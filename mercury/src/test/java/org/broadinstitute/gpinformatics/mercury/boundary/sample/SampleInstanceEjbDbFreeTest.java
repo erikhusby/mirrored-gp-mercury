@@ -3,12 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -21,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
@@ -31,12 +28,12 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryBarcodeUpdate;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNonPooled;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooledMultiOrganism;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNewTech;
+import org.broadinstitute.gpinformatics.mercury.control.sample.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
@@ -104,7 +101,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     private JiraService jiraService = Mockito.mock(JiraService.class);
     private ReferenceSequenceDao referenceSequenceDao = Mockito.mock(ReferenceSequenceDao.class);
     private SampleKitRequestDao sampleKitRequestDao = Mockito.mock(SampleKitRequestDao.class);
-    private ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
+    private AnalysisTypeDao analysisTypeDao = Mockito.mock(AnalysisTypeDao.class);
 
     enum TestType {EZPASS, NONPOOLED, POOLED, MULTIORGANISM, POOLEDTUBE, WALKUP};
 
@@ -146,8 +143,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             }
         }
         Assert.assertEquals(count, 2, StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertEquals(messageCollection.getWarnings().iterator().next(), TableProcessor.getPrefixedMessage(
-                String.format(TableProcessor.UNKNOWN_HEADER, "Sample No."), null, 29));
+        Assert.assertEquals(messageCollection.getWarnings().size(), 0,
+                StringUtils.join(messageCollection.getWarnings(), "; "));
     }
 
     @Test
@@ -203,11 +200,9 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "G S");
             if (i == 0) {
                 Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), "M");
-                Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), "n/a");
                 Assert.assertEquals(entity.getMolecularIndexingScheme().getName(), "Illumina_P5-Bipof_P7-Dihib");
             }
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
-            Assert.assertNull(metadataMap.get(Metadata.Key.ORGANISM));
             Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
                     metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
@@ -223,11 +218,12 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
-            Assert.assertEquals(entity.getProductOrder().getTitle(), "Poon - LLDeep samples for Low-Input Metagenomic");
+            Assert.assertEquals(entity.getAggregationParticle(), "Poon - LLDeep samples for Low-Input Metagenomic");
+            Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.AssemblyWithoutReference");
             Assert.assertEquals(entity.getNumberLanes(), 1);
             Assert.assertEquals(entity.getComments(), "SSF-1344; Tiffany Poon");
             Assert.assertTrue(entity.getPooled());
-            Assert.assertEquals(entity.getReferenceSequence().getName(), "N/A");
+            Assert.assertEquals(entity.getReferenceSequence().getName().split("\\|")[0], "Homo_sapiens_RP11-78M2");
         }
     }
 
@@ -239,7 +235,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorPooledMultiOrganism(null), messageCollection);
+                new ExternalLibraryProcessorNewTech(null), messageCollection);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -289,9 +285,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES),
                     "see Organism column for genus see Organism column for species");
             Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "M", "F", "M"));
-            Assert.assertTrue(StringUtils.isBlank(metadataMap.get(Metadata.Key.STRAIN)));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
-            Assert.assertEquals(metadataMap.get(Metadata.Key.ORGANISM), "human");
             Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
                     metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
@@ -308,12 +302,13 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
             Assert.assertEquals(entity.getReadLength().intValue(), 76);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
-            Assert.assertEquals(entity.getProductOrder().getTitle(), "Microsporidia_RNASeq_Sanscrainte");
+            Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
+            Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
             Assert.assertEquals(entity.getNumberLanes(), new int[]{2, 2, 4}[i]);
             Assert.assertEquals(entity.getComments(),
                     select(i, "more info; CCLF", "more inf 2; CCLF", "more inf3; CCLF"));
             Assert.assertTrue(entity.getPooled());
-            Assert.assertEquals(entity.getReferenceSequence().getName(), "hg19");
+            Assert.assertEquals(entity.getReferenceSequence().getName(), "Homo_sapiens_assembly19");
 
             if (i < 2) {
                 Assert.assertNull(entity.getMolecularIndexingScheme());
@@ -331,7 +326,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorPooledMultiOrganism(null), messageCollection);
+                new ExternalLibraryProcessorNewTech(null), messageCollection);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -370,9 +365,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                     select(i, "Patient X", "Patient Y"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "Test Genus Test Species");
             Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "F", null));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), select(i, "n/a", null));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
-            Assert.assertNull(metadataMap.get(Metadata.Key.ORGANISM));
             Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
                     metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
@@ -389,7 +382,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
             Assert.assertEquals(entity.getReadLength().intValue(), 151);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
-            Assert.assertEquals(entity.getProductOrder().getTitle(), "Microsporidia_RNASeq_Sanscrainte");
+            Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
+            Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
             Assert.assertEquals(entity.getNumberLanes(), new int[]{3, 5}[i]);
             Assert.assertEquals(entity.getComments(),
                     select(i, "Some info; Sarah Youngs group", "Sarah Youngs group"));
@@ -412,7 +406,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorNonPooled(null), messageCollection);
+                new ExternalLibraryProcessorNewTech(null), messageCollection);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -451,9 +445,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                     select(i, "Patient1", "Patient2"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "GG SS");
             Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "M", "M"));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), select(i, "3", "3"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
-            Assert.assertNull(metadataMap.get(Metadata.Key.ORGANISM));
             Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
                     metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
@@ -470,12 +462,13 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
             Assert.assertEquals(entity.getReadLength().intValue(), 151);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
-            Assert.assertEquals(entity.getProductOrder().getTitle(), "Microsporidia_RNASeq_Sanscrainte");
+            Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
+            Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
             Assert.assertEquals(entity.getNumberLanes(), 4);
             Assert.assertEquals(entity.getComments(),
                     select(i, "mediocre sample; you, me, somebody", "great sample; you, me, somebody"));
             Assert.assertNull(entity.getPooled());
-            Assert.assertEquals(entity.getReferenceSequence().getName(), "HG19");
+            Assert.assertEquals(entity.getReferenceSequence().getName(), "Homo_sapiens_assembly19");
 
             if (i == 0) {
                 Assert.assertNull(entity.getMolecularIndexingScheme());
@@ -554,7 +547,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
             Assert.assertEquals(entity.getReadLength().intValue(), new int[]{4, 2}[i]);
             Assert.assertNull(entity.getLibraryType());
-            Assert.assertNull(entity.getProductOrder());
+            Assert.assertNull(entity.getAggregationParticle());
+            Assert.assertNull(entity.getAnalysisType());
             Assert.assertEquals(entity.getNumberLanes(), 1);
             Assert.assertNull(entity.getComments());
             Assert.assertNull(entity.getPooled());
@@ -752,10 +746,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 metadata.add(new Metadata(Metadata.Key.SPECIES, "S"));
                 metadata.add(new Metadata(Metadata.Key.GENDER, select(mercuryIdx,
                         "M", "F", "", "F", "", "M", "F", "M")));
-                metadata.add(new Metadata(Metadata.Key.STRAIN,  select(mercuryIdx,
-                        "", "n/a", "", "n/a", "", "", "", "")));
-                metadata.add(new Metadata(Metadata.Key.ORGANISM, select(mercuryIdx,
-                        "", "", "", "", "", "human", "human", "human")));
                 metadata.add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
                 metadataMap.put(sampleName, metadata);
                 ++mercuryIdx;
@@ -796,48 +786,11 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                     }
                 });
 
-        // ProductOrders
-        final String analysisType;
-        final String irbNumber;
-        switch (testType) {
-        case EZPASS:
-            analysisType = "WholeGenomeShotgunwithoutReference";
-            irbNumber = "0504001179";
-            break;
-        case POOLEDTUBE:
-        case NONPOOLED:
-        case MULTIORGANISM:
-            analysisType = "WholeGenomeShotgun.Resequencing";
-            irbNumber = "0504001179";
-            break;
-        case POOLED:
-            analysisType = "WholeGenomeShotgun.Resequencing";
-            irbNumber = "IRB Exempt";
-            break;
-        default:
-            analysisType = "";
-            irbNumber = "";
-            break;
-        }
-
-        Mockito.when(productOrderDao.findByTitle(Mockito.anyString())).thenAnswer(new Answer<ProductOrder>() {
+        Mockito.when(analysisTypeDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<AnalysisType>() {
             @Override
-            public ProductOrder answer(InvocationOnMock invocation) throws Throwable {
-                String title = (String)invocation.getArguments()[0];
-                ProductOrder productOrder = null;
-                if (StringUtils.isNotBlank(title)) {
-                    ResearchProject researchProject = new ResearchProject();
-                    researchProject.setTitle("RP for " + title);
-                    ResearchProjectIRB researchProjectIRB = new ResearchProjectIRB(researchProject,
-                            ResearchProjectIRB.IrbType.BROAD, irbNumber);
-                    researchProject.addIrbNumber(researchProjectIRB);
-                    Product product = new Product();
-                    product.setAnalysisTypeKey(analysisType);
-                    productOrder = new ProductOrder(title, null, null);
-                    productOrder.setProduct(product);
-                    productOrder.setResearchProject(researchProject);
-                }
-                return productOrder;
+            public AnalysisType answer(InvocationOnMock invocation) throws Throwable {
+                String analysisTypeName = (String)invocation.getArguments()[0];
+                return new AnalysisType(analysisTypeName);
             }
         });
 
@@ -847,7 +800,19 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                     @Override
                     public ReferenceSequence answer(InvocationOnMock invocation) throws Throwable {
                         String name = (String)invocation.getArguments()[0];
-                        return StringUtils.isNotBlank(name) ? new ReferenceSequence(name, "") : null;
+                        return StringUtils.isBlank(name) ? null : new ReferenceSequence(name, "");
+                    }
+                });
+
+        Mockito.when(referenceSequenceDao.findByBusinessKey(Mockito.anyString())).thenAnswer(
+                new Answer<ReferenceSequence>() {
+                    @Override
+                    public ReferenceSequence answer(InvocationOnMock invocation) throws Throwable {
+                        String businessKey = (String)invocation.getArguments()[0];
+                        return StringUtils.isBlank(businessKey) ? null : new ReferenceSequence(
+                                StringUtils.substringBeforeLast(businessKey, "|"),
+                                StringUtils.substringAfterLast(businessKey, "|"));
+
                     }
                 });
 
@@ -903,7 +868,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         return new SampleInstanceEjb(molecularIndexingSchemeDao, jiraService,
                 reagentDesignDao, labVesselDao, mercurySampleDao, sampleInstanceEntityDao,
-                productOrderDao, sampleKitRequestDao, sampleDataFetcher, referenceSequenceDao);
+                analysisTypeDao, sampleKitRequestDao, sampleDataFetcher, referenceSequenceDao);
     }
 
 }

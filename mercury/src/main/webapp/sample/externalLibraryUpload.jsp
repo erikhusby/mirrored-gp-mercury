@@ -22,21 +22,28 @@
             <div class="form-horizontal">
                 <div class="control-group">
                     <div class="controls">
-                        <stripes:select id="spreadsheetType" name="spreadsheetType">
-                            <stripes:option value="">Select a Spreadsheet Type</stripes:option>
-                            <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean.SpreadsheetType"
-                                    label="displayName"/>
-                        </stripes:select>
+                        <div style="float: left; width: 25%;">
+                            <stripes:select id="spreadsheetType" name="spreadsheetType">
+                                <stripes:option value="">Select a Spreadsheet Type</stripes:option>
+                                <stripes:options-enumeration
+                                        enum="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean.SpreadsheetType"
+                                        label="displayName"/>
+                            </stripes:select>
+                        </div>
+                        <div style="float: right; width: 75%;">
+                            <stripes:submit name="downloadTemplate" value="View Template" class="btn btn-primary"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="controls">
+                        <stripes:file name="samplesSpreadsheet" id="samplesSpreadsheet"/>
                     </div>
                     <div style="margin-left: 180px; width: auto;">
                         <stripes:checkbox id="overWriteFlag" name="overWriteFlag"/>
                         <stripes:label for="overWriteFlag">
                             Overwrite previous upload
                         </stripes:label>
-                    </div>
-                    <div class="controls">
-                        <stripes:file name="samplesSpreadsheet" id="samplesSpreadsheet"/>
                     </div>
                 </div>
                 <div class="control-group">

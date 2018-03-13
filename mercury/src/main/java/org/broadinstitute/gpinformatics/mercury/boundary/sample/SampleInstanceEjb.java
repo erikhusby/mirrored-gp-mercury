@@ -7,8 +7,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -17,8 +15,8 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
@@ -29,8 +27,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryBarcodeUpdate;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNewTech;
+import org.broadinstitute.gpinformatics.mercury.control.sample.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
@@ -51,6 +51,7 @@ import javax.inject.Inject;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -90,12 +91,11 @@ public class SampleInstanceEjb {
     static final String MERCURY_FORMAT = "Row #%d the new %s \"%s\" must not have a Mercury barcode format (10 digits).";
     static final String PREXISTING =
             "Row #%d %s named \"%s\" already exists in Mercury; set the Overwrite checkbox to re-upload.";
-    static final String PDO_PROBLEM = "Row #%d no %s is defined for Product Order \"%s\".";
     static final String PREXISTING_VALUES =
             "Row #%d values for %s already exist in Mercury; set the Overwrite checkbox to re-upload.";
     static final String BSP_METADATA =
             "Row #%d values for %s should be blank because BSP data for sample %s cannot be updated.";
-    static final String BSP_MISSING = "Row #%d Mercury expects sample \"%s\" to be in BSP and it's not.";
+    static final String CONFLICTING_SOURCE = "Row #%d sample \"%s\" has %s metadata source but is %s in BSP.";
 
     public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
     public static final String IS_SUCCESS2 = "%d tube barcodes were updated.";
@@ -130,7 +130,7 @@ public class SampleInstanceEjb {
     private SampleInstanceEntityDao sampleInstanceEntityDao;
 
     @Inject
-    private ProductOrderDao productOrderDao;
+    private AnalysisTypeDao analysisTypeDao;
 
     @Inject
     private SampleKitRequestDao sampleKitRequestDao;
@@ -143,7 +143,7 @@ public class SampleInstanceEjb {
 
     static {
         for (IlluminaFlowcell.FlowcellType flowcellType : CreateFCTActionBean.FLOWCELL_TYPES) {
-            String sequencer = StringUtils.substringBeforeLast(flowcellType.getDisplayName(), "Flowcell").trim();
+            String sequencer = makeSequencerValue(flowcellType);
             mapSequencerToFlowcellType.put(sequencer, flowcellType);
         }
         SEQUENCER_MODELS = "\"" + StringUtils.join(mapSequencerToFlowcellType.keySet(), "\", \"") + "\"";
@@ -155,7 +155,7 @@ public class SampleInstanceEjb {
     /** Constructor used for unit testing. */
     public SampleInstanceEjb(MolecularIndexingSchemeDao molecularIndexingSchemeDao, JiraService jiraService,
             ReagentDesignDao reagentDesignDao, LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao,
-            SampleInstanceEntityDao sampleInstanceEntityDao, ProductOrderDao productOrderDao,
+            SampleInstanceEntityDao sampleInstanceEntityDao, AnalysisTypeDao analysisTypeDao,
             SampleKitRequestDao sampleKitRequestDao, SampleDataFetcher sampleDataFetcher,
             ReferenceSequenceDao referenceSequenceDao) {
         this.molecularIndexingSchemeDao = molecularIndexingSchemeDao;
@@ -164,7 +164,7 @@ public class SampleInstanceEjb {
         this.labVesselDao = labVesselDao;
         this.mercurySampleDao = mercurySampleDao;
         this.sampleInstanceEntityDao = sampleInstanceEntityDao;
-        this.productOrderDao = productOrderDao;
+        this.analysisTypeDao = analysisTypeDao;
         this.sampleKitRequestDao = sampleKitRequestDao;
         this.sampleDataFetcher = sampleDataFetcher;
         this.reagentDesignDao = reagentDesignDao;
@@ -174,14 +174,13 @@ public class SampleInstanceEjb {
     /**
      * Parses the uploaded spreadsheet, checks for correct headers and missing/incorrect data,
      * and if it's all ok then persists the SampleInstanceEntity and associated entities.
-     *
-     * @param inputStream the spreadsheet inputStream.
+     *  @param inputStream the spreadsheet inputStream.
      * @param overwrite specifies if existing entities should be overwritten.
      * @param processor the TableProcessor subclass that should parse the spreadsheet.
      * @param messages the errors, warnings, and info to be passed back.
      */
-    public List<SampleInstanceEntity> doExternalUpload(InputStream inputStream,
-            boolean overwrite, TableProcessor processor, MessageCollection messages) {
+    public List<SampleInstanceEntity> doExternalUpload(InputStream inputStream, boolean overwrite,
+            ExternalLibraryProcessor processor, MessageCollection messages) {
 
         messages.clearAll();
         if (processor == null) {
@@ -191,12 +190,21 @@ public class SampleInstanceEjb {
             PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
             messages.addErrors(processor.getMessages());
             messages.addWarning(processor.getWarnings());
-            return processor instanceof VesselPooledTubesProcessor ?
-                    verifyAndPersistSpreadsheet((VesselPooledTubesProcessor) processor, messages, overwrite) :
-                    (processor instanceof ExternalLibraryBarcodeUpdate ?
-                            updateBarcodes((ExternalLibraryBarcodeUpdate) processor, messages, overwrite) :
-                            verifyAndPersistSpreadsheet((ExternalLibraryProcessor) processor, messages, overwrite));
+            if (processor instanceof VesselPooledTubesProcessor) {
+                return processPooledTube((VesselPooledTubesProcessor)processor, messages, overwrite);
+            } else if (processor instanceof ExternalLibraryProcessorEzPass) {
+                return processLibraries((ExternalLibraryProcessorEzPass)processor, messages, overwrite);
+            } else if (processor instanceof ExternalLibraryProcessorNewTech) {
+                return processLibraries((ExternalLibraryProcessorNewTech)processor, messages, overwrite);
+            } else if (processor instanceof ExternalLibraryBarcodeUpdate) {
+                return processBarcodeUpdate((ExternalLibraryBarcodeUpdate)processor, messages, overwrite);
+            } else {
+                throw new RuntimeException("Unsuported processor type: " + processor.getClass().getCanonicalName());
+            }
         } catch (ValidationException e) {
+            if (processor.getMessages().isEmpty()) {
+                messages.addErrors(Arrays.asList(e.toString().split("\\n")));
+            }
             messages.addErrors(processor.getMessages());
             messages.addWarning(processor.getWarnings());
         } catch (Exception e) {
@@ -214,7 +222,7 @@ public class SampleInstanceEjb {
      * known to Mercury and BSP; a JIRA DEV ticket and the relevant subtask ticket must be given; and a pool
      * can be uploaded by repeating the barcode in multiple spreadsheet rows with different sample names.
      */
-    private List<SampleInstanceEntity> verifyAndPersistSpreadsheet(VesselPooledTubesProcessor processor,
+    private List<SampleInstanceEntity> processPooledTube(VesselPooledTubesProcessor processor,
             MessageCollection messages, boolean overWriteFlag) {
 
         // rowOffset converts row index to the 1-based row number shown by Excel on the far left of each row.
@@ -340,15 +348,23 @@ public class SampleInstanceEjb {
             boolean sampleHasMercuryData = (mercurySample != null &&
                     mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) ||
                     !fetchedData.containsKey(sampleName);
-            if (!sampleHasMercuryData && !fetchedData.containsKey(sampleName)) {
-                messages.addError(String.format(BSP_MISSING, rowIndex + rowOffset, sampleName));
+            if (sampleHasMercuryData && fetchedData.containsKey(sampleName)) {
+                messages.addWarning(String.format(CONFLICTING_SOURCE, rowIndex + rowOffset, sampleName,
+                        "Mercury", "also"));
+            } else if (!sampleHasMercuryData && !fetchedData.containsKey(sampleName)) {
+                messages.addError(String.format(CONFLICTING_SOURCE, rowIndex + rowOffset, sampleName,
+                        "BSP", "not"));
             }
             MercurySample rootSample = rootSampleMap.get(rootSampleName);
             boolean rootHasMercuryData = sampleHasMercuryData &&
                     ((rootSample != null && rootSample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) ||
                             !fetchedData.containsKey(rootSampleName));
-            if (!rootHasMercuryData && fetchedData.get(rootSampleName) == null) {
-                messages.addError(String.format(BSP_MISSING, rowIndex + rowOffset, rootSampleName));
+            if (rootHasMercuryData && fetchedData.containsKey(rootSampleName)) {
+                messages.addWarning(String.format(CONFLICTING_SOURCE, rowIndex + rowOffset, rootSampleName,
+                        "Mercury", "also"));
+            } else if (!rootHasMercuryData && fetchedData.get(rootSampleName) == null) {
+                messages.addError(String.format(CONFLICTING_SOURCE, rowIndex + rowOffset, rootSampleName,
+                        "BSP", "not"));
             }
 
             // If a non-BSP Broad Sample needs to be created its name must not collide with a future BSP SM-id.
@@ -426,11 +442,11 @@ public class SampleInstanceEjb {
                 }
             }
 
-            String libraryName = processor.getSingleSampleLibraryName().get(rowIndex);
+            String libraryName = processor.getLibraryName().get(rowIndex);
             rowDto.setLibraryName(libraryName);
             if (!uniqueLibraryNames.add(libraryName)) {
                 messages.addError(String.format(DUPLICATE, rowDto.getRowNumber(),
-                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+                        VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
             }
             if (sampleInstanceEntityDao.findByName(libraryName) != null && !overWriteFlag) {
                 messages.addError(String.format(PREXISTING, rowDto.getRowNumber(), "Library", libraryName));
@@ -501,7 +517,7 @@ public class SampleInstanceEjb {
             }
 
             //Does molecular index scheme exist.
-            String misName = processor.getMolecularIndexingScheme().get(rowIndex);
+            String misName = processor.getMolecularBarcodeName().get(rowIndex);
             MolecularIndexingScheme molecularIndexingScheme = molecularIndexingSchemeDao.findByName(misName);
             rowDto.setMolecularIndexSchemes(molecularIndexingScheme);
             if (molecularIndexingScheme == null) {
@@ -790,7 +806,7 @@ public class SampleInstanceEjb {
      * overwritten), and if not provided then the library name is used, though it's likely that the
      * tube barcode will be updated by the lab user to the actual value in a later step.
      */
-    private List<SampleInstanceEntity> verifyAndPersistSpreadsheet(ExternalLibraryProcessor processor,
+    private List<SampleInstanceEntity> processLibraries(ExternalLibraryProcessor processor,
             MessageCollection messages, boolean overWriteFlag) {
 
         // Includes error messages due to missing header or value that were discovered when parsing the spreadsheet.
@@ -799,8 +815,7 @@ public class SampleInstanceEjb {
         Set<String> uniqueBarcodes = new HashSet<>();
         Set<String> uniqueLibraryNames = new HashSet<>();
 
-        Map<Integer, ResearchProject> researchProjects = new HashMap<>();
-        Map<Integer, ProductOrder> productOrders = new HashMap<>();
+        Map<Integer, AnalysisType> analysisTypes = new HashMap<>();
         Map<Integer, MolecularIndexingScheme> molecularIndexingSchemes = new HashMap<>();
         Map<Integer, LabVessel> labVessels = new HashMap<>();
         Map<Integer, MercurySample> mercurySamples = new HashMap<>();
@@ -808,7 +823,7 @@ public class SampleInstanceEjb {
         Map<Integer, ReferenceSequence> referenceSequences = new HashMap<>();
         Map<Integer, IlluminaFlowcell.FlowcellType> sequencerModels = new HashMap<>();
 
-        int entityCount = processor.getSingleSampleLibraryName().size();
+        int entityCount = processor.getLibraryName().size();
         for (int index = 0; index < entityCount; ++index) {
             // Converts the 0-based index into the spreadsheet row number shown at the far left side in Excel.
             int rowNumber = index + processor.getHeaderRowIndex() + 2;
@@ -816,7 +831,7 @@ public class SampleInstanceEjb {
             // Library name must only appear in one row, and is assumed to be universally unique. If it is
             // reused then it's unusable unless Overwrite is set. The pipeline and elsewhere require a
             // simple name so disallow whitespace and anything that might cause trouble.
-            String libraryName = get(processor.getSingleSampleLibraryName(), index);
+            String libraryName = get(processor.getLibraryName(), index);
             if (!uniqueLibraryNames.add(libraryName)) {
                 messages.addError(String.format(DUPLICATE, rowNumber, "Library Name"));
             }
@@ -876,12 +891,12 @@ public class SampleInstanceEjb {
                             (barcodeIsLibrary ? "(the Library Name)" : "")));
                 }
             }
-            if (isNotBlank(get(processor.getTotalLibraryVolume(), index)) &&
-                    !NumberUtils.isNumber(processor.getTotalLibraryVolume().get(index))) {
+            if (isNotBlank(get(processor.getVolume(), index)) &&
+                    !NumberUtils.isNumber(processor.getVolume().get(index))) {
                 messages.addError(String.format(WRONG_TYPE, rowNumber, "Volume", "numeric"));
             }
-            if (isNotBlank(get(processor.getTotalLibraryConcentration(), index)) &&
-                    !NumberUtils.isNumber(processor.getTotalLibraryConcentration().get(index))) {
+            if (isNotBlank(get(processor.getConcentration(), index)) &&
+                    !NumberUtils.isNumber(processor.getConcentration().get(index))) {
                 messages.addError(String.format(WRONG_TYPE, rowNumber, "Concentration", "numeric"));
             }
 
@@ -890,7 +905,9 @@ public class SampleInstanceEjb {
             nonNegativeOrBlank(get(processor.getInsertSize(), index), "Insert Size", rowNumber, messages);
             String referenceSequenceName = get(processor.getReferenceSequence(), index);
             if (isNotBlank(referenceSequenceName)) {
-                ReferenceSequence referenceSequence = referenceSequenceDao.findCurrent(referenceSequenceName);
+                ReferenceSequence referenceSequence = referenceSequenceName.contains("|") ?
+                        referenceSequenceDao.findByBusinessKey(referenceSequenceName) :
+                        referenceSequenceDao.findCurrent(referenceSequenceName);
                 if (referenceSequence == null) {
                     messages.addError(String.format(UNKNOWN, rowNumber, "Reference Sequence", "Mercury"));
                 } else {
@@ -906,41 +923,21 @@ public class SampleInstanceEjb {
                 messages.addError(String.format(UNKNOWN, rowNumber, "Molecular Barcode Name", "Mercury"));
             }
 
-            String pdoTitle = get(processor.getProjectTitle(), index);
-            if (isNotBlank(pdoTitle)) {
-                ProductOrder productOrder = productOrderDao.findByTitle(pdoTitle);
-                if (productOrder == null) {
-                    messages.addError(String.format(UNKNOWN, rowNumber, "Project Title", "Mercury"));
+            String analysisTypeName = get(processor.getDataAnalysisType(), index);
+            if (isNotBlank(analysisTypeName)) {
+                AnalysisType analysisType = analysisTypeDao.findByBusinessKey(analysisTypeName);
+                if (analysisType == null) {
+                    messages.addError(String.format(UNKNOWN, rowNumber, "Data Analysis Type", "Mercury"));
                 } else {
-                    productOrders.put(index, productOrder);
-                    if (productOrder.getProduct() == null) {
-                        messages.addError(String.format(PDO_PROBLEM, rowNumber, "Product", pdoTitle));
-                    } else {
-                        String productAnalysisType =
-                                StringUtils.trimToEmpty(productOrder.getProduct().getAnalysisTypeKey());
-                        String analysisType = StringUtils.trimToEmpty(get(processor.getDataAnalysisType(), index));
-                        if (!analysisType.equalsIgnoreCase(productAnalysisType)) {
-                            messages.addError(String.format(CONFLICT, rowNumber, "Data Analysis Type",
-                                    analysisType, productAnalysisType,
-                                    "from Product " + productOrder.getProduct().getPartNumber()));
-                        }
-                    }
-                    ResearchProject researchProject = productOrder.getResearchProject();
-                    if (researchProject == null) {
-                        messages.addError(String.format(PDO_PROBLEM, rowNumber, "Research Project", pdoTitle));
-                    } else {
-                        researchProjects.put(index, researchProject);
-                        validateIrbNumber(get(processor.getIrbNumber(), index), researchProject, rowNumber,
-                                messages);
-                    }
+                    analysisTypes.put(index, analysisType);
                 }
             }
+
             if (isNotBlank(get(processor.getSequencingTechnology(), index))) {
                 IlluminaFlowcell.FlowcellType sequencerModel =
                         findFlowcellType(get(processor.getSequencingTechnology(), index));
                 if (sequencerModel == null) {
-                    messages.addError(String.format(WRONG_TYPE, rowNumber, "Sequencing Technology",
-                            SEQUENCER_MODELS + ", or blank"));
+                    messages.addError(String.format(UNKNOWN, rowNumber, "Sequencing Technology", "Mercury"));
                 } else {
                     sequencerModels.put(index, sequencerModel);
                 }
@@ -951,7 +948,7 @@ public class SampleInstanceEjb {
             messages.addWarning("Spreadsheet contains no data.");
         }
         if (!messages.hasErrors()) {
-            persistExternalLibraries(processor, researchProjects, productOrders, molecularIndexingSchemes, labVessels,
+            persistExternalLibraries(processor, analysisTypes, molecularIndexingSchemes, labVessels,
                     mercurySamples, sampleInstanceEntities, referenceSequences, sequencerModels, messages);
         } else {
             Collections.sort(messages.getErrors(), BY_ROW_NUMBER);
@@ -968,15 +965,13 @@ public class SampleInstanceEjb {
      * Persists External Library uploads.
      */
     private void persistExternalLibraries(ExternalLibraryProcessor processor,
-            Map<Integer, ResearchProject> researchProjects, Map<Integer, ProductOrder> productOrders,
-            Map<Integer, MolecularIndexingScheme> molecularIndexingSchemes,
+            Map<Integer, AnalysisType> analysisTypes, Map<Integer, MolecularIndexingScheme> molecularIndexingSchemes,
             Map<Integer, LabVessel> labVessels, Map<Integer, MercurySample> mercurySamples,
             Map<Integer, SampleInstanceEntity> sampleInstanceEntities,
             Map<Integer, ReferenceSequence> referenceSequences,
             Map<Integer, IlluminaFlowcell.FlowcellType> sequencerModels, MessageCollection messages) {
 
-        // Captures the pre-row one-off spreadsheet data in a "kit request". This unfortunate naming of the
-        // upload manifest is not a request nor has it any connection with the informatics sample kit.
+        // Captures the pre-row one-off spreadsheet data in a "kit request", i.e. the upload manifest.
         SampleKitRequest kit = sampleKitRequestDao.find(processor.getEmail(), processor.getOrganization(),
                 processor.getLastName(), processor.getFirstName());
         if (kit == null) {
@@ -999,9 +994,9 @@ public class SampleInstanceEjb {
         }
 
         Collection<Object> newObjects = new ArrayList<>();
-        int numberOfEntities = processor.getSingleSampleLibraryName().size();
+        int numberOfEntities = processor.getLibraryName().size();
         for (int index = 0; index < numberOfEntities; ++index) {
-            String libraryName = processor.getSingleSampleLibraryName().get(index);
+            String libraryName = processor.getLibraryName().get(index);
 
             LabVessel labVessel = labVessels.get(index);
             if (labVessel == null) {
@@ -1013,9 +1008,9 @@ public class SampleInstanceEjb {
                 newObjects.add(labVessel);
             }
             labVessel.setVolume(MathUtils.scaleTwoDecimalPlaces(new BigDecimal(
-                    asNumber(get(processor.getTotalLibraryVolume(), index)))));
+                    asNumber(get(processor.getVolume(), index)))));
             labVessel.setConcentration(MathUtils.scaleTwoDecimalPlaces(new BigDecimal(
-                    asNumber(get(processor.getTotalLibraryConcentration(), index)))));
+                    asNumber(get(processor.getConcentration(), index)))));
             if (asInteger(get(processor.getLibrarySize(), index)) > 0) {
                 addLibrarySize(labVessel, MathUtils.scaleTwoDecimalPlaces(new BigDecimal(
                         get(processor.getLibrarySize(), index))));
@@ -1035,12 +1030,6 @@ public class SampleInstanceEjb {
 
             if (isNotBlank(get(processor.getSex(), index))) {
                 metadata.add(new Metadata(Metadata.Key.GENDER, get(processor.getSex(), index)));
-            }
-            if (isNotBlank(get(processor.getStrain(), index))) {
-                metadata.add(new Metadata(Metadata.Key.STRAIN, get(processor.getStrain(), index)));
-            }
-            if (isNotBlank(get(processor.getOrganism(), index))) {
-                metadata.add(new Metadata(Metadata.Key.ORGANISM, get(processor.getOrganism(), index)));
             }
             metadata.add(new Metadata(Metadata.Key.SPECIES,
                     StringUtils.trimToEmpty(processor.getGenus() + " " + processor.getSpecies())));
@@ -1080,8 +1069,8 @@ public class SampleInstanceEjb {
             sampleInstanceEntity.setReferenceSequence(referenceSequences.get(index));
             sampleInstanceEntity.setMolecularIndexScheme(molecularIndexingSchemes.get(index));
             sampleInstanceEntity.setLibraryType(get(processor.getLibraryType(), index));
-            sampleInstanceEntity.setResearchProject(researchProjects.get(index));
-            sampleInstanceEntity.setProductOrder(productOrders.get(index));
+            sampleInstanceEntity.setAnalysisType(analysisTypes.get(index));
+            sampleInstanceEntity.setAggregationParticle(get(processor.getProjectTitle(), index));
             sampleInstanceEntity.setLabVessel(labVessel);
             sampleInstanceEntity.setMercurySample(mercurySample);
             sampleInstanceEntity.setSequencerModel(sequencerModels.get(index));
@@ -1306,15 +1295,15 @@ public class SampleInstanceEjb {
         return  isNotBlank(get(processor.getCollaboratorSampleId(), rowIndex)) ||
                 isNotBlank(get(processor.getCollaboratorParticipantId(), rowIndex)) ||
                 isNotBlank(get(processor.getBroadParticipantId(), rowIndex)) ||
-                isNotBlank(get(processor.getGender(), rowIndex)) ||
-                isNotBlank(get(processor.getSpecies(), rowIndex)) ||
+                isNotBlank(get(processor.getSex(), rowIndex)) ||
+                isNotBlank(get(processor.getOrganism(), rowIndex)) ||
                 isNotBlank(get(processor.getLsid(), rowIndex));
     }
 
     /**
      * Updates existing SampleInstanceEntity tube barcode labels.
      */
-    private List<SampleInstanceEntity> updateBarcodes(ExternalLibraryBarcodeUpdate processor,
+    private List<SampleInstanceEntity> processBarcodeUpdate(ExternalLibraryBarcodeUpdate processor,
             MessageCollection messages, boolean overwrite) {
 
         final int rowOffset = processor.getHeaderRowIndex() + 1;
@@ -1324,8 +1313,8 @@ public class SampleInstanceEjb {
         if (!overwrite) {
             messages.addError("Set the Overwrite checkbox to update tube barcodes.");
         }
-        for (int rowIdx = 0; rowIdx < processor.getLibraryNames().size(); ++rowIdx) {
-            String libraryName = get(processor.getLibraryNames(), rowIdx);
+        for (int rowIdx = 0; rowIdx < processor.getLibraryName().size(); ++rowIdx) {
+            String libraryName = get(processor.getLibraryName(), rowIdx);
             String newBarcode = get(processor.getBarcodes(), rowIdx);
             if (isNotBlank(libraryName) && isNotBlank(newBarcode)) {
                 SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(libraryName);
@@ -1356,6 +1345,11 @@ public class SampleInstanceEjb {
         return sampleInstanceEntities;
     }
 
+    /** Returns a string that can be used as a sequencer value in the spreadsheet. */
+    public static String makeSequencerValue(IlluminaFlowcell.FlowcellType flowcellType) {
+        return StringUtils.substringBeforeLast(flowcellType.getDisplayName(), "Flowcell").trim();
+    }
+
     /** DTO for sample metadata found in the spreadsheet. */
     class SampleDataDto implements Cloneable {
         private String sampleName;
@@ -1377,8 +1371,8 @@ public class SampleInstanceEjb {
             collaboratorSampleId = processor.getCollaboratorSampleId().get(rowIndex);
             collaboratorParticipantId = processor.getCollaboratorParticipantId().get(rowIndex);
             broadParticipantId = processor.getBroadParticipantId().get(rowIndex);
-            gender = get(processor.getGender(), rowIndex);
-            species = get(processor.getSpecies(), rowIndex);
+            gender = get(processor.getSex(), rowIndex);
+            species = get(processor.getOrganism(), rowIndex);
             lsid = get(processor.getLsid(), rowIndex);
         }
 
@@ -1386,7 +1380,7 @@ public class SampleInstanceEjb {
         public void validate(int rowNumber, MessageCollection messages) {
             if (StringUtils.isBlank(getSampleName())) {
                 messages.addError(String.format(MISSING, rowNumber,
-                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+                        VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
             }
             if (StringUtils.isBlank(getRootSampleName())) {
                 messages.addError(String.format(MISSING, rowNumber,
@@ -1405,15 +1399,15 @@ public class SampleInstanceEjb {
                         VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText()));
             }
             if (StringUtils.isBlank(getSpecies())) {
-                messages.addWarning(String.format(MISSING, rowNumber,
+                messages.addInfo(String.format(MISSING, rowNumber,
                         VesselPooledTubesProcessor.Headers.SPECIES.getText()));
             }
             if (StringUtils.isBlank(getGender())) {
-                messages.addWarning(String.format(MISSING, rowNumber,
+                messages.addInfo(String.format(MISSING, rowNumber,
                         VesselPooledTubesProcessor.Headers.GENDER.getText()));
             }
             if (StringUtils.isBlank(getLsid())) {
-                messages.addWarning(String.format(MISSING, rowNumber,
+                messages.addInfo(String.format(MISSING, rowNumber,
                         VesselPooledTubesProcessor.Headers.LSID.getText()));
             }
         }

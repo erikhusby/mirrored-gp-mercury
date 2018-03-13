@@ -4,9 +4,10 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 
 import java.util.Map;
 
-public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
+/** Handles both Pooled, Non-pooled, and MultiOrganism New Tech spreadsheets. */
 
-    public ExternalLibraryProcessorEzPass(String sheetName) {
+public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
+    public ExternalLibraryProcessorNewTech(String sheetName) {
         super(sheetName);
     }
 
@@ -14,18 +15,18 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         additionalAssemblyInformation.add(getFromRow(dataRow, Headers.ASSEMBLY_INFORMATION));
         additionalSampleInformation.add(getFromRow(dataRow, Headers.ADDITIONAL_SAMPLE_INFORMATION));
-        barcodes.add(getFromRow(dataRow, Headers.TUBE_BARCODE));
         collaboratorSampleId.add(getFromRow(dataRow, Headers.COLLABORATOR_SAMPLE_ID));
         dataAnalysisType.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
-        dataSubmission.add(getFromRow(dataRow, Headers.DATA_SUBMISSION));
         individualName.add(getFromRow(dataRow, Headers.INDIVIDUAL_NAME));
         insertSize.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE));
         librarySize.add(getFromRow(dataRow, Headers.LIBRARY_SIZE));
         libraryType.add(getFromRow(dataRow, Headers.LIBRARY_TYPE));
         molecularBarcodeName.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME));
         numberOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
+        organism.add(getFromRow(dataRow, Headers.ORGANISM));
         pooled.add(getFromRow(dataRow, Headers.POOLED));
         projectTitle.add(getFromRow(dataRow, Headers.PROJECT_TITLE));
+        readLength.add(getFromRow(dataRow, Headers.READ_LENGTH));
         referenceSequence.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
         sequencingTechnology.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
         sex.add(getFromRow(dataRow, Headers.SEX));
@@ -51,8 +52,8 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         LIBRARY_SIZE("Library Size", REQUIRED),
         PROJECT_TITLE("Project Title (pipeline aggregator)", REQUIRED),
         REFERENCE_SEQUENCE("Reference Sequence", REQUIRED),
-        CONCENTRATION("Concentration (ng/ul)", REQUIRED),
-        VOLUME("Volume (ul)", REQUIRED),
+        CONCENTRATION("Concentration (ng/uL)", REQUIRED),
+        VOLUME("Volume (uL)", REQUIRED),
         SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
 
         // Optional header and data.
@@ -70,24 +71,23 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         BLANK("", IGNORED),
         APPROVED_BY("Approved By", IGNORED),
         CELL_LINE("Cell Line", IGNORED),
+        ACCESS_LIST("Data Access List", IGNORED),
         DATA_SUBMISSION("Data Submission", IGNORED),
+        DERIVED_FROM("Derived From", IGNORED),
         FUNDING_SOURCE("Funding Source", IGNORED),
-        GSSR_OF_BAIT_POOL("GSSR # of Bait Pool", IGNORED),
+        IRB_NUMBER("IRB Number", IGNORED),
         ILLUMINA_KIT_USED("Illumina or 454 Kit", IGNORED),
         INSERT_SIZE_RANGE("Insert Size Range", IGNORED),
         JUMP_SIZE("Jump Size", IGNORED),
-        MOLECULAR_BARCODE_PLATE_ID("Molecular Barcode Plate Id", IGNORED),
-        MOLECULAR_BARCODE_PLATE_WELL_ID("Molecular Barcode Plate Well Id", IGNORED),
+        MEMBER_OF_POOL("Member of Pool", IGNORED),
         MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", IGNORED),
         REQUESTED_COMPLETION_DATE("Requested Completion Date", IGNORED),
+        REQUIRED_ACCESS("Require Controlled Access for Data", IGNORED),
         RESTRICTION_ENZYMES("Restriction Enzyme", IGNORED),
-        SQUID_PROJECT("Squid Project", IGNORED),
         SAMPLE_NUMBER("Sample Number", IGNORED),
-        SOURCE_SAMPLE_GSSR_ID("Source Sample Gssr Id", IGNORED),
         STRAIN("Strain", IGNORED),
         SUBMITTED_TO_GSSR("Submitted to Gssr", IGNORED),
         TISSUE_TYPE("Tissue Type", IGNORED),
-        VIRTUAL_GSSR_ID("Virtual Gssr Id", IGNORED),
         ;
 
         private final String text;

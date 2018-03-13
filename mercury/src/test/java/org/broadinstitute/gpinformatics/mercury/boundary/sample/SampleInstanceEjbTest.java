@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CreationHelper;
@@ -13,7 +14,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -21,10 +21,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryBarcodeUpdate;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNonPooled;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooledMultiOrganism;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNewTech;
+import org.broadinstitute.gpinformatics.mercury.control.sample.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
@@ -50,7 +51,6 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor.REQUIRED_VALUE_IS_MISSING;
-import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjbDbFreeTest.TestType.NONPOOLED;
 
 @Test(groups = TestGroups.STANDARD)
 public class SampleInstanceEjbTest extends Arquillian {
@@ -104,7 +104,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                 for (int i = 0; i < ids.length; ++i) {
                     Map<String, String> row = new HashMap<>();
                     row.put(VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText(), "E" + ids[i]);
-                    row.put(VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText(),
+                    row.put(VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText(),
                             "Library" + ids[i]);
                     row.put(VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText(), "SM-" + ids[i]);
                     row.put(VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "SM-" + rootIds[i]);
@@ -140,7 +140,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                 for (int i = 0; i < processor.getBarcodes().size(); ++i) {
                     Assert.assertNotNull(labVesselDao.findByIdentifier(processor.getBarcodes().get(i)),
                             processor.getBarcodes().get(i));
-                    String libraryName = processor.getSingleSampleLibraryName().get(i);
+                    String libraryName = processor.getLibraryName().get(i);
                     Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName),
                             filename + " " + libraryName);
 
@@ -166,11 +166,11 @@ public class SampleInstanceEjbTest extends Arquillian {
                         Assert.assertEquals(sampleData.getCollaboratorParticipantId(),
                                 processor.getCollaboratorParticipantId().get(i), msg);
                     }
-                    if (!processor.getGender().get(i).isEmpty()) {
-                        Assert.assertEquals(sampleData.getGender(), processor.getGender().get(i), msg);
+                    if (!processor.getSex().get(i).isEmpty()) {
+                        Assert.assertEquals(sampleData.getGender(), processor.getSex().get(i), msg);
                     }
-                    if (!processor.getSpecies().get(i).isEmpty()) {
-                        Assert.assertEquals(sampleData.getOrganism(), processor.getSpecies().get(i), msg);
+                    if (!processor.getOrganism().get(i).isEmpty()) {
+                        Assert.assertEquals(sampleData.getOrganism(), processor.getOrganism().get(i), msg);
                     }
                     if (!processor.getLsid().get(i).isEmpty()) {
                         Assert.assertEquals(sampleData.getSampleLsid(), processor.getLsid().get(i), msg);
@@ -186,11 +186,11 @@ public class SampleInstanceEjbTest extends Arquillian {
             } else {
                 // The failing test cases should not have persisted any new Sample Instances.
                 for (int i = 0; i < processor.getBarcodes().size(); ++i) {
-                    String libraryName = processor.getSingleSampleLibraryName().get(i);
+                    String libraryName = processor.getLibraryName().get(i);
                     Assert.assertNull(sampleInstanceEntityDao.findByName(libraryName), filename + " " + libraryName);
                 }
                 // Checks the error messages for expected problems.
-                // NOTE that the metadata for SM-748OO is in Mercury and not BSP even though the sample is in BSP.
+                // NOTE that the metadata for SM-748OO is taken from Mercury even though the sample is in BSP.
                 List<String> errors = new ArrayList<>(messageCollection.getErrors());
                 List<String> warnings = new ArrayList<>(messageCollection.getWarnings());
 
@@ -224,7 +224,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                             VesselPooledTubesProcessor.Headers.CONDITIONS.getText()));
 
                     errorIfMissing(errors, filename, "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                            VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+                            VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
 
                     errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
                             VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
@@ -281,7 +281,7 @@ public class SampleInstanceEjbTest extends Arquillian {
         for (int i = 0; i < ids.length; ++i) {
             Map<String, String> row = new HashMap<>();
             row.put(VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText(), "E" + ids[i]);
-            row.put(VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText(), "Library" + ids[i]);
+            row.put(VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText(), "Library" + ids[i]);
             row.put(VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText(), "SM-" + ids[i]);
             row.put(VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "SM-" + rootIds[i]);
             alternativeData1.add(row);
@@ -297,7 +297,7 @@ public class SampleInstanceEjbTest extends Arquillian {
         for (int i = 0; i < processor1.getBarcodes().size(); ++i) {
             Assert.assertNotNull(labVesselDao.findByIdentifier(processor1.getBarcodes().get(i)),
                     processor1.getBarcodes().get(i));
-            String libraryName = processor1.getSingleSampleLibraryName().get(i);
+            String libraryName = processor1.getLibraryName().get(i);
             Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName),
                     filename1+ " " + libraryName);
         }
@@ -327,7 +327,7 @@ public class SampleInstanceEjbTest extends Arquillian {
         // Should have persisted all updates.
         for (int i = 0; i < processor2.getBarcodes().size(); ++i) {
             String barcode = processor2.getBarcodes().get(i);
-            String libraryName = processor2.getLibraryNames().get(i);
+            String libraryName = processor2.getLibraryName().get(i);
             Assert.assertTrue(barcode.startsWith("F"));
             Assert.assertEquals(sampleInstanceEntityDao.findByName(libraryName).getLabVessel().getLabel(),
                     barcode, filename2 + " " + libraryName);
@@ -335,56 +335,23 @@ public class SampleInstanceEjbTest extends Arquillian {
     }
 
     @Test
-    public void testNonPooledExternalLibrary() {
-        String file = "ExternalLibraryNONPooledTest.xlsx";
-        MessageCollection messages = new MessageCollection();
-        InputStream spreadsheet = VarioskanParserTest.getSpreadsheet(file);
-        ExternalLibraryProcessorNonPooled processor = new ExternalLibraryProcessorNonPooled(null);
-        sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages);
+    public void testNewTechUploads() {
+        for (Pair<String, ? extends ExternalLibraryProcessor> pair : Arrays.asList(
+                Pair.of("ExternalLibraryEZPassTest.xlsx", new ExternalLibraryProcessorEzPass(null)),
+                Pair.of("ExternalLibraryMultiOrganismTest.xlsx", new ExternalLibraryProcessorNewTech(null)),
+                Pair.of("ExternalLibraryNONPooledTest.xlsx", new ExternalLibraryProcessorNewTech(null)),
+                Pair.of("ExternalLibraryPooledTest.xlsx", new ExternalLibraryProcessorNewTech(null)))) {
+            MessageCollection messages = new MessageCollection();
+            String file = pair.getLeft();
+            InputStream spreadsheet = VarioskanParserTest.getSpreadsheet(file);
+            ExternalLibraryProcessor processor = pair.getRight();
+            sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages);
 
-        Assert.assertTrue(messages.getErrors().isEmpty(), StringUtils.join(messages.getErrors(), "; "));
-        // Should have persisted all rows.
-        for (int i = 0; i < processor.getBarcodes().size(); ++i) {
-            String barcode = processor.getBarcodes().get(i);
-            Assert.assertNotNull(labVesselDao.findByIdentifier(barcode), barcode);
-            String libraryName = processor.getSingleSampleLibraryName().get(i);
-            Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName), libraryName);
-        }
-    }
-
-    @Test
-    public void testMultiOrganismExternalLibrary() {
-        String file = "ExternalLibraryMultiOrganismTest.xlsx";
-        MessageCollection messages = new MessageCollection();
-        InputStream spreadsheet = VarioskanParserTest.getSpreadsheet(file);
-        ExternalLibraryProcessorPooledMultiOrganism processor = new ExternalLibraryProcessorPooledMultiOrganism(null);
-        sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages);
-
-        Assert.assertTrue(messages.getErrors().isEmpty(), StringUtils.join(messages.getErrors(), "; "));
-        // Should have persisted all rows.
-        for (int i = 0; i < processor.getBarcodes().size(); ++i) {
-            String barcode = processor.getBarcodes().get(i);
-            Assert.assertNotNull(labVesselDao.findByIdentifier(barcode), barcode);
-            String libraryName = processor.getSingleSampleLibraryName().get(i);
-            Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName), libraryName);
-        }
-    }
-
-    @Test
-    public void testPooledExternalLibrary() {
-        String file = "ExternalLibraryPooledTest.xlsx";
-        MessageCollection messages = new MessageCollection();
-        InputStream spreadsheet = VarioskanParserTest.getSpreadsheet(file);
-        ExternalLibraryProcessorPooledMultiOrganism processor = new ExternalLibraryProcessorPooledMultiOrganism(null);
-        sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages);
-
-        Assert.assertTrue(messages.getErrors().isEmpty(), StringUtils.join(messages.getErrors(), "; "));
-        // Should have persisted all rows.
-        for (int i = 0; i < processor.getBarcodes().size(); ++i) {
-            String barcode = processor.getBarcodes().get(i);
-            Assert.assertNotNull(labVesselDao.findByIdentifier(barcode), barcode);
-            String libraryName = processor.getSingleSampleLibraryName().get(i);
-            Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName), libraryName);
+            Assert.assertTrue(messages.getErrors().isEmpty(), "In " + file + " " + messages.getErrors());
+            // Should have persisted all rows.
+            for (String libraryName : processor.getLibraryName()) {
+                Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName), "Library '" + libraryName + "'");
+            }
         }
     }
 
@@ -406,7 +373,7 @@ public class SampleInstanceEjbTest extends Arquillian {
 
         // Reads the spreadsheet
         final List<Map<String, String>> rows = new ArrayList<>();
-        TableProcessor processor = new TableProcessor("Sheet1") {
+        ExternalLibraryProcessor processor = new ExternalLibraryProcessor("Sheet1") {
             private List<String> headerNames;
 
             @Override
@@ -454,9 +421,14 @@ public class SampleInstanceEjbTest extends Arquillian {
             col = 0;
             for (String header : processor.getHeaderNames()) {
                 String cellValue = row.get(header);
-                // If alternative data exists, uses it instead.
-                if (alternativeData.size() > rowIndex && alternativeData.get(rowIndex).containsKey(header)) {
-                    cellValue = alternativeData.get(rowIndex).get(header);
+                // If alternative data exists, uses it instead. Does the lookup using adjusted header name.
+                if (alternativeData.size() > rowIndex) {
+                    header = processor.adjustHeaderName(header);
+                    for (String alternativeDataHeader : alternativeData.get(rowIndex).keySet()) {
+                        if (processor.adjustHeaderName(alternativeDataHeader).equals(header)) {
+                            cellValue = alternativeData.get(rowIndex).get(alternativeDataHeader);
+                        }
+                    }
                 }
                 currentRow.createCell(col++, Cell.CELL_TYPE_STRING).setCellValue(cellValue);
             }
@@ -465,7 +437,8 @@ public class SampleInstanceEjbTest extends Arquillian {
         workbook.write(outputStream);
         byte[] bytes = outputStream.toByteArray();
         IOUtils.closeQuietly(outputStream);
-        //debug  org.apache.commons.io.FileUtils.writeByteArrayToFile(java.io.File.createTempFile("modified", ".xls"), bytes);
+        // Uncomment the next line to save a copy of the modified spreadsheet for debugging.
+        //org.apache.commons.io.FileUtils.writeByteArrayToFile(java.io.File.createTempFile("modified", ".xls"), bytes);
         return bytes;
     }
 }

@@ -10,6 +10,9 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+/**
+ * Represents the upload manifest of an external library (EZPass, NewTech) spreadsheet upload.
+ */
 @Entity
 @Audited
 @Table(schema = "mercury", name = "sample_kit_request")

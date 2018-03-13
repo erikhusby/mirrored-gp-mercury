@@ -3,6 +3,10 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFPalette;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -51,7 +55,7 @@ public final class PoiSpreadsheetParser {
      * can parse the data in a way specific to that parser.
      *
      * @throws ValidationException if the header row cannot be found or the header validation failed.
-     * Data validation errors can be found in processor.getMessages().
+     *                             Data validation errors can be found in processor.getMessages().
      */
     public void processRows(Sheet workSheet, TableProcessor processor) throws ValidationException {
         // If the header row index is invalid then it is found by searching for a row with the required header names.
@@ -79,7 +83,7 @@ public final class PoiSpreadsheetParser {
      * Process the data portion of the spreadsheet, i.e. after the header row(s) have been processed.
      *
      * @param processor The processor being used. Missing data error messages are put in processor messages.
-     * @param rows The iterator on the excel rows, positioned at the first row after the header row.
+     * @param rows      The iterator on the excel rows, positioned at the first row after the header row.
      */
     private void processData(TableProcessor processor, Iterator<Row> rows) {
         // Buffer of blank lines used only for TableProcessors where #shouldIgnoreTrailingBlankLines is true.
@@ -130,7 +134,8 @@ public final class PoiSpreadsheetParser {
      * followed by value column(s).
      *
      * @param processor The Table Processor that will be turning rows of data into objects based on headers.
-     * @param rows The row iterator which gets advanced past the header row.
+     * @param rows      The row iterator which gets advanced past the header row.
+     *
      * @throws ValidationException if the header row cannot be found or the header is missing required columns.
      */
     private void processHeaders(TableProcessor processor, Iterator<Row> rows) throws ValidationException {
@@ -155,7 +160,7 @@ public final class PoiSpreadsheetParser {
                 break;
             }
         }
-        if (!processor.validateColumnHeaders(headers, headerRowIndex)){
+        if (!processor.validateColumnHeaders(headers, headerRowIndex)) {
             throw new ValidationException(TableProcessor.getPrefixedMessage("Failed to validate headers.", null,
                     headerRowIndex), processor.getMessages());
         }
@@ -174,8 +179,8 @@ public final class PoiSpreadsheetParser {
      *
      * @throws IOException
      * @throws InvalidFormatException
-     * @throws ValidationException if the header row cannot be found or is missing required columns.
-     * Other validation errors can be found in processor.getMessages().
+     * @throws ValidationException    if the header row cannot be found or is missing required columns.
+     *                                Other validation errors can be found in processor.getMessages().
      */
     public void processUploadFile(InputStream fileStream) throws IOException, InvalidFormatException,
             ValidationException {
@@ -186,7 +191,9 @@ public final class PoiSpreadsheetParser {
         processWorkSheets(WorkbookFactory.create(file));
     }
 
-    /** Processes the rows on each sheet. */
+    /**
+     * Processes the rows on each sheet.
+     */
     private void processWorkSheets(Workbook workbook) throws ValidationException {
         for (String sheetName : processorMap.keySet()) {
             Sheet workSheet = workbook.getSheet(sheetName);
@@ -204,13 +211,15 @@ public final class PoiSpreadsheetParser {
      * parser to handle pulling out the data specific to the POI implementation, and allows the concrete parsers to
      * parse the data not caring whether or not it came from a spreadsheet.
      *
-     * @param row Represents a row in the spreadsheet file to be parsed
+     * @param row         Represents a row in the spreadsheet file to be parsed
      * @param columnIndex a 0-based index that identifies which column to extract from the row.
-     * @param header the ColumnHeader for this cell.
+     * @param header      the ColumnHeader for this cell.
      *
      * @return A string representation of the data in the cell indicated by the given row/column (header) combination
      */
-    protected @NotNull String extractCellContent(Row row, int columnIndex, @Nullable  ColumnHeader header) {
+    protected
+    @NotNull
+    String extractCellContent(Row row, int columnIndex, @Nullable ColumnHeader header) {
         Cell cell = row.getCell(columnIndex);
         return getCellValues(cell, (header != null ? header.isDateColumn() : false),
                 (header != null ? header.isStringColumn() : true));
@@ -223,12 +232,15 @@ public final class PoiSpreadsheetParser {
      * <b>Note, if your cell contains a formula, this method will return not the calculated value, nor the formula
      * but an empty string instead.</b>
      *
-     * @param cell The cell data.
-     * @param isDate causes a numeric cell to be read as a date.
+     * @param cell     The cell data.
+     * @param isDate   causes a numeric cell to be read as a date.
      * @param isString causes a numeric cell to be read as a string.
+     *
      * @return A non-null string representation of the cell.
      */
-    public static @NotNull String getCellValues(Cell cell, boolean isDate, boolean isString) {
+    public static
+    @NotNull
+    String getCellValues(Cell cell, boolean isDate, boolean isString) {
         if (cell != null) {
             switch (cell.getCellType()) {
             case Cell.CELL_TYPE_BOOLEAN:
@@ -266,7 +278,7 @@ public final class PoiSpreadsheetParser {
 
     public static List<String> getWorksheetNames(InputStream inputStream) throws IOException, InvalidFormatException {
 
-        List<String> sheetNames = new ArrayList<> ();
+        List<String> sheetNames = new ArrayList<>();
 
         /*
          * JavaDoc for WorkbookFactory.create says the input stream "MUST either support mark/reset, or be wrapped as a
@@ -296,15 +308,15 @@ public final class PoiSpreadsheetParser {
      * verified.
      *
      * @param spreadsheet The spreadsheet stream of data.
-     * @param processor The table processor.
+     * @param processor   The table processor.
      *
      * @return the list of validation error messages, such as a missing data value when the ColumnHeader
      * indicates that it is required.
      *
      * @throws InvalidFormatException Formatting issues
-     * @throws IOException File issues
-     * @throws ValidationException if the header row cannot be found or is the header is missing required columns
-     * (defined in ColumnHeader). Other validation errors are in the returned list.
+     * @throws IOException            File issues
+     * @throws ValidationException    if the header row cannot be found or is the header is missing required columns
+     *                                (defined in ColumnHeader). Other validation errors are in the returned list.
      */
     public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
@@ -317,5 +329,19 @@ public final class PoiSpreadsheetParser {
         } finally {
             processor.close();
         }
+    }
+
+    /**
+     * Sets the cell's background color.
+     *
+     * @param workbook the workbook.
+     * @param cell the cell to set.
+     * @param colorIndex index of the predefined color from the pallet.
+     */
+    public static void setBackgroundColor(HSSFWorkbook workbook, Cell cell, short colorIndex) {
+        HSSFCellStyle style = workbook.createCellStyle();
+        style.setFillForegroundColor(colorIndex);
+        style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+        cell.setCellStyle(style);
     }
 }

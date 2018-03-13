@@ -72,9 +72,4 @@ public abstract class HeaderValueRowTableProcessor extends TableProcessor {
     public Map<String, String> getHeaderValueMap() {
         return headerValueMap;
     };
-
-    /** Returns the mapping from header text to the 1-based row number that the header first appeared in. */
-    public Map<String, Integer> getHeaderRowIndexMap() {
-        return headerRowIndexMap;
-    }
 }

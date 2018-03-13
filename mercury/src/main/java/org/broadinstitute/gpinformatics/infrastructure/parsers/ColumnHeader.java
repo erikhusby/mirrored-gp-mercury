@@ -25,4 +25,9 @@ public interface ColumnHeader {
 
     boolean isDateColumn();
     boolean isStringColumn();
+
+    /** Interface that indicates that the value is ignored. */
+    interface Ignorable {
+        boolean isIgnoredValue();
+    }
 }

@@ -11,8 +11,9 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProcessor {
-    final static boolean REQUIRED = true;
-    final static boolean OPTIONAL = false;
+    final static Boolean REQUIRED = true;
+    final static Boolean OPTIONAL = false;
+    final static Boolean IGNORED = null;
 
     protected List<String> headerNames = new ArrayList<>();
     protected List<String> headerValueNames = new ArrayList<>();
@@ -20,65 +21,43 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     // Maps adjusted header name to actual header name.
     protected Map<String, String> adjustedNames = new HashMap<>();
 
-    protected List<String> accessList = new ArrayList<>();
     protected List<String> additionalAssemblyInformation = new ArrayList<>();
     protected List<String> additionalSampleInformation = new ArrayList<>();
-    protected List<String> approvedBy = new ArrayList<>();
     protected List<String> barcodes = new ArrayList<>();
-    protected List<String> cellLine = new ArrayList<>();
     protected List<String> collaboratorSampleId = new ArrayList<>();
     protected List<String> dataAnalysisType = new ArrayList<>();
     protected List<String> dataSubmission = new ArrayList<>();
-    protected List<String> derivedFrom = new ArrayList<>();
-    protected List<String> fundingSource = new ArrayList<>();
-    protected List<String> gssrOfBaitPool = new ArrayList<>();
-    protected List<String> illuminaKitUsed = new ArrayList<>();
     protected List<String> individualName = new ArrayList<>();
     protected List<String> insertSize = new ArrayList<>();
     protected List<String> irbNumber = new ArrayList<>();
-    protected List<String> jumpSize = new ArrayList<>();
     protected List<String> librarySize = new ArrayList<>();
     protected List<String> libraryType = new ArrayList<>();
-    protected List<String> memberOfPool = new ArrayList<>();
     protected List<String> molecularBarcodeName = new ArrayList<>();
-    protected List<String> molecularBarcodePlateID = new ArrayList<>();
-    protected List<String> molecularBarcodePlateWellID = new ArrayList<>();
-    protected List<String> molecularBarcodeSequence = new ArrayList<>();
     protected List<String> numberOfLanes = new ArrayList<>();
     protected List<String> organism = new ArrayList<>();
     protected List<String> pooled = new ArrayList<>();
     protected List<String> projectTitle = new ArrayList<>();
     protected List<String> readLength = new ArrayList<>();
     protected List<String> referenceSequence = new ArrayList<>();
-    protected List<String> requestedCompletionDate = new ArrayList<>();
-    protected List<String> requiredControlledAccess = new ArrayList<>();
-    protected List<String> restrictionEnzymes = new ArrayList<>();
-    protected List<String> sampleNumber = new ArrayList<>();
     protected List<String> sequencingTechnology = new ArrayList<>();
     protected List<String> sex = new ArrayList<>();
     protected List<String> singleDoubleStranded = new ArrayList<>();
-    protected List<String> singleSampleLibraryName = new ArrayList<>();
-    protected List<String> sourceSampleGSSRId = new ArrayList<>();
-    protected List<String> squidProject = new ArrayList<>();
-    protected List<String> strain = new ArrayList<>();
-    protected List<String> submittedToGSSR = new ArrayList<>();
-    protected List<String> tissueType = new ArrayList<>();
-    protected List<String> totalLibraryConcentration = new ArrayList<>();
-    protected List<String> totalLibraryVolume = new ArrayList<>();
-    protected List<String> virtualGSSRId = new ArrayList<>();
+    protected List<String> libraryName = new ArrayList<>();
+    protected List<String> concentration = new ArrayList<>();
+    protected List<String> volume = new ArrayList<>();
 
     public enum HeaderValueRows implements HeaderValueRow {
-        FIRST_NAME("First Name:", REQUIRED),
-        LAST_NAME("Last Name:", REQUIRED),
+        EMAIL("Email:", REQUIRED),
         ORGANIZATION("Organization:", REQUIRED),
+        FIRST_NAME("First Name:", OPTIONAL),
+        LAST_NAME("Last Name:", OPTIONAL),
         ADDRESS("Address:", OPTIONAL),
         CITY("City:", OPTIONAL),
         STATE("State:", OPTIONAL),
         POSTAL_CODE("Postal Code:", OPTIONAL),
-        COMMON_NAME("Common Name:", OPTIONAL),
         COUNTRY("Country:", OPTIONAL),
         PHONE("Phone:", OPTIONAL),
-        EMAIL("Email:", OPTIONAL),
+        COMMON_NAME("Common Name:", OPTIONAL),
         GENUS("Genus:", OPTIONAL),
         SPECIES("Species:", OPTIONAL),
         IRB_REQUIRED("IRB approval required: (Y/N)", OPTIONAL),
@@ -133,11 +112,13 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return HeaderValueRows.values();
     }
 
+    /** Returns the canonical HeaderValueRow header names, not the ones that appeared in the spreadsheet. */
     @Override
     public List<String> getHeaderValueNames() {
         return headerValueNames;
     }
 
+    /** Returns the column header names that appeared in the spreadsheet, not the canonical ones. */
     @Override
     public List<String> getHeaderNames() {
         return headerNames;
@@ -155,24 +136,55 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     public void close() {
     }
 
+    public String adjustHeaderName(String headerCell) {
+        return ExternalLibraryProcessor.fixupHeaderName(headerCell);
+    }
+
     /**
      * Normalizes the spreadsheet header names.
-     * Cuts off after four words, after any parenthesis, at the word "bp.".
-     * Lower cases all words. Trims blanks off.
+     * - Trims leading and trailing blanks from each word.
+     * - Lower cases all words.
+     * - Keeps only the first few words.
+     * - Ignores everything after a parenthesis.
+     * - Substitutes some of the words.
      */
-    public String adjustHeaderName(String headerCell) {
+    public static String fixupHeaderName(String headerCell) {
+        final Map<String, String> substitutes = new HashMap<String, String>() {{
+            put("molecule", "molecular");
+            put("bp", "");
+            put("bp.", "");
+            put("if", "");
+            put("for", "");
+            put("requested", "");
+            put("desired", "");
+            put("no", "");
+            put("no.", "number");
+            put("total", "");
+            put("range", "");
+            put("description", "");
+        }};
         StringBuilder builder = new StringBuilder();
         int count = 0;
-        for (String word : headerCell.trim().toLowerCase().split(" ")) {
-            if (count > 3 || word.startsWith("(") || word.equals("bp.")) {
+        for (String word : headerCell.trim().toLowerCase().
+                replaceFirst("total library", "").
+                replaceFirst("sample collaborator", "collaborator sample").
+                replaceFirst("sample volume", "volume").
+                replaceFirst("sample concentration", "concentration").
+                replaceFirst("if applicable", "").
+                replaceFirst("single sample", "").
+                split(" ")) {
+            ++count;
+            if (count > 4 || word.startsWith("(")) {
                 break;
             }
+            if (substitutes.containsKey(word)) {
+                word = substitutes.get(word);
+            }
             if (StringUtils.isNotBlank(word)) {
-                if (count > 0) {
+                if (builder.length() > 0) {
                     builder.append(" ");
                 }
                 builder.append(word);
-                ++count;
             }
         }
         return builder.toString();
@@ -194,10 +206,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return adjustedNames;
     }
 
-    public List<String> getAccessList() {
-        return accessList;
-    }
-
     public List<String> getAdditionalAssemblyInformation() {
         return additionalAssemblyInformation;
     }
@@ -206,16 +214,8 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return additionalSampleInformation;
     }
 
-    public List<String> getApprovedBy() {
-        return approvedBy;
-    }
-
     public List<String> getBarcodes() {
         return barcodes;
-    }
-
-    public List<String> getCellLine() {
-        return cellLine;
     }
 
     public List<String> getCollaboratorSampleId() {
@@ -230,28 +230,8 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return dataAnalysisType;
     }
 
-    public List<String> getDataSubmission() {
-        return dataSubmission;
-    }
-
-    public List<String> getDerivedFrom() {
-        return derivedFrom;
-    }
-
     public List<String> getReadLength() {
         return readLength;
-    }
-
-    public List<String> getFundingSource() {
-        return fundingSource;
-    }
-
-    public List<String> getGssrOfBaitPool() {
-        return gssrOfBaitPool;
-    }
-
-    public List<String> getIlluminaKitUsed() {
-        return illuminaKitUsed;
     }
 
     public List<String> getIndividualName() {
@@ -266,10 +246,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return irbNumber;
     }
 
-    public List<String> getJumpSize() {
-        return jumpSize;
-    }
-
     public List<String> getLibrarySize() {
         return librarySize;
     }
@@ -278,24 +254,8 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return libraryType;
     }
 
-    public List<String> getMemberOfPool() {
-        return memberOfPool;
-    }
-
     public List<String> getMolecularBarcodeName() {
         return molecularBarcodeName;
-    }
-
-    public List<String> getMolecularBarcodePlateID() {
-        return molecularBarcodePlateID;
-    }
-
-    public List<String> getMolecularBarcodePlateWellID() {
-        return molecularBarcodePlateWellID;
-    }
-
-    public List<String> getMolecularBarcodeSequence() {
-        return molecularBarcodeSequence;
     }
 
     public List<String> getOrganism() {
@@ -314,22 +274,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return referenceSequence;
     }
 
-    public List<String> getRequestedCompletionDate() {
-        return requestedCompletionDate;
-    }
-
-    public List<String> getRequiredControlledAccess() {
-        return requiredControlledAccess;
-    }
-
-    public List<String> getRestrictionEnzymes() {
-        return restrictionEnzymes;
-    }
-
-    public List<String> getSampleNumber() {
-        return sampleNumber;
-    }
-
     public List<String> getSequencingTechnology() {
         return sequencingTechnology;
     }
@@ -338,44 +282,16 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return sex;
     }
 
-    public List<String> getSingleDoubleStranded() {
-        return singleDoubleStranded;
+    public List<String> getLibraryName() {
+        return libraryName;
     }
 
-    public List<String> getSingleSampleLibraryName() {
-        return singleSampleLibraryName;
+    public List<String> getConcentration() {
+        return concentration;
     }
 
-    public List<String> getSourceSampleGSSRId() {
-        return sourceSampleGSSRId;
-    }
-
-    public List<String> getSquidProject() {
-        return squidProject;
-    }
-
-    public List<String> getStrain() {
-        return strain;
-    }
-
-    public List<String> getSubmittedToGSSR() {
-        return submittedToGSSR;
-    }
-
-    public List<String> getTissueType() {
-        return tissueType;
-    }
-
-    public List<String> getTotalLibraryConcentration() {
-        return totalLibraryConcentration;
-    }
-
-    public List<String> getTotalLibraryVolume() {
-        return totalLibraryVolume;
-    }
-
-    public List<String> getVirtualGSSRId() {
-        return virtualGSSRId;
+    public List<String> getVolume() {
+        return volume;
     }
 
     public String getAddress() {

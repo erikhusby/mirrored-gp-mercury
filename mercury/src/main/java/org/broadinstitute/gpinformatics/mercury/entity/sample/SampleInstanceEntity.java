@@ -1,9 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
@@ -74,10 +73,7 @@ public class SampleInstanceEntity {
     private MolecularIndexingScheme molecularIndexingScheme;
 
     @ManyToOne
-    private ResearchProject researchProject;
-
-    @ManyToOne
-    private ProductOrder productOrder;
+    private AnalysisType analysisType;
 
     @ManyToOne
     private ReferenceSequence referenceSequence;
@@ -93,6 +89,7 @@ public class SampleInstanceEntity {
     private Boolean pairedEndRead;
     private String comments;
     private Integer numberLanes;
+    private String aggregationParticle;
 
     @Enumerated(EnumType.STRING)
     private IlluminaFlowcell.FlowcellType sequencerModel;
@@ -203,18 +200,6 @@ public class SampleInstanceEntity {
         this.sampleKitRequest = sampleKitRequest;
     }
 
-    public ResearchProject getResearchProject() {
-        return researchProject;
-    }
-
-    public void setResearchProject(ResearchProject researchProject) {
-        this.researchProject = researchProject;
-    }
-
-    public ProductOrder getProductOrder() {
-        return productOrder;
-    }
-
     public Integer getReadLength() {
         return readLength;
     }
@@ -263,10 +248,6 @@ public class SampleInstanceEntity {
         return sampleInstanceEntityTsks;
     }
 
-    public void setProductOrder(ProductOrder productOrder) {
-        this.productOrder = productOrder;
-    }
-
     public void setUploadDate(Date uploadDate) {
         this.uploadDate = uploadDate;
     }
@@ -293,5 +274,21 @@ public class SampleInstanceEntity {
 
     public void setSequencerModel(IlluminaFlowcell.FlowcellType sequencerModel) {
         this.sequencerModel = sequencerModel;
+    }
+
+    public AnalysisType getAnalysisType() {
+        return analysisType;
+    }
+
+    public void setAnalysisType(AnalysisType analysisType) {
+        this.analysisType = analysisType;
+    }
+
+    public String getAggregationParticle() {
+        return aggregationParticle;
+    }
+
+    public void setAggregationParticle(String aggregationParticle) {
+        this.aggregationParticle = aggregationParticle;
     }
 }
