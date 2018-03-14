@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOnPriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAdjustment;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -48,9 +49,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -625,25 +624,51 @@ public class SapIntegrationServiceImplDBFreeTest {
         }
         testSingleSourceQuote.setQuoteItems(quoteItems);
 
-        for()
-
-        double primarySampleCount =
-                SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, false);
-        double primaryClosingCount =
-                SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, true);
-        assertThat(primarySampleCount, is(equalTo(Double.valueOf(countTestPDO.getSamples().size()))));
-        assertThat(primaryClosingCount, is(equalTo(0d)));
+        double closingCount = 0d;
 
 
-        for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
-            final double addonSampleCount =
-                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, false);
-            final double addonClosingCount =
-                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, true);
-            assertThat(addonSampleCount, is(equalTo(Double.valueOf(countTestPDO.getSamples().size()))));
-            assertThat(addonClosingCount, is(equalTo(0d)));
+        while (closingCount <= countTestPDO.getSamples().size()) {
+            double primarySampleCount =
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, false);
+            double primaryClosingCount =
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, true);
+            assertThat(primarySampleCount, is(equalTo(Double.valueOf(countTestPDO.getSamples().size()))));
+            assertThat(primaryClosingCount, is(equalTo(closingCount)));
+
+
+            for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
+                final double addonSampleCount =
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, false);
+                final double addonClosingCount =
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, true);
+                assertThat(addonSampleCount, is(equalTo(Double.valueOf(countTestPDO.getSamples().size()))));
+                assertThat(addonClosingCount, is(equalTo(closingCount)));
+            }
+            addLedgerItems(countTestPDO, 1);
+
+            closingCount++;
         }
 
+    }
+
+    void addLedgerItems(ProductOrder order, int ledgerCount) {
+        for (ProductOrderSample productOrderSample : order.getSamples()) {
+            if(!productOrderSample.isCompletelyBilled()) {
+                productOrderSample.addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), ledgerCount * 1d);
+                for (ProductOrderAddOn productOrderAddOn : order.getAddOns()) {
+                    productOrderSample.addLedgerItem(new Date(), productOrderAddOn.getAddOn().getPrimaryPriceItem(), ledgerCount * 1d);
+                }
+
+                BillingSession newSession = new BillingSession(1L, productOrderSample.getLedgerItems());
+                for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
+                    ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+                    newSession.setBilledDate(new Date());
+                    ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+                    order.latestSapOrderDetail().addLedgerEntry(ledgerEntry);
+                }
+                break;
+            }
+        }
     }
 
     public static void addTestProductMaterialPrice(String primaryMaterialBasePrice, PriceList priceList,
