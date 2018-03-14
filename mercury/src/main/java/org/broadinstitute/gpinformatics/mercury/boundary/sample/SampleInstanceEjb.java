@@ -7,7 +7,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -1217,20 +1216,6 @@ public class SampleInstanceEjb {
     /** Returns the list element or null if the list or element doesn't exist */
     private <T> T get(List<T> list, int index) {
         return (CollectionUtils.isNotEmpty(list) && list.size() > index) ? list.get(index) : null;
-    }
-
-    private void validateIrbNumber(String irbNumber, ResearchProject researchProject, int rowNumber,
-            MessageCollection messages) {
-        if (isNotBlank(irbNumber) && !IRB_EXEMPT.equalsIgnoreCase(irbNumber)) {
-            if (!researchProject.getIrbNumbers(false).contains(irbNumber)) {
-                String identifier = researchProject.hasJiraTicketKey() ?
-                        researchProject.getJiraTicketKey() :
-                        String.valueOf(researchProject.getResearchProjectId());
-                messages.addError(String.format(CONFLICT, rowNumber, "IRB Number", irbNumber,
-                        StringUtils.join(researchProject.getIrbNumbers(), "\" or \""),
-                        "from ResearchProject " + identifier));
-            }
-        }
     }
 
     private static Comparator<String> BY_ROW_NUMBER = new Comparator<String>() {
