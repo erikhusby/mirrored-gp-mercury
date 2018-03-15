@@ -63,6 +63,8 @@ public class LibraryConstructionEntityBuilder {
     private Indexing indexing;
     private LibraryConstructionJaxbBuilder.PondType pondType;
     private final Umi umi;
+    private final String p7IndexPlateBarcode;
+    private final String p5IndexPlateBarcode;
 
     private final Map<String, BarcodedTube> mapBarcodeToPondRegTubes = new HashMap<>();
     private final Map<String, BarcodedTube> mapBarcodeToPondNormTubes = new HashMap<>();
@@ -80,6 +82,15 @@ public class LibraryConstructionEntityBuilder {
             LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
             String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
             Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType, Umi umi) {
+        this(bettaLimsMessageTestFactory, labEventFactory, labEventHandler, shearingCleanupPlate, shearCleanPlateBarcode,
+                shearingPlate, numSamples, testPrefix, indexing, pondType, umi, "IndexPlateP7", "IndexPlateP5");
+    }
+
+    public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                                            LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
+                                            String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
+                                            Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType, Umi umi,
+                                            String p7IndexPlateBarcode, String p5IndexPlateBarcode) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -91,6 +102,8 @@ public class LibraryConstructionEntityBuilder {
         this.indexing = indexing;
         this.pondType = pondType;
         this.umi = umi;
+        this.p7IndexPlateBarcode = p7IndexPlateBarcode;
+        this.p5IndexPlateBarcode = p5IndexPlateBarcode;
     }
 
     public List<String> getPondRegTubeBarcodes() {
@@ -127,7 +140,7 @@ public class LibraryConstructionEntityBuilder {
 
     public LibraryConstructionEntityBuilder invoke() {
         final LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
-                bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, "IndexPlateP7", "IndexPlateP5",
+                bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, p7IndexPlateBarcode, p5IndexPlateBarcode,
                 numSamples, LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),

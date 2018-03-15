@@ -37,6 +37,7 @@ public enum MaterialType implements Displayable {
     BODILY_FLUID_PLEURAL_EFFUSION("Bodily Fluid:Pleural Effusion"),
     BODILY_FLUID_SALIVA("Bodily Fluid:Saliva"),
     BODILY_FLUID_URINE("Bodily Fluid:Urine"),
+    BODILY_FLUID_CEREBROSPINAL_FLUID("Bodily Fluid:Cerebrospinal Fluid"),
     CELLS_ALLPROTECT_REAGENT_PRESERVED("Cells:Allprotect Reagent Preserved"),
     CELLS_CELL_LINE_VIABLE("Cells:Cell Line, Viable"),
     CELLS_CELL_PELLET_FROZEN_LESIONAL_CELLS("Cells:Cell Pellet Frozen - Lesional Cells"),

@@ -1411,4 +1411,18 @@ public class ProductOrderFixupTest extends Arquillian {
 
         commitTransaction();
     }
+
+    @Test(enabled=false)
+    public void gplimSupport3853ChangeOrderType() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        ProductOrder orderToUpdate = productOrderDao.findByBusinessKey("PDO-13052");
+
+        orderToUpdate.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3853: updated PDO-13052 to allow it to switch to a commercial order type"));
+
+        commitTransaction();
+    }
 }

@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryBeansType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantBeanType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.MetricMetadataType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.QpcrRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -928,8 +929,17 @@ public class VesselEjb {
             }
 
             LabMetric labMetric = new LabMetric(libraryBeans.getValue(), metricType,
-                    LabMetric.LabUnit.NG_PER_UL, libraryBeans.getRackPositionName(), libraryQuantRun.getRunDate());
+                    metricType.getLabUnit(), libraryBeans.getRackPositionName(), libraryQuantRun.getRunDate());
             labMetricRun.addMetric(labMetric);
+            for (MetricMetadataType metricMetadataType: libraryBeans.getMetadata()) {
+                Metadata.Key metadataKey = Metadata.Key.fromDisplayName(metricMetadataType.getName());
+                if(metadataKey != null) {
+                    Metadata metadata = Metadata.createMetadata(metadataKey, metricMetadataType.getValue());
+                    labMetric.getMetadataSet().add(metadata);
+                } else {
+                    throw new RuntimeException("Failed to find metadata " + metricMetadataType.getName());
+                }
+            }
             labVessel.addMetric(labMetric);
         }
         return labMetricRun;
@@ -986,8 +996,8 @@ public class VesselEjb {
                 continue;
             }
 
-            LabMetric labMetric = new LabMetric(libraryBeans.getConcentration(), metricType,
-                    LabMetric.LabUnit.NG_PER_UL, libraryBeans.getWell(), qpcrRunBean.getRunDate());
+            LabMetric labMetric = new LabMetric(libraryBeans.getConcentration(), metricType, metricType.getLabUnit(),
+                    libraryBeans.getWell(), qpcrRunBean.getRunDate());
             labMetricRun.addMetric(labMetric);
             labVessel.addMetric(labMetric);
 
