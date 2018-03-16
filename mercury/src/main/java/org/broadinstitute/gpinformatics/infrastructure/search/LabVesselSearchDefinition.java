@@ -1615,6 +1615,7 @@ public class LabVesselSearchDefinition {
                 return reasons;
             }
         });
+        searchTerm.setHelpText("These abandon terms only looks backwards in transfers and gather any past vessel abandons, otherwise results would be ambiguous for reworks looking forward.  Infinium related logic requires using 'Infinium Array Metrics' term.");
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
