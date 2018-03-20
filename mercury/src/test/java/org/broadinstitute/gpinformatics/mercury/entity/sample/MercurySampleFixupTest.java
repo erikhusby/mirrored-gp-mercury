@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselFixupTest;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -469,4 +470,34 @@ public class MercurySampleFixupTest extends Arquillian {
             return builder.build();
         }
     }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ChangeSampleMetadataSource.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * CRSP-556 change metadata source
+     * SM-G811M MERCURY
+     * SM-9T6OH BSP
+     */
+    @Test(enabled = false)
+    public void fixupCrsp556() throws IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangeSampleMetadataSource.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(fields[0]);
+            Assert.assertNotNull(mercurySample, fields[0] + " not found");
+            MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.valueOf(fields[1]);
+            Assert.assertNotNull(metadataSource, fields[1] + " not found");
+            System.out.println("Changing " + mercurySample.getSampleKey() + " to " + metadataSource);
+            mercurySample.setMetadataSource(metadataSource);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
+
 }

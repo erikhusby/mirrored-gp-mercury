@@ -30,7 +30,6 @@ import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -194,10 +193,10 @@ public class InfiniumRunFinder implements Serializable {
      *  Check to see if the any position on the current chip or any ancestor plates or vessels are abandoned.
      */
     private boolean isAbandoned(StaticPlate staticPlate, VesselPosition vesselPosition) {
-        TransferTraverserCriteria.AbandonedLabVesselAncestorCriteria abandonedLabVesselAncestorCriteria =
-                new TransferTraverserCriteria.AbandonedLabVesselAncestorCriteria();
-        staticPlate.getContainerRole().evaluateCriteria(vesselPosition, abandonedLabVesselAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
-        if(abandonedLabVesselAncestorCriteria.isAncestorAbandoned()) {
+        TransferTraverserCriteria.AbandonedLabVesselCriteria abandonedLabVesselCriteria =
+                new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+        staticPlate.getContainerRole().evaluateCriteria(vesselPosition, abandonedLabVesselCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
+        if(abandonedLabVesselCriteria.isAncestorAbandoned()) {
             return true;
         }
         return false;

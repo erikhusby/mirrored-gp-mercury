@@ -1,12 +1,18 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
+import org.broadinstitute.gpinformatics.mercury.control.run.InfiniumArchiver;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselFixupTest;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -23,10 +29,15 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * "Test" to resubmit Infinium starter messages.
@@ -44,7 +55,16 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
     private UserBean userBean;
 
     @Inject
+    private InfiniumArchiver infiniumArchiver;
+
+    @Inject
     private UserTransaction userTransaction;
+
+    @Inject
+    private LabVesselDao labVesselDao;
+
+    @Inject
+    private InfiniumStarterConfig infiniumStarterConfig;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -104,6 +124,47 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
                 HeuristicRollbackException | HeuristicMixedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Add INFINIUM_ARCHIVED event to ~1000 chips that were archived by GAP (or if it's DEV, to chips that don't
+     * exist in the dev directory).
+     */
+    @Test(enabled = false)
+    public void testGplim5110() throws SystemException, NotSupportedException, HeuristicRollbackException,
+            HeuristicMixedException, RollbackException {
+        userBean.loginOSUser();
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        gregorianCalendar.add(Calendar.DAY_OF_YEAR, -10);
+        List<Pair<String, Boolean>> chipsToArchive = infiniumArchiver.findChipsToArchive(20000, gregorianCalendar.getTime());
+
+        userTransaction.begin();
+        int i = 1;
+        for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
+            if (stringBooleanPair.getRight()) {
+                if (infiniumStarterConfig.getDeploymentConfig() == PROD) {
+                    continue;
+                } else {
+                    File baseDataDir = new File(infiniumStarterConfig.getDataPath());
+                    File dataDir = new File(baseDataDir, stringBooleanPair.getLeft());
+                    if (dataDir.exists()) {
+                        continue;
+                    }
+                }
+            }
+            // else assume GAP has archived it (or it's dev and the data directory exists)
+            LabVessel chip = labVesselDao.findByIdentifier(stringBooleanPair.getKey());
+            chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
+                    1L, userBean.getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME));
+            labVesselDao.flush();
+            labVesselDao.clear();
+            if (i % 100 == 0) {
+                System.out.println("Marked " + i + " chips");
+            }
+            i++;
+        }
+        labVesselDao.persist(new FixupCommentary("GPLIM-5110 mark chips archived by GAP"));
+        userTransaction.commit();
     }
 
 }

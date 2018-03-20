@@ -536,7 +536,7 @@ public class LabBatch {
         SUMMARY("Summary", false),
         SEQUENCING_STATION("Sequencing Station", true),
         CLUSTER_STATION("Cluster Station", true),
-        MATERIAL_TYPE("BATCH_TYPE", true),
+        MATERIAL_TYPE("Material Type", true),
         LANE_INFO("Lane Info", true),
         SAMPLES_ON_RISK("Samples On Risk", true),
         RISK_CATEGORIZED_SAMPLES("Risk Categorized Samples", true),
