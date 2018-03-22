@@ -500,4 +500,42 @@ public class MercurySampleFixupTest extends Arquillian {
         labVesselDao.flush();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/AddSampleToVessel.txt,
+     * so it can be used for other similar fixups, without writing a new test.  It is used to add BSP samples to
+     * vessels that are the result of messages.  Example contents of the file are (first line is the fixup commentary,
+     * subsequent lines are whitespace separated vessel barcode and sample ID):
+     * SUPPORT-3907 reflect BSP daughter transfer
+     * SM-H5GZC SM-H5GZC
+     * SM-H5GZI SM-H5GZI
+     */
+    @Test(enabled = false)
+    public void fixupSupport3907() throws IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddSampleToVessel.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            String barcode = fields[0];
+            LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+            Assert.assertNotNull(labVessel, barcode + " not found");
+            String sampleKey = fields[1];
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleKey);
+            if (mercurySample == null) {
+                mercurySample = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
+            }
+            Assert.assertTrue(mercurySample.getLabVessel().isEmpty(),
+                    "Sample " + sampleKey + " is already associated with other vessel " +
+                            mercurySample.getLabVessel().iterator().next().getLabel());
+            System.out.println("Adding " + mercurySample.getSampleKey() + " to " + labVessel.getLabel());
+            labVessel.addSample(mercurySample);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
+
 }
