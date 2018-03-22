@@ -527,9 +527,10 @@ public class MercurySampleFixupTest extends Arquillian {
             if (mercurySample == null) {
                 mercurySample = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
             }
-            Assert.assertTrue(mercurySample.getLabVessel().isEmpty(),
-                    "Sample " + sampleKey + " is already associated with other vessel " +
-                            mercurySample.getLabVessel().iterator().next().getLabel());
+            if (!mercurySample.getLabVessel().isEmpty()) {
+                throw new RuntimeException("Sample " + sampleKey + " is already associated with vessel " +
+                        mercurySample.getLabVessel().iterator().next().getLabel());
+            }
             System.out.println("Adding " + mercurySample.getSampleKey() + " to " + labVessel.getLabel());
             labVessel.addSample(mercurySample);
         }
