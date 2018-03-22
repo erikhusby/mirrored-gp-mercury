@@ -19,8 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.NotInStorageException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -34,8 +32,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 /**
- * This Action Bean takes the barcode of a static plate designated for GAP fingerprinting
- * and streams back a newly created spreadsheet of the well contents.
+ * This Action Bean takes Lab Batch or Lab Vessel Barcodes and generates XL20 pick lists by searching for the
+ * tubes in the storage system.
  */
 @UrlBinding(value = PickerActionBean.ACTION_BEAN_URL)
 public class PickerActionBean extends CoreActionBean {
