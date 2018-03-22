@@ -10,16 +10,20 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,6 +51,10 @@ public class BucketEntryFixupTest extends Arquillian {
 
     @Inject
     UserTransaction utx;
+
+    @Inject
+    private UserBean userBean;
+
 
     /**
      * Use test deployment here to talk to the actual jira
@@ -170,4 +178,22 @@ public class BucketEntryFixupTest extends Arquillian {
             }
         }
     }
+
+    @Test(enabled = false)
+    public void gplim5419_RemoveBucketEntry() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        for (Long id : Arrays.asList(487719L, 487801L)) {
+            BucketEntry bucketEntry = bucketEntryDao.findById(BucketEntry.class, id);
+            Assert.assertNotNull(bucketEntry);
+            System.out.println("Removing bucket entry " + bucketEntry.getBucketEntryId());
+            bucketEntryDao.remove(bucketEntry);
+        }
+
+        bucketEntryDao.persist(new FixupCommentary("GPLIM-5419 Followup fixup to remove bucket entries."));
+        bucketEntryDao.flush();
+        utx.commit();
+    }
+
 }
