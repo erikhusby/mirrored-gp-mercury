@@ -683,13 +683,18 @@ public class SequencingTemplateFactory {
         }
 
         String readStructure = "";
+        long readLengthDifference = 0;
         if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ)) {
             UniqueMolecularIdentifier umiReagent = umiLocationUMIReagentMap.get(UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ);
             readStructure = umiReagent.getLength() + "M" + umiReagent.getSpacerLength() + "S";
+            readLengthDifference = umiReagent.getLength() + umiReagent.getSpacerLength();
+            strandCode = (readLength != null && !isPoolTest) ? readLength.intValue() - readLengthDifference  + "T" : "";
         }
         if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.INLINE_FIRST_READ)) {
             UniqueMolecularIdentifier umiReagent = umiLocationUMIReagentMap.get(UniqueMolecularIdentifier.UMILocation.INLINE_FIRST_READ);
             readStructure = readStructure + umiReagent.getLength() + "M" + umiReagent.getSpacerLength() + "S";
+            readLengthDifference = umiReagent.getLength() + umiReagent.getSpacerLength();
+            strandCode = (readLength != null && !isPoolTest) ? readLength.intValue() - readLengthDifference  + "T" : "";
         }
         readStructure = readStructure + strandCode; //Now Either 8M76T ot 76T
         if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_INDEX_READ)) {
@@ -726,15 +731,23 @@ public class SequencingTemplateFactory {
             }
         }
 
+        // reset strand code for the second read
+        strandCode = (readLength != null && !isPoolTest) ? readLength.intValue() + "T" : "";
         if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ)) {
             UniqueMolecularIdentifier umiReagent = umiLocationUMIReagentMap.get(UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ);
+            readLengthDifference = umiReagent.getLength() + umiReagent.getSpacerLength();
+            strandCode = (readLength != null && !isPoolTest) ? readLength.intValue() - readLengthDifference  + "T" : "";
             readStructure = readStructure + umiReagent.getLength() + "M" + umiReagent.getSpacerLength() + "S";
         }
 
-        readStructure = readStructure + (isPairedEnd ? strandCode : "");
         if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.INLINE_SECOND_READ)) {
             UniqueMolecularIdentifier umiReagent = umiLocationUMIReagentMap.get(UniqueMolecularIdentifier.UMILocation.INLINE_SECOND_READ);
+            readLengthDifference = umiReagent.getLength() + umiReagent.getSpacerLength();
+            strandCode = (readLength != null && !isPoolTest) ? readLength.intValue() - readLengthDifference  + "T" : "";
+            readStructure = readStructure + (isPairedEnd ? strandCode : "");
             readStructure = readStructure + umiReagent.getLength() + "M" + umiReagent.getSpacerLength() + "S";
+        } else {
+            readStructure = readStructure + (isPairedEnd ? strandCode : "");
         }
         return readStructure;
     }
