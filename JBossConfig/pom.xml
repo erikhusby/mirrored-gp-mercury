@@ -12,7 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <oracle.version>12.1.0.2</oracle.version>
-        <crowdJaas.version>2.0-SNAPSHOT</crowdJaas.version>
+        <crowdJaas.version>2.0</crowdJaas.version>
         <crowd.application.name>mercury</crowd.application.name>
         <crowd.application.password>vx2hUJP4xB</crowd.application.password>
         <crowd.application.serverurl>https://crowd.broadinstitute.org:8443/crowd</crowd.application.serverurl>
