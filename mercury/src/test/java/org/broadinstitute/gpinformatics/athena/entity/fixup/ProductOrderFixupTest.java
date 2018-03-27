@@ -70,6 +70,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -1052,13 +1053,13 @@ public class ProductOrderFixupTest extends Arquillian {
 
         for(ProductOrder orderWithSap:listWithWildcard) {
             if(CollectionUtils.isEmpty(orderWithSap.getSapReferenceOrders())) {
-                double sampleCount = 0d;
+                BigDecimal sampleCount = BigDecimal.ZERO;
                 if(orderWithSap.isPriorToSAP1_5()) {
                     sampleCount =
                             SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct(), false);
                 }
                 SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
-                        Double.valueOf(sampleCount).intValue(),
+                        sampleCount.intValue(),
                         orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode(),
                         "", "");
                 orderWithSap.addSapOrderDetail(newDetail);

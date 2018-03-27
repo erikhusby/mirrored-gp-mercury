@@ -231,7 +231,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     quote);
 
             final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
-                    new BigDecimal(getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder)));
+                    getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder));
 
             if(placedOrder.isPriorToSAP1_5()) {
                 sapOrderItem.addCondition(Condition.MATERIAL_PRICE, new BigDecimal(price));
@@ -308,20 +308,20 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             throws SAPIntegrationException {
 
         final SAPOrderItem sapOrderItem =
-                new SAPOrderItem(product.getPartNumber(), new BigDecimal(getSampleCount(placedOrder, product, additionalSampleCount,
-                        false, closingOrder)));
+                new SAPOrderItem(product.getPartNumber(), getSampleCount(placedOrder, product, additionalSampleCount,
+                        false, closingOrder));
         defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
         return sapOrderItem;
     }
 
 
-    public static double getSampleCount(ProductOrder placedOrder, Product product, boolean closingOrder) {
+    public static BigDecimal getSampleCount(ProductOrder placedOrder, Product product, boolean closingOrder) {
 
         return getSampleCount(placedOrder, product, 0, false, closingOrder);
     }
 
-    public static double getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount,
-                                        boolean creatingNewOrder, boolean closingOrder) {
+    public static BigDecimal getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount,
+                                            boolean creatingNewOrder, boolean closingOrder) {
         double sampleCount = 0d;
 
         final PriceAdjustment adjustmentForProduct = placedOrder.getAdjustmentForProduct(product);
@@ -355,7 +355,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(placedOrder);
             sampleCount += (adjustmentQuantity != null)?adjustmentQuantity:targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) + additionalSampleCount;
         }
-        return sampleCount - previousBilledCount;
+        return BigDecimal.valueOf(sampleCount-previousBilledCount);
     }
 
     @Override

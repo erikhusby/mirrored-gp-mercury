@@ -457,12 +457,12 @@ public class ProductOrderEjb {
                                   boolean closingOrder)
             throws SAPIntegrationException {
         sapService.updateOrder(orderToUpdate, closingOrder);
-        double sampleCount = 0d;
+        BigDecimal sampleCount = BigDecimal.ZERO ;
         if(orderToUpdate.isPriorToSAP1_5()) {
             sampleCount = SapIntegrationServiceImpl.getSampleCount(orderToUpdate,
                     orderToUpdate.getProduct(), 0, false, closingOrder);
         }
-        orderToUpdate.updateSapDetails(Double.valueOf(sampleCount).intValue(),
+        orderToUpdate.updateSapDetails(sampleCount.intValue(),
                 TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),
                 TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")));
         messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
