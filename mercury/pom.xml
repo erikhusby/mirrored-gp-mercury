@@ -1723,14 +1723,12 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
-        <!--  BettaLimsMessageBeanTest and WorkCompleteMessageBeanTest -->
+        <!--  BettaLimsMessageBeanTest, WorkCompleteMessageBeanTest, and InfiniumPipelineClient -->
         <dependency>
-            <groupId>org.wildfly</groupId>
-            <artifactId>wildfly-jms-client-bom</artifactId>
-            <version>${wildfly.version}</version>
-            <type>pom</type>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-client</artifactId>
+            <version>5.14.5</version>
         </dependency>
-
 
         <dependency>
             <groupId>com.jgraph</groupId>

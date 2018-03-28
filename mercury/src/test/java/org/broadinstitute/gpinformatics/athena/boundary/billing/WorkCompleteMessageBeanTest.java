@@ -1,11 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.apache.activemq.artemis.api.core.TransportConfiguration;
-import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
-import org.apache.activemq.artemis.api.jms.JMSFactoryType;
-import org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory;
-import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
-import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
@@ -29,7 +24,6 @@ import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.transaction.UserTransaction;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
@@ -152,17 +146,10 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
 
     private Connection getConnection() throws JMSException {
 
-        // Use network JMS connectivity
-        ActiveMQConnectionFactory cf = ActiveMQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,
-                new TransportConfiguration(NettyConnectorFactory.class.getName(),
-                        new HashMap<String, Object>() {{
-                            put(TransportConstants.PORT_PROP_NAME, appConfig.getJmsPort());
-                            put(TransportConstants.HOST_PROP_NAME, appConfig.getHost());
-                        }}
-                ));
+        String url = String.format( "tcp://%s:%d", appConfig.getHost(), appConfig.getJmsPort() );
 
-        cf.setClientFailureCheckPeriod(Long.MAX_VALUE);
-        cf.setConnectionTTL(-1);
+        // Use network JMS connectivity
+        ActiveMQConnectionFactory cf = new ActiveMQConnectionFactory(url);
         // This connection is never closed, which is probably Bad but it doesn't seem to break anything.
         return cf.createConnection();
     }
