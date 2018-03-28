@@ -1287,13 +1287,15 @@ public class ProductOrderEjb {
      *
      * @param body The body of the short close request email
      */
-    void sendSapOrderShortCloseRequest(String body) {
+    private void sendSapOrderShortCloseRequest(String body) {
 
         Collection<String> currentUserForCC = Collections.singletonList(userBean.getBspUser().getEmail());
 
         final boolean isProduction = deployment.equals(Deployment.PROD);
-        final Collection<String> ccAddrdesses = isProduction ? currentUserForCC :
-                Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org");
+        final Collection<String> ccAddrdesses = new ArrayList<>();
+        if(isProduction) {
+            ccAddrdesses .addAll(currentUserForCC);
+        }
 
         emailSender.sendHtmlEmail(appConfig, sapConfig.getSapShortCloseRecipientEmail(), ccAddrdesses,
                 sapConfig.getSapShortCloseEmailSubject(), body, !isProduction);
