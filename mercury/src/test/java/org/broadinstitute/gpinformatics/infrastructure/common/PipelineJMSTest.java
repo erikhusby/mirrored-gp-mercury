@@ -16,9 +16,10 @@ import javax.jms.Session;
  * This class is put together to validate any picard connectivity issues without the need to spin up the container.
  * Edit password as required before running, unless you're simply testing connectivity/protocol
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class PipelineJMSTest {
 
+    @Test(enabled = false)
     public static void main( String[] args ) {
         PipelineJMSTest messageTester = new PipelineJMSTest();
         String url = String.format("failover://(ssl://picard-jms-dev.broadinstitute.org:61616)");
