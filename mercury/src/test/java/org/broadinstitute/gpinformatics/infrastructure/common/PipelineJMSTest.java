@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
 import javax.jms.Connection;
@@ -12,16 +13,17 @@ import javax.jms.MessageProducer;
 import javax.jms.Session;
 
 /**
- * This class is put together to validate any picard connectivity issues without the need to spin up the container
+ * This class is put together to validate any picard connectivity issues without the need to spin up the container.
+ * Edit password as required before running, unless you're simply testing connectivity/protocol
  */
-@Test(enabled = false)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
 public class PipelineJMSTest {
 
     public static void main( String[] args ) {
         PipelineJMSTest messageTester = new PipelineJMSTest();
         String url = String.format("failover://(ssl://picard-jms-dev.broadinstitute.org:61616)");
         String user = "mercury-pipeline";
-        String password = "butter-private-once-tailor";
+        String password = "change-to-the-real-password";
         String queueName = "broad.arrays.enqueue.staging";
         String chipWellBarcode = "TEST-TEST-TEST";
         messageTester.sendJmsMessage(url, user, password, queueName, chipWellBarcode);
