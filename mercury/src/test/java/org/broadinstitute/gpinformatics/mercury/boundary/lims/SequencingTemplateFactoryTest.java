@@ -692,7 +692,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         UniqueMolecularIdentifier umiReagent2 = LabEventTest.createUmi(3, 2, UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ);
         StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", umiReagent);
         LabEventTest.attachUMIToPlate(umiReagent2, umiPlate);
-        testUniqueMolecularIdentifierMultiDesignations(umiPlate, "3M2S99T8B8B3M2S99T",
+        testUniqueMolecularIdentifierMultiDesignations(umiPlate, "3M2S94T8B8B3M2S94T",
                 LibraryConstructionEntityBuilder.Umi.DUAL);
     }
 
@@ -705,7 +705,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         BarcodedTube barcodedTube = new BarcodedTube("UmiTestTube01232", BarcodedTube.BarcodedTubeType.MatrixTube075);
         barcodedTube.addReagent(umiReagent);
         barcodedTube.addReagent(umiReagent2);
-        testUniqueMolecularIdentifierMultiDesignations(barcodedTube, "3M2S99T8B8B3M2S99T",
+        testUniqueMolecularIdentifierMultiDesignations(barcodedTube, "3M2S94T8B8B3M2S94T",
                 LibraryConstructionEntityBuilder.Umi.DUAL);
     }
 

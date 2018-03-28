@@ -2150,7 +2150,7 @@ public class LabEventTest extends BaseEventTest {
             if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTube.getLabel())) {
                 Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B8B76T");
             } else if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTubeUMI.getLabel())) {
-                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S76T8B8B76T");
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S67T8B8B76T");
             } else {
                 Assert.fail("Wrong sequencing library found " + zimsIlluminaChamber.getSequencedLibrary());
             }
