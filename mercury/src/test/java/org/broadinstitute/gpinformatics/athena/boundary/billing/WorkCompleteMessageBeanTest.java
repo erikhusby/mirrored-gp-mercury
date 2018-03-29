@@ -87,7 +87,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * <p/>
      * This test is only checking to see if the queue is present on the server at the specified port and host name.
      */
-    @Test(groups = TestGroups.STANDARD)
+    @Test(groups = TestGroups.STANDARD, enabled = false)
     public void testSendMessage() throws Exception {
         sendMessage();
     }
@@ -98,7 +98,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * This test doesn't actually connect to the JMS queue.  The test hands the message directly
      * to the MDB handler method.
      */
-    @Test(groups = TestGroups.STANDARD)
+    @Test(groups = TestGroups.STANDARD, enabled = false)
     public void testOnMessage() throws Exception {
         deliverMessage();
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
@@ -150,6 +150,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
 
         // Use network JMS connectivity
         ActiveMQConnectionFactory cf = new ActiveMQConnectionFactory(url);
+
         // This connection is never closed, which is probably Bad but it doesn't seem to break anything.
         return cf.createConnection();
     }
@@ -158,7 +159,9 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * Create a message and send it using the JMS API.  The message is created with flag so that if the JMS
      * listener reads it, it won't get written to the database.
      */
-    public void sendMessage() throws JMSException {
+
+    @Test(enabled = false)
+    public void sendMessage() {
         Session session = null;
         Connection connection = null;
 
@@ -170,13 +173,21 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
             MessageProducer producer = session.createProducer(destination);
             Message message = createMessage(session, false);
             producer.send(message);
+        } catch ( JMSException jmse ) {
+            throw new RuntimeException( jmse.getMessage(), jmse.getLinkedException() );
+        } catch ( Exception e ) {
+            throw new RuntimeException( e );
         } finally {
             if (session != null) {
-                session.close();
+                try {
+                    session.close();
+                } catch ( JMSException jmse ) {}
             }
 
             if(connection != null) {
-                connection.close();
+                try {
+                    connection.close();
+                } catch ( JMSException jmse ) {}
             }
         }
     }
@@ -186,6 +197,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * that creates a message entity, and the code that reads the created message entity, but doesn't cause the
      * entity to be persisted.
      */
+    @Test(enabled = false)
     public void deliverMessage() throws JMSException {
         Session session = null;
         Connection connection = null;

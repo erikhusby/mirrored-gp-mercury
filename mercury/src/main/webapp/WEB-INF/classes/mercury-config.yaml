@@ -9,11 +9,10 @@ app:
       jmsPort:  5445
       workflowValidationEmail:
 
-
     AUTO_BUILD:
-      host:     mercurydev.broadinstitute.org
-      port:     8444
-      jmsPort:  5446
+      host:     vmercurydev.broadinstitute.org
+      port:     8443
+      jmsPort:  5445
       workflowValidationEmail:
 
     TEST:
