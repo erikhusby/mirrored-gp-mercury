@@ -155,7 +155,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      */
     protected SAPOrder initializeSAPOrder(ProductOrder placedOrder, boolean creatingOrder) throws SAPIntegrationException {
 
-        ProductOrder orderToUpdate = (placedOrder.isChildOrder() && placedOrder.getParentOrder().getSapOrderNumber().equals(placedOrder.getSapOrderNumber()))?placedOrder.getParentOrder():placedOrder;
+        ProductOrder orderToUpdate = placedOrder;
 
         Quote foundQuote = null;
         try {
@@ -343,7 +343,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
             sampleCount += (adjustmentQuantity != null) ?adjustmentQuantity :placedOrder.getLaneCount();
         } else {
-            ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(placedOrder);
+            ProductOrder targetSapPdo = placedOrder;
             sampleCount += (adjustmentQuantity != null)?adjustmentQuantity:targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) + additionalSampleCount;
         }
         return sampleCount - previousBilledCount;

@@ -388,13 +388,6 @@ public class ProductOrderEjb {
                         final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange,allProductsOrdered,
                                 effectivePricesForProducts, messageCollection, priceChangeForNewOrder);
 
-                        // Create orders for any Child orders that does not share
-                        for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
-                            if(!ProductOrder.sharesSAPOrderWithParent(childOrder, newSapOrderNumber)) {
-                                createOrderInSAP(childOrder, quoteIdChange, allProductsOrdered, effectivePricesForProducts,
-                                        messageCollection, priceChangeForNewOrder);
-                            }
-                        }
 
                     } else if(orderToPublish.isSavedInSAP()){
                         if (SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct(),
@@ -491,12 +484,6 @@ public class ProductOrderEjb {
             String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
                           " is being associated with a new quote by "+
                           userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
-            for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
-                if(ProductOrder.sharesSAPOrderWithParent(childOrder, oldNumber)) {
-                    childOrder.addSapOrderDetail(orderToPublish.latestSapOrderDetail());
-                }
-            }
-
             sendSapOrderShortCloseRequest(body);
         }
         orderToPublish.setPriorToSAP1_5(false);
@@ -1355,7 +1342,7 @@ public class ProductOrderEjb {
 
     private void conditionallyShortCloseOrder(ProductOrder productOrder) {
 
-        ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(productOrder);
+        ProductOrder targetSapPdo = productOrder;
 
         if(targetSapPdo.isSavedInSAP() &&
            ((targetSapPdo.allOrdersAreComplete() &&
