@@ -17,7 +17,7 @@ app:
       workflowValidationEmail:
 
     TEST:
-      host:     mercurydev.broadinstitute.org
+      host:     mercuryfb.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
