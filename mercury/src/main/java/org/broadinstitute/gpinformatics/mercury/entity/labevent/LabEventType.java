@@ -1582,12 +1582,12 @@ public enum LabEventType {
                     RackOfTubes.RackType.FlipperRackRow8).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.EppendorfFliptop15).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.SpinColumn).
-                    sourceSection(SBSSection.ALL96).
-                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ROWOF8).
+                    targetSection(SBSSection.ROWOF8).
                     targetVolume(true).
                     sourceContainerPrefix("WB").
                     reagentNames(new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}).
-                    useWebCam(true).build(), LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+                    useWebCam(true).build(), LibraryType.NONE_ASSIGNED),
     // Transfer blood to matrix tube
     EXTRACT_BLOOD_SPIN_TO_MATRIX("ExtractBloodSpinToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
