@@ -1102,15 +1102,15 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     <textarea id="abandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
-<%--<div id="unAbandonDialog" style="width:600px;display:none;">--%>
-    <%--<p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>--%>
+<div id="unAbandonDialog" style="width:600px;display:none;">
+    <p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>
 
-    <%--<p style="clear:both">--%>
-        <%--<label for="unAbandonSampleCommentId">Comment:</label>--%>
-    <%--</p>--%>
+    <p style="clear:both">
+        <label for="unAbandonSampleCommentId">Comment:</label>
+    </p>
 
-    <%--<textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>--%>
-<%--</div>--%>
+    <textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+</div>
 
 <div id="recalculateRiskDialog" style="width:600px;display:none;">
     <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
@@ -1168,7 +1168,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 <stripes:hidden id="proceedOos" name="proceedOos" value=""/>
 <stripes:hidden id="abandonComment" name="abandonComment" value=""/>
     <stripes:hidden name="replacementSampleList" id="replacementSampleList" value="" />
-<%--<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>--%>
+<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
 

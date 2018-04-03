@@ -1401,8 +1401,8 @@ public class ProductOrderEjb {
         transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
                 DeliveryStatus.NOT_STARTED, samples, comment, reporter);
 
-        reporter.addInfo("Un-Abandoned samples: {0}.",
-                StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+        reporter.addInfo("Un-Abandoned samples: " +
+                StringUtils.join(ProductOrderSample.getSampleNames(samples), ", ") +".");
     }
 
     /**

@@ -1457,7 +1457,6 @@
                         </div>
                     </c:otherwise>
                 </c:choose>
-
                     <c:choose>
                         <c:when test="${actionBean.editOrder.regulatoryInfoEditAllowed}">
                             <div class="control-group">
