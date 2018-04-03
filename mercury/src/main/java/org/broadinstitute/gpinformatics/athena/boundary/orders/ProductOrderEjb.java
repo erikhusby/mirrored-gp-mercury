@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -28,7 +27,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDeta
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
-import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -1760,13 +1758,12 @@ public class ProductOrderEjb {
             }
 
             Collection<ProductOrderSample.LedgerUpdate> updates = entry.getValue();
-            try {
-                LedgerEntry.validateWorkCompletedDates(updates);
-                for (ProductOrderSample.LedgerUpdate update : updates) {
+            for (ProductOrderSample.LedgerUpdate update : updates) {
+                try {
                     productOrderSample.applyLedgerUpdate(update);
+                } catch (Exception e) {
+                    errorMessages.add(e.getMessage());
                 }
-            } catch (Exception e) {
-                errorMessages.add(e.getMessage());
             }
         }
 

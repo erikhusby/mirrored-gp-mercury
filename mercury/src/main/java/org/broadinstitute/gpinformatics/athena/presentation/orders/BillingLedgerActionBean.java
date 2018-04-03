@@ -509,7 +509,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * @return the date 3 months ago as milliseconds since January 1, 1970, 00:00:00 GMT
      */
     public long getThreeMonthsAgo() {
-        return DateUtils.getMonths(-3).getTime();
+        return DateUtils.getByMonthOffset(-3).getTime();
     }
 
     public long getProductOrderSampleId() {

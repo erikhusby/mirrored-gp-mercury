@@ -503,7 +503,7 @@ public class DateUtils {
      * @param monthCount how many months ahead or behinde (negative number)
      * @return
      */
-    public static Date getMonths(int monthCount) {
+    public static Date getByMonthOffset(int monthCount) {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MONTH, monthCount);
         return calendar.getTime();
