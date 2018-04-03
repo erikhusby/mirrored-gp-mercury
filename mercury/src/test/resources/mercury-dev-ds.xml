@@ -8,7 +8,7 @@
 		<driver>oracle</driver>
 		<security>
 			<user-name>mercury</user-name>
-			<password>guest</password>
+			<password>mercury_dev</password>
 		</security>
 		<validation>
 			<valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
