@@ -190,16 +190,17 @@ $j(document).ready(function () {
                 error: function (obj, error, ex) {
                     console.log(error, obj.responseText, JSON.stringify(ex));
                 },
-                success: function (json) {
-                    var data = json.responseJSON;
-                    var rowsWithSampleData = data['<%=ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT%>'];
-                    var recordsTotal = data['<%=ProductOrderSampleBean.RECORDS_TOTAL%>'];
-                    initSampleDataProgress(rowsWithSampleData, recordsTotal);
-                    if (data['<%=ProductOrderSampleBean.COMMENT%>']) {
-                        writeSummaryData(data);
-                    }
-                    if (data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
-                        $j("#numberSamplesNotReceived").html(data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
+                complete: function (data, status) {
+                    if (status === 'success') {
+                        var rowsWithSampleData = data['<%=ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT%>'];
+                        var recordsTotal = data['<%=ProductOrderSampleBean.RECORDS_TOTAL%>'];
+                        initSampleDataProgress(rowsWithSampleData, recordsTotal);
+                        if (data['<%=ProductOrderSampleBean.COMMENT%>']) {
+                            writeSummaryData(data);
+                        }
+                        if (data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
+                            $j("#numberSamplesNotReceived").html(data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
+                        }
                     }
                 },
             },
