@@ -365,7 +365,6 @@
             /*
              * Set up date pickers for date complete.
              */
-
             var $dateCompleteInputs = $ledger.find("input.dateComplete");
             $dateCompleteInputs.on("click", function(){
                 var $thisInput = $j(this);
@@ -374,8 +373,6 @@
                 }
                 $thisInput.datepicker({ onClose: destroyMe, dateFormat: 'M d, yy', maxDate: 0}).datepicker('refresh');
                 $thisInput.datepicker("show");
-
-
             });
             // Update display styles for all date complete inputs when the page loads.
             for (var i = 0; i < $dateCompleteInputs.length; i++) {
@@ -407,7 +404,6 @@
                 $hSpinner.filter(":visible").hSpinner('option',{hidden:true});
                 toggleHidden(event.currentTarget, "toggle");
             });
-
 
             /*
              * Handle enable/disable of row inputs based on checkboxes.
@@ -689,8 +685,6 @@
             $j('#updateLedgers').attr('disabled', changedInputs.length == 0);
 </c:if>
         }
-
-
 
         /**
          * Updates the style for date complete inputs based on range validation rules.
