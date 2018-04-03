@@ -202,7 +202,8 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     @ManyToMany(cascade = {CascadeType.PERSIST})
     @JoinTable(schema = "athena", name = "RP_REGULATORY_INFOS",
-            joinColumns = {@JoinColumn(name="RESEARCH_PROJECT")})
+            joinColumns = {@JoinColumn(name="RESEARCH_PROJECT")},
+            inverseJoinColumns = {@JoinColumn(name="REGULATORY_INFOS")})
     private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.

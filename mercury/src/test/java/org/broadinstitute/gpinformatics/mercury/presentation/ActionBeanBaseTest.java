@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
 import net.sourceforge.stripes.action.ActionBean;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -15,7 +15,7 @@ import javax.servlet.Filter;
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
 @Test(groups = {TestGroups.STUBBY})
-public class ActionBeanBaseTest<T extends ActionBean> extends ContainerTest {
+public class ActionBeanBaseTest<T extends ActionBean> extends StubbyContainerTest {
     private TestCoreActionBeanContext ctx;
 
     private T bean;

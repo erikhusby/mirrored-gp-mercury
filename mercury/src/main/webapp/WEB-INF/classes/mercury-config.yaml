@@ -9,15 +9,14 @@ app:
       jmsPort:  5445
       workflowValidationEmail:
 
-
     AUTO_BUILD:
-      host:     mercurydev.broadinstitute.org
-      port:     8444
-      jmsPort:  5446
+      host:     vmercurydev.broadinstitute.org
+      port:     8443
+      jmsPort:  5445
       workflowValidationEmail:
 
     TEST:
-      host:     mercurydev.broadinstitute.org
+      host:     mercuryfb.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
@@ -46,7 +45,8 @@ bsp:
     DEV:
       login:    seqsystem
       password: bspbsp
-      host:     gapdev.broadinstitute.org
+      # Feature branch!  Revert to gapdev.broadinstitute.org at go-live
+      host:     vgapdev1.broadinstitute.org
       port:     8080
 
     RC:
@@ -66,7 +66,8 @@ gap:
     DEV:
       login:    seqsystem
       password: bspbsp
-      host:     gapdev.broadinstitute.org
+      #  Feature branch!  Revert to gapdev.broadinstitute.org at go-live
+      host:     vgapdev1.broadinstitute.org
       port:     8080
 
     RC:
@@ -112,10 +113,12 @@ collaborate:
 portal:
 
     TEST:
-      urlBase:      http://gapdev:8111/portal
+      # Feature branch!  Revert to gapdev at go-live
+      urlBase:      http://vgapdev1.broadinstitute.org:8111/portal
 
     DEV:
-      urlBase:      http://gapdev:8111/portal
+      # Feature branch!  Revert to gapdev at go-live
+      urlBase:      http://vgapdev1.broadinstitute.org:8111/portal
 
     QA:
       urlBase:      http://gaprc:8111/portal
@@ -228,7 +231,8 @@ bettaLimsServer:
 datawhEtl:
 
     DEV:
-        datawhEtlDirRoot: /seq/lims/datawh/dev
+# Feature branch! Revert to dev after go-live.
+        datawhEtlDirRoot: /seq/lims/datawh/fb
 
     QA:
         datawhEtlDirRoot: /seq/lims/datawh/qa
@@ -352,7 +356,7 @@ mercury:
       gap:      DEV
       jira:     TEST
       quote:    QA
-      squid:    DEV
+      squid:    TEST
       tableau:  PROD
       thrift:   TEST
       deckMsgs: DEV

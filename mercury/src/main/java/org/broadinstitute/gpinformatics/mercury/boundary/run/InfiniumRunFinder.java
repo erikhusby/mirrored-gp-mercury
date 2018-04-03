@@ -19,12 +19,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Resource;
 import javax.ejb.EJBContext;
-import javax.ejb.Singleton;
+import javax.ejb.Stateless;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
@@ -38,7 +40,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Finds pending infinium chip runs and forwards them on to analysis.
  */
-@Singleton
+@Stateless
+@Dependent
 @TransactionManagement(value= TransactionManagementType.BEAN)
 public class InfiniumRunFinder implements Serializable {
     private static final Log log = LogFactory.getLog(InfiniumRunFinder.class);
@@ -67,6 +70,9 @@ public class InfiniumRunFinder implements Serializable {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private UserBean userBean;
+
     @Resource
     private EJBContext ejbContext;
 
@@ -78,6 +84,7 @@ public class InfiniumRunFinder implements Serializable {
         }
 
         try {
+            userBean.login("seqsystem");
             List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
                     LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
             for (LabVessel labVessel : infiniumChips) {

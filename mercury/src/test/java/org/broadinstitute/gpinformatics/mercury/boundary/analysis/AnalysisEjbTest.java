@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.analysis;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.AnalysisDataTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
@@ -21,7 +21,7 @@ import javax.inject.Inject;
  * will typically be perormed.
  */
 @Test(groups = TestGroups.STUBBY, enabled = true)
-public class AnalysisEjbTest extends ContainerTest {
+public class AnalysisEjbTest extends StubbyContainerTest {
 
     @Inject
     private AnalysisEjb analysisEjb;

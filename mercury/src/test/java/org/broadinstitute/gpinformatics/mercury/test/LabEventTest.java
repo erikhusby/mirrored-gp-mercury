@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -1586,7 +1586,7 @@ public class LabEventTest extends BaseEventTest {
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceTestProducer.stubInstance());
 
         LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
         labBatchEJB.setTubeDao(tubeDao);
@@ -2652,6 +2652,13 @@ public class LabEventTest extends BaseEventTest {
         return umiTube;
     }
 
+    /**
+     * Treated as a test by default and thusly fails: <br/>
+     * org.testng.TestNGException:  <br/>
+     * Cannot inject @Test annotated Method [attachUMIToPlate] with [class org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier, class org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate]. <br/>
+     * For more information on native dependency injection please refer to http://testng.org/doc/documentation-main.html#native-dependency-injection
+     */
+    @Test( enabled = false )
     public static void attachUMIToPlate(UniqueMolecularIdentifier umi, StaticPlate staticPlate) {
         UMIReagent umiReagent = new UMIReagent(umi);
         for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {
