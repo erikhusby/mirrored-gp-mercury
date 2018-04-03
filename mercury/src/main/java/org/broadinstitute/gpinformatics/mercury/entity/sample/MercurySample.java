@@ -237,6 +237,10 @@ public class MercurySample extends AbstractSample {
         return sampleKey;
     }
 
+    void setSampleKey(String sampleKey) {
+        this.sampleKey = sampleKey;
+    }
+
     public Set<ProductOrderSample> getProductOrderSamples() {
         return productOrderSamples;
     }
