@@ -629,7 +629,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public Date getWorkCompleteDate() {
             return workCompleteDate;
         }
-        public String getCompleteDateFormatted() { return workCompleteDate != null ? new SimpleDateFormat(DATE_FORMAT).format(workCompleteDate) : null; }
+
+        public String getCompleteDateFormatted() {
+            return workCompleteDate != null ? new SimpleDateFormat(DATE_FORMAT).format(workCompleteDate) : null;
+        }
         public void setWorkCompleteDate(Date workCompleteDate) {
             this.workCompleteDate = workCompleteDate;
         }
@@ -650,6 +653,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public double getOriginalQuantity() {
             return originalQuantity;
         }
+
         public void setOriginalQuantity(double originalQuantity) {
             this.originalQuantity = originalQuantity;
         }
@@ -657,6 +661,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public double getSubmittedQuantity() {
             return submittedQuantity;
         }
+
         public void setSubmittedQuantity(double submittedQuantity) {
             this.submittedQuantity = submittedQuantity;
         }
