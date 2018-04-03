@@ -1380,11 +1380,11 @@ public class ProductOrderEjb {
      * @param jiraTicketKey the order's JIRA key
      * @param sampleIds     the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
-     * @param reporter
+     * @param messageCollection
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> sampleIds,
-                                 @Nonnull String comment, @Nonnull MessageCollection reporter)
+                                 @Nonnull String comment, @Nonnull MessageCollection messageCollection)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException, SAPInterfaceException {
 
         List<ProductOrderSample> samples = productOrderSampleDao.findListByList(ProductOrderSample.class,
@@ -1399,9 +1399,9 @@ public class ProductOrderEjb {
         }
 
         transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
-                DeliveryStatus.NOT_STARTED, samples, comment, reporter);
+                DeliveryStatus.NOT_STARTED, samples, comment, messageCollection);
 
-        reporter.addInfo("Un-Abandoned samples: " +
+        messageCollection.addInfo("Un-Abandoned samples: " +
                 StringUtils.join(ProductOrderSample.getSampleNames(samples), ", ") +".");
     }
 
