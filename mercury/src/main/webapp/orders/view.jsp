@@ -67,8 +67,7 @@ var kitDefinitionIndex = 0;
 
 $j(document).ready(function () {
     $j('body').popover({selector: '[rel=popover]'});
-//    if ($j("#sampleData tbody>tr").length > 0) {
-    $j("#ledgerLink").on('click', function(){
+    $j(document).on('click', '#ledgerLink', function () {
         window.stop();
     });
     enableDefaultPagingOptions();
@@ -191,7 +190,7 @@ $j(document).ready(function () {
                 error: function (obj, error, ex) {
                     console.log(error, obj.responseText, JSON.stringify(ex));
                 },
-                complete: function (json) {
+                success: function (json) {
                     var data = json.responseJSON;
                     var rowsWithSampleData = data['<%=ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT%>'];
                     var recordsTotal = data['<%=ProductOrderSampleBean.RECORDS_TOTAL%>'];
@@ -1234,7 +1233,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
 
                     &nbsp;&nbsp;&nbsp;&nbsp;
-                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
+                    <stripes:link id="ledgerLink" beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
                 </security:authorizeBlock>
 
             </c:if>
