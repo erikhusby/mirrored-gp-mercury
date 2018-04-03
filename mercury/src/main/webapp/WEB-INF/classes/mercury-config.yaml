@@ -356,7 +356,7 @@ mercury:
       gap:      DEV
       jira:     TEST
       quote:    QA
-      squid:    DEV
+      squid:    TEST
       tableau:  PROD
       thrift:   TEST
       deckMsgs: DEV
