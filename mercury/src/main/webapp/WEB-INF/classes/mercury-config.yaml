@@ -45,8 +45,7 @@ bsp:
     DEV:
       login:    seqsystem
       password: bspbsp
-      # Feature branch!  Revert to gapdev.broadinstitute.org at go-live
-      host:     vgapdev1.broadinstitute.org
+      host:     gapdev.broadinstitute.org
       port:     8080
 
     RC:
@@ -66,8 +65,7 @@ gap:
     DEV:
       login:    seqsystem
       password: bspbsp
-      #  Feature branch!  Revert to gapdev.broadinstitute.org at go-live
-      host:     vgapdev1.broadinstitute.org
+      host:     gapdev.broadinstitute.org
       port:     8080
 
     RC:
@@ -113,12 +111,10 @@ collaborate:
 portal:
 
     TEST:
-      # Feature branch!  Revert to gapdev at go-live
-      urlBase:      http://vgapdev1.broadinstitute.org:8111/portal
+      urlBase:      http://gapdev:8111/portal
 
     DEV:
-      # Feature branch!  Revert to gapdev at go-live
-      urlBase:      http://vgapdev1.broadinstitute.org:8111/portal
+      urlBase:      http://gapdev:8111/portal
 
     QA:
       urlBase:      http://gaprc:8111/portal
@@ -231,8 +227,7 @@ bettaLimsServer:
 datawhEtl:
 
     DEV:
-# Feature branch! Revert to dev after go-live.
-        datawhEtlDirRoot: /seq/lims/datawh/fb
+        datawhEtlDirRoot: /seq/lims/datawh/dev
 
     QA:
         datawhEtlDirRoot: /seq/lims/datawh/qa
