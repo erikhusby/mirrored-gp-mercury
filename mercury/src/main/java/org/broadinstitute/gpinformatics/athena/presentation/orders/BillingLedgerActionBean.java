@@ -19,7 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
@@ -39,7 +38,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
@@ -124,7 +122,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private List<PriceItem> priceItems = new ArrayList<>();
 
     /**
-     * the modified date of this product order. This is saved into the form and checked against the order when
+     * The modified date of this product order. This is saved into the form and checked against the order when
      * the form is submitted to make sure that nothing changed between rendering and submitting the form. Used for both
      * rendering the JSP and capturing the values submitted from hidden elements in the form.
      */
@@ -236,7 +234,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
                     flashMessage(message);
                 }
             }
-//            return new RedirectResolution(BillingLedgerActionBean.class).addParameter("orderId", orderId);
         }
 
         Resolution resolution = new StreamingResolution("text/json") {
