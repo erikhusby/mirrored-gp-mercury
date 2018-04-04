@@ -12,7 +12,7 @@ import java.util.List;
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BSPManagerFactoryTest {
 
-    private BSPManagerFactory bspManagerFactory=BSPManagerFactoryProducer.testInstance();;
+    private BSPManagerFactory bspManagerFactory=BSPManagerFactoryProducer.testInstance();
 
     public void testGetProjectManagers() {
         Assert.assertNotNull(bspManagerFactory);

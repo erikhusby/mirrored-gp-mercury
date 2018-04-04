@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -13,12 +14,15 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bettaLimsServer")
+@ApplicationScoped
 public class BettaLimsConfig extends AbstractConfig implements Serializable {
     private String wsHost;
     private int wsPort;
     private String jmsHost;
     private int jmsPort;
     private String jmsQueue;
+
+    public BettaLimsConfig(){}
 
     @Inject
     public BettaLimsConfig(@Nonnull Deployment deployment) {

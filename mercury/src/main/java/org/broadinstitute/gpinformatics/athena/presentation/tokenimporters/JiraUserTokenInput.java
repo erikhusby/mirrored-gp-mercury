@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraUser;
 import org.json.JSONException;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
 /**
  * Token Input support for 
  */
+@Dependent
 public class JiraUserTokenInput extends TokenInput<JiraUser> {
 
     @Inject

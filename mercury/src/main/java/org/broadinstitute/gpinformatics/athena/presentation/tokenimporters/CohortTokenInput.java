@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
  *
  * @author hrafal
  */
+@Dependent
 public class CohortTokenInput extends TokenInput<Cohort> {
 
     @Inject

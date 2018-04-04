@@ -1,22 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <datasources xmlns="http://www.jboss.org/ironjacamar/schema"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation="
-        http://www.jboss.org/ironjacamar/schema
-        http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
-    <datasource jndi-name="java:jboss/jdbc/metrics_pool" pool-name="metrics_pool" enabled="true">
-        <connection-url>jdbc:oracle:thin:@ora01:1521:seqprod</connection-url>
-        <driver>com.oracle</driver>
+             xsi:schemaLocation="http://www.jboss.org/ironjacamar/schema http://docs.jboss.org/ironjacamar/schema/datasources_1_1.xsd">
+    <datasource jndi-name="java:jboss/jdbc/metrics_pool" pool-name="metrics_pool" enabled="true" use-java-context="true" jta="true">
+       <connection-url>jdbc:oracle:thin:@ora01:1521:seqprod</connection-url>
+		<driver-class>oracle.jdbc.OracleDriver</driver-class>
+		<driver>oracle</driver>
         <security>
             <user-name>metrics_reader</user-name>
             <password>metrics_reader</password>
         </security>
-        <validation>
-            <background-validation>true</background-validation>
-            <background-validation-millis>60000</background-validation-millis>
-            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
-            <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
-            <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
-        </validation>
+		<validation>
+			<valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+			<background-validation>true</background-validation>
+			<background-validation-millis>60000</background-validation-millis>
+			<stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+			<exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+		</validation>
     </datasource>
 </datasources>

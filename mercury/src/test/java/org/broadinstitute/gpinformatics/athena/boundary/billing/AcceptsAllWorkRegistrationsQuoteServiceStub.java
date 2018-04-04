@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.Set;
  * be modified to be happier if new clients so require.
  */
 @Alternative
+@ApplicationScoped
 class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
     private static int counter = 0;
