@@ -912,6 +912,7 @@
         <profile>
             <id>BUILD</id>
             <properties>
+                <!-- For Unit tests on MercuryFB and deploy to MercuryDEV
                 <!--  Oracle Dev database -->
                 <database>oracle</database>
                 <database.delimiterType>row</database.delimiterType>
@@ -927,6 +928,22 @@
                         <filtering>true</filtering>
                     </testResource>
                 </testResources>
+                <plugins>
+                    <plugin>
+
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for Bamboo builds and GPUI testing -->
+                                    <directory>src/main/webapp-build</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+
+                    </plugin>
+                </plugins>
             </build>
         </profile>
         <profile>
@@ -947,6 +964,22 @@
                         <directory>src/test/resources-rc</directory>
                     </testResource>
                 </testResources>
+                <plugins>
+                    <plugin>
+
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for RC testing -->
+                                    <directory>src/main/webapp-rc</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+
+                    </plugin>
+                </plugins>
             </build>
         </profile>
 
