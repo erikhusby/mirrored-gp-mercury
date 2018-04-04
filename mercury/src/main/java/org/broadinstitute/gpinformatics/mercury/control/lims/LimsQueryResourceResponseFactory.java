@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PoolGroupTyp
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
+import javax.enterprise.context.Dependent;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -25,6 +26,7 @@ import java.util.Date;
 /**
  * @author breilly
  */
+@Dependent
 public class LimsQueryResourceResponseFactory {
 
     private static final String CREATE_DATE_FORMAT_STRING = "yyyy/MM/dd HH:mm";

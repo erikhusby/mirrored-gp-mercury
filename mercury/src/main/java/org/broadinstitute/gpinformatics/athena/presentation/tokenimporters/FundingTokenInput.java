@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 import org.json.JSONException;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
  *
  * @author hrafal
  */
+@Dependent
 public class FundingTokenInput extends TokenInput<Funding> {
 
     @Inject

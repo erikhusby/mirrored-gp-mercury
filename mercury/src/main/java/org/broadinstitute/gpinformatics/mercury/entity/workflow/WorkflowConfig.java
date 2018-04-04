@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import com.google.common.collect.HashMultimap;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionCreator;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.JAXBContext;
@@ -29,7 +28,6 @@ import java.util.Map;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-@Impl
 public class WorkflowConfig implements PreferenceDefinitionValue, Serializable {
 
     // JAXBContext is threadsafe

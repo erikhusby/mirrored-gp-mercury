@@ -10,6 +10,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
@@ -38,12 +39,11 @@ public class GZipFilter implements Filter {
             // Check to see if the browser supports compression before doing it.
             if (acceptEncoding != null && acceptEncoding.contains("gzip")) {
                 GZIPResponseWrapper wrappedResponse = new GZIPResponseWrapper(response);
-                chain.doFilter(req, wrappedResponse);
                 wrappedResponse.finishResponse();
-                return;
+                chain.doFilter(req, wrappedResponse);
+            } else {
+                chain.doFilter(req, res);
             }
-
-            chain.doFilter(req, res);
         }
     }
 
@@ -135,6 +135,16 @@ public class GZipFilter implements Filter {
                 throw new IOException("Cannot write to a closed output stream");
             }
             gzipStream.write(b, off, len);
+        }
+
+        @Override
+        public boolean isReady() {
+            throw new RuntimeException("Not implemented");
+        }
+
+        @Override
+        public void setWriteListener(WriteListener writeListener) {
+            throw new RuntimeException("Not implemented");
         }
     }
 

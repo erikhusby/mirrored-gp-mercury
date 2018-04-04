@@ -9,15 +9,14 @@ app:
       jmsPort:  5445
       workflowValidationEmail:
 
-
     AUTO_BUILD:
-      host:     mercurydev.broadinstitute.org
-      port:     8444
-      jmsPort:  5446
+      host:     vmercurydev.broadinstitute.org
+      port:     8443
+      jmsPort:  5445
       workflowValidationEmail:
 
     TEST:
-      host:     mercurydev.broadinstitute.org
+      host:     mercuryfb.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
@@ -352,7 +351,7 @@ mercury:
       gap:      DEV
       jira:     TEST
       quote:    QA
-      squid:    DEV
+      squid:    TEST
       tableau:  PROD
       thrift:   TEST
       deckMsgs: DEV

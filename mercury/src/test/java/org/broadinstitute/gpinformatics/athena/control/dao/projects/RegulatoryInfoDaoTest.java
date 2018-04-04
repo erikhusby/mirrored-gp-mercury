@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 @Test(groups = TestGroups.STUBBY)
-public class RegulatoryInfoDaoTest extends ContainerTest {
+public class RegulatoryInfoDaoTest extends StubbyContainerTest {
 
     @Inject
     private RegulatoryInfoDao regulatoryInfoDao;

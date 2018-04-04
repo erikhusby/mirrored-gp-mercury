@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Test(groups = TestGroups.STUBBY)
-public class ReceiveSamplesEjbTest extends ContainerTest {
+public class ReceiveSamplesEjbTest extends StubbyContainerTest {
 
     @Inject
     ProductOrderSampleDao productOrderSampleDao;

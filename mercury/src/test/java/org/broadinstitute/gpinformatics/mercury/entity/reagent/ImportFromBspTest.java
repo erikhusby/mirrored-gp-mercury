@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -28,7 +28,7 @@ import java.util.List;
  * In preparation for testing Mercury by sending it BettaLIMS production messages, import data from BSP.
  */
 @Test(groups = TestGroups.STUBBY)
-public class ImportFromBspTest extends ContainerTest {
+public class ImportFromBspTest extends StubbyContainerTest {
 
     //    @PersistenceContext(unitName = "gap_pu")
     private EntityManager entityManager;
