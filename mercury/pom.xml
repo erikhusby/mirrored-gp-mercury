@@ -912,7 +912,7 @@
         <profile>
             <id>BUILD</id>
             <properties>
-                <!-- For Unit tests on MercuryFB and deploy to MercuryDEV
+                <!-- For Unit tests on MercuryFB and deploy to MercuryDEV -->
                 <!--  Oracle Dev database -->
                 <database>oracle</database>
                 <database.delimiterType>row</database.delimiterType>
