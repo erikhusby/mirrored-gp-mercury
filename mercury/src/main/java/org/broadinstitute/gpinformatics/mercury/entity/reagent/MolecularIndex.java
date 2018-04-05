@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
@@ -58,11 +60,7 @@ public class MolecularIndex implements Serializable {
         // No-arg c'tor for Hibernate's sake
     }
 
-    /**
-     * All of the component molecular indexes should have been created in the database
-     * right after initial release of the code, so it's likely that this constructor
-     * should not be called.
-     */
+    /** Constructor for creating a new index. */
     public MolecularIndex(String sequence) {
         setSequence(sequence);
     }
@@ -164,26 +162,30 @@ public class MolecularIndex implements Serializable {
       */
     @SuppressWarnings("unused")
     private void setSequence(String sequence) {
-        if (sequence ==  null) {
-            throw new NullPointerException("A non-null sequence is required.");
+        Pair<Boolean, String> pair = validatedUpperCaseSequence(sequence);
+        if (pair.getLeft()) {
+            this.sequence = pair.getRight();
+        } else {
+            throw new IllegalArgumentException(pair.getRight());
         }
-        if (sequence.isEmpty()) {
-            throw new IllegalArgumentException("The sequence must have a length greater than zero.");
-        }
+    }
 
+    /** Returns validity status and either upper cased sequence or the error message. */
+    public static Pair<Boolean, String> validatedUpperCaseSequence(String sequence) {
+        if (StringUtils.isBlank(sequence)) {
+            return Pair.of(false, "The sequence must have a length greater than zero.");
+        }
         String upperSequence = sequence.trim().toUpperCase();
-
         if (upperSequence.contains("U") && upperSequence.contains("T")) {
-            throw new IllegalArgumentException("Cannot have both T and U in the same sequence.");
+            return Pair.of(false, "Cannot have both T and U in the same sequence.");
         }
 
         for (char base : upperSequence.toCharArray()) {
             if ( ! BASE_INDEXES.containsKey(base)) {
-                throw new IllegalArgumentException("The sequence must only have the letters A, C, T, G, or U, not " + base);
+                return Pair.of(false, "The sequence must only have the letters A, C, T, G, or U, not " + base);
             }
         }
-
-        this.sequence = upperSequence;
+        return Pair.of(true, upperSequence);
     }
 
     /**

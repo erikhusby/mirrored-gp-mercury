@@ -210,6 +210,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.TagVesselActionBean"
                                           event="view">Add Dev Condition To Vessel</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="molecularIndexNaming"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexNamingActionBean"
+                                          event="view">Make Molecular Index Names</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

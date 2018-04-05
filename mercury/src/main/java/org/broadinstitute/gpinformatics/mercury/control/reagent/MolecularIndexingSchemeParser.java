@@ -98,7 +98,7 @@ public class MolecularIndexingSchemeParser {
                                 indexPositions.get(i), fields[i]));
                     }
                     molecularIndexingSchemes.add(
-                            molecularIndexingSchemeFactory.findOrCreateIndexingScheme(indexPositionPairs));
+                            molecularIndexingSchemeFactory.findOrCreateIndexingScheme(indexPositionPairs, false));
                 }
             }
         } catch (IOException e) {

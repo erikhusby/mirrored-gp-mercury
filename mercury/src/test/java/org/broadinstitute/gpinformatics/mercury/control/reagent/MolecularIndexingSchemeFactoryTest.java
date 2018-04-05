@@ -70,7 +70,7 @@ public class MolecularIndexingSchemeFactoryTest extends ContainerTest {
         indexPositionPairs.add(new MolecularIndexingSchemeFactory.IndexPositionPair(
                 MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, sequence));
         MolecularIndexingScheme molecularIndexingScheme = molecularIndexingSchemeFactory.findOrCreateIndexingScheme(
-                indexPositionPairs);
+                indexPositionPairs, false);
         Assert.assertEquals(molecularIndexingScheme.getName(), "Illumina_P7-Babababababab", "Wrong name");
 
         molecularIndexingSchemeDao.flush();
