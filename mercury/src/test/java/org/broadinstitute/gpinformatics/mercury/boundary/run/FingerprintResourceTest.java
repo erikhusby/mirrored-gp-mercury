@@ -66,6 +66,7 @@ public class FingerprintResourceTest extends Arquillian {
         String getUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/query";
         FingerprintsBean fingerprintsBean = client.resource(getUrl).queryParam("lsids", aliquotLsid).
                 accept(MediaType.APPLICATION_JSON).get(FingerprintsBean.class);
+        // todo jmt asserts
         fingerprintsBean.getFingerprints();
     }
 
@@ -75,11 +76,16 @@ public class FingerprintResourceTest extends Arquillian {
         Client client = getClient(true);
 
         String getUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/query";
+        String queryLsid = "broadinstitute.org:bsp.prod.sample:GOHM6";
         FingerprintsBean fingerprintsBean = client.resource(getUrl).
-                queryParam("lsids", "broadinstitute.org:bsp.prod.sample:GOHM6").
+                queryParam("lsids", queryLsid).
                 accept(MediaType.APPLICATION_JSON).get(FingerprintsBean.class);
-        // todo jmt asserts
-        fingerprintsBean.getFingerprints();
+
+        Assert.assertEquals(fingerprintsBean.getFingerprints().size(), 1);
+        FingerprintBean fingerprintBean = fingerprintsBean.getFingerprints().get(0);
+        Assert.assertEquals(fingerprintBean.getQueriedLsid(), queryLsid);
+        Assert.assertEquals(fingerprintBean.getAliquotLsid(), "broadinstitute.org:bsp.prod.sample:GP3T6");
+        Assert.assertEquals(fingerprintBean.getCalls().size(), 96);
     }
 
     /**

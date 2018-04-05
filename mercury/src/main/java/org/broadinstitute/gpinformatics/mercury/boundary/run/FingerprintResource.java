@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import clover.org.apache.commons.lang3.tuple.ImmutablePair;
 import clover.org.apache.commons.lang3.tuple.Pair;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -31,6 +33,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -65,18 +69,39 @@ public class FingerprintResource {
     @Path("/query")
     @Produces(MediaType.APPLICATION_JSON)
     public FingerprintsBean get(@QueryParam("lsids")List<String> lsids) {
+        // Bulk fetch data from Mercury database and BSP web service
         Set<String> sampleIds = new HashSet<>();
         for (String lsid : lsids) {
             sampleIds.add(getSmIdFromLsid(lsid));
         }
-        List<BSPGetExportedSamplesFromAliquots.ExportedSamples> samplesExportedFromBsp =
+        List<BSPGetExportedSamplesFromAliquots.ExportedSample> samplesExportedFromBsp =
                 bspGetExportedSamplesFromAliquots.getExportedSamplesFromAliquots(lsids, IsExported.ExternalSystem.GAP);
-        for (BSPGetExportedSamplesFromAliquots.ExportedSamples exportedSamples : samplesExportedFromBsp) {
-            sampleIds.add(getSmIdFromLsid(exportedSamples.getExportedLsid()));
+        Multimap<String, BSPGetExportedSamplesFromAliquots.ExportedSample> mapLsidToExportedSample =
+                ArrayListMultimap.create();
+        Map<String, String> mapSmidToLsid = new HashMap<>();
+        for (BSPGetExportedSamplesFromAliquots.ExportedSample exportedSample : samplesExportedFromBsp) {
+            mapLsidToExportedSample.put(exportedSample.getLsid(), exportedSample);
+            String exportedLsid = exportedSample.getExportedLsid();
+            String smId = getSmIdFromLsid(exportedLsid);
+            sampleIds.add(smId);
+            mapSmidToLsid.put(smId, exportedLsid);
         }
-        Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
 
-        return buildFingerprintsBean(mapIdToMercurySample);
+        // Map queried LSIDs to MercurySamples that may have fingerprints
+        Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+        Multimap<String, MercurySample> mapLsidToFpSamples = ArrayListMultimap.create();
+        for (String lsid : lsids) {
+            MercurySample mercurySample = mapIdToMercurySample.get(getSmIdFromLsid(lsid));
+            if (mercurySample == null) {
+                throw new ResourceException("Sample not found: " + lsid, Response.Status.BAD_REQUEST);
+            }
+            mapLsidToFpSamples.put(lsid, mercurySample);
+            for (BSPGetExportedSamplesFromAliquots.ExportedSample exportedSample : mapLsidToExportedSample.get(lsid)) {
+                mapLsidToFpSamples.put(lsid, mapIdToMercurySample.get(getSmIdFromLsid(exportedSample.getExportedLsid())));
+            }
+        }
+
+        return buildFingerprintsBean(lsids, mapLsidToFpSamples, mapSmidToLsid);
     }
 
     @NotNull
@@ -101,37 +126,32 @@ public class FingerprintResource {
 
     @NotNull
     @DaoFree
-    private FingerprintsBean buildFingerprintsBean(Map<String, MercurySample> mapIdToMercurySample) {
-        List<Pair<String, Fingerprint>> fingerprintEntities = new ArrayList<>();
-        for (Map.Entry<String, MercurySample> stringMercurySampleEntry : mapIdToMercurySample.entrySet()) {
-            if (stringMercurySampleEntry.getValue() == null) {
-                throw new ResourceException("Sample not found: " + stringMercurySampleEntry.getKey(),
-                        Response.Status.BAD_REQUEST);
-            }
-
-            if (stringMercurySampleEntry.getValue().getFingerprints().isEmpty()) {
-                // todo jmt re-enable after Fluidigm moves to Mercury
-//                traverseMercuryTransfers(fingerprintEntities, stringMercurySampleEntry);
-            } else {
-                fingerprintEntities.add(new ImmutablePair<>(stringMercurySampleEntry.getKey(),
-                        stringMercurySampleEntry.getValue().getFingerprints().iterator().next()));
-            }
-        }
-
+    private FingerprintsBean buildFingerprintsBean(List<String> lsids,
+            Multimap<String, MercurySample> mapLsidToFpSamples, Map<String, String> mapSmidToLsid) {
         List<FingerprintBean> fingerprints = new ArrayList<>();
-        for (Pair<String, Fingerprint> stringFingerprintPair : fingerprintEntities) {
-            List<FingerprintCallsBean> calls = new ArrayList<>();
-            Fingerprint fingerprint = stringFingerprintPair.getRight();
-            for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
-                calls.add(new FingerprintCallsBean(fpGenotype.getSnp().getRsId(), fpGenotype.getGenotype(),
-                        fpGenotype.getCallConfidence().toString()));
-            }
+        for (String lsid : lsids) {
+            Collection<MercurySample> mercurySamples = mapLsidToFpSamples.get(lsid);
+            for (MercurySample mercurySample : mercurySamples) {
+                if (mercurySample.getFingerprints().isEmpty()) {
+                    // todo jmt re-enable after Fluidigm moves to Mercury
+//                traverseMercuryTransfers(fingerprintEntities, stringMercurySampleEntry);
+                } else {
+                    for (Fingerprint fingerprint : mercurySample.getFingerprints()) {
+                        List<FingerprintCallsBean> calls = new ArrayList<>();
+                        for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
+                            calls.add(new FingerprintCallsBean(fpGenotype.getSnp().getRsId(), fpGenotype.getGenotype(),
+                                    fpGenotype.getCallConfidence().toString()));
+                        }
 
-            fingerprints.add(new FingerprintBean(stringFingerprintPair.getLeft(),
-                    fingerprint.getDisposition().getAbbreviation(), fingerprint.getMercurySample().getSampleKey(),
-                    fingerprint.getPlatform().name(), fingerprint.getGenomeBuild().name(),
-                    fingerprint.getSnpList().getName(), fingerprint.getDateGenerated(),
-                    fingerprint.getGender().getAbbreviation(), calls));
+                        fingerprints.add(new FingerprintBean(lsid,
+                                fingerprint.getDisposition().getAbbreviation(),
+                                mapSmidToLsid.get(fingerprint.getMercurySample().getSampleKey()),
+                                fingerprint.getPlatform().name(), fingerprint.getGenomeBuild().name(),
+                                fingerprint.getSnpList().getName(), fingerprint.getDateGenerated(),
+                                fingerprint.getGender().getAbbreviation(), calls));
+                    }
+                }
+            }
         }
 
         return new FingerprintsBean(fingerprints);
