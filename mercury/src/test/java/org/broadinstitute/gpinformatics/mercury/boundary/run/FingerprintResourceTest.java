@@ -90,7 +90,7 @@ public class FingerprintResourceTest extends Arquillian {
 
     /**
      * DO NOT DISABLE OR QUARANTINE THIS TEST.  It verifies that authentication is required to access the fingerprint
-     * web service, which is visible to the outside work.
+     * web service, which is visible to the outside world.
      */
     @Test(groups = TestGroups.STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
