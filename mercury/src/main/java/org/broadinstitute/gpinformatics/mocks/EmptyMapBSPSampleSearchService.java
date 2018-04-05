@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mocks;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.*;
 
@@ -11,6 +12,7 @@ import java.util.*;
  * Returns a completely empty list.
  */
 @Alternative
+@Dependent
 public class EmptyMapBSPSampleSearchService implements BSPSampleSearchService {
 
     @Override

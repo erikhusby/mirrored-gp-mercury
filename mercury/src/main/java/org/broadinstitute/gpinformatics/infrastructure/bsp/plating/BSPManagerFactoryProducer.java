@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
-import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
@@ -14,20 +13,31 @@ import javax.inject.Inject;
  *         Date: 11/26/12
  *         Time: 2:58 PM
  */
+@ApplicationScoped
 public class BSPManagerFactoryProducer {
 
     @Inject
     private Deployment deployment;
 
+    @Inject
+    public BSPManagerFactoryProducer( BSPConfig bspConfig ) {
+        runtimeInstance = new BSPManagerFactoryImpl(bspConfig);
+    };
+
+    private BSPManagerFactory runtimeInstance;
+
     private static BSPManagerFactory testInstance;
 
+    /**
+     * NOT CDI compliant!  Use for external integration testing only
+     * @return
+     */
     public static BSPManagerFactory testInstance() {
-
         if (testInstance == null) {
             synchronized (BSPManagerFactory.class) {
                 if (testInstance == null) {
-                    BSPConfig bspConfig = BSPConfig.produce(Deployment.TEST);
-                    testInstance = new BSPManagerFactoryImpl(bspConfig);
+                    BSPConfig bspTestConfig = BSPConfig.produce(Deployment.TEST);
+                    testInstance = new BSPManagerFactoryImpl(bspTestConfig);
                 }
             }
         }
@@ -36,21 +46,24 @@ public class BSPManagerFactoryProducer {
 
     }
 
+    /**
+     * NOT CDI compliant!  Use for DBFree testing only
+     * @return
+     */
     public static BSPManagerFactory stubInstance() {
-
         return new BSPManagerFactoryStub();
     }
 
     @Produces
     @Default
     @ApplicationScoped
-    public BSPManagerFactory produce(@New BSPManagerFactoryStub stub, @New BSPManagerFactoryImpl impl) {
+    public BSPManagerFactory produce() {
 
         if (deployment == Deployment.STUBBY) {
-            return stub;
+            return new BSPManagerFactoryStub();
         }
 
-        return impl;
+        return runtimeInstance;
 
     }
 }

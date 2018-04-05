@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -39,8 +41,9 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Test the Wallac upload with persistence.
  */
-@Test(groups = TestGroups.STANDARD)
+@Test(groups = TestGroups.STANDARD, singleThreaded = true)
 public class WallacParserContainerTest extends Arquillian {
+    private static Log log = LogFactory.getLog(WallacParserContainerTest.class);
     public static final String WALLAC_OUTPUT = "Wallac96WellOutput.xls";
 
     private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMddHHmmssSSS");
@@ -74,6 +77,9 @@ public class WallacParserContainerTest extends Arquillian {
                 messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS);
 
         Assert.assertTrue(StringUtils.isNotBlank(pair1.getRight()));
+        if (messageCollection.hasErrors()) {
+            log.error(StringUtils.join(messageCollection.getErrors(), ","));
+        }
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
         Assert.assertNotNull(pair1.getLeft());
@@ -94,6 +100,9 @@ public class WallacParserContainerTest extends Arquillian {
                 messageCollection, ACCEPT_PICO_REDO, !PERSIST_VESSELS);
 
         Assert.assertTrue(StringUtils.isNotBlank(pair3.getRight()));
+        if (messageCollection.hasErrors()) {
+            log.error(StringUtils.join(messageCollection.getErrors(), ","));
+        }
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
         Assert.assertNotNull(pair3.getLeft());
@@ -175,7 +184,7 @@ public class WallacParserContainerTest extends Arquillian {
         workbook.write(new FileOutputStream(tempFile));
         Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
         Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.buildPicoTubesAndTransfers(
-                numSamples, mapBarcodeToPlate, plate1Barcode, plate2Barcode, namePrefix);
+                numSamples, mapBarcodeToPlate, plate1Barcode, plate2Barcode, "W96" + namePrefix);
         if (persistVessels) {
             labVesselDao.persistAll(mapBarcodeToPlate.values());
             labVesselDao.persistAll(mapPositionToTube.values());

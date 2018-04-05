@@ -718,6 +718,7 @@ public enum LabEventType {
                     sourceContainerPrefix("CSFSource").
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetContainerPrefix("CSFTarget").
+                    targetVolume(true).
                     requireSingleParticipant(true).
                     build(),
             MaterialType.BODILY_FLUID_CEREBROSPINAL_FLUID, LibraryType.NONE_ASSIGNED),

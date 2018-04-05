@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.google.common.collect.ImmutableList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.mockito.Matchers;
@@ -38,7 +39,7 @@ public class BSPSampleDataFetcherUnitTest {
          * to make BSPSampleDataFetcher more stringent about what it considers a valid BSP sample ID.
          */
         BSPConfig bspConfig = new BSPConfig(Deployment.PROD);
-        bspSampleDataFetcher = new BSPSampleDataFetcher(mockBspSampleSearchService, bspConfig);
+        bspSampleDataFetcher = new BSPSampleDataFetcherImpl(mockBspSampleSearchService, bspConfig);
     }
 
     @Test
