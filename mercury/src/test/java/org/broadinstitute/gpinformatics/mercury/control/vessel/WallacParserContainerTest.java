@@ -41,7 +41,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Test the Wallac upload with persistence.
  */
-@Test(groups = TestGroups.STANDARD)
+@Test(groups = TestGroups.STANDARD, singleThreaded = true)
 public class WallacParserContainerTest extends Arquillian {
     private static Log log = LogFactory.getLog(WallacParserContainerTest.class);
     public static final String WALLAC_OUTPUT = "Wallac96WellOutput.xls";

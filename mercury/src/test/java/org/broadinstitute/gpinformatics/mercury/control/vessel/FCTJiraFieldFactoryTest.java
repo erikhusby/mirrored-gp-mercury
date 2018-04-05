@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import com.google.common.collect.Lists;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -38,7 +38,7 @@ public class FCTJiraFieldFactoryTest {
 
     @BeforeMethod
     public void startUp() throws IOException {
-        jiraFieldDefs = JiraServiceProducer.stubInstance().getCustomFields();
+        jiraFieldDefs = JiraServiceTestProducer.stubInstance().getCustomFields();
     }
 
     public void testFCTSetFieldGeneration() throws IOException {

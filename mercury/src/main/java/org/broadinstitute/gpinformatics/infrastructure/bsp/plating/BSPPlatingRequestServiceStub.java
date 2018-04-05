@@ -3,11 +3,13 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.List;
 
 @Stub
 @Alternative
+@Dependent
 public class BSPPlatingRequestServiceStub implements BSPPlatingRequestService {
 
     @Override

@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jboss-deployment-structure>
     <deployment>
+        <exclude-subsystems>
+            <subsystem name="jsf" />
+        </exclude-subsystems>
         <dependencies>
             <module name="org.broadinstitute.configuration" />
+            <module name="javax.ws.rs.api"/>
+            <module name="org.dom4j"/>
         </dependencies>
     </deployment>
 </jboss-deployment-structure>

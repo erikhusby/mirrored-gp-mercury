@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Test(groups = TestGroups.STUBBY)
-public class HibernateMetadataTest extends ContainerTest {
+public class HibernateMetadataTest extends StubbyContainerTest {
     @PersistenceContext(unitName = "mercury_pu")
     private EntityManager entityManager;
 

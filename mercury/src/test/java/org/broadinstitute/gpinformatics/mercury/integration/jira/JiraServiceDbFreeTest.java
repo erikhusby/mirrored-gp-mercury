@@ -13,7 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
@@ -36,7 +36,7 @@ public class JiraServiceDbFreeTest {
 
     @BeforeTest
     public void setUp() {
-        jiraService = JiraServiceProducer.stubInstance();
+        jiraService = JiraServiceTestProducer.stubInstance();
     }
 
     @Test(expectedExceptions = NoJiraTransitionException.class)

@@ -16,7 +16,7 @@ public class ContainerTest extends Arquillian {
     }
 
     @AfterTest
-    public void flushCloverCache() throws Exception {
+    public void tearDown() throws Exception {
         log.debug("Trying to force Clover to flush");
         ///CLOVER:FLUSH
     }

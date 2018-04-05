@@ -127,14 +127,14 @@ public class BSPUserList extends AbstractCache implements Serializable {
         return results;
     }
 
-    private static boolean anyFieldMatches(String lowerQuery, BspUser user) {
+    private boolean anyFieldMatches(String lowerQuery, BspUser user) {
         return safeToLowerCase(user.getFirstName()).contains(lowerQuery) ||
                safeToLowerCase(user.getLastName()).contains(lowerQuery) ||
                safeToLowerCase(user.getUsername()).contains(lowerQuery) ||
                safeToLowerCase(user.getEmail()).contains(lowerQuery);
     }
 
-    private static String safeToLowerCase(String s) {
+    private String safeToLowerCase(String s) {
         if (s == null) {
             return "";
         } else {
@@ -179,7 +179,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
         }
     }
 
-    private static Map<Long, BspUser> rebuildUsers(List<BspUser> rawUsers) {
+    private Map<Long, BspUser> rebuildUsers(List<BspUser> rawUsers) {
         Collections.sort(rawUsers, new Comparator<BspUser>() {
             @Override
             public int compare(BspUser o1, BspUser o2) {
@@ -242,7 +242,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @param user the user to check
      * @return true if the user is active
      */
-    public static boolean isActiveUser(BspUser user) {
+    public boolean isActiveUser(BspUser user) {
         return !user.getUsername().startsWith(PERSONNEL_PREFIX);
     }
 
@@ -275,7 +275,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
         }
     }
 
-    private static void addQADudeUsers(List<BspUser> users) {
+    private void addQADudeUsers(List<BspUser> users) {
         // FIXME: should instead generate this dynamically based on current users.properties settings on the server.
         // Could also create QADude entries on demand during login.
         String[] types = {"Test", "PM", "PDM", "LU", "LM", "BM"};
@@ -285,7 +285,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
         }
     }
 
-    public static boolean isTestUser(BspUser user) {
+    public boolean isTestUser(BspUser user) {
         return user instanceof QADudeUser;
     }
 }
