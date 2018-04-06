@@ -14,15 +14,21 @@ package org.broadinstitute.gpinformatics.infrastructure.bioproject;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
-@XmlRootElement
+
+@JsonPropertyOrder(alphabetic = true)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class BioProjects implements Serializable {
+    @JsonProperty
     private List<BioProject> bioprojects;
 
     public BioProjects() {
@@ -32,7 +38,6 @@ public class BioProjects implements Serializable {
         this.bioprojects = Arrays.asList(bioProjects);
     }
 
-    @XmlElement
     public List<BioProject> getBioprojects() {
         return bioprojects;
     }

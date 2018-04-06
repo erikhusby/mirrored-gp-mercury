@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -13,6 +14,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -21,6 +24,7 @@ import java.util.Collection;
 import java.util.Date;
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, ProductOrder> {
     private BSPUserList userList;
     private ProductEjb productEjb;
@@ -83,9 +87,21 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
             arrayChipType = chipData.getRight();
             GenotypingChip chip = archetypeDao.findGenotypingChip( chipData.getLeft(), chipData.getRight() );
             if( chip != null ) {
-                ArchetypeAttribute attrib = chip.getAttribute("call_rate_threshold");
+                ArchetypeAttribute attrib = chip.getAttribute(GenotypingProductOrderMapping.CALL_RATE_THRESHOLD);
                 if( attrib != null ) {
                     callThreshold = attrib.getAttributeValue();
+                }
+                // Check if a mapping override exists for this pdo, if so override default values if not null
+                GenotypingProductOrderMapping genotypingProductOrderMapping =
+                        archetypeDao.findGenotypingProductOrderMapping(entity.getProductOrderId());
+                if (genotypingProductOrderMapping != null) {
+                    for (ArchetypeAttribute attribute : genotypingProductOrderMapping.getAttributes()) {
+                        if( attribute.getAttributeName().equals(GenotypingProductOrderMapping.CALL_RATE_THRESHOLD)) {
+                            if (attribute.getAttributeValue() != null) {
+                                callThreshold = attribute.getAttributeValue();
+                            }
+                        }
+                    }
                 }
             }
         }

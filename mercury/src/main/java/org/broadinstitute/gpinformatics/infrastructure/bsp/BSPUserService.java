@@ -11,6 +11,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -24,6 +25,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 /**
  * BSP API for creating a user. Currently only used to create an external collaborator.
  */
+@Dependent
 public class BSPUserService extends BSPJerseyClient {
     private static final long serialVersionUID = 2587957568965043063L;
 

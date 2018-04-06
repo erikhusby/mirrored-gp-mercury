@@ -23,6 +23,7 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class State implements Serializable {
     private static final long serialVersionUID = 2016092701L;
+    public static final int ALL_RESULTS = -1;
 
     private long time;
     private int start;

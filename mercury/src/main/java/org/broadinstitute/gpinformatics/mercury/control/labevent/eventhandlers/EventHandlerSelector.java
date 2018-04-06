@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
@@ -13,21 +14,19 @@ import javax.inject.Inject;
  * By triggering off of the {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType}, we can
  * target each message at its own message validator.
  */
+@Dependent
 public class EventHandlerSelector {
 
-    private SonicAliquotHandler sonicAliquotHandler;
     private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
     private FlowcellLoadedHandler flowcellLoadedHandler;
     private BspNewRootHandler bspNewRootHandler;
 
     @Inject
-    public EventHandlerSelector(SonicAliquotHandler sonicAliquotHandler,
-            DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
+    public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
             FlowcellMessageHandler flowcellMessageHandler,
             FlowcellLoadedHandler flowcellLoadedHandler,
             BspNewRootHandler bspNewRootHandler) {
-        this.sonicAliquotHandler = sonicAliquotHandler;
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
@@ -62,9 +61,6 @@ public class EventHandlerSelector {
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
             break;
-        case SONIC_DAUGHTER_PLATE_CREATION:
-            sonicAliquotHandler.handleEvent(targetEvent, stationEvent);
-            break;
         case BLOOD_PLASMA_SECOND_TRANSFER:
         case BLOOD_BUFFY_COAT_TRANSFER:
             bspNewRootHandler.handleEvent(targetEvent, stationEvent);
@@ -80,10 +76,4 @@ public class EventHandlerSelector {
         return flowcellLoadedHandler;
     }
 
-
-    public void setBspRestSender(BSPRestSender bspRestSender) {
-        if (sonicAliquotHandler != null) {
-            sonicAliquotHandler.setBspRestSender(bspRestSender);
-        }
-    }
 }

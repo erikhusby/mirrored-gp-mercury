@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.util;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -14,7 +14,7 @@ import java.util.List;
  *
  */
 @Test(groups = TestGroups.STUBBY)
-public class PingResourceTest extends ContainerTest {
+public class PingResourceTest extends StubbyContainerTest {
 
     @Inject
     PingResource pingResource;

@@ -11,23 +11,20 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionConfig;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -45,7 +42,7 @@ public class ResearchProjectEjbExternalIntegrationTest {
     @Test(expectedExceptions = NullPointerException.class)
     public void testValidateSubmissionSamplesNullSample() throws Exception {
         researchProjectEjb.validateSubmissionSamples(bioProjectWithResults, null);
-        assertThat(null, CoreMatchers.notNullValue());
+        assertThat(null, Matchers.notNullValue());
     }
 
     @Test(expectedExceptions = ValidationException.class)
@@ -85,7 +82,7 @@ public class ResearchProjectEjbExternalIntegrationTest {
     public void testValidateSubmissionNullBioProject() throws Exception {
         researchProjectEjb.validateSubmissionSamples(null, goodSubmissionDtos);
 
-        assertThat(null, CoreMatchers.notNullValue());
+        assertThat(null, Matchers.notNullValue());
     }
 
 
@@ -96,13 +93,9 @@ public class ResearchProjectEjbExternalIntegrationTest {
     private List<SubmissionDto> getTestDataWithSamples(String... sampleNames) {
         List<SubmissionDto> results = new ArrayList<>(sampleNames.length);
         for (String sampleName : sampleNames) {
-            Map<BassDTO.BassResultColumn, String> valuesMap = new HashMap<>();
-            valuesMap.put(BassDTO.BassResultColumn.sample, sampleName);
-            valuesMap.put(BassDTO.BassResultColumn.version, "1");
-            valuesMap.put(BassDTO.BassResultColumn.project, "RP-123");
-            valuesMap.put(BassDTO.BassResultColumn.file_type, "bam");
-            BassDTO bassDTO = new BassDTO(valuesMap);
-            results.add(new SubmissionDto(bassDTO, null, Collections.<ProductOrder>emptyList(), null));
+            Aggregation aggregation = AggregationTestFactory
+                .buildAggregation("RP-123", "PDO-1234", sampleName, 1, null, null, "WGA", null, null, null, "OnPremn");
+            results.add(new SubmissionDto(aggregation, null));
         }
         return results;
     }

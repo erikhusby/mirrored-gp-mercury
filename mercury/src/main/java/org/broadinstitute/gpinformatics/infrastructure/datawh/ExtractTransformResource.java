@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl.EventFactDto;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.SequencingSampleFactEtl.SequencingRunDto;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -22,13 +23,15 @@ import java.util.List;
 @Path("etl")
 public class ExtractTransformResource {
     private ExtractTransform extractTransform;
+    private GenericDao dao;
 
     public ExtractTransformResource() {
     }
 
     @Inject
-    public ExtractTransformResource(ExtractTransform extractTransform) {
+    public ExtractTransformResource(ExtractTransform extractTransform ) {
         this.extractTransform = extractTransform;
+        this.dao = dao;
     }
 
     /**
@@ -46,6 +49,21 @@ public class ExtractTransformResource {
 
         extractTransform.initConfig();
         return extractTransform.backfillEtl(entityClassname, startId, endId);
+    }
+
+    /**
+     * Runs ETL on any downstream events affected by a change associated with a lab vessel. <br/>
+     * This was put in place due to GPLIM-5073 where an index plate was not registered and all downstream event_fact entries had no molecular index values.
+     * After registration, all downstream events required individual backfills.
+     *
+     * @param barcode Vessel for which all downstream event_fact and sequencing_sample_fact data must be refreshed
+     */
+    @Path("backfillByVessel/{barcode}")
+    @PUT
+    @Produces("text/plain")
+    public Response backfillByVessel( @PathParam("barcode") String barcode ){
+        extractTransform.initConfig();
+        return extractTransform.backfillEtlForVessel(barcode);
     }
 
     /**
@@ -212,7 +230,7 @@ public class ExtractTransformResource {
         return sb.toString();
     }
 
-    public void buildAncestryTable( StringBuilder sb, int columnCount, List<EventAncestryEtlUtil.AncestryFactDto> ancestryFactDtoList ){
+    private void buildAncestryTable( StringBuilder sb, int columnCount, List<EventAncestryEtlUtil.AncestryFactDto> ancestryFactDtoList ){
         if( ancestryFactDtoList == null || ancestryFactDtoList.isEmpty() ) {
             return;
         }

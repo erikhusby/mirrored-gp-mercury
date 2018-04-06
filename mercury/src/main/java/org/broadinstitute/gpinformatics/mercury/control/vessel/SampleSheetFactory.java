@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.search.InfiniumVesselTraversalEvaluator;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -18,19 +19,23 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition.CHIP_EVENT_TYPES;
+
 /**
  * Create an arrays sample sheet, for Genome Studio.
  */
+@Dependent
 public class SampleSheetFactory {
 
     static final Set<LabEventType> LAB_EVENT_TYPES = new HashSet<LabEventType>() {{
@@ -52,19 +57,14 @@ public class SampleSheetFactory {
     public static List<Pair<LabVessel, VesselPosition>> loadByPdo(ProductOrder productOrder) {
         List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
         // todo jmt include controls?
+        // Infinium bucket entries are always DNA plate wells
         for (BucketEntry bucketEntry : productOrder.getBucketEntries()) {
-            TransferTraverserCriteria.VesselPositionForEvent transferTraverserCriteria =
-                    new TransferTraverserCriteria.VesselPositionForEvent(
-                            Collections.singleton(LabEventType.INFINIUM_HYBRIDIZATION),
-                            bucketEntry.getLabBatch());
-            bucketEntry.getLabVessel().evaluateCriteria(transferTraverserCriteria,
-                    TransferTraverserCriteria.TraversalDirection.Descendants);
-
-            VesselAndPosition vesselAndPosition = transferTraverserCriteria.getMapTypeToVesselPosition().
-                    get(LabEventType.INFINIUM_HYBRIDIZATION);
-            if (vesselAndPosition != null) {
-                vesselPositionPairs.add(new ImmutablePair<>(vesselAndPosition.getVessel(),
-                        vesselAndPosition.getPosition()));
+            for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions :
+                    InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(
+                            bucketEntry.getLabVessel(), CHIP_EVENT_TYPES, null).asMap().entrySet()) {
+                vesselPositionPairs.add(new ImmutablePair<>(labVesselAndPositions.getKey(),
+                        labVesselAndPositions.getValue().iterator().next() ) );
+                break;
             }
         }
 

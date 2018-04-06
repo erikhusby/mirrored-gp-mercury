@@ -4,16 +4,19 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Dependent
 public class CrspPipelineUtils {
 
     private Deployment deployment;
@@ -27,8 +30,10 @@ public class CrspPipelineUtils {
      * Returns true if all samples are considered
      * crsp samples.  Throws an exception if there's a
      * mix of crps and non-crsp samples.
+     * @param sampleInstances the sample instances for a lane
+     * @param mixedLaneOk whether the pipeline accepts mixtures of clinical and research samples; true for genomes
      */
-    public  boolean areAllSamplesForCrsp(Set<SampleInstanceV2> sampleInstances) {
+    public boolean areAllSamplesForCrsp(Set<SampleInstanceV2> sampleInstances, boolean mixedLaneOk) {
         boolean hasAtLeastOneCrspSample = false;
         boolean hasNonCrspSamples = false;
 
@@ -45,7 +50,7 @@ public class CrspPipelineUtils {
                 }
             }
         }
-        if (hasAtLeastOneCrspSample && hasNonCrspSamples) {
+        if (!mixedLaneOk && hasAtLeastOneCrspSample && hasNonCrspSamples) {
             throw new RuntimeException("Samples contain a mix of CRSP and non-CRSP samples.");
         }
         else {
@@ -74,14 +79,16 @@ public class CrspPipelineUtils {
             SampleData sampleData,
             String bait) {
         throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
-        setBuickVisitAndCollectionDate(libraryBean, sampleData);
-
-        libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
-        libraryBean.setRootSample(libraryBean.getSampleId());
-        libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
+        if (sampleData.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+            setBuickVisitAndCollectionDate(libraryBean, sampleData);
+            libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
+            libraryBean.setRootSample(libraryBean.getSampleId());
+            libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
+        }
 
         if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
             if (bait != null) {
+                // todo required by clinical Exome pipeline, not sure about genomes
                 libraryBean.setProductPartNumber(mapBaitToProductPartNumber.get(bait));
             }
         }

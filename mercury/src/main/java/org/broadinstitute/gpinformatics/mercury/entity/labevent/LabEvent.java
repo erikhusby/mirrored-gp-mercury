@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -189,10 +190,13 @@ public class LabEvent {
     private LabEventType labEventType;
 
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "LAB_BATCH")
     private LabBatch labBatch;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "mercury", name = "le_lab_event_metadatas")
+    @JoinTable(schema = "mercury", name = "le_lab_event_metadatas"
+            , joinColumns = {@JoinColumn(name = "LAB_EVENT")}
+            , inverseJoinColumns = {@JoinColumn(name = "LAB_EVENT_METADATAS")})
     private Set<LabEventMetadata> labEventMetadatas = new HashSet<>();
 
     /**
@@ -208,11 +212,16 @@ public class LabEvent {
      * processed in multiple technologies.
      */
     @ManyToOne
+    @JoinColumn(name = "MANUAL_OVERRIDE_LC_SET")
     private LabBatch manualOverrideLcSet;
 
     private String workflowQualifier;
 
     private static Set<LabEventType> eventTypesThatCanFollowBucket = new HashSet<>();
+
+    /** The station event from which this lab event was created by LabEventFactory. */
+    @Transient
+    private StationEventType stationEventType;
 
     /**
      * For JPA
@@ -391,12 +400,21 @@ public class LabEvent {
         return eventOperator;
     }
 
+
+    void setEventOperator(Long eventOperator) {
+        this.eventOperator = eventOperator;
+    }
+
     public String getProgramName() {
         return programName;
     }
 
     public Date getEventDate() {
         return eventDate;
+    }
+
+    void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
     }
 
     public Collection<Reagent> getReagents() {
@@ -503,6 +521,14 @@ todo jmt adder methods
 
     public void setWorkflowQualifier(String workflowQualifier) {
         this.workflowQualifier = workflowQualifier;
+    }
+
+    public StationEventType getStationEventType() {
+        return stationEventType;
+    }
+
+    public void setStationEventType(StationEventType stationEventType) {
+        this.stationEventType = stationEventType;
     }
 
     /**

@@ -13,13 +13,9 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.validation.ValidationError;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
@@ -30,7 +26,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
@@ -45,20 +40,14 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequestBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchValueBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
-import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
@@ -69,7 +58,7 @@ import java.util.Random;
  */
 @SuppressWarnings("UnusedDeclaration")
 @UrlBinding("/search/ConfigurableSearch.action")
-public class ConfigurableSearchActionBean extends RackScanActionBean {
+public class ConfigurableSearchActionBean extends CoreActionBean {
 
     private static final Log log = LogFactory.getLog(ConfigurableSearchActionBean.class);
 
@@ -83,84 +72,8 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
      */
     public static final String PAGINATION_PREFIX = "pagination_";
 
-    public static final String AJAX_SELECT_LAB_EVENT = "ajaxLabSelect";
-    public static final String AJAX_SCAN_EVENT = "ajaxScan";
     public static final String RACK_SCAN_PAGE_TITLE = "Rack Scan Barcodes";
     public static final String DRILL_DOWN_EVENT = "drillDown";
-
-    @HandlesEvent(AJAX_SELECT_LAB_EVENT)
-    public Resolution selectLab() {
-        return new ForwardResolution("/vessel/ajax_div_rack_scanner.jsp");
-    }
-
-    /**
-     * Utilizes a rack scanner to return a line delimited list of tube barcodes to a client side ajax function
-     * callback which transfers value directly to a text area field.
-     * @throws ScannerException
-     */
-    @Override
-    @HandlesEvent(AJAX_SCAN_EVENT)
-    public Resolution scan() throws ScannerException {
-        final JSONObject scannerData = new JSONObject();
-        final StringBuilder errors = new StringBuilder();
-        try {
-            // Run the rack scanner and include the rack barcode in position map
-            super.runRackScan(true);
-
-            // Should never happen
-            if( rackScan == null || rackScan.isEmpty() ){
-                errors.append("No results from rack scan");
-            }
-
-            // Check for scan errors
-            if( getValidationErrors().isEmpty()) {
-                // Scan data can be persisted with a SearchInstance, keep track of who ran it and when
-                scannerData.put("scanDate", ColumnValueType.DATE_TIME.format(new Date(),""));
-                scannerData.put("scanUser", getUserBean().getLoginUserName());
-                scannerData.put("scannerName", getRackScanner().getScannerName());
-                JSONArray scan = new JSONArray();
-                scannerData.put("scans", scan);
-                for( Map.Entry<String,String> positionAndBarcode : rackScan.entrySet() ) {
-                    if( positionAndBarcode.getKey().equals("rack")) {
-                        scannerData.put("rackBarcode", positionAndBarcode.getValue());
-                        continue;
-                    }
-                    if( StringUtils.isNotEmpty( positionAndBarcode.getValue() ) ) {
-                        scan.put(new JSONObject()
-                                .put("position", positionAndBarcode.getKey())
-                                .put("barcode", positionAndBarcode.getValue())
-                        );
-                    }
-                }
-                if( scan.length() == 0 ){
-                    errors.append("No results from rack scan");
-                }
-            } else {
-                for( Map.Entry<String, List<ValidationError>> errorEntry : getValidationErrors().entrySet() ) {
-                    for( ValidationError error : errorEntry.getValue() ) {
-                        errors.append( error.getMessage(Locale.getDefault()) );
-                    }
-                }
-            }
-        } catch (Exception ex){
-            log.error(ex);
-            errors.append("Rack scan error occurred: " + ex.getMessage());
-        }
-
-        return new StreamingResolution("text/plain") {
-            @Override
-            public void stream(HttpServletResponse response) throws Exception {
-                ServletOutputStream out = response.getOutputStream();
-                if(errors.length() > 0 ) {
-                    out.write("Failure: ".getBytes());
-                    out.write(errors.toString().getBytes());
-                } else {
-                    out.write(scannerData.toString().getBytes());
-                }
-                out.close();
-            }
-        };
-    }
 
     /**
      * The definition from which the user will create the search
@@ -838,16 +751,6 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
 
     public ColumnEntity[] getAvailableEntityTypes(){
         return ColumnEntity.values();
-    }
-
-    @Override
-    public String getRackScanPageUrl() {
-        return "/search/ConfigurableSearch.action";
-    }
-
-    @Override
-    public String getPageTitle() {
-        return RACK_SCAN_PAGE_TITLE;
     }
 
     /**

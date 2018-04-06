@@ -3,8 +3,12 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
 
@@ -17,13 +21,15 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -82,6 +88,10 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     private String orderProductsHash;
 
     private String orderPricesHash;
+
+    @OneToMany(mappedBy = "sapOrderDetail", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    private Set<LedgerEntry> ledgerEntries = new HashSet<>();
 
     public SapOrderDetail() {
     }
@@ -144,6 +154,53 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
 
     public void setOrderPricesHash(String orderQuantitiesHash) {
         this.orderPricesHash = orderQuantitiesHash;
+    }
+
+    public Set<LedgerEntry> getLedgerEntries() {
+        return ledgerEntries;
+    }
+
+    public void addLedgerEntries(Collection<LedgerEntry> ledgerEntries) {
+        for (LedgerEntry ledgerEntry : ledgerEntries) {
+            addLedgerEntry(ledgerEntry);
+        }
+    }
+
+    public void addLedgerEntry(LedgerEntry ledgerEntry) {
+        ledgerEntry.setSapOrderDetail(this);
+        this.ledgerEntries.add(ledgerEntry);
+    }
+
+    public Map<Product, Integer> getNumberOfBilledEntriesByProduct() {
+        Map<Product, Integer> billedCount = new HashMap<>();
+
+
+        for (LedgerEntry ledgerEntry : this.ledgerEntries) {
+            final ProductOrder productOrder = ledgerEntry.getProductOrderSample().getProductOrder();
+            Product aggregatingProduct = null;
+
+            if(ledgerEntry.getPriceItemType() == LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM ||
+               ledgerEntry.getPriceItemType() == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM) {
+                aggregatingProduct = productOrder.getProduct();
+            } else {
+                for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
+                    PriceItem addonPriceItem =
+                            productOrder.determinePriceItemByCompanyCode(productOrderAddOn.getAddOn());
+
+                    if(addonPriceItem.equals(ledgerEntry.getPriceItem())) {
+                        aggregatingProduct = productOrderAddOn.getAddOn();
+                        break;
+                    }
+                }
+            }
+
+            if (ledgerEntry.isBilled()) {
+                int oldCount = (billedCount.containsKey(aggregatingProduct))?billedCount.get(aggregatingProduct):0;
+                billedCount.put(aggregatingProduct, oldCount + 1);
+            }
+        }
+
+        return billedCount;
     }
 
     @Override

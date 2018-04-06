@@ -1,12 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class VesselPooledTubesProcessor extends TableProcessor {
 
@@ -19,13 +20,18 @@ public class VesselPooledTubesProcessor extends TableProcessor {
     private List<String> bait = new ArrayList<>();
     private List<String> cat = new ArrayList<>();
     private List<String> experiment = new ArrayList<>();
-    private List<String> conditions = new ArrayList<>();
+    // conditions is a per-row list of dev ticket strings.
+    private List<List<String>> conditions = new ArrayList<>();
     private List<String> collaboratorSampleId = new ArrayList<>();
     private List<String> collaboratorParticipantId = new ArrayList<>();
     private List<String> broadParticipantId = new ArrayList<>();
     private List<String> gender = new ArrayList<>();
     private List<String> species = new ArrayList<>();
     private List<String> lsid = new ArrayList<>();
+    private List<String> volume = new ArrayList<>();
+    private List<String> fragmentSize = new ArrayList<>();
+    private List<String> readLength = new ArrayList<>();
+
 
     public VesselPooledTubesProcessor(String sheetName) {
         super(sheetName, TableProcessor.IgnoreTrailingBlankLines.YES);
@@ -52,13 +58,18 @@ public class VesselPooledTubesProcessor extends TableProcessor {
         bait.add(dataRow.get(Headers.BAIT.getText()));
         cat.add(dataRow.get(Headers.CAT.getText()));
         experiment.add(dataRow.get(Headers.EXPERIMENT.getText()));
-        conditions.add(dataRow.get(Headers.CONDITIONS.getText()));
+        String conditionsString = dataRow.get(Headers.CONDITIONS.getText());
+        conditions.add(Arrays.asList(StringUtils.stripAll(conditionsString.split(","))));
         collaboratorSampleId.add(dataRow.get(Headers.COLLABORATOR_SAMPLE_ID.getText()));
         collaboratorParticipantId.add(dataRow.get(Headers.COLLABORATOR_PARTICIPANT_ID.getText()));
         broadParticipantId.add(dataRow.get(Headers.BROAD_PARTICIPANT_ID.getText()));
         gender.add(dataRow.get(Headers.GENDER.getText()));
         species.add(dataRow.get(Headers.SPECIES.getText()));
         lsid.add(dataRow.get(Headers.LSID.getText()));
+        volume.add(dataRow.get(Headers.VOLUME.getText()));
+        fragmentSize.add(dataRow.get(Headers.FRAGMENT_SIZE.getText()));
+        readLength.add(dataRow.get(Headers.READ_LENGTH.getText()));
+
 
     }
 
@@ -84,6 +95,9 @@ public class VesselPooledTubesProcessor extends TableProcessor {
         BROAD_PARTICIPANT_ID("Broad participant ID", ColumnHeader.OPTIONAL_HEADER, true),
         GENDER("Gender", ColumnHeader.OPTIONAL_HEADER, true),
         SPECIES("Species", ColumnHeader.OPTIONAL_HEADER, true),
+        VOLUME("Volume", ColumnHeader.OPTIONAL_HEADER, true),
+        FRAGMENT_SIZE("Fragment Size", ColumnHeader.OPTIONAL_HEADER, true),
+        READ_LENGTH("Read Length", ColumnHeader.OPTIONAL_HEADER, true),
         LSID("Lsid", ColumnHeader.OPTIONAL_HEADER, true);
 
 
@@ -139,20 +153,8 @@ public class VesselPooledTubesProcessor extends TableProcessor {
 
     public List<String> getExperiment() { return experiment; }
 
-    public List<Map<String, String>> getConditions() {
-        List<Map<String, String>> devConditions = new ArrayList<>();
-        if (conditions != null) {
-            for (String condition : conditions) {
-                String[] devTasks = condition.split(",");
-                Map<String, String> map = new HashMap<String, String>();
-                for (String devTask : devTasks) {
-                    map.put(devTask.trim(), devTask.trim());
-                }
-                devConditions.add(map);
-            }
-            return devConditions;
-        }
-        return null;
+    public List<List<String>> getConditions() {
+        return conditions;
     }
 
     public List<String> getCollaboratorSampleId() { return collaboratorSampleId; }
@@ -167,4 +169,9 @@ public class VesselPooledTubesProcessor extends TableProcessor {
 
     public List<String> getLsid() { return lsid; }
 
+    public List<String> getVolume() { return volume; }
+
+    public List<String> getFragmentSize() { return fragmentSize; }
+
+    public List<String> getReadLength() { return readLength;  }
 }

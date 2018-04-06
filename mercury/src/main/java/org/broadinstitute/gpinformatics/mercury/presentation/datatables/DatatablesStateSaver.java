@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Dependent
 public class DatatablesStateSaver {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private PreferenceEjb preferenceEjb;
@@ -76,6 +78,8 @@ public class DatatablesStateSaver {
 
         } else {
             definitionValue = new NameValueDefinitionValue();
+            state = new State();
+            tableState = objectMapper.writeValueAsString(state);
         }
         List<String> tableStatePreferenceValue = definitionValue.getDataMap().get(TABLE_STATE_KEY);
         if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {

@@ -2,8 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 //import com.jprofiler.api.agent.Controller;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazySortedMap;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -12,10 +14,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -54,6 +57,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -80,10 +85,12 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEnt
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.FPEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionCellFreeUMIEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -109,6 +116,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1578,7 +1586,7 @@ public class LabEventTest extends BaseEventTest {
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceTestProducer.stubInstance());
 
         LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
         labBatchEJB.setTubeDao(tubeDao);
@@ -1952,9 +1960,15 @@ public class LabEventTest extends BaseEventTest {
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
         String[] expectedEventNames = {
-                "SamplesDaughterPlateCreation",
-                "SamplesNormalizationTransfer",
-                "PicoPlatingPostNorm",
+                "PicoTransfer",
+                "PicoTransfer",
+                "FingerprintingAliquot",
+                "PicoTransfer",
+                "PicoTransfer",
+                "FingerprintingPlateSetup",
+                "ShearingAliquot",
+                "PicoTransfer",
+                "PicoTransfer",
                 "ShearingTransfer",
                 "PostShearingTransferCleanup",
                 "ShearingQC",
@@ -2038,64 +2052,143 @@ public class LabEventTest extends BaseEventTest {
 //        Controller.stopCPURecording();
     }
 
-    private void testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
-                                    String[] expectedEventNames, Workflow workflow) {
+    public void testPcrPlusUMI() {
         expectedRouting = SystemRouter.System.MERCURY;
 
-        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        ProductOrder productOrder = ProductOrderTestFactory.buildPcrPlusProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        LabBatch workflowBatch = new LabBatch("whole Genome Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflow(workflow);
+        // Grab denature tube from one UMI LC set and build another without
+        Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pairUmi =
+                testUpToBooking(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS,
+                        Workflow.CELL_FREE_HYPER_PREP_UMIS, "1_UMI", LibraryConstructionEntityBuilder.Indexing.DUAL,
+                        LibraryConstructionEntityBuilder.Umi.SINGLE);
 
-        String lcsetSuffix = "1";
-        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
+        Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pair =
+                testUpToBooking(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS,
+                        Workflow.PCR_PLUS, "1", LibraryConstructionEntityBuilder.Indexing.DUAL,
+                        LibraryConstructionEntityBuilder.Umi.NONE);
 
-        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
-        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
-        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        QtpEntityBuilder qtpEntityBuilderUMI = pairUmi.getRight();
+        QtpEntityBuilder qtpEntityBuilder = pair.getRight();
+
+        BarcodedTube denatureTubeUMI =
+                qtpEntityBuilderUMI.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+
+        BarcodedTube denatureTube =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+
+        Assert.assertEquals(denatureTubeUMI.getSampleInstancesV2().iterator().next().getReagents().size(), 2,
+                "Wrong number of reagents");
+
+        Assert.assertEquals(denatureTube.getSampleInstancesV2().iterator().next().getReagents().size(), 1,
+                "Wrong number of reagents");
+
+        // Put both together on a 4000 flowcell, 4 lanes each
+        VesselPosition[] hiseq4000VesselPositions =
+                IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell.getVesselGeometry().getVesselPositions();
+        List<VesselPosition> vesselPositionList = Arrays.asList(hiseq4000VesselPositions);
+        List<List<VesselPosition>> partition = Lists.partition(vesselPositionList, hiseq4000VesselPositions.length / 2);
+        List<VesselPosition> vesselPositions1 = partition.get(0);
+        List<VesselPosition> vesselPositions2 = partition.get(1);
+
+        LabBatch.VesselToLanesInfo vesselToLanesInfoUMI = new LabBatch.VesselToLanesInfo(
+                vesselPositions1, new BigDecimal("16.22"), denatureTubeUMI, null,
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
+
+        LabBatch.VesselToLanesInfo vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
+                vesselPositions2, new BigDecimal("12.33"), denatureTube, null,
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
+        List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = Arrays.asList(vesselToLanesInfoUMI, vesselToLanesInfo);
+
+        LabBatch fctBatchHiSeq4000 = new LabBatch("FCT-543", vesselToLanesInfos,
+                LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        mapPositionToTube.put(VesselPosition.A01, denatureTubeUMI);
+        mapPositionToTube.put(VesselPosition.A02, denatureTube);
+        TubeFormation rearrayedDenatureRack = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+        rearrayedDenatureRack.addRackOfTubes(new RackOfTubes("denatureRearray", RackOfTubes.RackType.Matrix96));
+        HiSeq4000FlowcellEntityBuilder flowcell4000EntityBuilder =
+                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, null, "UMIMix" + "ADXX",
+                        fctBatchHiSeq4000, "UMI Mix Desig", HiSeq4000FlowcellEntityBuilder.FCTCreationPoint.DENATURE);
+
+        IlluminaFlowcell illuminaFlowcell = flowcell4000EntityBuilder.getIlluminaFlowcell();
+
+        for (VesselPosition vesselPosition: illuminaFlowcell.getVesselGeometry().getVesselPositions()) {
+            Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
+                    illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
+            SampleInstanceV2 sampleInstance = sampleInstancesAtPositionV2.iterator().next();
+            System.out.println(sampleInstance);
         }
 
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
-                "P", lcsetSuffix, true);
-        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                        picoPlatingEntityBuilder.getNormTubeFormation(),
-                        picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
-        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(
-                exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                exomeExpressShearingEntityBuilder.getShearingPlate(),
-                lcsetSuffix,
-                NUM_POSITIONS_IN_RACK,
-                pondType);
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory =
+                new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
+        IlluminaSequencingRun illuminaSequencingRun;
+        try {
+            illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
+                            illuminaFlowcell.getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
+                            File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
+                    illuminaFlowcell);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        QtpEntityBuilder qtpEntityBuilder = null;
+        ReadStructureRequest readStructureRequest = new ReadStructureRequest();
+        readStructureRequest.setRunBarcode(illuminaSequencingRun.getRunBarcode());
+        readStructureRequest.setSetupReadStructure("71T8B8B71T");
+        readStructureRequest.setActualReadStructure("101T8B8B101T");
+        readStructureRequest.setLanesSequenced("1,2,3,4,5,6,7,8");
+
+        illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, illuminaSequencingRun);
+
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder,
+                Collections.<FlowcellDesignation>emptyList());
+
+        ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
+        for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
+            if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTube.getLabel())) {
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B8B76T");
+            } else if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTubeUMI.getLabel())) {
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S67T8B8B76T");
+            } else {
+                Assert.fail("Wrong sequencing library found " + zimsIlluminaChamber.getSequencedLibrary());
+            }
+        }
+    }
+
+    private void testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
+                                    String[] expectedEventNames, Workflow workflow) {
+        testGenomeWorkflow(productOrder, pondType, expectedEventNames, workflow, "1", false);
+    }
+
+    private QtpEntityBuilder testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
+                                                String[] expectedEventNames, Workflow workflow, String barcodeSuffix,
+                                                boolean includeUMI) {
+        Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pair =
+                testUpToBooking(productOrder, pondType, workflow, barcodeSuffix,
+                        LibraryConstructionEntityBuilder.Indexing.DUAL, LibraryConstructionEntityBuilder.Umi.NONE);
+        QtpEntityBuilder qtpEntityBuilder = pair.getRight();
+        Map<String, BarcodedTube> mapBarcodeToTube = pair.getLeft();
         int numSeqReagents = 1;
-        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
-            IceEntityBuilder iceEntityBuilder = runHyperPrepIceProcess(
-                    Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()),
-                    "1");
-            qtpEntityBuilder = runQtpProcess(iceEntityBuilder.getCatchEnrichRack(),
-                    iceEntityBuilder.getCatchEnrichBarcodes(),
-                    iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), "1");
+        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP)
             numSeqReagents = 3;
-        } else {
-            qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                    libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
-                    libraryConstructionEntityBuilder.getMapBarcodeToPondRegTubes(), "1");
-        }
-
+        if (includeUMI)
+            numSeqReagents++;
 
         LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
-        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
-        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
-                qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
-                ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "Squid Designation",
-                workflow);
+        VesselPosition[] hiseq4000VesselPositions =
+                IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell.getVesselGeometry().getVesselPositions();
+        List<VesselPosition> vesselPositionList = Arrays.asList(hiseq4000VesselPositions);
+        LabBatch.VesselToLanesInfo vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
+                vesselPositionList, new BigDecimal("16.22"), denatureSource, null,
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
+        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singletonList(vesselToLanesInfo),
+                LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+        HiSeq4000FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq4000FlowcellProcess(
+                qtpEntityBuilder.getDenatureRack(), qtpEntityBuilder.getNormalizationRack(), "1", fctBatch,
+                "Squid Designation", HiSeq4000FlowcellEntityBuilder.FCTCreationPoint.DENATURE);
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
@@ -2109,6 +2202,113 @@ public class LabEventTest extends BaseEventTest {
                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
         verifyEventSequence(labEventNames, expectedEventNames);
+        return qtpEntityBuilder;
+    }
+
+    private Pair<Map<String, BarcodedTube>, QtpEntityBuilder> testUpToBooking(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
+                                                                              Workflow workflow, String barcodeSuffix,
+                                                                              LibraryConstructionEntityBuilder.Indexing indexing,
+                                                                              LibraryConstructionEntityBuilder.Umi umi) {
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("whole Genome Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(workflow);
+
+        String lcsetSuffix = "1";
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
+
+        TubeFormation platingTubeFormation = null;
+        String platingBarcode = null;
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = null;
+        Map<String, BarcodedTube> mapBarcodeToPlatingVessel = null;
+        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
+            CrspPicoEntityBuilder crspPicoEntityBuilder = new CrspPicoEntityBuilder(getBettaLimsMessageTestFactory(),
+                    getLabEventFactory(), getLabEventHandler(), "", "CRSP", mapBarcodeToTube).invoke();
+            platingTubeFormation = (TubeFormation) crspPicoEntityBuilder.getShearingAliquotEntity().
+                    getTargetLabVessels().iterator().next();
+            platingBarcode = platingTubeFormation.getLabCentricName();
+            mapBarcodeToPlatingVessel = new HashMap<>();
+            for (BarcodedTube barcodedTube : platingTubeFormation.getContainerRole().getContainedVessels()) {
+                mapBarcodeToPlatingVessel.put(barcodedTube.getLabel(), barcodedTube);
+            }
+        } else {
+            TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+            mapBarcodeToDaughterTube = new HashMap<>();
+            for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+                mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+            }
+            PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
+                    "P", lcsetSuffix, true);
+            platingTubeFormation = picoPlatingEntityBuilder.getNormTubeFormation();
+            platingBarcode = picoPlatingEntityBuilder.getNormalizationBarcode();
+            mapBarcodeToPlatingVessel = picoPlatingEntityBuilder.getNormBarcodeToTubeMap();
+        }
+
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder;
+        if (workflow == Workflow.CELL_FREE_HYPER_PREP_UMIS && umi != LibraryConstructionEntityBuilder.Umi.NONE) {
+            LibraryConstructionCellFreeUMIEntityBuilder libraryConstructionProcessWithUMI =
+                    runLibraryConstructionProcessWithUMI(mapBarcodeToPlatingVessel,
+                            platingTubeFormation, umi);
+            QtpEntityBuilder qtpEntityBuilder = runQtpProcess(libraryConstructionProcessWithUMI.getPondRegRack(),
+                    libraryConstructionProcessWithUMI.getPondRegTubeBarcodes(),
+                    libraryConstructionProcessWithUMI.getMapBarcodeToPondRegTubes(), barcodeSuffix);
+
+            return Pair.of(mapBarcodeToDaughterTube, qtpEntityBuilder);
+        } else if (umi == LibraryConstructionEntityBuilder.Umi.DUAL) {
+            ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
+                    runExomeExpressShearingProcess(mapBarcodeToPlatingVessel,
+                            platingTubeFormation,
+                            platingBarcode, lcsetSuffix);
+
+            StaticPlate shearingCleanupPlate = exomeExpressShearingEntityBuilder.getShearingCleanupPlate();
+            UniqueMolecularIdentifier umiReagent = new UniqueMolecularIdentifier(
+                    UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ, 6L, 3L);
+            UniqueMolecularIdentifier umiReagent2 = new UniqueMolecularIdentifier(
+                    UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ, 6L, 3L);
+            StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", umiReagent);
+            LabEventTest.attachUMIToPlate(umiReagent2, umiPlate);
+            LabEventTestFactory.doSectionTransfer(LabEventType.UMI_ADDITION, umiPlate, shearingCleanupPlate);
+
+            libraryConstructionEntityBuilder = runWgsLibraryConstructionProcessWithUMI(
+                    exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
+                    exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                    exomeExpressShearingEntityBuilder.getShearingPlate(),
+                    lcsetSuffix,
+                    pondType,
+                    indexing, LibraryConstructionEntityBuilder.Umi.DUAL);
+        } else {
+            ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
+                    runExomeExpressShearingProcess(mapBarcodeToPlatingVessel, platingTubeFormation, platingBarcode,
+                            lcsetSuffix);
+
+            libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
+                    getBettaLimsMessageTestFactory(), getLabEventFactory(), getLabEventHandler(),
+                    exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
+                    exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                    exomeExpressShearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK, barcodeSuffix,
+                    indexing, pondType).invoke();
+        }
+
+        QtpEntityBuilder qtpEntityBuilder = null;
+
+        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
+            IceEntityBuilder iceEntityBuilder = runHyperPrepIceProcess(
+                    Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()),
+                    "1");
+            qtpEntityBuilder = runQtpProcess(iceEntityBuilder.getCatchEnrichRack(),
+                    iceEntityBuilder.getCatchEnrichBarcodes(),
+                    iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), barcodeSuffix);
+        } else {
+            qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                    libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
+                    libraryConstructionEntityBuilder.getMapBarcodeToPondRegTubes(), barcodeSuffix);
+        }
+
+        return Pair.of(mapBarcodeToTube, qtpEntityBuilder);
     }
 
     private void verifyEventSequence(List<String> labEventNames, String[] expectedEventNames) {
@@ -2348,6 +2548,80 @@ public class LabEventTest extends BaseEventTest {
         return indexPlates;
     }
 
+    public static StaticPlate buildDualIndexPlate(
+            @Nullable MolecularIndexingSchemeDao molecularIndexingSchemeDao,
+            @Nullable MolecularIndexDao molecularIndexDao,
+            List<MolecularIndexingScheme.IndexPosition> indexPositions,
+            String indexPlateBarcode) {
+
+        char[] bases = {'A', 'C', 'T', 'G'};
+
+        StaticPlate indexPlate = new StaticPlate(indexPlateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
+        for (VesselPosition vesselPosition : SBSSection.ALL96.getWells()) {
+            for (MolecularIndexingScheme.IndexPosition indexPosition : indexPositions) {
+                PlateWell plateWell = indexPlate.getContainerRole().getVesselAtPosition(vesselPosition);
+                if (plateWell == null) {
+                    plateWell = new PlateWell(indexPlate, vesselPosition);
+                    indexPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                }
+                StringBuilder stringBuilder = new StringBuilder();
+
+                // Build a deterministic sequence from the vesselPosition, by indexing into the bases array
+                int base4Ordinal = Integer.parseInt(Integer.toString(vesselPosition.ordinal() + 1, 4), 4);
+                while (base4Ordinal > 0) {
+                    stringBuilder.append(bases[base4Ordinal % 4]);
+                    base4Ordinal = base4Ordinal / 4;
+                }
+                while (stringBuilder.length() < 8) {
+                    stringBuilder.append(bases[0]);
+                }
+
+                // Re-use existing sequence, if any
+                String sequence = stringBuilder.toString();
+                MolecularIndex molecularIndex = null;
+                if (molecularIndexDao != null) {
+                    molecularIndex = molecularIndexDao.findBySequence(sequence);
+                }
+                if (molecularIndex == null) {
+                    molecularIndex = new MolecularIndex(sequence);
+                }
+
+                // Re-use existing scheme, if any
+                MolecularIndexingScheme testScheme = null;
+                if (molecularIndexingSchemeDao != null) {
+                    testScheme = molecularIndexingSchemeDao.findSingleIndexScheme(indexPosition, sequence);
+                }
+                if (testScheme == null) {
+                    EnumMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> mapPositionToIndex =
+                            new EnumMap<>(MolecularIndexingScheme.IndexPosition.class);
+                    mapPositionToIndex.put(indexPosition, molecularIndex);
+                    testScheme = new MolecularIndexingScheme(
+                            mapPositionToIndex);
+                    if (molecularIndexingSchemeDao != null) {
+                        molecularIndexingSchemeDao.persist(testScheme);
+                        molecularIndexingSchemeDao.flush();
+                        molecularIndexingSchemeDao.clear();
+                    }
+
+                }
+                MolecularIndexReagent molecularIndexReagent = new MolecularIndexReagent(testScheme);
+                plateWell.addReagent(molecularIndexReagent);
+            }
+        }
+
+        for (VesselPosition vesselPosition : indexPlate.getVesselGeometry().getVesselPositions()) {
+            Map<MolecularIndexingScheme.IndexPosition, MolecularIndex> mapPositionToIndex =
+                    new EnumMap<>(MolecularIndexingScheme.IndexPosition.class);
+            PlateWell well = indexPlate.getContainerRole().getVesselAtPosition(vesselPosition);
+            MolecularIndexingScheme molecularIndexingScheme = ((MolecularIndexReagent) well.
+                    getReagentContents().iterator().next()).getMolecularIndexingScheme();
+            mapPositionToIndex.putAll(molecularIndexingScheme.getIndexes());
+            new MolecularIndexingScheme(mapPositionToIndex);
+        }
+
+        return indexPlate;
+    }
+
     public static BarcodedTube buildBaitTube(String tubeBarcode, ReagentDesign reagent) {
         BarcodedTube baitTube = new BarcodedTube(tubeBarcode);
         if (reagent == null) {
@@ -2358,6 +2632,46 @@ public class LabEventTest extends BaseEventTest {
         }
         baitTube.addReagent(new DesignedReagent(reagent));
         return baitTube;
+    }
+
+    public static UniqueMolecularIdentifier createUmi(long length, long spacerLength, UniqueMolecularIdentifier.UMILocation umiLocation) {
+        return new UniqueMolecularIdentifier(umiLocation, length, spacerLength);
+    }
+
+    public static StaticPlate buildUmiPlate(String plateBarcode, UniqueMolecularIdentifier umiReagent) {
+        StaticPlate umiPlate = new StaticPlate(plateBarcode, StaticPlate.PlateType.UniqueMolecularIdentifierPlate96);
+        attachUMIToPlate(umiReagent, umiPlate);
+        return umiPlate;
+    }
+
+    public static BarcodedTube buildUmiTube(String tubeBarcode, UniqueMolecularIdentifier ... umiReagent) {
+        BarcodedTube umiTube = new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube);
+        for (UniqueMolecularIdentifier umi: umiReagent) {
+            umiTube.addReagent(new UMIReagent(umi));
+        }
+        return umiTube;
+    }
+
+    /**
+     * Treated as a test by default and thusly fails: <br/>
+     * org.testng.TestNGException:  <br/>
+     * Cannot inject @Test annotated Method [attachUMIToPlate] with [class org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier, class org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate]. <br/>
+     * For more information on native dependency injection please refer to http://testng.org/doc/documentation-main.html#native-dependency-injection
+     */
+    @Test( enabled = false )
+    public static void attachUMIToPlate(UniqueMolecularIdentifier umi, StaticPlate staticPlate) {
+        UMIReagent umiReagent = new UMIReagent(umi);
+        for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {
+            PlateWell plateWell = null;
+            if (staticPlate.getContainerRole().getMapPositionToVessel().get(vesselPosition) == null) {
+                plateWell = new PlateWell(staticPlate, vesselPosition);
+            } else {
+                plateWell = staticPlate.getContainerRole().getMapPositionToVessel().get(vesselPosition);
+            }
+            plateWell.addReagent(umiReagent);
+            staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+        }
+        staticPlate.addReagent(umiReagent);
     }
 
     public static List<StaticPlate> buildSamplePlates(ProductOrder productOrder, String platePrefix) {

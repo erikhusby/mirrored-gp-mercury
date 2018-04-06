@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
+import org.apache.commons.collections4.ListValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting_;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
@@ -27,7 +31,7 @@ import java.util.Map;
 @TransactionAttribute(TransactionAttributeType.NEVER)
 public class ArraysQcDao {
 
-    @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "metrics_pu")
+    @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "analytics_pu")
     private EntityManager entityManager;
 
     public List<ArraysQc> findByBarcodes(List<String> chipWellBarcodes) {
@@ -53,6 +57,41 @@ public class ArraysQcDao {
         Map<String, ArraysQc> mapWellBarcodeToMetric = new HashMap<>();
         for (ArraysQc arraysQc : arraysQcList) {
             mapWellBarcodeToMetric.put(arraysQc.getChipWellBarcode(), arraysQc);
+        }
+        return mapWellBarcodeToMetric;
+    }
+
+    /**
+     * Returns a raw list of all ArraysQcBlacklisting entities related to chip well barcode<br/>
+     * Note:  Schema design allows more than one blacklist entry per chip well barcode so caller should account
+     *    for possibility of multiples if details (e.g reasons, dates) required
+     */
+    public List<ArraysQcBlacklisting> findBlacklistByBarcodes(List<String> chipWellBarcodes) {
+        if( chipWellBarcodes == null || chipWellBarcodes.isEmpty() ) {
+            return Collections.emptyList();
+        }
+        return JPASplitter.runCriteriaQuery(chipWellBarcodes, new CriteriaInClauseCreator<String>() {
+            @Override
+            public Query createCriteriaInQuery(Collection<String> parameterList) {
+                CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+                CriteriaQuery<ArraysQcBlacklisting> criteria = cb.createQuery(ArraysQcBlacklisting.class);
+                Root<ArraysQcBlacklisting> root = criteria.from(ArraysQcBlacklisting.class);
+                criteria.select(root)
+                        .where(root.get(ArraysQcBlacklisting_.chipWellBarcode).in(parameterList))
+                        .orderBy(cb.asc(root.get(ArraysQcBlacklisting_.chipWellBarcode)), cb.asc(root.get(ArraysQcBlacklisting_.blacklistedOn)));
+                return entityManager.createQuery(criteria);
+            }
+        });
+    }
+
+    /**
+     * Returns 0:n ArraysQcBlacklisting entities related to each chip well barcode
+     */
+    public ListValuedMap<String, ArraysQcBlacklisting> findBlacklistMapByBarcodes(List<String> chipWellBarcodes) {
+        List<ArraysQcBlacklisting> arraysQcBlacklist = findBlacklistByBarcodes(chipWellBarcodes);
+        ListValuedMap<String, ArraysQcBlacklisting> mapWellBarcodeToMetric = new ArrayListValuedHashMap<>();
+        for (ArraysQcBlacklisting blacklist : arraysQcBlacklist) {
+            mapWellBarcodeToMetric.put(blacklist.getChipWellBarcode(), blacklist);
         }
         return mapWellBarcodeToMetric;
     }

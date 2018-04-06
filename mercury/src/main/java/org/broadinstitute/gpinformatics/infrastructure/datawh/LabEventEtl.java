@@ -1,16 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
-import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
-import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -19,6 +15,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -35,6 +33,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private WorkflowConfigLookup workflowConfigLookup;
     private final Collection<EventFactDto> loggingDtos = new ArrayList<>();
@@ -79,7 +78,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
     @Override
-    Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
+    public Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
 
         Collection<String> eventFactRecords = new ArrayList<>();
         try {
@@ -102,7 +101,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             ExtractTransform.formatTimestamp(fact.getEventDate()),
                             format(fact.getEventProgram()),
                             format(fact.getMolecularIndex()),
-                            format(fact.getLibraryName()),
+                            format(fact.isEtlLibrary()?fact.getLibraryName():""),
                             "E"
                         )
                     );
@@ -138,11 +137,12 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
      * All delete records go in event fact table.  <br/>
      * Last character of line for update/insert records determines which file the record is written to: <br/>
      * "E" is an event fact record <br/>
-     * "A" is an ancestry fact record
+     * "A" is an ancestry fact record <br/>
+     * Scope relaxed from protected to public to allow a backfill service hook
      */
     @DaoFree
     @Override
-    protected int writeRecords(Collection<LabEvent> entities,
+    public int writeRecords(Collection<LabEvent> entities,
                                Collection<Long>deletedEntityIds,
                                String etlDateStr) {
 
@@ -196,10 +196,11 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     /**
      * Overridden to gather LabEvent objects for entity ids and pass to writer so the file writes are forked
-     * into event or ancestry file
+     * into event or ancestry file <br/>
+     * Scope relaxed from protected to public to allow a backfill service hook
      */
     @Override
-    protected int writeRecords(Collection<Long> deletedEntityIds,
+    public int writeRecords(Collection<Long> deletedEntityIds,
                                Collection<Long> modifiedEntityIds,
                                Collection<Long> addedEntityIds,
                                Collection<RevInfoPair<LabEvent>> revInfoPairs,
@@ -219,83 +220,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         }
         return writeRecords( eventList, deletedEntityIds, etlDateStr );
     }
-
-    /**
-
-    /**
-     * Modifies the id lists and possibly also invokes sequencingSampleFact ETL, in order to fixup the downstream
-     * event facts and sequencing facts when there are lab event deletions and modifications, which are due to a
-     * manual fixup.
-     *
-     * @param deletedEntityIds the deleted event ids.
-     * @param modifiedEntityIds the modified event ids, and the downstream event ids get added to this list.
-     * @param etlDateStr the etl date.
-     */
-    @Override
-    protected void processFixups(Collection<Long> deletedEntityIds,
-                                 Collection<Long> modifiedEntityIds,
-                                 String etlDateStr) throws Exception {
-
-
-        Set<Long> fixupEventIds = new HashSet<>(deletedEntityIds);
-        fixupEventIds.addAll(modifiedEntityIds);
-
-        // Gets the downstream events from first level vessels and their descendant vessels.
-        Set<LabVessel> firstLevelVessels = new HashSet<>();
-        for (Long entityId : fixupEventIds) {
-            LabEvent entity = dao.findById(LabEvent.class, entityId);
-            if (entity != null) {
-                firstLevelVessels.addAll(entity.getTargetLabVessels());
-                firstLevelVessels.add(entity.getInPlaceLabVessel());
-            } else {
-                loggingDeletedEventIds.add(entityId);
-            }
-        }
-
-        Set<LabVessel> directAndDescendantVessels = new HashSet<>();
-        for (LabVessel vessel : firstLevelVessels) {
-            if (vessel != null) {
-                directAndDescendantVessels.add(vessel);
-                Collection<LabVessel> vessels = vessel.getDescendantVessels();
-                if (!CollectionUtils.isEmpty(vessels)) {
-                    directAndDescendantVessels.addAll(vessels);
-                }
-            }
-        }
-
-        Set<Long> descendantEventIds = new HashSet<>();
-        Set<Long> descendantSequencingRunIds = new HashSet<>();
-
-        for (LabVessel vessel : directAndDescendantVessels) {
-            for (LabEvent event : vessel.getEvents()) {
-                descendantEventIds.add(event.getLabEventId());
-            }
-
-            // Collects sequencing run ids from flowcell descendent vessels.
-            if (vessel.getType().equals(LabVessel.ContainerType.FLOWCELL)) {
-                if (OrmUtil.proxySafeIsInstance(vessel, RunCartridge.class)) {
-                    RunCartridge runCartridge = (RunCartridge) vessel;
-                    for (SequencingRun seqRun : runCartridge.getSequencingRuns()) {
-                        descendantSequencingRunIds.add(seqRun.getSequencingRunId());
-                    }
-                }
-            }
-        }
-        // Adds all except the deleted events to the modified list.
-        modifiedEntityIds.addAll(descendantEventIds);
-        modifiedEntityIds.removeAll(deletedEntityIds);
-
-        if (descendantSequencingRunIds.size() > 0) {
-            // Creates a sequencingSampleFact .dat file that contains the possibly modified sequencing runs.
-            sequencingSampleFactEtl.writeEtlDataFileWrapper(
-                    Collections.<Long>emptyList(),
-                    descendantSequencingRunIds,
-                    Collections.<Long>emptyList(),
-                    Collections.<GenericEntityEtl<SequencingRun, SequencingRun>.RevInfoPair<SequencingRun>>emptyList(),
-                    etlDateStr);
-        }
-    }
-
 
     /**
      * Holds extract data for lab event ETL.  Data should be considered immutable after constructor. <br />
@@ -332,6 +256,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         private String barcode;
         private VesselPosition vesselPosition;
         private String rejectReason;
+        private boolean isEtlLibrary = false;
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, VesselPosition vesselPosition, String molecularIndexName, String batchName,
                      Date workflowEffectiveDate,
@@ -475,6 +400,16 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         public List<EventAncestryEtlUtil.AncestryFactDto> getAncestryDtos(){
             return ancestryFactDtos;
+        }
+
+        /**
+         * Flags this event fact as of interest to analytics LIBRARY_LCSET_SAMPLE
+         */
+        public void setIsEtlLibrary(){
+            isEtlLibrary = true;
+        }
+        public boolean isEtlLibrary(){
+            return isEtlLibrary;
         }
 
         public void setRejectReason(String rejectReason ) {

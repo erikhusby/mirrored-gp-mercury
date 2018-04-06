@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -24,10 +27,12 @@ import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -41,6 +46,9 @@ public class LabMetricFixupTest extends Arquillian {
 
     @Inject
     private LabMetricRunDao dao;
+
+    @Inject
+    private LabMetricDao labMetricDao;
 
     @Inject
     private UserBean userBean;
@@ -373,6 +381,26 @@ public class LabMetricFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupGplim4803() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        List<LabMetric.MetricType> metricTypes = Arrays.asList(LabMetric.MetricType.VIIA_QPCR,
+                LabMetric.MetricType.ECO_QPCR);
+        for (LabMetric.MetricType metricType: metricTypes) {
+            for (LabMetric labMetric : labMetricDao.findByMetricType(metricType)) {
+                if (labMetric.getUnits() != LabMetric.LabUnit.NM) {
+                    labMetric.setLabUnit(LabMetric.LabUnit.NM);
+                    System.out.println("Lab metric " + labMetric.getLabMetricId() + " set lab unit to " +
+                                       LabMetric.LabUnit.NM.getDisplayName());
+                }
+            }
+        }
+        labMetricDao.persist(new FixupCommentary("GPLIM-4803 change viia and eco lab units to nM"));
+        labMetricDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
     public void fixupGplim4854() {
         try {
             utx.begin();
@@ -383,6 +411,27 @@ public class LabMetricFixupTest extends Arquillian {
                 HeuristicRollbackException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/DeleteLabMetricRuns.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-3624 User uploaded the wrong pico type
+     * 11_30-02:57 LCSET-12440
+     */
+    @Test(enabled = false)
+    public void fixupSupport3624() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabMetricRuns.txt"));
+        String reason = lines.get(0);
+
+        for (String runName : lines.subList(1, lines.size())) {
+            deleteRun(runName, reason);
+        }
+
+        utx.commit();
     }
 
     private void deleteRun(String runName, String reason) {

@@ -25,7 +25,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean.CONTROLS;
@@ -125,8 +124,8 @@ public class DesignationUtils {
     public static void updateDesignationsAndDtos(Collection<DesignationDto> dtos,
                                                  EnumSet<FlowcellDesignation.Status> persistableStatuses,
                                                  FlowcellDesignationEjb designationTubeEjb) {
-        for (Map.Entry<DesignationDto, FlowcellDesignation> dtoAndTube :
-                designationTubeEjb.update(dtos, persistableStatuses).entrySet()) {
+        List<Pair<DesignationDto, FlowcellDesignation>> pairs = designationTubeEjb.update(dtos, persistableStatuses);
+        for (Pair<DesignationDto, FlowcellDesignation> dtoAndTube : pairs) {
             // After Hibernate flushes new entities the dto can get the updated designation id.
             DesignationDto dto = dtoAndTube.getKey();
             FlowcellDesignation designation = dtoAndTube.getValue();

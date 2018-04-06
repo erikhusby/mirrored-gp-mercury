@@ -13,6 +13,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
@@ -21,12 +22,9 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingException
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionAccessEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -41,7 +39,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
@@ -87,9 +84,6 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @Inject
     private BillingSessionAccessEjb billingSessionAccessEjb;
-
-    @Inject
-    private SampleLedgerExporterFactory sampleLedgerExporterFactory;
 
     private List<BillingSession> billingSessions;
 
@@ -137,22 +131,6 @@ public class BillingSessionActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(SESSION_VIEW_PAGE);
-    }
-
-    @HandlesEvent("downloadTracker")
-    public Resolution downloadTracker() {
-
-        List<ProductOrder> productOrders =
-                productOrderDao.findListForBilling(editSession.getProductOrderBusinessKeys());
-
-        SampleLedgerExporter exporter = sampleLedgerExporterFactory.makeExporter(productOrders);
-
-        try {
-            return new BillingTrackerResolution(exporter);
-        } catch (IOException e) {
-            addGlobalValidationError("Got an exception trying to download the billing tracker: " + e.getMessage());
-            return new ForwardResolution(SESSION_VIEW_PAGE);
-        }
     }
 
     /**
@@ -230,10 +208,15 @@ public class BillingSessionActionBean extends CoreActionBean {
                                     billingResult.getWorkId());
 
                     String link = "<a href=\"" + workUrl + "\" target=\"QUOTE\">click here</a>";
-                    addMessage("Sent to quote server and SAP: " + link + " to see the quotes server value");
+                    final StringBuilder results = new StringBuilder("Sent to quote server");
+                    if(StringUtils.isNotBlank(billingResult.getSAPBillingId())) {
+                        results.append(" and SAP");
+                    }
+                    results.append(": ").append(link) .append(" to see the quotes server value");
+                    addMessage(results.toString());
                 }
             }
-        } catch (BillingException e) {
+        } catch (Exception e) {
             errorsInBilling = true;
             addGlobalValidationError(e.getMessage());
         }

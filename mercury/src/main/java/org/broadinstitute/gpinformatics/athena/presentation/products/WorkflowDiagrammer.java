@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -35,6 +36,7 @@ import java.util.Set;
 /**
  * This class generates diagrams of workflows.
  */
+@Dependent
 public class WorkflowDiagrammer implements Serializable {
     private static Log logger = LogFactory.getLog(WorkflowDiagrammer.class);
     private WorkflowConfig workflowConfig;
