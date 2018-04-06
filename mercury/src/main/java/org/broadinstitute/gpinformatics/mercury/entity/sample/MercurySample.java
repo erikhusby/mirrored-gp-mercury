@@ -29,6 +29,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -149,6 +151,7 @@ public class MercurySample extends AbstractSample {
     private String sampleKey;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinColumn(name = "RAP_SHEET")
     private RapSheet rapSheet;
 
     @OneToMany(mappedBy = "mercurySample", fetch = FetchType.LAZY,  cascade = CascadeType.PERSIST)
@@ -159,6 +162,9 @@ public class MercurySample extends AbstractSample {
     private MetadataSource metadataSource;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "MERCURY"
+            , joinColumns = {@JoinColumn(name = "MERCURY_SAMPLE")}
+            ,inverseJoinColumns = {@JoinColumn(name = "METADATA")})
     @BatchSize(size = 100)
     private Set<Metadata> metadata = new HashSet<>();
 
@@ -235,6 +241,10 @@ public class MercurySample extends AbstractSample {
     @Override
     public String getSampleKey() {
         return sampleKey;
+    }
+
+    void setSampleKey(String sampleKey) {
+        this.sampleKey = sampleKey;
     }
 
     public Set<ProductOrderSample> getProductOrderSamples() {
@@ -315,13 +325,20 @@ public class MercurySample extends AbstractSample {
     }
 
     public Date getReceivedDate() {
+        LabEvent receiptEvent = getReceiptEvent();
+        if (receiptEvent != null) {
+            return receiptEvent.getEventDate();
+        }
+        return null;
+    }
 
+    public LabEvent getReceiptEvent() {
         for(LabVessel currentVessel:labVessel) {
             Map<LabEvent, Set<LabVessel>> vesselsForEvent = currentVessel
                     .findVesselsForLabEventType(LabEventType.SAMPLE_RECEIPT, true,
                             EnumSet.of(TransferTraverserCriteria.TraversalDirection.Ancestors));
             if (!vesselsForEvent.isEmpty()) {
-                return vesselsForEvent.keySet().iterator().next().getEventDate();
+                return vesselsForEvent.keySet().iterator().next();
             }
         }
 

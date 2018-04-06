@@ -46,6 +46,13 @@ public class QuoteServiceDBFreeTest {
         PriceList priceList = service.getAllPriceItems();
         Assert.assertFalse(priceList.getQuotePriceItems().isEmpty());
 
+        final QuotePriceItem cryovialPriceItem = priceList.findByKeyFields("Biological Samples", "Sample Kit",
+                "Cryovials Partial Kit (1 - 40 Samples)");
+
+        Assert.assertNotNull(cryovialPriceItem.getEffectiveDate(), cryovialPriceItem.getName() +
+                                                                   " should not have a null effective date");
+        Assert.assertNotNull(cryovialPriceItem.getSubmittedDate(), cryovialPriceItem.getName() +
+                                                                   " should not have a null submitted date");
     }
 
     @Test(groups = DATABASE_FREE)

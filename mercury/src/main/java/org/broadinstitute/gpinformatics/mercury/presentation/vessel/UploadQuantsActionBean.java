@@ -244,8 +244,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
             labMetricDao.flush();
             addMessage("Successfully saved metrics.");
         }
-        labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
-        buildColumns();
+        if( labMetricRunId != null ) {
+            labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
+            buildColumns();
+        }
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -268,7 +270,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
         Result traverserResult = runAndRackOfTubes.getMiddle();
         if (quantType == LabMetric.MetricType.INITIAL_PICO) {
 
-            Set<VesselPosition> clinicalTubePositions = new HashSet<>();
+            Set<VesselPosition> researchTubePositions = new HashSet<>();
             // Must re-fetch to avoid lazy evaluation exception on tube.getSampleInstanceV2()
             TubeFormation tubeFormation = tubeFormationDao.findByDigest(traverserResult.getTubeFormation().getDigest());
             for (Map.Entry<VesselPosition, BarcodedTube> entry :
@@ -276,29 +278,26 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 VesselPosition tubePosition = entry.getKey();
                 BarcodedTube tube = entry.getValue();
                 for (SampleInstanceV2 sampleInstance : tube.getSampleInstancesV2()) {
-                    if (sampleInstance.getRootOrEarliestMercurySample().canSampleBeUsedForClinical()) {
-                        clinicalTubePositions.add(tubePosition);
+                    if (!sampleInstance.getRootOrEarliestMercurySample().canSampleBeUsedForClinical()) {
+                        researchTubePositions.add(tubePosition);
                         break;
                     }
                 }
             }
 
-            Set<VesselPosition> clinicalWellPositions = new HashSet<>();
-            int nonClinicalWellCount = 0;
+            Set<VesselPosition> researchWellPositions = new HashSet<>();
             for (VesselPosition wellPosition : traverserResult.getWellToTubePosition().keySet()) {
                 VesselPosition tubePosition = traverserResult.getWellToTubePosition().get(wellPosition);
-                if (clinicalTubePositions.contains(tubePosition)) {
-                    clinicalWellPositions.add(wellPosition);
-                } else {
-                    nonClinicalWellCount++;
+                if (researchTubePositions.contains(tubePosition)) {
+                    researchWellPositions.add(wellPosition);
                 }
             }
 
-            if (nonClinicalWellCount > 0) {
+            if (!researchWellPositions.isEmpty()) {
                 InputStream filteredQuantStream;
                 try {
                     filteredQuantStream = VesselEjb.filterOutRows(new ByteArrayInputStream(quantStreamBytes),
-                            clinicalWellPositions);
+                            researchWellPositions);
                 } catch (Exception e) {
                     messageCollection.addError("Cannot process spreadsheet: " + e.toString());
                     throw e;

@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryBeansType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantBeanType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.MetricMetadataType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.QpcrRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -118,7 +119,7 @@ public class VesselEjb {
      * @param tubeType either BarcodedTube.BarcodedTubeType.name or null (defaults to Matrix tube).
      */
     public void registerSamplesAndTubes(@Nonnull Collection<String> tubeBarcodes,
-                                        @Null String tubeType,
+                                        String tubeType,
                                         @Nonnull Map<String, GetSampleDetails.SampleInfo> sampleInfoMap) {
 
         // Determine which barcodes are already known to Mercury.
@@ -928,8 +929,17 @@ public class VesselEjb {
             }
 
             LabMetric labMetric = new LabMetric(libraryBeans.getValue(), metricType,
-                    LabMetric.LabUnit.NG_PER_UL, libraryBeans.getRackPositionName(), libraryQuantRun.getRunDate());
+                    metricType.getLabUnit(), libraryBeans.getRackPositionName(), libraryQuantRun.getRunDate());
             labMetricRun.addMetric(labMetric);
+            for (MetricMetadataType metricMetadataType: libraryBeans.getMetadata()) {
+                Metadata.Key metadataKey = Metadata.Key.fromDisplayName(metricMetadataType.getName());
+                if(metadataKey != null) {
+                    Metadata metadata = Metadata.createMetadata(metadataKey, metricMetadataType.getValue());
+                    labMetric.getMetadataSet().add(metadata);
+                } else {
+                    throw new RuntimeException("Failed to find metadata " + metricMetadataType.getName());
+                }
+            }
             labVessel.addMetric(labMetric);
         }
         return labMetricRun;
@@ -986,8 +996,8 @@ public class VesselEjb {
                 continue;
             }
 
-            LabMetric labMetric = new LabMetric(libraryBeans.getConcentration(), metricType,
-                    LabMetric.LabUnit.NG_PER_UL, libraryBeans.getWell(), qpcrRunBean.getRunDate());
+            LabMetric labMetric = new LabMetric(libraryBeans.getConcentration(), metricType, metricType.getLabUnit(),
+                    libraryBeans.getWell(), qpcrRunBean.getRunDate());
             labMetricRun.addMetric(labMetric);
             labVessel.addMetric(labMetric);
 
@@ -1005,10 +1015,10 @@ public class VesselEjb {
     }
 
     /**
-     * Parses the spreadsheet stream and removes rows containing specified cell names.
+     * Parses the spreadsheet stream and removes rows referring to cells that are to be excluded.
      * @return a stream of the filtered spreadsheet
      */
-    public static InputStream filterOutRows(InputStream quantStream, Set<VesselPosition> excludedPositions)
+    public static InputStream filterOutRows(InputStream quantStream, Set<VesselPosition> includedPositions)
             throws Exception {
         Workbook workbook = WorkbookFactory.create(quantStream);
         List<Row> toBeRemoved = new ArrayList<>();
@@ -1021,7 +1031,8 @@ public class VesselEjb {
             Row row = curveSheet.getRow(i);
             String well = (row != null && row.getCell(COLUMN_CONTAINING_VESSEL_POSITION) != null) ?
                     row.getCell(COLUMN_CONTAINING_VESSEL_POSITION).getStringCellValue().trim() : null;
-            if (StringUtils.isNotBlank(well) && excludedPositions.contains(VesselPosition.getByName(well))) {
+            VesselPosition wellPosition = VesselPosition.getByName(well);
+            if (wellPosition != null && !includedPositions.contains(wellPosition)) {
                 toBeRemoved.add(row);
             }
         }

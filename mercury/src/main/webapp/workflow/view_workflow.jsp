@@ -3,8 +3,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.WorkflowActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Workflow: #{actionBean.viewWorkflow.name}"
-                       sectionTitle="View Workflow: #{actionBean.viewWorkflow.name}"
+<stripes:layout-render name="/layout.jsp" pageTitle="View Workflow: ${actionBean.viewWorkflow.name}"
+                       sectionTitle="View Workflow: ${actionBean.viewWorkflow.name}"
                        businessKeyValue="${actionBean.viewWorkflow.name}">
 
     <stripes:layout-component name="content">

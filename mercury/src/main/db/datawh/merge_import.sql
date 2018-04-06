@@ -256,14 +256,6 @@ AS
         WHERE is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' abandon_vessel rows' );
 
-      DELETE FROM abandon_vessel
-      WHERE abandon_type = 'AbandonVesselPosition'
-        AND abandon_id IN (
-        SELECT abandon_id
-        FROM im_abandon_vessel_position
-        WHERE is_delete = 'T' );
-      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' abandon_vessel (position) rows' );
-
       DELETE FROM lab_metric
       WHERE lab_metric_id IN (
         SELECT lab_metric_id
@@ -629,41 +621,27 @@ AS
       FOR new IN (SELECT line_number,
                     etl_date,
                     abandon_id,
-                    abandon_type,
                     abandon_vessel_id,
-                    CAST(NULL AS VARCHAR2(24) ) AS vessel_position,
                     reason,
-                    abandoned_on
+                    abandoned_on,
+                    vessel_position
                   FROM im_abandon_vessel
-                  WHERE is_delete = 'F'
-                  UNION ALL
-                  SELECT line_number,
-                    etl_date,
-                    abandon_id,
-                    abandon_type,
-                    abandon_vessel_id,
-                    vessel_position,
-                    reason,
-                    abandoned_on
-                  FROM im_abandon_vessel_position
-                  WHERE is_delete = 'F') LOOP
+                  WHERE is_delete = 'F' ) LOOP
         BEGIN
           SELECT MAX(etl_date)
           INTO V_LATEST_ETL_DATE
           FROM abandon_vessel
-          WHERE abandon_id = new.abandon_id
-            AND abandon_type = new.abandon_type;
+          WHERE abandon_id = new.abandon_id;
 
           -- Do an update only if this ETL date greater than what's in DB already
           IF new.etl_date > V_LATEST_ETL_DATE THEN
             UPDATE abandon_vessel
             SET abandon_vessel_id = new.abandon_vessel_id,
-              vessel_position = new.vessel_position,
               reason = new.reason,
               abandoned_on = new.abandoned_on,
+              vessel_position = new.vessel_position,
               etl_date = new.etl_date
-            WHERE abandon_id = new.abandon_id
-              AND abandon_type = new.abandon_type;
+            WHERE abandon_id = new.abandon_id;
 
             V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
@@ -678,7 +656,7 @@ AS
               abandoned_on,
               etl_date
             ) VALUES (
-              new.abandon_type,
+              CASE WHEN new.vessel_position IS NULL THEN 'AbandonVessel' ELSE 'AbandonVesselPosition' END,
               new.abandon_id,
               new.abandon_vessel_id,
               new.vessel_position,
@@ -690,13 +668,8 @@ AS
           END IF;
           EXCEPTION WHEN OTHERS THEN
           errmsg := SQLERRM;
-          IF new.abandon_type = 'AbandonVessel' THEN
-            DBMS_OUTPUT.PUT_LINE(
+          DBMS_OUTPUT.PUT_LINE(
                 TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_abandon_vessel.dat line ' || new.line_number || '  ' || errmsg);
-          ELSE
-            DBMS_OUTPUT.PUT_LINE(
-                TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_abandon_vessel_position.dat line ' || new.line_number || '  ' || errmsg);
-          END IF;
           CONTINUE;
         END;
       END LOOP;
@@ -714,12 +687,6 @@ AS
 
       FOR new IN (SELECT * FROM im_lab_metric WHERE is_delete = 'F') LOOP
         BEGIN
-
-          -- RPT-3131 - Delete any older metrics for same vessel
-          DELETE FROM lab_metric
-          WHERE vessel_barcode =  new.vessel_barcode
-                AND quant_type     =  new.quant_type
-                AND run_date       < new.run_date;
 
           SELECT MAX(ETL_DATE)
           INTO V_LATEST_ETL_DATE
@@ -754,19 +721,12 @@ AS
               lab_vessel_id, vessel_barcode, rack_position,
               decision, decision_date, decider,
               override_reason, etl_date )
-              SELECT new.lab_metric_id,
+              VALUES( new.lab_metric_id,
                 new.quant_type, new.quant_units, new.quant_value,
                 new.run_name, new.run_date,
                 new.lab_vessel_id, new.vessel_barcode, new.rack_position,
                 new.decision, new.decision_date, new.decider,
-                new.override_reason, new.etl_date
-              FROM dual
-              WHERE NOT EXISTS (
-                  SELECT 'Y'
-                  FROM lab_metric
-                  WHERE vessel_barcode =  new.vessel_barcode
-                        AND quant_type     =  new.quant_type
-                        AND run_date       > new.run_date );
+                new.override_reason, new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
 
@@ -1051,6 +1011,7 @@ AS
               skip_regulatory_reason = new.skip_regulatory_reason,
               sap_order_number = new.sap_order_number,
               array_chip_type = new.array_chip_type,
+              call_rate_threshold = new.call_rate_threshold,
               etl_date = new.etl_date
             WHERE product_order_id = new.product_order_id;
 
@@ -1072,6 +1033,7 @@ AS
               skip_regulatory_reason,
               sap_order_number,
               array_chip_type,
+              call_rate_threshold,
               etl_date
             ) VALUES (
               new.product_order_id,
@@ -1088,6 +1050,7 @@ AS
               new.skip_regulatory_reason,
               new.sap_order_number,
               new.array_chip_type,
+              new.call_rate_threshold,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;

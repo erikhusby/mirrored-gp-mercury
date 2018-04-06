@@ -2,12 +2,13 @@ package org.broadinstitute.gpinformatics.infrastructure;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -16,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -30,11 +32,11 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -92,7 +94,7 @@ public class SampleDataFetcherTest {
     ));
 
     private MercurySampleDao mockMercurySampleDao;
-    private BSPSampleDataFetcher mockBspSampleDataFetcher;
+    private BSPSampleDataFetcherImpl mockBspSampleDataFetcher;
     private MercurySampleDataFetcher mockMercurySampleDataFetcher;
     private SampleDataFetcher sampleDataFetcher;
 
@@ -118,7 +120,7 @@ public class SampleDataFetcherTest {
 
         mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
 
-        mockBspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        mockBspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcherImpl.class);
         mockMercurySampleDataFetcher = Mockito.mock(MercurySampleDataFetcher.class);
         SampleDataSourceResolver sampleDataSourceResolver = new SampleDataSourceResolver(mockMercurySampleDao);
         sampleDataFetcher =
@@ -546,7 +548,11 @@ public class SampleDataFetcherTest {
 
         ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
         ProductOrder productOrder = new ProductOrder();
-        productOrder.setProduct(new Product());
+        try {
+            productOrder.setProduct(new Product());
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         productOrderSample.setProductOrder(productOrder);
         return productOrderSample;
     }
@@ -557,7 +563,11 @@ public class SampleDataFetcherTest {
 
         ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
         ProductOrder productOrder = new ProductOrder();
-        productOrder.setProduct(new Product());
+        try {
+            productOrder.setProduct(new Product());
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         productOrderSample.setProductOrder(productOrder);
         MercurySample mercurySample = presetSampleToMercurySampleMap.get(sampleId);
         if(mercurySample == null) {

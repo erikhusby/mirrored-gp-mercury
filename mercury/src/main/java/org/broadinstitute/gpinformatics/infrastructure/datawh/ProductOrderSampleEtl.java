@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -15,8 +17,11 @@ import java.util.Date;
 import java.util.Set;
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrderSample, ProductOrderSample> {
     private String samplePositionJoinTable;
+
+    private int counter = 0;
 
     public ProductOrderSampleEtl() {
     }
@@ -40,6 +45,10 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
 
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId) {
+        if( ++counter > JPA_CLEAR_THRESHOLD ) {
+            counter = 0;
+            dao.clear();
+        }
         return dataRecords(etlDateStr, isDelete, dao.findById(ProductOrderSample.class, entityId));
     }
 

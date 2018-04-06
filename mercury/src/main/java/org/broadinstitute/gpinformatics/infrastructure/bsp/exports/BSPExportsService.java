@@ -11,14 +11,17 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class BSPExportsService {
+@Dependent
+public class BSPExportsService implements Serializable {
 
     private static Log log = LogFactory.getLog(BSPExportsService.class);
 
@@ -49,5 +52,17 @@ public class BSPExportsService {
         WebResource resource = client.resource(url).queryParams(parameters);
 
         return resource.accept(MediaType.APPLICATION_XML_TYPE).get(IsExported.ExportResults.class);
+    }
+
+    /**
+     * Initiates an export to Mercury.
+     * @param containerId CO-ID
+     * @param userId user initiating export
+     */
+    public void export(String containerId, String userId) {
+        WebResource resource = client.resource(bspConfig.getUrl("rest/exports")).
+                queryParam("containerId", containerId).
+                queryParam("userId", userId);
+        resource.post();
     }
 }

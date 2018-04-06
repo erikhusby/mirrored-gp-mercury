@@ -12,11 +12,16 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Audited
@@ -32,12 +37,15 @@ public class SampleInstanceEntity {
 
     @Nonnull
     @ManyToOne
+    @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "MERCURY_SAMPLE")
     private MercurySample mercurySample;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "ROOT_SAMPLE")
     private MercurySample rootSample;
 
 
@@ -46,9 +54,11 @@ public class SampleInstanceEntity {
     private Set<SampleInstanceEntityTsk> sampleInstanceEntityTsks = new HashSet<>();
 
     @ManyToOne
+    @JoinColumn(name = "REAGENT_DESIGN")
     private ReagentDesign reagentDesign;
 
     @ManyToOne
+    @JoinColumn(name = "MOLECULAR_INDEXING_SCHEME")
     private MolecularIndexingScheme molecularIndexingScheme;
 
     private String sampleLibraryName;
@@ -56,6 +66,8 @@ public class SampleInstanceEntity {
     private Date uploadDate;
 
     private String experiment;
+
+    private Integer readLength;
 
     public void removeSubTasks() {
         sampleInstanceEntityTsks.clear();
@@ -82,6 +94,9 @@ public class SampleInstanceEntity {
        return subTask;
     }
 
+    public Integer getReadLength() { return readLength; }
+
+    public void setReadLength(Integer readLength) { this.readLength = readLength;  }
 
     public MercurySample getRootSample() {  return rootSample;  }
 
@@ -89,27 +104,21 @@ public class SampleInstanceEntity {
 
     public void setLabVessel(LabVessel labVessel) { this.labVessel = labVessel; }
 
-    public LabVessel getBarodedTube() { return labVessel;  }
-
-    public String getSampleLibraryName() { return  sampleLibraryName; }
-
     public MolecularIndexingScheme getMolecularIndexingScheme() { return molecularIndexingScheme;  }
 
     public void setReagentDesign(ReagentDesign reagentDesign){ this.reagentDesign = reagentDesign; }
 
     public ReagentDesign getReagentDesign() { return this.reagentDesign; }
 
-    public void setSampleInstanceEntityId(Long sampleInstanceEntityId) {this.sampleInstanceEntityId = sampleInstanceEntityId; }
-
-    public Long getSampleInstanceEntityId() { return sampleInstanceEntityId; }
-
     public void setMolecularIndexScheme(MolecularIndexingScheme molecularIndexingScheme) { this.molecularIndexingScheme = molecularIndexingScheme; }
 
-    public void setMercurySampleId(MercurySample mercurySample){ this.mercurySample = mercurySample; }
+    public void setMercurySample(MercurySample mercurySample){ this.mercurySample = mercurySample; }
 
     public MercurySample getMercurySample() { return this.mercurySample;    }
 
     public void setSampleLibraryName(String sampleLibraryName) { this.sampleLibraryName = sampleLibraryName; }
+
+    public String getSampleLibraryName() { return sampleLibraryName;  }
 
     public void setUploadDate(){ this.uploadDate = new Date(); }
 

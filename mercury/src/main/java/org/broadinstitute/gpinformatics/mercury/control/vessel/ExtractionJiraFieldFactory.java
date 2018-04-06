@@ -99,7 +99,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             if (pdo != null) {
                 foundResearchProjectList.put(currPdo, pdo.getResearchProject());
             } else {
-                //TODO SGM: Throw an exception here (?)
+                //TODO Throw an exception here (?)
                 log.error("Unable to find a PDO for the business key of " + currPdo);
             }
             if (batch.getWorkflowName() != null) {
@@ -112,13 +112,13 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
-        //TODO SGM: Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
+        //TODO Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
         Set<CustomField> customFields = new HashSet<>();
 
         customFields
                 .add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION, batch.getBatchDescription()));
 
-        int sampleCount = batch.getStartingBatchLabVessels().size();
+        int sampleCount = batch.getBucketEntries().size();
 
         customFields.add(new CustomField(
                 submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName()), sampleCount));
@@ -145,7 +145,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
                 MaterialType materialType = bucketEntry.getLabVessel().getLatestMaterialType();
                 if (materialType!=null) {
-                    CustomField materialTypeField = new CustomField(submissionFields, LabBatch.TicketFields.BATCH_TYPE,
+                    CustomField materialTypeField = new CustomField(submissionFields, LabBatch.TicketFields.MATERIAL_TYPE,
                                     new CustomField.ValueContainer(materialType.getDisplayName()));
                     customFields.add(materialTypeField);
                     // TODO: the batchtype field will be changed to a multi-select in the near future,

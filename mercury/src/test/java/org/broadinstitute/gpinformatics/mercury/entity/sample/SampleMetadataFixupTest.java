@@ -12,11 +12,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
@@ -28,10 +30,12 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,6 +49,8 @@ import static org.hamcrest.Matchers.nullValue;
  */
 @Test(groups = TestGroups.FIXUP)
 public class SampleMetadataFixupTest extends Arquillian {
+    private static final Pattern TAB_PATTERN = Pattern.compile("\\t");
+
     @Inject
     private MercurySampleDao mercurySampleDao;
 
@@ -222,6 +228,56 @@ public class SampleMetadataFixupTest extends Arquillian {
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-CEMYZ", Metadata.Key.PATIENT_ID, "CP-7595", "CP-7596"));
 
         String fixupComment = "see https://gpinfojira.broadinstitute.org:8443/jira/browse/CRSP-475";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
+     * "Tumor" was silently replaced with empty string, so add "Primary".
+     */
+    @Test(enabled = false)
+    public void testSupport3129Fixup() throws Exception {
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(Arrays.asList(
+                "SM-B3LYZ",
+                "SM-B3LZO",
+                "SM-CEMGG",
+                "SM-CEMH5",
+                "SM-CEMHH",
+                "SM-CEMI5",
+                "SM-CEMI6"));
+        Map<MercurySample, MetaDataFixupItem> fixupItems = new HashMap<>();
+        for (MercurySample mercurySample : mercurySamples) {
+            MetaDataFixupItem fixupItem = new MetaDataFixupItem(mercurySample.getSampleKey(), Metadata.Key.TUMOR_NORMAL,
+                    "", "Primary");
+            fixupItems.put(mercurySample, fixupItem);
+        }
+        String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-3129";
+        addMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateSampleMetadata.txt, so
+     * it can be used for other similar fixups, without writing a new test.
+     * Line 1 is the fixup commentary.
+     * Line 2 and subsequent are SampleId\tMetadata.Key\tOld value\tNew value.
+     * Example contents of the file are:
+     * CRSP-538
+     * SM-CEM8Z	TUMOR_NORMAL	NA	Normal
+     * SM-CEM9C	TUMOR_NORMAL	NA	Normal
+     */
+    @Test(enabled = false)
+    public void testCrsp538Fixup() throws Exception {
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateSampleMetadata.txt"));
+        String fixupComment = lines.get(0);
+
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = TAB_PATTERN.split(line);
+            if (fields.length != 4) {
+                throw new RuntimeException("Expected four tab separated fields in " + line);
+            }
+            fixupItems.putAll(MetaDataFixupItem.mapOf(fields[0], Metadata.Key.valueOf(fields[1]), fields[2], fields[3]));
+        }
+
         updateMetadataAndValidate(fixupItems, fixupComment);
     }
 

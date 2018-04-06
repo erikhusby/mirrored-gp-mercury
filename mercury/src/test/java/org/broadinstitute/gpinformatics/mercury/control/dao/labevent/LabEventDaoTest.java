@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.labevent;
 
 import org.apache.commons.lang.time.DateUtils;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -24,7 +24,7 @@ import java.util.Set;
  * Test persisting LabEvents, including reagents.
  */
 @Test(groups = TestGroups.STUBBY)
-public class LabEventDaoTest extends ContainerTest {
+public class LabEventDaoTest extends StubbyContainerTest {
 
     @Inject
     private LabEventDao labEventDao;

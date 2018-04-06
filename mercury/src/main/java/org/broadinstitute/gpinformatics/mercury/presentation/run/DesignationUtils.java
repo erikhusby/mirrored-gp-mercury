@@ -9,7 +9,6 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -26,7 +25,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean.CONTROLS;
@@ -126,8 +124,8 @@ public class DesignationUtils {
     public static void updateDesignationsAndDtos(Collection<DesignationDto> dtos,
                                                  EnumSet<FlowcellDesignation.Status> persistableStatuses,
                                                  FlowcellDesignationEjb designationTubeEjb) {
-        for (Map.Entry<DesignationDto, FlowcellDesignation> dtoAndTube :
-                designationTubeEjb.update(dtos, persistableStatuses).entrySet()) {
+        List<Pair<DesignationDto, FlowcellDesignation>> pairs = designationTubeEjb.update(dtos, persistableStatuses);
+        for (Pair<DesignationDto, FlowcellDesignation> dtoAndTube : pairs) {
             // After Hibernate flushes new entities the dto can get the updated designation id.
             DesignationDto dto = dtoAndTube.getKey();
             FlowcellDesignation designation = dtoAndTube.getValue();
@@ -219,8 +217,7 @@ public class DesignationUtils {
                 }
 
                 DesignationDto designationDto = makeDesignationDto(designation.getLoadingTube(),
-                        lcset, Collections.singletonList(designation.getLoadingTubeEvent()),
-                        bucketEntries, controls, designation);
+                        lcset, bucketEntries, controls, designation);
 
                 caller.getDtos().add(designationDto);
             }
@@ -234,18 +231,16 @@ public class DesignationUtils {
      * the collections passed in.
      */
     public static DesignationDto makeDesignationDto(LabVessel loadingTube, LabBatch lcset,
-                                                    Collection<LabEvent> loadingTubeEvents,
                                                     Collection<BucketEntry> bucketEntries,
                                                     Collection<LabVessel> controlTubes,
                                                     FlowcellDesignation flowcellDesignation) {
 
         // Populates values from existing flowcell designation if it exists.
         DesignationDto dto = new DesignationDto(flowcellDesignation);
-
+        dto.setTypeAndDate(loadingTube);
         dto.setBarcode(loadingTube.getLabel());
         dto.setLcset(lcset.getBatchName());
         dto.setLcsetUrl(lcset.getJiraTicket().getBrowserUrl());
-        dto.setEvents(loadingTubeEvents);
 
         int numberSamples = 0;
         Multimap<String, String> productToStartingVessel = HashMultimap.create();

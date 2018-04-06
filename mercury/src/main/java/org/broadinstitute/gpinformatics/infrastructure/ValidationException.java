@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
 import org.apache.commons.lang3.StringUtils;
+import javax.validation.constraints.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,11 @@ public class ValidationException extends Exception {
 
     @Override
     public String getMessage() {
-        return super.getMessage() + '\n' + StringUtils.join(validationMessages, '\n');
+        return getMessage("\n");
+    }
+
+    @NotNull
+    public String getMessage(String separator) {
+        return super.getMessage() + separator + StringUtils.join(validationMessages, separator);
     }
 }

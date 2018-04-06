@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -69,6 +69,7 @@ public class InfiniumRunResourceContainerTest extends Arquillian {
         InputStream xmlFile = VarioskanParserTest.getSpreadsheet(XML_FILE);
         OutputStream outputStream = new FileOutputStream(tempFile);
         IOUtils.copy(xmlFile, outputStream);
+        outputStream.close();
         InfiniumStarterConfig config = mock(InfiniumStarterConfig.class);
         when(config.getDataPath()).thenReturn(tmpDir.getPath());
         infiniumRunResource.setInfiniumStarterConfig(config);
@@ -97,7 +98,7 @@ public class InfiniumRunResourceContainerTest extends Arquillian {
 
         AttributeArchetypeDao spyAttributeArchetypeDao = spy(attributeArchetypeDao);
         doReturn(mockGenotypingProductOrderMapping1)
-                .when(spyAttributeArchetypeDao).findGenotypingProductOrderMapping(anyString());
+                .when(spyAttributeArchetypeDao).findGenotypingProductOrderMapping(anyLong());
         infiniumRunResource.setAttributeArchetypeDao(spyAttributeArchetypeDao);
         InfiniumRunBean run = infiniumRunResource.getRun("200724570010_R01C01");
         Assert.assertEquals(run.getClusterFilePath(), "clusteroverride");

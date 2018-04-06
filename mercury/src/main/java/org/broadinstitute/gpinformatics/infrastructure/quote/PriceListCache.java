@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
@@ -97,12 +98,28 @@ public class PriceListCache extends AbstractCache implements Serializable {
     }
 
 
-    public List<QuotePriceItem> searchPriceItems(String query) {
+    public List<QuotePriceItem> searchPriceItems(String query,
+                                                 PriceGrouping priceListFilter) {
         List<QuotePriceItem> results = new ArrayList<>();
         String lowerQuery = query.toLowerCase();
 
         // Currently searching all price items, not filtering by platform or anything else
         for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
+
+            switch (priceListFilter) {
+            case SSF_Only:
+                if(!quotePriceItem.getPriceListName().equals(QuoteServiceImpl.SSF_PRICE_LIST_NAME)) {
+                    continue;
+                }
+                break;
+            case External_Only:
+                if(!quotePriceItem.getPriceListName().equals(QuoteServiceImpl.EXTERNAL_PRICE_LIST_NAME) &&
+                   !quotePriceItem.getPriceListName().equals(QuoteServiceImpl.CRSP_PRICE_LIST_NAME)) {
+                    continue;
+                }
+                break;
+            }
+
             if (quotePriceItem != null &&
                 ((quotePriceItem.getPlatformName() != null && quotePriceItem.getPlatformName().toLowerCase().contains(lowerQuery)) ||
                  (quotePriceItem.getCategoryName() != null && quotePriceItem.getCategoryName().toLowerCase().contains(lowerQuery)) ||
@@ -168,9 +185,9 @@ public class PriceListCache extends AbstractCache implements Serializable {
         QuotePriceItem foundItem = null;
 
         for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
-            if (quotePriceItem.getPlatformName().equals(platform) &&
-                quotePriceItem.getCategoryName().equals(category) &&
-                quotePriceItem.getName().equals(name)) {
+            if (StringUtils.equals(quotePriceItem.getPlatformName(),platform) &&
+                StringUtils.equals(quotePriceItem.getCategoryName(),category) &&
+                StringUtils.equals(quotePriceItem.getName(),name)) {
                 foundItem = quotePriceItem;
             }
         }
@@ -215,9 +232,16 @@ public class PriceListCache extends AbstractCache implements Serializable {
         if(cachedPriceItem == null) {
             throw new InvalidProductException("The price item "+primaryPriceItem.getDisplayName()+" does not exist");
         }
+        return getEffectivePrice(cachedPriceItem, orderQuote);
+    }
+
+    public String getEffectivePrice(QuotePriceItem cachedPriceItem, Quote orderQuote) {
         String price = cachedPriceItem.getPrice();
-        QuoteItem foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(cachedPriceItem.getPlatformName(),
-                cachedPriceItem.getCategoryName(), cachedPriceItem.getName());
+        QuoteItem foundMatchingQuoteItem = null;
+        if (orderQuote != null) {
+            foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(cachedPriceItem.getPlatformName(),
+                    cachedPriceItem.getCategoryName(), cachedPriceItem.getName());
+        }
         if (foundMatchingQuoteItem  != null && !orderQuote.getExpired()) {
             if (new BigDecimal(foundMatchingQuoteItem .getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
                 price = foundMatchingQuoteItem .getPrice();
@@ -235,5 +259,9 @@ public class PriceListCache extends AbstractCache implements Serializable {
         }
 
         return orderedPrices;
+    }
+
+    public enum PriceGrouping {
+        SSF_Only, External_Only, ALL;
     }
 }

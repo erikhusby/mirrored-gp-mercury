@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
+import javax.enterprise.context.Dependent;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
@@ -20,12 +21,13 @@ import java.util.Date;
 /**
  * Encapsulates the mechanism for sending emails.
  */
+@Dependent
 public class EmailSender implements Serializable {
     private static final long serialVersionUID = -905091780612758760L;
 
     private static final Log LOG = LogFactory.getLog(EmailSender.class);
 
-    @Resource(mappedName = "java:/mail/broadsmtp")
+    @Resource(mappedName = "java:jboss/mail/Default")
     private Session mailSession;
 
     /**

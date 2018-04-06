@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -20,8 +21,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hibernate.SQLQuery;
+import org.hibernate.type.LongType;
+import org.hibernate.type.StringType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -29,6 +35,13 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +52,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -1558,5 +1572,82 @@ public class LabVesselFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim5001() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<StaticPlate> plates = staticPlateDao.findListByList(StaticPlate.class, StaticPlate_.label, Arrays.asList(
+                "000001827023",
+                "000001811023", "000001828323", "000001808923", "000001806223", "000001800423", "000001824523",
+                "000001801023", "000001812523", "000001829823", "000001806023", "000001804123", "000001819223",
+                "000001802123", "000001814423-GPLIM-3164", "000001816023"));
+
+        for (StaticPlate plate : plates) {
+            plate.setPlateType(StaticPlate.PlateType.IndexedAdapterPlate96);
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-5001 - Assign missing plate types to static plates");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim5136() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        CriteriaBuilder builder = labVesselDao.getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<LabVessel> query = builder.createQuery(LabVessel.class);
+        Root<LabVessel> zeroConcRoot = query.from(LabVessel.class);
+        Join<LabVessel, MercurySample> labVessels = zeroConcRoot.join(LabVessel_.mercurySamples);
+        BigDecimal zeroDecimal = BigDecimal.valueOf(0);
+        query.select(zeroConcRoot)
+            .where(builder.and(builder.equal(zeroConcRoot.get(LabVessel_.concentration), zeroDecimal),
+                               builder.equal(labVessels.get(MercurySample_.metadataSource), MercurySample.MetadataSource.BSP)
+            ));
+        List<LabVessel> labVesselList  = labVesselDao.getEntityManager().createQuery(query).getResultList();
+        for (LabVessel labVessel: labVesselList) {
+            System.out.println("Setting tube concentration: " + labVessel.getLabel() + " to null");
+            labVessel.setConcentration(null);
+        }
+        FixupCommentary fixupCommentary =
+                new FixupCommentary("GPLIM-5136 Set all 0 concentrations to null where BSP is metadatasource");
+        labVesselDao.persist(fixupCommentary);
+        labVesselDao.flush();
+
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/AlterSampleName.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-3871 change name of incorrectly accessioned sample and vessel
+     * SM-G811M A1119993
+     * SM-9T6OH A9920002
+     */
+    @Test(enabled = false)
+    public void fixupSupport3871ChangeSampleName() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> sampleUpdateLines = IOUtils.readLines(VarioskanParserTest.getTestResource("AlterSampleName.txt"));
+
+        for(int i = 1; i < sampleUpdateLines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(sampleUpdateLines.get(i));
+            if(fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + sampleUpdateLines.get(i));
+            }
+               LabVessel vessel = labVesselDao.findByIdentifier(fields[1]);
+
+            Assert.assertNotNull(vessel, fields[1] + " not found");
+            final String replacementVesselLabel = fields[1] + "_bad_vessel";
+            System.out.println("Changing " + vessel.getLabel() + " to " + replacementVesselLabel);
+            vessel.setLabel(replacementVesselLabel);
+        }
+
+        labVesselDao.persist(new FixupCommentary(sampleUpdateLines.get(0)));
+        labVesselDao.flush();
+    }
 
 }

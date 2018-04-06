@@ -1,10 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Represents a table row in Create FCT page.
@@ -17,7 +23,7 @@ public class CreateFctDto implements FctDto, Cloneable {
     private BigDecimal loadingConc;
     private String eventDate;
     private int readLength = 1;
-    private String product;
+    private List<String> productNames = new ArrayList<>();
     private String startingBatchVessels;
     private String tubeType;
     private String lcsetUrl;
@@ -30,15 +36,15 @@ public class CreateFctDto implements FctDto, Cloneable {
     }
 
     public CreateFctDto(@Nonnull String barcode, @Nonnull String lcset, String additionalLcsets,
-                        @Nonnull String eventDate,
-                        @Nonnull String product, @Nonnull String startingBatchVessels, @Nonnull String tubeType,
+                        @Nonnull String eventDate, @Nonnull List<String> productNames,
+                        @Nonnull String startingBatchVessels, @Nonnull String tubeType,
                         @Nonnull BigDecimal loadingConc, String lcsetUrl, @Nonnull String regulatoryDesignation,
                         int numberSamples) {
         this.barcode = barcode;
         this.lcset = lcset;
         this.additionalLcsets = additionalLcsets;
         this.eventDate = eventDate;
-        this.product = product;
+        this.productNames.addAll(productNames);
         this.startingBatchVessels = startingBatchVessels;
         this.tubeType = tubeType;
         this.loadingConc = loadingConc;
@@ -59,10 +65,12 @@ public class CreateFctDto implements FctDto, Cloneable {
      * Split is used for partial dto allocation. This is unsupported since it should never happen, since
      * this type of dto is only used in the CreateFCT page that can only do complete flowcell fills.
      */
+    @Override
     public CreateFctDto split(int allocatedLanes) {
         throw new RuntimeException("Expected to only do complete flowcell fills.");
     }
 
+    @Override
     public String getBarcode() {
         return barcode;
     }
@@ -71,6 +79,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.barcode = barcode;
     }
 
+    @Override
     public String getLcset() {
         return lcset;
     }
@@ -103,14 +112,21 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.readLength = readLength;
     }
 
+    @Override
     public String getProduct() {
-        return product;
+        return StringUtils.join(productNames, DesignationDto.DELIMITER);
     }
 
-    public void setProduct(String product) {
-        this.product = product;
+    @Override
+    public List<String> getProductNames() {
+        return productNames;
     }
 
+    public void setProduct(String delimitedProductNames) {
+        productNames = Arrays.asList(StringUtils.trimToEmpty(delimitedProductNames).split(DesignationDto.DELIMITER));
+    }
+
+    @Override
     public BigDecimal getLoadingConc() {
         return loadingConc;
     }
@@ -119,6 +135,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.loadingConc = loadingConc;
     }
 
+    @Override
     public Integer getNumberLanes() {
         return numberLanes;
     }
@@ -168,6 +185,7 @@ public class CreateFctDto implements FctDto, Cloneable {
     }
 
     /** Indicates if dto was allocated to a flowcell. */
+    @Override
     public boolean isAllocated() {
         return allocated;
     }
@@ -190,6 +208,15 @@ public class CreateFctDto implements FctDto, Cloneable {
         }
     };
 
+    /**
+     * Returns true if designation may be combined with others on a flowcell.
+     * @param groupDtos the dtos to test against.
+     */
+    @Override
+    public <DTO_TYPE extends FctDto> boolean isCompatible(Collection<DTO_TYPE> groupDtos) {
+        return true;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -199,31 +226,27 @@ public class CreateFctDto implements FctDto, Cloneable {
             return false;
         }
 
-        CreateFctDto createFctDto = (CreateFctDto) o;
+        CreateFctDto that = (CreateFctDto) o;
 
-        if (!barcode.equals(createFctDto.barcode)) {
+        if (!getBarcode().equals(that.getBarcode())) {
             return false;
         }
-        if (!lcset.equals(createFctDto.lcset)) {
+        if (getLcset() != null ? !getLcset().equals(that.getLcset()) : that.getLcset() != null) {
             return false;
         }
-        if (!eventDate.equals(createFctDto.eventDate)) {
+        if (getEventDate() != null ? !getEventDate().equals(that.getEventDate()) : that.getEventDate() != null) {
             return false;
         }
-        if (!tubeType.equals(createFctDto.tubeType)) {
-            return false;
-        }
-        return product.equals(createFctDto.product);
+        return getTubeType() != null ? getTubeType().equals(that.getTubeType()) : that.getTubeType() == null;
 
     }
 
     @Override
     public int hashCode() {
-        int result = barcode.hashCode();
-        result = 31 * result + lcset.hashCode();
-        result = 31 * result + eventDate.hashCode();
-        result = 31 * result + tubeType.hashCode();
-        result = 31 * result + product.hashCode();
+        int result = getBarcode().hashCode();
+        result = 31 * result + (getLcset() != null ? getLcset().hashCode() : 0);
+        result = 31 * result + (getEventDate() != null ? getEventDate().hashCode() : 0);
+        result = 31 * result + (getTubeType() != null ? getTubeType().hashCode() : 0);
         return result;
     }
 }

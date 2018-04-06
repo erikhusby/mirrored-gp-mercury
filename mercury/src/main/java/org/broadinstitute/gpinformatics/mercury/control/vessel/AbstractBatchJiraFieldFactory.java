@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -43,7 +44,6 @@ public abstract class AbstractBatchJiraFieldFactory {
     protected static Set<String> getUniqueSampleNames(Collection<LabVessel> labVessels) {
         Set<String> sampleNames = new HashSet<>();
         for (LabVessel labVessel : labVessels) {
-            Collection<String> sampleNamesForVessel = labVessel.getSampleNames();
             sampleNames.addAll(labVessel.getSampleNames());
         }
         return sampleNames;
@@ -62,8 +62,19 @@ public abstract class AbstractBatchJiraFieldFactory {
         StringBuilder samplesText = new StringBuilder();
         Set<String> newSamples = new TreeSet<>();
         Set<String> reworkSamples = new TreeSet<>();
-        newSamples.addAll(getUniqueSampleNames(labBatch.getNonReworkStartingLabVessels()));
-        reworkSamples.addAll(getUniqueSampleNames(labBatch.getReworks()));
+        for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+            Collection<String> sampleNames = bucketEntry.getLabVessel().getSampleNames();
+            switch (bucketEntry.getEntryType()) {
+                case PDO_ENTRY:
+                    newSamples.addAll(sampleNames);
+                    break;
+                case REWORK_ENTRY:
+                    reworkSamples.addAll(sampleNames);
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected entry type " + bucketEntry.getEntryType());
+            }
+        }
 
         samplesText.append(StringUtils.join(newSamples, "\n"));
         samplesText.append("\n");
