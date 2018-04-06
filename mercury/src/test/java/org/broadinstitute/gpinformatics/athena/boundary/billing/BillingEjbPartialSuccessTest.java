@@ -32,7 +32,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -41,9 +41,9 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -106,7 +106,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Inject
     private BillingSessionAccessEjb billingSessionAccessEjb;
 
-    private SapIntegrationService sapService;
+    // Stub implementation
+    private SapIntegrationService sapService = new SapIntegrationServiceStub();
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -130,8 +131,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     private TestLogHandler testLogHandler;
 
-    @BeforeTest
-    public void setUpTestLogger() {
+    public BillingEjbPartialSuccessTest() {
+        super();
         Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
         billingAdaptorLogger.setLevel(Level.ALL);
         testLogHandler = new TestLogHandler();
@@ -149,8 +150,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
 
-        sapService = SapIntegrationServiceProducer.stubInstance();
-
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
@@ -161,6 +160,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * expect.
      */
     @Alternative
+    @ApplicationScoped
     protected static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
         private static final long serialVersionUID = 6093273925949722169L;
         private Log log = LogFactory.getLog(QuoteFundingList.class);

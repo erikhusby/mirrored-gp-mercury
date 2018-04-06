@@ -15,6 +15,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
@@ -34,6 +35,7 @@ import static org.hamcrest.Matchers.equalTo;
  *         Time: 8:14 AM
  */
 @Test(groups = STANDARD)
+@RequestScoped
 public class BadgesProductionTest extends Arquillian {
 
 
@@ -51,7 +53,6 @@ public class BadgesProductionTest extends Arquillian {
     @Deployment
     public static WebArchive buildMercuryWar() {
         // need TEST here for now because there's no STUBBY version of ThriftConfig
-        // see ThriftServiceProducer.produce()
         return DeploymentBuilder.buildMercuryWar(PROD);
     }
 

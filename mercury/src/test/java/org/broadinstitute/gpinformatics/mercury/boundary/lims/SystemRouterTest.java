@@ -75,9 +75,9 @@ import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventT
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.PREFLIGHT_CLEANUP;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.SAMPLE_RECEIPT;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Mockito.mock;

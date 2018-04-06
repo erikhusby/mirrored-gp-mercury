@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ public class SampleDataFetcherStub {
      * SampleDataFetcher implementation that returns a human sample for any sample it is asked about.
      */
     @Alternative
+    @Dependent
     public static class EverythingYouAskForYouGetAndItsHuman extends SampleDataFetcher {
 
         @Override

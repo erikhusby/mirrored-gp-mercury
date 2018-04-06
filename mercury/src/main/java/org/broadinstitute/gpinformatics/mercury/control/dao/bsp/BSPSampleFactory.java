@@ -23,22 +23,6 @@ import java.util.Map;
  */
 public class BSPSampleFactory {
 
-
-//    @Inject
-//    private BSPStartingSampleDao bspStartingSampleDao;
-
-    @Inject
-    private BSPPlatingReceiptDao bspPlatingReceiptDao;
-
-    @Inject
-    private BSPPlatingRequestService bspPlatingRequestService;
-
-    @Inject
-    private QuoteService quoteService;
-
-    @Inject
-    private Log log;
-
     private static final Float WATER_CONTROL_CONCENTARTION = 0F;
 
     public List<BSPPlatingRequest> buildBSPPlatingRequests(Map<MercurySample, AliquotParameters> starterMap)

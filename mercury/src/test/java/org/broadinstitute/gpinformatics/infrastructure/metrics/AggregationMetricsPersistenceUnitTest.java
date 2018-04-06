@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
@@ -13,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 @Test(groups = TestGroups.STUBBY)
-public class AggregationMetricsPersistenceUnitTest extends ContainerTest {
+public class AggregationMetricsPersistenceUnitTest extends StubbyContainerTest {
 
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager metricsEntityManager;

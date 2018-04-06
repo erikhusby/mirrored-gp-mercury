@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.run;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -21,7 +21,7 @@ import java.util.Date;
  */
 
 @Test(groups = TestGroups.STUBBY)
-public class IlluminaSequencingRunDaoTest extends ContainerTest {
+public class IlluminaSequencingRunDaoTest extends StubbyContainerTest {
 
 
     @Inject

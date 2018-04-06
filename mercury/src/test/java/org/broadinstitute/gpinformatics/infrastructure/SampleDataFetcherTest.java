@@ -6,9 +6,9 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductE
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -32,11 +32,11 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -94,7 +94,7 @@ public class SampleDataFetcherTest {
     ));
 
     private MercurySampleDao mockMercurySampleDao;
-    private BSPSampleDataFetcher mockBspSampleDataFetcher;
+    private BSPSampleDataFetcherImpl mockBspSampleDataFetcher;
     private MercurySampleDataFetcher mockMercurySampleDataFetcher;
     private SampleDataFetcher sampleDataFetcher;
 
@@ -120,7 +120,7 @@ public class SampleDataFetcherTest {
 
         mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
 
-        mockBspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        mockBspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcherImpl.class);
         mockMercurySampleDataFetcher = Mockito.mock(MercurySampleDataFetcher.class);
         SampleDataSourceResolver sampleDataSourceResolver = new SampleDataSourceResolver(mockMercurySampleDao);
         sampleDataFetcher =

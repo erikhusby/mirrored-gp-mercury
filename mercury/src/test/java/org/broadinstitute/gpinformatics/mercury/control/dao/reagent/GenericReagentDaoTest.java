@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.testng.Assert;
@@ -14,7 +14,7 @@ import java.util.Date;
  * Test retrieval of entities
  */
 @Test(groups = TestGroups.STUBBY)
-public class GenericReagentDaoTest extends ContainerTest {
+public class GenericReagentDaoTest extends StubbyContainerTest {
 
     @Inject
     private GenericReagentDao genericReagentDao;

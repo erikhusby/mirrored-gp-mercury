@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 import static org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactoryTest.WellAndSourceTubeMatcher.matchesWellAndSourceTube;
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 
