@@ -8,7 +8,14 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibr
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 
 
@@ -17,7 +24,7 @@ import java.io.Serializable;
  */
 @Entity
 @Audited
-@Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
+@Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = "NAME"))
 public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     private static final long serialVersionUID = 234809472774666093L;

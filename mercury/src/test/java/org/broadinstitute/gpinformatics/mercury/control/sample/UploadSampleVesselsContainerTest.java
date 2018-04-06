@@ -35,7 +35,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Test SampleVessel parsing with persistence
  */
-@Test(groups = TestGroups.STANDARD)
+@Test(groups = TestGroups.STANDARD, singleThreaded = true)
 public class UploadSampleVesselsContainerTest extends Arquillian {
 
     private String[] parentChildHeaders = {"Sample ID", "Manufacturer Tube Barcode", "Container", "Position"};

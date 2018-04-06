@@ -14,6 +14,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -22,6 +24,7 @@ import java.util.Collection;
 import java.util.Date;
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, ProductOrder> {
     private BSPUserList userList;
     private ProductEjb productEjb;

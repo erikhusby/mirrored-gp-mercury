@@ -24,7 +24,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
@@ -77,10 +79,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.notNullValue;
@@ -123,8 +125,8 @@ public class ProductOrderEjbTest {
         mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
         productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
         productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, mockQuoteService,
-                JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
-                new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean),
+                JiraServiceTestProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
+                new ProductOrderJiraUtil(JiraServiceTestProducer.stubInstance(), mockUserBean),
                 mockSapService, priceListCache, productPriceCache);
         mockAppConfig = Mockito.mock(AppConfig.class);
         productOrderEjb.setAppConfig(mockAppConfig);
@@ -551,7 +553,7 @@ public class ProductOrderEjbTest {
 
         Assert.assertTrue(CollectionUtils.isNotEmpty(conversionPdo.getSapReferenceOrders()));
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 1);
-        
+
         ProductOrderTest.billSampleOut(conversionPdo, conversionPdo.getSamples().iterator().next(), conversionPdo.getSamples().size());
 
         //Trick the order into thinking the price has changed so that it will think it should send a new SAP Order
