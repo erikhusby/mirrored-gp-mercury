@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.envers;
 
+import org.hibernate.annotations.Proxy;
 import org.hibernate.envers.ModifiedEntityNames;
 import org.hibernate.envers.RevisionEntity;
 import org.hibernate.envers.RevisionNumber;
@@ -27,6 +28,9 @@ import java.util.Set;
 @Entity
 @RevisionEntity(EnversRevisionListener.class)
 @Table(schema = "mercury")
+// CrossTypeRevisionChangesReaderImpl.findEntityTypes uses reflection on a proxy for modifiedEntityNames
+// Fails miserably and tagging with fetch=FetchType.EAGER also doesn't kill the proxy
+@Proxy(lazy=false)
 public class RevInfo implements Serializable {
     @Id
     @SequenceGenerator(name = "SEQ_REV_INFO", schema = "mercury", sequenceName = "SEQ_REV_INFO")

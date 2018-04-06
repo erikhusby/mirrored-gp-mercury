@@ -16,12 +16,14 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("submission")
+@Dependent
 public class SubmissionConfig extends AbstractConfig implements Serializable {
     public static final String LIST_BIOPROJECTS_ACTION="bioproject/all";
     public static final String SUBMIT_ACTION="submission/submitrequest";

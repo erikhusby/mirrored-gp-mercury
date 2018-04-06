@@ -159,6 +159,11 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Plating</statusTransition>
+                    <endStatus>In Plating</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Initial Pico</name>
@@ -211,6 +216,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <numberOfRepeats>1</numberOfRepeats>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Plating</statusTransition>
+                    <endStatus>In Plating</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Shearing Pico</name>
@@ -3110,7 +3120,7 @@
             <batchJiraProjectType>LCSET</batchJiraProjectType>
             <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2017-03-03T22:04:23.932-04:00</effectiveDate>
-            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
             <workflowProcessDefs>PCR Plus Pond HyperPrep</workflowProcessDefs>
@@ -3134,8 +3144,9 @@
             <batchJiraProjectType>LCSET</batchJiraProjectType>
             <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2017-10-22T22:04:23.932-04:00</effectiveDate>
-            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>WGS Library Construction Hyper Prep UMI</workflowProcessDefs>
+            <workflowProcessDefs>ICE</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>

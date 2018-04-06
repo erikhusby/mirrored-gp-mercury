@@ -30,6 +30,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
@@ -50,6 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * for an example of double billing.
  */
 @Test(groups = TestGroups.ALTERNATIVES)
+@RequestScoped
 public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTest {
 
     private static final Log logger = LogFactory.getLog(ConcurrentBillingSessionDoubleBillingTest.class);
@@ -183,6 +185,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
     }
 
     @Alternative
+    @ApplicationScoped
     private static class RegisterWorkAlwaysWorks implements QuoteService {
 
         public static int workItemNumber;

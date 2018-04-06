@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactoryTest;
@@ -24,7 +24,7 @@ import java.util.Date;
  * Database test of receiving samples from BSP
  */
 @Test(groups = TestGroups.STUBBY)
-public class SampleReceiptResourceDbTest extends ContainerTest {
+public class SampleReceiptResourceDbTest extends StubbyContainerTest {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMddHHmmss");
 

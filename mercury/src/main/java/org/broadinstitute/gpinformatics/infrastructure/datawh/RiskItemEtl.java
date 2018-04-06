@@ -8,6 +8,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -18,6 +20,7 @@ import java.util.List;
 // This is a "cross etl" class that takes in RiskItem and outputs ProductOrderSample updates.
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> {
     private ProductOrderSampleDao pdoSampleDao;
 

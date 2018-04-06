@@ -906,7 +906,8 @@ public class ConfigurableList {
         /**
          * Each row may have a nested table
          */
-        private Map<String, ResultList> nestedTables = new HashMap<>();
+        private Map<String, ResultList> nestedTables = new LinkedHashMap<>();
+
         /**
          * Each cell may have a nested table.
          */

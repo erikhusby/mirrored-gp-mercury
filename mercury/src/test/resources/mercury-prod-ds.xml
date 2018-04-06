@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <datasources xmlns="http://www.jboss.org/ironjacamar/schema"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation="
-        http://www.jboss.org/ironjacamar/schema
-        http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
-    <datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true">
+             xsi:schemaLocation="http://www.jboss.org/ironjacamar/schema http://docs.jboss.org/ironjacamar/schema/datasources_1_1.xsd">
+    <datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true" jta="true">
         <connection-url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</connection-url>
-        <driver>com.oracle</driver>
+        <driver-class>oracle.jdbc.OracleDriver</driver-class>
+        <driver>oracle</driver>
         <security>
             <security-domain>mercury-prod-encrypted-ds</security-domain>
         </security>
         <validation>
+            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
             <background-validation>true</background-validation>
             <background-validation-millis>60000</background-validation-millis>
-            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
             <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
             <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
         </validation>

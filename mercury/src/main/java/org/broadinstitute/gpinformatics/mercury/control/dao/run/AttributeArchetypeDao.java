@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip_;
-import org.jetbrains.annotations.Nullable;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -101,7 +100,7 @@ public class AttributeArchetypeDao extends GenericDao {
     }
 
     /** Returns the chip type */
-    public GenotypingChip findGenotypingChip(@NotNull String chipFamily, String chipName) {
+    public GenotypingChip findGenotypingChip(String chipFamily, String chipName) {
         for (GenotypingChip chip : findList(GenotypingChip.class, GenotypingChip_.archetypeName, chipName)) {
             if (chip.getChipTechnology().equals(chipFamily)) {
                 return chip;
@@ -118,7 +117,7 @@ public class AttributeArchetypeDao extends GenericDao {
      * @param effectiveDate comparison date. If null, returns the latest mappings, possibly inactive.
      * @return list of mappings
      */
-    public Set<GenotypingChipMapping> getMappingsAsOf(@Nullable Date effectiveDate) {
+    public Set<GenotypingChipMapping> getMappingsAsOf(Date effectiveDate) {
         Set<GenotypingChipMapping> activeMappings = new HashSet<>();
 
         Map<String, List<GenotypingChipMapping>> lookupKeyMappings = new HashMap<>();

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.Collection;
  *
  * @author hrafal
  */
+@Dependent
 public class PriceItemTokenInput extends TokenInput<QuotePriceItem> {
 
     @Inject

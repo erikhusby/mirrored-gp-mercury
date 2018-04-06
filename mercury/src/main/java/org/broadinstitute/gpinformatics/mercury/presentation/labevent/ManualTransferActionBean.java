@@ -896,7 +896,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     //Target
                     VesselTypeGeometry targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
                     assignSyntheticBarcode(plateCherryPickEvent.getPlate().get(0), targetVesselTypeGeometryCp,
-                            localManualTransferDetails.getTargetContainerPrefix());
+                            localManualTransferDetails.getTargetContainerPrefix() + anonymousRackDisambiguator);
                     for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
                         if (!sourceVesselTypeGeometryCp.isBarcoded()) {
                             cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
