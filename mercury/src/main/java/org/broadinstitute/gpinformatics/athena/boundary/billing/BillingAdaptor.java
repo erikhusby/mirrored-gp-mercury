@@ -8,11 +8,15 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
+import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -28,7 +32,8 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.DeliveryCondition;
+import org.broadinstitute.sap.entity.SAPMaterial;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -78,16 +83,24 @@ public class BillingAdaptor implements Serializable {
     private static final FastDateFormat BILLING_DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
 
+    private SAPProductPriceCache productPriceCache;
+
+    private SAPAccessControlEjb sapAccessControlEjb;
+
     @Inject
     public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
                           QuoteService quoteService, BillingSessionAccessEjb billingSessionAccessEjb,
-                          SapIntegrationService sapService) {
+                          SapIntegrationService sapService,
+                          SAPProductPriceCache productPriceCache,
+                          SAPAccessControlEjb sapAccessControlEjb) {
         this.billingEjb = billingEjb;
         this.billingSessionDao = billingSessionDao;
         this.priceListCache = priceListCache;
         this.quoteService = quoteService;
         this.billingSessionAccessEjb = billingSessionAccessEjb;
         this.sapService = sapService;
+        this.productPriceCache = productPriceCache;
+        this.sapAccessControlEjb = sapAccessControlEjb;
     }
 
     public BillingAdaptor() {
@@ -169,11 +182,13 @@ public class BillingAdaptor implements Serializable {
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
                     quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     itemForPriceUpdate.setQuote(quote);
-                    ProductOrder.checkQuoteValidity(quote,
-                            DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
 
+                    if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(itemForPriceUpdate.getPriceItem().getName())))
+                       && productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder(), itemForPriceUpdate.getWorkCompleteDate()) &&
+                       itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
 
-                    if(itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
+                        ProductOrder.checkQuoteValidity(quote,
+                                DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
 
                         effectivePricesForProducts = getEffectivePricesForProducts(allProductsOrdered, quote, priceItemsForDate,
                                 itemForPriceUpdate.getProductOrder());
@@ -182,7 +197,7 @@ public class BillingAdaptor implements Serializable {
                             if (!StringUtils.equals(itemForPriceUpdate.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
                                     TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
                                     ) {
-                                productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true);
+                                productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true, itemForPriceUpdate.getWorkCompleteDate());
                             }
                         } else {
                             final String price =
@@ -190,19 +205,17 @@ public class BillingAdaptor implements Serializable {
 
                             BigDecimal listPrice = new BigDecimal(price);
                             BigDecimal effectivePrice = new BigDecimal(itemForPriceUpdate.getEffectivePrice());
-                            Condition adjustmentCondition = null;
-                            BigDecimal adjustmentDifference = null;
 
                             if(!itemForPriceUpdate.getProductOrder().needsCustomization(itemForPriceUpdate.getProduct()) && listPrice.compareTo(effectivePrice) !=0) {
                                 itemForPriceUpdate.getProductOrder().addQuoteAdjustment(itemForPriceUpdate.getProduct(), effectivePrice, listPrice);
                             }
-                            productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, false);
+                            productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, false, itemForPriceUpdate.getWorkCompleteDate());
                         }
                     }
                 } catch (QuoteServerException|QuoteNotFoundException|InvalidProductException|SAPInterfaceException e) {
                     BillingEjb.BillingResult result = new BillingEjb.BillingResult(itemForPriceUpdate);
 
-                    final String errorMessage = "Unable to Update pricing in SAP for " +itemForPriceUpdate.getProductOrder().getBusinessKey()+": "+e.getMessage();
+                    final String errorMessage = "Failed Price check for " +itemForPriceUpdate.getProductOrder().getBusinessKey()+": "+e.getMessage();
                     itemForPriceUpdate.setBillingMessages(errorMessage);
                     result.setErrorMessage(errorMessage);
                     errorsInBilling = true;
@@ -214,7 +227,7 @@ public class BillingAdaptor implements Serializable {
             }
 
             if(!results.isEmpty()) {
-                throw new BillingException("Pricing Update to SAP Failed.  Unable to complete Billing Session at this time");
+                throw new BillingException("Pricing Validation Failed.  Unable to complete Billing Session at this time");
             }
 
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
@@ -236,7 +249,7 @@ public class BillingAdaptor implements Serializable {
 //                    quote.setAlphanumericId(item.getQuoteId());
 
                     workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
-                    sapBillingId = quote.isEligibleForSAP()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
+                    sapBillingId = quote.isEligibleForSAP(item.getWorkCompleteDate())? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
 
                     // The price item that we are billing.
                     // todo need to set the price on the Price Item before this step
@@ -270,10 +283,61 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    if(StringUtils.isBlank(workId)) {
-                        if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                    BigDecimal replacementMultiplier = null;
+                    if(primaryPriceItemIfReplacementForSAP != null) {
+                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
+                        BigDecimal replacementPrice  = new BigDecimal(price);
+
+                        if(item.getProductOrder().isPriorToSAP1_5()) {
+                            replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN))
+                                    .multiply(BigDecimal.valueOf(item.getQuantityForSAP()))
+                                    .setScale(3, BigDecimal.ROUND_DOWN);
+                        }
+                    }
+
+                    if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName()))) &&
+                       productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate() )
+                       && !item.getProductOrder().getOrderStatus().canPlace()
+                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                       && StringUtils.isBlank(item.getSapItems())) {
+
+                        final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
+                                item.getProductOrder().getSapCompanyConfigurationForProductOrder());
+
+                        BigDecimal replacementPrice = new BigDecimal(price);
+
+                        BigDecimal sapPrimaryPrice = new BigDecimal(material.getBasePrice());
+
+                        if (StringUtils.equals(item.getQuotePriceType(),
+                                LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
+                            if (!material.getPossibleDeliveryConditions()
+                                    .containsKey(DeliveryCondition.LATE_DELIVERY_DISCOUNT)) {
+                                throw new InvalidProductException(
+                                        "Pricing in SAP has not been set up correctly: Late Delivery charge is not set for "
+                                        + item.getProduct().getPartNumber());
+                            }
+                            if (replacementPrice.compareTo(sapPrimaryPrice.add(material.getPossibleDeliveryConditions()
+                                    .get(DeliveryCondition.LATE_DELIVERY_DISCOUNT))) != 0) {
+                                throw new InvalidProductException(
+                                        "Pricing in SAP has not been set up correctly: Late Delivery charge in SAP differs from Quotes for "
+                                        + item.getProduct().getPartNumber());
+                            }
+                        }
+
+                    }
+
+                    if (StringUtils.isBlank(workId)) {
+
+                        PriceAdjustment singlePriceAdjustment =
+                                item.getProductOrder().getAdjustmentForProduct(item.getProduct());
+
+                        if (!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName()))) &&
+                            productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate())
                             && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
-                            if(item.getProductOrder().getSinglePriceAdjustment() == null) {
+
+
+
+                            if (singlePriceAdjustment == null) {
                                 workId = quoteService
                                         .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
@@ -284,10 +348,10 @@ public class BillingAdaptor implements Serializable {
                                                 primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
                                                 pageUrl, "billingSession", sessionKey,
-                                                item.getProductOrder().getSinglePriceAdjustment().getAdjustmentValue());
+                                                singlePriceAdjustment.getAdjustmentValue());
                             }
                         } else {
-                            if(item.getProductOrder().getSinglePriceAdjustment() == null) {
+                            if (singlePriceAdjustment == null) {
                                 workId = quoteService
                                         .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
@@ -297,7 +361,7 @@ public class BillingAdaptor implements Serializable {
                                         .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
                                                 pageUrl, "billingSession", sessionKey,
-                                                item.getProductOrder().getSinglePriceAdjustment().getAdjustmentValue());
+                                                singlePriceAdjustment.getAdjustmentValue());
                             }
                         }
 
@@ -305,19 +369,14 @@ public class BillingAdaptor implements Serializable {
                                 BillingSession.BILLED_FOR_QUOTES);
                     }
 
-                    BigDecimal replacementMultiplier = null;
-                    if(primaryPriceItemIfReplacementForSAP != null) {
-                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
-                        BigDecimal replacementPrice  = new BigDecimal(price);
 
-                        replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN)).multiply(BigDecimal.valueOf(item.getQuantityForSAP())).setScale(3, BigDecimal.ROUND_DOWN);
-                    }
-
-                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
+                    if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName())))
+                        && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(), item.getWorkCompleteDate() )
                         && !item.getProductOrder().getOrderStatus().canPlace()
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
                         && StringUtils.isBlank(item.getSapItems()))
                     {
+
                         if(item.getQuantityForSAP() != 0) {
                             sapBillingId = sapService.billOrder(item, replacementMultiplier, item.getWorkCompleteDate());
                         }
@@ -344,7 +403,7 @@ public class BillingAdaptor implements Serializable {
                                 .append(billingSession.getBusinessKey()).append(".");
 
                     } else if (StringUtils.isBlank(result.getSAPBillingId()) && quote != null
-                               && quote.isEligibleForSAP()
+                               && quote.isEligibleForSAP(item.getWorkCompleteDate())
                                && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
 
                         errorMessage.append("A problem occured attempting to post to SAP for ")
@@ -512,4 +571,9 @@ public class BillingAdaptor implements Serializable {
     public void setProductOrderEjb(ProductOrderEjb productOrderEjb) {
         this.productOrderEjb = productOrderEjb;
     }
+
+    public SAPAccessControlEjb getSapAccessControlEjb() {
+        return sapAccessControlEjb;
+    }
+
 }

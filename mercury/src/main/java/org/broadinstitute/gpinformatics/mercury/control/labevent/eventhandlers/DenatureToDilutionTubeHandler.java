@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
+import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,6 +29,7 @@ import java.util.Map;
  * This handler will validate the relationship between an FLOWCELL_TICKET ticket specified for a denature tube and the
  * relationship both of these entities will have to the targetted dilution tube.
  */
+@Dependent
 public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
 
     public static final String FCT_METADATA_NAME = "FCT";

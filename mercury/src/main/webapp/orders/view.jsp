@@ -306,9 +306,10 @@ $j(document).ready(function () {
                 if (kitDefinitionIndex == 0) {
                     showKitDetail();
                 }
-            $j('.shiftCheckbox').enableCheckboxRangeSelection();
-
-            }
+            },
+        "drawCallback": function(){
+            $j(".shiftCheckbox").enableCheckboxRangeSelection();
+        }
 });
 
     function renderRackscanMismatch(data, type, row, meta) {
@@ -794,7 +795,7 @@ function renderPico(data, type, row, meta) {
 
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
-    var productOrderKey = $j("input[name='productOrder'").val();
+    var productOrderKey = $j("input[name='productOrder']").val();
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
@@ -1475,36 +1476,38 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </div>
 </c:if>
 
-<div class="view-control-group control-group">
-    <label class="control-label label-form">Add-ons</label>
-
-    <div class="controls">
-        <div class="form-value">${actionBean.editOrder.addOnList}</div>
-    </div>
-</div>
-
-    <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
     <div class="view-control-group control-group">
-        <label class="control-label label-form">Order Customizations</label>
+        <label class="control-label label-form">Add-ons</label>
 
         <div class="controls">
-            <div class="form-value" id="customizationContent"></div>
+            <div class="form-value">${actionBean.editOrder.addOnList}</div>
         </div>
     </div>
+
+    <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+        <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Order Customizations</label>
+
+                <div class="controls">
+                    <div class="form-value" id="customizationContent"></div>
+                </div>
+            </div>
+        </c:if>
     </security:authorizeBlock>
 
-<div class="view-control-group control-group">
-    <label class="control-label label-form">Quote ID</label>
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Quote ID</label>
 
-    <div class="controls">
-        <div class="form-value">
-            <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                    ${actionBean.editOrder.quoteId}
-            </a>
-            <div id="fundsRemaining"> </div>
+        <div class="controls">
+            <div class="form-value">
+                <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
+                        ${actionBean.editOrder.quoteId}
+                </a>
+                <div id="fundsRemaining"></div>
+            </div>
         </div>
     </div>
-</div>
 <c:if test="${actionBean.editOrder.skipQuoteReason != null}">
     <div class="view-control-group control-group">
         <label class="control-label label-form">Quote Skip Reason</label>

@@ -12,7 +12,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.Date;
 
 @Test(groups = TestGroups.STUBBY)
-public class LabMetricParserTest extends ContainerTest {
+public class LabMetricParserTest extends StubbyContainerTest {
 
     @Inject
     private BarcodedTubeDao vesselDao;

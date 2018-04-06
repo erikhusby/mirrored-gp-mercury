@@ -5,8 +5,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product: #{actionBean.editProduct.partNumber}"
-                       sectionTitle="View Product: #{actionBean.editProduct.partNumber}"
+<stripes:layout-render name="/layout.jsp" pageTitle="View Product: ${actionBean.editProduct.partNumber}"
+                       sectionTitle="View Product: ${actionBean.editProduct.partNumber}"
                        businessKeyValue="${actionBean.editProduct.businessKey}">
 
     <stripes:layout-component name="content">
@@ -18,7 +18,7 @@
 
                 <security:authorizeBlock roles="<%= roles(PDM, GPProjectManager, PM, Developer) %>">
 
-                    <c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber)}">
+                    <c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber, actionBean.editProduct.determineCompanyConfiguration())}">
                         <stripes:submit name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}"
                                         value="Publish Product to SAP"
                                         class="btn padright" title="Click to Publish Product to SAP"/>

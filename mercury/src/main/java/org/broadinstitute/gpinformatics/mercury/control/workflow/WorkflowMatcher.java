@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
+import javax.enterprise.context.Dependent;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import java.util.Map;
 /**
  * Takes a workflow definition and fits events to it.
  */
+@Dependent
 public class WorkflowMatcher {
 
     /**

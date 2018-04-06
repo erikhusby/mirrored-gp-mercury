@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -63,6 +64,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Builds ConfigurableSearchDefinition for lab vessel user defined search logic
@@ -1368,6 +1370,11 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Unique Molecular Identifier");
+        searchTerm.setDisplayExpression(DisplayExpression.UNIQUE_MOLECULAR_IDENTIFIER);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample Tube Barcode");
         // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -1543,21 +1550,100 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Abandon Reason");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                LabVessel labVessel = (LabVessel) entity;
-                return labVessel.getAbandonReason();
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel currentVessel = (LabVessel) entity;
+                Set<String> reasons = null;
+                TransferTraverserCriteria.AbandonedLabVesselCriteria abandonCriteria =
+                            new TransferTraverserCriteria.AbandonedLabVesselCriteria(false);
+
+                if (currentVessel.getContainerRole() == null) {
+                    currentVessel.evaluateCriteria(abandonCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Ancestors);
+                } else {
+                    currentVessel.getContainerRole().applyCriteriaToAllPositions(abandonCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Ancestors);
+                }
+
+                // Bail out if nothing to do
+                if (! abandonCriteria.isAncestorAbandoned()) {
+                    return reasons;
+                }
+
+                reasons = new HashSet<>();
+                String reason;
+                MultiValuedMap<LabVessel, AbandonVessel> abandonMap = abandonCriteria.getAncestorAbandonVessels();
+
+                // Display each reason with a group of positions (if container) in parentheses
+                if( abandonMap.size() == 1 && abandonMap.mapIterator().next().getAbandonVessels().size() == 1 ) {
+                    // Only one abandon - could be a tube so show position only if available
+                    AbandonVessel abandonVessel = abandonMap.mapIterator().next().getAbandonVessels().iterator().next();
+                    reason = abandonVessel.getReason().getDisplayName();
+                    if( abandonVessel.getVesselPosition() != null ) {
+                        reason += "(" + abandonVessel.getVesselPosition().name() + ")";
+                    }
+                    reasons.add( reason );
+                } else {
+                    // Gather reasons and positions
+                    // TODO JMS Display can get ugly when ancestor abandons/positions are mixed in with current vessel
+                    String position;
+                    Map<String,Set<String>> reasonPositionMap = new HashMap<>();
+
+                    for( AbandonVessel abandonVessel : abandonMap.values() ) {
+                        reason = abandonVessel.getReason().getDisplayName();
+                        if( !reasonPositionMap.containsKey( reason ) ) {
+                            reasonPositionMap.put(reason, new TreeSet<String>());
+                        }
+                        position = abandonVessel.getVesselPosition() == null?"":abandonVessel.getVesselPosition().name();
+                        reasonPositionMap.get(reason).add( position );
+                    }
+                    for( String key : reasonPositionMap.keySet() ) {
+                        StringBuilder posDisplay = new StringBuilder(64);
+                        for( String pos : reasonPositionMap.get(key)) {
+                            if( pos.length() > 0 ) {
+                                posDisplay.append(pos).append(",");
+                            }
+                        }
+                        if( posDisplay.length() > 1 ) {
+                            posDisplay.deleteCharAt(posDisplay.length() - 1);
+                            posDisplay.append(")");
+                            posDisplay.insert(0,"(");
+                            posDisplay.insert(0,key );
+                            reasons.add( posDisplay.toString() );
+                        }
+                    }
+                }
+                return reasons;
             }
         });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Abandon Date");
-        searchTerm.setValueType(ColumnValueType.DATE_TIME);
+        searchTerm.setValueType(ColumnValueType.DATE);
+
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Date evaluate(Object entity, SearchContext context) {
-                LabVessel labVessel = (LabVessel) entity;
-                return labVessel.getAbandonedDate();
+            public Set<Date> evaluate(Object entity, SearchContext context) {
+                LabVessel currentVessel = (LabVessel) entity;
+                Set<Date> dateVal = null;
+                TransferTraverserCriteria.AbandonedLabVesselCriteria abandonCriteria =
+                        new TransferTraverserCriteria.AbandonedLabVesselCriteria(false);
+
+                if( currentVessel.getContainerRole() == null ) {
+                    currentVessel.evaluateCriteria(abandonCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                } else {
+                    currentVessel.getContainerRole().applyCriteriaToAllPositions(abandonCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                }
+                if( abandonCriteria.isAncestorAbandoned() ) {
+                    dateVal = new HashSet<>();
+                    MultiValuedMap<LabVessel,AbandonVessel> abandonMap = abandonCriteria.getAncestorAbandonVessels();
+                    for( LabVessel labVessel : abandonMap.keySet() ) {
+                        for( AbandonVessel abandonVessel : abandonMap.get(labVessel)) {
+                            dateVal.add(abandonVessel.getAbandonedOn());
+                        }
+                    }
+                }
+                return dateVal;
             }
         });
         searchTerms.add(searchTerm);
@@ -1834,6 +1920,31 @@ public class LabVesselSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 return InfiniumVesselTraversalEvaluator.getInfiniumAmpPlateBarcode((LabVessel)entity, context);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Chip Well Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String result = null;
+                LabVessel vessel = (LabVessel)entity;
+
+                // Ignore for all but Infinium DNA Plate wells as source vessel
+                if(!InfiniumVesselTraversalEvaluator.isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
+                    return null;
+                }
+
+                // DNA plate well event/vessel looks to (latest if rehyb-ed) descendant for chip well (1:1)
+                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
+                    result = labVesselAndPositions.getKey().getLabel() + "_" + labVesselAndPositions.getValue().iterator().next().toString();
+                    break;
+                }
+
+                return result;
             }
         });
         searchTerms.add(searchTerm);
@@ -2584,7 +2695,9 @@ public class LabVesselSearchDefinition {
 
             if( !hadStartingVessels ) {
                 for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                    labBatches.add(bucketEntry.getLabBatch());
+                    if( bucketEntry.getLabBatch() != null ) {
+                        labBatches.add(bucketEntry.getLabBatch());
+                    }
                 }
             }
         }

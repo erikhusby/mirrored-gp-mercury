@@ -12,6 +12,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -33,6 +34,7 @@ import java.util.Set;
 /**
  * Scans run folder for the finished idat pairs for each sample well in a chip
  */
+@Dependent
 public class InfiniumRunProcessor {
 
     private static final Log log = LogFactory.getLog(InfiniumRunProcessor.class);

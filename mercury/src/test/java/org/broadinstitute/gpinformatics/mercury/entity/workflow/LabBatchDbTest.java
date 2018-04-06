@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.apache.commons.io.FileUtils;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -28,7 +28,7 @@ import java.util.Set;
  * Tests of the LabBatch entity, using a database
  */
 @Test(groups = TestGroups.STUBBY)
-public class LabBatchDbTest extends ContainerTest {
+public class LabBatchDbTest extends StubbyContainerTest {
 
     @Inject
     private LabBatchDao labBatchDao;

@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -29,7 +30,7 @@ import static org.hamcrest.core.Is.is;
  * </ul>
  */
 @Test(groups = TestGroups.STUBBY)
-public class AggregationMetricsFetcherTest extends ContainerTest {
+public class AggregationMetricsFetcherTest extends StubbyContainerTest {
 
     /**
      * Sample (a.k.a., "Collaborator Sample ID") for which there are known aggregations in the metrics database.

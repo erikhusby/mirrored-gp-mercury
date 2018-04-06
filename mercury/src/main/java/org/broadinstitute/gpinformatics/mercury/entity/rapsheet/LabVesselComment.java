@@ -15,8 +15,21 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
-
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,12 +45,14 @@ public class LabVesselComment<T extends RapSheetEntry> {
     private Long labVesselCommentId;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, optional = true)
+    @JoinColumn(name = "LAB_EVENT")
     protected LabEvent labEvent;
 
     @Column(name = "LAB_VESSEL_COMMENT")
     private String comment;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH, optional = false)
+    @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
     @Column(nullable = false)
