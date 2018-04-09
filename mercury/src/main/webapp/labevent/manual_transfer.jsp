@@ -109,8 +109,11 @@
                                 var canvasData = tempCanvas.toDataURL("image/png");
                                 var data = new FormData();
                                 data.append("imageFile", canvasData);
+                                var eventClass = $j('input[name=\"eventClass[0]\"').val();
+                                console.log(eventClass);
+                                data.append("eventClass", eventClass);
                                 $j('#canvas').data(null);
-                                jQuery.ajax({
+                                $j.ajax({
                                     url: '/Mercury/labevent/manualtransfer.action?decodeImage',
                                     data: data,
                                     cache: false,
@@ -163,11 +166,18 @@
                             click: function () {
                                 var data = $j('#canvas').data();
                                 console.log(data);
-                                $(data.transfers).each(function( idx, transfer ) {
-                                    console.log( transfer );
-                                    $('#srcRcpBcd0_' + (transfer.index - 1)).val(transfer.sourceTubeBarcode);
-                                    $('#destRcpBcd0_' + (transfer.index - 1)).val(transfer.destinationTubeBarcode);
-                                });
+                                var eventClass = $j('input[name=\"eventClass[0]\"').val();
+                                if (eventClass === 'PlateTransferEventType') {
+                                    $(data.transfers).each(function (idx, transfer) {
+                                        console.log(transfer);
+                                        $('#srcRcpBcd0_' + (transfer.index - 1)).val(transfer.sourceTubeBarcode);
+                                        $('#destRcpBcd0_' + (transfer.index - 1)).val(transfer.destinationTubeBarcode);
+                                    });
+                                } else if (eventClass === 'PlateEventType') {
+                                    $(data.decodedBarcodes).each(function (idx, ciBarcode) {
+                                        $('#destRcpBcd0_' + (idx)).val(ciBarcode.label);
+                                    });
+                                }
                                 $j(this).dialog("close");
                             }
                         },
@@ -321,6 +331,8 @@
                         <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
                             <input type="hidden" name="stationEvents[${stationEventStatus.index}].eventType"
                                     value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
+                            <input type="hidden" name="eventClass[${stationEventStatus.index}]"
+                                            value="${actionBean.stationEvents[0].class.simpleName}"/>
                             <c:if test="${fn:length(actionBean.stationEvents) > 1}">
                                 ${stationEventStatus.index + 1}
                                 <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].name" value="MessageNum"/>

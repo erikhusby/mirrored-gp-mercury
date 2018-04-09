@@ -1796,6 +1796,7 @@
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
                     <buttonValue>Cross Check</buttonValue>
+                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>

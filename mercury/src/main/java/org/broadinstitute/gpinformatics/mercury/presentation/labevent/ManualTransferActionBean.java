@@ -152,6 +152,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
     @Inject
     private BarcodeDecoderRestClient barcodeDecoderRestClient;
 
+    private String imageFile;
+    private String eventClass;
+
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
@@ -545,14 +548,20 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
-    private String imageFile;
-
     public String getImageFile() {
         return imageFile;
     }
 
     public void setImageFile(String imageFile) {
         this.imageFile = imageFile;
+    }
+
+    public String getEventClass() {
+        return eventClass;
+    }
+
+    public void setEventClass(String eventClass) {
+        this.eventClass = eventClass;
     }
 
     @HandlesEvent(DECODE_IMAGE_ACTION)
@@ -562,7 +571,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
         BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
         File outputfile = File.createTempFile("DecodedImage", "png");
         ImageIO.write(img, "png", outputfile);
-        DecodeResponse decodeResult = barcodeDecoderRestClient.analyzeImage(outputfile);
+        DecodeResponse decodeResult = barcodeDecoderRestClient.analyzeImage(outputfile, getEventClass());
         ObjectMapper mapper = new ObjectMapper();
         return new StreamingResolution("application/json", mapper.writeValueAsString(decodeResult));
     }

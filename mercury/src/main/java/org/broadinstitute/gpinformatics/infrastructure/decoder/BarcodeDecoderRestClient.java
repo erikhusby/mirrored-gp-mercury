@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataBodyPart;
 import com.sun.jersey.multipart.FormDataMultiPart;
 import com.sun.jersey.multipart.MultiPart;
 import com.sun.jersey.multipart.file.FileDataBodyPart;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.barcode.generated.
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -22,6 +24,7 @@ import java.io.IOException;
 /**
  * This contains common code used by all clients of Barcode Decoder rest (ie: non-broadcore) services.
  */
+@Dependent
 public class BarcodeDecoderRestClient extends AbstractJerseyClientService {
     private static final Log log = LogFactory.getLog(BarcodeDecoderRestClient.class);
 
@@ -48,7 +51,7 @@ public class BarcodeDecoderRestClient extends AbstractJerseyClientService {
         return getJerseyClient().resource(urlString);
     }
 
-    public DecodeResponse analyzeImage(File file) throws IOException {
+    public DecodeResponse analyzeImage(File file, String eventClass) throws IOException {
         String url = getUrl("image");
         FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("file",
                 file,
@@ -58,6 +61,7 @@ public class BarcodeDecoderRestClient extends AbstractJerseyClientService {
                         .fileName(file.getName()).build());
 
         final MultiPart multiPart = new FormDataMultiPart().bodyPart(fileDataBodyPart);
+        multiPart.bodyPart(new FormDataBodyPart("eventClass", eventClass));
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
 
         ClientResponse response = getWebResource(url)

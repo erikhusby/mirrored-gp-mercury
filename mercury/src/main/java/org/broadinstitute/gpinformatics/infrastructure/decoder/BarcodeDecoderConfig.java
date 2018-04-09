@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -13,11 +14,15 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("decoder")
+@ApplicationScoped
 public class BarcodeDecoderConfig extends AbstractConfig implements Serializable {
 
     private String host;
 
     private int port;
+
+    public BarcodeDecoderConfig() {
+    }
 
     @Inject
     public BarcodeDecoderConfig(@Nonnull Deployment deploymentConfig) {
