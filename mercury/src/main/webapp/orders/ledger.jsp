@@ -177,7 +177,17 @@
             return $selectedRows;
         }
 
+        function clearSuccessFromUrl() {
+            var baseUrl = location.href.split('?')[0];
+            var search = location.href.split('?')[1];
+            var parameterMap = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
+            if (delete parameterMap['successMessage']){
+                history.replaceState({}, 'title', baseUrl + '?' + $j.param(parameterMap));
+            }
+        }
+
         $j(document).ready(function() {
+            clearSuccessFromUrl();
             var ledgerForm = $j('#ledgerForm');
             modalMessages("intercept");
             /*
@@ -444,6 +454,9 @@
                 var statusNamespace = "updateStatus";
                 infoMessages.add("Updating Ledger", statusNamespace);
 
+                // clear any previous success messages
+                modalMessages('success').clear();
+
                 var formData = $j(event.target).serializeArray();
 
                 try {
@@ -451,10 +464,14 @@
                     var allRows = [];
                     var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
                     var dom = changedRows.find("input").filter("[name^='ledgerData']").get();
+                    var totalRowsToUpdate=0;
                     for (var i = dom.length - 1; i >= 0; i--) {
                         var input = {};
                         input['name'] = dom[i].name;
                         input['value'] = dom[i].value;
+                        if (dom[i].name.indexOf("sample") > 0) {
+                            totalRowsToUpdate++;
+                        }
                         var rowNum = dom[i].getAttribute('data-rownum');
                         row = allDataByRow[rowNum];
                         if (row === undefined) {
@@ -503,8 +520,9 @@
                                     message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples, ").concat(rowsRemaining).concat(" remaining.");
                                 }
                                 infoMessages.add(message, statusNamespace);
-                                message = "&successMessage=Successfully updated ".concat(rowsCompleted).concat(" ledger entries.");
+                                message = "&successMessage=Successfully updated ".concat(totalRowsToUpdate).concat(" ledger entries.");
                                 if (json.redirectOnSuccess) {
+                                    modalMessages("info").clear();
                                     modalMessages('success').add("Updates complete, reloading page...");
 
                                     $j(".changed").removeClass("changed");

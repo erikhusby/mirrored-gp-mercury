@@ -185,9 +185,11 @@ var modalMessages = function (level = "info", options={}) {
             return;
         }
         var messageBlock = container.parentNode;
-        messageBlock.removeChild(container);
-        if (messageBlock.childElementCount === 0) {
-            messageBlock.parentNode.removeChild(messageBlock)
+        if (messageBlock != undefined) {
+            messageBlock.removeChild(container);
+            if (messageBlock.childElementCount === 0) {
+                messageBlock.parentNode.removeChild(messageBlock)
+            }
         }
     }
 
