@@ -338,7 +338,7 @@ buttons to move columns from one to the other --%>
                         multiple="true" size="10" style="width: 280px">
                     <c:if test="${not empty predefinedViewColumns}">
                         <c:forEach items="${predefinedViewColumns}" var="entry" varStatus="iter">
-                            <c:if test="${not empty viewColumnParamMap[iter.index]}"><option value='${fn:replace( viewColumnParamMap[iter.index] ,"\'","&#39;")}'>${viewColumnParamMap[iter.index].userColumnName}</option></c:if>
+                            <c:if test="${not empty viewColumnParamMap[iter.index]}"><option value='${fn:escapeXml( viewColumnParamMap[iter.index] )}'>${viewColumnParamMap[iter.index].userColumnName}</option></c:if>
                             <c:if test="${empty viewColumnParamMap[iter.index]}"><option>${entry}</option></c:if>
                         </c:forEach>
                     </c:if>
