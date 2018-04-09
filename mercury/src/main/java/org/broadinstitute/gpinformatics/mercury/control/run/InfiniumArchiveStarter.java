@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -20,8 +19,6 @@ import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.inject.Inject;
-import javax.transaction.SystemException;
-
 import java.util.Date;
 
 import static javax.ejb.ConcurrencyManagementType.BEAN;
@@ -48,9 +45,6 @@ public class InfiniumArchiveStarter {
 
     @Inject
     private SessionContextUtility sessionContextUtility;
-
-    @Inject
-    private UserBean userBean;
 
     @PostConstruct
     public void initialize() {
@@ -82,7 +76,6 @@ public class InfiniumArchiveStarter {
                 sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
                     @Override
                     public void apply() {
-                        userBean.login("seqsystem");
                         infiniumArchiver.archive();
                     }
                 });

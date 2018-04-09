@@ -6,12 +6,17 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -29,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 /**
  *
@@ -46,6 +52,12 @@ public class ProductFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     @Inject
     private UserTransaction utx;
@@ -320,5 +332,34 @@ public class ProductFixupTest extends Arquillian {
         productDao.persist(new FixupCommentary(fixupReason));
         utx.commit();
 
+    }
+
+    @Test(enabled = false)
+    public void testPriceDifferences() throws Exception {
+        List<Product> allProducts =
+                productDao.findProducts(ProductDao.Availability.CURRENT, ProductDao.TopLevelOnly.NO,
+                        ProductDao.IncludePDMOnly.YES);
+
+        List<String> errors = new ArrayList<>();
+        for (Product currentProduct : allProducts) {
+            SapIntegrationClientImpl.SAPCompanyConfiguration configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+            if(currentProduct.isExternalOnlyProduct() || currentProduct.isClinicalProduct()) {
+                configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+            }
+            final QuotePriceItem byKeyFields = priceListCache.findByKeyFields(currentProduct.getPrimaryPriceItem());
+            if(byKeyFields != null) {
+                BigDecimal qsPrice = new BigDecimal(byKeyFields.getPrice());
+                final SAPMaterial material = productPriceCache.findByProduct(currentProduct, configuration);
+                if (material != null) {
+                    BigDecimal sapPrice = new BigDecimal(material.getBasePrice());
+                    if (sapPrice.compareTo(qsPrice) != 0) {
+                        errors.add("Price for " + currentProduct.getPartNumber() + " sold in " + configuration
+                                .getCompanyCode() + " does not match SAP: QS price is " +
+                                   qsPrice.toString() + " and SAP price is " + sapPrice.toString());
+                    }
+                }
+            }
+        }
+        System.out.println(StringUtils.join(errors,"\n"));
     }
 }

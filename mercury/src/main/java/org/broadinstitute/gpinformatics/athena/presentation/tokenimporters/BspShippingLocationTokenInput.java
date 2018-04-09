@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 /**
  * Token Input support for Shipping Locations (aka Sites).
  */
+@Dependent
 public class BspShippingLocationTokenInput extends TokenInput<Site> {
 
     private static final String ADDITIONAL_LINE_FORMAT = "<div class=\"ac-dropdown-multiline-subtext\">{0}</div>";

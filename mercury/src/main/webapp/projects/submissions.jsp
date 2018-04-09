@@ -47,7 +47,6 @@
 
         .submissionControls {
             width: auto;
-            margin-bottom: 20px;
             display: none;
         }
 
@@ -130,7 +129,7 @@
             $j("${submissionsTabSelector}").click(function () {
                 function buildMessage(jqXHR) {
                     var responseText = jqXHR.responseJSON;
-                    if (responseText.stripesMessages) {
+                    if (responseText && responseText.stripesMessages) {
                         outerDiv = jQuery("<div></div>", {
                             "id": "stripesMessageOuter",
                             "style": "position: relative;z-index:5",
@@ -197,13 +196,13 @@
                     "bDeferRender": true,
                     "oLanguage": {
                         "sInfo": "_TOTAL_ submissions displayed.",
-                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes."
+                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, BSP, and Picard. This may take a few minutes."
                     },
                     "oTableTools": ttExportDefines,
                     "bStateSave": true,
                     "bProcessing": true,
                     "bInfo": true,
-                    "sDom": "r<'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' iT>'span2'>>>t<'row-fluid'<'span6'><'span6'p>>",
+                    "sDom": "r<'row-fluid'<'span12'T>><'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' i>'span2'>>>t<'row-fluid'<'span6'><'span6'p>>",
                     "sAjaxSource": '${ctxpath}/projects/project.action',
                     "fnServerData": function (sSource, aoData, fnCallback, oSettings) {
                         aoData.push({"name": "researchProject", "value": "${researchProject}"});
@@ -295,12 +294,21 @@
                             }
                         }
 
+                        // recheck previously checked values. Stripes can't do this itself since datatables is rendered later.
+                        var selectedSubmissions = ${actionBean.selectedSubmissionTuples};
+                        if (selectedSubmissions != undefined) {
+                            for (var i = 0; i<selectedSubmissions.length; i++) {
+                                $j("input[value='" + JSON.stringify(selectedSubmissions[i]) + "']").attr('checked','checked');
+                            }
+                        }
+
                         updateSearchText();
                         $j(findFilterTextInput(oTable).on("change init", updateSearchText));
-                    },
-                    "fnDrawCallback": function () {
+
                         $j(".submissionControls").show();
                         $j(".accordion").show();
+                    },
+                    "fnDrawCallback": function () {
                         $j(".ui-accordion-content").css('overflow', 'visible');
                         $j('.shiftCheckbox').enableCheckboxRangeSelection();
 

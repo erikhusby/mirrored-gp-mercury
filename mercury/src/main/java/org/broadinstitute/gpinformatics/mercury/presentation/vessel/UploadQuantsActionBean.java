@@ -244,8 +244,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
             labMetricDao.flush();
             addMessage("Successfully saved metrics.");
         }
-        labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
-        buildColumns();
+        if( labMetricRunId != null ) {
+            labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
+            buildColumns();
+        }
         return new ForwardResolution(VIEW_PAGE);
     }
 

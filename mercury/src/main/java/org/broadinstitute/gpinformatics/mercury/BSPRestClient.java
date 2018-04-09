@@ -16,11 +16,13 @@ import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
  * This contains common code used by all clients of BSP rest, ie: non-broadcore) services.
  */
+@Dependent
 public class BSPRestClient extends AbstractJerseyClientService {
 
     private static final long serialVersionUID = 5472586820069306030L;

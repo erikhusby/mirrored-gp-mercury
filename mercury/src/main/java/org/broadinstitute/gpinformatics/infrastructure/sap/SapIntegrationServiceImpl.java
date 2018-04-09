@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
@@ -14,7 +16,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAd
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -35,16 +36,18 @@ import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@Impl
+@Dependent
+@Default
 public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Inject
@@ -61,6 +64,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Inject
     private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private SAPAccessControlEjb accessControlEjb;
 
     private SapIntegrationClientImpl wrappedClient;
 
@@ -169,7 +175,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
 
-        if (fundingLevel == null) {
+        if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
             // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
             // of funding
             throw new SAPIntegrationException(
@@ -238,8 +244,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
     }
 
-    private void defineConditionsForOrderItem(ProductOrder placedOrder, Product product, SAPOrderItem sapOrderItem)
-             {
+    private void defineConditionsForOrderItem(ProductOrder placedOrder, Product product, SAPOrderItem sapOrderItem) {
+
         if(placedOrder.getProduct().equals(product)) {
 
             final ProductOrderPriceAdjustment singlePriceAdjustment = placedOrder.getSinglePriceAdjustment();
@@ -249,50 +255,45 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         new BigDecimal(productPriceCache.findByProduct(product,
                                 placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
 
-                sapOrderItem.addCondition(singlePriceAdjustment.deriveAdjustmentCondition(),
-                        singlePriceAdjustment.getAdjustmentDifference());
+                if (singlePriceAdjustment.getAdjustmentValue() != null) {
+                    sapOrderItem.addCondition(singlePriceAdjustment.deriveAdjustmentCondition(),
+                            singlePriceAdjustment.getAdjustmentDifference());
+                }
                 if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
                     sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
                 }
-
-                if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
-                    sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
-                } else {
-                    sapOrderItem.setProductAlias(product.getProductName());
-                    if(placedOrder.getSapCompanyConfigurationForProductOrder() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
-                            StringUtils.isNotBlank(product.getAlternateExternalName())) {
-                        sapOrderItem.setProductAlias(product.getAlternateExternalName());
+            } else {
+                for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
+                    if (productOrderPriceAdjustment.hasPriceAdjustment()) {
+                        sapOrderItem.addCondition(productOrderPriceAdjustment.deriveAdjustmentCondition(),
+                                productOrderPriceAdjustment.getAdjustmentDifference());
                     }
-                }
-            }
-
-            for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
-                if (productOrderPriceAdjustment.hasPriceAdjustment()) {
-                    sapOrderItem.addCondition(productOrderPriceAdjustment.deriveAdjustmentCondition(),
-                            productOrderPriceAdjustment.getAdjustmentDifference());
                 }
             }
         } else {
             for (ProductOrderAddOn productOrderAddOn : placedOrder.getAddOns()) {
+                final ProductOrderAddOnPriceAdjustment singleCustomPriceAdjustment =
+                        productOrderAddOn.getSingleCustomPriceAdjustment();
                 if(productOrderAddOn.getAddOn().equals(product)) {
-
-                    if(productOrderAddOn.getSingleCustomPriceAdjustment() != null &&
-                       productOrderAddOn.getSingleCustomPriceAdjustment().hasPriceAdjustment()) {
-                        productOrderAddOn.getSingleCustomPriceAdjustment().setListPrice(new BigDecimal(productPriceCache.findByProduct(productOrderAddOn.getAddOn(),
+                    if(singleCustomPriceAdjustment != null &&
+                       singleCustomPriceAdjustment.hasPriceAdjustment()) {
+                        singleCustomPriceAdjustment.setListPrice(new BigDecimal(productPriceCache.findByProduct(productOrderAddOn.getAddOn(),
                                 placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
-                        sapOrderItem.addCondition(
-                                productOrderAddOn.getSingleCustomPriceAdjustment().deriveAdjustmentCondition(),
-                                productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentDifference());
-                        if(StringUtils.isNotBlank(productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName())) {
-                            sapOrderItem.setProductAlias(productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName());
+                        if (singleCustomPriceAdjustment.getAdjustmentValue() != null) {
+                            sapOrderItem.addCondition(
+                                    singleCustomPriceAdjustment.deriveAdjustmentCondition(),
+                                    singleCustomPriceAdjustment.getAdjustmentDifference());
                         }
-                    }
-
-                    for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
-                            .getQuotePriceAdjustments()) {
-                        if (productOrderAddOnPriceAdjustment.hasPriceAdjustment()) {
-                            sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.deriveAdjustmentCondition(),
-                                    productOrderAddOnPriceAdjustment.getAdjustmentDifference());
+                        if(StringUtils.isNotBlank(singleCustomPriceAdjustment.getCustomProductName())) {
+                            sapOrderItem.setProductAlias(singleCustomPriceAdjustment.getCustomProductName());
+                        }
+                    } else {
+                        for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
+                                .getQuotePriceAdjustments()) {
+                            if (productOrderAddOnPriceAdjustment.hasPriceAdjustment()) {
+                                sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.deriveAdjustmentCondition(),
+                                        productOrderAddOnPriceAdjustment.getAdjustmentDifference());
+                            }
                         }
                     }
                 }
@@ -354,7 +355,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public String findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException {
 
         String customerNumber = null;
-        if (fundingLevel == null) {
+        if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
             // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
             // of funding
             throw new SAPIntegrationException(
@@ -419,8 +420,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
                         (quantityOverride == null)?new BigDecimal(quoteItemForBilling.getQuantityForSAP()):quantityOverride);
 
-        if(Arrays.asList("P-EX-0028", "P-EX-0029").contains(quoteItemForBilling.getProduct().getPartNumber()) &&
-           StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
+        if(StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
             lineItem.addCondition(DeliveryCondition.LATE_DELIVERY_DISCOUNT);
         }
 
@@ -492,19 +492,25 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId,
                                                           ProductOrder productOrder) throws SAPIntegrationException {
-        OrderCriteria potentialOrderCriteria = null;
-        if (productOrder != null) {
-            potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount);
+        OrderCalculatedValues orderCalculatedValues = null;
+        if (accessControlEjb.getCurrentControlDefinitions().isEnabled()) {
+            OrderCriteria potentialOrderCriteria = null;
+            if (productOrder != null && productOrder.getProduct() != null) {
+                potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
+            }
+
+            orderCalculatedValues = getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
+                            potentialOrderCriteria);
         }
-        return getClient().calculateOrderValues(quoteId,
-                SapIntegrationClientImpl.SystemIdentifier.MERCURY, potentialOrderCriteria);
+        return orderCalculatedValues;
     }
 
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
-        return generateOrderCriteria(productOrder, 0);
+        return generateOrderCriteria(productOrder, 0, false);
     }
 
-    protected OrderCriteria generateOrderCriteria(ProductOrder productOrder, int addedSampleCount) throws SAPIntegrationException {
+    protected OrderCriteria generateOrderCriteria(ProductOrder productOrder, int addedSampleCount,
+                                                  boolean forOrderValueQuery) throws SAPIntegrationException {
 
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
@@ -518,32 +524,35 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             sapOrderItems.add(orderSubItem);
         }
 
-        Quote foundQuote = null;
-        try {
-            foundQuote = quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
-        } catch (QuoteServerException | QuoteNotFoundException e) {
-            throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
-        }
-        FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
+        String customerNumber = "";
+        if (!forOrderValueQuery) {
+            Quote foundQuote = null;
+            try {
+                foundQuote = quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+            } catch (QuoteServerException | QuoteNotFoundException e) {
+                throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
+            }
+            FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
 
-        if (fundingLevel == null) {
-            // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
-            // of funding
-            throw new SAPIntegrationException(
-                    "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
-        }
+            if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
+                // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
+                // of funding
+                throw new SAPIntegrationException(
+                        "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
+            }
 
-        String customerNumber = null;
-        if(fundingLevel.getFunding().size() >1) {
-            throw new SAPIntegrationException("This order is ineligible to save to SAP since there are multiple "
-                                              + "funding sources associated with the given quote " +
-                                              productOrder.getQuoteId());
-        }
-        for (Funding funding : fundingLevel.getFunding()) {
-            if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                customerNumber = findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(), fundingLevel);
-            } else {
-                customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+            customerNumber = null;
+            if(fundingLevel.getFunding().size() >1) {
+                throw new SAPIntegrationException("This order is ineligible to save to SAP since there are multiple "
+                                                  + "funding sources associated with the given quote " +
+                                                  productOrder.getQuoteId());
+            }
+            for (Funding funding : fundingLevel.getFunding()) {
+                if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
+                    customerNumber = findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(), fundingLevel);
+                } else {
+                    customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+                }
             }
         }
 

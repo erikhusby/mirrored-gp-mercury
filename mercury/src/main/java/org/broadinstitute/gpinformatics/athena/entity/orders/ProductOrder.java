@@ -12,6 +12,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -41,6 +42,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -153,9 +155,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String title = "";
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "RESEARCH_PROJECT")
     private ResearchProject researchProject;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "PRODUCT")
     private Product product;
 
     @Enumerated(EnumType.STRING)
@@ -196,10 +200,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     // this should not cause n+1 select performance issue if it is LAZY and mandatory
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
+    @JoinColumn(name = "PRODUCT_ORDER_KIT")
     private ProductOrderKit productOrderKit;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS", joinColumns = {@JoinColumn(name = "PRODUCT_ORDER")})
+    @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS"
+            , joinColumns = {@JoinColumn(name = "PRODUCT_ORDER", referencedColumnName = "PRODUCT_ORDER_ID")}
+            , inverseJoinColumns = {@JoinColumn(name = "REGULATORY_INFOS", referencedColumnName = "REGULATORY_INFO_ID")})
     private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
@@ -231,7 +238,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String sapOrderNumber;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "athena", name = "product_order_sap_orders", joinColumns = {@JoinColumn(name = "reference_product_order")})
+    @JoinTable(schema = "athena", name = "product_order_sap_orders"
+            , joinColumns = {@JoinColumn(name = "REFERENCE_PRODUCT_ORDER", referencedColumnName = "PRODUCT_ORDER_ID")}
+            , inverseJoinColumns = {@JoinColumn(name = "SAP_REFERENCE_ORDERS", referencedColumnName = "SAP_ORDER_DETAIL_ID")})
     private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
 
     @OneToMany(mappedBy = "parentOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -251,6 +260,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Transient
     private Set<ProductOrderPriceAdjustment> quotePriceMatchAdjustments = new HashSet<>();
 
+    @Column(name = "PRIOR_TOSAP1_5")
     private Boolean priorToSAP1_5 = false;
 
     @Enumerated(EnumType.STRING)
@@ -595,9 +605,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
-                           List<ProductOrderSample> samples) {
+                           List<ProductOrderSample> samples) throws InvalidProductException {
         updateAddOnProducts(addOnProducts);
-        this.product = product;
+        if(product != null && !product.equals(this.product)) {
+            this.clearCustomPriceAdjustment();
+            if(product.getSapMaterial() != null) {
+                if(product.isExternalOnlyProduct() || product.isClinicalProduct()) {
+                    final ProductOrderPriceAdjustment priceAdjustment = new ProductOrderPriceAdjustment();
+                    priceAdjustment.setAdjustmentValue(new BigDecimal(product.getSapMaterial().getBasePrice()));
+                    this.addCustomPriceAdjustment(priceAdjustment);
+                }
+            }
+        } else if (product == null) {
+            this.clearCustomPriceAdjustment();
+        }
+        setProduct(product);
         setResearchProject(researchProject);
         setSamples(samples);
     }
@@ -704,9 +726,34 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void updateAddOnProducts(List<Product> addOnList) {
+
+        //make the existing Addons Accessible in a map for later comparison
+        Map<Product, ProductOrderAddOn> existingAddonMap = new HashMap<>();
+        for (ProductOrderAddOn addOn : addOns) {
+            existingAddonMap.put(addOn.getAddOn(), addOn);
+        }
+
         addOns.clear();
         for (Product addOn : addOnList) {
-            addOns.add(new ProductOrderAddOn(addOn, this));
+            final ProductOrderAddOn pdoAddOn ;
+            if(existingAddonMap.keySet().contains(addOn)) {
+                // Keep the old Add on instead of just creating a new one
+                pdoAddOn = existingAddonMap.get(addOn);
+            } else {
+
+                // Create a new addon for any potential add ons which are not already existing
+                pdoAddOn = new ProductOrderAddOn(addOn, this);
+
+                // For SAP Company code 2000 orders, create a custom price adjustment to lock in the price at the time
+                // of the order
+                if (addOn.getSapMaterial() != null && (addOn.isClinicalProduct() || addOn.isExternalOnlyProduct())) {
+                    final ProductOrderAddOnPriceAdjustment customPriceAdjustment =
+                            new ProductOrderAddOnPriceAdjustment();
+                    customPriceAdjustment.setAdjustmentValue(new BigDecimal(addOn.getSapMaterial().getBasePrice()));
+                    pdoAddOn.setCustomPriceAdjustment(customPriceAdjustment);
+                }
+            }
+            addOns.add(pdoAddOn);
         }
     }
 
@@ -733,7 +780,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return isChildOrder()?parentOrder.getProduct():product;
     }
 
-    public void setProduct(Product product) {
+    public void setProduct(Product product) throws InvalidProductException {
+        if(isSavedInSAP() &&
+           getSapCompanyConfigurationForProductOrder() != product.determineCompanyConfiguration()) {
+            throw new InvalidProductException("Unable to update the order.  This combination of Product and Order is "
+                                              + "attempting to change the company code to which this order will be associated.");
+        }
         this.product = product;
     }
 
@@ -2143,11 +2195,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return found;
     }
 
-    public void setCustomPriceAdjustment(ProductOrderPriceAdjustment customPriceAdjustment)
-            throws ValidationException {
+    public void setCustomPriceAdjustment(ProductOrderPriceAdjustment customPriceAdjustment) {
 
-        this.customPriceAdjustments.clear();
+        clearCustomPriceAdjustment();
         addCustomPriceAdjustment(customPriceAdjustment);
+    }
+
+    public void clearCustomPriceAdjustment() {
+        this.customPriceAdjustments.clear();
     }
 
     public void addCustomPriceAdjustment(ProductOrderPriceAdjustment priceAdjustment) {
@@ -2156,11 +2211,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public OrderAccessType getOrderType() {
-        return orderType;
+        return isChildOrder() ? getParentOrder().orderType: orderType;
     }
 
     public void setOrderType(OrderAccessType orderType) {
-        this.orderType = orderType;
+        if (!isChildOrder()) {
+            this.orderType = orderType;
+        }
     }
 
     public String getOrderTypeDisplay() {
@@ -2197,12 +2254,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public static void checkQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
         for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
-            for (Funding funding : fundingLevel.getFunding()) {
+            if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
+                for (Funding funding : fundingLevel.getFunding()) {
 
-                if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                    if (!FundingLevel.isGrantActiveForDate(todayTruncated, funding)) {
-                        throw new QuoteServerException("The funding source " + funding.getGrantNumber() +
-                                                       " has expired making this quote currently unfunded.");
+                    if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                        if (!FundingLevel.isGrantActiveForDate(todayTruncated, funding)) {
+                            throw new QuoteServerException("The funding source " + funding.getGrantNumber() +
+                                                           " has expired making this quote currently unfunded.");
+                        }
                     }
                 }
             }
@@ -2259,8 +2318,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return returnOrder;
     }
 
-    public void updateCustomSettings(List<CustomizationValues> productCustomizations)
-            throws ValidationException {
+    public void updateCustomSettings(List<CustomizationValues> productCustomizations){
 
         Map<String, CustomizationValues> mappedValues = new HashMap<>();
         for (CustomizationValues productCustomization : productCustomizations) {
@@ -2270,25 +2328,60 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if(getProduct() != null){
             final Product product = getProduct();
             final String primaryPartNumber = product.getPartNumber();
-            if(mappedValues.containsKey(primaryPartNumber) && !mappedValues.get(primaryPartNumber).isEmpty()) {
-                ProductOrderPriceAdjustment primaryAdjustment =
-                        new ProductOrderPriceAdjustment(new BigDecimal(mappedValues.get(primaryPartNumber).getPrice()),
-                                (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getQuantity()))?Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity()):null,
-                                mappedValues.get(primaryPartNumber).getCustomName());
-                setCustomPriceAdjustment(primaryAdjustment);
+            if(mappedValues.containsKey(primaryPartNumber)) {
+                if(mappedValues.get(primaryPartNumber).isEmpty()) {
+                    if(getSinglePriceAdjustment() != null) {
+                        clearCustomPriceAdjustment();
+                    }
+                } else {
+                    BigDecimal adjustmentPriceValue = null;
+                    Integer adjustmentQuantityValue = null;
+
+                    if(StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getPrice())){
+
+                        adjustmentPriceValue = new BigDecimal(mappedValues.get(primaryPartNumber).getPrice());
+                    }
+                    if (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getQuantity())) {
+                        adjustmentQuantityValue = Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity());
+                    }
+
+                    final ProductOrderPriceAdjustment primaryAdjustment =
+                            new ProductOrderPriceAdjustment(adjustmentPriceValue, adjustmentQuantityValue,
+                                    mappedValues.get(primaryPartNumber).getCustomName());
+                    setCustomPriceAdjustment(primaryAdjustment);
+                }
             }
         }
 
         for (ProductOrderAddOn productOrderAddOn : getAddOns()) {
             final Product addOnProduct = productOrderAddOn.getAddOn();
-            if(mappedValues.containsKey(addOnProduct.getPartNumber()) &&
-               !mappedValues.get(addOnProduct.getPartNumber()).isEmpty()) {
-                final ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment =
-                        new ProductOrderAddOnPriceAdjustment(new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getPrice()),
-                                (StringUtils.isNotBlank(mappedValues.get(addOnProduct.getPartNumber()).getQuantity()))?Integer.valueOf(mappedValues.get(addOnProduct.getPartNumber()).getQuantity()):null,
-                                mappedValues.get(addOnProduct.getPartNumber()).getCustomName());
+            if(mappedValues.containsKey(addOnProduct.getPartNumber())) {
+                if(mappedValues.get(addOnProduct.getPartNumber()).isEmpty()) {
+                    if(productOrderAddOn.getSingleCustomPriceAdjustment() != null) {
+                        productOrderAddOn.clearCustomPriceAdjustment();
+                    }
+                } else {
+                    BigDecimal addOnAdjustmentPriceValue = null;
+                    Integer addOnAdjustmentQuantityValue = null;
 
-                productOrderAddOn.setCustomPriceAdjustment(productOrderAddOnPriceAdjustment);
+                    if (StringUtils
+                            .isNoneBlank(mappedValues.get(addOnProduct.getPartNumber()).getPrice())) {
+                        addOnAdjustmentPriceValue =
+                                new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getPrice());
+                    }
+                    if (StringUtils
+                            .isNotBlank(mappedValues.get(addOnProduct.getPartNumber()).getQuantity())) {
+                        addOnAdjustmentQuantityValue =
+                                Integer.valueOf(mappedValues.get(addOnProduct.getPartNumber()).getQuantity());
+                    }
+                    
+                    final ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment =
+                            new ProductOrderAddOnPriceAdjustment(addOnAdjustmentPriceValue,
+                                    addOnAdjustmentQuantityValue,
+                                    mappedValues.get(addOnProduct.getPartNumber()).getCustomName());
+
+                    productOrderAddOn.setCustomPriceAdjustment(productOrderAddOnPriceAdjustment);
+                }
             }
         }
     }
@@ -2315,8 +2408,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public boolean isResearchOrder () {
         boolean result = true;
-        if(orderType != null) {
-            result = orderType == OrderAccessType.BROAD_PI_ENGAGED_WORK;
+        if(getOrderType() != null) {
+            result = getOrderType() == OrderAccessType.BROAD_PI_ENGAGED_WORK;
         }
         return result;
     }

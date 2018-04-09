@@ -44,14 +44,38 @@
             return val.plateMapMetrics.displayName;
         });
         var metricsListBox = this.buildMetricsSelectList(metricNames, $(metric));
-        var metadataSelector = $(metadata);
         var plateMetadataSelector = $(plateMetadata);
+        var cellMetadataSelector = $(metadata);
         plugin.attachMetadata(null, platemap.plateMetadata, plateMetadataSelector);
-        $.each(platemap.emptyWells, function (idx, well) {
-            var wellIdTag = '#' + platemap.label + "_" + well;
-            var wellElem = $(wellIdTag);
-            wellElem.attr('class', 'noSample');
+
+        var cellIdPrefix = '#' + platemap.label + "_";
+
+        // Attach metadata to each cell
+        $.each( platemap.wellMetadataMap, function( cell, metavals ) {
+            plugin.attachMetadata($(cellIdPrefix + cell), metavals, cellMetadataSelector);
         });
+
+        // Status
+        if( platemap.wellStatusMap != null ) {
+            $.each(platemap.wellStatusMap, function (idx, well) {
+                var wellIdTag = cellIdPrefix + idx;
+                var wellElem = $(wellIdTag);
+                switch (well) {
+                    case "Empty":
+                        wellElem.attr('class', 'metricCell noSample');
+                        break;
+                    case "Blacklisted":
+                        wellElem.attr('class', 'metricCell blacklisted');
+                        break;
+                    case "Abandoned":
+                        wellElem.attr('class', 'metricCell abandoned');
+                        break;
+                    default:
+                        wellElem.attr('class', 'metricCell');
+                }
+            });
+        }
+
         metricsListBox.change(function() {
             var selectedMetric = this.value;
             var datasetList = $.grep(datasets, function(e){
@@ -74,9 +98,8 @@
                 var chartType = dataset.plateMapMetrics.chartType;
                 plugin.buildLegend(legend, dataset.options);
                 $.each(dataset.wellData, function (idx, wellData) {
-                    var wellIdTag = '#' + platemap.label + "_" + wellData.well;
+                    var wellIdTag = cellIdPrefix + wellData.well;
                     var wellElem = $(wellIdTag);
-                    plugin.attachMetadata(wellElem, wellData.metadata, metadataSelector);
                     if (dataset.plateMapMetrics.displayValue)
                         wellElem.text(wellData.value);
                     if (chartType === 'Category') {
@@ -105,6 +128,7 @@
     Plugin.prototype.buildLegend = function(legend, options) {
         legend.empty();
         var legendList = $('<ul></ul>').addClass('legend');
+        if( !options ) return;
         for (var i = 0; i < options.length; i++) {
             var option = options[i];
             var li = $('<li></li>');
@@ -119,14 +143,18 @@
 
     Plugin.prototype.attachMetadata = function(wellElem, metadataList, metadataSelector) {
         if (wellElem != null) {
+            wellElem.data("metadata", metadataList);
             wellElem.hover(function(){
                 metadataSelector.empty();
-                if (metadataList != undefined) {
+                var metadata = wellElem.data("metadata");
+                if (metadata != undefined) {
                     $.each(metadataList, function (idx, metadata) {
-                        var dt = $('<dt></dt>').text(metadata.label);
-                        var dd = $('<dd></dd>').text(metadata.value);
-                        metadataSelector.append(dt);
-                        metadataSelector.append(dd);
+                        if( metadata.label ) {
+                            var dt = $('<dt></dt>').text(metadata.label);
+                            var dd = $('<dd></dd>').text(metadata.value);
+                            metadataSelector.append(dt);
+                            metadataSelector.append(dd);
+                        }
                     });
                 }
             }, function () {

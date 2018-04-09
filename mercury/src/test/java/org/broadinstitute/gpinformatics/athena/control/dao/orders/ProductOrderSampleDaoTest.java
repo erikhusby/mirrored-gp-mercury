@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
@@ -21,7 +21,7 @@ import java.util.Set;
 
 
 @Test(enabled = true, groups = TestGroups.STUBBY)
-public class ProductOrderSampleDaoTest extends ContainerTest {
+public class ProductOrderSampleDaoTest extends StubbyContainerTest {
 
     @Inject
     ProductOrderDao productOrderDao;
@@ -109,7 +109,13 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
             returnedSampleNames.add(productOrderSample.getName());
         }
 
-        Assert.assertEquals(returnedSampleNames,sampleNamesSubset);
+        Assert.assertEquals(sampleNamesSubset.size(), returnedSampleNames.size());
+
+        for( String returnedID : returnedSampleNames ) {
+            Assert.assertTrue( sampleNamesSubset.contains(returnedID), "Returned sample " + returnedID + " not in list of expected samples" );
+        }
+
+
     }
 
     @Test(groups = TestGroups.STUBBY, enabled = true)

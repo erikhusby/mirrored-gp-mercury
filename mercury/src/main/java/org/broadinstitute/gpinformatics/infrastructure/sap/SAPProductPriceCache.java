@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -14,7 +17,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.springframework.util.CollectionUtils;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -33,10 +35,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
 
     private SapIntegrationService sapService;
 
-    //  A temporary short circuit until actual implementation of the service to retrieve all materials is in place
-    //  When it is, this inclusion of the priceListCache will be removed.
-    @Inject
-    private PriceListCache quotesPriceListCache;
+    private SAPAccessControlEjb accessControlEjb;
 
     private static final Log logger = LogFactory.getLog(SAPProductPriceCache.class);
 
@@ -56,22 +55,25 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     @Override
     public synchronized void refreshCache() {
         try {
-            Set<SAPMaterial> tempSet = sapService.findProductsInSap();
+            SAPAccessControl control = accessControlEjb.getCurrentControlDefinitions();
+            if (control.isEnabled()) {
+                Set<SAPMaterial> tempSet = sapService.findProductsInSap();
 
-            if(!CollectionUtils.isEmpty(tempSet)) {
-                setMaterials(tempSet);
+                if(!CollectionUtils.isEmpty(tempSet)) {
+                    setMaterials(tempSet);
+                }
             }
         } catch (SAPIntegrationException e) {
             logger.error("Could not refresh the SAP Product Price Cache", e);
         }
-
     }
 
-    public void setMaterials(Set<SAPMaterial> tempSet) {
+    private void setMaterials(Set<SAPMaterial> tempSet) {
         sapMaterials = tempSet;
     }
 
-    public Collection<SAPMaterial> getSapMaterials()
+
+    private Collection<SAPMaterial> getSapMaterials()
     {
         if(CollectionUtils.isEmpty(sapMaterials)) {
             refreshCache();
@@ -79,12 +81,12 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         return sapMaterials;
     }
 
-    private SAPMaterial findByPartNumber(String partNumber,
+    public SAPMaterial findByPartNumber(String partNumber,
                                          SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
         SAPMaterial foundMaterial = null;
 
         for (SAPMaterial sapMaterial : getSapMaterials()) {
-            if(StringUtils.equals(partNumber, sapMaterial.getMaterialIdentifier()) &&
+            if(StringUtils.equalsIgnoreCase(partNumber, sapMaterial.getMaterialIdentifier()) &&
                sapMaterial.getCompanyCode() == companyCode) {
                 foundMaterial = sapMaterial;
                 break;
@@ -146,12 +148,19 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
 
     public boolean productExists(String partNumber) {
         boolean result = false;
-        for (SAPMaterial sapMaterial : sapMaterials) {
-            if (StringUtils.equals(sapMaterial.getMaterialIdentifier(), partNumber)) {
+        for (SAPMaterial sapMaterial : getSapMaterials()) {
+            if (StringUtils.equalsIgnoreCase(sapMaterial.getMaterialIdentifier(), partNumber)) {
                 result = true;
                 break;
             }
         }
         return result;
     }
+
+    @Inject
+    public void setAccessControlEjb(
+            SAPAccessControlEjb accessControlEjb) {
+        this.accessControlEjb = accessControlEjb;
+    }
+
 }
