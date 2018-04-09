@@ -2282,8 +2282,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 } catch (Exception e){
                     logger.error(e);
                 } finally {
-                    if (jsonGenerator!=null) {
-                        jsonGenerator.close();
+                    if (jsonGenerator!=null && !jsonGenerator.isClosed()) {
+                        try {
+                            jsonGenerator.close();
+                        } catch (IOException e) {
+                            logger.error("Error closing JSON stream. The user may have navigated away from page.", e);
+                        }
                     }
                 }
             }

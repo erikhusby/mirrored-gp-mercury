@@ -171,11 +171,9 @@
         var dateCompleteWarningThreshold = new Date(${actionBean.threeMonthsAgo});
         var $selectedRows=undefined;
         function getSelectedRows() {
-            console.time("selectedRows");
             if ($selectedRows == undefined) {
                 $selectedRows = $j('#ledger tbody input[name=selectedProductOrderSampleIds]:checked').closest("tr");
             }
-            console.timeEnd("selectedRows");
             return $selectedRows;
         }
 
@@ -412,9 +410,7 @@
                 $selectedRows=undefined;
                 getSelectedRows();
 
-                console.time("unselectedRows");
                 var unselectedRows = $j("#ledger").find("tbody tr").not($selectedRows);
-                console.timeEnd("unselectedRows");
                 var inputs = unselectedRows.find("input");
 
                 if ($selectedRows.length > 0) {
