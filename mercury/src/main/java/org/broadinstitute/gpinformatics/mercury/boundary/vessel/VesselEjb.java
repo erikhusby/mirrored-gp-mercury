@@ -211,8 +211,9 @@ public class VesselEjb {
             }
 
             if (!messageCollection.hasErrors()) {
+                // Process is only interested in the primary vessels
                 labVessels = labVesselFactory.buildLabVessels(sampleVesselProcessor.getParentVesselBeans(),
-                        loginUserName, new Date(), null, MercurySample.MetadataSource.MERCURY);
+                        loginUserName, new Date(), null, MercurySample.MetadataSource.MERCURY).getLeft();
                 labVesselDao.persistAll(labVessels);
             }
         }
