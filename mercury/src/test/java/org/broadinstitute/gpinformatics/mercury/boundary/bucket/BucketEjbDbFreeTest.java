@@ -10,7 +10,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
@@ -90,7 +91,7 @@ public class BucketEjbDbFreeTest {
     private BucketDao bucketDao = createNiceMock(BucketDao.class);
     private BucketEntryDao bucketEntryDao = createMock(BucketEntryDao.class);
     private LabVesselDao labVesselDao = createNiceMock(LabVesselDao.class);
-    private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcher.class);
+    private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcherImpl.class);
     private LabVesselFactory labVesselFactory = createMock(LabVesselFactory.class);
 
     private Object[] mocks =
@@ -126,7 +127,7 @@ public class BucketEjbDbFreeTest {
         pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
         setupMercurySamples(pdo, expectedSamples, labVessels);
 
-        bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao,
+        bucketEjb = new BucketEjb(labEventFactory, JiraServiceTestProducer.stubInstance(), bucketDao, bucketEntryDao,
                                   labVesselDao, labVesselFactory, bspSampleDataFetcher,
                                   bspUserList, workflowConfig, createNiceMock(ProductOrderDao.class), mercurysampleDao);
     }
@@ -316,11 +317,13 @@ public class BucketEjbDbFreeTest {
             if (createVessels) {
                 if (rackPosition == 4) {
                     List<LabVessel> mockCreatedVessels = new ArrayList<>();
+                    List<LabVessel> secondaryVessels = new ArrayList<>();
+                    Pair<List<LabVessel>,List<LabVessel>> factoryVesselPair = Pair.of(mockCreatedVessels, secondaryVessels);
                     mockCreatedVessels.add(labVessels.get(rackPosition - 1));
                     expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getName()),
                             eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date) anyObject(),
                             eq(MercurySample.MetadataSource.BSP))).
-                                    andReturn(mockCreatedVessels);
+                                    andReturn(factoryVesselPair);
                 }
             }
         }

@@ -473,9 +473,10 @@ public class BucketEjb {
             if (bspSampleData != null &&
                 StringUtils.isNotBlank(bspSampleData.getBarcodeForLabVessel())) {
                 if (bspSampleData.isSampleReceived()) {
-                    vessels.addAll(
-                            labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
-                                    username, new Date(), MercurySample.MetadataSource.BSP));
+                    // Process is only interested in the primary vessels
+                    List<LabVessel> sampleVessels = labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
+                            username, new Date(), MercurySample.MetadataSource.BSP).getLeft();
+                    vessels.addAll(sampleVessels );
                 }
             } else {
                 cannotAddToBucket.add(sampleName);

@@ -42,7 +42,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -60,16 +60,16 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.ExceptionMessageMatcher.containsMessage;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestEventMatcher.hasEventError;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * Container tests for ManifestSessions.
@@ -84,7 +84,7 @@ public class ManifestSessionContainerTest extends Arquillian {
     private static final String GENDER_MALE = "Male";
     private static final String GENDER_FEMALE = "Female";
     private static final String COLLAB_PREFIX = "collab_";
-    public static final int NUM_RECORDS_IN_SPREADSHEET = 23;
+    private static final int NUM_RECORDS_IN_SPREADSHEET = 23;
 
     private ResearchProject researchProject;
     private ManifestSession manifestSessionI;
@@ -110,8 +110,8 @@ public class ManifestSessionContainerTest extends Arquillian {
     private List<String> secondUploadedSamplesDupes = Arrays.asList("03101231193", "03101752020");
     private Map<String, MercurySample> sourceSampleToMercurySample;
     private Map<String, LabVessel> sourceSampleToTargetVessel;
-    public ManifestSession uploadedSession;
-    public ManifestSession uploadedSession2;
+    private ManifestSession uploadedSession;
+    private ManifestSession uploadedSession2;
 
     @Inject
     private ManifestSessionEjb manifestSessionEjb;
@@ -144,10 +144,10 @@ public class ManifestSessionContainerTest extends Arquillian {
     private ResearchProjectEjb researchProjectEjb;
 
     @Alternative
+    @Dependent
     public static class BSPCohortListProducer {
         @Produces
         @Alternative
-        @RequestScoped
         public static BSPCohortList produce() {
             BSPCohortList bspCohortList = Mockito.mock(BSPCohortList.class);
             Mockito.when(bspCohortList.getCohortListString(Mockito.any(String[].class))).thenReturn("");
@@ -1215,7 +1215,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         ParentVesselBean bean2 = new ParentVesselBean(sampleId2, sampleId2, "Cryo vial [2.0 (1.8)mL]", null);
         List<LabVessel> labVessels =
                 labVesselFactory.buildLabVessels(Arrays.asList(bean1, bean2), "QADudeLM", new Date(), null,
-                        MercurySample.MetadataSource.MERCURY);
+                        MercurySample.MetadataSource.MERCURY).getLeft();
         labVesselDao.persistAll(labVessels);
         manifestSessionDao.flush(); manifestSessionDao.clear();
 

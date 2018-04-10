@@ -25,6 +25,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
@@ -38,7 +39,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
-@Test(groups = TestGroups.ALTERNATIVES)
+@Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
+@RequestScoped
 public class BatchToJiraTest extends Arquillian {
 
     @Inject

@@ -13,6 +13,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -39,9 +40,11 @@ public class ProductOrderAddOn {
      */
     @Index(name = "ix_product_order_add_on")
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name="PRODUCT_ORDER")
     private ProductOrder productOrder;
 
     @ManyToOne(cascade = CascadeType.PERSIST, optional = false)
+    @JoinColumn(name="ADD_ON")
     private Product addOn;
 
 

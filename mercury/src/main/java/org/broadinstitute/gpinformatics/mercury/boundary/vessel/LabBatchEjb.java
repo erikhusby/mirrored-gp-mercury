@@ -604,7 +604,6 @@ public class LabBatchEjb {
 
     }
 
-    @org.jetbrains.annotations.Nullable
     private String getSample(BucketEntry entry) {
         String sampleName = null;
         for (SampleInstanceV2 sampleInstanceV2 : entry.getLabVessel().getSampleInstancesV2()) {

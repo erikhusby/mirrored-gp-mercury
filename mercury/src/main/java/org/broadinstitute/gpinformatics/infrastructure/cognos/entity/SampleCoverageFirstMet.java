@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.cognos.entity;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -17,6 +20,30 @@ public class SampleCoverageFirstMet {
     public static class SampleCoverageFirstMetId implements Serializable {
         private String pdoName;
         private String externalSampleId;
+
+        @Override
+        public boolean equals( Object obj){
+
+            if (obj == null) { return false; }
+            if (obj == this) { return true; }
+            if (obj.getClass() != getClass()) {
+                return false;
+            }
+            SampleCoverageFirstMetId rhs = (SampleCoverageFirstMetId) obj;
+            return new EqualsBuilder()
+                    .appendSuper(super.equals(obj))
+                    .append(pdoName, rhs.pdoName)
+                    .append(externalSampleId, rhs.externalSampleId)
+                    .isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder(17, 37).
+                    append(pdoName).
+                    append(externalSampleId).
+                    toHashCode();
+        }
     }
 
     @EmbeddedId
