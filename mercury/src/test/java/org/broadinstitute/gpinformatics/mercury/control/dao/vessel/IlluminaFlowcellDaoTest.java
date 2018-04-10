@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.testng.annotations.Test;
 
@@ -12,7 +12,7 @@ import javax.inject.Inject;
  * Test persist and fetch
  */
 @Test(groups = {TestGroups.STUBBY})
-public class IlluminaFlowcellDaoTest extends ContainerTest {
+public class IlluminaFlowcellDaoTest extends StubbyContainerTest {
 
     @Inject
     private IlluminaFlowcellDao illuminaFlowcellDao;

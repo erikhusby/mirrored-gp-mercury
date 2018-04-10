@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.Collection;
@@ -31,6 +32,7 @@ import java.util.Set;
  * {@link MercurySampleDao#findMapIdToMercurySample(Collection)} for the second argument to avoid a redundant database
  * query.
  */
+@Dependent
 public class SampleDataSourceResolver implements Serializable{
 
     private final MercurySampleDao mercurySampleDao;

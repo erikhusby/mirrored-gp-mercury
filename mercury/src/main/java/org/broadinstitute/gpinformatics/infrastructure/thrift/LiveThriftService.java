@@ -11,10 +11,12 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
@@ -23,17 +25,25 @@ import java.util.Map;
  * Thrift service client that connects to a live thrift endpoint. All thrift
  * communication details and handling of error conditions are handled here.
  */
-@Impl
+@Dependent
+@Default
 public class LiveThriftService implements ThriftService {
 
     private ThriftConnection thriftConnection;
 
-    private Log log;
+    private Log log = LogFactory.getLog(this.getClass());
 
-    @Inject
+    /**
+     * Testing only
+     */
     public LiveThriftService(ThriftConnection thriftConnection, Log log) {
         this.thriftConnection = thriftConnection;
         this.log = log;
+    }
+
+    @Inject
+    public LiveThriftService(ThriftConnection thriftConnection) {
+        this.thriftConnection = thriftConnection;
     }
 
     @Override

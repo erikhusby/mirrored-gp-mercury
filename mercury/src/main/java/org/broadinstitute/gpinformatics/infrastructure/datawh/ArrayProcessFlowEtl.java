@@ -12,6 +12,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -32,6 +34,7 @@ import java.util.TreeSet;
  *   If no Infinium buckets have been created on the DNSA plate chip well, all events are ignored because we're unable to deterministically track by PDO, LCSET, and sample
  */
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private final List<String> logErrors = new ArrayList<>();
     private final Set<Long> loggingDeletedEventIds = new HashSet<>();

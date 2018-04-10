@@ -21,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTe
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Arrays;
 
 /**
@@ -44,11 +43,12 @@ public class LimsQueryObjectFactory {
      *                       a 101-base paired-end read with dual indices: "101T8B8B101T"
      * @param lanes          SequencingTemplateLanes
      */
-    public static SequencingTemplateType createSequencingTemplate(@Nullable String name, @Nullable String barcode,
-                                                                  @Nonnull Boolean pairedRun,
-                                                                  @Nonnull String onRigWorkflow,
-                                                                  @Nonnull String onRigChemistry,
-                                                                  @Nonnull String readStructure,
+    public static SequencingTemplateType createSequencingTemplate(@Nullable String name,
+                                                                  @Nullable String barcode,
+                                                                  @Nonnull  Boolean pairedRun,
+                                                                  @Nullable String onRigWorkflow,
+                                                                  @Nullable String onRigChemistry,
+                                                                  @Nonnull  String readStructure,
                                                                   SequencingTemplateLaneType... lanes) {
         SequencingTemplateType template = new SequencingTemplateType();
         template.setName(name);
