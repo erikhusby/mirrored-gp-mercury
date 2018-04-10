@@ -11,6 +11,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
@@ -18,7 +19,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPOutputStream;
 
@@ -89,19 +89,19 @@ class GZIPHttpServletResponseWrapper extends HttpServletResponseWrapper {
             outputStream.flush();
         }
         super.flushBuffer();
-        }
+    }
 
-        @Override
-        public ServletOutputStream getOutputStream() throws IOException {
-            if (printWriter != null) {
-                throw new IllegalStateException("printWriter already defined");
-            }
-            if (outputStream == null) {
-                initGzip();
-                outputStream = gzipStream;
-            }
-            return outputStream;
+    @Override
+    public ServletOutputStream getOutputStream() throws IOException {
+        if (printWriter != null) {
+            throw new IllegalStateException("printWriter already defined");
         }
+        if (outputStream == null) {
+            initGzip();
+            outputStream = gzipStream;
+        }
+        return outputStream;
+    }
 
     @Override
     public PrintWriter getWriter() throws IOException {
@@ -132,41 +132,48 @@ class ServletResponseGZIPOutputStream extends ServletOutputStream {
 
     ServletResponseGZIPOutputStream(OutputStream output) throws IOException {
         gzipStream = new GZIPOutputStream(output);
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (open.compareAndSet(true, false)) {
+            gzipStream.close();
         }
+    }
 
-        @Override
-        public void close() throws IOException {
-            if (open.compareAndSet(true, false)) {
-                gzipStream.close();
-            }
+    @Override
+    public void flush() throws IOException {
+        gzipStream.flush();
+    }
+
+    @Override
+    public void write(byte[] b) throws IOException {
+        write(b, 0, b.length);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        if (!open.get()) {
+            throw new IOException("Stream closed!");
         }
+        gzipStream.write(b, off, len);
+    }
 
-        @Override
-        public void flush() throws IOException {
-            gzipStream.flush();
+    @Override
+    public void write(int b) throws IOException {
+        if (!open.get()) {
+            throw new IOException("Stream closed!");
         }
+        gzipStream.write(b);
+    }
 
-        @Override
-        public void write(byte[] b) throws IOException {
-            write(b, 0, b.length);
-        }
+    @Override
+    public boolean isReady() {
+        return true;
 
-        @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            if (!open.get()) {
-                throw new IOException("Stream closed!");
-            }
-            ByteBuffer buffer = ByteBuffer.wrap(b, off, len);
+    }
 
-            gzipStream.write(b, off, len);
-        }
-
-        @Override
-        public void write(int b) throws IOException {
-            if (!open.get()) {
-                throw new IOException("Stream closed!");
-            }
-            gzipStream.write(b);
-        }
-
+    @Override
+    public void setWriteListener(WriteListener writeListener) {
+    }
 }
