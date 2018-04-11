@@ -1426,4 +1426,61 @@ public class ProductOrderFixupTest extends Arquillian {
 
         commitTransaction();
     }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/PDOSamplesToUnabandon.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX unabandoning samples in pdo-xxx
+     * A reason for unabandoning to go with the unabandon comment
+     * PDO-xxx
+     * SM-329482
+     * SM-2938239
+     * ...
+     * ...
+     */
+
+    @Test(enabled = false)
+    public void genericUnAbandonSamples() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("PDOSamplesToUnabandon.txt"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(fixupLines), "The file PDOSamplesToUnabandon.txt has no content.");
+        String fixupReason = fixupLines.get(0);
+        final String sampleComment = fixupLines.get(1);
+        String pdoTicket = fixupLines.get(2);
+
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
+        Assert.assertTrue(StringUtils.isNotBlank(pdoTicket), "A PDO is necessary to unabandon");
+
+        List<String> samplesToUnabandon = fixupLines.subList(3, fixupLines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(samplesToUnabandon), "No Samples have been provided to unabandon");
+
+
+        Set<Long> productOrderSampleIDs = new HashSet<>();
+
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoTicket);
+
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if (samplesToUnabandon .contains(sample.getSampleKey())) {
+                productOrderSampleIDs.add(sample.getProductOrderSampleId());
+            }
+        }
+
+        final MessageReporter testOnly = MessageReporter.UNUSED;
+        final MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, messageCollection);
+        productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
+
+        if(productOrder.isSavedInSAP()) {
+            productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        }
+        if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
+            Assert.fail("Error occured attempting to update SAP in fixupTest");
+
+        }
+        productOrderDao.persist(new FixupCommentary(fixupReason));
+        commitTransaction();
+    }
 }

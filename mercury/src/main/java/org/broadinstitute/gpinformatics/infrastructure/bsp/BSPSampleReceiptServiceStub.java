@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.context.Dependent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import java.util.Set;
  * Stub of the bsp sample receipt service specifically set up to mark all of the samples as received.
  */
 @Stub
+@Dependent
 public class BSPSampleReceiptServiceStub implements BSPSampleReceiptService {
 
     public static final String SAMPLE_KIT_ID = "SK-1234";

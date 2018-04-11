@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.test.entity.bsp;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestOptions;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestResult;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -25,9 +24,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
 @Test(groups = TestGroups.STUBBY)
 public class BSPPlatingTest  {
 
-    //@Inject
-    BSPPlatingRequestService platingService;
-
     public BSPPlatingTest() {
     }
 
@@ -38,7 +34,6 @@ public class BSPPlatingTest  {
      */
     @Test(groups = {STUBBY}, enabled = false)
     public void testIssueBSPPlating() throws Exception {
-        platingService = new BSPPlatingRequestServiceImpl();
 
         Map<MercurySample, AliquotParameters> starterMap = new HashMap<>();
 
@@ -62,7 +57,10 @@ public class BSPPlatingTest  {
         List<BSPPlatingRequest> bspRequests = bspSampleFactory.buildBSPPlatingRequests(starterMap);
 
         List<ControlWell> controls = new ArrayList<>();
+
+        // Only works because no CDI dependencies in stub
         BSPPlatingRequestService bspPlatingService = new BSPPlatingRequestServiceStub();
+
         BSPPlatingRequestOptions options = bspPlatingService.getBSPPlatingRequestDefaultOptions();
 
         BSPPlatingRequestResult platingResult = bspPlatingService.issueBSPPlatingRequest(options, bspRequests,

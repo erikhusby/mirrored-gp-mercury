@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.Set;
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
 @ApplicationScoped
+@Default
 public class BSPCohortList extends AbstractCache {
 
     private static final Log logger = LogFactory.getLog(BSPCohortList.class);

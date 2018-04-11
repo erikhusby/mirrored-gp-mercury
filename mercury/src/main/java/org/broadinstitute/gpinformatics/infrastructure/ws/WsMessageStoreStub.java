@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.ws;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.Date;
 
@@ -10,6 +11,7 @@ import java.util.Date;
  */
 @Stub
 @Alternative
+@Dependent
 public class WsMessageStoreStub implements WsMessageStore{
 
     @Override

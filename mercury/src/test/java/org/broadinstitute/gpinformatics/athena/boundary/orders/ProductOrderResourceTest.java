@@ -60,7 +60,6 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Deployment
     public static WebArchive buildMercuryWar() {
         // need TEST here for now because there's no STUBBY version of ThriftConfig
-        // see ThriftServiceProducer.produce()
         return DeploymentBuilder.buildMercuryWar(AUTO_BUILD);
     }
 

@@ -1,10 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.jboss.weld.context.ManagedContext;
 import org.jboss.weld.context.bound.BoundSessionContext;
 
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 import java.io.Serializable;
@@ -15,6 +14,7 @@ import java.util.HashMap;
  * exists.  This is useful in cases such as JMS message handlers and EJB Timers, where we need to call code
  * that injects {@link UserBean}.
  */
+@Dependent
 public class SessionContextUtility implements Serializable {
     private static final long serialVersionUID = 20130517L;
     protected final BoundSessionContext sessionContext;
@@ -48,11 +48,10 @@ public class SessionContextUtility implements Serializable {
         } finally {
             // There seems to be a bug in JBoss AS 7.1.1 that causes Stateful RequestScoped beans not to be destroyed
             // at the end of onMessage.  This leads to a memory leak of org.hibernate.internal.util.collections.IdentityMap.
-            // Until this bug is fixed, we manually end the Request scope.
-            ManagedContext context = (ManagedContext) beanManager.getContext(RequestScoped.class);
-            context.invalidate();
-            context.deactivate();
+            // If this bug is not fixed, we must manually end the Request context.
+            // (Bug appears fixed in WildFly 10)
 
+            // Meanwhile, clear the session context
             sessionContext.invalidate();
             sessionContext.deactivate();
         }

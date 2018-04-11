@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.projects;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import java.util.Date;
 
 @Test(groups = TestGroups.STUBBY)
-public class RegulatoryInfoContainerTest extends ContainerTest {
+public class RegulatoryInfoContainerTest extends StubbyContainerTest {
 
     @Inject
     ProductOrderDao pdoDao;

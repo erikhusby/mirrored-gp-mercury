@@ -123,7 +123,9 @@ public abstract class LabVessel implements Serializable {
     private BigDecimal receptacleWeight;
 
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
-    @JoinTable(schema = "mercury")
+    @JoinTable(schema = "mercury", name="LAB_VESSEL_TICKETS_CREATED"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "TICKETS_CREATED")})
     @BatchSize(size = 20)
     private final Set<JiraTicket> ticketsCreated = new HashSet<>();
 
@@ -156,7 +158,9 @@ public abstract class LabVessel implements Serializable {
 
     // todo jmt separate role for containee?
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "mercury")
+    @JoinTable(schema = "mercury", name="LAB_VESSEL_CONTAINERS"
+        , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+        , inverseJoinColumns = {@JoinColumn(name = "CONTAINERS")})
     @BatchSize(size = 20)
     private Set<LabVessel> containers = new HashSet<>();
 
@@ -184,7 +188,9 @@ public abstract class LabVessel implements Serializable {
     private Set<SampleInstanceEntity> sampleInstanceEntities = new HashSet<>();
 
     @OneToMany // todo jmt should this have mappedBy?
-    @JoinTable(schema = "mercury")
+    @JoinTable(schema = "mercury", name = "LAB_VESSEL_NOTES"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "NOTES")})
     private Collection<StatusNote> notes = new HashSet<>();
 
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -204,6 +210,9 @@ public abstract class LabVessel implements Serializable {
 
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury", name = "LAB_VESSEL_MERCURY_SAMPLES"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "MERCURY_SAMPLES")})
     @BatchSize(size = 20)
     private Set<MercurySample> mercurySamples = new HashSet<>();
 
@@ -223,6 +232,7 @@ public abstract class LabVessel implements Serializable {
     private Set<LabMetric> labMetrics = new HashSet<>();
 
     @ManyToOne
+    @JoinColumn(name="STORAGE_LOCATION")
     private StorageLocation storageLocation;
 
     @Transient

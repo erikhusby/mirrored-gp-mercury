@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
@@ -13,6 +14,7 @@ import javax.inject.Inject;
  * By triggering off of the {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType}, we can
  * target each message at its own message validator.
  */
+@Dependent
 public class EventHandlerSelector {
 
     private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
