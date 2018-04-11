@@ -229,17 +229,6 @@ public class SapIntegrationServiceImplDBFreeTest {
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
                 conversionPdo.getQuoteId(), conversionPdo.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
 
-        ProductOrder childOrder = ProductOrder.cloneProductOrder(conversionPdo, false);
-        childOrder.setJiraTicketKey("PDO-CLONE1");
-
-        childOrder.addSapOrderDetail(new SapOrderDetail("testchildsap001", childOrder.getTotalNonAbandonedCount(
-                ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                childOrder.getQuoteId(), childOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
-
-        childOrder.setSamples(ProductOrderSampleTestFactory
-                .createDBFreeSampleList(MercurySample.MetadataSource.BSP,
-                        "SM-2ABDD", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC", "SM-Extra1"));
-
         SAPOrder convertedOrder2 = integrationService.initializeSAPOrder(conversionPdo, true);
         for(SAPOrderItem item:convertedOrder2.getOrderItems()) {
             assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
@@ -247,23 +236,6 @@ public class SapIntegrationServiceImplDBFreeTest {
                 assertThat(conditionValue.getCondition(), is(Condition.MATERIAL_PRICE));
             }
         }
-
-
-        SAPOrder convertedChildOrder = integrationService.initializeSAPOrder(childOrder, true);
-        for(SAPOrderItem item:convertedChildOrder.getOrderItems()) {
-            assertThat(item.getSampleCount(), equalTo(childOrder.getSamples().size()));
-            for (ConditionValue conditionValue : item.getConditions()) {
-                assertThat(conditionValue.getCondition(), is(Condition.MATERIAL_PRICE));
-            }
-        }
-
-
-        ProductOrder childOrder2 = ProductOrder.cloneProductOrder(conversionPdo, true);
-        childOrder2.setJiraTicketKey("PDO-CLONE2");
-        childOrder2.setSamples(ProductOrderSampleTestFactory
-                .createDBFreeSampleList(MercurySample.MetadataSource.BSP,
-                        "SM-2BBDD", "SM-2BB1B", "SM-2BCJC", "SM-2BCGC"));
-
 
         SAPOrder convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true);
         for(SAPOrderItem item:convertedOrder3.getOrderItems()) {
@@ -273,28 +245,15 @@ public class SapIntegrationServiceImplDBFreeTest {
             }
         }
 
-        childOrder2.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-
-        childOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-
         convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true);
         for(SAPOrderItem item:convertedOrder3.getOrderItems()) {
-            assertThat(item.getSampleCount(),
-                    equalTo(conversionPdo.getSamples().size() + childOrder2.getSamples().size()));
+            assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
 
             for (ConditionValue conditionValue : item.getConditions()) {
                 assertThat(conditionValue.getCondition(), is(Condition.MATERIAL_PRICE));
             }
         }
 
-
-        SAPOrder convertedChildOrder2 = integrationService.initializeSAPOrder(childOrder2, true);
-        for(SAPOrderItem item:convertedChildOrder2.getOrderItems()) {
-            assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size() + childOrder2.getSamples().size()));
-            for (ConditionValue conditionValue : item.getConditions()) {
-                assertThat(conditionValue.getCondition(), is(Condition.MATERIAL_PRICE));
-            }
-        }
     }
 
     @Test(enabled = true)
@@ -408,17 +367,6 @@ public class SapIntegrationServiceImplDBFreeTest {
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
                 conversionPdo.getQuoteId(), conversionPdo.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
 
-        ProductOrder childOrder = ProductOrder.cloneProductOrder(conversionPdo, false);
-        childOrder.setJiraTicketKey("PDO-CLONE1");
-
-        childOrder.addSapOrderDetail(new SapOrderDetail("testchildsap001", childOrder.getTotalNonAbandonedCount(
-                ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                childOrder.getQuoteId(), childOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
-
-        childOrder.setSamples(ProductOrderSampleTestFactory
-                .createDBFreeSampleList(MercurySample.MetadataSource.BSP,
-                        "SM-2ABDD", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC", "SM-Extra1"));
-
         SAPOrder convertedOrder2 = integrationService.initializeSAPOrder(conversionPdo, true);
         for(SAPOrderItem item:convertedOrder2.getOrderItems()) {
             if(item.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
@@ -428,24 +376,6 @@ public class SapIntegrationServiceImplDBFreeTest {
                 assertThat(item.getSampleCount(), equalTo(1));
             }
         }
-
-
-        SAPOrder convertedChildOrder = integrationService.initializeSAPOrder(childOrder, true);
-        for(SAPOrderItem item:convertedChildOrder.getOrderItems()) {
-            if(item.getProductIdentifier().equals(childOrder.getProduct().getPartNumber())) {
-                assertThat(item.getSampleCount(), equalTo(childOrder.getSamples().size()));
-            }
-            else {
-                assertThat(item.getSampleCount(), equalTo(1));
-            }
-        }
-
-
-        ProductOrder childOrder2 = ProductOrder.cloneProductOrder(conversionPdo, true);
-        childOrder2.setJiraTicketKey("PDO-CLONE2");
-        childOrder2.setSamples(ProductOrderSampleTestFactory
-                .createDBFreeSampleList(MercurySample.MetadataSource.BSP,
-                        "SM-2BBDD", "SM-2BB1B", "SM-2BCJC", "SM-2BCGC"));
 
 
         SAPOrder convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true);
@@ -458,30 +388,16 @@ public class SapIntegrationServiceImplDBFreeTest {
             }
         }
 
-        childOrder2.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-
-        childOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-
         convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true);
         for(SAPOrderItem item:convertedOrder3.getOrderItems()) {
-            if(item.getProductIdentifier().equals(childOrder2.getProduct().getPartNumber())) {
-                assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size() + childOrder2.getSamples().size()));
+            if(item.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
+                assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
             }
             else {
                 assertThat(item.getSampleCount(), equalTo(1));
             }
         }
 
-
-        SAPOrder convertedChildOrder2 = integrationService.initializeSAPOrder(childOrder2, true);
-        for(SAPOrderItem item:convertedChildOrder2.getOrderItems()) {
-            if(item.getProductIdentifier().equals(childOrder2.getProduct().getPartNumber())) {
-                assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size() + childOrder2.getSamples().size()));
-            }
-            else {
-                assertThat(item.getSampleCount(), equalTo(1));
-            }
-        }
 
         String newProductAlias = "testName";
         final ProductOrderPriceAdjustment customPriceAdjustment1 = new ProductOrderPriceAdjustment(null, null,

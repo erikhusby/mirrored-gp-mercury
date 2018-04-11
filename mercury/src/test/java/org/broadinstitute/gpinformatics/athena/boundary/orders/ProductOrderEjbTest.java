@@ -691,42 +691,7 @@ public class ProductOrderEjbTest {
             sampleCount++;
         }
 
-        ProductOrder childPdoOne = ProductOrder.cloneProductOrder(conversionPdo, true);
-        childPdoOne.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        childPdoOne.setSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-3URTST"));
-        childPdoOne.setJiraTicketKey(childOneJiraTicketKey);
-        productOrderEjb.publishProductOrderToSAP(childPdoOne, messageCollection, true);
-
-        ProductOrder childPdoTwo = ProductOrder.cloneProductOrder(conversionPdo, false);
-
-        Mockito.when(mockSapService.createOrder(Mockito.any(ProductOrder.class))).thenReturn("Child_sap_test");
-        childPdoTwo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        childPdoTwo.setSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-3BRTST"));
-        childPdoTwo.setJiraTicketKey(childtwoJiraTicketKey);
-        productOrderEjb.publishProductOrderToSAP(childPdoTwo, messageCollection, true);
-
-
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
-        Mockito.when(productOrderDaoMock.findByBusinessKey(childOneJiraTicketKey)).thenReturn(childPdoOne);
-        Mockito.when(productOrderDaoMock.findByBusinessKey(childtwoJiraTicketKey)).thenReturn(childPdoTwo);
-
-        assertThat(childPdoOne.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Submitted));
-        for (ProductOrderSample childOneSample : childPdoOne.getSamples()) {
-            ProductOrderSampleTestFactory.markAsBilled(childOneSample);
-        }
-        productOrderEjb.updateOrderStatus(childPdoOne.getBusinessKey(), MessageReporter.UNUSED);
-        assertThat(childPdoOne.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Completed));
-
-
-        for (ProductOrderSample child2Sample : childPdoTwo.getSamples()) {
-            ProductOrderSampleTestFactory.markAsBilled(child2Sample);
-        }
-
-        assertThat(childPdoTwo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Submitted));
-        productOrderEjb.updateOrderStatus(childPdoTwo.getBusinessKey(), MessageReporter.UNUSED);
-        assertThat(childPdoTwo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Completed));
-
-
         assertThat(conversionPdo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Submitted));
 
         int abandonSampleCount = 1;
