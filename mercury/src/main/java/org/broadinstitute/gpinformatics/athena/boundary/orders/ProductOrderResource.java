@@ -421,9 +421,10 @@ public class ProductOrderResource {
         }
 
         Date currentDate = new Date();
+        // Process is only interested in the primary vessels
         List<LabVessel> vessels = labVesselFactory.buildLabVessels(
                 addSamplesToPdoBean.parentVesselBeans, bspUser.getUsername(), currentDate, LabEventType.SAMPLE_PACKAGE,
-                MercurySample.MetadataSource.BSP);
+                MercurySample.MetadataSource.BSP).getLeft();
         labVesselDao.persistAll(vessels);
 
         // Get all the sample ids
