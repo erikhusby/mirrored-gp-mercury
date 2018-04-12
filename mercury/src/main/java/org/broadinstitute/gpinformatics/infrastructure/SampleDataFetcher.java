@@ -240,9 +240,13 @@ public class SampleDataFetcher implements Serializable {
                     mercurySample = productOrderSample.getMercurySample();
                     sampleName = productOrderSample.getName();
                 }
-                if (mercurySample != null &&
-                        mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                    mercurySamplesWithMercurySource.add(mercurySample);
+                if (mercurySample != null) {
+                    if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                        mercurySamplesWithMercurySource.add(mercurySample);
+                    } else {
+                        // The PDO sample name may be a barcode, so use the mercury sample name if it exists.
+                        bspSourceSampleNames.add(mercurySample.getSampleKey());
+                    }
                 } else {
                     bspSourceSampleNames.add(sampleName);
                 }
@@ -261,7 +265,9 @@ public class SampleDataFetcher implements Serializable {
                         bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource, bspSampleSearchColumns);
                 for (Map.Entry<String, ProductOrderSample> idPdoSampleEntry : mapMercuryQuantIdToPdoSample.entrySet()) {
                     BspSampleData bspSampleData1 = bspSampleData.get(idPdoSampleEntry.getKey());
-                    bspSampleData1.overrideWithMercuryQuants(idPdoSampleEntry.getValue());
+                    if (bspSampleData1 != null) {
+                        bspSampleData1.overrideWithMercuryQuants(idPdoSampleEntry.getValue());
+                    }
                 }
                 sampleData.putAll(bspSampleData);
             }

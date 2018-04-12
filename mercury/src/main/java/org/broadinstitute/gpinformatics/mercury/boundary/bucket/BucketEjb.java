@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -378,35 +377,38 @@ public class BucketEjb {
             nameToSampleMap.put(pdoSample.getName(), pdoSample);
         }
 
-        Multimap<String, LabVessel> labVesselMap = HashMultimap.create();
-        for (String name : nameToSampleMap.keys()) {
-            labVesselMap.putAll(name, labVesselDao.findBySampleKey(name));
+        Multimap<String, LabVessel> labVesselMap = labVesselDao.findMapBySampleKeys(samples);
+
+        // PDO Sample may be named after a tube barcode that is not a MercurySample name.
+        Map<String, LabVessel> barcodeMap = labVesselDao.findByBarcodes(new ArrayList<>(nameToSampleMap.keys()));
+        for (Map.Entry<String, LabVessel> mapEntry : barcodeMap.entrySet()) {
+            if (mapEntry.getValue() != null) {
+                labVesselMap.put(mapEntry.getKey(), mapEntry.getValue());
+            }
         }
-        // PDO Samples may be named after tube barcodes.
-        for (Map.Entry<String, LabVessel> mapEntry :
-                labVesselDao.findByBarcodes(new ArrayList<>(nameToSampleMap.keys())).entrySet()) {
-            labVesselMap.put(mapEntry.getKey(), mapEntry.getValue());
-        }
+
 
         // Finds samples with no existing vessels.
         Collection<String> samplesWithoutVessel = CollectionUtils.subtract(nameToSampleMap.keySet(),
                 labVesselMap.keySet());
-
         Set<LabVessel> vessels = new HashSet<>(labVesselMap.values());
 
-        // This case will only apply to Samples with a BSP data source, at least for now.  There should not be a
-        // scenario in which we fall into this conditional for Vessels that originate in Mercury
+        // For samples without vessels, if the sample has a BSP data source and BSP has both a receipt date
+        // and a tube barcode then it can be added to the bucket after creating the initial vessel.
         if (!CollectionUtils.isEmpty(samplesWithoutVessel)) {
             Collection<LabVessel> newVessels = createInitialVessels(samplesWithoutVessel, username);
             vessels.addAll(newVessels);
         }
 
+        // Links PDO Sample to MercurySample if they can be linked by name. It's legit for some PDO Samples
+        // to not have a MercurySample.
         Map<String, MercurySample> existingSamples = mercurySampleDao.findMapIdToMercurySample(nameToSampleMap.keys());
-
         for (ProductOrderSample productOrderSample : nameToSampleMap.values()) {
             if(productOrderSample.getMercurySample() == null) {
                 MercurySample mercurySample = existingSamples.get(productOrderSample.getSampleKey());
-                mercurySample.addProductOrderSample(productOrderSample);
+                if (mercurySample != null) {
+                    mercurySample.addProductOrderSample(productOrderSample);
+                }
             }
         }
 
@@ -492,7 +494,7 @@ public class BucketEjb {
         if (!cannotAddToBucket.isEmpty()) {
             throw new BucketException(
                     String.format("Some of the samples for the order could not be added to the bucket.  " +
-                                  "Could not find the manufacturer label for: %s",
+                                  "Could not get sample data, receipt date, and manufacturer label from BSP for: %s",
                                   StringUtils.join(cannotAddToBucket, ", ")));
         }
         if (!vessels.isEmpty()) {
