@@ -507,7 +507,8 @@ public class ProductOrderTest {
         billSamplesOut(productOrder, Collections.singleton(sample), expected);
 
     }
-    
+
+    @Test(enabled = false)
     public static void billSamplesOut(ProductOrder productOrder, Collection<ProductOrderSample> samples, int expected) {
         BillingSession billingSession = null;
         for (ProductOrderSample sample : samples) {

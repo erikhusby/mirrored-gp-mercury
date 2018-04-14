@@ -679,6 +679,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         }
     }
 
+    @Test(enabled = false)
     public static void addTestProductMaterialPrice(String primaryMaterialBasePrice, PriceList priceList,
                                             Collection<QuoteItem> quoteItems, Set<SAPMaterial> materials,
                                             Product primaryProduct, String quoteId) {
