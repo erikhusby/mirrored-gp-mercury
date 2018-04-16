@@ -224,6 +224,14 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<>();
 
+    /**
+     * Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
+     * avoid an unnecessary database round trip.
+     */
+    @NotAudited
+    @Formula("(select count(*) from vessel_transfer where vessel_transfer.target_vessel = lab_vessel_id)")
+    private Integer transfersThisAsTargetCount = 0;
+
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private Set<VesselToSectionTransfer> vesselToSectionTransfersThisAsSource = new HashSet<>();
@@ -430,7 +438,19 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsTarget() {
-        return vesselToVesselTransfersThisAsTarget;
+        if (transfersThisAsTargetCount != null && transfersThisAsTargetCount > 0) {
+            return vesselToVesselTransfersThisAsTarget;
+        }
+        return Collections.emptySet();
+    }
+
+    public void addVesselToVesselTransfersThisAsTarget(VesselToVesselTransfer vesselToVesselTransfer) {
+        vesselToVesselTransfersThisAsTarget.add(vesselToVesselTransfer);
+        if (transfersThisAsTargetCount == null) {
+            transfersThisAsTargetCount = 1;
+        } else {
+            transfersThisAsTargetCount++;
+        }
     }
 
     public void addMetric(LabMetric labMetric) {
@@ -588,7 +608,7 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<LabEvent> getTransfersTo() {
         Set<LabEvent> transfersTo = new HashSet<>();
-        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
+        for (VesselToVesselTransfer vesselToVesselTransfer : getVesselToVesselTransfersThisAsTarget()) {
             transfersTo.add(vesselToVesselTransfer.getLabEvent());
         }
         if (getContainerRole() == null) {
@@ -608,7 +628,7 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<LabEvent> getTransfersToWithReArrays() {
         Set<LabEvent> transfersTo = new HashSet<>();
-        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
+        for (VesselToVesselTransfer vesselToVesselTransfer : getVesselToVesselTransfersThisAsTarget()) {
             transfersTo.add(vesselToVesselTransfer.getLabEvent());
         }
         if (getContainerRole() == null) {
@@ -891,7 +911,7 @@ public abstract class LabVessel implements Serializable {
      */
     List<VesselEvent> getAncestors() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
-        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
+        for (VesselToVesselTransfer vesselToVesselTransfer : getVesselToVesselTransfersThisAsTarget()) {
             VesselEvent vesselEvent = new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null, vesselToVesselTransfer.getLabEvent(),
                     this, null, null);
             vesselEvents.add(vesselEvent);
@@ -1145,7 +1165,11 @@ public abstract class LabVessel implements Serializable {
     public void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
                                  TransferTraverserCriteria.TraversalDirection traversalDirection) {
         TransferTraverserCriteria.Context context = TransferTraverserCriteria.buildStartingContext(this, null, null, traversalDirection);
-        transferTraverserCriteria.evaluateVesselPreOrder(context);
+        TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVesselPreOrder(
+                context);
+        if (traversalControl == TransferTraverserCriteria.TraversalControl.StopTraversing) {
+            return;
+        }
         evaluateCriteria(transferTraverserCriteria, traversalDirection, 1);
         transferTraverserCriteria.evaluateVesselPostOrder(context);
     }
