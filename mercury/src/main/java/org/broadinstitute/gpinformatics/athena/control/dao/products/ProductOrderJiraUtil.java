@@ -144,8 +144,8 @@ public class ProductOrderJiraUtil {
      */
     public void addSampleComments(ProductOrder order) throws IOException {
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
-        issue.addComment(StringUtils.join(order.getSampleSummaryComments(), "\n"));
-        issue.addComment(StringUtils.join(order.getSampleValidationComments(), "\n"));
+//        issue.addComment(StringUtils.join(order.getSampleSummaryComments(), "\n"));
+//        issue.addComment(StringUtils.join(order.getSampleValidationComments(), "\n"));
     }
 
     /**
