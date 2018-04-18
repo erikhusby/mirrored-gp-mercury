@@ -822,6 +822,89 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
 
+    // Qiagen All Prep Stool Extraction
+    STOOL_BEAD_PLATE_TRANSFER("StoolBeadPlateTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    RackOfTubes.RackType.Eppendorf12x8BoxWell,
+                    StaticPlate.PlateType.Plate96WellPowerBead).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96)
+                    .sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.Cryovial2018)
+                    .build(),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+    STOOL_BEAD_BEATING("BeadBeating",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_EVENT,
+                    null,
+                    StaticPlate.PlateType.Plate96WellPowerBead).
+                    targetSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_SUPERNATENT_TRANSFER("StoolSupernatentTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96WellPowerBead,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+    STOOL_IRS_ADDITION("StoolIRSAddition",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_EVENT,
+                    null,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
+                    targetSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_IRS_SUPERNATENT_TRANSFER("StoolIRSSupernatentTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+    STOOL_RNA_EASY_PLATE_TRANSFER("StoolRNEasyPlateTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000,
+                    StaticPlate.PlateType.Plate96RNEasyWell1000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+    STOOL_RNA_EASY_VACUUM("StoolRNAEasyVacuum",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RNEasyWell1000,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+    STOOL_RNA_ISOLATION("StoolRNAIsolation",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+    STOOL_DNA_ISOLATION("StoolDNAIsolation",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RNEasyWell1000,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+
     // TruSeq Custom Amplicon
     TSCA_POST_NORM_TRANSFER("TSCAPostNormTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,

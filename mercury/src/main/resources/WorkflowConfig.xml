@@ -3021,6 +3021,188 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA from Stool</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2018-04-10T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA and RNA</name>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>STOOL_STOOL</materialTypes>
+                    <workflows>DNA_RNA_EXTRACTION_STOOL</workflows>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Initial Scan</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>ALL_PREP_INITIAL_SCAN</workflowQualifier>
+                <instructions>Scan all parent source SM-IDs to cross check against samples in XTR ticket
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>RackType.Eppendorf12x8Box</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                    <buttonValue>Cross Check</buttonValue>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Prep Reagents</name>
+                <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Reagents</workflowQualifier>
+                <instructions>Before starting, confirm all reagents have been prepared: [TODO List of reagents to prepare]
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to Bead Plate</name>
+                <labEventTypes>STOOL_BEAD_PLATE_TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_STOOL_TO_BEAD_PLATE</workflowQualifier>
+                <instructions>Transfer to Bead Plate [TODO volume??]
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.Eppendorf12x8BoxWell</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96WellPowerBead</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bead Beating</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>ALL_PREP_BEAD_BEATING</workflowQualifier>
+                <instructions>[TODO Whatever this means I need an instruction]
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>PlateType.Plate96WellPowerBead</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Spin</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>BEAD_PLATE</workflowQualifier>
+                <instructions>[TODO GIVE ME SPIN INSTRUCTIONS]
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer Supernatent to S-Block</name>
+                <labEventTypes>STOOL_SUPERNATENT_TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_TO_S_BLOCK</workflowQualifier>
+                <instructions>Transfer supernatent to S-BLOCK [TODO get acutal instructions]
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96WellPowerBead</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IRS Addition</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>ALL_PREP_IRS_ADDITION</workflowQualifier>
+                <instructions>[TODO Whatever this means I need an instruction]
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Incubate</name>
+                <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>IRS1</workflowQualifier>
+                <instructions>Incubate for 1 min at room temperature. [TODO ACTUAL INSTRucTION]
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>IRS_CENTRIFUGE</workflowQualifier>
+                <instructions>[TODO IRS Addition Centrifuge instructions]
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer Sample + IRS to new S-Block</name>
+                <labEventTypes>STOOL_IRS_SUPERNATENT_TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_IRS_TO_S_BLOCK</workflowQualifier>
+                <instructions>Transfer Sample + IRS to new S-Block[TODO get acutal instructions]
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>S-Block to RNEasy Plate</name>
+                <labEventTypes>STOOL_RNA_EASY_PLATE_TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_RNAEASY</workflowQualifier>
+                <instructions>Transfer Sample to RNEasy Plate
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Vacuum RNEasy Plate</name>
+                <labEventTypes>STOOL_RNA_EASY_VACUUM</labEventTypes>
+                <workflowQualifier>ALLPREP_VACUUM</workflowQualifier>
+                <instructions>Vacuum
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <!-- Bravo Protocols RNA Isolation in the flowthrough -->
+            <workflowStepDefs>
+                <name>RNA Isolation</name>
+                <labEventTypes>STOOL_RNA_ISOLATION</labEventTypes>
+                <workflowQualifier>RNA_ISOLATION</workflowQualifier>
+                <instructions>Run RNA Isolation Bravo Protocol using the samples in RNA Flowthrough block
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DNA Isolation</name>
+                <labEventTypes>STOOL_DNA_ISOLATION</labEventTypes>
+                <workflowQualifier>DNA_ISOLATION</workflowQualifier>
+                <instructions>Run DNA Isolation Bravo Protocol using the samples in the DNA RNEasy Plate
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -3348,6 +3530,17 @@
             <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA from Stool</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            <effectiveDate>2018-04-10T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA from Stool</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
