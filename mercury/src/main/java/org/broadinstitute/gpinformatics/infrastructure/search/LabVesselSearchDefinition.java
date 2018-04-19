@@ -407,6 +407,7 @@ public class LabVesselSearchDefinition {
                 }
             }
         );
+        searchTerm.setHelpText("Allows user to link to a selected drill down report.  <br/>Note: Selected report MUST have a single term which expects a barcode value.");
         searchTerms.add(searchTerm);
 
         return searchTerms;
