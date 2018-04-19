@@ -9,6 +9,8 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -64,6 +66,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -612,7 +615,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                         // Check for duplicate participants in source tubes
                         if (manualTransferDetails.isRequireSingleParticipant()) {
+                            // Get sample data for each source
                             Set<String> rootSampleIds = new HashSet<>();
+                            MultiValuedMap<String, String> mapPositionToSampleIds = new HashSetValuedHashMap<>();
                             for (ReceptacleType receptacleType :
                                     plateCherryPickEvent.getSourcePositionMap().get(0).getReceptacle()) {
                                 if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
@@ -621,29 +626,51 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                         continue;
                                     }
                                     for (SampleInstanceV2 sample : currentLabVessel.getSampleInstancesV2()) {
-                                        rootSampleIds.add(sample.getMercuryRootSampleName());
+                                        String rootSampleName = sample.getMercuryRootSampleName();
+                                        rootSampleIds.add(rootSampleName);
+                                        mapPositionToSampleIds.put(receptacleType.getPosition(), rootSampleName);
                                     }
                                 }
                             }
+
                             if (!rootSampleIds.isEmpty()) {
+                                // Map sample to participant
                                 Map<String, SampleData> mapSampleIdToData = sampleDataFetcher.fetchSampleData(
                                         rootSampleIds);
-                                Set<String> ptIds = new HashSet<>();
                                 for (SampleData sampleData : mapSampleIdToData.values()) {
                                     if (StringUtils.isEmpty(sampleData.getCollaboratorParticipantId())) {
                                         messageCollection.addError("No collaborator participant ID for " +
                                                 sampleData.getSampleId());
-                                    } else {
-                                        ptIds.add(sampleData.getCollaboratorParticipantId());
                                     }
                                 }
-                                if (ptIds.size() > 1) {
-                                    messageCollection.addError("More than one participant: " +
-                                            StringUtils.join(ptIds.toArray(), ','));
+
+                                // Map destination positions to source positions
+                                MultiValuedMap<String, String> mapDestToSource = new HashSetValuedHashMap<>();
+                                for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+                                    mapDestToSource.put(cherryPickSourceType.getDestinationWell(),
+                                            cherryPickSourceType.getWell());
+                                }
+
+                                // If dest has multiple sources, check they are the same participant
+                                for (String dest : mapDestToSource.keySet()) {
+                                    Set<String> ptIds = new HashSet<>();
+                                    Collection<String> sources = mapDestToSource.get(dest);
+                                    if (sources.size() > 1) {
+                                        for (String source : sources) {
+                                            Collection<String> sampleIds = mapPositionToSampleIds.get(source);
+                                            for (String sampleId : sampleIds) {
+                                                SampleData sampleData = mapSampleIdToData.get(sampleId);
+                                                ptIds.add(sampleData.getCollaboratorParticipantId());
+                                            }
+                                        }
+                                    }
+                                    if (ptIds.size() > 1) {
+                                        messageCollection.addError("More than one participant: " +
+                                                StringUtils.join(ptIds.toArray(), ','));
+                                    }
                                 }
                             }
                         }
-
                     }
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
