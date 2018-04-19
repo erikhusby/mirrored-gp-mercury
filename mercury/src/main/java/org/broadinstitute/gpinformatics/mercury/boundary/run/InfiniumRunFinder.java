@@ -98,7 +98,7 @@ public class InfiniumRunFinder implements Serializable {
                         if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
                             StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
                             utx.begin();
-                            log.info("Processing " + staticPlate.getLabel());
+                            log.debug("Processing " + staticPlate.getLabel());
                             processChip(staticPlate);
                             // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
                             labEventDao.flush();
