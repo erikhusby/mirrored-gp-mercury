@@ -407,7 +407,7 @@ public class LabVesselSearchDefinition {
                 }
             }
         );
-        searchTerm.setHelpText("Creates a column with a link to an existing search which functions as a drill-down.  <br/>Note: Selected report MUST have a single term which expects a barcode value.");
+        searchTerm.setHelpText("Creates a column with a link to an existing search which functions as a drill-down.  <br/>Note: Selected search MUST have a single term which expects a barcode value.");
         searchTerms.add(searchTerm);
 
         return searchTerms;
