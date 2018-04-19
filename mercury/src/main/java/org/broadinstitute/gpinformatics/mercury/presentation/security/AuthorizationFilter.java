@@ -106,7 +106,9 @@ public class AuthorizationFilter implements Filter {
                         } else {
                                 String username = credentials.substring(0, p).trim();
                                 String password = credentials.substring(p + 1).trim();
-                                request.login(username, password);
+                                if (request.getRemoteUser() == null || !request.getRemoteUser().equals(username)) {
+                                    request.login(username, password);
+                                }
                                 filterChain.doFilter(servletRequest, servletResponse);
                         }
                     } catch (ServletException ignored) {
