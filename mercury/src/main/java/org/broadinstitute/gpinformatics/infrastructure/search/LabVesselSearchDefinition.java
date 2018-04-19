@@ -407,7 +407,7 @@ public class LabVesselSearchDefinition {
                 }
             }
         );
-        searchTerm.setHelpText("Allows user to link to a selected drill down report.  <br/>Note: Selected report MUST have a single term which expects a barcode value.");
+        searchTerm.setHelpText("Creates a column with a link to an existing search which functions as a drill-down.  <br/>Note: Selected report MUST have a single term which expects a barcode value.");
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -797,7 +797,7 @@ public class LabVesselSearchDefinition {
                 return new VesselEventResultParamConfiguration();
             }
         });
-        searchTerm.setHelpText("Traverses all transfers from and finds barcodes at all user selected event types.");
+        searchTerm.setHelpText("Traverses all transfers from a vessel and finds barcodes at all user selected event types.");
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -815,7 +815,7 @@ public class LabVesselSearchDefinition {
                 return new VesselEventResultParamConfiguration();
             }
         });
-        searchTerm.setHelpText("Traverses all transfers from and finds container positions at all user selected event types.");
+        searchTerm.setHelpText("Traverses all transfers from a vessel and finds container positions at all user selected event types.");
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -833,7 +833,7 @@ public class LabVesselSearchDefinition {
                 return new VesselEventResultParamConfiguration();
             }
         });
-        searchTerm.setHelpText("Traverses all transfers from and finds dates of all user selected event types.");
+        searchTerm.setHelpText("Traverses all transfers from a vessel and finds dates of all user selected event types.");
         searchTerms.add(searchTerm);
         /****  Result Criteria ****/
 
