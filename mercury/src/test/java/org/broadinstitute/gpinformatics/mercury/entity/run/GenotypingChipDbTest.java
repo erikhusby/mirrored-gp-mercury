@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -203,5 +204,10 @@ public class GenotypingChipDbTest extends Arquillian {
         return chip;
     }
 
-
+    /** Tests a KeyValueMapping. */
+    public void testKeyValueMapping() {
+        Map<String, String> map = dao.findKeyValueMap(KeyValueMapping.BAIT_PRODUCT_MAPPING);
+        Assert.assertNotNull(map);
+        Assert.assertFalse(map.isEmpty());
+    }
 }

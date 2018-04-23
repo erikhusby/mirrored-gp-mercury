@@ -1152,4 +1152,76 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4205-1" author="epolk">
+        <sql>
+	    INSERT INTO ATTRIBUTE_DEFINITION (attribute_definition_id, definition_type, archetype_group,
+	      attribute_name, is_group_attribute, is_displayable)
+	    SELECT seq_attribute_definition.nextval, 'KEY_VALUE_MAPPING', 'BaitToProductMapping', 'theValue', 0, 1
+	    FROM dual;
+
+	    INSERT INTO ATTRIBUTE_ARCHETYPE (archetype_id, dtype, archetype_name, archetype_group)
+	    SELECT seq_attribute_archetype.nextval, 'KeyValueMapping', 'Buick_v6_0_2014', 'BaitToProductMapping'
+	    FROM dual;
+
+	    INSERT INTO ARCHETYPE_ATTRIBUTE (attribute_id, archetype, attribute_name, attribute_value)
+	    SELECT seq_archetype_attribute.nextval, archetype_id, 'theValue', 'P-EX-0011'
+	    FROM ATTRIBUTE_ARCHETYPE
+	    WHERE archetype_name = 'Buick_v6_0_2014'
+	    AND archetype_group = 'BaitToProductMapping';
+
+	    INSERT INTO ATTRIBUTE_ARCHETYPE (archetype_id, dtype, archetype_name, archetype_group)
+	    SELECT seq_attribute_archetype.nextval, 'KeyValueMapping',
+	      'whole_exome_agilent_1.1_refseq_plus_3_boosters', 'BaitToProductMapping'
+	    FROM dual;
+
+	    INSERT INTO ARCHETYPE_ATTRIBUTE (attribute_id, archetype, attribute_name, attribute_value)
+	    SELECT seq_archetype_attribute.nextval, archetype_id, 'theValue', 'P-CLA-0001'
+	    FROM ATTRIBUTE_ARCHETYPE
+	    WHERE archetype_name = 'whole_exome_agilent_1.1_refseq_plus_3_boosters'
+	    AND archetype_group = 'BaitToProductMapping';
+
+	    INSERT INTO ATTRIBUTE_ARCHETYPE (archetype_id, dtype, archetype_name, archetype_group)
+	    SELECT seq_attribute_archetype.nextval, 'KeyValueMapping', 'whole_exome_illumina_coding_v1', 'BaitToProductMapping'
+	    FROM dual;
+
+	    INSERT INTO ARCHETYPE_ATTRIBUTE (attribute_id, archetype, attribute_name, attribute_value)
+	    SELECT seq_archetype_attribute.nextval, archetype_id, 'theValue', 'P-CLA-0003'
+	    FROM ATTRIBUTE_ARCHETYPE
+	    WHERE archetype_name = 'whole_exome_illumina_coding_v1'
+	    AND archetype_group = 'BaitToProductMapping';
+
+	    INSERT INTO ATTRIBUTE_ARCHETYPE (archetype_id, dtype, archetype_name, archetype_group)
+	    SELECT seq_attribute_archetype.nextval, 'KeyValueMapping', 'eMerge_Oct16_5pad_CDS', 'BaitToProductMapping'
+	    FROM dual;
+
+	    INSERT INTO ARCHETYPE_ATTRIBUTE (attribute_id, archetype, attribute_name, attribute_value)
+	    SELECT seq_archetype_attribute.nextval, archetype_id, 'theValue', 'P-VAL-0010'
+	    FROM ATTRIBUTE_ARCHETYPE
+	    WHERE archetype_name = 'eMerge_Oct16_5pad_CDS'
+	    AND archetype_group = 'BaitToProductMapping';
+
+	    INSERT INTO ATTRIBUTE_ARCHETYPE (archetype_id, dtype, archetype_name, archetype_group)
+	    SELECT seq_attribute_archetype.nextval, 'KeyValueMapping', 'Myeloid_Lymphoid_Panel_v1-88774', 'BaitToProductMapping'
+	    FROM dual;
+
+	    INSERT INTO ARCHETYPE_ATTRIBUTE (attribute_id, archetype, attribute_name, attribute_value)
+	    SELECT seq_archetype_attribute.nextval, archetype_id, 'theValue', 'P-VAL-0015'
+	    FROM ATTRIBUTE_ARCHETYPE
+	    WHERE archetype_name = 'Myeloid_Lymphoid_Panel_v1-88774'
+	    AND archetype_group = 'BaitToProductMapping';
+
+	    INSERT INTO ATTRIBUTE_ARCHETYPE (archetype_id, dtype, archetype_name, archetype_group)
+	    SELECT seq_attribute_archetype.nextval, 'KeyValueMapping', 'eMerge_v2_83311', 'BaitToProductMapping'
+	    FROM dual;
+
+	    INSERT INTO ARCHETYPE_ATTRIBUTE (attribute_id, archetype, attribute_name, attribute_value)
+	    SELECT seq_archetype_attribute.nextval, archetype_id, 'theValue', 'P-VAL-0016'
+	    FROM ATTRIBUTE_ARCHETYPE
+	    WHERE archetype_name = 'eMerge_v2_83311'
+	    AND archetype_group = 'BaitToProductMapping';
+
+            COMMIT;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
