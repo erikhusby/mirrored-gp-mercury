@@ -221,7 +221,7 @@ public class BucketEjbTest extends StubbyContainerTest {
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
@@ -231,21 +231,21 @@ public class BucketEjbTest extends StubbyContainerTest {
         
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair2 =
                 resource.applyBucketCriteria( Collections.<LabVessel>singletonList(bspAliquot2), productOrder2,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Collection<BucketEntry> testEntries2 = workflowBucketEntriesPair2.getRight();
         Assert.assertEquals(testEntries2.size(), 1);
         BucketEntry testEntry2 = testEntries2.iterator().next();
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair3 =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot3), productOrder3,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Collection<BucketEntry> testEntries3 = workflowBucketEntriesPair3.getRight();
         Assert.assertEquals(testEntries3.size(), 1);
         BucketEntry testEntry3 = testEntries3.iterator().next();
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair4 =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot4), productOrder3,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Collection<BucketEntry> testEntries4 = workflowBucketEntriesPair4.getRight();
 
         Assert.assertEquals(testEntries4.size(), 1);
@@ -253,7 +253,7 @@ public class BucketEjbTest extends StubbyContainerTest {
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair5 =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Collection<BucketEntry> duplicateEntry = workflowBucketEntriesPair5.getRight();
         Assert.assertTrue(duplicateEntry.isEmpty());
         
@@ -300,7 +300,7 @@ public class BucketEjbTest extends StubbyContainerTest {
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
@@ -318,7 +318,7 @@ public class BucketEjbTest extends StubbyContainerTest {
                 bspAliquot3, bspAliquot4));
 
         resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest,
-                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
 
         bucketDao.flush();
         bucketDao.clear();
@@ -405,7 +405,7 @@ public class BucketEjbTest extends StubbyContainerTest {
         
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
 
         Assert.assertEquals(testEntries1.size(), 1);
@@ -422,7 +422,7 @@ public class BucketEjbTest extends StubbyContainerTest {
 
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2, bspAliquot3, bspAliquot4));
         resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest,
-                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
 
         bucketDao.flush();
         bucketDao.clear();

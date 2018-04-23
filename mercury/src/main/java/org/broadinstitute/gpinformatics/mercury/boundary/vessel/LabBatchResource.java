@@ -150,7 +150,8 @@ public class LabBatchResource {
         if (labBatch == null) {
             labBatch = new LabBatch(labBatchBean.getBatchId(), labVesselSet,
                     labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
-                            LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
+                            LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW,
+                    labBatchBean.getCreatedDate());
         }
 
         // Create bucket entries (if any) and add to batch
@@ -220,7 +221,7 @@ public class LabBatchResource {
             Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                     bucketEjb.applyBucketCriteria(noBucketEntryVessels,
                             productOrder, labBatchBean.getUsername(),
-                            ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS);
+                            ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS, labBatchBean.getCreatedDate());
             ProductWorkflowDefVersion productWorkflowDefVersion = workflowBucketEntriesPair.getLeft();
             if (productWorkflowDefVersion == null) {
                 throw new RuntimeException("No workflow for " + productOrder.getJiraTicketKey());
