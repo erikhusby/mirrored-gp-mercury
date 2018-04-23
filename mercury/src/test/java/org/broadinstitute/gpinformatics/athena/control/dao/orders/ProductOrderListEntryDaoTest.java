@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Test(groups = TestGroups.STUBBY, enabled = true)
-public class ProductOrderListEntryDaoTest extends ContainerTest {
+public class ProductOrderListEntryDaoTest extends StubbyContainerTest {
 
     @Inject
     private ProductOrderListEntryDao productOrderListEntryDao;

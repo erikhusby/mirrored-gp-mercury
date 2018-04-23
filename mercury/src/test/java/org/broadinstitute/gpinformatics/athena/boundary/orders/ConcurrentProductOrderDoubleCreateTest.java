@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
@@ -48,8 +49,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 
 @Test(groups = TestGroups.ALTERNATIVES)
 public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
@@ -188,8 +189,12 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         }
     }
 
+
+    @Dependent
     @Alternative
     public static class ControlBusinessKeyJiraService implements JiraService {
+
+        public ControlBusinessKeyJiraService(){}
 
         @Override
         public JiraIssue createIssue(CreateFields.ProjectType projectType, @Nullable String reporter,

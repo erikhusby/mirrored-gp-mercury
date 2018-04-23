@@ -5,12 +5,15 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class PriceItemEtl extends GenericEntityEtl<PriceItem, PriceItem> {
     public PriceItemEtl() {
     }

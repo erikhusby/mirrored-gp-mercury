@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
@@ -9,6 +8,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -21,6 +22,7 @@ import java.util.List;
  * Only interested in ETL of flowcell tickets and vessels as created for MISEQ and FCT batch types.
  */
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBatchStartingVessel> {
 
     FlowcellDesignationEjb flowcellDesignationEjb;
