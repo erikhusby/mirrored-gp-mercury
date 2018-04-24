@@ -93,7 +93,12 @@ public class VesselEventResultParamConfiguration extends ResultParamConfiguratio
         if( resultEventData == ResultEventData.DATE) {
             eval.captureAllEvents();
         }
-        labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+        if( labVessel.getContainerRole() != null ) {
+            labVessel.getContainerRole().applyCriteriaToAllPositions(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+        } else {
+            labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+        }
 
         switch( resultEventData ) {
             case BARCODE:
