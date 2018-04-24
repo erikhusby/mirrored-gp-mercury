@@ -59,6 +59,7 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
     private static final Log log = LogFactory.getLog(MolecularIndexNamingActionBean.class);
     public static final String JSP_PAGE = "/reagent/mol_ind_scheme_naming.jsp";
     public static final String UPLOAD = "upload";
+    public static final String DOWNLOAD = "download";
     // Regex of delimiters to split the header and data values.
     static final Pattern DELIMITER_REGEX = Pattern.compile("[|\\+\\- ]");
     // Used in the returned spreadsheet as header for the added name column.
@@ -72,6 +73,8 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
     static final String WRONG_COLUMN_COUNT = "Row %d has %d values but should have %d.";
     static final String UNKNOWN_POSITION = "Header column %d has unknown position \"%s\" (valid positions are %s).";
 
+    static final String CONCATENATOR = ",";
+
     private List<String> technologies = new ArrayList<>();
 
     // The header names from the input file, possibly having embedded delimiters.
@@ -81,10 +84,10 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
     // i.e. no embedded delimiters here.
     private List<MolecularIndexingScheme.IndexPosition> indexPositions = new ArrayList();
 
-    // The collection of input file sequences, organizes as a list of rows, with each rowE
-    // having a single sequence that corresponds 1:1 with the indexPositions
-    // i.e. no embedded delimiters here.
-    private List<List<String>> dataRows = new ArrayList<>();
+    // The collection of uploaded sequences, organized as a list of rows, with each row consisting of
+    // a string concatenation of the individual sequences. Note the concatenator used here is internal
+    // and unrelated to any upload index combination delimiters.
+    private List<String> dataRows = new ArrayList<>();
 
     // The list of existing or new molecular index names, one for each dataRow.
     private List<String> molecularIndexNames = new ArrayList<>();
@@ -96,10 +99,8 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
     private String technology;
 
     private boolean createMissingNames;
-    private boolean downloadSpreadsheet;
     private InputStream inputStream;
     private String filename;
-    private byte[] returnedSpreadsheet = new byte[0];
 
     @Inject
     private MolecularIndexingSchemeFactory molecularIndexingSchemeFactory;
@@ -116,13 +117,18 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
     @HandlesEvent(UPLOAD)
     public Resolution upload() {
         int nullCount = 0;
+        indexPositions.clear();
+        dataRows.clear();
+        molecularIndexNames.clear();
+
         if (inputStream != null && StringUtils.isNotBlank(filename)) {
+            // Determines the file type from the file name extension.
             boolean isExcel = !filename.endsWith(".csv") && !filename.endsWith(".tsv");
 
             // Regardless of the input file type, parses the file into these collections:
-            //   The header on each column is put into sequenceFileHeaderNames.
-            //   Each position parsed from the headers is put into indexPositions.
-            //   Each sequence in a data row is put into dataRows.
+            // - The header on each column is put into sequenceFileHeaderNames.
+            // - Each position parsed from the headers is put into indexPositions.
+            // - Each sequence in a data row is put into dataRows.
             try {
                 if (isExcel) {
                     PoiSpreadsheetParser.processSingleWorksheet(inputStream, new MolecularIndexNamingProcessor());
@@ -136,64 +142,78 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
 
             // Using the sequence combinations in each dataRow, looks up an existing molecular indexing scheme.
             // If the checkbox for creating missing names is on, then creates the missing indexes and names.
-            for (List<String> dataRow : dataRows) {
-                List<MolecularIndexingSchemeFactory.IndexPositionPair> indexPositionPairs = new ArrayList<>();
-                for (int i = 0; i < indexPositions.size(); i++) {
-                    indexPositionPairs.add(new MolecularIndexingSchemeFactory.IndexPositionPair(
-                            indexPositions.get(i), dataRow.get(i)));
-                }
-                MolecularIndexingScheme mis = null;
-                try {
-                    mis = createMissingNames ?
-                            molecularIndexingSchemeFactory.findOrCreateIndexingScheme(indexPositionPairs, true) :
-                            molecularIndexingSchemeFactory.findIndexingScheme(indexPositionPairs);
-                } catch (IllegalArgumentException e) {
-                    // Ignores the missing index exception and counts it as a null.
-                }
-                nullCount += (mis == null) ? 1 : 0;
-                molecularIndexNames.add(mis != null ? mis.getName() : UNKNOWN_NAME);
-            }
             if (!hasErrors()) {
-                if (downloadSpreadsheet) {
-                    // Passes a spreadsheet back to the browser if there were no errors and the checkbox is set.
-                    // This must be the only data returned to the page so no UI messages are given.
-                    try {
-                        returnedSpreadsheet = makeSpreadsheet(indexPositions, dataRows, molecularIndexNames);
-                        Resolution resolution = new Resolution() {
-                            @Override
-                            public void execute(HttpServletRequest in, HttpServletResponse response) throws Exception {
-                                response.setContentType("application/ms-excel");
-                                response.setContentLength(getReturnedSpreadsheet().length);
-                                response.setHeader("Expires:", "0"); // eliminates browser caching
-                                response.setHeader("Content-Disposition", "attachment; filename=testxls.xls");
-                                OutputStream outStream = response.getOutputStream();
-                                outStream.write(getReturnedSpreadsheet());
-                                outStream.flush();
-                            }
-                        };
-                        return resolution;
-
-                    } catch (IOException e) {
-                        addGlobalValidationError("Cannot create spreadsheet to download " + e);
+                int rowNum = 0;
+                for (String dataRow : dataRows) {
+                    ++rowNum;
+                    String[] sequences = dataRow.split(CONCATENATOR);
+                    if (sequences.length != indexPositions.size()) {
+                        addGlobalValidationError("Expected " + indexPositions.size() + " sequences on row " +
+                                rowNum + " but found " + sequences.length);
                     }
+                    List<MolecularIndexingSchemeFactory.IndexPositionPair> indexPositionPairs = new ArrayList<>();
+                    for (int i = 0; i < indexPositions.size(); i++) {
+                        indexPositionPairs.add(new MolecularIndexingSchemeFactory.IndexPositionPair(
+                                indexPositions.get(i), sequences[i]));
+                    }
+                    MolecularIndexingScheme mis = null;
+                    try {
+                        mis = createMissingNames ?
+                                molecularIndexingSchemeFactory.findOrCreateIndexingScheme(indexPositionPairs, true) :
+                                molecularIndexingSchemeFactory.findIndexingScheme(indexPositionPairs);
+                    } catch (IllegalArgumentException e) {
+                        // Ignores the missing index exception and counts it as a null.
+                    }
+                    nullCount += (mis == null) ? 1 : 0;
+                    molecularIndexNames.add(mis != null ? mis.getName() : UNKNOWN_NAME);
                 }
-            } else {
-                returnedSpreadsheet = new byte[0];
+                addMessage("Found " + molecularIndexNames.size() + " indexes in the upload.");
+                if (nullCount > 0) {
+                    addMessage(nullCount + " indexes are unknown. Re-upload and check \"Create\" to add them to Mercury.");
+                }
             }
-        }
-
-        addMessage("Found " + molecularIndexNames.size() + " indexes in the upload.");
-        if (nullCount > 0) {
-            addMessage(nullCount + " indexes are unknown. Re-upload and check \"Create\" to add them to Mercury.");
         }
         return new ForwardResolution(JSP_PAGE);
+    }
+
+    /**
+     * Passes a spreadsheet with headers, sequences, and names back to the browser.
+     */
+    @HandlesEvent(DOWNLOAD)
+    public Resolution download() {
+        Resolution resolution = new ForwardResolution(JSP_PAGE);
+        try {
+            if (!indexPositions.isEmpty() && !dataRows.isEmpty() && !molecularIndexNames.isEmpty()) {
+                final byte[] returnedSpreadsheet = makeSpreadsheet(indexPositions, dataRows, molecularIndexNames);
+                indexPositions.clear();
+                dataRows.clear();
+                molecularIndexNames.clear();
+                // The spreadsheet must be the only data returned to the page. No UI messages are given.
+                resolution = new Resolution() {
+                    @Override
+                    public void execute(HttpServletRequest in, HttpServletResponse response) throws Exception {
+                        response.setContentType("application/ms-excel");
+                        response.setContentLength(returnedSpreadsheet.length);
+                        response.setHeader("Expires:", "0"); // eliminates browser caching
+                        response.setHeader("Content-Disposition", "attachment; filename=IndexNames.xls");
+                        OutputStream outStream = response.getOutputStream();
+                        outStream.write(returnedSpreadsheet);
+                        outStream.flush();
+                    }
+                };
+            } else {
+                addGlobalValidationError("No data available. Please re-upload.");
+            }
+        } catch (Exception e) {
+            addGlobalValidationError("Cannot create spreadsheet to download " + e);
+        }
+        return resolution;
     }
 
     /**
      * TableProcessor implementation for parsing the spreadsheet. Expects one header row and
      * one or more data rows having one or more columns. The column count and header names
      * are not predefined.
-     *
      */
     private class MolecularIndexNamingProcessor extends TableProcessor {
         private boolean hasHeaderError = false;
@@ -340,13 +360,13 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
                 addGlobalValidationError(String.format(WRONG_COLUMN_COUNT, dataRowIndex , dataRow.size(),
                         indexPositions.size()));
             } else {
-                dataRows.add(dataRow);
+                dataRows.add(StringUtils.join(dataRow, CONCATENATOR));
             }
         }
     }
 
     public static byte[] makeSpreadsheet(List<MolecularIndexingScheme.IndexPosition> indexPositions,
-            List<List<String>> dataRows, List<String> molecularIndexNames) throws IOException {
+            List<String> dataRows, List<String> molecularIndexNames) throws IOException {
         HSSFWorkbook workbook = new HSSFWorkbook();
         Sheet sheet = workbook.createSheet("Sheet1");
         int rowIndex = 0;
@@ -366,10 +386,9 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
 
         // Writes the dataRow followed by the looked up or created mis name.
         for (int i = 0; i < dataRows.size(); ++i) {
-            List<String> dataRow = dataRows.get(i);
             row = sheet.createRow(rowIndex++);
             column = 0;
-            for (String sequence : dataRow) {
+            for (String sequence : dataRows.get(i).split(CONCATENATOR)) {
                 row.createCell(column).setCellValue(sequence);
                 ++column;
             }
@@ -388,14 +407,6 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
 
     public String getTechnology() {
         return technology;
-    }
-
-    public boolean isDownloadSpreadsheet() {
-        return downloadSpreadsheet;
-    }
-
-    public byte[] getReturnedSpreadsheet() {
-        return returnedSpreadsheet;
     }
 
     public boolean isCreateMissingNames() {
@@ -440,10 +451,6 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
         this.createMissingNames = createMissingNames;
     }
 
-    public void setDownloadSpreadsheet(boolean downloadSpreadsheet) {
-        this.downloadSpreadsheet = downloadSpreadsheet;
-    }
-
     /** Setter for testing. */
     public void setMolecularIndexingSchemeFactory(MolecularIndexingSchemeFactory molecularIndexingSchemeFactory) {
         this.molecularIndexingSchemeFactory = molecularIndexingSchemeFactory;
@@ -452,5 +459,29 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
     /** Setter for testing. */
     public void setMolecularIndexingSchemeParser(MolecularIndexingSchemeParser molecularIndexingSchemeParser) {
         this.molecularIndexingSchemeParser = molecularIndexingSchemeParser;
+    }
+
+    public List<MolecularIndexingScheme.IndexPosition> getIndexPositions() {
+        return indexPositions;
+    }
+
+    public void setIndexPositions(List<MolecularIndexingScheme.IndexPosition> indexPositions) {
+        this.indexPositions = indexPositions;
+    }
+
+    public List<String> getDataRows() {
+        return dataRows;
+    }
+
+    public void setDataRows(List<String> dataRows) {
+        this.dataRows = dataRows;
+    }
+
+    public List<String> getMolecularIndexNames() {
+        return molecularIndexNames;
+    }
+
+    public void setMolecularIndexNames(List<String> molecularIndexNames) {
+        this.molecularIndexNames = molecularIndexNames;
     }
 }
