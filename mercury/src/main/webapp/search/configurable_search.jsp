@@ -157,7 +157,8 @@ Move the mouse over the question marks to see details about each section.
         <stripes:button id="chooseColumnSetBtn" name="chooseColumnSetBtn" value="Choose Column Set" onclick="chooseColumnSet();" class="btn btn-primary"/>
         <stripes:layout-render name="/search/view_columns.jsp"
                                availableMapGroupToColumnNames="${actionBean.availableMapGroupToColumnNames}"
-                               predefinedViewColumns="${actionBean.searchInstance.predefinedViewColumns}"/>
+                               predefinedViewColumns="${actionBean.searchInstance.predefinedViewColumns}"
+                               viewColumnParamMap="${actionBean.searchInstance.viewColumnParamMap}"/>
 
     </fieldset>
     <div style="padding-left: 6px; margin-left: 2px; margin-top: 4px; border-bottom-width: 1px; margin-bottom: 25px;">
@@ -181,13 +182,13 @@ Move the mouse over the question marks to see details about each section.
 </fieldset>
 <script type="text/javascript">
 function validateNewSearch() {
-    if (document.getElementById('newSearchName').value.strip() == '') {
+    if (document.getElementById('newSearchName').value.trim().length == 0) {
         alert("You must enter a name for the new search");
         return false;
     }
     var newSearchLevelSelect = document.getElementById('newSearchLevel');
-    var newSearchLevel = newSearchLevelSelect.options[newSearchLevelSelect.selectedIndex].value;
-    if (newSearchLevel != 'USER') {
+    var newSearchLevel = newSearchLevelSelect.options[newSearchLevelSelect.selectedIndex].innerHTML;
+    if (newSearchLevel !== 'USER') {
         return confirm("Are you sure you want to save this search at " + newSearchLevel +
                 " level?  (If you want this search to be visible to you only, click " +
                 "Cancel and change the level to USER)");
@@ -768,6 +769,13 @@ function chooseColumnSet() {
 <div id="rack_scan_overlay">
     <%@include file="/vessel/ajax_div_rack_scanner.jsp"%>
 </div>
-
+<%-- Adds the overlay elements for selecting result column params --%>
+<div id="resultParamsOverlay" style="display: none">
+    <div id="resultParamsError" style="color:red"></div>
+    <form>
+        <div id="resultParamsInputs"> </div>
+        <p><input type="reset" value="Cancel" name="resultParamsCancelBtn" id="resultParamsCancelBtn" class="btn btn-primary"/>&nbsp;&nbsp;<input type="submit" value="Done" name="resultParamsDoneBtn" id="resultParamsDoneBtn" class="btn btn-primary"/></p>
+    </form>
+</div>
 </stripes:layout-component>
 </stripes:layout-render>

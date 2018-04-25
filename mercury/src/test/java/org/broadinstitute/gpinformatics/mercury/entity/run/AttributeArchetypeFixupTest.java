@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -537,6 +538,96 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.persist(new FixupCommentary(ticketId + " fixup Attribute Archetypes"));
         attributeArchetypeDao.flush();
         utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim5268GdcMetadata() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String attributeDefinitionGroup = "workflowMetadata";
+        Collection<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "library_preparation_kit_catalog_number", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "library_preparation_kit_name", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "library_preparation_kit_vendor", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "library_preparation_kit_version", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "target_capture_kit_catalog_number", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "target_capture_kit_name", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "target_capture_kit_target_region", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "target_capture_kit_vendor", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "target_capture_kit_version", true));
+        }};
+
+        String[] initialAttributes = {
+                "workflow_name", "Hyper Prep ICE Exome Express",
+                "library_preparation_kit_catalog_number", "KK8504",
+                "library_preparation_kit_name", "KAPA Hyper Prep Kit with KAPA Library Amplification Primer Mix (10X).",
+                "library_preparation_kit_vendor", "Kapa BioSystems",
+                "library_preparation_kit_version", "v1.1",
+                "target_capture_kit_catalog_number", "FC-144-1004",
+                "target_capture_kit_name", "Illumina TruSeq Rapid Exome Library Prep kit",
+                "target_capture_kit_target_region", "http://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions_v1.2.bed",
+                "target_capture_kit_vendor", "Illumina",
+                "target_capture_kit_version", "v1.2",
+
+                "workflow_name", "Whole Genome PCR Free HyperPrep",
+                "library_preparation_kit_catalog_number", "KK8505",
+                "library_preparation_kit_name", "KAPA HyperPrep Kit (no amp)",
+                "library_preparation_kit_vendor", "Kapa BioSystems",
+                "library_preparation_kit_version", "v1.1",
+
+                "workflow_name", "Whole Genome PCR Plus HyperPrep",
+                "library_preparation_kit_catalog_number", "KK8504",
+                "library_preparation_kit_name", "KAPA Hyper Prep Kit with KAPA Library Amplification Primer Mix (10X)",
+                "library_preparation_kit_vendor", "Kapa BioSystems",
+                "library_preparation_kit_version", "v1.1",
+
+                "workflow_name", "Cell Free HyperPrep",
+                "library_preparation_kit_catalog_number", "KK8504",
+                "library_preparation_kit_name", "KAPA Hyper Prep Kit with KAPA Library Amplification Primer Mix (10X)",
+                "library_preparation_kit_vendor", "Kapa BioSystems",
+                "library_preparation_kit_version", "v1.1",
+        };
+        final int fieldCount = 2;
+
+        List<WorkflowMetadata> workflowMetadataList = new ArrayList<>();
+        WorkflowMetadata workflowMetadata = null;
+        for (int i = 0; i < initialAttributes.length; i += fieldCount) {
+            String key = initialAttributes[i];
+            String value = initialAttributes[i + 1];
+
+            if (key.equals("workflow_name")) {
+                workflowMetadata = new WorkflowMetadata(value, definitions);
+                workflowMetadataList.add(workflowMetadata);
+            } else {
+                workflowMetadata.addOrSetAttribute(key, value);
+                System.out.println("Adding attribute (" + key + ", " + value + ") to " + workflowMetadata.getWorkflowName());
+            }
+        }
+
+        attributeArchetypeDao.persist(new FixupCommentary("GPLIM-5268 GDC Metadata fixup Attribute Archetypes"));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(workflowMetadataList);
+        attributeArchetypeDao.flush();
+        utx.commit();
+
     }
 
 }

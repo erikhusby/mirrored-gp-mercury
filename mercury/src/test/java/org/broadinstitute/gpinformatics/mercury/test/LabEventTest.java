@@ -1732,7 +1732,7 @@ public class LabEventTest extends BaseEventTest {
                 new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
                 new Date(), Arrays.asList(parentVesselBean),
-                null, MercurySample.MetadataSource.BSP);
+                null, MercurySample.MetadataSource.BSP).getLeft();
         Set<LabVessel> labVesselSet = new HashSet<>(startingVessels);
         LabBatch labBatch = new LabBatch(batchId, labVesselSet,
                         LabBatch.LabBatchType.BSP);
