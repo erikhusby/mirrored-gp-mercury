@@ -61,6 +61,8 @@
 
                 var camHeight = 612;//$(window).height() - 60;
                 var camWidth = 816;//$(window).width() - 60;//
+                var camInitialized = false;
+                var barcodeCounter = 0;
                 $j("#camera_overlay").dialog({
                     title: "Camera",
                     autoOpen: false,
@@ -170,14 +172,15 @@
                                 if (eventClass === 'PlateTransferEventType') {
                                     $(data.transfers).each(function (idx, transfer) {
                                         console.log(transfer);
-                                        $('#srcRcpBcd0_' + (transfer.index - 1)).val(transfer.sourceTubeBarcode);
-                                        $('#destRcpBcd0_' + (transfer.index - 1)).val(transfer.destinationTubeBarcode);
+                                        $('#srcRcpBcd0_' + (barcodeCounter + transfer.index - 1)).val(transfer.sourceTubeBarcode);
+                                        $('#destRcpBcd0_' + (barcodeCounter + transfer.index - 1)).val(transfer.destinationTubeBarcode);
                                     });
                                 } else if (eventClass === 'PlateEventType') {
                                     $(data.decodedBarcodes).each(function (idx, ciBarcode) {
-                                        $('#destRcpBcd0_' + (idx)).val(ciBarcode.label);
+                                        $('#destRcpBcd0_' + (barcodeCounter + idx)).val(ciBarcode.label);
                                     });
                                 }
+                                barcodeCounter = barcodeCounter + data.transfers.length;
                                 $j(this).dialog("close");
                             }
                         },
@@ -189,7 +192,7 @@
                         $j('#camera_alert').hide();
                         $j('#analyzebtnid').button('disable');
                         $j('#addbtnid').button('disable');
-                        if (initializeCamera()) {
+                        if (!camInitialized && initializeCamera()) {
                             var video = $j('<video id="video" width="' + camWidth + '" height="' + camHeight + '" autoplay></video>');
                             $j("#camera_overlay").append(video);
                             var canvas = $j('<canvas id="canvas" width="' + camWidth + '" height="' + camHeight + '"></canvas>').hide();
@@ -206,10 +209,12 @@
                             $j("#camera_overlay").append(canvas);
                             video[0].src = window.URL.createObjectURL(stream);
                             video[0].play();
+                            camInitialized = true;
                             return true;
                         }).catch(function (err) {
                             console.log(err);
                             cameraAlert("Failed to initialize camera, is it turned on? If not, start and reload page.");
+                            camInitialized = false;
                             return false;
                         });
                     }
@@ -222,8 +227,16 @@
                     $j('#canvas').hide();
                 }
 
-                <c:if test="${actionBean.useWebCam}">
+                function displayCamera() {
                     $j("#camera_overlay").dialog("open");
+                }
+
+                <c:if test="${actionBean.useWebCam}">
+                    displayCamera();
+                    $j('#displayCamera').click(function(event) {
+                        event.preventDefault();
+                        displayCamera();
+                    });
                 </c:if>
             });
 
@@ -284,6 +297,10 @@
                     <%-- Can't use stripes:text because the value in the request takes precedence over the value set in the action bean. --%>
                     <c:if test="${not empty actionBean.stationEvents}">
                         ${empty actionBean.workflowStepDef ? '' : actionBean.workflowStepDef.instructions}
+                        <c:if test="${actionBean.manualTransferDetails.useWebCam}">
+                            <br/>
+                            <input id="displayCamera" type="submit" class="btn btn-primary" value="Display Camera">
+                        </c:if>
                         <input type="hidden" name="workflowProcessName" value="${actionBean.workflowProcessName}"/>
                         <input type="hidden" name="workflowStepName" value="${actionBean.workflowStepName}"/>
                         <input type="hidden" name="workflowEffectiveDate" value="${actionBean.workflowEffectiveDate}"/>

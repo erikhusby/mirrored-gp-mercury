@@ -122,9 +122,10 @@ public class LabBatchResource {
      * create bucket entries and associate them with the batch.
      */
     private LabBatch createLabBatchByParentVessel(LabBatchBean labBatchBean) {
+        // Process is only interested in the primary vessels
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(
                 Collections.singletonList(labBatchBean.getParentVesselBean()), labBatchBean.getUsername(),
-                new Date(), null, MercurySample.MetadataSource.BSP);
+                new Date(), null, MercurySample.MetadataSource.BSP).getLeft();
 
         // Gather vessels for each PDO (if any)
         Set<LabVessel> labVesselSet = new HashSet<>();
