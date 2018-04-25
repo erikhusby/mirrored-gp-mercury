@@ -78,6 +78,7 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
+            <xs:element type="xs:boolean" name="jiraSampleFromNearest" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="workflowConfigType">
