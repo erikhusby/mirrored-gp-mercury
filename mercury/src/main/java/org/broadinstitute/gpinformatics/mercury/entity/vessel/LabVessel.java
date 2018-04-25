@@ -224,14 +224,6 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<>();
 
-    /**
-     * Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
-     * avoid an unnecessary database round trip.
-     */
-    @NotAudited
-    @Formula("(select count(*) from vessel_transfer where vessel_transfer.target_vessel = lab_vessel_id)")
-    private Integer transfersThisAsTargetCount = 0;
-
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private Set<VesselToSectionTransfer> vesselToSectionTransfersThisAsSource = new HashSet<>();
@@ -438,19 +430,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsTarget() {
-        if (transfersThisAsTargetCount != null && transfersThisAsTargetCount > 0) {
-            return vesselToVesselTransfersThisAsTarget;
-        }
-        return Collections.emptySet();
-    }
-
-    public void addVesselToVesselTransfersThisAsTarget(VesselToVesselTransfer vesselToVesselTransfer) {
-        vesselToVesselTransfersThisAsTarget.add(vesselToVesselTransfer);
-        if (transfersThisAsTargetCount == null) {
-            transfersThisAsTargetCount = 1;
-        } else {
-            transfersThisAsTargetCount++;
-        }
+        return vesselToVesselTransfersThisAsTarget;
     }
 
     public void addMetric(LabMetric labMetric) {
@@ -608,7 +588,7 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<LabEvent> getTransfersTo() {
         Set<LabEvent> transfersTo = new HashSet<>();
-        for (VesselToVesselTransfer vesselToVesselTransfer : getVesselToVesselTransfersThisAsTarget()) {
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             transfersTo.add(vesselToVesselTransfer.getLabEvent());
         }
         if (getContainerRole() == null) {
@@ -628,7 +608,7 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<LabEvent> getTransfersToWithReArrays() {
         Set<LabEvent> transfersTo = new HashSet<>();
-        for (VesselToVesselTransfer vesselToVesselTransfer : getVesselToVesselTransfersThisAsTarget()) {
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             transfersTo.add(vesselToVesselTransfer.getLabEvent());
         }
         if (getContainerRole() == null) {
@@ -911,7 +891,7 @@ public abstract class LabVessel implements Serializable {
      */
     List<VesselEvent> getAncestors() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
-        for (VesselToVesselTransfer vesselToVesselTransfer : getVesselToVesselTransfersThisAsTarget()) {
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             VesselEvent vesselEvent = new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null, vesselToVesselTransfer.getLabEvent(),
                     this, null, null);
             vesselEvents.add(vesselEvent);
