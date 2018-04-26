@@ -89,7 +89,6 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 WorkflowBucketDef workflowBucketDef = workflowConfig.findWorkflowBucketDef(pdo, bucketName);
                 if (workflowBucketDef != null) {
                     jiraSampleFromNearest = workflowBucketDef.isJiraSampleFromNearest();
-                    assert(jiraSampleFromNearest);
                 }
             }
             if (pdo != null) {
