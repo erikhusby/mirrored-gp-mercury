@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +64,12 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
             LabVessel denatureTube =
                     transfer.getSourceVesselContainer().getVesselAtPosition(transfer.getSourcePosition());
             LabVessel dilutionTube;
+            String targetPosition = transfer.getTargetPosition().name();
+            String expectedLane = "LANE" + targetPosition.charAt(targetPosition.length() - 1);
+            boolean isStripTube = false;
             if (transfer.getTargetVesselContainer().getEmbedder().getType() == LabVessel.ContainerType.STRIP_TUBE) {
                 dilutionTube = transfer.getTargetVesselContainer().getEmbedder();
+                isStripTube = true;
             } else {
                 dilutionTube = transfer.getTargetVesselContainer().getVesselAtPosition(transfer.getTargetPosition());
             }
@@ -124,7 +127,7 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
             for (LabBatch fctLabBatch : fctBatches) {
                 if (fctTicket.equals(fctLabBatch.getBusinessKey())) {
                     foundTicket = true;
-                    if (!updateLabBatch(fctLabBatch, denatureTube, dilutionTube)) {
+                    if (!updateLabBatch(fctLabBatch, denatureTube, dilutionTube, expectedLane, isStripTube)) {
                         if (!denatureTube.getContainers().isEmpty()) {
                             LabVessel denatureTubeFormation = denatureTube.getContainers().iterator().next();
                             List<LabVessel.VesselEvent> ancestors =
@@ -132,7 +135,7 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
                             if (ancestors != null && !ancestors.isEmpty()) {
                                 LabVessel.VesselEvent denatureEvent = ancestors.get(0);
                                 LabVessel normTube = denatureEvent.getSourceLabVessel();
-                                if (!updateLabBatch(fctLabBatch, normTube, dilutionTube)) {
+                                if (!updateLabBatch(fctLabBatch, normTube, dilutionTube, expectedLane, isStripTube)) {
                                     String errMsg = String.format(
                                             "Neither the denature tube %s or its ancestor tube %s are associated"
                                             + " with the given FCT.",
@@ -154,12 +157,15 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
     }
 
     private boolean updateLabBatch(LabBatch fctLabBatch, LabVessel loadingTube,
-                                   LabVessel dilutionTube) {
+                                   LabVessel dilutionTube, String expectedLane, boolean isStripTube) {
         boolean foundStartTube = false;
-        for (LabBatchStartingVessel fctVesselAssociation : fctLabBatch
-                .getLabBatchStartingVessels()) {
-            if (loadingTube.equals(fctVesselAssociation
-                    .getLabVessel())) {
+        for (LabBatchStartingVessel fctVesselAssociation : fctLabBatch.getLabBatchStartingVessels()) {
+            if (!isStripTube && fctVesselAssociation.getVesselPosition() != null) {
+                if (!expectedLane.equals(fctVesselAssociation.getVesselPosition().name())) {
+                    continue;
+                }
+            }
+            if (loadingTube.equals(fctVesselAssociation.getLabVessel())) {
                 foundStartTube = true;
                 if (fctVesselAssociation.getDilutionVessel() == null) {
                     fctVesselAssociation.setDilutionVessel(dilutionTube);
@@ -170,6 +176,7 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
                 }
             }
         }
+
         return foundStartTube;
     }
 }
