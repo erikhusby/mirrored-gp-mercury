@@ -156,14 +156,19 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         for( SampleInstanceV2 si : dnaWellSampleInstances) {
             if( si.getSingleBucketEntry() != null ) {
+
+                if(si.getSingleBatch()==null){
+                    logErrors.add("Extracting data, but FYI SampleInstance has single bucket entry and null single batch for bucket event " + bucketEvent.getLabEventId() + ", plating event " + platingEvent.getLabEventId());
+                }
+
                 arrayFlowDtos.add(new ArrayDto(platingEvent, dnaPlateWell, dnaPlatePosition,
                         si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
-                        si.getSingleBatch().getBatchName(),
+                        si.getSingleBucketEntry().getLabBatch().getBatchName(),
                         si.getNearestMercurySampleName(),
                         si.getEarliestMercurySampleName())
                 );
             } else {
-                logErrors.add("No single bucket entry for DNA plate well " + dnaPlateWell.getLabel());
+                logErrors.add("No single bucket entry for DNA plate well " + dnaPlateWell.getLabel() + ", InfiniumBucket event " + bucketEvent.getLabEventId() );
             }
         }
 
