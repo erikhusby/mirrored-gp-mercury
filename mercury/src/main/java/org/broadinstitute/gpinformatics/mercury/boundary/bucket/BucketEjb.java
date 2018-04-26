@@ -131,7 +131,7 @@ public class BucketEjb {
                 }
             }
             labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, eventLocation, programName,
-                    bucketEventType);
+                    bucketEventType, date);
         }
 
         return listOfNewEntries;

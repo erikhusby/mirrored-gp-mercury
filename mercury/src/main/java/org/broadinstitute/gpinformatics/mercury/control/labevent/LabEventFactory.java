@@ -1483,7 +1483,8 @@ public class LabEventFactory implements Serializable {
      */
     public Collection<LabEvent> buildFromBatchRequests(@Nonnull Collection<BucketEntry> entryCollection,
                                                        String operator, LabBatch batchIn, @Nonnull String eventLocation,
-                                                       @Nonnull String programName, @Nonnull LabEventType eventType) {
+                                                       @Nonnull String programName, @Nonnull LabEventType eventType,
+                                                       Date date) {
 
         long workCounter = 1L;
 
@@ -1494,7 +1495,7 @@ public class LabEventFactory implements Serializable {
         for (BucketEntry mapEntry : entryCollection) {
             List<LabEvent> events = new LinkedList<>();
             LabEvent currEvent = createFromBatchItems(mapEntry.getProductOrder().getBusinessKey(), mapEntry.getLabVessel(),
-                    workCounter++, operator, eventType, eventLocation, programName, batchIn.getCreatedOn());
+                    workCounter++, operator, eventType, eventLocation, programName, date);
             if (null != batchIn) {
                 currEvent.setLabBatch(batchIn);
             }
