@@ -56,7 +56,6 @@ import java.util.regex.Pattern;
  */
 @UrlBinding("/reagent/MolecularIndexNaming.action")
 public class MolecularIndexNamingActionBean extends CoreActionBean {
-    private static final Log log = LogFactory.getLog(MolecularIndexNamingActionBean.class);
     public static final String JSP_PAGE = "/reagent/mol_ind_scheme_naming.jsp";
     public static final String UPLOAD = "upload";
     public static final String DOWNLOAD = "download";
@@ -290,13 +289,13 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
     private void processSpreadsheetHeader(List<String> headers) {
         sequenceFileHeaderNames.clear();
         for (int i = 0; i < headers.size(); ++i) {
-            String header = headers.get(i);
+            String header = StringUtils.strip(headers.get(i).trim(), "\\\"").toUpperCase();
             int columnNumber = i + 1;
             if (StringUtils.isBlank(header)) {
                 addGlobalValidationError(String.format(BLANK_HEADER, columnNumber));
             }
             sequenceFileHeaderNames.add(header);
-            for (String position : DELIMITER_REGEX.split(header.trim().toUpperCase())) {
+            for (String position : DELIMITER_REGEX.split(header)) {
                 if (StringUtils.isNotBlank(position)) {
                     boolean found = false;
                     for (MolecularIndexingScheme.IndexPosition indexPosition :
@@ -342,7 +341,8 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
         List<String> dataRow = new ArrayList<>();
         boolean allValid = true;
         for (String column : columns) {
-            for (String sequence : DELIMITER_REGEX.split(column.trim().toUpperCase())) {
+            String value = StringUtils.strip(column.trim(), "\\\"").toUpperCase();
+            for (String sequence : DELIMITER_REGEX.split(value)) {
                 Pair<Boolean, String> pair = MolecularIndex.validatedUpperCaseSequence(sequence);
                 boolean isValid = pair.getLeft();
                 String sequenceOrMessage = pair.getRight();

@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static edu.mit.broad.prodinfo.thrift.lims.IndexPosition.P7;
+
 /**
  * Tests MolecularIndexNamingActionBean.
  */
@@ -74,6 +76,15 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
             "Illumina_P7-Bababo_IS1-Bababe",
             "Illumina_P7-Bababe_IS1-Bababi",
             "Illumina_P7-Bababi_IS1-Bababa"
+    );
+
+    private List<List<String>> quotedP7is1 = Arrays.asList(
+            Arrays.asList(" \"P7\" ", "\"IS1\""),
+            Arrays.asList("\"AGCAATTC\" ", " \"AGTTGCTT\"")
+    );
+
+    private List<String> quotedP7is1Schemes = Arrays.asList(
+            "Illumina_P7-Debox_IS1-Doyez"
     );
 
     private List<List<String>> ionUpload = Arrays.asList(
@@ -168,7 +179,7 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
     }
 
     @Test
-    public void testDuplicateHeader() throws Exception {
+    public void testDuplicateHeader() {
         // Does the upload.
         actionBean.setInputStream(makeInputStream(duplicateHeader, ","));
         actionBean.setFilename("test.csv");
@@ -183,7 +194,7 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
     }
 
     @Test
-    public void testBlankHeaderRow() throws Exception {
+    public void testBlankHeaderRow() {
         // Does the upload.
         actionBean.setInputStream(makeInputStream(blankHeaderRow, ","));
         actionBean.setFilename("test.csv");
@@ -198,7 +209,7 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
     }
 
     @Test
-    public void testBlankHeaderColumn() throws Exception {
+    public void testBlankHeaderColumn() {
         // Does the upload.
         actionBean.setInputStream(makeInputStream(oneBlankHeader, ","));
         actionBean.setFilename("test.csv");
@@ -213,7 +224,7 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
     }
 
     @Test
-    public void testWrongTechnology() throws Exception {
+    public void testWrongTechnology() {
         // Does the upload.
         actionBean.setInputStream(makeInputStream(p7is1Upload, ","));
         actionBean.setFilename("test.csv");
@@ -241,8 +252,7 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         actionBean.upload();
 
         // Should not have any errors.
-        Assert.assertTrue(actionBean.getFormattedErrors().isEmpty(),
-                StringUtils.join(actionBean.getFormattedErrors(), "; "));
+        Assert.assertFalse(actionBean.hasErrors());
         // Returned spreadsheet should be present and the names should match expected ones. The input data
         // won't, because the returned spreadsheet splits a combination header into individual columns.
         byte[] bytes = actionBean.makeSpreadsheet(actionBean.getIndexPositions(), actionBean.getDataRows(),
@@ -261,8 +271,7 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         actionBean.upload();
 
         // Should not have any errors.
-        Assert.assertTrue(actionBean.getFormattedErrors().isEmpty(),
-                StringUtils.join(actionBean.getFormattedErrors(), "; "));
+        Assert.assertFalse(actionBean.hasErrors());
         // Returned spreadsheet should be present but names are flagged as missing.
         byte[] bytes = actionBean.makeSpreadsheet(actionBean.getIndexPositions(), actionBean.getDataRows(),
                 actionBean.getMolecularIndexNames());
@@ -270,6 +279,20 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         for (String name : names) {
             Assert.assertEquals(name, MolecularIndexNamingActionBean.UNKNOWN_NAME);
         }
+    }
+
+    @Test
+    public void testQuotedCsv() {
+        actionBean.setInputStream(makeInputStream(quotedP7is1, ","));
+        actionBean.setFilename("test.csv");
+        actionBean.setTechnology(MolecularIndexingScheme.TECHNOLOGY_ILLUMINA);
+        actionBean.setCreateMissingNames(false);
+        actionBean.upload();
+
+        // Should not have any errors.
+        Assert.assertFalse(actionBean.hasErrors());
+        // Returned spreadsheet should have the name that already exists in Mercury for this sequence.
+        Assert.assertEquals(actionBean.getMolecularIndexNames(), quotedP7is1Schemes);
     }
 
     @Test
@@ -282,8 +305,7 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         actionBean.upload();
 
         // Should not have any errors.
-        Assert.assertTrue(actionBean.getFormattedErrors().isEmpty(),
-                StringUtils.join(actionBean.getFormattedErrors(), "; "));
+        Assert.assertFalse(actionBean.hasErrors());
         // Returned spreadsheet should be present and the names should match existing ones. The input data
         // won't, because the returned spreadsheet splits a combination header into individual columns.
         byte[] bytes = actionBean.makeSpreadsheet(actionBean.getIndexPositions(), actionBean.getDataRows(),
