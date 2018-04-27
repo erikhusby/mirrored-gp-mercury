@@ -205,6 +205,8 @@ public class GenotypingChipDbTest extends Arquillian {
     }
 
     /** Tests a KeyValueMapping. */
+    // todo enable this test after GPLIM-4205 fixup test is run.
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = false)
     public void testKeyValueMapping() {
         Map<String, String> map = dao.findKeyValueMap(KeyValueMapping.BAIT_PRODUCT_MAPPING);
         Assert.assertNotNull(map);

@@ -3,10 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.entity.infrastructure;
 
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
+import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.Transient;
+import java.util.Collection;
 
 /**
  * Contains a generic key-value mapping backed by an AttributeArchetype.
@@ -24,6 +26,14 @@ public class KeyValueMapping extends AttributeArchetype {
     public static final String BAIT_PRODUCT_MAPPING = "BaitToProductMapping";
 
     private static final String GENERIC_KEY_VALUE_ATTRIBUTE = "theValue";
+
+    // Used by Hibernate.
+    public KeyValueMapping() {
+    }
+
+    public KeyValueMapping(String group, String name, Collection<AttributeDefinition> attributeDefinitions) {
+        super(group, name, attributeDefinitions);
+    }
 
     @Transient
     public String getKey() {
