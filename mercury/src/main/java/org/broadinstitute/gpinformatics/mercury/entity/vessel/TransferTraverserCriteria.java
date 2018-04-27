@@ -749,7 +749,7 @@ public abstract class TransferTraverserCriteria {
         private List<LabEventType> types;
         private boolean useTargetVessels = true;
         private Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = new HashMap<>();
-        private boolean stopAtFirstFound = false;
+        private boolean stopAtFirstFound;
 
         public VesselForEventTypeCriteria(List<LabEventType> types) {
             this.types = types;
@@ -770,7 +770,9 @@ public abstract class TransferTraverserCriteria {
 
             LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
             if( contextVesselEvent != null ) {
-                evaluteVesselEvent(contextVesselEvent, context.getTraversalDirection());
+                if (evaluteVesselEvent(contextVesselEvent, context.getTraversalDirection()) == TraversalControl.StopTraversing) {
+                    return TraversalControl.StopTraversing;
+                }
             } else {
                 // No VesselEvent means we're on starting vessel, process any in place events
                 LabVessel contextVessel = context.getContextVessel();
@@ -778,7 +780,7 @@ public abstract class TransferTraverserCriteria {
                     contextVessel = context.getContextVesselContainer().getEmbedder();
                 }
                 for (LabEvent inPlaceEvent : contextVessel.getInPlaceLabEvents()) {
-                    if (evaluateEvent(contextVessel, inPlaceEvent)) {
+                    if (evaluateEvent(contextVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
                         return TraversalControl.StopTraversing;
                     }
                 }
@@ -787,7 +789,7 @@ public abstract class TransferTraverserCriteria {
             return TraversalControl.ContinueTraversing;
         }
 
-        private void evaluteVesselEvent(LabVessel.VesselEvent contextVesselEvent, TraversalDirection traversalDirection){
+        private TraversalControl evaluteVesselEvent(LabVessel.VesselEvent contextVesselEvent, TraversalDirection traversalDirection){
             LabEvent contextEvent = contextVesselEvent.getLabEvent();
 
             LabVessel sourceVessel = contextVesselEvent.getSourceLabVessel();
@@ -802,21 +804,32 @@ public abstract class TransferTraverserCriteria {
 
             if( traversalDirection == TraversalDirection.Ancestors ) {
                 for (LabEvent inPlaceEvent : sourceVessel.getInPlaceLabEvents()) {
-                    evaluateEvent(sourceVessel, inPlaceEvent);
+                    if (evaluateEvent(sourceVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
+                        return TraversalControl.StopTraversing;
+                    }
                 }
                 if( useTargetVessels ) {
                     // Some ancestry logic wants the event target vessel
-                    evaluateEvent(targetVessel, contextEvent);
+                    if (evaluateEvent(targetVessel, contextEvent) == TraversalControl.StopTraversing) {
+                        return TraversalControl.StopTraversing;
+                    }
                 } else {
                     // Ancestor by default uses source vessel
-                    evaluateEvent(sourceVessel, contextEvent);
+                    if (evaluateEvent(sourceVessel, contextEvent) == TraversalControl.StopTraversing) {
+                        return TraversalControl.StopTraversing;
+                    }
                 }
             } else {
                 for (LabEvent inPlaceEvent : targetVessel.getInPlaceLabEvents()) {
-                    evaluateEvent(targetVessel, inPlaceEvent);
+                    if (evaluateEvent(targetVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
+                        return TraversalControl.StopTraversing;
+                    }
                 }
-                evaluateEvent(targetVessel, contextEvent);
+                if (evaluateEvent(targetVessel, contextEvent) == TraversalControl.StopTraversing) {
+                    return TraversalControl.StopTraversing;
+                }
             }
+            return TraversalControl.ContinueTraversing;
         }
 
         private void addVesselForType(LabVessel vessel, LabEvent event){
@@ -829,14 +842,14 @@ public abstract class TransferTraverserCriteria {
             vessels.add(vessel);
         }
 
-        private boolean evaluateEvent(LabVessel vessel, LabEvent event) {
+        private TraversalControl evaluateEvent(LabVessel vessel, LabEvent event) {
             if (types.contains(event.getLabEventType())) {
                 addVesselForType(vessel, event);
                 if (stopAtFirstFound) {
-                    return true;
+                    return TraversalControl.StopTraversing;
                 }
             }
-            return false;
+            return TraversalControl.ContinueTraversing;
         }
 
         @Override
