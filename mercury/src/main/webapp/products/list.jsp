@@ -57,7 +57,7 @@
             <stripes:submit name="publishProductsToSap" value="Publish Selected Product(s) to SAP" class="btn padright" title="Click to publish products to SAP" />
         </div>
 
-        <table id="productList" class="table simple products">
+        <table id="productList" class="table simple">
             <thead>
             <tr>
                 <th width="40">
