@@ -1546,7 +1546,7 @@ AS
 
       IF v_rowid_arr.count > 0 THEN
         -- Only one batch per run - all dates (should be) the same
-        SELECT ETL_DATE INTO v_etldate FROM event_fact WHERE ROWNUM < 2;
+        SELECT ETL_DATE INTO v_etldate FROM im_event_fact WHERE ROWNUM < 2;
 
         -- TODO Bulk collect errors in a single FORALL statement?
         FOR V_IDX IN v_rowid_arr.FIRST .. v_rowid_arr.LAST LOOP
