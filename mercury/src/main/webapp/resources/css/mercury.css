@@ -81,7 +81,7 @@ tr .bad-price-div {
     display:none;
     padding: 14px 20px;
     margin-top: -30px;
-    margin-left: 28px;
+    margin-left: 400px;
     width: 300px;
     line-height: 16px;
 }
@@ -92,8 +92,12 @@ tr.bad-prices:hover .bad-price-div {
     color: #111;
     border: 1px solid #DCA;
     background: #FFFAF0;
-}.callout {z-index:20;  position:absolute; top: 30px; border:0;
-     left: -12px;}
+}.callout {
+     z-index:20;
+     position:absolute;
+     top: 30px; border:0;
+     left: -12px;
+ }
 
 table#productList tr.bad-prices.odd {
      background-color: #b93d2e;
