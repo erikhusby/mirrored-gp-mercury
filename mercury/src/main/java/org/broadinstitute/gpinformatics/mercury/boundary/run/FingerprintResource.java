@@ -246,7 +246,9 @@ public class FingerprintResource {
             throw new ResourceException("snpListName is required", Response.Status.BAD_REQUEST);
         }
         SnpList snpList = snpListDao.findByName(fingerprintBean.getSnpListName());
-        // todo jmt validate snpList is found
+        if (snpList == null) {
+            throw new ResourceException("snpListName not found", Response.Status.BAD_REQUEST);
+        }
 
         Fingerprint fingerprint = new Fingerprint(mercurySample,
                 Fingerprint.Disposition.byAbbreviation(fingerprintBean.getDisposition()),
