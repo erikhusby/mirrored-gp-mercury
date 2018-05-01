@@ -72,38 +72,38 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         List<ArrayDto> arrayFlowDtos = null;
 
-        if( entity == null ) {
-            return (List<String>)Collections.EMPTY_LIST;
+        if (entity == null) {
+            return (List<String>) Collections.EMPTY_LIST;
         }
 
         // Supports overrides but not deletes
-        if( isDelete ) {
+        if (isDelete) {
             loggingDeletedEventIds.add(entity.getLabEventId());
-            return (List<String>)Collections.EMPTY_LIST;
+            return (List<String>) Collections.EMPTY_LIST;
         }
 
         LabEventType eventType = entity.getLabEventType();
 
         try {
-            if (eventType == LabEventType.INFINIUM_BUCKET ) {
+            if (eventType == LabEventType.INFINIUM_BUCKET) {
                 // An ARRAY LCSET has been created: LCSET and PDO values are available so get all associated events
                 arrayFlowDtos = makeDtosFromBucketEvent(entity);
             } else {
-                return (List<String>)Collections.EMPTY_LIST;
+                return (List<String>) Collections.EMPTY_LIST;
             }
         } catch (Exception e) {
             // Uncaught RuntimeExceptions kill the injected LabEventEtl in ExtractTransform.
             logger.error("Error in array flow etl", e);
             logErrors.add("Error in array flow etl, EventID: " + entity.getLabEventId() + ", Type: "
-                    + entity.getLabEventType().getName() + ", Error: " + e.getMessage() );
+                          + entity.getLabEventType().getName() + ", Error: " + e.getMessage());
         }
 
-        if( arrayFlowDtos == null || arrayFlowDtos.size() == 0 ) {
-            return (List<String>)Collections.EMPTY_LIST;
+        if (arrayFlowDtos == null || arrayFlowDtos.size() == 0) {
+            return (List<String>) Collections.EMPTY_LIST;
         }
 
         List<String> records = new ArrayList<>();
-        for( ArrayDto dto : arrayFlowDtos ) {
+        for (ArrayDto dto : arrayFlowDtos) {
             records.add(dto.toEtlString(etlDateStr, isDelete));
         }
         arrayFlowDtos.clear();
@@ -115,7 +115,8 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
      * map to PDO, LCSET, and sample data of bucketed plate well<br />
      * Also, look forward in case an Infinium bucket event was performed after other events
      * (many cases in initial array process shakeout mid 2016 to early 2017)
-     * @return  A row for all event types of interest in an array process flow starting at DNA plate well
+     *
+     * @return A row for all event types of interest in an array process flow starting at DNA plate well
      * to be mapped in ETL to horizontal columns in a single row keyed by PDO, LCSET, and aliquot sample ID
      */
     private List<ArrayDto> makeDtosFromBucketEvent(LabEvent bucketEvent) {
@@ -125,7 +126,7 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         // Get the ArrayPlatingDilution transfer to this vessel (plate well)
         PlateWell dnaPlateWell = null;
-        if( OrmUtil.proxySafeIsInstance(bucketEvent.getInPlaceLabVessel(), PlateWell.class)) {
+        if (OrmUtil.proxySafeIsInstance(bucketEvent.getInPlaceLabVessel(), PlateWell.class)) {
             dnaPlateWell = OrmUtil.proxySafeCast(bucketEvent.getInPlaceLabVessel(), PlateWell.class);
         } else {
             // Die if not a DNA plate well (very unlikely)
@@ -136,7 +137,7 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         Set<LabEvent> dnaPlateXfers = dnaPlateWell.getTransfersTo();
         LabEvent platingEvent = null;
         // There should never be more than 1 section transfer event, but make sure it's ArrayPlatingDilution
-        if( dnaPlateXfers != null ) {
+        if (dnaPlateXfers != null) {
             for (LabEvent event : dnaPlateXfers) {
                 if (event.getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
                     platingEvent = event;
@@ -147,28 +148,36 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         if (platingEvent == null) {
             logErrors.add("No plating event prior to InfiniumBucket event, ID: " + bucketEvent.getLabEventId());
-            // Don't die here, continue looking for downstream events
+            // Don't die here, allows process to record plate name from InfiniumBucket but no plating event data
         }
 
         VesselPosition dnaPlatePosition = dnaPlateWell.getVesselPosition();
         // All downstream Infinium events share samples of DNA plate well (should only ever be 1)
         dnaWellSampleInstances = dnaPlateWell.getSampleInstancesV2();
+        if (dnaWellSampleInstances == null ||  dnaWellSampleInstances.isEmpty()) {
+            logErrors.add("No sampleInstances for DNA plate well " + dnaPlateWell.getLabel());
+        } else {
+            for (SampleInstanceV2 si : dnaWellSampleInstances) {
+                if (si.getSingleBucketEntry() != null) {
+                    // Data is useless without PDO (highly unlikely case)
+                    if (si.getSingleBucketEntry().getProductOrder() == null) {
+                        logErrors
+                                .add("Skipping SampleInstance: No PDO for bucket entry event " + bucketEvent
+                                        .getLabEventId()
+                                     + ", plating event " + platingEvent.getLabEventId());
+                        continue;
+                    }
 
-        for( SampleInstanceV2 si : dnaWellSampleInstances) {
-            if( si.getSingleBucketEntry() != null ) {
-
-                if(si.getSingleBatch()==null){
-                    logErrors.add("Extracting data, but FYI SampleInstance has single bucket entry and null single batch for bucket event " + bucketEvent.getLabEventId() + ", plating event " + platingEvent.getLabEventId());
+                    arrayFlowDtos.add(new ArrayDto(platingEvent, dnaPlateWell, dnaPlatePosition,
+                            si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
+                            si.getSingleBucketEntry().getLabBatch().getBatchName(),
+                            si.getNearestMercurySampleName(),
+                            si.getEarliestMercurySampleName())
+                    );
+                } else {
+                    logErrors.add("No single bucket entry for DNA plate well " + dnaPlateWell.getLabel()
+                                  + ", InfiniumBucket event " + bucketEvent.getLabEventId());
                 }
-
-                arrayFlowDtos.add(new ArrayDto(platingEvent, dnaPlateWell, dnaPlatePosition,
-                        si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
-                        si.getSingleBucketEntry().getLabBatch().getBatchName(),
-                        si.getNearestMercurySampleName(),
-                        si.getEarliestMercurySampleName())
-                );
-            } else {
-                logErrors.add("No single bucket entry for DNA plate well " + dnaPlateWell.getLabel() + ", InfiniumBucket event " + bucketEvent.getLabEventId() );
             }
         }
 
@@ -179,7 +188,7 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     @Override
     public void postEtlLogging() {
 
-        for( String msg : logErrors ) {
+        for (String msg : logErrors) {
             logger.debug(msg);
         }
         logErrors.clear();
@@ -192,8 +201,44 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         }
         if (deletedIds.size() > 0) {
             logger.error("Manual etl required to fixup lab events downstream of deleted lab events " +
-                    StringUtils.join(deletedIds, ", "));
+                         StringUtils.join(deletedIds, ", "));
         }
+    }
+
+    /**
+     * Scope relaxed from protected to public to allow a backfill service hook <br/>
+     * This overwrite handles when all entities are attached in the persistence context
+     */
+    @Override
+    public int writeRecords(Collection<LabEvent> entities,
+                            Collection<Long>deletedEntityIds,
+                            String etlDateStr) throws Exception {
+        return super.writeRecords(entities, deletedEntityIds, etlDateStr);
+    }
+
+    /**
+     * Scope relaxed from protected to public to allow a backfill service hook <br/>
+     * This overwrite handles when the persistence context is cleared and all we have are numeric IDs
+     */
+    @Override
+    public int writeRecords(Collection<Long> deletedEntityIds,
+                            Collection<Long> modifiedEntityIds,
+                            Collection<Long> addedEntityIds,
+                            Collection<RevInfoPair<LabEvent>> revInfoPairs,
+                            String etlDateStr) throws Exception {
+        Collection<Long> nonDeletedIds = new ArrayList<>();
+        nonDeletedIds.addAll(modifiedEntityIds);
+        nonDeletedIds.addAll(addedEntityIds);
+
+        Collection<LabEvent> eventList = new ArrayList<>();
+        LabEvent event;
+        for (Long entityId : nonDeletedIds) {
+            event = dao.findById( LabEvent.class, entityId );
+            if( event != null ) {
+                eventList.add(event);
+            }
+        }
+        return writeRecords( eventList, deletedEntityIds, etlDateStr );
     }
 
     /**
@@ -213,8 +258,8 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
          * Encapsulates a single event in the array process flow <br/>
          * The flow is tracked by mandatory fields: PDO, LCSET, and LCSET sample name
          **/
-        ArrayDto( LabEvent labEvent, LabVessel labVessel, VesselPosition vesselPosition,
-                  Long productOrderId, String batchName, String lcsetSampleName, String sampleName) {
+        ArrayDto(LabEvent labEvent, LabVessel labVessel, VesselPosition vesselPosition,
+                 Long productOrderId, String batchName, String lcsetSampleName, String sampleName) {
             this.labEvent = labEvent;
             this.labVessel = labVessel;
             this.vesselPosition = vesselPosition;
@@ -224,18 +269,19 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             this.sampleName = sampleName;
         }
 
-        public String toEtlString(String etlDateStr, boolean isDelete ) {
+        public String toEtlString(String etlDateStr, boolean isDelete) {
             return genericRecord(etlDateStr, isDelete,
                     format(productOrderId),
                     format(batchName),
                     format(lcsetSampleName),
                     format(sampleName),
-                    format(labEvent.getLabEventId()),
-                    format(labEvent.getLabEventType().getName()),
-                    format(labEvent.getEventLocation()),
-                    format(labEvent.getEventDate()),
+                    format( labEvent == null ? null : labEvent.getLabEventId() ),
+                    // Event type not saved - simply flags these fields for plating related data
+                    format( labEvent == null ? "ArrayPlatingDilution" : labEvent.getLabEventType().getName()),
+                    format( labEvent == null ? null : labEvent.getEventLocation()),
+                    format( labEvent == null ? labVessel.getCreatedOn() : labEvent.getEventDate()),
                     format(labVessel.getLabVesselId()),
-                    format(vesselPosition==null?"":vesselPosition.toString())
+                    format(vesselPosition == null ? "" : vesselPosition.toString())
             );
         }
     }

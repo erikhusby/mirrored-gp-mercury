@@ -1700,8 +1700,7 @@ AS
         lab_vessel_id, position,
         'N' as split_on_rehyb
       FROM im_array_process
-      WHERE lab_event_type = 'ArrayPlatingDilution'  -- Sanity - should only be this one type
-            AND is_delete = 'F'
+      WHERE is_delete = 'F'
       UNION ALL
       SELECT LINE_NUMBER, ETL_DATE,
         product_order_id, batch_name, lcset_sample_name, sample_name,
