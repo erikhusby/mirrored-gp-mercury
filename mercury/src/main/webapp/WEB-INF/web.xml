@@ -54,7 +54,7 @@
         </init-param>
         <init-param>
             <param-name>inject-into-attributes</param-name>
-            <param-value>true</param-value>
+            <param-value>false</param-value>
         </init-param>
         <init-param>
             <param-name>domain-strict</param-name>
