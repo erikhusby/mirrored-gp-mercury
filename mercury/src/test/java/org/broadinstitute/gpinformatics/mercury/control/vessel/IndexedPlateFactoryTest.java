@@ -6,7 +6,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.testng.Assert;
@@ -26,7 +26,7 @@ import java.util.Map;
  * Test creation of plates
  */
 @Test(groups = TestGroups.STUBBY)
-public class IndexedPlateFactoryTest extends ContainerTest {
+public class IndexedPlateFactoryTest extends StubbyContainerTest {
     @Inject
     private IndexedPlateFactory indexedPlateFactory;
 

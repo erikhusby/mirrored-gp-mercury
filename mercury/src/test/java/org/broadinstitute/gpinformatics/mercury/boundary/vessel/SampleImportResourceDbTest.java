@@ -5,7 +5,7 @@ import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -26,7 +26,7 @@ import java.util.List;
  * Database test of web service to import samples from BSP
  */
 @Test(groups = TestGroups.STUBBY)
-public class SampleImportResourceDbTest extends ContainerTest {
+public class SampleImportResourceDbTest extends StubbyContainerTest {
 
     private static final String MATRIX_TUBE_SCREW_CAP_0_5M_L = "Matrix Tube Screw cap [0.5mL]";
     private static final String A01 = "A01";

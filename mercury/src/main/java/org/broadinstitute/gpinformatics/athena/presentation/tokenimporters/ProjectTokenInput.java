@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.Collections;
  * Token Input support for Research Projects.
  *
  */
+@Dependent
 public class ProjectTokenInput extends TokenInput<ResearchProject> {
 
     @Inject

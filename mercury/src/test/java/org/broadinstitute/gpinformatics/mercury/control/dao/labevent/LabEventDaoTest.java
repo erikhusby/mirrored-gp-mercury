@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.labevent;
 
 import org.apache.commons.lang.time.DateUtils;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -24,7 +24,7 @@ import java.util.Set;
  * Test persisting LabEvents, including reagents.
  */
 @Test(groups = TestGroups.STUBBY)
-public class LabEventDaoTest extends ContainerTest {
+public class LabEventDaoTest extends StubbyContainerTest {
 
     @Inject
     private LabEventDao labEventDao;
@@ -34,8 +34,8 @@ public class LabEventDaoTest extends ContainerTest {
         LabEvent labEvent = new LabEvent(LabEventType.A_BASE, eventDate, "PERIPHERAL_VISION_MAN", 1L, 101L, "Bravo");
         String barcode = Long.toString(System.currentTimeMillis());
         BigDecimal volume = new BigDecimal("1.2");
-        labEvent.addReagentVolume(new GenericReagent("ETOH", barcode, null),
-                volume);
+        Reagent reagent = new GenericReagent("ETOH", barcode, null);
+        labEvent.addReagentVolume(reagent, volume);
 
         labEventDao.persist(labEvent);
         labEventDao.flush();
@@ -50,6 +50,10 @@ public class LabEventDaoTest extends ContainerTest {
         LabEventReagent labEventReagent = labEvent1.getLabEventReagents().iterator().next();
         Assert.assertEquals(labEventReagent.getVolume(), volume);
         Assert.assertEquals(labEventReagent.getReagent().getLot(), barcode);
+        Assert.assertTrue(
+                DateUtils.truncatedEquals(labEventReagent.getReagent().getFirstUse()
+                        , eventDate
+                        , Calendar.SECOND), "Reagent first use does not match event date" );
     }
 
     public void testReagentWithMetadata() {
@@ -75,6 +79,10 @@ public class LabEventDaoTest extends ContainerTest {
         LabEventReagent labEventReagent = labEvent1.getLabEventReagents().iterator().next();
         Assert.assertEquals(labEventReagent.getReagent().getLot(), barcode);
         Assert.assertEquals(labEventReagent.getReagent().getName(), name);
+        Assert.assertTrue(
+                DateUtils.truncatedEquals(labEventReagent.getReagent().getFirstUse()
+                        , eventDate
+                        , Calendar.SECOND), "Reagent first use does not match event date" );
         metadataSet = labEventReagent.getMetadata();
         Assert.assertEquals(metadataSet.size(), 1);
         Metadata metadata1 = metadataSet.iterator().next();
