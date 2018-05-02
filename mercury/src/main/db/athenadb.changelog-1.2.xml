@@ -1197,6 +1197,7 @@
             <column name="NAME" type="varchar2(50)">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
+            <column name="ACTIVE" type="number(1,0)"/>
         </createTable>
     </changeSet>
 
@@ -1214,6 +1215,8 @@
             <column name="NAME" type="varchar2(50)">
                 <constraints nullable="false"/>
             </column>
+            <column name="ACTIVE" type="number(1,0)"/>
+
         </createTable>
     </changeSet>
 </databaseChangeLog>

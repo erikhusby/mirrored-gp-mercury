@@ -21,12 +21,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineDataTypeDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -102,6 +104,9 @@ public class ProductActionBean extends CoreActionBean {
     private ProductTokenInput addOnTokenInput;
 
     @Inject
+    private PipelineDataTypeDao pipelineDataTypeDao;
+
+    @Inject
     private PriceItemTokenInput priceItemTokenInput;
 
     @Inject
@@ -168,6 +173,8 @@ public class ProductActionBean extends CoreActionBean {
 
     private boolean productUsedInOrders = false;
 
+    private List<PipelineDataType> pipelineDataTypes;
+
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
     }
@@ -206,6 +213,7 @@ public class ProductActionBean extends CoreActionBean {
 
     @Before(stages = LifecycleStage.BindingAndValidation, on = {EDIT_ACTION, CREATE_ACTION})
     public void editCreateBindingAndValidation() {
+        pipelineDataTypes = pipelineDataTypeDao.findActive();
         initProduct();
         initGenotypingInfo();
         setupFamilies();
@@ -463,7 +471,6 @@ public class ProductActionBean extends CoreActionBean {
     public Resolution externalPriceItemAutocomplete() throws Exception {
         return createTextResolution(externalPriceItemTokenInput.getExternalJsonString(getQ()));
     }
-
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
@@ -830,5 +837,12 @@ public class ProductActionBean extends CoreActionBean {
     public boolean isProductUsedInOrders() {
         return productUsedInOrders;
     }
-    
+
+    public List<PipelineDataType> getPipelineDataTypes() {
+        return pipelineDataTypes;
+    }
+
+    public void setPipelineDataTypes(List<PipelineDataType> pipelineDataTypes) {
+        this.pipelineDataTypes = pipelineDataTypes;
+    }
 }

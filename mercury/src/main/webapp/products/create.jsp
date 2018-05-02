@@ -585,8 +585,10 @@
                         <div class="control-group">
                             <stripes:label for="aggregationDataType" name="AggregationDataType" class="control-label"/>
                             <div class="controls">
-                                <stripes:text id="aggregationDataType" name="editProduct.aggregationDataType"
-                                              class="defaultText" title="Enter data type to use for aggregation"/>
+                                <stripes:select id="aggregationDataType" name="editProduct.aggregationDataType"
+                                              class="defaultText" title="Select data type to use for aggregation">
+                                    <stripes:options-collection collection="${actionBean.pipelineDataTypes}" label="name"/>
+                                </stripes:select>
                             </div>
                         </div>
 
