@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
@@ -10,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionManagement;
@@ -70,7 +73,7 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
 
-        List<ArrayDto> arrayFlowDtos = null;
+        ArrayDto arrayFlowDto = null;
 
         if (entity == null) {
             return (List<String>) Collections.EMPTY_LIST;
@@ -87,7 +90,7 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         try {
             if (eventType == LabEventType.INFINIUM_BUCKET) {
                 // An ARRAY LCSET has been created: LCSET and PDO values are available so get all associated events
-                arrayFlowDtos = makeDtosFromBucketEvent(entity);
+                arrayFlowDto = makeDtosFromBucketEvent(entity);
             } else {
                 return (List<String>) Collections.EMPTY_LIST;
             }
@@ -98,42 +101,57 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                           + entity.getLabEventType().getName() + ", Error: " + e.getMessage());
         }
 
-        if (arrayFlowDtos == null || arrayFlowDtos.size() == 0) {
+        if ( arrayFlowDto == null ) {
             return (List<String>) Collections.EMPTY_LIST;
         }
 
         List<String> records = new ArrayList<>();
-        for (ArrayDto dto : arrayFlowDtos) {
-            records.add(dto.toEtlString(etlDateStr, isDelete));
-        }
-        arrayFlowDtos.clear();
+        records.add(arrayFlowDto.toEtlString(etlDateStr, isDelete));
         return records;
     }
 
     /**
-     * From an Infinium bucket event on a DNA plate chip well, look backwards to obtain DNA plate well details and
+     * From an Infinium bucket event on a DNA plate chip well, look backwards to obtain plating event details and
      * map to PDO, LCSET, and sample data of bucketed plate well<br />
-     * Also, look forward in case an Infinium bucket event was performed after other events
-     * (many cases in initial array process shakeout mid 2016 to early 2017)
      *
-     * @return A row for all event types of interest in an array process flow starting at DNA plate well
+     * @return An ArrayDto row representing the plating eventin an array process flow starting at DNA plate well
      * to be mapped in ETL to horizontal columns in a single row keyed by PDO, LCSET, and aliquot sample ID
      */
-    private List<ArrayDto> makeDtosFromBucketEvent(LabEvent bucketEvent) {
-        List<ArrayDto> arrayFlowDtos = new ArrayList<>();
+    private ArrayDto makeDtosFromBucketEvent(LabEvent bucketEvent) {
 
-        Set<SampleInstanceV2> dnaWellSampleInstances;
-
-        // Get the ArrayPlatingDilution transfer to this vessel (plate well)
+        // Infinium always uses the DNA plate well for the bucket
         PlateWell dnaPlateWell = null;
         if (OrmUtil.proxySafeIsInstance(bucketEvent.getInPlaceLabVessel(), PlateWell.class)) {
             dnaPlateWell = OrmUtil.proxySafeCast(bucketEvent.getInPlaceLabVessel(), PlateWell.class);
         } else {
             // Die if not a DNA plate well (very unlikely)
             logErrors.add("InfiniumBucket event does not contain a plate well, ID: " + bucketEvent.getLabEventId());
-            return arrayFlowDtos;
+            return null;
+        }
+        VesselPosition dnaPlatePosition = dnaPlateWell.getVesselPosition();
+
+        Set<BucketEntry> wellBucketEntries = dnaPlateWell.getBucketEntries();
+        BucketEntry wellbucket = null;
+        LabBatch arrayBatch = null;
+        ProductOrder pdo = null;
+        // An infiniumBucket entry event without a bucket entry?  Should never happen, but don't even bother.
+        if( wellBucketEntries == null || wellBucketEntries.isEmpty() ) {
+            logErrors.add("InfiniumBucket event not associated with a batch: " + bucketEvent.getLabEventId());
+            return null;
+        } else {
+            // Will a DNA plate well ever be in multiple buckets?  Have to trust that it will never happen.
+            wellbucket = wellBucketEntries.iterator().next();
+            arrayBatch = wellbucket.getLabBatch();
+            // As of 04/2018 no nulls exist
+            pdo = wellbucket.getProductOrder();
         }
 
+        if( arrayBatch == null ) {
+            logErrors.add("Infinium bucket entry event not associated with a batch: " + bucketEvent.getLabEventId());
+            return null;
+        }
+
+        // Try to find plating event details - may not exist if daughter plate creation was mistakenly the event
         Set<LabEvent> dnaPlateXfers = dnaPlateWell.getTransfersTo();
         LabEvent platingEvent = null;
         // There should never be more than 1 section transfer event, but make sure it's ArrayPlatingDilution
@@ -145,43 +163,36 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 }
             }
         }
-
         if (platingEvent == null) {
             logErrors.add("No plating event prior to InfiniumBucket event, ID: " + bucketEvent.getLabEventId());
             // Don't die here, allows process to record plate name from InfiniumBucket but no plating event data
         }
 
-        VesselPosition dnaPlatePosition = dnaPlateWell.getVesselPosition();
+        // Get samples
+        Set<SampleInstanceV2> dnaWellSampleInstances;
+
         // All downstream Infinium events share samples of DNA plate well (should only ever be 1)
         dnaWellSampleInstances = dnaPlateWell.getSampleInstancesV2();
         if (dnaWellSampleInstances == null ||  dnaWellSampleInstances.isEmpty()) {
+            // Process is useless
             logErrors.add("No sampleInstances for DNA plate well " + dnaPlateWell.getLabel());
         } else {
             for (SampleInstanceV2 si : dnaWellSampleInstances) {
-                if (si.getSingleBucketEntry() != null) {
-                    // Data is useless without PDO (highly unlikely case)
-                    if (si.getSingleBucketEntry().getProductOrder() == null) {
-                        logErrors
-                                .add("Skipping SampleInstance: No PDO for bucket entry event " + bucketEvent
-                                        .getLabEventId()
-                                     + ", plating event " + platingEvent.getLabEventId());
-                        continue;
+                // All we care about is the array batch
+                for(BucketEntry bucketEntry : si.getAllBucketEntries() ) {
+                    if( bucketEntry.getLabBatch() != null
+                            && bucketEntry.getLabBatch().getBatchName().equals(arrayBatch.getBatchName())) {
+                        return new ArrayDto(platingEvent, dnaPlateWell, dnaPlatePosition,
+                                pdo.getProductOrderId(),
+                                arrayBatch.getBatchName(),
+                                si.getNearestMercurySampleName(),
+                                si.getEarliestMercurySampleName());
                     }
-
-                    arrayFlowDtos.add(new ArrayDto(platingEvent, dnaPlateWell, dnaPlatePosition,
-                            si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
-                            si.getSingleBucketEntry().getLabBatch().getBatchName(),
-                            si.getNearestMercurySampleName(),
-                            si.getEarliestMercurySampleName())
-                    );
-                } else {
-                    logErrors.add("No single bucket entry for DNA plate well " + dnaPlateWell.getLabel()
-                                  + ", InfiniumBucket event " + bucketEvent.getLabEventId());
                 }
             }
         }
 
-        return arrayFlowDtos;
+        return null;
 
     }
 
