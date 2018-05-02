@@ -1185,4 +1185,35 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-5521-TABLE" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="PIPELINE_DATA_TYPE" schemaName="ATHENA"/>
+            </not>
+        </preConditions>
+        <createTable tableName="PIPELINE_DATA_TYPE" schemaName="ATHENA">
+
+            <!--picard.read_group_index.data_type is varchar2(50)-->
+            <column name="NAME" type="varchar2(50)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-5521-AUD" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="PIPELINE_DATA_TYPE_AUD" schemaName="ATHENA"/>
+            </not>
+        </preConditions>
+        <createTable tableName="PIPELINE_DATA_TYPE_AUD" schemaName="ATHENA">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="NAME" type="varchar2(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>
