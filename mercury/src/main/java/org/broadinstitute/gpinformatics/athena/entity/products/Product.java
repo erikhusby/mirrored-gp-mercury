@@ -125,6 +125,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private BigDecimal loadingConcentration;
     private Boolean pairedEndRead;
 
+    @Transient
+    private PipelineDataType pipelineDataType;
+
     /**
      * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
      * performance hit of looking for Mercury quants in Products that don't have them.
@@ -537,6 +540,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setAggregationDataType(String aggregationDataType) {
         this.aggregationDataType = aggregationDataType;
+    }
+
+    public void setAggregationDataType(PipelineDataType pipelineDataType) {
+        this.aggregationDataType = pipelineDataType.getName();
     }
 
     public BillingRequirement getRequirement() {

@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -21,18 +23,61 @@ import javax.persistence.Table;
 @Audited
 @Table(schema = "athena")
 public class PipelineDataType {
+    @Id
     private String name;
+    public boolean active;
 
-    PipelineDataType(String name) {
-        this.name = name;
+    public PipelineDataType() {
     }
 
-    @Id
+    PipelineDataType(String name) {
+        this(name, true);
+    }
+
+    public PipelineDataType(String name, boolean active) {
+        this.name = name;
+        this.active = active;
+    }
+
     public String getName() {
         return name;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PipelineDataType that = (PipelineDataType) o;
+
+        return new EqualsBuilder()
+            .append(isActive(), that.isActive())
+            .append(getName(), that.getName())
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(getName())
+            .append(isActive())
+            .toHashCode();
     }
 }

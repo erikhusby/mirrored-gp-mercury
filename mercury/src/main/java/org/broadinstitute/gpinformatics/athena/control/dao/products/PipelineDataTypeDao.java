@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
@@ -18,9 +20,13 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import java.io.Serializable;
+import java.util.List;
 
 @Stateful
 @RequestScoped
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class PipelineDataTypeDao extends GenericDao implements Serializable {
+    public List<PipelineDataType> findActive() {
+        return findList(PipelineDataType.class, PipelineDataType_.active, true);
+    }
 }
