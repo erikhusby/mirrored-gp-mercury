@@ -2,12 +2,14 @@ package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 @Alternative
+@Dependent
 public class MockThriftService implements ThriftService {
 
     public MockThriftService() {

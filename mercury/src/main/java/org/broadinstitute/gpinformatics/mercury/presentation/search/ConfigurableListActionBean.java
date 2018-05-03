@@ -91,7 +91,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         if (downloadColumnSetName.equals("Viewed Columns")) {
             List<ColumnTabulation> columnTabulations = searchInstance.buildViewedColumnTabulations(entityName);
 
-            ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
+            ConfigurableList configurableList = new ConfigurableList(columnTabulations, searchInstance.getViewColumnParamMap(), 0, "ASC",
                     ColumnEntity.getByName(entityName));
 
             // Add any row listeners

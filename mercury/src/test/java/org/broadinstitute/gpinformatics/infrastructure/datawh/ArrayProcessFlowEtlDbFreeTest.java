@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -16,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -39,7 +41,6 @@ public class ArrayProcessFlowEtlDbFreeTest extends BaseEventTest {
 
     private String etlDateStr;
     private Long pdoId = 999L;
-    private String batchName = "LCSET1";
 
 
     private ArrayProcessFlowEtl arrayProcessFlowEtl;
@@ -81,22 +82,21 @@ public class ArrayProcessFlowEtlDbFreeTest extends BaseEventTest {
      *  Tests upstream DNA plate data mapped to PDO, LCSET, and LCSET Sample name from an Infinium bucketed DNA plate well
      **/
     public void testBucketEvent() throws Exception {
-
+        expectedRouting = SystemRouter.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
-        ProductOrder pdo = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
+        ProductOrder productOrder = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
 
         Field pdoIdField = ProductOrder.class.getDeclaredField("productOrderId");
         pdoIdField.setAccessible(true);
-        pdoIdField.set(pdo, pdoId );
+        pdoIdField.set(productOrder, pdoId );
 
-        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(pdo, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("Infinium Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.INFINIUM);
-
-        bucketBatchAndDrain(mapBarcodeToTube, pdo, workflowBatch, "1");
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
         TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
 
@@ -108,15 +108,16 @@ public class ArrayProcessFlowEtlDbFreeTest extends BaseEventTest {
         ArrayPlatingEntityBuilder arrayPlatingEntityBuilder =
                 runArrayPlatingProcess(mapBarcodeToDaughterTube, "Infinium");
 
-        // Don't need follow events  beyond ArrayPlatingDilution
-        //InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(
-        //        arrayPlatingEntityBuilder.getArrayPlatingPlate(), "Infinium");
+        LabBatch arrayBatch = new LabBatch("ArrayBatch", new HashSet<>(),LabBatch.LabBatchType.WORKFLOW);
 
-        arrayPlatingEntityBuilder.bucketPlateWells(pdo);
+        arrayPlatingEntityBuilder.bucketPlateWells(productOrder, arrayBatch);
+
+        InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(
+                arrayPlatingEntityBuilder.getArrayPlatingPlate(), "Infinium");
 
         StaticPlate dnaPlate = arrayPlatingEntityBuilder.getArrayPlatingPlate();
-
         PlateWell wellA01 = dnaPlate.getContainerRole().getMapPositionToVessel().get(VesselPosition.A01);
+
         LabEvent bucketEvent = wellA01.getInPlaceLabEvents().iterator().next();
 
         EasyMock.expect(dao.findById(LabEvent.class, 1L)).andReturn(bucketEvent);
@@ -133,7 +134,7 @@ public class ArrayProcessFlowEtlDbFreeTest extends BaseEventTest {
         Assert.assertEquals( parts[0], etlDateStr);
         Assert.assertEquals( parts[1], "F");
         Assert.assertEquals( parts[2], pdoId.toString());
-        Assert.assertEquals( parts[3], batchName);
+        Assert.assertEquals( parts[3], arrayBatch.getBatchName());
         Assert.assertFalse(parts[4].isEmpty(), "A value is expected for sample name.");
         Assert.assertEquals( parts[4],  parts[5]);
         // Ignore event ID

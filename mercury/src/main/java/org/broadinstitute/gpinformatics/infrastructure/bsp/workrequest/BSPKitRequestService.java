@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.List;
 /**
  * High-level APIs for using the BSP work request service to create sample kit requests.
  */
+@Dependent
 public class BSPKitRequestService implements Serializable {
 
     private final BSPWorkRequestClientService bspWorkRequestClientService;

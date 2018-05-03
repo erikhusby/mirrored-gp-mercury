@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.PrintStream;
 import java.math.BigDecimal;
@@ -42,6 +43,7 @@ import java.util.Set;
  * Generates Summary.txt file for arrays.  Used by PMs to review Array projects, and sometimes delivered to
  * collaborators.
  */
+@Dependent
 public class ArraysSummaryFactory {
 
     private static final Format DATE_TIME_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy hh:mm a");
@@ -241,13 +243,7 @@ public class ArraysSummaryFactory {
             printStream.print(dnaPlateAndPosition.getPosition() + "\t");
 
             // Lab abandon vessel reason and date
-            // To test abandon output:  foundArraysQc = false;
-            if( !foundArraysQc ) {
-                // No metrics data, try if cause is an abandon
-                printStream.print( getAbandon(chip, vesselPosition) + "\t" );
-            }else {
-                printStream.print(" \t");
-            }
+            printStream.print( getAbandon(chip, vesselPosition) + "\t" );
 
             // Pipeline blacklist date, reason, whitelist date
             if( arraysQcBlacklistings == null || arraysQcBlacklistings.isEmpty() ) {

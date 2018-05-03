@@ -62,7 +62,7 @@ public class BucketEjb {
     private final BucketDao bucketDao;
     private final LabVesselDao labVesselDao;
     private final BucketEntryDao bucketEntryDao;
-    private final WorkflowConfig workflowConfig;;
+    private final WorkflowConfig workflowConfig;
     private final BSPUserList bspUserList;
     private final LabVesselFactory labVesselFactory;
     private final MercurySampleDao mercurySampleDao;
@@ -473,9 +473,10 @@ public class BucketEjb {
             if (bspSampleData != null &&
                 StringUtils.isNotBlank(bspSampleData.getBarcodeForLabVessel())) {
                 if (bspSampleData.isSampleReceived()) {
-                    vessels.addAll(
-                            labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
-                                    username, new Date(), MercurySample.MetadataSource.BSP));
+                    // Process is only interested in the primary vessels
+                    List<LabVessel> sampleVessels = labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
+                            username, new Date(), MercurySample.MetadataSource.BSP).getLeft();
+                    vessels.addAll(sampleVessels );
                 }
             } else {
                 cannotAddToBucket.add(sampleName);

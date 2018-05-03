@@ -6,12 +6,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingResponse;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.util.Collection;
 
 @Stub // used in fast unit tests, non-integration.
 @Alternative
+@Dependent
 public class BSPConnectorStub implements BSPConnector {
 
     @Inject

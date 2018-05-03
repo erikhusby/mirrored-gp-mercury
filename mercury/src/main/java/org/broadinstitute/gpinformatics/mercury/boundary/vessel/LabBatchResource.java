@@ -6,6 +6,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -121,9 +122,10 @@ public class LabBatchResource {
      * create bucket entries and associate them with the batch.
      */
     private LabBatch createLabBatchByParentVessel(LabBatchBean labBatchBean) {
+        // Process is only interested in the primary vessels
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(
                 Collections.singletonList(labBatchBean.getParentVesselBean()), labBatchBean.getUsername(),
-                new Date(), null, MercurySample.MetadataSource.BSP);
+                new Date(), null, MercurySample.MetadataSource.BSP).getLeft();
 
         // Gather vessels for each PDO (if any)
         Set<LabVessel> labVesselSet = new HashSet<>();
@@ -161,8 +163,11 @@ public class LabBatchResource {
                 SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
                 List<ProductOrder> productOrders = new ArrayList<>();
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                    if (productOrderSample.getProductOrder().getProduct().getProductFamily().getName().equals(
-                            labBatchBean.getWorkflowName())) {
+                    Product product = productOrderSample.getProductOrder().getProduct();
+                    if (product.getProductFamily().getName().equals(labBatchBean.getWorkflowName()) ||
+                            // Some array / sequencing combo products are in family "Exome"
+                            labBatchBean.getWorkflowName().equals("Whole Genome Genotyping") &&
+                                    product.getWorkflow().name().contains("INFINIUM")) {
                         if (productOrderSample.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
                             productOrders.add(productOrderSample.getProductOrder());
                         }

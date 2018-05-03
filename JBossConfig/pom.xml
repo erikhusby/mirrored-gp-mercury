@@ -11,10 +11,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <oracle.version>6-11.2.0.1.0</oracle.version>
-        <postgresql.version>9.1-901.jdbc4</postgresql.version>
-        <billing.log.dir>${env.JBOSS_HOME}/standalone/log</billing.log.dir>
-        <crowdJaas.version>1.3.1.4</crowdJaas.version>
+        <oracle.version>12.1.0.2</oracle.version>
+        <crowdJaas.version>2.0</crowdJaas.version>
         <crowd.application.name>mercury</crowd.application.name>
         <crowd.application.password>vx2hUJP4xB</crowd.application.password>
         <crowd.application.serverurl>https://crowd.broadinstitute.org:8443/crowd</crowd.application.serverurl>
@@ -25,6 +23,7 @@
         <ssl.keystore.password>changeit</ssl.keystore.password>
         <ssl.truststore.password>changeit</ssl.truststore.password>
         <crsp.enable>false</crsp.enable>
+	<ssl.keystore.alias>vmercurydev</ssl.keystore.alias>
     </properties>
 
     <repositories>
@@ -33,24 +32,33 @@
             <name>Prodinfo Maven Repository</name>
             <url>http://prodinfosvn.broadinstitute.org:8000/m2-repository</url>
         </repository>
+        <repository>
+            <id>BroadMaven</id>
+            <name>Broad Maven Repository</name>
+            <url>http://maven.broadinstitute.org:8000/maven</url>
+        </repository>
+	<repository>
+	  <id>central</id>
+	  <url>https://m2proxy.atlassian.com/repository/public</url>
+	  <snapshots>
+	    <enabled>true</enabled>
+	    <updatePolicy>always</updatePolicy>
+	  </snapshots>
+	</repository>
     </repositories>
 
     <dependencies>
         <dependency>
-            <groupId>com.oracle</groupId>
-            <artifactId>ojdbc</artifactId>
+            <groupId>com.oracle.jdbc</groupId>
+            <artifactId>ojdbc7</artifactId>
             <version>${oracle.version}</version>
         </dependency>
-        <dependency>
-            <groupId>postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>com.atlassian.crowd.application</groupId>
             <artifactId>CrowdJaasLoginModule</artifactId>
             <version>${crowdJaas.version}</version>
+            <type>zip</type>
+            <classifier>deploy</classifier>
         </dependency>
     </dependencies>
 
@@ -119,7 +127,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.6</version>
+                <version>2.10</version>
                 <executions>
                     <execution>
                         <id>CrowdJaas</id>
@@ -132,21 +140,17 @@
                                     <groupId>com.atlassian.crowd.application</groupId>
                                     <artifactId>CrowdJaasLoginModule</artifactId>
                                     <version>${crowdJaas.version}</version>
-                                    <outputDirectory>${project.build.directory}/modules/com/atlassian/crowd/main
-                                    </outputDirectory>
+                                    <type>zip</type>
+                                    <classifier>deploy</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <destFileName>CrowdJaasLoginModule.zip</destFileName>
+
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>com.oracle</groupId>
-                                    <artifactId>ojdbc</artifactId>
+                                    <groupId>com.oracle.jdbc</groupId>
+                                    <artifactId>ojdbc7</artifactId>
                                     <version>${oracle.version}</version>
                                     <outputDirectory>${project.build.directory}/modules/com/oracle/main
-                                    </outputDirectory>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>postgresql</groupId>
-                                    <artifactId>postgresql</artifactId>
-                                    <version>${postgresql.version}</version>
-                                    <outputDirectory>${project.build.directory}/modules/org/postgresql/main
                                     </outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -159,7 +163,7 @@
 
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
+                <version>1.8</version>
                 <executions>
                     <execution>
                         <id>Update JBoss</id>
@@ -171,34 +175,43 @@
                             <target>
                                 <property environment="env"/>
                                 <fail unless="env.JBOSS_HOME"
-                                      message="Please define the environment variable JBOSS_HOME"/>
+                                      message="Please define the environment variable JBOSS_HOME to point at Wildfly installation."/>
+
                                 <!-- Copy the modules -->
                                 <echo message="Copying modules"/>
                                 <copy todir="${env.JBOSS_HOME}/modules" overwrite="true" verbose="true">
                                     <fileset dir="${project.build.directory}/modules"/>
                                 </copy>
                                 <echo message="Updating standalone configuration"/>
-                                <property name="jboss.standalone.dir">${env.JBOSS_HOME}/standalone</property>
-                                <copy todir="${jboss.standalone.dir}" overwrite="true" verbose="true">
+                                <copy todir="${env.JBOSS_HOME}/standalone" overwrite="true" verbose="true" filtering="true">
                                     <fileset dir="${project.build.directory}/standalone"/>
                                 </copy>
-                                <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true"
+                                <copy todir="${env.JBOSS_HOME}/standalone/configuration" overwrite="true" verbose="true"
                                       file="src/main/resources/keystore/.keystore"/>
+
+                                <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true">
+                                    <fileset dir="src/main/scripts"/>
+                                </copy>
+
+                                <unzip src="${project.build.directory}/CrowdJaasLoginModule.zip" dest="${env.JBOSS_HOME}/modules"/>
+
+                                <chmod perm="ugo+rx" dir="${env.JBOSS_HOME}" includes="*.sh"/>
 
                                 <echo>
 
-                                    Your JBoss has been updated with the Mercury configurations.
+                                    Your Wildfly 10 has been updated with the Mercury configurations.
 
-                                    It is recommended that you increase the memory settings, in particular PERMGEN.
-                                    Put the heap to at least 1G. For example:
-                                    JAVA_OPTS="-Xms64m -Xmx4096M -XX:MaxPermSize=1G"
+                                    It is recommended that you increase the memory settings. For example:
+                                    JAVA_OPTS="-Xms64m -Xmx4096M -XXMetaspace=4G"
 
                                     Edit ${env.JBOSS_HOME}/bin/standalone.conf (or
                                     ${env.JBOSS_HOME}/bin/standalone.conf.bat )
                                     * Change the value of JAVA_OPTS for memory.
-                                    * Change the value of jboss.server.default.conf to be standalone-full.xml
-                                    * Add the contents of src/main/resources/keystore/keystoreOptions.conf (or
-                                    keystoreOptions.conf.bat ) to enable use of the GPInfo keystore.
+
+                                    If you use the ${env.JBOSS_HOME}/bin/standalone.sh procedure to start the server, you must
+                                    include the "-c standalone-full.xml" command line option.
+
+                                    You may also use the ${env.JBOSS_HOME}/wildfly.sh to start the server in the background.
 
                                     If you've made server configuration changes that need to be applied to the Mercury
                                     Production, QA, RC and DEV servers, please create or update a
@@ -206,6 +219,25 @@
 
                                 </echo>
                             </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.0-alpha-2</version>
+                <executions>
+                    <!-- Associate the read-project-properties goal with the initialize phase, to read the properties file. -->
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>read-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <files>
+                                <file>crowd.properties</file>
+                            </files>
                         </configuration>
                     </execution>
                 </executions>

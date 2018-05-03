@@ -3,15 +3,15 @@ package org.broadinstitute.gpinformatics.mercury.control.workflow;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.ExternalDataCacheControl;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
+import javax.ejb.Singleton;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.inject.Inject;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.xml.bind.JAXBContext;
@@ -26,14 +26,15 @@ import java.io.Serializable;
  *
  * @see ExternalDataCacheControl#invalidateCache()
  */
-@ApplicationScoped
+@Singleton
 public class WorkflowLoader extends AbstractCache implements Serializable {
     private final Object lock = new Object();
 
     // Use file based configuration access for DBFree testing
     private static boolean IS_STANDALONE = false;
 
-    // In-container only - do not inject or DBFree tests will fail
+    // Valid for in-container only - DBFree tests will load workflow from file system
+    @Inject
     private PreferenceDao preferenceDao;
 
     // Standalone only (DBFree tests)
@@ -52,8 +53,7 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
 
     public WorkflowLoader(){}
 
-    @Produces
-    @Default
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public WorkflowConfig load() {
         if (workflowConfig==null){
             refreshCache();
@@ -62,6 +62,7 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void refreshCache() {
         synchronized (lock) {
             if (IS_STANDALONE) {
@@ -79,7 +80,7 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
     private WorkflowConfig loadFromPrefs() {
 
         if( preferenceDao == null ) {
-            preferenceDao = ServiceAccessUtility.getBean(PreferenceDao.class);
+            throw new RuntimeException("Attempt to load preferences from DB without JavaEE container services.");
         }
 
         Preference workflowConfigPref = preferenceDao.getGlobalPreference(PreferenceType.WORKFLOW_CONFIGURATION);
@@ -105,7 +106,6 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
      * @return
      */
     private WorkflowConfig loadFromFile() {
-        if (workflowConfigFromFile == null) {
             try {
                 JAXBContext jc = JAXBContext.newInstance(WorkflowConfig.class, WorkflowBucketDef.class);
                 Unmarshaller unmarshaller = jc.createUnmarshaller();
@@ -114,7 +114,6 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
             } catch (JAXBException e) {
                 throw new RuntimeException(e);
             }
-        }
         return workflowConfigFromFile;
     }
 

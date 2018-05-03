@@ -62,7 +62,9 @@ public class LabMetricSearchDefinition {
     // TODO: JMS Create a shared interface that this implements then use this as a registry of all term names
     public enum MultiRefTerm {
         METRIC_RUN_ID("Metric Run ID"),
-        METRIC_TUBES_ONLY("Only Show Metrics for Tubes");
+        METRIC_TUBES_ONLY("Only Show Metrics for Tubes"),
+        BSP_PARTICIPANT("Collaborator Patient ID"),
+        BSP_MATERIAL("Original Material Type");
 
         MultiRefTerm(String termRefName ) {
             this.termRefName = termRefName;
@@ -163,6 +165,7 @@ public class LabMetricSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Barcode");
+        searchTerm.setRackScanSupported(Boolean.TRUE);
         searchTerm.setDbSortPath("labVessel.label");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
@@ -503,7 +506,7 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Collaborator Patient ID");
+        searchTerm.setName(MultiRefTerm.BSP_PARTICIPANT.getTermRefName());
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
@@ -696,7 +699,7 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Original Material Type");
+        searchTerm.setName(MultiRefTerm.BSP_MATERIAL.getTermRefName());
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {

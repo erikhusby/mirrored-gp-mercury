@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity;
 
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -24,7 +24,7 @@ import javax.transaction.UserTransaction;
 import static org.testng.Assert.fail;
 
 @Test(groups = {TestGroups.STUBBY})
-public class PlasticToProductOrderTest extends ContainerTest {
+public class PlasticToProductOrderTest extends StubbyContainerTest {
 
     @Inject
     private BucketDao bucketDao;

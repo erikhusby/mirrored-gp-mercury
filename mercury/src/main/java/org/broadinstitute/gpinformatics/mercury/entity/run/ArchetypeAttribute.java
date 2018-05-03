@@ -10,6 +10,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -24,7 +25,7 @@ import java.util.Date;
 
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"archetype","attributeName"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"ARCHETYPE","ATTRIBUTE_NAME"}))
 public class ArchetypeAttribute {
     public static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
 
@@ -34,6 +35,7 @@ public class ArchetypeAttribute {
     private Long attributeId;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinColumn(name = "ARCHETYPE")
     private AttributeArchetype archetype;
 
     private String attributeName;

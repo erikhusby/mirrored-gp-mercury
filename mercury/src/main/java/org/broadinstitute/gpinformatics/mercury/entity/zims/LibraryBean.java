@@ -202,6 +202,9 @@ public class LibraryBean {
     @JsonProperty("analyzeUmis")
     private boolean analyzeUmis;
 
+    @JsonProperty("submissionsMetadata")
+    private List<SubmissionMetadata> submissionMetadata = new ArrayList<>();
+
     public LibraryBean() {}
 
     /**
@@ -241,7 +244,27 @@ public class LibraryBean {
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
                 productOrder, lcSet, sampleData, labWorkflow, productOrderSample, libraryCreationDate, null, null,
-                metadataSource, aggregationDataType, jiraService, analyzeUmis);
+                metadataSource, aggregationDataType, jiraService, new ArrayList<SubmissionMetadata>());
+    }
+
+    public LibraryBean(String library, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme,
+                       Boolean hasIndexingRead, String expectedInsertSize, String analysisType,
+                       String referenceSequence, String referenceSequenceVersion, String organism, String species,
+                       String strain, String aligner, String rrbsSizeRange, String restrictionEnzyme, String bait,
+                       double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
+                       TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
+                       Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
+                       String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
+                       String productOrderSample, String metadataSource, String aggregationDataType,
+                       JiraService jiraService, List<SubmissionMetadata> submissionMetadata) {
+
+        // project was always null in the calls here, so don't send it through. Can add back later.
+        this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
+                analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
+                aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
+                negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
+                productOrder, lcSet, sampleData, labWorkflow, productOrderSample, libraryCreationDate, null, null,
+                metadataSource, aggregationDataType, jiraService, submissionMetadata, analyzeUmis);
     }
 
     /**
@@ -299,7 +322,8 @@ public class LibraryBean {
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, SampleData sampleData, String labWorkflow, String productOrderSample,
             String libraryCreationDate, String workRequestType, String workRequestDomain, String metadataSource,
-            String aggregationDataType, JiraService jiraService, boolean analyzeUmis) {
+            String aggregationDataType, JiraService jiraService, List<SubmissionMetadata> submissionMetadata,
+                   boolean analyzeUmis) {
 
         this(sampleLSID, gssrSampleType, collaboratorSampleId, organism, species, strain, individual, sampleData,
                 labWorkflow, productOrderSample, libraryCreationDate);
@@ -369,6 +393,7 @@ public class LibraryBean {
         this.lcSet = lcSet;
         this.workRequestType = workRequestType;
         this.workRequestDomain = workRequestDomain;
+        this.submissionMetadata = submissionMetadata;
         this.analyzeUmis = analyzeUmis;
     }
 
@@ -690,5 +715,14 @@ public class LibraryBean {
 
     public void setAnalyzeUmis(boolean analyzeUmis) {
         this.analyzeUmis = analyzeUmis;
+    }
+
+    public List<SubmissionMetadata> getSubmissionMetadata() {
+        return submissionMetadata;
+    }
+
+    public void setSubmissionMetadata(
+            List<SubmissionMetadata> submissionMetadata) {
+        this.submissionMetadata = submissionMetadata;
     }
 }
