@@ -550,6 +550,7 @@ public class ZimsIlluminaRunFactory {
 
         // These items are pulled off the project or product.
         String aligner = null;
+        boolean analyzeUmi = false;
         if (productOrder != null) {
             // Product stuff.
             Product product = productOrder.getProduct();
@@ -579,6 +580,8 @@ public class ZimsIlluminaRunFactory {
                 referenceSequence = null;
                 referenceSequenceVersion = null;
             }
+
+            analyzeUmi = productOrder.getAnalyzeUmiOverride();
         }
 
         List<SubmissionMetadata> submissionMetadataList = new ArrayList<>();
@@ -597,7 +600,7 @@ public class ZimsIlluminaRunFactory {
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
-                metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList);
+                metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList, analyzeUmi);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }
