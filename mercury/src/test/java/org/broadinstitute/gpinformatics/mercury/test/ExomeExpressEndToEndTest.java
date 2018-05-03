@@ -38,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -552,6 +553,14 @@ public class ExomeExpressEndToEndTest {
                 }
             });
 
+            AttributeArchetypeDao attributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
+            Mockito.when(attributeArchetypeDao.findWorkflowMetadata(Mockito.anyString())).then(new Answer<Object>() {
+                @Override
+                public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                    return null;
+                }
+            });
+
             // Method calls on factory will always use our list of flowcell designations.
             // Need not put anything into it for now.
             final List<FlowcellDesignation> flowcellDesignations = new ArrayList<>();
@@ -568,7 +577,7 @@ public class ExomeExpressEndToEndTest {
 
             ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new SampleDataFetcher(),
                     null, new SequencingTemplateFactory(), productOrderDao, crspPipelineUtils,
-                    testFlowcellDesignationEjb);
+                    testFlowcellDesignationEjb, attributeArchetypeDao);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
             // how to populate BspSampleData?  Ease of use from EL suggests an entity that can load itself, but this

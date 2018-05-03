@@ -19,6 +19,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInstanceNameCache;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
@@ -219,6 +220,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private SearchInstanceEjb searchInstanceEjb;
 
     @Inject
+    private SearchInstanceNameCache searchInstanceNameCache;
+
+    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -237,7 +241,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     public Resolution entitySelectionPage() {
         allSearchInstances = new LinkedHashMap<>();
         try {
-            searchInstanceEjb.fetchAllInstances(allSearchInstances);
+            allSearchInstances = searchInstanceNameCache.fetchInstanceNames();
         } catch (Exception e) {
             addGlobalValidationError("Failed to retrieve search definitions");
         }
@@ -297,7 +301,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         newSearchLevels = new HashMap<>();
         try {
             configurableSearchDef = SearchDefinitionFactory.getForEntity(entityType.getEntityName());
-
+            // TODO JMS Use SearchInstanceNameCache
             searchInstanceEjb.fetchInstances( entityType, preferenceMap,  searchInstanceNames, newSearchLevels );
         } catch (Exception e) {
             addGlobalValidationError("Failed to retrieve search definitions");
@@ -408,10 +412,13 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                     .getAttribute(SEARCH_INSTANCE_PREFIX + sessionKey);
         }
 
-        // Handles search attempt without any terms
-        //    (see ConfigurableListFactory.getFirstResultsPage for more validations)
-        if (searchInstance == null || searchInstance.getSearchValues() == null
-            || searchInstance.getSearchValues().isEmpty()) {
+        if (searchInstance == null || searchInstance.getSearchValues() == null ) {
+            // Handles search attempt without any SearchInstance (Cause is questionable)
+            addGlobalValidationError("Search has no result columns or search terms");
+        } else if ( searchInstance.getSearchValues().isEmpty()) {
+            // Handles search attempt without any terms
+            //    (see ConfigurableListFactory.getFirstResultsPage for more validations)
+            searchInstance.establishRelationships(configurableSearchDef);
             addGlobalValidationError("You must add at least one search term");
         } else {
             searchInstance.establishRelationships(configurableSearchDef);

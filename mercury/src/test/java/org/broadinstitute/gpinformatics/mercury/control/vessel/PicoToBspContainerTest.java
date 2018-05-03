@@ -375,7 +375,7 @@ public class PicoToBspContainerTest extends Arquillian {
         // Builds the racks and plates.
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(Arrays.asList(new ParentVesselBean(
                         rackBarcode, rackBarcode, RackOfTubes.RackType.Matrix96.getDisplayName(), tubeBeans)),
-                "epolk", new Date(), null, MercurySample.MetadataSource.MERCURY);
+                "epolk", new Date(), null, MercurySample.MetadataSource.MERCURY).getLeft();
         labVesselDao.persistAll(labVessels);
         labVesselDao.flush();
 

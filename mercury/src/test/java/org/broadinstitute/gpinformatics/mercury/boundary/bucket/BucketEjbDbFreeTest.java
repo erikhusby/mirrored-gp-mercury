@@ -317,11 +317,13 @@ public class BucketEjbDbFreeTest {
             if (createVessels) {
                 if (rackPosition == 4) {
                     List<LabVessel> mockCreatedVessels = new ArrayList<>();
+                    List<LabVessel> secondaryVessels = new ArrayList<>();
+                    Pair<List<LabVessel>,List<LabVessel>> factoryVesselPair = Pair.of(mockCreatedVessels, secondaryVessels);
                     mockCreatedVessels.add(labVessels.get(rackPosition - 1));
                     expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getName()),
                             eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date) anyObject(),
                             eq(MercurySample.MetadataSource.BSP))).
-                                    andReturn(mockCreatedVessels);
+                                    andReturn(factoryVesselPair);
                 }
             }
         }

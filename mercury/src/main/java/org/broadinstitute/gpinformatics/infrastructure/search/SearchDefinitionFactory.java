@@ -201,14 +201,19 @@ public class SearchDefinitionFactory {
      * Shared value list of all lab event types.
      */
     static class EventTypeValuesExpression extends SearchTerm.Evaluator<List<ConstrainedValue>> {
-        @Override
-        public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+
+        public static List<ConstrainedValue> getConstrainedValues() {
             List<ConstrainedValue> constrainedValues = new ArrayList<>();
             for (LabEventType labEventType : LabEventType.values()) {
                 constrainedValues.add(new ConstrainedValue(labEventType.toString(), labEventType.getName()));
             }
             Collections.sort(constrainedValues);
             return constrainedValues;
+        }
+
+        @Override
+        public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+            return getConstrainedValues();
         }
     }
 
