@@ -139,6 +139,7 @@ public class ProductOrderTest {
                 .ignoreProperty("quotePriceMatchAdjustments")
                 .ignoreProperty("orderType")
                 .ignoreProperty("clinicalAttestationConfirmed")
+                .ignoreProperty("analyzeUmiOverride")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 

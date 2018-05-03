@@ -244,7 +244,7 @@ public class LibraryBean {
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
                 productOrder, lcSet, sampleData, labWorkflow, productOrderSample, libraryCreationDate, null, null,
-                metadataSource, aggregationDataType, jiraService, new ArrayList<SubmissionMetadata>());
+                metadataSource, aggregationDataType, jiraService, new ArrayList<SubmissionMetadata>(), analyzeUmis);
     }
 
     public LibraryBean(String library, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme,
@@ -256,7 +256,7 @@ public class LibraryBean {
                        Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
                        String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
                        String productOrderSample, String metadataSource, String aggregationDataType,
-                       JiraService jiraService, List<SubmissionMetadata> submissionMetadata) {
+                       JiraService jiraService, List<SubmissionMetadata> submissionMetadata, boolean analyzeUmis) {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
