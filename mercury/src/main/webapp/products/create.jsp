@@ -586,8 +586,11 @@
                             <stripes:label for="aggregationDataType" name="AggregationDataType" class="control-label"/>
                             <div class="controls">
                                 <stripes:select id="aggregationDataType" name="editProduct.aggregationDataType"
-                                              class="defaultText" title="Select data type to use for aggregation">
-                                    <stripes:options-collection collection="${actionBean.pipelineDataTypes}" label="name"/>
+                                                title="Select data type to use for aggregation">
+                                    <stripes:option value="">Choose...</stripes:option>
+                                    <c:forEach items="${actionBean.pipelineDataTypes}" var="datatype">
+                                        <stripes:option disabled="${! datatype.active}" value="${datatype.name}">${datatype.name}</stripes:option>
+                                    </c:forEach>
                                 </stripes:select>
                             </div>
                         </div>

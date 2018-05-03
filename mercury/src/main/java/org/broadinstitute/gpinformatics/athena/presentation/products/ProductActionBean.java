@@ -213,10 +213,14 @@ public class ProductActionBean extends CoreActionBean {
 
     @Before(stages = LifecycleStage.BindingAndValidation, on = {EDIT_ACTION, CREATE_ACTION})
     public void editCreateBindingAndValidation() {
-        pipelineDataTypes = pipelineDataTypeDao.findActive();
         initProduct();
         initGenotypingInfo();
         setupFamilies();
+        pipelineDataTypes = pipelineDataTypeDao.findActive();
+        String dataType = editProduct.getAggregationDataType();
+        if (StringUtils.isNotBlank(dataType) && !PipelineDataType.contains(pipelineDataTypes, dataType)) {
+            pipelineDataTypes.add(pipelineDataTypeDao.find(dataType));
+        }
     }
 
     @Before(stages = LifecycleStage.BindingAndValidation, on = {SAVE_ACTION})
