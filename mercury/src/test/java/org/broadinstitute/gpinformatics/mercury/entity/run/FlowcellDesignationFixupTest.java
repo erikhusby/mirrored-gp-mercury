@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -43,6 +44,7 @@ import javax.transaction.UserTransaction;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -459,14 +461,15 @@ public class FlowcellDesignationFixupTest extends Arquillian {
 
         // ******************************************************************************************************
         // (the odd transfer) DenatureToFlowcellTransfer   2707477	"000007010501 JwSimsAFlowcell" --> "H3K5CDSXX" FCT-41413
+        // ************ These tubes renamed to same prefixes as all others in same plate locations- flowcell transfer is going to be swapped
         BarcodedTube fct13Lane4Dilution = new BarcodedTube("024753262-d", BarcodedTube.BarcodedTubeType.MatrixTube); // A01
         labVesselDao.persist(fct13Lane4Dilution);
+        BarcodedTube fct13Lane3Dilution = new BarcodedTube("024753210-d", BarcodedTube.BarcodedTubeType.MatrixTube); // D01
+        labVesselDao.persist(fct13Lane3Dilution);
         BarcodedTube fct13Lane2Dilution = new BarcodedTube("024753242-d", BarcodedTube.BarcodedTubeType.MatrixTube); // B01
         labVesselDao.persist(fct13Lane2Dilution);
         BarcodedTube fct13Lane1Dilution = new BarcodedTube("024753211-d", BarcodedTube.BarcodedTubeType.MatrixTube); // C01
         labVesselDao.persist(fct13Lane1Dilution);
-        BarcodedTube fct13Lane3Dilution = new BarcodedTube("024753210-d", BarcodedTube.BarcodedTubeType.MatrixTube); // D01
-        labVesselDao.persist(fct13Lane3Dilution);
 
         Map<VesselPosition,BarcodedTube> fct13Layout = new HashMap<>();
         fct13Layout.put(VesselPosition.A01,fct13Lane4Dilution );
@@ -575,6 +578,57 @@ public class FlowcellDesignationFixupTest extends Arquillian {
         labVesselDao.flush();
         utx.commit();
 
+    }
+
+    /**
+     * GPLIM-5508 above fixup had error on FCT-41413 - Lane transfers are different for flowcell H3K5CDSXX.
+     */
+    @Test(enabled = false)
+    public void gplim5508Fct41413() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+        Long operator = userBean.getBspUser().getUserId();
+
+        // Change barcodes on dilution vessels to match positions/barcodes on FCT-41412, 41414, and 41415
+        Field labelField = LabVessel.class.getDeclaredField("label");
+        labelField.setAccessible(true);
+        // A01 vessel prefix doesn't change
+        LabVessel dilutionA01 = labVesselDao.findByIdentifier("024753262-d" );
+        labelField.set(dilutionA01, "024753262-e" );
+        LabVessel dilutionB01 = labVesselDao.findByIdentifier("024753210-d" );
+        labelField.set(dilutionB01, "024753242-e" );
+        LabVessel dilutionC01 = labVesselDao.findByIdentifier("024753242-d" );
+        labelField.set(dilutionC01, "024753211-e" );
+        LabVessel dilutionD01 = labVesselDao.findByIdentifier("024753211-d" );
+        labelField.set(dilutionD01, "024753210-e" );
+
+        // Change flowcell transfer target lanes
+        LabVessel flowcell = labVesselDao.findByIdentifier("H3K5CDSXX" );
+        LabEvent flowcellXfer = flowcell.getTransfersTo().iterator().next();
+        Field targetField = CherryPickTransfer.class.getDeclaredField("targetPosition");
+        targetField.setAccessible(true);
+        for( CherryPickTransfer laneXfer : flowcellXfer.getCherryPickTransfers()){
+            if( laneXfer.getTargetPosition() == VesselPosition.LANE1 ) {
+                // Give event a poke to coerce audit
+                flowcellXfer.getCherryPickTransfers().remove(laneXfer);
+                targetField.set( laneXfer, VesselPosition.LANE3 );
+                flowcellXfer.getCherryPickTransfers().add(laneXfer);
+            } else if( laneXfer.getTargetPosition() == VesselPosition.LANE2) {
+                flowcellXfer.getCherryPickTransfers().remove(laneXfer);
+                targetField.set( laneXfer, VesselPosition.LANE1 );
+                flowcellXfer.getCherryPickTransfers().add(laneXfer);
+            } else if( laneXfer.getTargetPosition() == VesselPosition.LANE3) {
+                flowcellXfer.getCherryPickTransfers().remove(laneXfer);
+                targetField.set( laneXfer, VesselPosition.LANE2 );
+                flowcellXfer.getCherryPickTransfers().add(laneXfer);
+            }
+        }
+
+        // Flowcell Designation OK
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-5508 FCT-41413 correct lanes");
+        labVesselDao.persist(fixupCommentary);
+        labVesselDao.flush();
+        utx.commit();
     }
 
 }
