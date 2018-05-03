@@ -1839,7 +1839,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
-        if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
+        if(editOrder.isPriorToSAP1_5() && editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
            (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL) < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
             shareSapOrder = true;
         }
@@ -1949,8 +1949,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
             } catch (NoJiraTransitionException | ProductOrderEjb.NoSuchPDOException |
-                    ProductOrderEjb.SampleDeliveryStatusChangeException | IOException e) {
-                throw new RuntimeException(e);
+                    ProductOrderEjb.SampleDeliveryStatusChangeException | IOException | SAPInterfaceException e) {
+                addGlobalValidationError(e.getMessage());
+                return getSourcePageResolution();
             }
         }
 

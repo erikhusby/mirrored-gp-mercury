@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -253,7 +254,7 @@ public class LedgerEntryFixupTest extends Arquillian {
     @Test(enabled = false)
     public void gplim4143FixEntryBilledAsAddOnInsteadOfPrimary()
             throws IOException, ProductOrderEjb.NoSuchPDOException, SystemException, NotSupportedException,
-            HeuristicRollbackException, HeuristicMixedException, RollbackException {
+            HeuristicRollbackException, HeuristicMixedException, RollbackException, SAPInterfaceException {
         userBean.loginOSUser();
 
         /*

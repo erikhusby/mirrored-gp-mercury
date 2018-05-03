@@ -37,7 +37,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException {
+    public void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
     }
 
     @Override

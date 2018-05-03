@@ -216,6 +216,12 @@ public class BucketEjbDbFreeTest {
 
             Map<String, Collection<ProductOrderSample>> samplesByBucket = bucketEjb.addSamplesToBucket(pdo);
             Collection<ProductOrderSample> addedSamples = samplesByBucket.get("Pico/Plating Bucket");
+            if(addedSamples == null) {
+                System.out.println("added samples are null");
+            }
+            if(expectedSamples == null) {
+                System.out.println("expected samples are null");
+            }
             Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
 
             verify(mocks);
