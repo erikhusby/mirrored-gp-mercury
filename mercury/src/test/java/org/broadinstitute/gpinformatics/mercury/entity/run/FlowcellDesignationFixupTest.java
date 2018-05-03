@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -461,15 +460,14 @@ public class FlowcellDesignationFixupTest extends Arquillian {
 
         // ******************************************************************************************************
         // (the odd transfer) DenatureToFlowcellTransfer   2707477	"000007010501 JwSimsAFlowcell" --> "H3K5CDSXX" FCT-41413
-        // ************ These tubes renamed to same prefixes as all others in same plate locations- flowcell transfer is going to be swapped
         BarcodedTube fct13Lane4Dilution = new BarcodedTube("024753262-d", BarcodedTube.BarcodedTubeType.MatrixTube); // A01
         labVesselDao.persist(fct13Lane4Dilution);
-        BarcodedTube fct13Lane3Dilution = new BarcodedTube("024753210-d", BarcodedTube.BarcodedTubeType.MatrixTube); // D01
-        labVesselDao.persist(fct13Lane3Dilution);
         BarcodedTube fct13Lane2Dilution = new BarcodedTube("024753242-d", BarcodedTube.BarcodedTubeType.MatrixTube); // B01
         labVesselDao.persist(fct13Lane2Dilution);
         BarcodedTube fct13Lane1Dilution = new BarcodedTube("024753211-d", BarcodedTube.BarcodedTubeType.MatrixTube); // C01
         labVesselDao.persist(fct13Lane1Dilution);
+        BarcodedTube fct13Lane3Dilution = new BarcodedTube("024753210-d", BarcodedTube.BarcodedTubeType.MatrixTube); // D01
+        labVesselDao.persist(fct13Lane3Dilution);
 
         Map<VesselPosition,BarcodedTube> fct13Layout = new HashMap<>();
         fct13Layout.put(VesselPosition.A01,fct13Lane4Dilution );
