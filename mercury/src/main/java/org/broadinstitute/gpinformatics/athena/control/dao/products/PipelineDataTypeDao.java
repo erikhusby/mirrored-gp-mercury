@@ -29,4 +29,8 @@ public class PipelineDataTypeDao extends GenericDao implements Serializable {
     public List<PipelineDataType> findActive() {
         return findList(PipelineDataType.class, PipelineDataType_.active, true);
     }
+
+    public PipelineDataType find(String aggregationDataType) {
+        return findSingle(PipelineDataType.class, PipelineDataType_.name, aggregationDataType);
+    }
 }

@@ -18,6 +18,7 @@ import org.hibernate.envers.Audited;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.List;
 
 @Entity
 @Audited
@@ -37,6 +38,10 @@ public class PipelineDataType {
     public PipelineDataType(String name, boolean active) {
         this.name = name;
         this.active = active;
+    }
+
+    public static boolean contains(List<PipelineDataType> pipelineDataTypes, String aggregationDataType) {
+        return pipelineDataTypes.stream().anyMatch(agg -> agg.getName().equals(aggregationDataType));
     }
 
     public String getName() {
