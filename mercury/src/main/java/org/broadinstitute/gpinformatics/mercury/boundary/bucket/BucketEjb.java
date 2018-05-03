@@ -62,7 +62,7 @@ public class BucketEjb {
     private final BucketDao bucketDao;
     private final LabVesselDao labVesselDao;
     private final BucketEntryDao bucketEntryDao;
-    private final WorkflowConfig workflowConfig;
+    private final WorkflowConfig workflowConfig;;
     private final BSPUserList bspUserList;
     private final LabVesselFactory labVesselFactory;
     private final MercurySampleDao mercurySampleDao;

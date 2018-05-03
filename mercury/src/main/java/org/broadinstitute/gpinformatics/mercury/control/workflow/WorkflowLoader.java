@@ -106,6 +106,7 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
      * @return
      */
     private WorkflowConfig loadFromFile() {
+        if (workflowConfigFromFile == null) {
             try {
                 JAXBContext jc = JAXBContext.newInstance(WorkflowConfig.class, WorkflowBucketDef.class);
                 Unmarshaller unmarshaller = jc.createUnmarshaller();
@@ -114,6 +115,7 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
             } catch (JAXBException e) {
                 throw new RuntimeException(e);
             }
+        }
         return workflowConfigFromFile;
     }
 
