@@ -607,20 +607,15 @@ public class FlowcellDesignationFixupTest extends Arquillian {
         targetField.setAccessible(true);
         for( CherryPickTransfer laneXfer : flowcellXfer.getCherryPickTransfers()){
             if( laneXfer.getTargetPosition() == VesselPosition.LANE1 ) {
-                // Give event a poke to coerce audit
-                flowcellXfer.getCherryPickTransfers().remove(laneXfer);
                 targetField.set( laneXfer, VesselPosition.LANE3 );
-                flowcellXfer.getCherryPickTransfers().add(laneXfer);
             } else if( laneXfer.getTargetPosition() == VesselPosition.LANE2) {
-                flowcellXfer.getCherryPickTransfers().remove(laneXfer);
                 targetField.set( laneXfer, VesselPosition.LANE1 );
-                flowcellXfer.getCherryPickTransfers().add(laneXfer);
             } else if( laneXfer.getTargetPosition() == VesselPosition.LANE3) {
-                flowcellXfer.getCherryPickTransfers().remove(laneXfer);
                 targetField.set( laneXfer, VesselPosition.LANE2 );
-                flowcellXfer.getCherryPickTransfers().add(laneXfer);
             }
         }
+
+        // ********************** Use ETL service to manually refresh the DilutionToFlowcellTransfer event ***
 
         // Flowcell Designation OK
         FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-5508 FCT-41413 correct lanes");
