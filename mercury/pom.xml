@@ -762,7 +762,7 @@
                 <dependency>
                     <groupId>org.wildfly.arquillian</groupId>
                     <artifactId>wildfly-arquillian-container-managed</artifactId>
-                    <version>2.0.0.Final</version>
+                    <version>2.1.0.Final</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -867,7 +867,7 @@
                 <dependency>
                     <groupId>org.wildfly.arquillian</groupId>
                     <artifactId>wildfly-arquillian-container-remote</artifactId>
-                    <version>2.0.0.Final</version>
+                    <version>2.1.0.Final</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -1269,7 +1269,7 @@ nodePrinter.print(webapp)
             <dependency>
                 <groupId>org.jboss.arquillian</groupId>
                 <artifactId>arquillian-bom</artifactId>
-                <version>1.1.11.Final</version>
+                <version>1.4.0.Final</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -1277,7 +1277,7 @@ nodePrinter.print(webapp)
             <dependency>
                 <groupId>org.eu.ingwar.tools</groupId>
                 <artifactId>arquillian-suite-extension</artifactId>
-                <version>1.1.2</version>
+                <version>1.2.0</version>
                 <scope>test</scope>
             </dependency>
 
@@ -1301,7 +1301,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.10</version>
+            <version>6.14.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
