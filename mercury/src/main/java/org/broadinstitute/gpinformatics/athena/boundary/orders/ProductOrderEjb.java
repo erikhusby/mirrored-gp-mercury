@@ -1653,7 +1653,7 @@ public class ProductOrderEjb {
             transitionIssueToSameOrderStatus(editOrder);
 
             // Now that the order is placed, add the comments about the samples to the issue.
-//            productOrderJiraUtil.addSampleComments(editOrder);
+            productOrderJiraUtil.addSampleComments(editOrder);
 
         } catch (IOException e) {
             String message = "Unable to create the Product Order in Jira";
