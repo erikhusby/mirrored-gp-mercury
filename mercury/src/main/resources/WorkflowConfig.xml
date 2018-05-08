@@ -3135,6 +3135,7 @@
             <effectiveDate>2017-10-22T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>WGS Library Construction Hyper Prep UMI</workflowProcessDefs>
+            <workflowProcessDefs>ICE</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>

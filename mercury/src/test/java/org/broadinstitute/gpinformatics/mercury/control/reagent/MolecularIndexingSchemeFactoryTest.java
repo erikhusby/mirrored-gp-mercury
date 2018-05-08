@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.reagent;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
@@ -23,7 +23,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
  * Test creation and retrieval of indexes
  */
 @Test(groups = TestGroups.STUBBY)
-public class MolecularIndexingSchemeFactoryTest extends ContainerTest {
+public class MolecularIndexingSchemeFactoryTest extends StubbyContainerTest {
 
     @Inject
     private MolecularIndexingSchemeFactory molecularIndexingSchemeFactory;

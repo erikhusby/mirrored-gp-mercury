@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -17,6 +18,7 @@ import java.util.Random;
 
 @Stub
 @Alternative
+@Dependent
 public class SubmissionsServiceStub implements SubmissionsService {
     public static final String TEST_PROJECT_NAME = "Primary submission";
     public static final String STUB_UPDATE_DATE = "Dec 17, 2001 9:30 AM";

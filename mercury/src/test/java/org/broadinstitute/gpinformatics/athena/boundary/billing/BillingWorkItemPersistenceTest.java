@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.AbstractContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -55,7 +55,8 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
     @Inject
     private BillingSessionAccessEjb billingSessionAccessEjb;
 
-    private SapIntegrationService sapService;
+    // Stub implementation
+    private SapIntegrationService sapService = new SapIntegrationServiceStub();
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -128,8 +129,6 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
         }
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
-
-        sapService = SapIntegrationServiceProducer.stubInstance();
 
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
