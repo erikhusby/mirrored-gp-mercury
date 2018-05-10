@@ -547,7 +547,11 @@ public class ProductOrderEjb {
      */
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
             throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
-        Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
+        Quote orderQuote = editedProductOrder.getQuote(quoteService);
+        if (orderQuote == null) {
+            orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
+        }
+
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
 
@@ -685,7 +689,7 @@ public class ProductOrderEjb {
     void validateQuote(ProductOrder productOrder, QuoteService quoteService) throws QuoteNotFoundException {
         if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
             try {
-                quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+                productOrder.getQuote(quoteService);
             } catch (QuoteServerException e) {
                 throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(), e);
             }
