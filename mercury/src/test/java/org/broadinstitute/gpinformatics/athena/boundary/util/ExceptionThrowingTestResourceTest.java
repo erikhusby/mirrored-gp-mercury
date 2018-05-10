@@ -37,6 +37,7 @@ public class ExceptionThrowingTestResourceTest extends RestServiceContainerTest 
 
     /**
      * Force stubby alternatives without extending StubbyContainerTest
+     * (But this class tagged with TestGroups.STUBBY so it gets rolled into whatever deployment is used for the Arquillian Suite)
      */
     @Deployment
     public static WebArchive buildMercuryWar() {

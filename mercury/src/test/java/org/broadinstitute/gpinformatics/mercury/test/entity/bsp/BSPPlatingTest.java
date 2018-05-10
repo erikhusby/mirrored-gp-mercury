@@ -28,7 +28,8 @@ public class BSPPlatingTest  {
     }
 
     /**
-     * Don't want to hammer on BSP all the time, so disabling, but turn on
+     * Don't want to hammer on BSP all the time, so disabling, but turn on <br />
+     * TODO:  Don't turn on until either set to STANDARD and needs to extend Arquillian or STUBBY and needs to extend StubbyContainerTest
      *
      * @throws Exception any errors
      */

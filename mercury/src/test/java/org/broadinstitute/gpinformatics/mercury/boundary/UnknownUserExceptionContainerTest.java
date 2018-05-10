@@ -31,6 +31,15 @@ import static org.hamcrest.Matchers.equalTo;
 public class UnknownUserExceptionContainerTest extends RestServiceContainerTest {
 
     /**
+     * Force stubby alternatives without extending StubbyContainerTest
+     * (But this class tagged with TestGroups.STUBBY so it gets rolled into whatever deployment is used for the Arquillian Suite)
+     */
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return StubbyContainerTest.buildMercuryWar();
+    }
+
+    /**
      * Test resource that always throws {@link UnknownUserException} with the username from the request.
      */
     @Path(UnknownUserExceptionContainerTestResource.RESOURCE_PATH)
@@ -46,13 +55,6 @@ public class UnknownUserExceptionContainerTest extends RestServiceContainerTest 
         }
     }
 
-    /**
-     * Force use of stubby alternatives
-     */
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return StubbyContainerTest.buildMercuryWar();
-    }
 
     @Override
     protected String getResourcePath() {
