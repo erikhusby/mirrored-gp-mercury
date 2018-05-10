@@ -24,12 +24,9 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -65,9 +62,6 @@ public class MercurySampleFixupTest extends Arquillian {
     @Inject
     private BSPUserList bspUserList;
 
-    @Inject
-    private UserTransaction utx;
-
     private static final String RECEIVED_DATE_UPDATE_FORMAT = "MM/dd/yyyy";
 
     @Deployment
@@ -78,23 +72,6 @@ public class MercurySampleFixupTest extends Arquillian {
          */
         return DeploymentBuilder.buildMercuryWar(
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "DEV");
-    }
-
-    @BeforeMethod(groups = TestGroups.FIXUP)
-    public void setUp() throws Exception {
-        if (userBean == null) {
-            return;
-        }
-        utx.begin();
-    }
-
-    @AfterMethod(groups = TestGroups.FIXUP)
-    public void tearDown() throws Exception {
-
-        if (userBean == null) {
-            return;
-        }
-        utx.commit();
     }
 
     @Test(groups = TestGroups.FIXUP, enabled = false)
