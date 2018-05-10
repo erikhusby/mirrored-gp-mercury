@@ -1,13 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket_;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Stateful;
@@ -21,6 +27,7 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -93,6 +100,73 @@ public class BucketEntryDao extends GenericDao {
             return getEntityManager().createQuery(query).getSingleResult();
         } catch (NoResultException ignored) {
             return null;
+        }
+    }
+
+    public List<BucketEntry> findBySampleAndBucket(List<String> sampleIds, Bucket bucket) {
+        CriteriaBuilder bucketCriteria = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<BucketEntry> query = bucketCriteria.createQuery(BucketEntry.class);
+        Root<BucketEntry> root = query.from(BucketEntry.class);
+
+        Join<BucketEntry, LabVessel> bucketEntryLabVesselJoin = root.join(BucketEntry_.labVessel);
+        SetJoin<LabVessel, MercurySample> labVesselMercurySamplesJoin = bucketEntryLabVesselJoin.join(LabVessel_.mercurySamples);
+
+        query.where(bucketCriteria.and(
+            bucketCriteria.equal(root.get(BucketEntry_.bucket), bucket),
+            bucketCriteria.equal(root.get(BucketEntry_.status), BucketEntry.Status.Active),
+            labVesselMercurySamplesJoin.get(MercurySample_.sampleKey).in(sampleIds)
+        ));
+
+        try {
+            return getEntityManager().createQuery(query).getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
+        }
+    }
+
+
+    public List<BucketEntry> findByProductAndBucket(List<String> product, Bucket bucket) {
+        CriteriaBuilder bucketCriteria = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<BucketEntry> query = bucketCriteria.createQuery(BucketEntry.class);
+        Root<BucketEntry> root = query.from(BucketEntry.class);
+        Join<BucketEntry, ProductOrder> entryProductOrderJoin = root.join(BucketEntry_.productOrder);
+        Join<ProductOrder, Product> productJoin = entryProductOrderJoin.join(ProductOrder_.product);
+
+        query.where(bucketCriteria.and(
+            bucketCriteria.equal(root.get(BucketEntry_.bucket), bucket),
+            bucketCriteria.equal(root.get(BucketEntry_.status), BucketEntry.Status.Active),
+            bucketCriteria.or(
+                productJoin.get(Product_.partNumber).in(product),
+                productJoin.get(Product_.productName).in(product)
+            )
+        ));
+
+        try {
+            return getEntityManager().createQuery(query).getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
+        }
+    }
+
+    public List<BucketEntry> findByProductOrderAndBucket(List<String> pdo, Bucket bucket) {
+        CriteriaBuilder bucketCriteria = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<BucketEntry> query = bucketCriteria.createQuery(BucketEntry.class);
+        Root<BucketEntry> root = query.from(BucketEntry.class);
+        Join<BucketEntry, ProductOrder> entryProductOrderJoin = root.join(BucketEntry_.productOrder);
+
+        query.where(bucketCriteria.and(
+            bucketCriteria.equal(root.get(BucketEntry_.bucket), bucket),
+            bucketCriteria.equal(root.get(BucketEntry_.status), BucketEntry.Status.Active),
+            bucketCriteria.or(
+                entryProductOrderJoin.get(ProductOrder_.jiraTicketKey).in(pdo),
+                entryProductOrderJoin.get(ProductOrder_.title).in(pdo)
+            )
+        ));
+
+        try {
+            return getEntityManager().createQuery(query).getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
         }
     }
 
