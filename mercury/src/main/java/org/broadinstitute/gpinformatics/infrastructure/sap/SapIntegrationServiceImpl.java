@@ -163,7 +163,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         Quote foundQuote = null;
         try {
-            foundQuote = quoteService.getQuoteByAlphaId(orderToUpdate.getQuoteId());
+            foundQuote = orderToUpdate.getQuote(quoteService);
         } catch (QuoteServerException | QuoteNotFoundException e) {
             throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
         }
@@ -538,7 +538,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         if (!forOrderValueQuery) {
             Quote foundQuote = null;
             try {
-                foundQuote = quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+                foundQuote = productOrder.getQuote(quoteService);
             } catch (QuoteServerException | QuoteNotFoundException e) {
                 throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
             }

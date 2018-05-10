@@ -367,10 +367,9 @@ public class ProductOrderEjb {
             try {
                 if (isOrderEligibleForSAP(orderToPublish, effectiveDate)
                     && !orderToPublish.getOrderStatus().canPlace()) {
-
+                    Quote quote = orderToPublish.getQuote(quoteService);
                     final List<String> effectivePricesForProducts = productPriceCache
-                            .getEffectivePricesForProducts(allProductsOrdered,editedProductOrder,
-                                    quoteService.getQuoteByAlphaId(orderToPublish.getQuoteId()));
+                            .getEffectivePricesForProducts(allProductsOrdered,editedProductOrder, quote);
 
                     final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
                                                   !orderToPublish.getQuoteId()
@@ -548,10 +547,6 @@ public class ProductOrderEjb {
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
             throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
         Quote orderQuote = editedProductOrder.getQuote(quoteService);
-        if (orderQuote == null) {
-            orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
-        }
-
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
 
