@@ -278,15 +278,15 @@ infiniumStarter:
 decoder:
 
     DEV:
-      host:     jowalsh-vm.broadinstitute.org
+      host:     gp-decode-vm.broadinstitute.org
       port:     5000
 
     QA:
-      host:     jowalsh-vm.broadinstitute.org
+      host:     gp-decode-vm.broadinstitute.org
       port:     5000
 
     PROD:
-      host:     jowalsh-vm.broadinstitute.org
+      host:     gp-decode-vm.broadinstitute.org
       port:     5000
 
 hipchat:
