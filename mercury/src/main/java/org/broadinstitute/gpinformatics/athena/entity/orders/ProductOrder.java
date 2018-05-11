@@ -32,7 +32,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -103,6 +105,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final String REQUISITION_PREFIX = "REQ-";
 
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
+
+    public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
+        if (cachedQuote==null) {
+            cachedQuote = quoteService.getQuoteByAlphaId(quoteId);
+        }
+        return cachedQuote;
+    }
 
     public enum SaveType {CREATING, UPDATING}
 
@@ -268,6 +277,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "ANALYZE_UMI_OVERRIDE")
     private Boolean analyzeUmiOverride;
+
+    @Transient
+    private Quote cachedQuote;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -765,6 +777,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setQuoteId(String quoteId) {
+        if (!this.quoteId.equals(quoteId)) {
+            cachedQuote = null;
+        }
         this.quoteId = quoteId;
     }
 

@@ -25,8 +25,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
@@ -79,13 +77,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderEjbTest {
@@ -330,6 +328,7 @@ public class ProductOrderEjbTest {
             assertThat(sample.getMercurySample().getSampleKey(), is(equalTo(sample.getBusinessKey())));
         }
         Mockito.verify(mockMercurySampleDao).findMapIdToMercurySample(Mockito.eq(sampleMap.keySet()));
+        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
     }
 
     public void testCreateOrderInSap() throws Exception {
@@ -475,6 +474,10 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(),
                 Mockito.anyString(),
                 Mockito.anyBoolean());
+
+        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId());
+        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(testSingleSourceQuote2.getAlphanumericId());
+        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(testSingleSourceQuote3.getAlphanumericId());
     }
 
 
@@ -571,6 +574,7 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(),
                 Mockito.anyString(),
                 Mockito.anyBoolean());
+        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
     }
 
     public void testAbandonOrderWithServiceNowTicket() throws Exception {
@@ -651,6 +655,8 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(),
                 Mockito.anyString(),
                 Mockito.anyBoolean());
+
+        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
 
         productOrderEjb.updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
         Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
@@ -847,6 +853,9 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(),
                 Mockito.anyString(),
                 Mockito.anyBoolean());
+
+        // called once for conversionPdo and once for childPdoTwo
+        Mockito.verify(mockQuoteService, Mockito.times(2)).getQuoteByAlphaId(Mockito.anyString());
     }
 
     public void testCreateOrderWithProductNotInSap() throws Exception {
@@ -923,6 +932,7 @@ public class ProductOrderEjbTest {
         assertThat(conversionPdo.getBusinessKey(), is(equalTo(jiraTicketKey)));
         assertThat(messageCollection.getErrors(), is(not(Matchers.<String>empty())));
         assertThat(conversionPdo.isSavedInSAP(), is(false));
+        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
 
     }
 }

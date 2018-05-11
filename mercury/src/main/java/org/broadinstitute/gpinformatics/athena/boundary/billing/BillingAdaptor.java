@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessio
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -178,7 +177,7 @@ public class BillingAdaptor implements Serializable {
                     priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(itemForPriceUpdate));
                     itemForPriceUpdate.setPriceOnWorkDate(priceItemsForDate);
 
-                    quote = quoteService.getQuoteByAlphaId(itemForPriceUpdate.getQuoteId());
+                    quote = itemForPriceUpdate.getProductOrder().getQuote(quoteService);
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
                     quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     itemForPriceUpdate.setQuote(quote);
