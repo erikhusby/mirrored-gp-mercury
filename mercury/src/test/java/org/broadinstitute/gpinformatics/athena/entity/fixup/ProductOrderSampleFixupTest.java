@@ -96,7 +96,7 @@ public class ProductOrderSampleFixupTest extends Arquillian {
         }
     }
 
-    @Test()
+    @Test(enabled = false)
     public void support4060UpdateDeliveryDocument() {
 
         userBean.loginOSUser();
