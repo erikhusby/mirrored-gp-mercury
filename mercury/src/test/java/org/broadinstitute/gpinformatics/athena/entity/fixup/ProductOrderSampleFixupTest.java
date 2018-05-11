@@ -102,7 +102,7 @@ public class ProductOrderSampleFixupTest extends Arquillian {
         userBean.loginOSUser();
 
         List<ProductOrderSample> samples = productOrderSampleDao.findByOrderKeyAndSampleNames("PDO-14794",
-                Collections.singleton("SM-GFCY5"));
+                Collections.singleton("SM-GFCXQ"));
 
         for (ProductOrderSample sample : samples) {
             for (LedgerEntry ledgerEntry : sample.getLedgerItems()) {
