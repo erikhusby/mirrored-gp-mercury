@@ -22,6 +22,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,7 +34,10 @@ import static org.hamcrest.Matchers.equalTo;
  *
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class ExceptionThrowingTestResourceTest extends RestServiceContainerTest {
+
+    public ExceptionThrowingTestResourceTest(){}
 
     /**
      * Force stubby alternatives without extending StubbyContainerTest

@@ -8,6 +8,7 @@ import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,7 +27,10 @@ import java.util.zip.ZipInputStream;
  * Test archiving.
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class InfiniumArchiverTest extends StubbyContainerTest {
+
+    public InfiniumArchiverTest(){}
 
     @Inject
     private InfiniumArchiver infiniumArchiver;

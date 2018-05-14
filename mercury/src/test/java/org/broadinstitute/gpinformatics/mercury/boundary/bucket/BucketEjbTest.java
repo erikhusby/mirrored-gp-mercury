@@ -28,6 +28,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
@@ -43,7 +44,10 @@ import java.util.Map;
 import java.util.Set;
 
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class BucketEjbTest extends StubbyContainerTest {
+
+    public BucketEjbTest(){}
 
     @Inject
     BucketEjb resource;

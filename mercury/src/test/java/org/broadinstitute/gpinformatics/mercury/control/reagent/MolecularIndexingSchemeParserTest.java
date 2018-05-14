@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexing
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.util.List;
@@ -14,7 +15,10 @@ import java.util.List;
  * Test the parser
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class MolecularIndexingSchemeParserTest extends StubbyContainerTest {
+
+    public MolecularIndexingSchemeParserTest(){}
 
     @Inject
     private MolecularIndexingSchemeParser molecularIndexingSchemeParser;

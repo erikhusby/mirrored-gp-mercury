@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +30,10 @@ import static org.hamcrest.core.Is.is;
  * </ul>
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class AggregationMetricsFetcherTest extends StubbyContainerTest {
+
+    public AggregationMetricsFetcherTest(){}
 
     /**
      * Sample (a.k.a., "Collaborator Sample ID") for which there are known aggregations in the metrics database.

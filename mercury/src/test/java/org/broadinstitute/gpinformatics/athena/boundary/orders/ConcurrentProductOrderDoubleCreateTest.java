@@ -53,7 +53,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
+
+    public ConcurrentProductOrderDoubleCreateTest(){}
 
     private static final Log logger = LogFactory.getLog(ConcurrentProductOrderDoubleCreateTest.class);
 

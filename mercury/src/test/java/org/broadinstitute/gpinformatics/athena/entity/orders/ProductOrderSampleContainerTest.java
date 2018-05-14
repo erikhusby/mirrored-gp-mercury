@@ -12,11 +12,15 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Collections;
 
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class ProductOrderSampleContainerTest extends StubbyContainerTest {
+
+    public ProductOrderSampleContainerTest(){}
 
     public static final String PDO_TO_LEDGER_ENTRY_COUNT_PROVIDER = "PDO-To-Ledger-Entry-Count-Provider";
 
