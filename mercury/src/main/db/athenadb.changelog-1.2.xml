@@ -1238,6 +1238,7 @@
             END;
 
             BEGIN
+            dbms_output.enable();
             OPEN CUR_CONSTRAINT;
             WHILE TRUE
             LOOP
