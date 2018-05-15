@@ -1381,7 +1381,13 @@ public class ProductOrderEjb {
              targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) < targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()
            ) || CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),Collections.singleton(targetSapPdo.getOrderStatus())))) {
 
-            if(productOrder.isPriorToSAP1_5()) {
+            boolean orderEligibleForSAP = true;
+            try {
+                orderEligibleForSAP = isOrderEligibleForSAP(productOrder);
+            } catch (QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
+                orderEligibleForSAP = false;
+            }
+            if(productOrder.isPriorToSAP1_5() || !orderEligibleForSAP) {
                 sendSapOrderShortCloseRequest(
                         "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
                         " has been marked as completed in Mercury by " +
