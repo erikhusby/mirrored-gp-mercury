@@ -88,6 +88,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
@@ -121,10 +122,14 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @SuppressWarnings("OverlyCoupledClass")
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class BettaLimsMessageResourceTest extends Arquillian {
+
+    public BettaLimsMessageResourceTest(){}
 
     public static final String PICO_PLATING_BUCKET = "Pico/Plating Bucket";
     public static final String ICE_BUCKET = "ICE Bucket";
+
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
 

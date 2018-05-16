@@ -56,6 +56,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,7 +77,10 @@ import static org.hamcrest.Matchers.hasItems;
  *
  */
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class ReworkEjbTest extends Arquillian {
+
+    public ReworkEjbTest(){}
 
     public static final String SM_SGM_Test_Somatic_1_PATIENT_ID = "PT-1TS1";
     public static final String SM_SGM_Test_Somatic_1_STOCK_SAMP = "SM-SGM_Test_Somatic1";

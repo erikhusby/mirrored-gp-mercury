@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,7 +27,11 @@ import java.util.Map;
  * Test creation of plates
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class IndexedPlateFactoryTest extends StubbyContainerTest {
+
+    public IndexedPlateFactoryTest(){}
+
     @Inject
     private IndexedPlateFactory indexedPlateFactory;
 

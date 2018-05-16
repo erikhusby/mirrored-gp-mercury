@@ -19,7 +19,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.text.SimpleDateFormat;
@@ -27,8 +27,10 @@ import java.util.Collections;
 import java.util.Date;
 
 @Test(groups = TestGroups.STUBBY)
-@RequestScoped
+@Dependent
 public class BucketEntryDaoTest extends StubbyContainerTest {
+
+    public BucketEntryDaoTest(){}
 
     @Inject
     BucketDao bucketDao;

@@ -40,6 +40,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
@@ -53,7 +54,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class IlluminaRunResourceTest extends Arquillian {
+
+    public IlluminaRunResourceTest(){}
 
     @Inject
     private IlluminaRunResource runLaneResource;

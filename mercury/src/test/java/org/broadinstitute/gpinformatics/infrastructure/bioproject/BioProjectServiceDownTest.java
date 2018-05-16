@@ -30,6 +30,8 @@ public class BioProjectServiceDownTest {
     @Dependent
     public static final class SubmissionsServiceThatRefusesConnections implements SubmissionsService {
 
+        public SubmissionsServiceThatRefusesConnections(){}
+
         private static final ConnectionException CONNECTION_REFUSED_EXCEPTION =  new ConnectionException("Connection refused, dude.");
 
         @Override
