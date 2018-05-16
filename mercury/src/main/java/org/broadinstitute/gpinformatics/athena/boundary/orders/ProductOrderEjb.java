@@ -367,10 +367,9 @@ public class ProductOrderEjb {
             try {
                 if (isOrderEligibleForSAP(orderToPublish, effectiveDate)
                     && !orderToPublish.getOrderStatus().canPlace()) {
-
+                    Quote quote = orderToPublish.getQuote(quoteService);
                     final List<String> effectivePricesForProducts = productPriceCache
-                            .getEffectivePricesForProducts(allProductsOrdered,editedProductOrder,
-                                    quoteService.getQuoteByAlphaId(orderToPublish.getQuoteId()));
+                            .getEffectivePricesForProducts(allProductsOrdered,editedProductOrder, quote);
 
                     final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
                                                   !orderToPublish.getQuoteId()
@@ -547,7 +546,7 @@ public class ProductOrderEjb {
      */
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
             throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
-        Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
+        Quote orderQuote = editedProductOrder.getQuote(quoteService);
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
 
@@ -685,7 +684,7 @@ public class ProductOrderEjb {
     void validateQuote(ProductOrder productOrder, QuoteService quoteService) throws QuoteNotFoundException {
         if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
             try {
-                quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+                productOrder.getQuote(quoteService);
             } catch (QuoteServerException e) {
                 throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(), e);
             }
@@ -1382,7 +1381,14 @@ public class ProductOrderEjb {
              targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) < targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()
            ) || CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),Collections.singleton(targetSapPdo.getOrderStatus())))) {
 
-            if(productOrder.isPriorToSAP1_5()) {
+            boolean orderEligibleForSAP = true;
+            try {
+                orderEligibleForSAP = isOrderEligibleForSAP(productOrder);
+            } catch (QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
+                orderEligibleForSAP = false;
+            }
+            if(productOrder.isPriorToSAP1_5() || !orderEligibleForSAP ||
+               targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) <1 ) {
                 sendSapOrderShortCloseRequest(
                         "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
                         " has been marked as completed in Mercury by " +
