@@ -1387,7 +1387,8 @@ public class ProductOrderEjb {
             } catch (QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
                 orderEligibleForSAP = false;
             }
-            if(productOrder.isPriorToSAP1_5() || !orderEligibleForSAP || targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) <1 ) {
+            if(productOrder.isPriorToSAP1_5() || !orderEligibleForSAP ||
+               targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) <1 ) {
                 sendSapOrderShortCloseRequest(
                         "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
                         " has been marked as completed in Mercury by " +
