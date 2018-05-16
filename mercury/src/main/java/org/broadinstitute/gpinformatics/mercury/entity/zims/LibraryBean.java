@@ -199,6 +199,9 @@ public class LibraryBean {
     @JsonProperty("buickCollectionDate")
     private String buickCollectionDate; // buick specific field, not generally applicable to future crsp work
 
+    @JsonProperty("analyzeUmis")
+    private boolean analyzeUmis;
+
     @JsonProperty("submissionsMetadata")
     private List<SubmissionMetadata> submissionMetadata = new ArrayList<>();
 
@@ -233,7 +236,7 @@ public class LibraryBean {
                        Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
                        String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
                        String productOrderSample, String metadataSource, String aggregationDataType,
-                       JiraService jiraService) {
+                       JiraService jiraService, boolean analyzeUmis) {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
@@ -241,7 +244,7 @@ public class LibraryBean {
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
                 productOrder, lcSet, sampleData, labWorkflow, productOrderSample, libraryCreationDate, null, null,
-                metadataSource, aggregationDataType, jiraService, new ArrayList<SubmissionMetadata>());
+                metadataSource, aggregationDataType, jiraService, new ArrayList<SubmissionMetadata>(), analyzeUmis);
     }
 
     public LibraryBean(String library, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme,
@@ -253,7 +256,7 @@ public class LibraryBean {
                        Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
                        String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
                        String productOrderSample, String metadataSource, String aggregationDataType,
-                       JiraService jiraService, List<SubmissionMetadata> submissionMetadata) {
+                       JiraService jiraService, List<SubmissionMetadata> submissionMetadata, boolean analyzeUmis) {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
@@ -261,7 +264,7 @@ public class LibraryBean {
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
                 productOrder, lcSet, sampleData, labWorkflow, productOrderSample, libraryCreationDate, null, null,
-                metadataSource, aggregationDataType, jiraService, submissionMetadata);
+                metadataSource, aggregationDataType, jiraService, submissionMetadata, analyzeUmis);
     }
 
     /**
@@ -307,6 +310,7 @@ public class LibraryBean {
      * @param workRequestDomain squid work request domain name
      * @param metadataSource BSP or Mercury
      * @param aggregationDataType only for controls
+     * @param analyzeUmis are we analyzing the Umi, set in product and overriden in PDO
      */
     public LibraryBean(String library, String project, String initiative, Long workRequest,
             MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
@@ -318,7 +322,8 @@ public class LibraryBean {
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, SampleData sampleData, String labWorkflow, String productOrderSample,
             String libraryCreationDate, String workRequestType, String workRequestDomain, String metadataSource,
-            String aggregationDataType, JiraService jiraService, List<SubmissionMetadata> submissionMetadata) {
+            String aggregationDataType, JiraService jiraService, List<SubmissionMetadata> submissionMetadata,
+                   boolean analyzeUmis) {
 
         this(sampleLSID, gssrSampleType, collaboratorSampleId, organism, species, strain, individual, sampleData,
                 labWorkflow, productOrderSample, libraryCreationDate);
@@ -389,6 +394,7 @@ public class LibraryBean {
         this.workRequestType = workRequestType;
         this.workRequestDomain = workRequestDomain;
         this.submissionMetadata = submissionMetadata;
+        this.analyzeUmis = analyzeUmis;
     }
 
     /**
@@ -701,6 +707,14 @@ public class LibraryBean {
 
     public String getBuickCollectionDate() {
         return buickCollectionDate;
+    }
+
+    public boolean isAnalyzeUmis() {
+        return analyzeUmis;
+    }
+
+    public void setAnalyzeUmis(boolean analyzeUmis) {
+        this.analyzeUmis = analyzeUmis;
     }
 
     public List<SubmissionMetadata> getSubmissionMetadata() {

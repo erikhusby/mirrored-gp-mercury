@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -69,6 +70,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -380,7 +382,7 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void fixupPDOCompleteStatus() throws ProductOrderEjb.NoSuchPDOException, IOException {
+    public void fixupPDOCompleteStatus() throws ProductOrderEjb.NoSuchPDOException, IOException, SAPInterfaceException {
         // Loop through all PDOs and update their status to complete where necessary.  The API can in theory
         // un-complete PDOs but no PDOs in the database should be completed yet.
         List<ProductOrder> orders = productOrderDao.findAll();
@@ -554,7 +556,8 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void gplim2893ManuallyCompletePDO() throws ProductOrderEjb.NoSuchPDOException, IOException {
+    public void gplim2893ManuallyCompletePDO()
+            throws ProductOrderEjb.NoSuchPDOException, IOException, SAPInterfaceException {
         MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(log);
         productOrderEjb.updateOrderStatus("PDO-2635", reporter);
     }
@@ -1050,8 +1053,13 @@ public class ProductOrderFixupTest extends Arquillian {
 
         for(ProductOrder orderWithSap:listWithWildcard) {
             if(CollectionUtils.isEmpty(orderWithSap.getSapReferenceOrders())) {
+                BigDecimal sampleCount = BigDecimal.ZERO;
+                if(orderWithSap.isPriorToSAP1_5()) {
+                    sampleCount =
+                            SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct(), false);
+                }
                 SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
-                        SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct()),
+                        sampleCount.intValue(),
                         orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode(),
                         "", "");
                 orderWithSap.addSapOrderDetail(newDetail);
