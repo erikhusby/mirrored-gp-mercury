@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -154,7 +155,7 @@ public class PickerActionBean extends CoreActionBean {
         searchTerm.setPluginClass(PickerVesselPlugin.class);
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         columnTabulations.add(searchTerm);
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, Collections.emptyMap(), 0, "ASC",
                 ColumnEntity.LAB_VESSEL);
         List<LabVessel> searchTerms = new ArrayList<>();
         for (LabVessel labVessel : labVessels) {
