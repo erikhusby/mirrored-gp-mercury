@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnector;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -37,9 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.easymock.EasyMock;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -47,6 +44,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
@@ -67,7 +65,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEve
  *         Time: 11:10 PM
  */
 @Test(groups = TestGroups.STUBBY)
-public class MercuryOrSquidRouterContainerTest extends Arquillian {
+@Dependent
+public class MercuryOrSquidRouterContainerTest extends StubbyContainerTest {
+
+    public MercuryOrSquidRouterContainerTest(){}
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -107,11 +108,6 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     private BettaLimsConnector mockConnector;
     private String testPrefix;
     private String ligationBarcode;
-
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar();
-    }
 
     @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
@@ -399,7 +395,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
      * Assists in creating a set of Mercury Tubes based on an existing Product order.  This method will also, if need
      * be, add the created mercury vessels to a given Bucket to assist
      * <p/>
-     * TODO SGM:  this could probably be broken up better to define an alternate method to make cleaner
+     * TODO  this could probably be broken up better to define an alternate method to make cleaner
      *
      * @param productOrder Product order by which to determine the Samples to Create.
      * @param bucketName   Optional:  Name of the Bucket to create.  If left null, bucket creation will be avoided

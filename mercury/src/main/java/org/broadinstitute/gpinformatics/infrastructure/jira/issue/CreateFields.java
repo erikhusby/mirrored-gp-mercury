@@ -165,7 +165,7 @@ public class CreateFields extends UpdateFields {
         MISEQ("MiSeq"),
         SAMPLE_INITIATION("Sample Initiation"),
         RECEIPT("Receipt"),
-        ALLPREP("AllPrep"),
+        ALLPREP("AllPrep Extraction"),
         DNA_EXTRACTION("DNA Extraction"),
         EXTRACTION_OTHER("Extraction (Other)"),
         RNA_EXTRACTION("RNA Extraction"),

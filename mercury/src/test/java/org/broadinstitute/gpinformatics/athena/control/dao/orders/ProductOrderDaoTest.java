@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -20,6 +20,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.PersistenceUnitUtil;
 import javax.transaction.UserTransaction;
@@ -42,7 +43,10 @@ import static org.hamcrest.Matchers.is;
 
 
 @Test(groups = TestGroups.STUBBY, enabled = true)
-public class ProductOrderDaoTest extends ContainerTest {
+@Dependent
+public class ProductOrderDaoTest extends StubbyContainerTest {
+
+    public ProductOrderDaoTest(){}
 
     @Inject
     private ThreadEntityManager entityManager;

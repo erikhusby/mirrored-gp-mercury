@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ The Broad Institute
+  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
+  ~ This software and its documentation are copyright 2018 by the
+  ~ Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+  ~
+  ~ This software is supplied without any warranty or guaranteed support
+  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+  ~ use, misuse, or functionality.
+  -->
+
+<datasources xmlns="http://www.jboss.org/ironjacamar/schema"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.jboss.org/ironjacamar/schema http://docs.jboss.org/ironjacamar/schema/datasources_1_1.xsd">
+    <datasource jndi-name="java:jboss/jdbc/analytics_pool" pool-name="analytics_pool" enabled="true" jta="true">
+        <connection-url>jdbc:oracle:thin:@seqdev:1521:seqdev3</connection-url>
+        <driver-class>oracle.jdbc.OracleDriver</driver-class>
+        <driver>oracle</driver>
+        <security>
+            <user-name>metrics_reader</user-name>
+            <password>metrics_reader</password>
+        </security>
+        <validation>
+            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+            <background-validation>true</background-validation>
+            <background-validation-millis>60000</background-validation-millis>
+            <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+            <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+        </validation>
+    </datasource>
+</datasources>

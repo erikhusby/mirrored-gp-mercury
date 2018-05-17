@@ -107,7 +107,7 @@ public class BucketEntry {
     private Status status = Status.Active;
 
     /*
-        TODO SGM:  Implement this as a separate join table to have the ranking associated directly with the Product
+        TODO Implement this as a separate join table to have the ranking associated directly with the Product
         order, and not duplicated across bucket entries
         todo jmt can this be removed?
      */
@@ -121,6 +121,7 @@ public class BucketEntry {
      * The batch into which the bucket was drained.
      */
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "LAB_BATCH")
     @BatchSize(size = 500)
     private LabBatch labBatch;
 
@@ -203,7 +204,7 @@ public class BucketEntry {
     public void setProductOrder(@Nonnull ProductOrder productOrder) {
         this.productOrder = checkNotNull(productOrder);
 
-        //TODO SGM-- Temporary add until GPLIM-2710 is implemented
+        //TODO Temporary add until GPLIM-2710 is implemented:  This should be able to be removed now.
         this.poBusinessKey = productOrder.getBusinessKey();
     }
 

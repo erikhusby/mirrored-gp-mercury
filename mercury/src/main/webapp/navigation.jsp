@@ -16,7 +16,7 @@
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
                     <%-- PMs and sometimes PDMs (and Developers) can create Research Projects. --%>
-                    <security:authorizeBlock roles="<%= roles(Developer, PM, PDM) %>">
+                    <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
                         <li>
                             <stripes:link id="createProject"
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
@@ -35,7 +35,7 @@
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
                     <%-- PMs and PDMs (and Developers) can create Product Orders. --%>
-                    <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                    <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                         <li>
                             <stripes:link id="createProductOrder"
                                           beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
@@ -75,13 +75,13 @@
             </li>
 
             <security:authorizeBlock
-                    roles="<%= roles(LabUser, LabManager, PDM, PM, Developer)%>">
+                    roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer)%>">
                 <li class="dropdown">
 
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
-                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer) %>">
                             <li>
                                 <stripes:link id="addToBucket"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
@@ -94,7 +94,7 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
                                           event="view">Buckets</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer) %>">
                             <li>
                                 <stripes:link id="controls"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
@@ -183,7 +183,7 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean"
                                           event="view">Batch Workflow</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
+                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
                             <li>
                                 <stripes:link id="molecularIndexUpload"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
@@ -258,7 +258,7 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
                                       event="list">List</stripes:link>
                     </li>
-                    <security:authorizeBlock roles="<%= roles(LabManager,PDM, PM, Developer) %>">
+                    <security:authorizeBlock roles="<%= roles(LabManager,PDM, GPProjectManager, PM, Developer) %>">
                         <li>
                             <stripes:link id="createStorage"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
@@ -278,6 +278,13 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"
                                       event="create">
                             Create New Container
+                        </stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="pickFromStorage"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean"
+                                      event="view">
+                            Create Pick List From Storage
                         </stripes:link>
                     </li>
                 </ul>

@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -28,6 +28,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
@@ -42,8 +43,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Test(groups = TestGroups.STUBBY)
-public class BucketEjbTest extends ContainerTest {
+/**
+ *  This test is singleThreaded because subsequent test methods are called before the @AfterMethod of the previous test method call is complete <br/>
+ *  Lifecycle @AfterMethod operates on the injected UserTransaction instance variable while subsequent methods are performing persistence operations.
+ *  The previous @AfterMethod rollback call is incomplete so unique constraints are violated.
+ */
+@Test(groups = TestGroups.STUBBY, singleThreaded = true)
+@Dependent
+public class BucketEjbTest extends StubbyContainerTest {
+
+    public BucketEjbTest(){}
 
     @Inject
     BucketEjb resource;
@@ -100,22 +109,24 @@ public class BucketEjbTest extends ContainerTest {
         poBusinessKey2 = "PDO-9";
         poBusinessKey3 = "PDO-10";
 
-        Date today = new Date();
+        long timestamp = (new Date()).getTime();
 
         productOrder1 = new ProductOrder(101L, "Test PO1", productOrderSamples, "GSP-123",
                                          productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
                                          researchProjectDao.findByTitle("ADHD"));
-        productOrder1.setTitle(productOrder1.getTitle() + today.getTime());
-        today = new Date();
+        productOrder1.setTitle(productOrder1.getTitle() + timestamp);
+
+        timestamp += 1000;
         productOrder2 = new ProductOrder(101L, "Test PO2", productOrderSamples, "GSP-123",
                                          productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
                                          researchProjectDao.findByTitle("ADHD"));
-        productOrder2.setTitle(productOrder2.getTitle() + today.getTime());
-        today = new Date();
+        productOrder2.setTitle(productOrder2.getTitle() + timestamp);
+
+        timestamp += 1000;
         productOrder3 = new ProductOrder(101L, "Test PO3", productOrderSamples, "GSP-123",
                                          productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
                                          researchProjectDao.findByTitle("ADHD"));
-        productOrder3.setTitle(productOrder3.getTitle() + today.getTime());
+        productOrder3.setTitle(productOrder3.getTitle() + timestamp);
 
         productOrder1.setJiraTicketKey(poBusinessKey1);
         productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);

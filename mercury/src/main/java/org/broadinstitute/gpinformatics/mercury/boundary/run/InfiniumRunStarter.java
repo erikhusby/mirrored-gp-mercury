@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -46,16 +45,13 @@ public class InfiniumRunStarter {
     private static Date previousNextTimeout = new Date(0);
 
     @Resource
-    TimerService timerService;
+    private TimerService timerService;
 
     @Inject
     private InfiniumRunFinder infiniumRunFinder;
 
     @Inject
     private SessionContextUtility sessionContextUtility;
-
-    @Inject
-    private UserBean userBean;
 
     @PostConstruct
     public void initialize() {
@@ -84,7 +80,6 @@ public class InfiniumRunStarter {
                     @Override
                     public void apply() {
                         try {
-                            userBean.login("seqsystem");
                             infiniumRunFinder.find();
                         } catch (SystemException e) {
                             log.error("Error finding infinium runs", e);

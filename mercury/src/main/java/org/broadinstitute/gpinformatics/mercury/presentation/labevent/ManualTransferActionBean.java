@@ -8,6 +8,9 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -15,6 +18,8 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -34,6 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParser;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -60,6 +66,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -136,6 +143,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
     @Inject
     private MercurySampleDao mercurySampleDao;
 
+    @Inject
+    private SampleDataFetcher sampleDataFetcher;
+
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
@@ -211,7 +221,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public Resolution chooseLabEventType() {
         List<String> reagentNames;
         int[] reagentFieldCounts;
-        if (workflowStepDef != null) {
+        if (workflowStepDef != null && !CollectionUtils.isEmpty(workflowStepDef.getReagentTypes())) {
             reagentNames = workflowStepDef.getReagentTypes();
             reagentFieldCounts = new int[reagentNames.size()];
             Arrays.fill(reagentFieldCounts, 1);
@@ -378,7 +388,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
         if (workflowProcessName != null) {
             workflowStepDef = workflowConfig.getStep(workflowProcessName, workflowStepName,
                     workflowEffectiveDate);
-            workflowStepDef.getReagentTypes();
         }
         return workflowStepDef;
     }
@@ -463,6 +472,35 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         }
                     }
                 }
+                break;
+            case DBS_PUNCHER:
+                DBSPuncherFileParser dbsPuncherFileParser = new DBSPuncherFileParser();
+                DBSPuncherFileParser.DBSPuncherRun puncherRun =
+                        dbsPuncherFileParser.parseRun(limsFileStream, messageCollection);
+                Map<VesselPosition, String> mapPositionToSampleBarcode = puncherRun.getMapPositionToSampleBarcode();
+                if (mapPositionToSampleBarcode.size() == 0) {
+                    messageCollection.addError(
+                            "Failed to find any transfers in file: " + mapPositionToSampleBarcode.size());
+                } else {
+                    Iterator<StationEventType> eventIterator = stationEvents.iterator();
+                    PlateTransferEventType plateTransferEventTypeDbs =
+                            (PlateTransferEventType) eventIterator.next();
+                    String sourceBarcode =  manualTransferDetails.getSourceContainerPrefix() + syntheticBarcode;
+                    plateTransferEventTypeDbs.getSourcePlate().setBarcode(sourceBarcode);
+                    plateTransferEventTypeDbs.getPlate().setBarcode(puncherRun.getPlateBarcode());
+                    PositionMapType sourcePositionMap = plateTransferEventTypeDbs.getSourcePositionMap();
+                    sourcePositionMap.setBarcode(plateTransferEventTypeDbs.getSourcePlate().getBarcode());
+                    for (Map.Entry<VesselPosition, String> entry: mapPositionToSampleBarcode.entrySet()) {
+                        ReceptacleType receptacleType = new ReceptacleType();
+                        receptacleType.setReceptacleType(manualTransferDetails.getSourceBarcodedTubeType().
+                                getAutomationName());
+                        receptacleType.setBarcode(entry.getValue());
+                        receptacleType.setPosition(entry.getKey().name());
+                        sourcePositionMap.getReceptacle().add(receptacleType);
+                    }
+                }
+
+                break;
             }
         } catch (IOException e) {
             log.error("IO Exception when parsing LIMS File", e);
@@ -545,6 +583,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 }
                 break;
             case PLATE_CHERRY_PICK_EVENT:
+                Set<String> rootSampleIds = new HashSet<>();
+                MultiValuedMap<String, String> mapPositionToSampleIds = new HashSetValuedHashMap<>();
+                Map<String, SampleData> mapSampleIdToData = null;
                 for (int eventIndex = 0; eventIndex < stationEvents.size(); eventIndex++) {
                     StationEventType stationEvent = stationEvents.get(eventIndex);
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
@@ -555,7 +596,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 Direction.SOURCE);
 
                         //Check for duplicate molecular indexes in source tubes.
-                        Set<String> set = new HashSet<>();
+                        Set<String> molIndexSchemes = new HashSet<>();
                         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
                             ReceptacleType receptacleType = findReceptacleAtPosition(
                                     plateCherryPickEvent.getSourcePositionMap().get(0), cherryPickSourceType.getWell());
@@ -567,10 +608,71 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 if (sample.getMolecularIndexingScheme() != null) {
                                     String molIndex = sample.getMolecularIndexingScheme().getName();
                                     if (molIndex != null) {
-                                        if (!set.add(molIndex)) {
+                                        if (!molIndexSchemes.add(molIndex)) {
                                             messageCollection.addWarning("Duplicate molecular index: " + molIndex);
                                         }
                                     }
+                                }
+                            }
+                        }
+
+                        // Get participants in source tubes
+                        if (manualTransferDetails.isRequireSingleParticipant()) {
+                            // Get sample data for each source
+                            for (ReceptacleType receptacleType :
+                                    plateCherryPickEvent.getSourcePositionMap().get(0).getReceptacle()) {
+                                if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
+                                    LabVessel currentLabVessel = mapBarcodeToVessel.get(receptacleType.getBarcode());
+                                    if (currentLabVessel == null) {
+                                        continue;
+                                    }
+                                    for (SampleInstanceV2 sample : currentLabVessel.getSampleInstancesV2()) {
+                                        String rootSampleName = sample.getMercuryRootSampleName();
+                                        rootSampleIds.add(rootSampleName);
+                                        mapPositionToSampleIds.put(receptacleType.getPosition(), rootSampleName);
+                                    }
+                                }
+                            }
+                            if (!rootSampleIds.isEmpty()) {
+                                // Map sample to participant
+                                mapSampleIdToData = sampleDataFetcher.fetchSampleData(rootSampleIds);
+                                for (SampleData sampleData : mapSampleIdToData.values()) {
+                                    if (StringUtils.isEmpty(sampleData.getCollaboratorParticipantId())) {
+                                        messageCollection.addError("No collaborator participant ID for " +
+                                                sampleData.getSampleId());
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Check for duplicate participants in pooling transfers
+                    if (manualTransferDetails.isRequireSingleParticipant()) {
+
+                        if (!rootSampleIds.isEmpty()) {
+                            // Map destination positions to source positions
+                            MultiValuedMap<String, String> mapDestToSource = new HashSetValuedHashMap<>();
+                            for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+                                mapDestToSource.put(cherryPickSourceType.getDestinationWell(),
+                                        cherryPickSourceType.getWell());
+                            }
+
+                            // If dest has multiple sources, check they are the same participant
+                            for (String dest : mapDestToSource.keySet()) {
+                                Set<String> ptIds = new HashSet<>();
+                                Collection<String> sources = mapDestToSource.get(dest);
+                                if (sources.size() > 1) {
+                                    for (String source : sources) {
+                                        Collection<String> sampleIds = mapPositionToSampleIds.get(source);
+                                        for (String sampleId : sampleIds) {
+                                            SampleData sampleData = mapSampleIdToData.get(sampleId);
+                                            ptIds.add(sampleData.getCollaboratorParticipantId());
+                                        }
+                                    }
+                                }
+                                if (ptIds.size() > 1) {
+                                    messageCollection.addError("More than one participant: " +
+                                            StringUtils.join(ptIds.toArray(), ','));
                                 }
                             }
                         }
@@ -578,10 +680,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
                             false, null, labBatch, messageCollection, Direction.TARGET);
-
-                    if (messageCollection.hasErrors() || isValidation) {
-                        break;
-                    }
                 }
                 break;
             case RECEPTACLE_PLATE_TRANSFER_EVENT:
@@ -828,7 +926,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     //Target
                     VesselTypeGeometry targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
                     assignSyntheticBarcode(plateCherryPickEvent.getPlate().get(0), targetVesselTypeGeometryCp,
-                            localManualTransferDetails.getTargetContainerPrefix());
+                            localManualTransferDetails.getTargetContainerPrefix() + anonymousRackDisambiguator);
                     for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
                         if (!sourceVesselTypeGeometryCp.isBarcoded()) {
                             cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());

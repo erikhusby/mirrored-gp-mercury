@@ -47,6 +47,8 @@ import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActi
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -235,7 +237,22 @@ public class ContainerActionBean extends RackScanActionBean {
             }
         }
         if (!sortedTreeMap.isEmpty()) {
-            Pair<LabEvent, TubeFormation> labEventTubeFormationPair = sortedTreeMap.get(sortedTreeMap.lastKey());
+            TreeMap<Date, Pair<LabEvent, TubeFormation>> sortedDateDesc =
+                    new TreeMap<>(Collections.reverseOrder());
+            sortedDateDesc.putAll(sortedTreeMap);
+            Pair<LabEvent, TubeFormation> labEventTubeFormationPair = null;
+            for (Map.Entry<Date, Pair<LabEvent, TubeFormation>> entry: sortedDateDesc.entrySet()) {
+                if (entry.getValue() != null && entry.getValue().getLeft() != null &&
+                    entry.getValue().getLeft().getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
+                    entry.getValue().getLeft().getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
+                    labEventTubeFormationPair = entry.getValue();
+                    break;
+                }
+            }
+            if (labEventTubeFormationPair == null) {
+                return;
+            }
+
             LabEvent latestEvent = labEventTubeFormationPair.getLeft();
             TubeFormation tubeFormation = labEventTubeFormationPair.getRight();
             VesselContainer<?> containerRole = tubeFormation.getContainerRole();
@@ -255,7 +272,7 @@ public class ContainerActionBean extends RackScanActionBean {
                                 && !barcodedTube.getStorageLocation().equals(rackOfTubes.getStorageLocation())) {
                             continue;
                         }
-                        LabEvent barcodesLatestEvent = barcodedTube.getLatestEvent();
+                        LabEvent barcodesLatestEvent = barcodedTube.getLatestStorageEvent();
                         if (barcodesLatestEvent != null && barcodesLatestEvent.equals(latestEvent)) {
                             mapPositionToVessel.put(vesselPosition, barcodedTube);
                         }
@@ -350,6 +367,9 @@ public class ContainerActionBean extends RackScanActionBean {
         if (rackOfTubes != null && !rackOfTubes.getRackType().isRackScannable()) {
             showLayout = true;
         }
+        if (storageLocation != null) {
+            addMessage("After updating the container layout you will need to add it back to storage.");
+        }
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
 
@@ -399,8 +419,11 @@ public class ContainerActionBean extends RackScanActionBean {
             showLayout = true;
             editLayout = true;
             return new ForwardResolution(CONTAINER_VIEW_PAGE);
+        } else if (messageCollection.hasWarnings()) {
+            addMessages(messageCollection);
         }
         addMessage("Successfully updated layout.");
+        addMessage("Please select storage location.");
         return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_SEARCH_ACTION)
                 .addParameter(CONTAINER_PARAMETER, containerBarcode)
                 .addParameter(SHOW_LAYOUT_PARAMETER, true);
@@ -412,11 +435,15 @@ public class ContainerActionBean extends RackScanActionBean {
             messageCollection.addError("No tube barcodes found.");
             return;
         }
+        storageLocation = null;
         List<BarcodedTube> barcodedTubesToAddToStorage = null;
-        if (storageLocation != null) {
-            barcodedTubesToAddToStorage = savePositionMapToLocation(messageCollection);
-            if (messageCollection.hasErrors()) {
-                addMessages(messageCollection);
+        Set<String> barcodes = new HashSet<>();
+        for (ReceptacleType receptacleType : receptacleTypes) {
+            if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
+                String barcode = receptacleType.getBarcode();
+                LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+                labVessel.setStorageLocation(null);
+                barcodes.add(barcode);
             }
         }
 
@@ -446,6 +473,24 @@ public class ContainerActionBean extends RackScanActionBean {
                 barcodedTube.setStorageLocation(storageLocation);
             }
         }
+
+        // Remove any tubes that are no longer in this storage location
+        // Sort to display orphans warnings in order
+        List<Map.Entry<VesselPosition, LabVessel>> entries = new ArrayList<>(mapPositionToVessel.entrySet());
+        Collections.sort(entries, new Comparator<Map.Entry<VesselPosition, LabVessel>>() {
+            @Override
+            public int compare(Map.Entry<VesselPosition, LabVessel> o1, Map.Entry<VesselPosition, LabVessel> o2) {
+                return o1.getKey().compareTo(o2.getKey());
+            }
+        });
+        for (Map.Entry<VesselPosition, LabVessel> entry: entries) {
+            LabVessel labVessel = entry.getValue();
+            if (!barcodes.contains(labVessel.getLabel())) {
+                VesselPosition vesselPosition = entry.getKey();
+                labVessel.setStorageLocation(null);
+                messageCollection.addWarning("Lab Vessel " + labVessel.getLabel() + " was orphaned from position " + vesselPosition.name());
+            }
+        }
         showLayout = true;
         labEventDao.persist(labEvent);
         labEventDao.flush();
@@ -454,33 +499,45 @@ public class ContainerActionBean extends RackScanActionBean {
     @HandlesEvent(FIRE_RACK_SCAN)
     public Resolution fireRackScan() throws ScannerException {
         scan();
-        showLayout = true;
+        boolean rackScanEmpty = true;
         MessageCollection messageCollection = new MessageCollection();
         Map<VesselPosition, LabVessel> scanPositionToVessel = new HashMap<>();
         if(getRackScan() != null) {
-            List<String> barcodes = new ArrayList<>(rackScan.values());
-            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-            for (Map.Entry<String, String> entry: rackScan.entrySet()) {
-                String position = entry.getKey();
-                String barcode = entry.getValue();
-                LabVessel labVessel = mapBarcodeToVessel.get(barcode);
-                if (labVessel == null) {
-                    messageCollection.addError("Unrecognized tube barcode: " + barcode);
-                } else {
-                    VesselPosition vesselPosition = VesselPosition.getByName(position);
-                    if (vesselPosition == null) {
-                        messageCollection.addError("Unrecognized position: " + position);
-                    } else {
-                        scanPositionToVessel.put(vesselPosition, labVessel);
+            if (rackScan == null || rackScan.isEmpty()) {
+                messageCollection.addError("No results from rack scan");
+            } else {
+                List<String> barcodes = new ArrayList<>(rackScan.values());
+                Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+                for (Map.Entry<String, String> entry : rackScan.entrySet()) {
+                    if (StringUtils.isNotEmpty(entry.getValue())) {
+                        rackScanEmpty = false;
+                        String position = entry.getKey();
+                        String barcode = entry.getValue();
+                        LabVessel labVessel = mapBarcodeToVessel.get(barcode);
+                        if (labVessel == null) {
+                            messageCollection.addError("Unrecognized tube barcode: " + barcode);
+                        } else {
+                            VesselPosition vesselPosition = VesselPosition.getByName(position);
+                            if (vesselPosition == null) {
+                                messageCollection.addError("Unrecognized position: " + position);
+                            } else {
+                                scanPositionToVessel.put(vesselPosition, labVessel);
+                            }
+                        }
                     }
                 }
             }
+        }
+
+        if (rackScanEmpty) {
+            messageCollection.addError("No results from rack scan");
         }
 
         if (messageCollection.hasErrors()) {
             showLayout = false;
             addMessages(messageCollection);
         } else {
+            showLayout = true;
             mapPositionToVessel = scanPositionToVessel;
         }
         editLayout = true;

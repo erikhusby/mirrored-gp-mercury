@@ -1,10 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -13,13 +14,17 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Arrays;
 import java.util.List;
 
-@Test(groups = TestGroups.STUBBY)
-public class ProductOrderSampleStatusTest extends ContainerTest {
+@Test(groups = TestGroups.STUBBY, singleThreaded = true)
+@Dependent
+public class ProductOrderSampleStatusTest extends StubbyContainerTest {
+
+    public ProductOrderSampleStatusTest(){}
 
     @Inject
     ProductOrderEjb productOrderEjb;
@@ -93,7 +98,11 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
         ProductOrder order = productOrderDao.findByBusinessKey(testKey);
         List<ProductOrderSample> samples = order.getSamples();
         List<ProductOrderSample> samplesToAbandon = Arrays.asList(samples.get(1), samples.get(3), samples.get(5));
-        productOrderEjb.abandonSamples(testKey, samplesToAbandon, "Why I abandoned you let me count the ways...");
+
+        final MessageCollection messageCollection = new MessageCollection();
+
+        productOrderEjb.abandonSamples(testKey, samplesToAbandon, "Why I abandoned you let me count the ways...",
+                messageCollection);
         Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Draft);
         Assert.assertEquals(samples.size(), NUM_TEST_SAMPLES);
         for (ProductOrderSample sample : samples) {

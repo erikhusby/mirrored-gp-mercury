@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,15 +22,19 @@ import java.util.Date;
 import java.util.List;
 
 @Alternative
+@Dependent
 public class SubmissionsWillAlwaysWorkSubmissionsService extends SubmissionsServiceStub {
+
+    public SubmissionsWillAlwaysWorkSubmissionsService(){}
+
     @Override
     public Collection<SubmissionStatusDetailBean> postSubmissions(SubmissionRequestBean submission) {
         List<SubmissionStatusDetailBean> results = new ArrayList<>();
         for (SubmissionBean submissionBean : submission.getSubmissions()) {
             SubmissionStatusDetailBean bean = new SubmissionStatusDetailBean(submissionBean.getUuid(),
-                    SubmissionStatusDetailBean.Status.SUBMITTED.getKey(),
+                    SubmissionStatusDetailBean.Status.SUBMITTED,
                     SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR,
-                    SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
+                    SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription(),
                     new Date());
             results.add(bean);
         }
@@ -48,9 +53,9 @@ public class SubmissionsWillAlwaysWorkSubmissionsService extends SubmissionsServ
         List<SubmissionStatusDetailBean> results = new ArrayList<>();
         for (String uuid : uuids) {
             SubmissionStatusDetailBean statusDetailBean = new SubmissionStatusDetailBean(uuid,
-                    SubmissionStatusDetailBean.Status.FAILURE.getKey(),
+                    SubmissionStatusDetailBean.Status.FAILURE,
                     SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR,
-                    SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION, new Date(), "error1", "error2");
+                    SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription(), new Date(), "error1", "error2");
             results.add(statusDetailBean);
         }
         return results;

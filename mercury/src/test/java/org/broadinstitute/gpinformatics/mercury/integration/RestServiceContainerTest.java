@@ -11,6 +11,7 @@ import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
+import javax.enterprise.context.Dependent;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -20,8 +21,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.AL
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.testng.Assert.fail;
 
 /**
@@ -34,6 +35,7 @@ import static org.testng.Assert.fail;
  *
  * @author breilly
  */
+@Dependent
 public abstract class RestServiceContainerTest extends Arquillian {
 
     public static final int DEFAULT_FORWARD_PORT = 8443;

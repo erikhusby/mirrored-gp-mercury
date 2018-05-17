@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -21,6 +21,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.text.SimpleDateFormat;
@@ -32,8 +33,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-@Test(groups = TestGroups.STUBBY)
-public class LabBatchEJBTest extends ContainerTest {
+@Test(groups = TestGroups.STUBBY, singleThreaded = true)
+@Dependent
+public class LabBatchEJBTest extends StubbyContainerTest {
+
+    public LabBatchEJBTest(){}
 
     public static final String STUB_TEST_PDO_KEY = "PDO-999";
     public static final String BUCKET_NAME = "Pico/Plating Bucket";

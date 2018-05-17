@@ -1,11 +1,12 @@
+<%--suppress ALL --%>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -52,6 +53,21 @@
             background: #c4eec0;
             height: 15px;
         }
+        /* css used to indicate slow columns */
+        .em-turtle {
+            background-image: url("${ctxpath}/images/turtle.png") !important;
+            background-size: 16px 16px;
+            background-repeat: no-repeat;
+            background-position: right 5px center;
+        }
+        .image-small {
+            width: 16px;
+            height: 16px;
+        }
+        .slow-colunms-hidden {
+            box-shadow: inset 0 0 10px orange
+        }
+
         .sampleDataProgressText{
             position: absolute;
             margin-left: 1em;
@@ -68,15 +84,44 @@ $j(document).ready(function () {
     $j('body').popover({selector: '[rel=popover]'});
 //    if ($j("#sampleData tbody>tr").length > 0) {
     enableDefaultPagingOptions();
-    function loadBspData(settings) {
+    function loadBspData(settings, refresh=false) {
         var api = new $j.fn.dataTable.Api(settings);
         var table = api.table();
         var remainingSamples = [];
-        table.column(0).data().each(function (cell) {
-            remainingSamples.push($j(cell)[0]);
+        table.rows().data().each(function (row) {
+            var data = $j(row);
+            data.each(function () {
+                var pdoId = this.PRODUCT_ORDER_SAMPLE_ID;
+                if ((!this.includeSampleData) && remainingSamples.indexOf(pdoId) < 0 || refresh) {
+                    remainingSamples.push(pdoId);
+                }
+            });
         });
-
         sampleInfoBatchUpdate(remainingSamples, table);
+        updateSampleSummary();
+    }
+
+    function updateSampleSummary(){
+        $j.ajax({
+            url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_SUMMARY %>",
+            data: {
+                'productOrder': "${actionBean.editOrder.businessKey}",
+            },
+            method: 'POST',
+            dataType: 'json',
+            error: function (obj, error, ex) {
+                console.log(error, obj.responseText, JSON.stringify(ex));
+            },
+            success: function (json) {
+                if (json['summary']) {
+                    writeSummaryData(json);
+                }
+                if (json['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
+                    $j("#numberSamplesNotReceived").html(json['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
+                }
+            }
+        })
+
     }
 
     function sampleInfoBatchUpdate(samplesToFetch, settings) {
@@ -87,16 +132,71 @@ $j(document).ready(function () {
         var table = new $j.fn.dataTable.Api(settings).table();
 
         // When there are greater than 1000 samples split the call to updateSampleInformation
-        if (pdoSampleCount > 1000) {
-            fetchSize = Math.ceil(pdoSampleCount / 2);
-            updateSampleInformation(samplesToFetch.splice(0, fetchSize), table, true);
-            updateSampleInformation(samplesToFetch.splice(0, fetchSize), table, false);
-        } else {
-            updateSampleInformation(samplesToFetch, table, true);
+        fetchSize = pdoSampleCount > 2000 ? 2000: pdoSampleCount;
+        while (samplesToFetch.length > 0) {
+            (function (samples) {
+                updateSampleInformation(samples, table, false);
+            }(samplesToFetch.splice(0, fetchSize)));
         }
     }
 
     setupDialogs();
+    renderCustomizationSummary();
+    updateFundsRemaining();
+
+    function renderCustomizationSummary() {
+        var customJSONString = $j("#customizationJsonString").val();
+        if(customJSONString !== null && customJSONString!==undefined && customJSONString !== "") {
+            var customSettings = JSON.parse(customJSONString);
+        }
+        $j("#customizationContent").html(function() {
+            var content = "";
+
+            for  (part in customSettings) {
+                content += "<b>"+part +"</b>";
+                var price = customSettings[part]["price"];
+                var quantity = customSettings[part]["quantity"];
+                var customName = customSettings[part]["customName"];
+
+                var firstSetting = true;
+
+                if ((price !== undefined) && (price !== 'null') && (price.length > 0)) {
+
+                    if(firstSetting) {
+                        content += ": ";
+                        firstSetting = false;
+                    }
+
+                    content += "Custom Price -- " + price;
+                }
+                if ((quantity !== undefined) && (quantity !== 'null') && (quantity.length > 0)) {
+                    if(firstSetting) {
+                        content += ": ";
+                        firstSetting = false;
+                    } else {
+
+                        content += ", ";
+                    }
+
+                    content += "Custom Quantity -- " + quantity;
+                }
+                if ((customName !== undefined) && (customName !== 'null') && (customName.length > 0)) {
+                    if(firstSetting) {
+                        content += ": ";
+                        firstSetting = false;
+                    } else {
+
+                        content += ", ";
+                    }
+
+                    content += "Custom Product Name -- " + customName;
+                }
+                content += "<BR>";
+            }
+            return content;
+        });
+
+    }
 
     var oTable = $j('#sampleData').dataTable({
         'dom': "<'row-fluid'<'span12'f>><'row-fluid'<'span5'l><'span2 sampleDataProgress'><'span5 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
@@ -120,10 +220,11 @@ $j(document).ready(function () {
                     }
                 }],
             }, standardButtons()],
-            order: [[ 1, 'desc' ]],
+            order: [[ 1, 'asc' ]],
             ajax: {
                 url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
                 method: 'POST',
+                dataType: 'json',
                 data: function (data, settings) {
                     data.productOrder = "${actionBean.editOrder.businessKey}";
                     data.initialLoad = true;
@@ -136,12 +237,6 @@ $j(document).ready(function () {
                     var rowsWithSampleData = data['<%=ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT%>'];
                     var recordsTotal = data['<%=ProductOrderSampleBean.RECORDS_TOTAL%>'];
                     initSampleDataProgress(rowsWithSampleData, recordsTotal);
-                    if (data['<%=ProductOrderSampleBean.COMMENT%>']) {
-                        writeSummaryData(data);
-                    }
-                    if (data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
-                        $j("#numberSamplesNotReceived").html(data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
-                    }
                 },
             },
             "columns": [
@@ -174,7 +269,7 @@ $j(document).ready(function () {
                 {"data": "${columnHeaderOnRiskString}", "title": "${columnHeaderOnRisk}"},
                 {"data": "${columnHeaderProceedOutOfSpec}", "title": "${columnHeaderProceedOutOfSpec}"},
                 {"data": "${columnHeaderStatus}", "title": "${columnHeaderStatus}"},
-                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "title-string", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
+                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "boolean", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
             ],
             "stateSaveCallback": function (settings, data) {
                 var api = new $j.fn.dataTable.Api(settings);
@@ -231,7 +326,6 @@ $j(document).ready(function () {
                 }
                 loadBspData(settings);
                 initColumnVisibility(settings);
-                updateFundsRemaining();
 
 //                postLoadSampleInfo();
                 // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
@@ -250,44 +344,41 @@ $j(document).ready(function () {
                 if (kitDefinitionIndex == 0) {
                     showKitDetail();
                 }
-            $j('.shiftCheckbox').enableCheckboxRangeSelection();
-
-            }
+            },
+        "drawCallback": function(){
+            $j(".shiftCheckbox").enableCheckboxRangeSelection();
+        }
 });
-//    }
 
     function renderRackscanMismatch(data, type, row, meta) {
-        var result = data;
         if (type === 'display') {
             if (data === true) {
-                result = imageForBoolean(data, "${ctxpath}/images/error.png")
+                return imageForBoolean(data, "${ctxpath}/images/error.png")
             } else {
-                result = "";
+                return "";
             }
         }
-        return result;
+        return data;
     }
 
     function renderBilled(data, type, row, meta) {
-        var result = data;
         if (type === 'display') {
             if (data && data === true) {
                 return imageForBoolean(data, "${ctxpath}/images/check.png");
             } else {
-                result = "";
+                return "";
             }
         }
-        return result;
+        return data;
     }
 
-    function imageForBoolean(data, image) {
+    function imageForBoolean(data, imageSrc) {
         var result = data;
         if (data) {
-            tagAttributes = {
-                src: image,
-                title: true
-            }
-            result = jQuery("<img/>", tagAttributes)[0].outerHTML;
+            var image = document.createElement("img");
+            image.src = imageSrc;
+            image.title = true;
+            result = image.outerHTML;
         }
         return result;
     }
@@ -296,20 +387,66 @@ $j(document).ready(function () {
 
     function initColumnVisibility(settings) {
         var api=$j.fn.dataTable.Api(settings);
-        var columnVisibilityKey = "columnVisibility";
-        $j('#sampleData').on('column-visibility.dt', function (e, settings, column, state) {
-            $j("body").data(columnVisibilityKey, state);
+        var columnVisibilityChangedKey = "columnVisibilityChanged";
+        var $sampleDataTable = $j('#sampleData');
+        var $colVis = $j(".buttons-colvis");
+
+        $sampleDataTable.on('column-visibility.dt', function (e, settings, column, state) {
+            $j("body").data(columnVisibilityChangedKey, state);
         });
+
+
+        $colVis.popover({
+            trigger: "hover", placement: 'top', html: true, delay: { "show": 500, "hide": 100 },
+            content: "Click to change column visibility. Columns marked with a <img src='${ctxpath}/images/turtle.png' class='image-small'/> will negatively impact page loading time.</div>"
+        });
+
+        function updateShowHideButton() {
+            if (api.column(":hidden").length>0) {
+                $colVis.addClass("slow-colunms-hidden");
+                $colVis.attr('data-original-title','Some data columns are hidden.');
+            } else {
+                $colVis.removeClass("slow-colunms-hidden");
+                $colVis.attr('data-original-title','Hide unneeded columns.');
+            }
+        }
+
+        $j(".slow-colunms-hidden").on('hover', function(){
+           this.setAttribute('tooltip', 'Some data columns are hidden')
+        });
+        $sampleDataTable.on('init.dt', updateShowHideButton);
+
+        var slowColumns = ${actionBean.slowColumns}
+
+            // When the "Show or Hide" button is clicked
+            $j(document.body).on("click", "a.buttons-colvis", function (event) {
+                // When colvis modal is loading
+                $j.when($j(event.target).load()).then(function (event2) {
+                    var slowButtons = $j("a.buttons-columnVisibility").filter(function () {
+                        var $button = $j(this);
+                        // test if the column headers is in the slowColumns array.
+                        // the check for undefined is to prevent this from being called very time
+                        return $button.data('tooltip') === undefined && slowColumns.indexOf($button.text().trim()) >= 0;
+                    });
+                    slowButtons.addClass("em-turtle");
+                    slowButtons.attr('title', 'Enabling this column may slow page loading');
+                    slowButtons.tooltip();
+                });
+//                updateHowHideButton();
+            });
 
         // If a column that was previously hidden but becomes visible the page
         // must be reloaded since there is no data in that column.
         $j(document.body).on("click", ".dt-button-background", function () {
             api.state.save();
-            var sessionVisibility = !undefined && $j("body").data(columnVisibilityKey) || false;
+            updateShowHideButton();
+
+            var sessionVisibility = !undefined && $j("body").data(columnVisibilityChangedKey) || false;
             if (sessionVisibility) {
-//                api.ajax.reload();
-                loadBspData(settings);
-//                location.reload();
+                loadBspData(settings, true);
+
+                // After data reload, reset the columnVisibilityChanged flag to false.
+                $j("body").data(columnVisibilityChangedKey, false);
             }
         });
     }
@@ -325,14 +462,14 @@ $j(document).ready(function () {
     function renderCheckbox(data, type, row) {
         var result = data;
         if (type === 'display') {
-            tagAttributes = {
-                "name": "selectedProductOrderSampleIds",
-                "value": data,
-                "type": "checkbox",
-                "class": "shiftCheckbox",
-                "data-sample-checkbox" :row["<%= ProductOrderSampleBean.SAMPLE_ID %>"]
-            };
-            result = jQuery("<input/>", tagAttributes)[0].outerHTML;
+            var input = document.createElement("input");
+            input.name = "selectedProductOrderSampleIds"
+            input.className = "shiftCheckbox";
+            input.type = "checkbox";
+            input.value = data;
+            input.setAttribute("data-sample-checkbox", row["<%= ProductOrderSampleBean.SAMPLE_ID %>"]);
+
+            result = input.outerHTML;
         }
         return result;
 
@@ -594,7 +731,7 @@ function setupDialogs() {
 
 function writeSummaryData(json) {
     var dataList = '<ul>';
-    json.comments.map(function (item) {
+    json.summary.map(function (item) {
         dataList += '<li>' + item + '</li>'
     });
     dataList += '</ul>';
@@ -671,24 +808,13 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
             },
             success: function (json) {
                 if (json) {
-                    var dataMap = {};
                     for (var item of json.data) {
-                        dataMap[item.rowId] = item;
+                        var row = table.row("#"+item.rowId);
+                        row.data(item);
+                        row.invalidate;
                     }
-                    table.rows().every(function () {
-                        var newData = dataMap[this.data().rowId];
-                        if (newData) {
-                            this.data(newData);
-                            this.invalidate();
-                        }
-                    });
-                    if (json.comments) {
-                        writeSummaryData(json);
-                    }
+
                     updateSampleDataProgress(json.rowsWithSampleData, recordsTotal);
-                    if (json.numberSamplesNotReceived) {
-                        $j("#numberSamplesNotReceived").html(json.numberSamplesNotReceived);
-                    }
                 }
             },
             complete: function () {
@@ -702,12 +828,11 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
 
 function renderPico(data, type, row, meta) {
     var result = data;
-    if (result === null) {
-        result = "";
-    }
     if (type === 'display') {
-        if (result === "") {
-            result = "No Pico";
+        var outerDiv = document.createElement("div");
+        var picoSpan=document.createElement("span");
+        if (result === "" && row.includeSampleData) {
+            picoSpan.innerHTML = "No Pico";
         } else {
             var oneYearAgo = meta.settings.oneYearAgo;
             var almostOneYearAgo = meta.settings.almostOneYearAgo;
@@ -729,19 +854,21 @@ function renderPico(data, type, row, meta) {
             } else if (picoDate.getTime() < almostOneYearAgo.getTime()) {
                 containerClass = "label label-warning";
             }
-
+            picoSpan.innerHTML=data;
+            picoSpan.className=containerClass;
         }
-        var $container = $j("<span></span>", {text: result, class: containerClass});
-        result = $container.wrap("<div></div>").parent().html();
+        outerDiv.appendChild(picoSpan);
+        result = outerDiv.outerHTML;
     }
     return result;
 }
 
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
+    var productOrderKey = $j("input[name='productOrder']").val();
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
             dataType: 'json',
             success: updateFunds
         });
@@ -1113,6 +1240,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     <stripes:hidden name="replacementSampleList" id="replacementSampleList" value="" />
 <%--<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>--%>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
+<stripes:hidden name="customizationJsonString" id="customizationJsonString" />
 
 <div class="actionButtons">
     <c:choose>
@@ -1120,7 +1248,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
             <%-- PDOs can be placed by PM or PDMs, so the security tag accepts either of those roles for 'Place Order'. --%>
             <%--'Validate' is also under that same security tag since that has the power to alter 'On-Riskedness' --%>
             <%-- for PDO samples. --%>
-            <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 <stripes:submit name="placeOrder" value="Validate and Place Order"
                                 disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                 <stripes:submit name="validate" value="Validate" style="margin-left: 3px;" class="btn"/>
@@ -1133,14 +1261,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
             </stripes:link>
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
                                 value="Delete Draft" style="margin-left: 10px;" class="btn"/>
             </security:authorizeBlock>
         </c:when>
         <c:otherwise>
             <c:if test="${actionBean.canPlaceOrder}">
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                     <stripes:button onclick="showPlaceConfirm('placeOrder')" name="placeOrder"
                                     value="Place Order" class="btn"/>
                 </security:authorizeBlock>
@@ -1168,27 +1296,9 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
                     <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
-                    <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
-                                    style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <c:choose>
-                        <c:when test="${actionBean.productOrderListEntry.billing}">
-                            <span class="disabled-link" title="Upload not allowed while billing is in progress">Upload Billing Tracker</span>
-                        </c:when>
-                        <c:otherwise>
-                            <stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
-                                    event="view" >
-                                Upload Billing Tracker
-                            </stripes:link>
-                        </c:otherwise>
-                    </c:choose>
-                    <c:if test="${actionBean.productOrderListEntry.billing}">
-                        &#160;
-                        Upload not allowed while billing is in progress
-                    </c:if>
 
                     &nbsp;&nbsp;&nbsp;&nbsp;
                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
@@ -1196,7 +1306,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
             </c:if>
 
-            <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
+            <security:authorizeBlock roles="<%= roles(PDM, GPProjectManager, PM, Developer) %>">
 
                 <c:if test="${!actionBean.editOrder.savedInSAP && !actionBean.editOrder.pending && !actionBean.editOrder.draft}">
                     &nbsp;&nbsp;&nbsp;&nbsp;
@@ -1288,6 +1398,9 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
             <c:if test="${actionBean.editOrder.product != null}">
                 <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
                     <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
+                    <c:if test="${actionBean.editOrder.orderType != null}">
+                        ${actionBean.editOrder.orderTypeDisplay} --
+                    </c:if>
                     ${actionBean.editOrder.product.productName}
                 </stripes:link>
             </c:if>
@@ -1433,26 +1546,38 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </div>
 </c:if>
 
-<div class="view-control-group control-group">
-    <label class="control-label label-form">Add-ons</label>
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Add-ons</label>
 
-    <div class="controls">
-        <div class="form-value">${actionBean.editOrder.addOnList}</div>
-    </div>
-</div>
-
-<div class="view-control-group control-group">
-    <label class="control-label label-form">Quote ID</label>
-
-    <div class="controls">
-        <div class="form-value">
-            <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                    ${actionBean.editOrder.quoteId}
-            </a>
-            <div id="fundsRemaining"> </div>
+        <div class="controls">
+            <div class="form-value">${actionBean.editOrder.addOnList}</div>
         </div>
     </div>
-</div>
+
+    <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+        <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Order Customizations</label>
+
+                <div class="controls">
+                    <div class="form-value" id="customizationContent"></div>
+                </div>
+            </div>
+        </c:if>
+    </security:authorizeBlock>
+
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Quote ID</label>
+
+        <div class="controls">
+            <div class="form-value">
+                <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
+                        ${actionBean.editOrder.quoteId}
+                </a>
+                <div id="fundsRemaining"></div>
+            </div>
+        </div>
+    </div>
 <c:if test="${actionBean.editOrder.skipQuoteReason != null}">
     <div class="view-control-group control-group">
         <label class="control-label label-form">Quote Skip Reason</label>
@@ -1542,6 +1667,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         </div>
     </c:forEach>
 </c:if>
+<div class="view-control-group control-group">
+    <label class="control-label label-form">Analyze UMIs</label>
+    <div class="controls">
+        <div class="form-value">
+                ${actionBean.editOrder.analyzeUmiOverride ? "Yes" : "No"}
+        </div>
+    </div>
+</div>
 <div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
@@ -1738,7 +1871,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
         </c:if>
 
-        <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+        <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
             <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn"
                     style="margin-left:5px;" onclick="showProceedOosDialog()"/>
         </security:authorizeBlock>

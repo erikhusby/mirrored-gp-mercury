@@ -1,18 +1,25 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
+
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
-import java.util.Arrays;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * This entity represents a piece of plastic that has been marked as abandoned. If it has multiple positions that
- * can be individually abandoned that data is stored in AbandonVesselPosition.
+ * can be individually abandoned, vesselPosition will not be null.
  */
 
 @Entity
@@ -27,6 +34,7 @@ public class AbandonVessel {
     private Long abandonVesselId;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
     @Enumerated(EnumType.STRING)
@@ -34,28 +42,19 @@ public class AbandonVessel {
 
     private Date abandonedOn;
 
-    @OneToMany(mappedBy = "abandonVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @BatchSize(size = 100)
-    private Set<AbandonVesselPosition> abandonVesselPosition = new HashSet<>();
+    @Enumerated(EnumType.STRING)
+    private VesselPosition vesselPosition;
 
     public Long getAbandonVesselId()
     {
         return this.abandonVesselId;
     }
 
-    public Set<AbandonVesselPosition> getAbandonedVesselPosition() {
-        return this.abandonVesselPosition;
-    }
-
-    public void removeAbandonedWells(AbandonVesselPosition abandonVesselPosition) { this.abandonVesselPosition.remove(abandonVesselPosition); }
-
-    public void getAbandonedVesselPosition(AbandonVesselPosition abandonVesselPosition)  { this.abandonVesselPosition.add(abandonVesselPosition); }
-
     public Reason getReason() { return reason;  }
 
-    public void setReason(Reason reason) { this.reason = reason;  }
-
-    public AbandonVessel getAbandonVessel() { return this; }
+    public void setReason(Reason reason) {
+        this.reason = reason;
+    }
 
     public LabVessel getLabVessel() {
         return labVessel;
@@ -63,25 +62,23 @@ public class AbandonVessel {
 
     public void setAbandonedVessel(LabVessel labVessel) { this.labVessel = labVessel; }
 
-    public void addAbandonVesselPosition(AbandonVesselPosition abandonedWells) {
-        abandonVesselPosition.add(abandonedWells);
-        abandonedWells.setAbandonVessel(this);
+    public void setVesselPosition(VesselPosition vesselPosition) {
+        this.vesselPosition = vesselPosition;
+    }
+
+    public VesselPosition getVesselPosition() {
+        return this.vesselPosition;
     }
 
     public Date getAbandonedOn() {
         return this.abandonedOn;
     }
 
-    public void setAbandonedOn(boolean toggle) {
-        if (toggle) {
-            this.abandonedOn = new Date();
-        } else {
-            this.abandonedOn = null;
-        }
+    public void setAbandonedOn(Date abandonedOn) {
+        this.abandonedOn = abandonedOn;
     }
 
     public enum Reason implements Displayable {
-        SELECT("-Select-"),
         FAILED_QC("Failed QC"),
         LAB_INCIDENT("Lab incident"),
         EQUIPMENT_FAILURE("Equipment failure"),

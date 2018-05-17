@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
@@ -11,9 +12,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
+import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,6 +31,7 @@ import java.util.Map;
  * This handler will validate the relationship between an FLOWCELL_TICKET ticket specified for a denature tube and the
  * relationship both of these entities will have to the targetted dilution tube.
  */
+@Dependent
 public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
 
     public static final String FCT_METADATA_NAME = "FCT";
@@ -67,7 +71,16 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
                 dilutionTube = transfer.getTargetVesselContainer().getVesselAtPosition(transfer.getTargetPosition());
             }
 
-            Collection<LabBatch> fctBatches = denatureTube.getAllLabBatches(LabBatch.LabBatchType.FCT);
+            List<LabBatch> fctBatches = new ArrayList<>();
+            LabVesselSearchDefinition.VesselBatchTraverserCriteria
+                    downstreamBatchFinder = new LabVesselSearchDefinition.VesselBatchTraverserCriteria();
+            denatureTube.evaluateCriteria(downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+            for (LabBatch labBatch: downstreamBatchFinder.getLabBatches()) {
+                if(labBatch.getLabBatchType() == LabBatch.LabBatchType.FCT) {
+                    fctBatches.add(labBatch);
+                }
+            }
 
             //Get FCT Ticket for which the Dilution tube is targeted
             String fctTicket = "";

@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip_;
+import org.broadinstitute.gpinformatics.mercury.entity.run.WorkflowMetadata;
+import org.broadinstitute.gpinformatics.mercury.entity.run.WorkflowMetadata_;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -100,7 +102,7 @@ public class AttributeArchetypeDao extends GenericDao {
     }
 
     /** Returns the chip type */
-    public GenotypingChip findGenotypingChip(@NotNull String chipFamily, String chipName) {
+    public GenotypingChip findGenotypingChip(String chipFamily, String chipName) {
         for (GenotypingChip chip : findList(GenotypingChip.class, GenotypingChip_.archetypeName, chipName)) {
             if (chip.getChipTechnology().equals(chipFamily)) {
                 return chip;
@@ -110,11 +112,11 @@ public class AttributeArchetypeDao extends GenericDao {
     }
 
     /**
-     * Returns one mapping for each of the lookup keys found in the genotyping chip mappings.
-     * The one mapping is the most recent one active before or on the effectiveDate.
-     * If the effective date precedes all active dates, the earliest one is used.
+     * Returns one mapping for each product (and possibly product order) found in the
+     * genotyping chip mappings. The mappings are the ones active on the effectiveDate,
+     * and if the effective date precedes all active dates the earliest mapping is used.
      *
-     * @param effectiveDate comparison date
+     * @param effectiveDate comparison date. If null, returns the latest mappings, possibly inactive.
      * @return list of mappings
      */
     public Set<GenotypingChipMapping> getMappingsAsOf(Date effectiveDate) {
@@ -132,16 +134,22 @@ public class AttributeArchetypeDao extends GenericDao {
         }
 
         // For each lookup key, sorts the mappings by date and finds the one active on the
-        // the effective date, or uses the earliest mapping.
+        // the effective date, or uses the first active mapping.
         for (List<GenotypingChipMapping> list : lookupKeyMappings.values()) {
             Collections.sort(list, BY_DATE);
             GenotypingChipMapping bestMapping = null;
             for (GenotypingChipMapping mapping : list) {
-                if (bestMapping == null || mapping.isActiveOn(effectiveDate)) {
+                boolean isInactive = effectiveDate != null &&
+                        (mapping.getInactiveDate() != null && !mapping.getInactiveDate().after(effectiveDate));
+                boolean isActive = effectiveDate == null ||
+                        (mapping.getActiveDate() != null && !mapping.getActiveDate().after(effectiveDate));
+                if ((bestMapping == null || isActive) && !isInactive) {
                     bestMapping = mapping;
                 }
             }
-            activeMappings.add(bestMapping);
+            if (bestMapping != null) {
+                activeMappings.add(bestMapping);
+            }
         }
         return activeMappings;
     }
@@ -156,6 +164,10 @@ public class AttributeArchetypeDao extends GenericDao {
     public GenotypingProductOrderMapping findGenotypingProductOrderMapping(Long productOrderId) {
         return findSingle(GenotypingProductOrderMapping.class, GenotypingProductOrderMapping_.archetypeName,
                 productOrderId.toString());
+    }
+
+    public WorkflowMetadata findWorkflowMetadata(String workflowName) {
+        return findSingle(WorkflowMetadata.class, WorkflowMetadata_.archetypeName, workflowName);
     }
 
     public Map<String, AttributeDefinition> findAttributeGroupByTypeAndName(

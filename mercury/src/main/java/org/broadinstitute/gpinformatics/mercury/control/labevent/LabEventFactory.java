@@ -70,6 +70,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -92,6 +93,7 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "serial", "CloneableClassWithoutClone",
         "ClassExtendsConcreteCollection", "OverlyComplexClass", "ClassWithTooManyMethods", "ClassWithTooManyFields"})
+@Dependent
 public class LabEventFactory implements Serializable {
 
     /**
@@ -148,6 +150,7 @@ public class LabEventFactory implements Serializable {
     @Inject
     private StaticPlateDao staticPlateDao;
 
+    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -189,11 +192,13 @@ public class LabEventFactory implements Serializable {
     @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
 
+    @Inject
     private BSPSetVolumeConcentration bspSetVolumeConcentration;
 
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);
 
-    @Inject
+    public LabEventFactory(){}
+
     public LabEventFactory(BSPUserList userList, BSPSetVolumeConcentration bspSetVolumeConcentration) {
         bspUserList = userList;
         this.bspSetVolumeConcentration = bspSetVolumeConcentration;
@@ -422,22 +427,8 @@ public class LabEventFactory implements Serializable {
                         }
                     }
                     for (LabVessel labVessel : labVessels) {
-                        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                            ProductOrderSample productOrderSample =
-                                    sampleInstanceV2.getProductOrderSampleForSingleBucket();
-                            if (productOrderSample != null) {
-                                Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(
-                                        productOrderSample.getProductOrder(), labEvent.getEventDate());
-                                if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
-                                    GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(
-                                            chipFamilyAndName.getLeft(), chipFamilyAndName.getRight());
-                                    forwardToGap = chip.getAttributeMap().get("forward_to_gap");
-                                    if (forwardToGap != null) {
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                        forwardToGap = determineForwardToGap(labEvent, labVessel, productEjb,
+                                attributeArchetypeDao);
                     }
                     if (forwardToGap == null || forwardToGap.equalsIgnoreCase("Y")) {
                         gapHandler.postToGap(bettaLIMSMessage);
@@ -450,6 +441,29 @@ public class LabEventFactory implements Serializable {
             }
         }
         return labEvents;
+    }
+
+    @Nullable
+    public static String determineForwardToGap(LabEvent labEvent, LabVessel labVessel,
+            ProductEjb productEjb, AttributeArchetypeDao attributeArchetypeDao) {
+        String forwardToGap = null;
+        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+            ProductOrderSample productOrderSample =
+                    sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (productOrderSample != null) {
+                Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(
+                        productOrderSample.getProductOrder(), labEvent.getEventDate());
+                if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
+                    GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(
+                            chipFamilyAndName.getLeft(), chipFamilyAndName.getRight());
+                    forwardToGap = chip.getAttributeMap().get("forward_to_gap");
+                    if (forwardToGap != null) {
+                        break;
+                    }
+                }
+            }
+        }
+        return forwardToGap;
     }
 
     /**
@@ -724,9 +738,6 @@ public class LabEventFactory implements Serializable {
                             }
                             setTubeQuantities(mapBarcodeToTube, positionMapType, labEvent);
                         }
-                        if (rackOfTubes != null) {
-                            rackOfTubes.setStorageLocation(null);
-                        }
                         mapBarcodeToTubeFormation.put(plateType.getBarcode(), tubeFormation);
                         break;
                     }
@@ -751,9 +762,6 @@ public class LabEventFactory implements Serializable {
                                 StaticPlate.PlateType.getByAutomationName(plateType.getPhysType()));
                     }
                     mapBarcodeToVessel.put(plateType.getBarcode(), labVessel);
-                }
-                if (labVessel != null) {
-                    labVessel.setStorageLocation(null);
                 }
             }
         }
@@ -979,17 +987,11 @@ public class LabEventFactory implements Serializable {
             }
             StaticPlate staticPlate = staticPlateDao.findByBarcode(plate.getBarcode());
             labEvent = buildFromBettaLimsPlateEventDbFree(plateEventType, staticPlate);
-            if (staticPlate != null) {
-                staticPlate.setStorageLocation(null);
-            }
         } else {
             TubeFormation tubeFormation = fetchTubeFormation(plateEventType.getPositionMap());
             RackOfTubes rackOfTubes = rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode());
             labEvent = buildFromBettaLimsRackEventDbFree(plateEventType, tubeFormation, findTubesByBarcodes(
                     plateEventType.getPositionMap()), rackOfTubes);
-            if (rackOfTubes != null) {
-                rackOfTubes.setStorageLocation(null);
-            }
         }
         labEvent.setStationEventType(plateEventType);
         return labEvent;
@@ -1129,7 +1131,6 @@ public class LabEventFactory implements Serializable {
         if (rackOfTubes == null) {
             rackOfTubes = new RackOfTubes(plate.getBarcode(), rackType);
         }
-        rackOfTubes.setStorageLocation(null);
         tubeFormation.addRackOfTubes(rackOfTubes);
         return tubeFormation;
     }
@@ -1173,7 +1174,6 @@ public class LabEventFactory implements Serializable {
         if (receptacleType.getReceptacleWeight() != null) {
             barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
         }
-        barcodedTube.setStorageLocation(null);
         if (labEvent.getLabEventType().getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
             MercurySample mercurySample = extractSample(barcodedTube.getSampleInstancesV2());
             if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
@@ -1235,10 +1235,10 @@ public class LabEventFactory implements Serializable {
     }
 
     private void addMetadatas( LabEvent labEvent, List<MetadataType> metadataTypes) {
-        for(MetadataType metadataType: metadataTypes){
+        for (MetadataType metadataType: metadataTypes){
             LabEventMetadata.LabEventMetadataType labEventMetadataType =
                     LabEventMetadata.LabEventMetadataType.getByName(metadataType.getName());
-            if(labEventMetadataType != null) { //Throw runtime exception for unknown metadata?
+            if (labEventMetadataType != null) { //Throw runtime exception for unknown metadata?
                 LabEventMetadata labEventMetadata =
                         new LabEventMetadata(labEventMetadataType, metadataType.getValue());
                 labEvent.addMetadata(labEventMetadata);
@@ -1520,10 +1520,10 @@ public class LabEventFactory implements Serializable {
         LabEvent bucketMoveEvent =
                 new LabEvent(eventType, new Date(), eventLocation, disambiguator, operatorInfo, programName);
 
-        //TODO SGM: add to container.
+        //TODO add to container.
         batchItem.addInPlaceEvent(bucketMoveEvent);
 
-        //TODO SGM: If LabVessel has a batch waiting to be associated with an event, add it here
+        //TODO If LabVessel has a batch waiting to be associated with an event, add it here
 
         return bucketMoveEvent;
     }

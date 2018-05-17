@@ -1,5 +1,9 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -93,7 +97,25 @@
             }
         }
 
+        function CustomizationValue (priceValue, quantityValue, customNameValue) {
+            this.price = priceValue;
+            this.quantity = quantityValue;
+            this.customName = customNameValue;
+        }
+
         var regulatorySuggestionDT;
+        var customizationValues = {};
+        function initializeOrderCustomValues() {
+            var customJSONString = $j("#customizationJsonString").val();
+            if(customJSONString !== null && customJSONString!==undefined && customJSONString !== "") {
+                var customSettings = JSON.parse(customJSONString);
+            }
+            for  (part in customSettings) {
+                addCustomizationValue(part, customSettings[part]["price"],
+                    customSettings[part]["quantity"],customSettings[part]["customName"]
+                );
+            }
+        }
         $j(document).ready(
 
                 function () {
@@ -290,6 +312,7 @@
                                 hintText: "Type a Product name or Part Number   ",
                                 onAdd: updateUIForProductChoice,
                                 onDelete: updateUIForProductChoice,
+                                onChange: resetCustomizationChoices,
                                 resultsFormatter: formatInput,
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
                                 tokenDelimiter: "${actionBean.productTokenInput.separator}",
@@ -365,6 +388,64 @@
                         ]
                     });
 
+                    $j("#customizedProductSettings").dialog({
+                        modal: true,
+                        autoOpen: false,
+                        position: {my: "left top", at: "left top", of: window},
+                        buttons: [
+                            {
+                                id: "assignCustomizations",
+                                text: "Customize",
+                                click: function() {
+
+                                    var errors = [];
+
+                                    $j("#customizationData > tbody > tr").each(function() {
+                                        var foundError = false;
+                                        var partnumberIndex = $(this).find("input[class='partNumber']").val();
+                                        var quantity = $(this).find("input[class='customQuantityValue']").val();
+                                        var price = $(this).find("input[class='customPriceValue']").val();
+                                        var productName = $(this).find("input[class='customProductNameValue']").val();
+
+                                          if ((quantity !== undefined) && (quantity !== "") && (quantity !== 'null')
+                                          && (isNaN(quantity ))) {
+                                              errors.push(partnumberIndex + ": If you enter a value for quantity it must be numeric");
+                                              foundError = true;
+                                          }
+                                          if ((price !== undefined) && (price !== "") && (price !== 'null')
+                                          && (isNaN(price ))) {
+                                              errors.push(partnumberIndex + ": If you enter a value for quantity it must be numeric");
+                                              foundError = true;
+                                          }
+                                          if((productName !== undefined) && (productName !== "") && (productName !== 'null')) {
+                                              if(productName.length >40) {
+                                                  errors.push(partnumberIndex + ": A customized product name must be 40 Characters or less");
+                                                  foundError = true;
+                                              }
+                                          }
+                                        if(!foundError) {
+                                            addCustomizationValue(partnumberIndex, price, quantity, productName);
+                                        }
+
+                                    });
+                                    $j("#customizationJsonString").val(JSON.stringify(customizationValues));
+                                    $j(this).dialog("close");
+                                    renderCustomizationSummary();
+                                    if(errors.length > 0) {
+                                        alert(errors.join("\n"));
+                                    }
+                                }
+                            },
+                            {
+                                id: "cancelAssignCustomizations",
+                                text: "Cancel",
+                                click: function () {
+                                    $j(this).dialog("close");
+                                }
+                            }
+                        ]
+                    });
+
                     // Initializes the previously chosen sample kit detail info in the sample kit display section
                     <c:forEach items="${actionBean.kitDetails}" var="initKitDetail" varStatus="kitDetailStatus">
                     addKitDefinitionInfo('${initKitDetail.productOrderKitDetailId}', '${initKitDetail.numberOfSamples}',
@@ -389,6 +470,9 @@
                         updateUIForMaterialInfoChoice(index, getSelectedPostReceiveOptions(index));
                     });
                     $j("#skipQuoteDiv").hide();
+                    $j("#showCustomizeWindow").hide();
+                    $j("#clinicalAttestationDiv").hide();
+                    $j("#primaryProductListPrice").hide();
                     updateUIForProductChoice();
                     updateUIForProjectChoice();
                     updateFundsRemaining();
@@ -404,8 +488,12 @@
                     <c:if test="${actionBean.editOrder.draft}">
                     $j('#samplesToAdd').bindWithDelay('input',reloadRegulatorySuggestions, 1000);
                     </c:if>
+                    $j('#showCustomizeWindow').click(function(event) {
+                        event.preventDefault();
+                        initializeOrderCustomValues();
+                        showCustomProductInfoDialog();
+                    });
                 }
-
         );
 
         function formatInput(item) {
@@ -486,10 +574,7 @@
 
                 postReceiveOption[${kitOption.key}]["${option}"] = true;
             </c:forEach>
-            <%--postReceiveOption[${kitOption.key}].length =${fn:length(kitOption.value)};--%>
         </c:forEach>
-
-        <%--postReceiveOption.length = ${fn:length(actionBean.postReceiveOptionKeys)};--%>
 
         function updateUIForProjectChoice(){
             var projectKey = $j("#researchProject").val();
@@ -549,7 +634,7 @@
             var selectedAddonProducts = "";
 
             $j('#createForm').find('input:checkbox[name="addOnKeys"]:checked').each(function () {
-                if (selectedAddonProducts != "") {
+                if (selectedAddonProducts !== "") {
                     selectedAddonProducts += "|@|";
                 }
                 selectedAddonProducts += $(this).val();
@@ -564,12 +649,17 @@
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
-            if ((productKey == null) || (productKey == "")) {
+            if ((productKey === null) || (productKey === "")) {
+                $j("#customizationJsonString").val("");
+                customizationValues = {};
                 $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                 $j("#sampleInitiationKitRequestEdit").hide();
                 $j("#numberOfLanesDiv").fadeOut(duration);
                 $j("#skipQuoteDiv").hide();
                 $j("#quote").show();
+                $j("#showCustomizeWindow").hide();
+                $j("#clinicalAttestationDiv").hide();
+                $j("#primaryProductListPrice").hide();
 
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
@@ -582,21 +672,15 @@
                     $j("#sampleInitiationKitRequestEdit").hide();
                 }
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey,
                     dataType: 'json',
-                    success: setupAddonCheckboxes,
+                    success: selectedProductFollowup,
                     complete: detectNumberOfLanesVisibility
                 });
 
                 // Moving the check for number of lanes visibility to the 'complete' (like finally in a try catch)
                 // setting for the ajax call for getting addons.  This way the addons that are set can be input for
                 // determining visibility of the number of lanes field
-
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getSupportsSkippingQuote=&product=" + productKey,
-                    dataType: 'json',
-                    success: updateSkipQuoteVisibility
-                });
             }
         }
 
@@ -762,10 +846,53 @@
             }
         }
 
-        function setupAddonCheckboxes(data) {
-            var productTitle = $j("#product").val();
+        function selectedProductFollowup(data) {
+            var productKey = $j("#product").val();
 
-            if (data.length == 0) {
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+            var priceListText = "";
+
+            if(data.researchListPrice !== undefined && data.researchListPrice.length > 0) {
+                priceListText += "research list price: " + data.researchListPrice;
+            }
+
+            if(data.externalListPrice !== undefined && data.externalListPrice.length > 0) {
+                if(priceListText.length > 0) {
+                    priceListText += ",  ";
+                }
+
+                priceListText += "external list price: " + data.externalListPrice;
+            }
+
+            if(data.clinicalPrice  !== undefined && data.clinicalPrice.length > 0) {
+                if(priceListText.length > 0) {
+                    priceListText += ",  ";
+                }
+
+                priceListText += "Clinical list price: " + data.clinicalPrice;
+            }
+            $j("#primaryProductListPrice").text(priceListText);
+            if(priceListText.length > 0) {
+                $j("#primaryProductListPrice").show();
+            }
+            </security:authorizeBlock>
+
+            setupAddonCheckboxes(data, productKey);
+            if ((productKey !== null) && (productKey !== "") && (productKey !== undefined)) {
+                $j("#showCustomizeWindow").show();
+                renderCustomizationSummary();
+                if(data["clinicalProduct"] === true) {
+                    $j("#clinicalAttestationDiv").show();
+                }
+
+            }
+            updateSkipQuoteVisibility(data);
+        }
+
+        function setupAddonCheckboxes(data, productTitle) {
+//            var productTitle = $j("#product").val();
+
+            if (data["addOns"].length === 0) {
                 $j("#addOnCheckboxes").text("The product '" + productTitle + "' has no Add-ons");
                 return;
             }
@@ -773,7 +900,7 @@
             var checkboxText = "";
             var checked;
 
-            $j.each(data, function (index, val) {
+            $j.each(data["addOns"], function (index, val) {
                 // if this value is in the add on list, then check the checkbox
                 checked = '';
                 if (addOn[val.key]) {
@@ -782,7 +909,35 @@
 
                 var addOnId = "addOnCheckbox-" + index;
                 checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '" onchange="registerChangeForAddon()" />';
-                checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key + ']</label>';
+                checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key;
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+                if((val.externalListPrice !== undefined && val.externalListPrice.length > 0) ||
+                    (val.researchListPrice !== undefined && val.researchListPrice.length > 0)) {
+                    checkboxText += ' (';
+                }
+                if(val.researchListPrice !== undefined && val.researchListPrice.length > 0) {
+                    checkboxText += 'research list price: ' + val.researchListPrice;
+                }
+                if(val.externalListPrice !== undefined && val.externalListPrice.length > 0) {
+                    if(val.researchListPrice !== undefined && val.researchListPrice.length > 0) {
+                        checkboxText += ', ';
+                    }
+                    checkboxText += 'external list price: ' + val.externalListPrice ;
+                }
+                if(val.clinicalPrice  !== undefined && val.clinicalPrice.length > 0) {
+                    if((val.researchListPrice !== undefined && val.researchListPrice.length > 0) ||
+                        (val.externalListPrice !== undefined && val.externalListPrice.length > 0)) {
+                        checkboxText += ', ';
+                    }
+                    checkboxText += 'clinical list price: ' + val.clinicalPrice ;
+                }
+                if((val.externalListPrice !== undefined && val.externalListPrice.length > 0) ||
+                    (val.researchListPrice !== undefined && val.researchListPrice.length > 0) ||
+                    (val.clinicalPrice !== undefined && val.clinicalPrice.length > 0)) {
+                    checkboxText += ')';
+                }
+                </security:authorizeBlock>
+                checkboxText += ']</label>';
                 checkboxText += '  <br>';
             });
 
@@ -850,9 +1005,10 @@
 
         function updateFundsRemaining() {
             var quoteIdentifier = $j("#quote").val();
+            var productOrderKey = $j("input[name='productOrder']").val();
             if ($j.trim(quoteIdentifier)) {
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier + "&productOrder=" + productOrderKey,
                     dataType: 'json',
                     success: updateFunds
                 });
@@ -951,6 +1107,53 @@
         function showDuplicateKitInfoDialog(id) {
             $j("#duplicateKitInfoDialog").dialog("open").dialog("option", "width", 300);
             $j("#idToDuplicate").val(id);
+        }
+
+
+        function addCustomizationValue(productPart, priceValue, quantityValue, customNameValue) {
+            customNameValue = customNameValue || "";
+            quantityValue = quantityValue || "";
+            priceValue = priceValue || "";
+            customizationValues[productPart] = new CustomizationValue(priceValue, quantityValue, customNameValue);
+        }
+
+        function resetCustomizationChoices() {
+            customizationValues = {};
+        }
+
+        /**
+         * Method to bring up customization dialog will pass in any existing customizations currently defined.  If none
+         * exist, it will fill in with blank values to just have a place holder
+         */
+        function showCustomProductInfoDialog() {
+            $j('#customizedProductSettings').html('');
+
+            var primaryProductPart = $("#product").attr("value");
+            var productNames = new Array(primaryProductPart);
+            if(!(primaryProductPart in customizationValues)) {
+                addCustomizationValue(primaryProductPart);
+            }
+
+            var first = true;
+
+            $j("#addOnCheckboxes input:checked").each(function() {
+                var productPartNumber = $j(this).val();
+                productNames.push(productPartNumber);
+                if(!(productPartNumber in customizationValues)) {
+                    addCustomizationValue(productPartNumber);
+                }
+            });
+
+            $j.ajax({
+                url: "${ctxpath}/orders/order.action?openCustomView=",
+                data: {
+                    'customizationJsonString': JSON.stringify(customizationValues)
+                },
+                datatype: 'html',
+                success: function (html) {
+                    $j("#customizedProductSettings").html(html).dialog("open").dialog("option", "width", 1100).dialog("option", "height", 600);
+                }
+            });
         }
 
         /**
@@ -1104,22 +1307,81 @@
             return postReceivePrePopulates;
         }
 
+        function renderCustomizationSummary() {
+            $j("#customizationContent").html("");
+            var customJSONString = $j("#customizationJsonString").val();
+            if(customJSONString !== null && customJSONString!==undefined && customJSONString !== "") {
+                var customSettings = JSON.parse(customJSONString);
+            }
+            $j("#customizationContent").html(function() {
+                var content = "";
+
+                for  (part in customSettings) {
+                    content += "<b>"+part +"</b>";
+                    var price = customSettings[part]["price"];
+                    var quantity = customSettings[part]["quantity"];
+                    var customName = customSettings[part]["customName"];
+
+                    var firstSetting = true;
+
+                    if (!(price === undefined) && !(price === 'null') && (price.length >0)) {
+
+                        if(firstSetting) {
+                            content += ": ";
+                            firstSetting = false;
+                        }
+
+                        content += "Custom Price -- " + price;
+                    }
+                    if (!(quantity === undefined) && !(quantity === 'null') && (quantity.length >0)) {
+                        if(firstSetting) {
+                            content += ": ";
+                            firstSetting = false;
+                        } else {
+
+                            content += ", ";
+                        }
+
+                        content += "Custom Quantity -- " + quantity;
+                    }
+                    if (!(customName === undefined) && !(customName === 'null') && (customName.length > 0)) {
+                        if(firstSetting) {
+                            content += ": ";
+                            firstSetting = false;
+                        } else {
+
+                            content += ", ";
+                        }
+
+                        content += "Custom Product Name -- " + customName;
+                    }
+                    content += "<BR>";
+                }
+                return (firstSetting)?"":content;
+            });
+
+        }
+
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
 
-    <div id="duplicateKitInfoDialog" style="width:500px;display:none;">
-        <p><label style="float:left;width:60px;" for="numDuplicatesId"># of kit duplicates to create?</label>
-            <input type="hidden" id="idToDuplicate" />
-            <input type="text" id="numDuplicatesId" name="numDuplicates" style="float:left;margin-right: 5px;"/>
-        </p>
-    </div>
+        <div id="duplicateKitInfoDialog" style="width:500px;display:none;">
+            <p><label style="float:left;width:60px;" for="numDuplicatesId"># of kit duplicates to create?</label>
+                <input type="hidden" id="idToDuplicate" />
+                <input type="text" id="numDuplicatesId" name="numDuplicates" style="float:left;margin-right: 5px;"/>
+            </p>
+        </div>
+
+        <div id="customizedProductSettings" title="Associate customized settings to order products" style="...">
+        </div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
             <div class="form-horizontal span6">
                 <stripes:hidden name="productOrder"/>
                 <stripes:hidden name="submitString"/>
+                <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
                 <div class="control-group">
                     <stripes:label for="orderName" class="control-label">
                         Name <c:if test="${actionBean.editOrder.draft}">*</c:if>
@@ -1312,7 +1574,6 @@
                     </div>
                 </div>
 
-
                 <div class="control-group">
 
                     <stripes:label for="product" class="control-label">
@@ -1335,8 +1596,23 @@
                                               title="Enter the product name for this order"/>
                         </c:otherwise>
                     </c:choose>
+                        <div id="primaryProductListPrice" ></div>
                     </div>
                 </div>
+
+
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+                <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
+                    <div class="control-group">
+                        <label class="control-label">Order Customizations</label>
+
+                        <div class="controls">
+                            <div class="form-value" id="customizationContent"></div>
+                        </div>
+                    </div>
+                    
+                </c:if>
+            </security:authorizeBlock>
 
                 <div class="control-group">
                     <stripes:label for="selectedAddOns" class="control-label">
@@ -1353,6 +1629,21 @@
                             <div id="addOnCheckboxes" class="controls controls-text"></div>
                         </c:otherwise>
                     </c:choose>
+                </div>
+                <security:authorizeBlock roles="<%= roles(GPProjectManager, PDM, Developer) %>">
+                    <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
+                    <div class="control-group">
+                        <div class="controls">
+                            <a href="#" id="showCustomizeWindow" class="form-value">Customize product and add-ons for this order</a></div>
+                    </div>
+                    </c:if>
+                </security:authorizeBlock>
+
+                <div id="clinicalAttestationDiv" class="controls controls-text">
+
+                    <stripes:checkbox name="editOrder.clinicalAttestationConfirmed"
+                                      id="clinicalAttestationConfirmed" class="form-value"/>
+                        ${actionBean.clinicalAttestationMessage}
                 </div>
 
                 <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.requiresLaneCount() ? 'block' : 'none'};">
@@ -1430,6 +1721,21 @@
                     <c:forEach items="${actionBean.chipDefaults}" var="item">
                         <stripes:hidden name="chipDefaults[${item.key}]" value="${item.value}"/>
                     </c:forEach>
+                </c:if>
+
+                <c:if test="${not empty actionBean.editOrder.product}">
+                    <div class="control-group">
+                        <stripes:label for="analyzeUmiOverride" class="control-label">
+                            Analyze UMIs
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:select name="editOrder.analyzeUmiOverride" id="analyzeUmiOverride"
+                                            value="${actionBean.editOrder.getAnalyzeUmiOverride()}">
+                                <stripes:option value="true">True</stripes:option>
+                                <stripes:option value="false">False</stripes:option>
+                            </stripes:select>
+                        </div>
+                    </div>
                 </c:if>
 
                 <div class="control-group">
