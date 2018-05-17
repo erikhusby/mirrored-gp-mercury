@@ -322,6 +322,13 @@ public class LabBatchEjb {
         allBucketEntries.addAll(reworkBucketEntries);
         bucketEjb.moveFromBucketToBatch(allBucketEntries, batch);
 
+        createJiraTicket(workflowName, username, bucketName, reporter, watchers, pdoKeys, batch);
+
+        return batch;
+    }
+
+    public void createJiraTicket(@Nonnull String workflowName, @Nonnull String username, String bucketName,
+            @Nonnull MessageReporter reporter, List<String> watchers, Set<String> pdoKeys, LabBatch batch) {
         WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName,workflowName);
 
         CreateFields.IssueType issueType = CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
@@ -333,8 +340,6 @@ public class LabBatchEjb {
         for (String pdoKey : pdoKeys) {
             linkJiraBatchToTicket(pdoKey, batch);
         }
-
-        return batch;
     }
 
     private WorkflowBucketDef getWorkflowBucketDef(String bucketName, String workflowName) {
