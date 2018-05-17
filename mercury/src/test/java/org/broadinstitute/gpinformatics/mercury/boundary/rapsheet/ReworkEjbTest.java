@@ -74,7 +74,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 
 /**
- *
+ *  This test is singleThreaded because subsequent test methods are called before the @AfterMethod of the previous test method call is complete <br/>
+ *  This wouldn't be a problem if lifecycle methods didn't change the state of instance variables.
+ *  Subsequent methods are using variables which are getting stepped on by previous @AfterMethod calls
  */
 @Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
 @Dependent

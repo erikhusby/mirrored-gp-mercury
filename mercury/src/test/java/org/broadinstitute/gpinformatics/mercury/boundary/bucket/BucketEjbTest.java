@@ -43,6 +43,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ *  This test is singleThreaded because subsequent test methods are called before the @AfterMethod of the previous test method call is complete <br/>
+ *  Lifecycle @AfterMethod operates on the injected UserTransaction instance variable while subsequent methods are performing persistence operations.
+ *  The previous @AfterMethod rollback call is incomplete so unique constraints are violated.
+ */
 @Test(groups = TestGroups.STUBBY, singleThreaded = true)
 @Dependent
 public class BucketEjbTest extends StubbyContainerTest {

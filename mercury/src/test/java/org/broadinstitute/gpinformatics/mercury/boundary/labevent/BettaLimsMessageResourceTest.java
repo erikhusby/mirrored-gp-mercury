@@ -121,7 +121,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Test the web service
  */
 @SuppressWarnings("OverlyCoupledClass")
-@Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
+@Test(groups = TestGroups.ALTERNATIVES)
 @Dependent
 public class BettaLimsMessageResourceTest extends Arquillian {
 
