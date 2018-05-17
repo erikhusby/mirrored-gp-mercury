@@ -541,18 +541,19 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         String testPrefix = testPrefixDateFormat.format(new Date());
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
         List<BettaLIMSMessage> messages = new ArrayList<>();
-        // Uses these tubes from BSP rack CO-11200063
-        // A01  0109784754  SM-1Z8XY
-        // A02  0109784741  SM-1Z8XN
-        // A03  0109784822  SM-1Z8XB
-        String[] barcodes = new String[]{"0109784754", "0109784741", "0109784822"};
-        String[] sampleNames = new String[]{"SM-1Z8XY", "SM-1Z8XN", "SM-1Z8XB"};
+        // Uses these tubes from BSP rack CO-9153199
+        // SM-1NO68 - 1036273087
+        // SM-1NO61 - 0097414383
+        // SM-1NWD9 - 1035642036
+
+        String[] barcodes = new String[]{"1036273087", "0097414383", "1035642036"};
+        String[] sampleNames = new String[]{"SM-1NO68", "SM-1NO61", "SM-1NWD9"};
         // Verify none of the samples are known to mercury.  It's not really a code failure if for some reason
         // Mercury dev gains awareness of these samples, but the test cannot continue.
         Assert.assertTrue(CollectionUtils.isEmpty(barcodedTubeDao.findListByList(MercurySample.class,
                 MercurySample_.sampleKey, Arrays.asList(sampleNames))));
         PlateEventType plateEvent = bettaLimsMessageFactory.buildRackEvent("SeqPlatingNormalization",
-                "CO-11200063" + testPrefix, Arrays.asList(barcodes));
+                "CO-9153199" + testPrefix, Arrays.asList(barcodes));
         BettaLIMSMessage bettaLIMSMessage = bettaLimsMessageFactory.addMessage(new ArrayList<BettaLIMSMessage>(),
                 plateEvent);
         // Override routing to prevent this message from going to Squid, where it could fail.
