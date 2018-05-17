@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Test(groups = TestGroups.STUBBY)
+@Test(groups = TestGroups.STUBBY, singleThreaded = true)
 @Dependent
 public class BucketEjbTest extends StubbyContainerTest {
 
@@ -104,22 +104,24 @@ public class BucketEjbTest extends StubbyContainerTest {
         poBusinessKey2 = "PDO-9";
         poBusinessKey3 = "PDO-10";
 
-        Date today = new Date();
+        long timestamp = (new Date()).getTime();
 
         productOrder1 = new ProductOrder(101L, "Test PO1", productOrderSamples, "GSP-123",
                                          productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
                                          researchProjectDao.findByTitle("ADHD"));
-        productOrder1.setTitle(productOrder1.getTitle() + today.getTime());
-        today = new Date();
+        productOrder1.setTitle(productOrder1.getTitle() + timestamp);
+
+        timestamp += 1000;
         productOrder2 = new ProductOrder(101L, "Test PO2", productOrderSamples, "GSP-123",
                                          productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
                                          researchProjectDao.findByTitle("ADHD"));
-        productOrder2.setTitle(productOrder2.getTitle() + today.getTime());
-        today = new Date();
+        productOrder2.setTitle(productOrder2.getTitle() + timestamp);
+
+        timestamp += 1000;
         productOrder3 = new ProductOrder(101L, "Test PO3", productOrderSamples, "GSP-123",
                                          productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
                                          researchProjectDao.findByTitle("ADHD"));
-        productOrder3.setTitle(productOrder3.getTitle() + today.getTime());
+        productOrder3.setTitle(productOrder3.getTitle() + timestamp);
 
         productOrder1.setJiraTicketKey(poBusinessKey1);
         productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);

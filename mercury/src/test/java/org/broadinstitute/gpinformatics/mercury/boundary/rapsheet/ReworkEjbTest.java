@@ -76,7 +76,7 @@ import static org.hamcrest.Matchers.hasItems;
 /**
  *
  */
-@Test(groups = TestGroups.ALTERNATIVES)
+@Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
 @Dependent
 public class ReworkEjbTest extends Arquillian {
 
