@@ -1190,7 +1190,7 @@ public enum LabEventType {
     ARRAY_PLATING_DILUTION("ArrayPlatingDilution",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
     SHEARING_ALIQUOT("ShearingAliquot",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
