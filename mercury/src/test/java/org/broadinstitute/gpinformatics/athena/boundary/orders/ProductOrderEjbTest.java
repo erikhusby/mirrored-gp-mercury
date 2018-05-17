@@ -87,7 +87,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.notNullValue;
 
-@Test(groups = TestGroups.DATABASE_FREE)
+@Test(groups = TestGroups.DATABASE_FREE, singleThreaded = true)
 public class ProductOrderEjbTest {
     private static final BSPUserList.QADudeUser qaDudeUser = new BSPUserList.QADudeUser("PM", 2423L);
     private static final UserBean mockUserBean = Mockito.mock(UserBean.class);
