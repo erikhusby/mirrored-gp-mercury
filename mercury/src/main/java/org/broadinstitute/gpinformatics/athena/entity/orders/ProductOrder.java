@@ -777,7 +777,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setQuoteId(String quoteId) {
-        if (!this.quoteId.equals(quoteId)) {
+        if (!StringUtils.equals(this.quoteId, quoteId)) {
             cachedQuote = null;
         }
         this.quoteId = quoteId;
