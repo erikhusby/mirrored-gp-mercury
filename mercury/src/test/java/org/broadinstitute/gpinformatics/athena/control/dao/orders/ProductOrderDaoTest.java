@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -290,4 +292,17 @@ public class ProductOrderDaoTest extends StubbyContainerTest {
         assertThat(status.getNumberAbandoned(), is(greaterThanOrEqualTo(2)));
         assertThat(status.getNumberInProgress(), is(equalTo(1)));
     }
+
+    public void testUpdateQuoteAfterOrderSaved() {
+        ProductOrder newOrder = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
+        newOrder.setQuoteId("");
+        productOrderDao.persist(newOrder);
+        productOrderDao.flush();
+        productOrderDao.clear();
+        newOrder = productOrderDao.findByBusinessKey(newOrder.getBusinessKey());
+
+        newOrder.setQuoteId("newquote");
+        assertThat(newOrder.getQuoteId(), not(nullValue()));
+    }
+
 }
