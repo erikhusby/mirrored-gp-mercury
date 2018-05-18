@@ -301,6 +301,7 @@ public class ProductOrderDaoTest extends StubbyContainerTest {
         productOrderDao.clear();
         newOrder = productOrderDao.findByBusinessKey(newOrder.getBusinessKey());
 
+        assertThat(newOrder.getQuoteId(), nullValue());
         newOrder.setQuoteId("newquote");
         assertThat(newOrder.getQuoteId(), not(nullValue()));
     }
