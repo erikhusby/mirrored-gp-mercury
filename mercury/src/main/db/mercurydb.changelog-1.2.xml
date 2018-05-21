@@ -1451,43 +1451,53 @@
         </createIndex>
     </changeSet>
 
+    <changeSet author="jsacco" id="GPLIM-4886-1">
+        <addColumn schemaName="mercury" tableName="reagent">
+            <column name="first_use" type="date"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jsacco" id="GPLIM-4886-2">
+        <addColumn schemaName="mercury" tableName="reagent_aud">
+            <column name="first_use" type="date"/>
+        </addColumn>
+    </changeSet>
+
 
     <changeSet id="GPLIM-4712-200" author="epolk">
-      <dropForeignKeyConstraint baseTableName="sample_instance_entity" constraintName="FK_SAMPL_INST_RESEARCH_PROJ"/>
-      <dropForeignKeyConstraint baseTableName="sample_instance_entity" constraintName="FK_SAMPL_INST_PRODUCT_ORDER"/>
+        <dropForeignKeyConstraint baseTableName="sample_instance_entity" constraintName="FK_SAMPL_INST_RESEARCH_PROJ"/>
+        <dropForeignKeyConstraint baseTableName="sample_instance_entity" constraintName="FK_SAMPL_INST_PRODUCT_ORDER"/>
     </changeSet>
     <changeSet id="GPLIM-4712-201" author="epolk">
-      <dropColumn schemaName="mercury" tableName="sample_instance_entity" columnName="product_order"/>
-      <dropColumn schemaName="mercury" tableName="sample_instance_entity" columnName="research_project"/>
+        <dropColumn schemaName="mercury" tableName="sample_instance_entity" columnName="product_order"/>
+        <dropColumn schemaName="mercury" tableName="sample_instance_entity" columnName="research_project"/>
     </changeSet>
     <changeSet id="GPLIM-4712-202" author="epolk">
-      <dropColumn schemaName="mercury" tableName="sample_instance_entity_aud" columnName="product_order"/>
-      <dropColumn schemaName="mercury" tableName="sample_instance_entity_aud" columnName="research_project"/>
+        <dropColumn schemaName="mercury" tableName="sample_instance_entity_aud" columnName="product_order"/>
+        <dropColumn schemaName="mercury" tableName="sample_instance_entity_aud" columnName="research_project"/>
     </changeSet>
     <changeSet id="GPLIM-4712-203" author="epolk">
-       <addColumn schemaName="mercury" tableName="sample_instance_entity">
-	 <column name="aggregation_particle" type="varchar(255)"/>
-       </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="aggregation_particle" type="varchar(255)"/>
+        </addColumn>
     </changeSet>
     <changeSet id="GPLIM-4712-204" author="epolk">
-       <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
-	 <column name="aggregation_particle" type="varchar(255)"/>
-       </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="aggregation_particle" type="varchar(255)"/>
+        </addColumn>
     </changeSet>
     <changeSet id="GPLIM-4712-205" author="epolk">
-       <addColumn schemaName="mercury" tableName="sample_instance_entity">
-	 <column name="analysis_type" type="number(19,0)"/>
-       </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="analysis_type" type="number(19,0)"/>
+        </addColumn>
     </changeSet>
     <changeSet id="GPLIM-4712-206" author="epolk">
-       <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
-	 <column name="analysis_type" type="number(19,0)"/>
-       </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="analysis_type" type="number(19,0)"/>
+        </addColumn>
     </changeSet>
     <changeSet id="GPLIM-4712-207" author="epolk">
         <addForeignKeyConstraint constraintName="FK_SMPL_INST_ANALYSIS_TYPE"
-	  baseTableSchemaName="mercury" baseTableName="sample_instance_entity" baseColumnNames="analysis_type"
-          referencedTableSchemaName="mercury" referencedTableName="analysis_type" referencedColumnNames="analysis_type_id"/>
+                                 baseTableSchemaName="mercury" baseTableName="sample_instance_entity" baseColumnNames="analysis_type"
+                                 referencedTableSchemaName="mercury" referencedTableName="analysis_type" referencedColumnNames="analysis_type_id"/>
     </changeSet>
-
 </databaseChangeLog>

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -17,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@Dependent
 public class SampleDataFetcher implements Serializable {
 
     @Inject
@@ -63,12 +66,18 @@ public class SampleDataFetcher implements Serializable {
         this.mercurySampleDataFetcher = mercurySampleDataFetcher;
     }
 
+    /**
+     * Database Free testing only
+     */
     public SampleDataFetcher(@Nonnull BSPSampleSearchService service) {
         this(service, null);
     }
 
+    /**
+     * Database Free testing only
+     */
     public SampleDataFetcher(@Nonnull BSPSampleSearchService service, @Nullable BSPConfig bspConfig) {
-        this(new BSPSampleDataFetcher(service, bspConfig));
+        this(new BSPSampleDataFetcherImpl(service, bspConfig));
     }
 
     /**

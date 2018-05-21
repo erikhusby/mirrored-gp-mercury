@@ -1,33 +1,29 @@
 package org.broadinstitute.gpinformatics.mercury.integration.test;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.integration.test.beans.SimpleService;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
- * @author breilly
+ * Confirm the Stubby Builder actually puts stub alternatives in CDI? <br />
+ * Disabled because otherwise all our tests would fail anyways
  */
-@Test(groups = TestGroups.ALTERNATIVES)
-public class DeploymentBuilderTest extends Arquillian {
+@Test(groups = TestGroups.STUBBY)
+@Dependent
+public class DeploymentBuilderTest extends StubbyContainerTest {
+
+    public DeploymentBuilderTest(){}
 
     @Inject
-    private SimpleService service;
+    private JiraService service;
 
-    @Deployment
-    public static WebArchive makeArchive() {
-        return DeploymentBuilder.buildMercuryWar().addPackage("org.broadinstitute.gpinformatics.mercury.test.beans");
-    }
-
-    @Test(enabled = false)
-    public void testInjection() {
-        System.out.println("in inject test---");
-        Assert.assertEquals(service.getName(), "SimpleServiceImpl");
+    @Test
+    public void testCdiAlternativesInjection() {
+        Assert.assertEquals(service.getClass().getSimpleName(), "JiraServiceStub", "Injected artifact expected to be a stub implementation");
     }
 }

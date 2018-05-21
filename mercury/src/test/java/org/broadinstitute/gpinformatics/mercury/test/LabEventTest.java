@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -1586,7 +1586,7 @@ public class LabEventTest extends BaseEventTest {
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceTestProducer.stubInstance());
 
         LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
         labBatchEJB.setTubeDao(tubeDao);
@@ -1732,7 +1732,7 @@ public class LabEventTest extends BaseEventTest {
                 new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
                 new Date(), Arrays.asList(parentVesselBean),
-                null, MercurySample.MetadataSource.BSP);
+                null, MercurySample.MetadataSource.BSP).getLeft();
         Set<LabVessel> labVesselSet = new HashSet<>(startingVessels);
         LabBatch labBatch = new LabBatch(batchId, labVesselSet,
                         LabBatch.LabBatchType.BSP);
@@ -2057,6 +2057,7 @@ public class LabEventTest extends BaseEventTest {
 
         ProductOrder productOrder = ProductOrderTestFactory.buildPcrPlusProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
+        productOrder.setAnalyzeUmiOverride(true);
 
         // Grab denature tube from one UMI LC set and build another without
         Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pairUmi =
@@ -2150,11 +2151,29 @@ public class LabEventTest extends BaseEventTest {
             if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTube.getLabel())) {
                 Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B8B76T");
             } else if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTubeUMI.getLabel())) {
-                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S76T8B8B76T");
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S67T8B8B76T");
             } else {
                 Assert.fail("Wrong sequencing library found " + zimsIlluminaChamber.getSequencedLibrary());
             }
         }
+        for (LibraryBean libraryBean: zimsIlluminaRun.getLanes().iterator().next().getLibraries()) {
+            if (libraryBean != null) {
+                if (libraryBean.isNegativeControl() == null  && libraryBean.isPositiveControl() == null) {
+                    Assert.assertEquals(libraryBean.isAnalyzeUmis(), true);
+                }
+            }
+        }
+
+        productOrder.setAnalyzeUmiOverride(false);
+        zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
+        for (LibraryBean libraryBean: zimsIlluminaRun.getLanes().iterator().next().getLibraries()) {
+            if (libraryBean != null) {
+                if (libraryBean.isNegativeControl() == null  && libraryBean.isPositiveControl() == null) {
+                    Assert.assertEquals(libraryBean.isAnalyzeUmis(), false);
+                }
+            }
+        }
+
     }
 
     private void testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
@@ -2652,6 +2671,13 @@ public class LabEventTest extends BaseEventTest {
         return umiTube;
     }
 
+    /**
+     * Treated as a test by default and thusly fails: <br/>
+     * org.testng.TestNGException:  <br/>
+     * Cannot inject @Test annotated Method [attachUMIToPlate] with [class org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier, class org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate]. <br/>
+     * For more information on native dependency injection please refer to http://testng.org/doc/documentation-main.html#native-dependency-injection
+     */
+    @Test( enabled = false )
     public static void attachUMIToPlate(UniqueMolecularIdentifier umi, StaticPlate staticPlate) {
         UMIReagent umiReagent = new UMIReagent(umi);
         for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {

@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 /**
@@ -18,13 +18,16 @@ import javax.persistence.ManyToOne;
 public class VesselToVesselTransfer extends VesselTransfer {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "SOURCE_VESSEL")
     private LabVessel sourceVessel;
 
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "TARGET_VESSEL")
     private LabVessel targetVessel;
 
-    @Index(name = "ix_vtvt_lab_event")
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "LAB_EVENT")
     private LabEvent labEvent;
 
     public VesselToVesselTransfer(LabVessel sourceVessel, LabVessel targetVessel, LabEvent labEvent) {

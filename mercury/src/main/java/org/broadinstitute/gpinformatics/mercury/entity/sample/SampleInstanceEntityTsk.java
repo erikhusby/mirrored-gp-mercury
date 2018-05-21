@@ -29,6 +29,7 @@ public class SampleInstanceEntityTsk {
     private Long sampleInstanceEntityTskId;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "SAMPLE_INSTANCE_ENTITY")
     private SampleInstanceEntity sampleInstanceEntity;
 
     private int orderOfCreation;

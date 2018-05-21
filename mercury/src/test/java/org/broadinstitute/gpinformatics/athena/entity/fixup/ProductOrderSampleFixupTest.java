@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -18,6 +19,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -92,5 +94,26 @@ public class ProductOrderSampleFixupTest extends Arquillian {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test(enabled = false)
+    public void support4060UpdateDeliveryDocument() {
+
+        userBean.loginOSUser();
+
+        List<ProductOrderSample> samples = productOrderSampleDao.findByOrderKeyAndSampleNames("PDO-14794",
+                Collections.singleton("SM-GFCXQ"));
+
+        for (ProductOrderSample sample : samples) {
+            for (LedgerEntry ledgerEntry : sample.getLedgerItems()) {
+                if(ledgerEntry.getWorkItem().equals("278914")) {
+                    ledgerEntry.setSapDeliveryDocumentId("0200003045");
+                }
+            }
+
+        }
+
+        productOrderSampleDao.persist(new FixupCommentary("SUPPORT-4060 Adding Sap Delivery document which did not come back during create.  Will allow billing to complete"));
+
     }
 }

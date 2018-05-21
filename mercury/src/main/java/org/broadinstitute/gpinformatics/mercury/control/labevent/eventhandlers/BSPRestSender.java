@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -53,6 +54,7 @@ import java.util.Set;
 /**
  * Passes info to BSP via a BSP REST service.
  */
+@Dependent
 public class BSPRestSender implements Serializable {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
     public static final String BSP_UPLOAD_QUANT_URL = "quant/upload";

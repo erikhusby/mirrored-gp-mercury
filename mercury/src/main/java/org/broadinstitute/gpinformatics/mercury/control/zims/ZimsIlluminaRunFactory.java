@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplate
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
@@ -34,11 +35,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.WorkflowMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -48,12 +51,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.SubmissionMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.text.Format;
@@ -78,6 +83,7 @@ import java.util.TreeSet;
  * @author breilly
  */
 @SuppressWarnings("FeatureEnvy")
+@Dependent
 public class ZimsIlluminaRunFactory {
 
     private SampleDataFetcher sampleDataFetcher;
@@ -86,7 +92,7 @@ public class ZimsIlluminaRunFactory {
     private ProductOrderDao productOrderDao;
     private final CrspPipelineUtils crspPipelineUtils;
     private FlowcellDesignationEjb flowcellDesignationEjb;
-
+    private AttributeArchetypeDao attributeArchetypeDao;
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
     @Inject
@@ -97,13 +103,15 @@ public class ZimsIlluminaRunFactory {
                                   ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory,
                                   ProductOrderDao productOrderDao,
                                   CrspPipelineUtils crspPipelineUtils,
-                                  FlowcellDesignationEjb flowcellDesignationEjb) {
+                                  FlowcellDesignationEjb flowcellDesignationEjb,
+                                  AttributeArchetypeDao attributeArchetypeDao) {
         this.sampleDataFetcher = sampleDataFetcher;
         this.controlDao = controlDao;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.productOrderDao = productOrderDao;
         this.crspPipelineUtils = crspPipelineUtils;
         this.flowcellDesignationEjb = flowcellDesignationEjb;
+        this.attributeArchetypeDao = attributeArchetypeDao;
     }
 
     private LabVessel getContextVessel(SampleInstanceV2 sampleInstance) {
@@ -257,13 +265,21 @@ public class ZimsIlluminaRunFactory {
             log.error("Failed to get sequencingTemplate.", e);
             throw e;
         }
+        Map<String, WorkflowMetadata> mapWorkflowToMetadata = new HashMap<>();
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
                 ArrayList<LibraryBean> libraryBeans = new ArrayList<>();
                 SampleInstanceDto sampleInstanceDto = sampleInstanceDtos.get(0);
                 short laneNumber = sampleInstanceDto.getLaneNumber();
+                String workflowName = sampleInstanceDto.getSampleInstance().getWorkflowName();
+                if (workflowName != null) {
+                    if (!mapWorkflowToMetadata.containsKey(workflowName)) {
+                        mapWorkflowToMetadata.put(workflowName, attributeArchetypeDao.findWorkflowMetadata(workflowName));
+                    }
+                }
                 libraryBeans.addAll(
-                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
+                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl,
+                                mapWorkflowToMetadata));
                 String sequencedLibraryName = sampleInstanceDto.getSequencedLibraryName();
                 Date sequencedLibraryDate = sampleInstanceDto.getSequencedLibraryDate();
 
@@ -294,7 +310,8 @@ public class ZimsIlluminaRunFactory {
     public List<LibraryBean> makeLibraryBeans(List<SampleInstanceDto> sampleInstanceDtos,
                                               Map<String, SampleData> mapSampleIdToDto,
                                               Map<String, ProductOrder> mapKeyToProductOrder,
-                                              Map<String, Control> mapNameToControl) {
+                                              Map<String, Control> mapNameToControl,
+                                              Map<String, WorkflowMetadata> mapWorkflowToMetadata) {
         List<LibraryBean> libraryBeans = new ArrayList<>();
 
         // Get distinct analysis types and reference sequences.  If there's only one distinct, it's used for the
@@ -408,13 +425,13 @@ public class ZimsIlluminaRunFactory {
                 mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
             }
             TZDevExperimentData devExperimentData = sampleInstance.getTzDevExperimentData();
-
+            WorkflowMetadata workflowMetadata = mapWorkflowToMetadata.get(sampleInstance.getWorkflowName());
             libraryBeans.add(createLibraryBean(sampleInstanceDto, productOrder, sampleData, lcSet,
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
                     referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes,
-                    devExperimentData, isPooledTube));
+                    devExperimentData, isPooledTube, workflowMetadata));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -453,7 +470,7 @@ public class ZimsIlluminaRunFactory {
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
             Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes, TZDevExperimentData devExperimentData,
-            boolean isPooledTube) {
+            boolean isPooledTube, WorkflowMetadata workflowMetadata) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -533,6 +550,7 @@ public class ZimsIlluminaRunFactory {
 
         // These items are pulled off the project or product.
         String aligner = null;
+        boolean analyzeUmi = false;
         if (productOrder != null) {
             // Product stuff.
             Product product = productOrder.getProduct();
@@ -562,8 +580,19 @@ public class ZimsIlluminaRunFactory {
                 referenceSequence = null;
                 referenceSequenceVersion = null;
             }
+
+            analyzeUmi = productOrder.getAnalyzeUmiOverride();
         }
 
+        List<SubmissionMetadata> submissionMetadataList = new ArrayList<>();
+            if (workflowMetadata != null) {
+            Set<ArchetypeAttribute> attributes = workflowMetadata.getAttributes();
+            for (ArchetypeAttribute archetypeAttribute: attributes) {
+                SubmissionMetadata metadata = new SubmissionMetadata(archetypeAttribute.getAttributeName(),
+                        archetypeAttribute.getAttributeValue());
+                submissionMetadataList.add(metadata);
+            }
+        }
 
         LibraryBean libraryBean = new LibraryBean(
                 library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
@@ -571,7 +600,7 @@ public class ZimsIlluminaRunFactory {
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
-                metadataSourceForPipelineAPI, aggregationDataType, jiraService);
+                metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList, analyzeUmi);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }

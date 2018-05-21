@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -19,6 +19,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.text.SimpleDateFormat;
@@ -26,7 +27,10 @@ import java.util.Collections;
 import java.util.Date;
 
 @Test(groups = TestGroups.STUBBY)
-public class BucketEntryDaoTest extends ContainerTest {
+@Dependent
+public class BucketEntryDaoTest extends StubbyContainerTest {
+
+    public BucketEntryDaoTest(){}
 
     @Inject
     BucketDao bucketDao;
@@ -61,6 +65,8 @@ public class BucketEntryDaoTest extends ContainerTest {
         if (utx == null) {
             return;
         }
+
+        utx.begin();
 
 
         testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
@@ -98,6 +104,8 @@ public class BucketEntryDaoTest extends ContainerTest {
         if (utx == null) {
             return;
         }
+
+        utx.rollback();
     }
 
     @Test

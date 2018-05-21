@@ -60,7 +60,7 @@ public class UserBean implements Serializable {
     private boolean GPPMUser;
 
     private boolean isTestUser() {
-        return BSPUserList.isTestUser(bspUser);
+        return bspUserList.isTestUser(bspUser);
     }
 
     /**

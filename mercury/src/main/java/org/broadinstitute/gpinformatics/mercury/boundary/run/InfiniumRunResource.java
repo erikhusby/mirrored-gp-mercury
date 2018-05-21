@@ -230,12 +230,14 @@ public class InfiniumRunResource {
             String productFamily = null;
             String partNumber = null;
             String researchProjectId = null;
+            String regulatoryDesignation = null;
             if (productOrder != null) {
                 productOrderId = productOrder.getJiraTicketKey();
                 productName = productOrder.getProduct().getProductName();
                 productFamily = productOrder.getProduct().getProductFamily().getName();
                 partNumber = productOrder.getProduct().getPartNumber();
                 researchProjectId = productOrder.getResearchProject().getBusinessKey();
+                regulatoryDesignation = productOrder.getResearchProject().getRegulatoryDesignation().name();
 
                 //Attempt to override default chip attributes if changed in product order
                 GenotypingProductOrderMapping genotypingProductOrderMapping =
@@ -276,8 +278,8 @@ public class InfiniumRunResource {
                     batchName,
                     startDate,
                     scannerName,
-                    chipAttributes.get("norm_manifest_unix")
-                    );
+                    chipAttributes.get("norm_manifest_unix"),
+                    regulatoryDesignation);
         } else {
             throw new RuntimeException("Expected 1 sample, found " + sampleInstancesAtPositionV2.size());
         }

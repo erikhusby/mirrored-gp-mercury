@@ -56,6 +56,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -73,10 +74,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 
 /**
- *
+ *  This test is singleThreaded because subsequent test methods are called before the @AfterMethod of the previous test method call is complete <br/>
+ *  This wouldn't be a problem if lifecycle methods didn't change the state of instance variables.
+ *  Subsequent methods are using variables which are getting stepped on by previous @AfterMethod calls
  */
-@Test(groups = TestGroups.ALTERNATIVES)
+@Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
+@Dependent
 public class ReworkEjbTest extends Arquillian {
+
+    public ReworkEjbTest(){}
 
     public static final String SM_SGM_Test_Somatic_1_PATIENT_ID = "PT-1TS1";
     public static final String SM_SGM_Test_Somatic_1_STOCK_SAMP = "SM-SGM_Test_Somatic1";

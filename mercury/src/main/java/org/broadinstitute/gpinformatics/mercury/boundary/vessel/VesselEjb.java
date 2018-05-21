@@ -120,7 +120,7 @@ public class VesselEjb {
      * @param tubeType either BarcodedTube.BarcodedTubeType.name or null (defaults to Matrix tube).
      */
     public void registerSamplesAndTubes(@Nonnull Collection<String> tubeBarcodes,
-                                        @Null String tubeType,
+                                        String tubeType,
                                         @Nonnull Map<String, GetSampleDetails.SampleInfo> sampleInfoMap) {
 
         // Determine which barcodes are already known to Mercury.
@@ -212,8 +212,9 @@ public class VesselEjb {
             }
 
             if (!messageCollection.hasErrors()) {
+                // Process is only interested in the primary vessels
                 labVessels = labVesselFactory.buildLabVessels(sampleVesselProcessor.getParentVesselBeans(),
-                        loginUserName, new Date(), null, MercurySample.MetadataSource.MERCURY);
+                        loginUserName, new Date(), null, MercurySample.MetadataSource.MERCURY).getLeft();
                 labVesselDao.persistAll(labVessels);
             }
         }

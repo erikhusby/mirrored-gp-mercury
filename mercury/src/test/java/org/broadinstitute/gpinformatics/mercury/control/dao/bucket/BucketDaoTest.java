@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -18,6 +18,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Collections;
@@ -31,7 +32,10 @@ import java.util.List;
  *         Time: 1:05 PM
  */
 @Test(groups = TestGroups.STUBBY)
-public class BucketDaoTest extends ContainerTest {
+@Dependent
+public class BucketDaoTest extends StubbyContainerTest {
+
+    public BucketDaoTest(){}
 
     public static final String EXTRACTION_BUCKET_NAME = "Extraction Bucket";
     @Inject

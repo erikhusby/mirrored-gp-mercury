@@ -13,6 +13,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.LockModeType;
 import javax.persistence.criteria.Path;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
 
     public LabVesselEtl() {
@@ -64,7 +67,9 @@ public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
     /**
      * Does ETL for event_fact and sequencing_sample_fact for any downstream data related to a vessel
      **/
-    public MutableTriple<Integer, String, Exception> backfillEtlForVessel(String barcode, String etlDateStr, LabEventEtl labEventEtl, SequencingSampleFactEtl seqRunEtl ) {
+    public MutableTriple<Integer, String, Exception> backfillEtlForVessel(String barcode, String etlDateStr,
+            LabEventEtl labEventEtl, ArrayProcessFlowEtl arrayEventEtl, SequencingSampleFactEtl seqRunEtl ) {
+
         MutableTriple<Integer, String, Exception> countDateException = new MutableTriple<>(null, null, null);
         try {
 
@@ -115,6 +120,7 @@ public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
             if( descendantEvents.size() <= JPA_CLEAR_THRESHOLD ) {
                 // Extract entire set of data from attached entities
                 recordCount += labEventEtl.writeRecords(descendantEvents, Collections.EMPTY_SET, etlDateStr);
+                recordCount += arrayEventEtl.writeRecords(descendantEvents, Collections.EMPTY_SET, etlDateStr);
             } else {
                 int eventLinecount = 0;
                 // Break up list of Ids and clear hibernate session to avoid high resource consumption
@@ -134,6 +140,12 @@ public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
                             Collections.EMPTY_SET,
                             Collections.EMPTY_SET, // Collection<RevInfoPair<LabEvent>> not used
                             etlDateStr);
+                    eventLinecount += arrayEventEtl.writeRecords(Collections.EMPTY_SET,
+                            modifiedEntityIds.subList(startDex, endDex),
+                            Collections.EMPTY_SET,
+                            Collections.EMPTY_SET, // Collection<RevInfoPair<LabEvent>> not used
+                            etlDateStr);
+
                     startDex = endDex;
                 }
                 recordCount += eventLinecount;

@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
+import org.broadinstitute.gpinformatics.infrastructure.search.ResultParamValues;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
@@ -24,6 +25,8 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -81,7 +84,7 @@ public class ConfigurableListContainerTest extends Arquillian {
             }
         }
 
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, barCodeColumnIndex, "ASC", ColumnEntity.LAB_VESSEL);
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, Collections.EMPTY_MAP, barCodeColumnIndex, "ASC", ColumnEntity.LAB_VESSEL);
         // Add any row listeners
         configurableList.addAddRowsListeners(configurableSearchDef);
 
@@ -158,11 +161,30 @@ public class ConfigurableListContainerTest extends Arquillian {
         columnTabulations.add(configurableSearchDef.getSearchTerm("Barcode"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Nearest Sample ID"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Imported Sample ID"));
-        columnTabulations.add(configurableSearchDef.getSearchTerm("Imported Sample Tube Barcode"));
-        columnTabulations.add(configurableSearchDef.getSearchTerm("Shearing Sample Barcode"));
-        columnTabulations.add(configurableSearchDef.getSearchTerm("Flowcell Barcode"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Event Vessel Barcodes"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Event Vessel Barcodes"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Event Vessel Barcodes"));
 
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
+        Map<Integer,ResultParamValues> resultParamsMap = new HashMap<>();
+
+        // Configure and map result params to "Event Vessel Barcodes" search terms
+        ResultParamValues sampleParams = new ResultParamValues("Event Vessel Barcodes", "Sample Barcode");
+        sampleParams.addParamValue("eventTypes", "SAMPLE_IMPORT");
+        resultParamsMap.put(new Integer(3), sampleParams );
+
+        ResultParamValues shearingParams = new ResultParamValues("Event Vessel Barcodes", "Shearing Barcode");
+        shearingParams.addParamValue("eventTypes", "SHEARING_TRANSFER");
+        shearingParams.addParamValue("srcOrTarget", "source");
+        resultParamsMap.put(new Integer(4), shearingParams );
+
+        ResultParamValues flowcellParams = new ResultParamValues("Event Vessel Barcodes", "Flowcell Barcode");
+
+        flowcellParams.addParamValue("eventTypes", "FLOWCELL_TRANSFER" );
+        flowcellParams.addParamValue("eventTypes", "DENATURE_TO_FLOWCELL_TRANSFER");
+        flowcellParams.addParamValue("eventTypes", "DILUTION_TO_FLOWCELL_TRANSFER");
+        resultParamsMap.put(new Integer(5), flowcellParams );
+
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, resultParamsMap, 1, "ASC", ColumnEntity.LAB_VESSEL);
 
         // Add any row listeners
         configurableList.addAddRowsListeners(configurableSearchDef);

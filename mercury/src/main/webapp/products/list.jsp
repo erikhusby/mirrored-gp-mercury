@@ -85,13 +85,22 @@
             </thead>
             <tbody>
             <c:forEach items="${actionBean.allProducts}" var="product">
-                <td>
-                    <c:if test="${!actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
-                        <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}"
-                                          class="shiftCheckbox"/>
-                    </c:if>
-                </td>
-                <td>
+                <c:set var="priceClass" value="" />
+                <c:if test="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration()) &&
+                    !product.quoteServerPrice.equals(product.sapFullPrice)}">
+                    <c:set var="priceClass" value="bad-prices" />
+                </c:if>
+                <tr class="${priceClass}">
+
+                    <td>
+                        <span class="bad-price-div">The prices for this product information differ between the quote server and SAP.  Please correct this before any orders can be placed or updated
+                        </span>
+                        <c:if test="${!actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                            <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}"
+                                              class="shiftCheckbox"/>
+                        </c:if>
+                    </td>
+                    <td>
                     <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
                         <stripes:param name="product" value="${product.businessKey}"/>
                         ${product.partNumber}

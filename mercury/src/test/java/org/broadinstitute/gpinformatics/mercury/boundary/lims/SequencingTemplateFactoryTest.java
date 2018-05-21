@@ -59,10 +59,10 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.core.IsNot.not;
@@ -94,6 +94,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     private Date runDate;
     private String flowcellHiSeq2500Barcode;
     private BarcodedTube dilutionTube2500;
+    private BarcodedTube dilutionTube4000;
     private LabBatch fctBatch;
     private LabBatch miSeqBatch;
     private LabBatch fctBatchHiSeq2000;
@@ -260,9 +261,9 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         TubeFormation rearrayedDenatureRack = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         rearrayedDenatureRack.addRackOfTubes(new RackOfTubes("denatureRearray", RackOfTubes.RackType.Matrix96));
         HiSeq4000FlowcellEntityBuilder flowcell4000EntityBuilder =
-                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, null, BARCODE_SUFFIX + "ADXX",
+                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, null, BARCODE_SUFFIX + "4ADXX",
                         fctBatchHiSeq4000, null, HiSeq4000FlowcellEntityBuilder.FCTCreationPoint.DENATURE);
-        dilutionTube2500 = flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(
+        dilutionTube4000 = flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(
                 VesselPosition.A01);
 
         flowcellHiSeq4000 = flowcell4000EntityBuilder.getIlluminaFlowcell();
@@ -691,7 +692,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         UniqueMolecularIdentifier umiReagent2 = LabEventTest.createUmi(3, 2, UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ);
         StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", umiReagent);
         LabEventTest.attachUMIToPlate(umiReagent2, umiPlate);
-        testUniqueMolecularIdentifierMultiDesignations(umiPlate, "3M2S99T8B8B3M2S99T",
+        testUniqueMolecularIdentifierMultiDesignations(umiPlate, "3M2S94T8B8B3M2S94T",
                 LibraryConstructionEntityBuilder.Umi.DUAL);
     }
 
@@ -704,7 +705,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         BarcodedTube barcodedTube = new BarcodedTube("UmiTestTube01232", BarcodedTube.BarcodedTubeType.MatrixTube075);
         barcodedTube.addReagent(umiReagent);
         barcodedTube.addReagent(umiReagent2);
-        testUniqueMolecularIdentifierMultiDesignations(barcodedTube, "3M2S99T8B8B3M2S99T",
+        testUniqueMolecularIdentifierMultiDesignations(barcodedTube, "3M2S94T8B8B3M2S94T",
                 LibraryConstructionEntityBuilder.Umi.DUAL);
     }
 

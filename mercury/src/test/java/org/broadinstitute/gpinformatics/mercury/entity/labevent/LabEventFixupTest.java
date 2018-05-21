@@ -2102,4 +2102,26 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupGPLIM5438() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        // Change Lab event types to arrays
+        for (long id : new Long[]{2584508L, 2584509L, 2584616L, 2584617L, 2584618L}) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.AUTO_DAUGHTER_PLATE_CREATION) {
+                throw new RuntimeException("Cannot find event " + id + " or is not AUTO_DAUGHTER_PLATE_CREATION");
+            }
+            System.out.print("LabEvent " + id + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.ARRAY_PLATING_DILUTION);
+            System.out.println("   updated to " + labEvent.getLabEventType());
+
+        }
+
+        labEventDao.persist(new FixupCommentary("GPLIM-5438 change event type from AUTO_DAUGHTER_PLATE_CREATION to ARRAY_PLATING_DILUTION"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
 }

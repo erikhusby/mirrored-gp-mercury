@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularInd
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.util.regex.Pattern;
  * An optional NAME header can be used to specify grand-fathered names that pre-date the introduction of
  * automatic names, e.g. tagged_960.
  */
+@Dependent
 public class MolecularIndexingSchemeParser {
     @Inject
     private MolecularIndexingSchemeFactory molecularIndexingSchemeFactory;

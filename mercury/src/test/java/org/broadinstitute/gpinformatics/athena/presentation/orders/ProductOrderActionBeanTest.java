@@ -72,16 +72,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Search;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
-import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Search;
-import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
-import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
@@ -904,7 +904,6 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
                 (double) (1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));

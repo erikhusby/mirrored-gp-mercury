@@ -33,7 +33,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
@@ -106,6 +108,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
 
+    public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
+        if (cachedQuote==null) {
+            cachedQuote = quoteService.getQuoteByAlphaId(quoteId);
+        }
+        return cachedQuote;
+    }
+
     public enum SaveType {CREATING, UPDATING}
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -153,9 +162,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String title = "";
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "RESEARCH_PROJECT")
     private ResearchProject researchProject;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "PRODUCT")
     private Product product;
 
     @Enumerated(EnumType.STRING)
@@ -196,10 +207,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     // this should not cause n+1 select performance issue if it is LAZY and mandatory
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
+    @JoinColumn(name = "PRODUCT_ORDER_KIT")
     private ProductOrderKit productOrderKit;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS", joinColumns = {@JoinColumn(name = "PRODUCT_ORDER")})
+    @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS"
+            , joinColumns = {@JoinColumn(name = "PRODUCT_ORDER", referencedColumnName = "PRODUCT_ORDER_ID")}
+            , inverseJoinColumns = {@JoinColumn(name = "REGULATORY_INFOS", referencedColumnName = "REGULATORY_INFO_ID")})
     private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
@@ -231,7 +245,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String sapOrderNumber;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "athena", name = "product_order_sap_orders", joinColumns = {@JoinColumn(name = "reference_product_order")})
+    @JoinTable(schema = "athena", name = "product_order_sap_orders"
+            , joinColumns = {@JoinColumn(name = "REFERENCE_PRODUCT_ORDER", referencedColumnName = "PRODUCT_ORDER_ID")}
+            , inverseJoinColumns = {@JoinColumn(name = "SAP_REFERENCE_ORDERS", referencedColumnName = "SAP_ORDER_DETAIL_ID")})
     private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
 
     @OneToMany(mappedBy = "parentOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -261,6 +277,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "CLINICAL_ATTESTATION_CONFIRMED")
     private Boolean clinicalAttestationConfirmed = false;
 
+    @Column(name = "ANALYZE_UMI_OVERRIDE")
+    private Boolean analyzeUmiOverride;
+
+    @Transient
+    private Quote cachedQuote;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -801,6 +822,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setQuoteId(String quoteId) {
+        if (!StringUtils.equals(this.quoteId, quoteId)) {
+            cachedQuote = null;
+        }
         this.quoteId = quoteId;
     }
 
@@ -2251,6 +2275,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setClinicalAttestationConfirmed(Boolean clinicalAttestationConfirmed) {
         this.clinicalAttestationConfirmed = clinicalAttestationConfirmed;
+    }
+
+    public boolean getAnalyzeUmiOverride() {
+        if (analyzeUmiOverride == null) {
+            return getProduct() != null && getProduct().getAnalyzeUmi();
+        }
+        return analyzeUmiOverride;
+    }
+
+    public void setAnalyzeUmiOverride(boolean analyzeUmiOverride) {
+        this.analyzeUmiOverride = analyzeUmiOverride;
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
