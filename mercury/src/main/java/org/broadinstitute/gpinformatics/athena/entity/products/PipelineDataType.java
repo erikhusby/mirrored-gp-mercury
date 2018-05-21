@@ -13,26 +13,32 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import java.util.List;
 
 @Entity
 @Audited
-@Table(schema = "athena")
-public class PipelineDataType {
+@Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = "NAME"))
+public class PipelineDataType  {
     @Id
+    @SequenceGenerator(name = "SEQ_PIPELINE_DATA_TYPE", schema = "athena", sequenceName = "SEQ_PIPELINE_DATA_TYPE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PIPELINE_DATA_TYPE")
+    private Long pipelineDataTypeId;
+
     private String name;
-    public boolean active;
+
+    private boolean active;
 
     public PipelineDataType() {
-    }
-
-    PipelineDataType(String name) {
-        this(name, true);
     }
 
     public PipelineDataType(String name, boolean active) {
@@ -48,6 +54,10 @@ public class PipelineDataType {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public boolean isActive() {
         return active;
     }
@@ -56,23 +66,25 @@ public class PipelineDataType {
         this.active = active;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     @Override
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
 
-        if (o == null || getClass() != o.getClass()) {
+        if (o == null || (!OrmUtil.proxySafeIsInstance(o, PipelineDataType.class))) {
             return false;
         }
 
-        PipelineDataType that = (PipelineDataType) o;
+        if (!(o instanceof PipelineDataType)) {
+            return false;
+        }
+
+        PipelineDataType that = OrmUtil.proxySafeCast(o, PipelineDataType.class);
 
         return new EqualsBuilder()
+            .append(pipelineDataTypeId, that.pipelineDataTypeId)
             .append(isActive(), that.isActive())
             .append(getName(), that.getName())
             .isEquals();
@@ -81,6 +93,7 @@ public class PipelineDataType {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
+            .append(pipelineDataTypeId)
             .append(getName())
             .append(isActive())
             .toHashCode();

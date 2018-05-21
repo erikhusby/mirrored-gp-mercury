@@ -24,13 +24,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class PipelineDataTypeDbFreeTest {
     public void testContains() {
         List<PipelineDataType> pipelineDataTypes =
-            Arrays.asList(new PipelineDataType("foo"), new PipelineDataType("bar"));
+            Arrays.asList(new PipelineDataType("foo", true), new PipelineDataType("bar", true));
         assertThat(PipelineDataType.contains(pipelineDataTypes, "bar"), is(true));
     }
 
     public void testDoesntContain() {
         List<PipelineDataType> pipelineDataTypes =
-            Arrays.asList(new PipelineDataType("foo"), new PipelineDataType("bar"));
+            Arrays.asList(new PipelineDataType("foo", true), new PipelineDataType("bar", true));
         assertThat(PipelineDataType.contains(pipelineDataTypes, "baz"), is(false));
     }
 }

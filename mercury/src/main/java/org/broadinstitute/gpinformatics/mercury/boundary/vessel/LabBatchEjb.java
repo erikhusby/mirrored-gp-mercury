@@ -711,7 +711,7 @@ public class LabBatchEjb {
                             bucketEntries.add(bucketEntry);
                             // Exome Express currently does strange things with multiple LCSETs at shearing, so
                             // limit this logic to WGS.
-                            if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                            if (Objects.equals(bucketEntry.getProductOrder().getProduct().getPipelineDataTypeString(),
                                     Aggregation.DATA_TYPE_WGS)) {
                                 addAndRemoveSamples = true;
                             }
@@ -1142,7 +1142,7 @@ public class LabBatchEjb {
         for (String productName : designationDto.getProductNames()) {
             if (!productName.equals(CONTROLS)) {
                 Product product = productDao.findByName(productName);
-                if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
+                if (Objects.equals(product.getPipelineDataTypeString(), Aggregation.DATA_TYPE_WGS)) {
                     mixedFlowcellOk = true;
                     break;
                 }

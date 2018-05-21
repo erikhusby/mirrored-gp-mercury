@@ -91,9 +91,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Column(name = "DESCRIPTION", length = 2000)
     private String description;
 
-    @Column(name = "AGGREGATION_DATA_TYPE", length = 200)
+    @Column(name = "AGGREGATION_DATA_TYPE", length = 200, insertable = false)
     private String aggregationDataType;
 
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.REFRESH})
+    @JoinColumn(name = "PIPELINE_DATA_TYPE")
+    private PipelineDataType pipelineDataType;
 
     @Column(name = "ANALYSIS_TYPE_KEY", nullable = true, length = 200)
     private String analysisTypeKey;
@@ -121,9 +124,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private Integer insertSize;
     private BigDecimal loadingConcentration;
     private Boolean pairedEndRead;
-
-    @Transient
-    private PipelineDataType pipelineDataType;
 
     /**
      * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
@@ -228,11 +228,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                 productToClone.getSamplesPerWeek(),productToClone.getMinimumOrderSize(),
                 productToClone.getInputRequirements(), productToClone.getDeliverables(),
                 productToClone.isTopLevelProduct(), productToClone.getWorkflow(),
-                productToClone.isPdmOrderableOnly(),productToClone.getAggregationDataType());
+            productToClone.isPdmOrderableOnly(), productToClone.getPipelineDataType());
 
         clonedProduct.setExternalOnlyProduct(productToClone.isExternalOnlyProduct());
 
-        clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
+        clonedProduct.setPipelineDataType(productToClone.getPipelineDataType());
         clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
         clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
         clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
@@ -265,6 +265,16 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, Workflow.NONE, false, null);
     }
 
+    public Product(String productName, ProductFamily productFamily, String description, String partNumber,
+                   Date availabilityDate, Date discontinuedDate, Integer expectedCycleTimeSeconds,
+                   Integer guaranteedCycleTimeSeconds, Integer samplesPerWeek, Integer minimumOrderSize,
+                   String inputRequirements, String deliverables, boolean topLevelProduct, @Nonnull Workflow workflow,
+                   boolean pdmOrderableOnly) {
+        this(productName, productFamily, description, partNumber, availabilityDate, discontinuedDate,
+            expectedCycleTimeSeconds, guaranteedCycleTimeSeconds, samplesPerWeek, minimumOrderSize, inputRequirements,
+            deliverables, topLevelProduct, workflow, pdmOrderableOnly, null);
+    }
+
     public Product(String productName,
                    ProductFamily productFamily,
                    String description,
@@ -280,7 +290,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                    boolean topLevelProduct,
                    @Nonnull Workflow workflow,
                    boolean pdmOrderableOnly,
-                   String aggregationDataType) {
+                   PipelineDataType pipelineDataType) {
         this.productName = productName;
         this.productFamily = productFamily;
         this.description = description;
@@ -296,7 +306,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.topLevelProduct = topLevelProduct;
         workflowName = workflow.getWorkflowName();
         this.pdmOrderableOnly = pdmOrderableOnly;
-        this.aggregationDataType = aggregationDataType;
+        this.pipelineDataType = pipelineDataType;
     }
 
     public Long getProductId() {
@@ -386,7 +396,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Nullable
     public Boolean getPairedEndRead() {
         // Disallows null when sequencing params are present.
-        if (StringUtils.isNotBlank(aggregationDataType)) {
+        if (pipelineDataType != null) {
             return Boolean.TRUE.equals(pairedEndRead);
         }
         return pairedEndRead;
@@ -532,12 +542,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return aggregationDataType;
     }
 
-    public void setAggregationDataType(String aggregationDataType) {
-        this.aggregationDataType = aggregationDataType;
+    public PipelineDataType getPipelineDataType() {
+        return pipelineDataType;
     }
 
-    public void setAggregationDataType(PipelineDataType pipelineDataType) {
-        this.aggregationDataType = pipelineDataType.getName();
+    public void setPipelineDataType(PipelineDataType pipelineDataType) {
+        this.pipelineDataType = pipelineDataType;
     }
 
     public BillingRequirement getRequirement() {
@@ -975,5 +985,15 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         }
         return fee;
 
+    }
+
+    @Transient
+    public String getPipelineDataTypeString() {
+        String dataType = "";
+
+        if (pipelineDataType != null) {
+            dataType = pipelineDataType.getName();
+        }
+        return dataType;
     }
 }
