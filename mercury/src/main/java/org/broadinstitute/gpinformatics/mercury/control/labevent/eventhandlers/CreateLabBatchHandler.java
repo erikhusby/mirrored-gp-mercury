@@ -10,6 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -40,12 +42,20 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
 
     @Override
     public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
-        // todo jmt do only for Mercury (not BSP) samples
         Set<LabVessel> sourceLabVessels = targetEvent.getSourceLabVessels();
         Set<LabVessel> targetLabVessels = targetEvent.getTargetLabVessels();
         if (targetEvent.getSectionTransfers().size() != 1 || sourceLabVessels.size() != 1 ||
                 targetLabVessels.size() != 1) {
             throw new RuntimeException("Currently supports single section transfer only.");
+        }
+
+        // Create LabBatch only for Mercury (not BSP) samples
+        LabVessel sourceLabVessel = sourceLabVessels.iterator().next();
+        for (SampleInstanceV2 sampleInstanceV2 : sourceLabVessel.getSampleInstancesV2()) {
+            if (sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource() ==
+                    MercurySample.MetadataSource.BSP) {
+                return;
+            }
         }
 
         LabVessel targetLabVessel = targetLabVessels.iterator().next();
@@ -54,7 +64,6 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
             // Create target PlateWells for filled positions in source rack
             StaticPlate staticPlate = OrmUtil.proxySafeCast(targetLabVessel, StaticPlate.class);
             SectionTransfer sectionTransfer = targetEvent.getSectionTransfers().iterator().next();
-            LabVessel sourceLabVessel = sourceLabVessels.iterator().next();
             List<VesselPosition> targetPositions = sectionTransfer.getTargetSection().getWells();
             List<VesselPosition> sourcePositions = sectionTransfer.getSourceSection().getWells();
             for (Map.Entry<VesselPosition, ?> vesselPositionEntry :
