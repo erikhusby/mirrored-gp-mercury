@@ -151,6 +151,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_QIAGEN</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
