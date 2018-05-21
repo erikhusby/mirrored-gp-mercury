@@ -161,6 +161,7 @@ public class ProductActionBean extends CoreActionBean {
     private String controlsProject;
 
     @ValidateNestedProperties({
+        @Validate(field = "pipelineDataType", converter = PipelineDataTypeConverter.class),
             @Validate(field = "productName", required = true, maxlength = 255, on = {SAVE_ACTION},
                     label = "Product Name"),
             @Validate(field = "partNumber", required = true, maxlength = 255, on = {SAVE_ACTION},
@@ -172,8 +173,6 @@ public class ProductActionBean extends CoreActionBean {
     private Product editProduct;
 
     private boolean productUsedInOrders = false;
-
-    private List<PipelineDataType> pipelineDataTypes;
 
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
@@ -216,11 +215,6 @@ public class ProductActionBean extends CoreActionBean {
         initProduct();
         initGenotypingInfo();
         setupFamilies();
-        pipelineDataTypes = pipelineDataTypeDao.findActive();
-        String dataType = editProduct.getAggregationDataType();
-        if (StringUtils.isNotBlank(dataType) && !PipelineDataType.contains(pipelineDataTypes, dataType)) {
-            pipelineDataTypes.add(pipelineDataTypeDao.find(dataType));
-        }
     }
 
     @Before(stages = LifecycleStage.BindingAndValidation, on = {SAVE_ACTION})
@@ -479,7 +473,7 @@ public class ProductActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         // Sets paired end non-null when sequencing params are present.
-        if (StringUtils.isNotBlank(editProduct.getAggregationDataType())) {
+        if (editProduct.getPipelineDataType()!=null) {
             editProduct.setPairedEndRead(editProduct.getPairedEndRead());
         }
         productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
@@ -708,6 +702,10 @@ public class ProductActionBean extends CoreActionBean {
         return getDisplayableItemInfo(businessKey, reagentDesignDao);
     }
 
+    public Collection<PipelineDataType> getPipelineDataTypes() {
+        return pipelineDataTypeDao.findAll();
+    }
+
     /**
      * Get the analysis type.
      *
@@ -840,13 +838,5 @@ public class ProductActionBean extends CoreActionBean {
 
     public boolean isProductUsedInOrders() {
         return productUsedInOrders;
-    }
-
-    public List<PipelineDataType> getPipelineDataTypes() {
-        return pipelineDataTypes;
-    }
-
-    public void setPipelineDataTypes(List<PipelineDataType> pipelineDataTypes) {
-        this.pipelineDataTypes = pipelineDataTypes;
     }
 }

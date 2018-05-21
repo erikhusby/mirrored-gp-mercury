@@ -97,7 +97,7 @@ public class ProductDaoTest extends StubbyContainerTest {
                 "dummy deliverables",                      // deliverables
                 false,                                     // top level product
                 Workflow.NONE,
-                false, "agg type");
+                false);
 
         // we have some tests that call this method more than once so the price item compound key must be unique
         // across invocations

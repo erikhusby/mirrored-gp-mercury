@@ -26,11 +26,17 @@ import java.util.List;
 @RequestScoped
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class PipelineDataTypeDao extends GenericDao implements Serializable {
+    private static final long serialVersionUID = -5509302444273367564L;
+
     public List<PipelineDataType> findActive() {
         return findList(PipelineDataType.class, PipelineDataType_.active, true);
     }
 
-    public PipelineDataType find(String aggregationDataType) {
+    public List<PipelineDataType> findAll() {
+        return findAll(PipelineDataType.class);
+    }
+
+    public PipelineDataType findDataType(String aggregationDataType) {
         return findSingle(PipelineDataType.class, PipelineDataType_.name, aggregationDataType);
     }
 }
