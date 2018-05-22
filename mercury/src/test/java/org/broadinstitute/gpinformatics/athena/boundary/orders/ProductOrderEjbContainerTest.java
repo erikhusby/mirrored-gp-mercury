@@ -131,6 +131,28 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     }
 
+    // SM-XADF
+    // SM-XADE
+    // SM-XADD
+    // SM-XADG
+    @Test
+    public void test_Calculate_risk_without_error() throws Exception {
+        userBean.loginTestUser();
+        MessageReporter mockReporter = Mockito.mock(MessageReporter.class);
+        String[] sampleNames = {"SM-XADE", "SM-XADF", "SM-XADG", "SM-XADH", "SM-XADI", "SM-XADJ", "SM-XADK"};
+        ProductOrder order =
+                ProductOrderDBTestFactory.createTestExExProductOrder(researchProjectDao, productDao, sampleNames);
+
+        order.setCreatedBy(userBean.getBspUser().getUserId());
+        productDao.persist(order);
+        productDao.flush();
+        MessageCollection messageCollection = new MessageCollection();
+
+        pdoEjb.placeProductOrder(order.getProductOrderId(), order.getBusinessKey(), messageCollection);
+
+        pdoEjb.calculateRisk(order.getBusinessKey());
+    }
+
 
     /**
      * Gets the text of the quote field from
