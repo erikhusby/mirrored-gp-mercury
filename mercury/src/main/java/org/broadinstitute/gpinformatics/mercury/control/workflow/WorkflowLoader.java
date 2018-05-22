@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.ExternalDataCacheCont
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -30,8 +31,13 @@ import java.io.Serializable;
 public class WorkflowLoader extends AbstractCache implements Serializable {
     private final Object lock = new Object();
 
-    // Use file based configuration access for DBFree testing
-    private static boolean IS_STANDALONE = false;
+    public static boolean IS_INITIALIZED = false;
+
+    /**
+     * Defaults to using file based configuration access for DBFree testing <br/>
+     * This state is only changed to true via EJB lifecycle methods, DBFree has no effect
+     */
+    private static boolean IS_STANDALONE = true;
 
     // Valid for in-container only - DBFree tests will load workflow from file system
     @Inject
@@ -40,18 +46,24 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
     // Standalone only (DBFree tests)
     private static WorkflowConfig workflowConfigFromFile;
 
-    // Use availability of context to test for running in container
-    static {
-        try{
-            new InitialContext().lookup("java:comp/env");
-        } catch (NamingException e) {
-            IS_STANDALONE = true;
-        }
-    }
-
     private WorkflowConfig workflowConfig;
 
     public WorkflowLoader(){}
+
+    /**
+     * EJB lifecycle method sets state of cache to use database (vs. filesystem for DBFree testing)
+     */
+    @PostConstruct
+    public void initialize(){
+        // Use availability of context to test for running in container
+        try{
+            new InitialContext().lookup("java:comp/env");
+            IS_STANDALONE = false;
+        } catch (NamingException e) {
+            IS_STANDALONE = true;
+        }
+        IS_INITIALIZED = true;
+    }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public WorkflowConfig load() {
@@ -64,6 +76,13 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void refreshCache() {
+
+        // Sequence of @PostConstruct calls between superclass and this results in this method getting called before
+        // @PostConstruct initialize() method
+        if( !IS_INITIALIZED ) {
+            initialize();
+        }
+
         synchronized (lock) {
             if (IS_STANDALONE) {
                 workflowConfig = loadFromFile();
@@ -75,7 +94,6 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
 
     /**
      * Pull workflow configuration from preferences when running in container
-     * @return
      */
     private WorkflowConfig loadFromPrefs() {
 
@@ -101,9 +119,8 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
         return config;
     }
 
-    /** Pull workflow configuration from file when running outside a container
-     *
-     * @return
+    /**
+     *  Pull workflow configuration from file when running outside a container
      */
     private WorkflowConfig loadFromFile() {
             try {
