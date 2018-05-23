@@ -14,6 +14,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Handles creation of ARRAY tickets.
+ */
 public class ArrayJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     private int sampleCount;
