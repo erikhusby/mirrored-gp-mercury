@@ -172,7 +172,7 @@ public class CreateFields extends UpdateFields {
         RNA_EXTRACTION("RNA Extraction"),
         HUMAN_PCR_FREE("Human PCR-Free"),
         HUMAN_PCR_PLUS("Human PCR-Plus"),
-        INFINIUM_24("Infinium-24"); // todo jmt -4, -8, -12
+        INFINIUM_8("Infinium-8"); // todo jmt -12, -24
 
         private final String jiraName;
 
