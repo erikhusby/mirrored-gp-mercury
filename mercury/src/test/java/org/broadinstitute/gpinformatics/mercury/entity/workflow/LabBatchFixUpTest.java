@@ -13,9 +13,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -76,9 +76,9 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -90,6 +90,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -151,6 +153,25 @@ public class LabBatchFixUpTest extends Arquillian {
         removeSamples(samplesToRemove, labBatch);
 
         labBatchDao.persist(new FixupCommentary("GPLIM-4393: Remove samples from LCSET-9978"));
+    }
+
+    @Test(enabled = false)
+    public void gplim5572removeSamplesFromLcset() throws Exception {
+        userBean.loginOSUser();
+
+        Map<String, String> lcSetSampleMap = Collections.unmodifiableMap(Stream.of(
+            new SimpleEntry<>("LCSET-13556", "SM-H7YD8"),
+            new SimpleEntry<>("LCSET-13554", "SM-H91G6"),
+            new SimpleEntry<>("LCSET-13553", "SM-H91NZ")
+        ).collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
+
+        labBatchDao.findByListIdentifier(new ArrayList<>(lcSetSampleMap.keySet())).stream()
+            .collect(Collectors.toMap(LabBatch::getBatchName, labBatch -> labBatch))
+            .forEach((batchName, labBatch) -> removeSamples(
+                Collections.singletonList(lcSetSampleMap.get(batchName)), labBatch)
+            );
+
+        labBatchDao.persist(new FixupCommentary("GPLIM-5572: Remove samples from LCSETS"));
     }
 
     private List<LabBatchStartingVessel> removeSamples(List<String> sampleNames, LabBatch labBatch) {
