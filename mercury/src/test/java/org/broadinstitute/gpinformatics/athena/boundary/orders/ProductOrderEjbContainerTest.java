@@ -142,10 +142,6 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     }
 
-    // SM-XADF
-    // SM-XADE
-    // SM-XADD
-    // SM-XADG
     @Test
     public void test_Calculate_risk_without_error() throws Exception {
         userBean.loginTestUser();
