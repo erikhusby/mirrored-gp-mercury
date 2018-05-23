@@ -2887,7 +2887,7 @@
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
                 <batchJiraProjectType>ARRAY</batchJiraProjectType>
-                <batchJiraIssueType>INFINIUM_24</batchJiraIssueType>
+                <batchJiraIssueType>INFINIUM_8</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>InfiniumMethylationZymoTransferElution</name>
@@ -2954,7 +2954,7 @@
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
                 <batchJiraProjectType>ARRAY</batchJiraProjectType>
-                <batchJiraIssueType>INFINIUM_24</batchJiraIssueType>
+                <batchJiraIssueType>INFINIUM_8</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>InfiniumAmplification</name>
