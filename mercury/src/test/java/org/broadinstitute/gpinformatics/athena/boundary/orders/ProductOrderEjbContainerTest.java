@@ -2,16 +2,22 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mocks.HappyQuoteServiceMock;
@@ -26,8 +32,10 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
+import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -53,6 +61,9 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Inject
     ResearchProjectDao researchProjectDao;
+
+    @Inject
+    ResearchProjectEjb researchProjectEjb;
 
     @Inject
     JiraService jiraService;
@@ -140,8 +151,16 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         userBean.loginTestUser();
         MessageReporter mockReporter = Mockito.mock(MessageReporter.class);
         String[] sampleNames = {"SM-XADE", "SM-XADF", "SM-XADG", "SM-XADH", "SM-XADI", "SM-XADJ", "SM-XADK"};
+
+        ResearchProject dummy = researchProjectDao.findByTitle("ADHD");
+
+        List<Product> products = productDao.findList(Product.class, Product_.workflowName, Workflow.AGILENT_EXOME_EXPRESS
+                .getWorkflowName());
+        assertThat(products, is(not(nullOrEmptyCollection())));
+        Product product = products.get(new Random().nextInt(products.size()));
+
         ProductOrder order =
-                ProductOrderDBTestFactory.createTestExExProductOrder(researchProjectDao, productDao, sampleNames);
+                ProductOrderDBTestFactory.createTestProductOrder(dummy, product, sampleNames);
 
         order.setCreatedBy(userBean.getBspUser().getUserId());
         productDao.persist(order);
