@@ -28,6 +28,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Creates a LabBatch for a given message.  Initially, creates ARRAY ticket for ArrayPlatingDilution message that is
+ * all Mercury samples (BSP creates the ARRAY tickets for samples it owns).
+ */
 @Dependent
 public class CreateLabBatchHandler extends AbstractEventHandler {
 
@@ -61,7 +65,8 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
         LabVessel targetLabVessel = targetLabVessels.iterator().next();
         if (targetLabVessel.getType() == LabVessel.ContainerType.STATIC_PLATE &&
                 targetLabVessel.getContainerRole().getContainedVessels().isEmpty()) {
-            // Create target PlateWells for filled positions in source rack
+            // Create target PlateWells for filled positions in source rack, so there's something to attach a
+            // BucketEntry to.
             StaticPlate staticPlate = OrmUtil.proxySafeCast(targetLabVessel, StaticPlate.class);
             SectionTransfer sectionTransfer = targetEvent.getSectionTransfers().iterator().next();
             List<VesselPosition> targetPositions = sectionTransfer.getTargetSection().getWells();
@@ -73,9 +78,9 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
             }
 
         }
-        Set<LabVessel> labVesselSet = new HashSet<>(targetLabVessel.getContainerRole().getContainedVessels());
 
         String username = bspUserList.getById(targetEvent.getEventOperator()).getUsername();
+        Set<LabVessel> labVesselSet = new HashSet<>(targetLabVessel.getContainerRole().getContainedVessels());
         LabBatch labBatch = new LabBatch("dummy" , labVesselSet, LabBatch.LabBatchType.WORKFLOW);
         Set<ProductOrder> productOrders = LabBatchResource.addToBatch(labVesselSet, labBatch,
                 ProductFamily.WHOLE_GENOME_GENOTYPING, username, bucketEjb);
