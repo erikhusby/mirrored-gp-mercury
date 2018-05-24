@@ -1457,7 +1457,7 @@ public class ProductOrderEjb {
      * <li>if necessary, update the order status based on the new list of samples</li>
      * </ul>
      */
-    private void updateSamples(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
+    public void updateSamples(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
                                String operation) throws IOException, NoSuchPDOException, SAPInterfaceException {
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
 
@@ -1581,7 +1581,7 @@ public class ProductOrderEjb {
     /**
      * Makes the association between ProductOrderSample and MercurySample.
      */
-    private void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) {
+    public void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) {
         ImmutableListMultimap<String, ProductOrderSample> samplesBySampleId =
                 Multimaps.index(samples, new Function<ProductOrderSample, String>() {
                     @Override
