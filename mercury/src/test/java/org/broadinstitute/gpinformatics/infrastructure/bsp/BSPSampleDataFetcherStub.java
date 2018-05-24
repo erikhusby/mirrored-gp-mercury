@@ -1,14 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Alternative;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 @Alternative
-@Dependent
+@RequestScoped
 public class BSPSampleDataFetcherStub extends BSPSampleDataFetcher {
 
     public BSPSampleDataFetcherStub(){}
@@ -16,9 +16,19 @@ public class BSPSampleDataFetcherStub extends BSPSampleDataFetcher {
     private Map<String, BspSampleData> sampleDataBySampleId = new HashMap<>();
     private Map<String, String> samplePlasticBySampleId = new HashMap<>();
 
+
+    /**
+     * Clears any cached test sample data and replaces with new testing data <br/>
+     * Typically managed in TestNg's @BeforeMethod event
+     */
     public void stubFetchSampleData(String sampleId, BspSampleData sampleData, String samplePlastic) {
         sampleDataBySampleId.put(sampleId, sampleData);
         samplePlasticBySampleId.put(sampleId, samplePlastic);
+    }
+
+    public void clearStubFetchSampleData() {
+        sampleDataBySampleId.clear();
+        samplePlasticBySampleId.clear();
     }
 
     @Override
