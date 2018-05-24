@@ -1495,7 +1495,19 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
-    @Test(enabled = true)
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/SamplesToAddToClosedPDO.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX Adding samples to completed pdos PDO-xxx, PDO-xxx1
+     * PDO-xxx SM-329482
+     * PDO-xxx SM-2938239
+     * PDO-xxx1 SM-329482
+     * PDO-xxx1 SM-2938239
+     * ...
+     * ...
+     */
+    @Test(enabled = false)
     public void addSamplesToClosedOrder() throws Exception {
 
         userBean.loginOSUser();
