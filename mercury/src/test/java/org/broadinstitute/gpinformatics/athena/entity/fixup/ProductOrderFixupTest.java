@@ -1511,48 +1511,26 @@ public class ProductOrderFixupTest extends Arquillian {
                 .forEach((pdoSampleString)->samplesToAdd.put(pdoSampleString.split(" ")[0],
                         new ProductOrderSample(pdoSampleString.split(" ")[1])));
 
-        for(Map.Entry<String, Collection<ProductOrderSample>> entry: samplesToAdd.asMap().entrySet()) {
-            ProductOrder pdo = productOrderDao.findByBusinessKey(entry.getKey());
-            pdo.addSamples(entry.getValue());
+        samplesToAdd.asMap().forEach((String pdoKey, Collection<ProductOrderSample> samples) -> {
+            ProductOrder pdo = productOrderDao.findByBusinessKey(pdoKey);
+            pdo.addSamples(samples);
 
             pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-            productOrderEjb.attachMercurySamples(new ArrayList<>(entry.getValue()));
+            productOrderEjb.attachMercurySamples(new ArrayList<>(samples));
 
             pdo.prepareToSave(userBean.getBspUser());
             productOrderDao.persist(pdo);
-            productOrderEjb.handleSamplesAdded(entry.getKey(), entry.getValue(), MessageReporter.UNUSED);
+            productOrderEjb.handleSamplesAdded(pdoKey, samples, MessageReporter.UNUSED);
 
             try {
-                productOrderEjb.updateSamples(pdo, entry.getValue(), MessageReporter.UNUSED, "added");
+                productOrderEjb.updateSamples(pdo, samples, MessageReporter.UNUSED, "added");
             } catch (IOException | ProductOrderEjb.NoSuchPDOException | SAPInterfaceException e) {
                 Assert.fail();
             }
-            productOrderDao.persist(new FixupCommentary(fixupReason));
+        });
 
-        }
-
-//        samplesToAdd.asMap().forEach((String pdoKey, Collection<ProductOrderSample> samples) -> {
-//            ProductOrder pdo = productOrderDao.findByBusinessKey(pdoKey);
-//            pdo.addSamples(samples);
-//
-//            pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-//
-//            productOrderEjb.attachMercurySamples(new ArrayList<>(samples));
-//
-//            pdo.prepareToSave(userBean.getBspUser());
-//            productOrderDao.persist(pdo);
-//            productOrderEjb.handleSamplesAdded(pdoKey, samples, MessageReporter.UNUSED);
-//
-//            try {
-//                productOrderEjb.updateSamples(pdo, samples, MessageReporter.UNUSED, "added");
-//            } catch (IOException | ProductOrderEjb.NoSuchPDOException | SAPInterfaceException e) {
-//                Assert.fail();
-//            }
-//            productOrderDao.persist(new FixupCommentary(fixupReason));
-//        });
-
+        productOrderDao.persist(new FixupCommentary(fixupReason));
         commitTransaction();
-
     }
 }
