@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -76,7 +77,6 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -91,7 +91,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -157,21 +156,46 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Test(enabled = false)
     public void gplim5572removeSamplesFromLcset() throws Exception {
+        removeSamplesFromLcset("RemoveFromLCSET.txt");
+    }
+
+    /**
+     * Remove samples from LCSET(s)
+     * Expected format is
+     * <pre>
+     * fixup commentary
+     * LCSET-1  SM-1    SM-2    SM-3
+     * LCSET-2  SM-4    SM-5    SM-6
+     * </pre>
+     * Assertions will fail if any samples to be removed are not present in the LCSET
+     * @param testDataFile
+     * @throws IOException
+     */
+    protected void removeSamplesFromLcset(String testDataFile) throws IOException {
         userBean.loginOSUser();
 
-        Map<String, String> lcSetSampleMap = Collections.unmodifiableMap(Stream.of(
-            new SimpleEntry<>("LCSET-13556", "SM-H7YD8"),
-            new SimpleEntry<>("LCSET-13554", "SM-H91G6"),
-            new SimpleEntry<>("LCSET-13553", "SM-H91NZ")
-        ).collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource(testDataFile));
+        Assert.assertTrue(CollectionUtils.size(fixupLines) > 2, String.format("The file %s has no content.", testDataFile));
+        String fixupReason = fixupLines.get(0).trim();
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
 
-        labBatchDao.findByListIdentifier(new ArrayList<>(lcSetSampleMap.keySet())).stream()
+        List<String> lcsetData = fixupLines.subList(1, fixupLines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(lcsetData), "No data found in file.");
+        ArrayListMultimap<String, String> lcsetToSamples = ArrayListMultimap.create();
+        for (String line  :lcsetData){
+            String[] split = line.split("\\s");
+            for (int i = 1; i < split.length; i++) {
+                lcsetToSamples.put(split[0], split[i]);
+            }
+        }
+
+        labBatchDao.findByListIdentifier(new ArrayList<>(lcsetToSamples.keySet())).stream()
             .collect(Collectors.toMap(LabBatch::getBatchName, labBatch -> labBatch))
             .forEach((batchName, labBatch) -> removeSamples(
-                Collections.singletonList(lcSetSampleMap.get(batchName)), labBatch)
+                lcsetToSamples.get(batchName), labBatch)
             );
 
-        labBatchDao.persist(new FixupCommentary("GPLIM-5572: Remove samples from LCSETS"));
+        labBatchDao.persist(new FixupCommentary(fixupReason));
     }
 
     private List<LabBatchStartingVessel> removeSamples(List<String> sampleNames, LabBatch labBatch) {
@@ -188,7 +212,7 @@ public class LabBatchFixUpTest extends Arquillian {
                 }
             }
         }
-        Assert.assertEquals(sampleNamesFound, sampleNames, labBatch.getBatchName() + " does not contain " +
+        Assert.assertTrue(sampleNamesFound.containsAll(sampleNames), labBatch.getBatchName() + " does not contain " +
                 StringUtils.join(CollectionUtils.subtract(sampleNames, sampleNamesFound), ", "));
         for (LabBatchStartingVessel vesselToRemove : vesselsToRemove) {
             labBatch.getLabBatchStartingVessels().remove(vesselToRemove);
