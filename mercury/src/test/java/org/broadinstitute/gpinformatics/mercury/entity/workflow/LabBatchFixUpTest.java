@@ -223,6 +223,9 @@ public class LabBatchFixUpTest extends Arquillian {
         return vesselsToRemove;
     }
 
+    /**
+     * Removes samples from Jira. Note: this will not remove rework!!!
+     */
     private void removeSamplesFromJira(List<String> sampleNames, LabBatch batch, String fixupReason) {
         try {
             JiraIssue issue = batch.getJiraTicket().getJiraDetails();
