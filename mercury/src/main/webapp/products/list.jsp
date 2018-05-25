@@ -86,16 +86,18 @@
             <tbody>
             <c:forEach items="${actionBean.allProducts}" var="product">
                 <c:set var="priceClass" value="" />
-                <c:if test="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration()) &&
-                    !product.quoteServerPrice.equals(product.sapFullPrice)}">
-                    <c:set var="priceClass" value="bad-prices" />
-                </c:if>
+                <c:set var="inSAP" value="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}" />
+                <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
+                    <c:if test="${inSAP && !product.quoteServerPrice.equals(product.sapFullPrice)}">
+                        <c:set var="priceClass" value="bad-prices"/>
+                    </c:if>
+                </security:authorizeBlock>
                 <tr class="${priceClass}">
 
                     <td>
                         <span class="bad-price-div">The prices for this product information differ between the quote server and SAP.  Please correct this before any orders can be placed or updated
                         </span>
-                        <c:if test="${!actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                        <c:if test="${!inSAP}">
                             <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}"
                                               class="shiftCheckbox"/>
                         </c:if>
@@ -115,23 +117,23 @@
                     <td>${product.primaryPriceItem.platform}</td>
                     <td>${product.quoteServerPrice}</td>
                     <td>
-                        <c:if test="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                        <c:if test="${inSAP}">
                             ${product.sapFullPrice}
                         </c:if>
                     </td>
 
                     <td>
-                        <c:if test="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                        <c:if test="${inSAP}">
                             ${product.sapClinicalCharge}
                         </c:if>
                     </td>
                     <td>
-                        <c:if test="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                        <c:if test="${inSAP}">
                             ${product.sapCommercialCharge}
                         </c:if>
                     </td>
                     <td>
-                        <c:if test="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                        <c:if test="${inSAP}">
                             ${product.sapSSFIntercompanyCharge}
                         </c:if>
                     </td>

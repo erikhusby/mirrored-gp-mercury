@@ -12,8 +12,6 @@ import javax.ejb.Singleton;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -28,10 +26,6 @@ import java.io.Serializable;
  */
 @Singleton
 public class WorkflowLoader extends AbstractCache implements Serializable {
-    private final Object lock = new Object();
-
-    // Use file based configuration access for DBFree testing
-    private static boolean IS_STANDALONE = false;
 
     // Valid for in-container only - DBFree tests will load workflow from file system
     @Inject
@@ -39,15 +33,6 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
 
     // Standalone only (DBFree tests)
     private static WorkflowConfig workflowConfigFromFile;
-
-    // Use availability of context to test for running in container
-    static {
-        try{
-            new InitialContext().lookup("java:comp/env");
-        } catch (NamingException e) {
-            IS_STANDALONE = true;
-        }
-    }
 
     private WorkflowConfig workflowConfig;
 
@@ -64,18 +49,15 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void refreshCache() {
-        synchronized (lock) {
-            if (IS_STANDALONE) {
-                workflowConfig = loadFromFile();
-            } else {
-                workflowConfig = loadFromPrefs();
-            }
+        if ( preferenceDao == null ) {
+            workflowConfig = loadFromFile();
+        } else {
+            workflowConfig = loadFromPrefs();
         }
     }
 
     /**
      * Pull workflow configuration from preferences when running in container
-     * @return
      */
     private WorkflowConfig loadFromPrefs() {
 
@@ -101,9 +83,8 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
         return config;
     }
 
-    /** Pull workflow configuration from file when running outside a container
-     *
-     * @return
+    /**
+     *  Pull workflow configuration from file when running outside a container
      */
     private WorkflowConfig loadFromFile() {
             try {
