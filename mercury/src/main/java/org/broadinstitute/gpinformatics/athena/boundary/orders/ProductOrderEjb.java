@@ -1543,6 +1543,10 @@ public class ProductOrderEjb {
 
         attachMercurySamples(samples);
 
+        if(order.getOrderStatus() == OrderStatus.Completed) {
+            order.setOrderStatus(OrderStatus.Submitted);
+        }
+
         order.prepareToSave(userBean.getBspUser());
         productOrderDao.persist(order);
         handleSamplesAdded(jiraTicketKey, samples, reporter);
