@@ -63,8 +63,8 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     @Inject
     private LabMetricDao labMetricDao;
 
-    // Spreadsheet upload page invokes this action bean and passes in the tubeFormationLabel parameter.
-    private String tubeFormationLabel;
+    // Spreadsheet upload page invokes this action bean and passes in the tubeFormationLabels parameter.
+    private List<String> tubeFormationLabels;
 
     // ListItem is one row of the "next step" table shown by the jsp.
     private List<ListItem> listItems = new ArrayList<>();
@@ -75,12 +75,12 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     // Indicates the selection of next step by the user during rearray confirm.
     private NextStep nextStepSelect;
 
-    public String getTubeFormationLabel() {
-        return tubeFormationLabel;
+    public List<String> getTubeFormationLabels() {
+        return tubeFormationLabels;
     }
 
-    public void setTubeFormationLabel(String tubeFormationLabel) {
-        this.tubeFormationLabel = tubeFormationLabel;
+    public void setTubeFormationLabels(List<String> tubeFormationLabels) {
+        this.tubeFormationLabels = tubeFormationLabels;
     }
 
     public List<ListItem> getListItems() {
@@ -239,7 +239,7 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution displayList() {
-        makeListItems(tubeFormationLabel, tubeFormation);
+        makeListItems(tubeFormationLabels, tubeFormation);
         return new ForwardResolution(NEXT_STEPS_PAGE);
     }
 
@@ -321,16 +321,18 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     }
 
     /** Makes listItems from either a tube formation or its label. */
-    private void makeListItems(String label, TubeFormation container) {
+    private void makeListItems(List<String> labels, TubeFormation container) {
         listItems.clear();
-        if (StringUtils.isNotBlank(label) && container == null) {
-            container = tubeFormationDao.findByDigest(label);
-            if (container == null || container.getContainerRole() == null) {
-                addGlobalValidationError("Cannot find tube formation having label '" + label + "'");
+        for (String label: labels) {
+            if (StringUtils.isNotBlank(label) && container == null) {
+                container = tubeFormationDao.findByDigest(label);
+                if (container == null || container.getContainerRole() == null) {
+                    addGlobalValidationError("Cannot find tube formation having label '" + label + "'");
+                }
             }
-        }
-        if (container != null) {
-            makeListItems(container.getContainerRole().getMapPositionToVessel());
+            if (container != null) {
+                makeListItems(container.getContainerRole().getMapPositionToVessel());
+            }
         }
     }
 
