@@ -175,7 +175,7 @@ public class LabBatchFixUpTest extends Arquillian {
         userBean.loginOSUser();
 
         List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource(testDataFile));
-        Assert.assertTrue(CollectionUtils.size(fixupLines) > 2, String.format("The file %s has no content.", testDataFile));
+        Assert.assertTrue(CollectionUtils.size(fixupLines) >= 2, String.format("The file %s has no content.", testDataFile));
         String fixupReason = fixupLines.get(0).trim();
         Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
 
