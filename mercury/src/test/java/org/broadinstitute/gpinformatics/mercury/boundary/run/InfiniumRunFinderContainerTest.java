@@ -56,6 +56,7 @@ import static org.mockito.Mockito.when;
 
 /*
  * Database test for the Infinium Run Finder logic
+ * Make single threaded so previous @AfterMethod tearDown doesn't step on subsequent method's folder and files
  */
 @Test(groups = TestGroups.STANDARD, singleThreaded = true)
 public class InfiniumRunFinderContainerTest extends Arquillian {
