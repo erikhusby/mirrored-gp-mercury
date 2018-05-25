@@ -62,12 +62,6 @@ public class VarioskanParserTest {
             List<VarioskanPlateProcessor.PlateWellResult> plateWellResults =
                     plateProcessorTwoCurve.processMultipleCurves(LabMetric.MetricType.INITIAL_PICO);
 
-            for (VarioskanPlateProcessor.PlateWellResult result: plateWellResults) {
-                if (result.getVesselPosition() == VesselPosition.A05 || result.getVesselPosition() == VesselPosition.A06 ||
-                        result.getVesselPosition() == VesselPosition.B05) {
-                    System.out.println(result.toString());
-                }
-            }
             Assert.assertEquals(plateWellResults.size(), numSamples * 3);
             Assert.assertEquals(plateProcessorTwoCurve.getMessages().size(), 0);
         } catch (ValidationException | IOException | InvalidFormatException e) {
