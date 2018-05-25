@@ -57,7 +57,7 @@ import static org.mockito.Mockito.when;
 /*
  * Database test for the Infinium Run Finder logic
  */
-@Test(groups = TestGroups.STANDARD)
+@Test(groups = TestGroups.STANDARD, singleThreaded = true)
 public class InfiniumRunFinderContainerTest extends Arquillian {
 
     @Inject
@@ -146,6 +146,8 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
         when(mockLabVesselDao.findAllWithEventButMissingAnother(
                 LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED))
                 .thenReturn(Arrays.asList(infiniumChip));
+        when(mockLabVesselDao.findByIdentifier(chipBarcode))
+                .thenReturn(infiniumChip);
         infiniumRunFinder.setLabVesselDao(mockLabVesselDao);
 
         InfiniumStarterConfig config = new InfiniumStarterConfig(STUBBY);
@@ -158,8 +160,9 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
         when(mockPipelineClient.callStarterOnWell(any(StaticPlate.class), any(VesselPosition.class))).thenReturn(true);
         infiniumRunFinder.setInfiniumPipelineClient(mockPipelineClient);
 
-        InfiniumRunFinder runFinderSpy = spy(infiniumRunFinder);
-        runFinderSpy.find();
+        infiniumRunFinder.find();
+//        InfiniumRunFinder runFinderSpy = spy(infiniumRunFinder);
+//        runFinderSpy.find();
 
         verify(mockPipelineClient, times(infiniumChip.getVesselGeometry().getVesselPositions().length)).
                 callStarterOnWell(any(StaticPlate.class), any(VesselPosition.class));
