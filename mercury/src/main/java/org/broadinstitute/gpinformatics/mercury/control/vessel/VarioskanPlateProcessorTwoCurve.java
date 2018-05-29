@@ -17,7 +17,7 @@ public final class VarioskanPlateProcessorTwoCurve {
     private final List<String> validationMessages = new ArrayList<>();
 
     public enum PicoCurve {
-        BROAD_RANGE("QuantitativeCurveFit1", new BigDecimal("100")),
+        BROAD_RANGE("QuantitativeCurveFit1", new BigDecimal("10")),
         HIGH_SENSE("QuantitativeCurveFit2", BigDecimal.ZERO);
 
         private final String sheetname;
