@@ -40,9 +40,7 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
 
     private WorkflowConfig workflowConfig;
 
-    public WorkflowLoader(){
-        System.out.println("WorkflowLoader default constructor");
-    }
+    public WorkflowLoader(){}
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public WorkflowConfig load() {
