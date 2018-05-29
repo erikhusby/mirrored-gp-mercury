@@ -69,7 +69,7 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     // ListItem is one row of the "next step" table shown by the jsp.
     private List<ListItem> listItems = new ArrayList<>();
 
-    private TubeFormation tubeFormation;
+    private List<TubeFormation> tubeFormations;
     private static final Map<VesselPosition, BarcodedTube> positionToTubeMap = new HashMap<>();
 
     // Indicates the selection of next step by the user during rearray confirm.
@@ -117,18 +117,23 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     }
 
     // TubeFormation accessible only for test purposes.
-    TubeFormation getTubeFormation() {
-        return tubeFormation;
+    List<TubeFormation> getTubeFormations() {
+        return tubeFormations;
     }
 
     // TubeFormation accessible only for test purposes.
-    void setTubeFormation(TubeFormation tubeFormation) {
-        this.tubeFormation = tubeFormation;
+    void setTubeFormation(List<TubeFormation>  tubeFormations) {
+        this.tubeFormations = tubeFormations;
     }
 
     // Accessible only for test purposes.
     void setBarcodedTubeDao(BarcodedTubeDao dao) {
         barcodedTubeDao = dao;
+    }
+
+    // Accessible only for test purposes.
+    void setTubeFormationDao(TubeFormationDao tubeFormationDao) {
+        this.tubeFormationDao = tubeFormationDao;
     }
 
     /**
@@ -239,7 +244,7 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution displayList() {
-        makeListItems(tubeFormationLabels, tubeFormation);
+        makeListItems(tubeFormationLabels);
         return new ForwardResolution(NEXT_STEPS_PAGE);
     }
 
@@ -321,10 +326,11 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     }
 
     /** Makes listItems from either a tube formation or its label. */
-    private void makeListItems(List<String> labels, TubeFormation container) {
+    private void makeListItems(List<String> labels) {
         listItems.clear();
         for (String label: labels) {
-            if (StringUtils.isNotBlank(label) && container == null) {
+            TubeFormation container = null;
+            if (StringUtils.isNotBlank(label)) {
                 container = tubeFormationDao.findByDigest(label);
                 if (container == null || container.getContainerRole() == null) {
                     addGlobalValidationError("Cannot find tube formation having label '" + label + "'");
