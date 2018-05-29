@@ -97,6 +97,8 @@ public class Fingerprint {
         }
     }
 
+    // todo jmt unique constraint?
+
     @SuppressWarnings("unused")
     @SequenceGenerator(name = "SEQ_FINGERPRINT", schema = "mercury", sequenceName = "SEQ_FINGERPRINT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_FINGERPRINT")
