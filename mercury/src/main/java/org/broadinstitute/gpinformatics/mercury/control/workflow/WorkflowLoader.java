@@ -3,14 +3,15 @@ package org.broadinstitute.gpinformatics.mercury.control.workflow;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.ExternalDataCacheControl;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
-import javax.ejb.Singleton;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -24,19 +25,24 @@ import java.io.Serializable;
  *
  * @see ExternalDataCacheControl#invalidateCache()
  */
-@Singleton
+@ApplicationScoped
 public class WorkflowLoader extends AbstractCache implements Serializable {
 
     // Valid for in-container only - DBFree tests will load workflow from file system
     @Inject
     private PreferenceDao preferenceDao;
 
+    @Inject
+    private SessionContextUtility sessionContextUtility;
+
     // Standalone only (DBFree tests)
     private static WorkflowConfig workflowConfigFromFile;
 
     private WorkflowConfig workflowConfig;
 
-    public WorkflowLoader(){}
+    public WorkflowLoader(){
+        System.out.println("WorkflowLoader default constructor");
+    }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public WorkflowConfig load() {
@@ -50,9 +56,15 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void refreshCache() {
         if ( preferenceDao == null ) {
+            // DB Free tests will load from file
             workflowConfig = loadFromFile();
         } else {
-            workflowConfig = loadFromPrefs();
+            sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
+                @Override
+                public void apply() {
+                    workflowConfig = loadFromPrefs();
+                }
+            });
         }
     }
 
