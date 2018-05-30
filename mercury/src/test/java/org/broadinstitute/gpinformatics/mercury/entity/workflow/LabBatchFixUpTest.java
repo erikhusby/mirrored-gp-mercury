@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableListMultimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -56,6 +58,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -181,22 +184,44 @@ public class LabBatchFixUpTest extends Arquillian {
 
         List<String> lcsetData = fixupLines.subList(1, fixupLines.size());
         Assert.assertTrue(CollectionUtils.isNotEmpty(lcsetData), "No data found in file.");
-        ArrayListMultimap<String, String> lcsetToSamples = ArrayListMultimap.create();
-        for (String line  :lcsetData){
-            String[] split = line.split("\\s+");
-            for (int i = 1; i < split.length; i++) {
-                lcsetToSamples.put(split[0], split[i]);
-            }
-        }
+        ImmutableListMultimap<String, String> lcsetToSamples =
+            lcsetData.stream().collect(
+                ImmutableListMultimap.flatteningToImmutableListMultimap(
+                    key -> key.split("\\s+")[0],
+                    values -> {
+                        List<String> split = Arrays.asList(values.split("\\s+"));
+                        return split.subList(1, split.size()).stream();
+                    }));
 
-        labBatchDao.findByListIdentifier(new ArrayList<>(lcsetToSamples.keySet())).stream()
-            .collect(Collectors.toMap(LabBatch::getBatchName, labBatch -> labBatch))
-            .forEach((batchName, labBatch) -> {
-                    List<String> sampleNames = lcsetToSamples.get(batchName);
-                    removeSamples(sampleNames, labBatch);
-                    removeSamplesFromJira(sampleNames, labBatch, fixupReason);
-                }
-            );
+        ArrayListMultimap<String, BucketEntry> bucketEntriesToRemove = ArrayListMultimap.create();
+        labBatchDao.findByListIdentifier(new ArrayList<>(lcsetToSamples.keySet()))
+            .forEach(labBatch -> {
+                String businessKey = labBatch.getBusinessKey();
+                labBatch.getBucketEntries().stream()
+                    .filter(bucketEntry -> bucketEntry.getLabVessel().getMercurySamples().stream()
+                        .anyMatch(mercurySample -> lcsetToSamples.get(businessKey).contains(mercurySample.getSampleKey())))
+                    .forEach(bucketEntriesToRemove.get(businessKey)::add);
+            });
+
+        // Validate that the fix-up has not already been run
+        lcsetToSamples.asMap().keySet().forEach(key -> {
+            Assert.assertEquals(lcsetToSamples.get(key).size(), bucketEntriesToRemove.get(key).size());
+        });
+
+        bucketEntriesToRemove.asMap().forEach((batchName, bucketEntries) -> {
+            List<Long> bucketEntryIds =
+                bucketEntries.stream().map(BucketEntry::getBucketEntryId).collect(Collectors.toList());
+
+            String bucketName = bucketEntries.iterator().next().getBucket().getBucketDefinitionName();
+            try {
+                labBatchEjb
+                    .updateLabBatch(batchName, Collections.emptyList(), Collections.emptyList(), bucketEntryIds,
+                        bucketName, MessageReporter.UNUSED, Collections.emptyList());
+            } catch (ValidationException | IOException e) {
+                Assert.fail(e.getMessage(), e);
+            }
+        });
+
         labBatchDao.persist(new FixupCommentary(fixupReason));
     }
 
