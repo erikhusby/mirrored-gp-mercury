@@ -1181,6 +1181,7 @@
                                  baseTableName="fingerprint" baseColumnNames="mercury_sample"
                                  referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
     </changeSet>
+    <!-- todo jmt index on mercury_sample -->
     <changeSet id="GPLIM-5122-4" author="thompson">
         <addForeignKeyConstraint constraintName="FK_FPA_REV_INFO"
                                  baseTableName="fingerprint_aud" baseColumnNames="rev"
