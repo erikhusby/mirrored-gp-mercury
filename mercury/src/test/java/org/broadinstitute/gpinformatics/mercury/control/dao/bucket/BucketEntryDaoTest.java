@@ -5,7 +5,9 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -24,6 +26,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -192,42 +195,39 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
     @Test
     public void testFindPartialProductAndBucket() throws Exception {
         String differentPart = "P-RNA-0001";
-        String differentProductName = "Standard RNA Sequencing - Low Coverage (15M pairs)";
-        ProductOrder anotherOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey + 33);
+        String differentProductName = "Standard RNA Sequencing  - Low Coverage (15M pairs)";
 
-        anotherOrder.setTitle(testOrder.getTitle() + today.getTime());
-        anotherOrder.setProduct(productDao.findByBusinessKey(differentPart));
-        anotherOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+        productOrderSamples.add(new ProductOrderSample("SM-1234", new BspSampleData()));
+        ProductOrder anotherOrder = new ProductOrder(10_950L, testOrder.getTitle() + today.getTime(),
+            productOrderSamples, "GPLB1",
+            productDao.findByBusinessKey(differentPart), researchProjectDao.findByTitle("ADHD")
+        );
 
         testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
         BarcodedTube anotherVessel = new BarcodedTube("A1324"+System.currentTimeMillis());
         anotherVessel.getMercurySamples().add(new MercurySample("SM-1234"+System.currentTimeMillis(), MercurySample.MetadataSource.BSP));
-
         productOrderDao.persist(anotherOrder);
-        productOrderDao.flush();
-        productOrderDao.clear();
 
-        BucketEntry anotherEntry = new BucketEntry(anotherVessel, anotherOrder, testBucket, BucketEntry.BucketEntryType.PDO_ENTRY);
+        BucketEntry anotherEntry =
+            new BucketEntry(anotherVessel, anotherOrder, testBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 0);
         bucketEntryDao.persist(anotherEntry);
         bucketEntryDao.flush();
-        bucketEntryDao.clear();
 
         List<BucketEntry> bySampleAndBucket =
-            bucketEntryDao.findByProductAndBucket(Collections.singletonList("Standard RNA Sequencing - Low Coverage"), testBucket);
+            bucketEntryDao.findByProductAndBucket(Collections.singletonList("RNA Sequencing"), testBucket);
         Assert.assertEquals(bySampleAndBucket.size(), 2);
 
-        List<String> products = Arrays.asList(differentProductName, STANDARD_RNA_SEQ_PRODUCT_NAME);
+        List<String> products = new ArrayList<>(Arrays.asList(differentProductName, STANDARD_RNA_SEQ_PRODUCT_NAME));
 
-        bySampleAndBucket.forEach(bucketEntry -> {
-            String productName = bucketEntry.getProductOrder().getProduct().getProductName();
-            boolean removed = products.remove(productName);
-            Assert.assertTrue(removed, String.format("Expected bucket entry with product %s was not found", productName));
-        });
+        boolean allSamplesFound = bySampleAndBucket.stream()
+            .allMatch(bucketEntry -> products.contains(bucketEntry.getProductOrder().getProduct().getProductName()));
+        Assert.assertTrue(allSamplesFound);
     }
 
-    protected void validateEntry(BucketEntry entry) {
+    private void validateEntry(BucketEntry entry) {
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yy");
-        Assert.assertEquals(entry.getBucket(), testBucket);
+        Assert.assertEquals(entry.getBucket().getBucketDefinitionName(), testBucket.getBucketDefinitionName());
         Assert.assertEquals(entry.getProductOrder(), testOrder);
         Assert.assertEquals(entry.getProductOrder().getJiraTicketKey(), testPoBusinessKey);
         Assert.assertEquals(entry.getProductOrder().getProduct().getPartNumber(), STANDARD_RNA_SEQ_PART_NUMBER);

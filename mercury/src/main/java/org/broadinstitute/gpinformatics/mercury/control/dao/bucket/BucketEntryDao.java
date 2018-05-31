@@ -26,6 +26,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
 import java.util.Collections;
@@ -137,7 +138,12 @@ public class BucketEntryDao extends GenericDao {
             bucketCriteria.equal(root.get(BucketEntry_.status), BucketEntry.Status.Active),
             bucketCriteria.or(
                 productJoin.get(Product_.partNumber).in(product),
-                productJoin.get(Product_.productName).in(product)
+                bucketCriteria.or(
+                    productJoin.get(Product_.productName).in(product),
+                    bucketCriteria.or(product.stream()
+                        .map(p -> bucketCriteria.like(productJoin.get(Product_.productName), String.format("%%%s%%", p)))
+                        .toArray(Predicate[]::new))
+                )
             )
         ));
 
