@@ -2887,7 +2887,8 @@
                     <materialTypes>DNA_DNA_WGA_CLEANED</materialTypes>
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
-                <!-- No JIRA setup, because BSP creates ARRAY tickets -->
+                <batchJiraProjectType>ARRAY</batchJiraProjectType>
+                <batchJiraIssueType>INFINIUM_8</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>InfiniumMethylationZymoTransferElution</name>
@@ -2953,7 +2954,8 @@
                     <materialTypes>DNA_DNA_WGA_CLEANED</materialTypes>
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
-                <!-- No JIRA setup, because BSP creates ARRAY tickets -->
+                <batchJiraProjectType>ARRAY</batchJiraProjectType>
+                <batchJiraIssueType>INFINIUM_8</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>InfiniumAmplification</name>
