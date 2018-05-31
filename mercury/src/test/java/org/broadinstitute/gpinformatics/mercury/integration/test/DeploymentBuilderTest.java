@@ -13,7 +13,7 @@ import javax.inject.Inject;
  * Confirm the Stubby Builder actually puts stub alternatives in CDI? <br />
  * Disabled because otherwise all our tests would fail anyways
  */
-@Test(groups = TestGroups.STUBBY, enabled = false)
+@Test(groups = TestGroups.STUBBY)
 @Dependent
 public class DeploymentBuilderTest extends StubbyContainerTest {
 
@@ -22,8 +22,8 @@ public class DeploymentBuilderTest extends StubbyContainerTest {
     @Inject
     private JiraService service;
 
-    @Test(enabled = false)
-    public void testInjection() {
-        Assert.assertEquals(service.getClass().getSimpleName(), "JiraServiceStub");
+    @Test
+    public void testCdiAlternativesInjection() {
+        Assert.assertEquals(service.getClass().getSimpleName(), "JiraServiceStub", "Injected artifact expected to be a stub implementation");
     }
 }

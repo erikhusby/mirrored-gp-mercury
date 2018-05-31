@@ -56,7 +56,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,10 +74,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 
 /**
- *
+ *  This test is singleThreaded because subsequent test methods are called before the @AfterMethod of the previous test method call is complete <br/>
+ *  This wouldn't be a problem if lifecycle methods didn't change the state of instance variables.
+ *  Subsequent methods are using variables which are getting stepped on by previous @AfterMethod calls
  */
-@Test(groups = TestGroups.ALTERNATIVES)
-@Dependent
+@Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
+@RequestScoped
 public class ReworkEjbTest extends Arquillian {
 
     public ReworkEjbTest(){}
@@ -209,7 +211,7 @@ public class ReworkEjbTest extends Arquillian {
                 .buildMercuryWarWithAlternatives(DEV, JiraServiceStub.class, BSPSampleDataFetcherStub.class);
     }
 
-    @BeforeMethod(groups = TestGroups.ALTERNATIVES)
+    @BeforeMethod
     public void setUp() throws Exception {
         if (reworkEjb == null) {
             return;
@@ -515,11 +517,15 @@ public class ReworkEjbTest extends Arquillian {
         return bucketDef;
     }
 
-    @AfterMethod(groups = TestGroups.ALTERNATIVES)
+    @AfterMethod
     public void tearDown() throws Exception {
         if (reworkEjb == null) {
             return;
         }
+
+        ((BSPSampleDataFetcherStub) bspSampleDataFetcher)
+                .clearStubFetchSampleData();
+
         exExProductOrder1 = productOrderDao.findByBusinessKey(exExProductOrder1.getBusinessKey());
         exExProductOrder1.setOrderStatus(ProductOrder.OrderStatus.Completed);
         exExProductOrder2 = productOrderDao.findByBusinessKey(exExProductOrder2.getBusinessKey());
@@ -608,7 +614,7 @@ public class ReworkEjbTest extends Arquillian {
         return product;
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testNonRework() throws Exception {
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst1");
 
@@ -632,7 +638,7 @@ public class ReworkEjbTest extends Arquillian {
                 hasItems(bucketedTubeLabels.toArray(new String[bucketedTubeLabels.size()])));
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+    @Test
     public void testHappyPath() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst1");
@@ -658,7 +664,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testHappyPathFindCandidatesByBarcode() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
@@ -684,7 +690,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testCannotReworkDraftPdoSamples() throws Exception {
         createInitialTubes(bucketSamplesDraft, String.valueOf((new Date()).getTime()) + "tst2draft");
         for (String barcode : mapBarcodeToTube.keySet()) {
@@ -697,7 +703,7 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testHappyPathFindCandidatesByBarcodes() throws Exception {
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
 
@@ -718,7 +724,7 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testWorkflowSensitivityOfBucketCandidates() throws Exception {
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
 
@@ -733,7 +739,7 @@ public class ReworkEjbTest extends Arquillian {
                             "Unsupported workflows may be added incorrectly to the bucket, resulting in general ExEx panic and support burden.");
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testHappyPathFindCandidatesBySampleId() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf(new Date().getTime()) + "tst2");
@@ -760,7 +766,7 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testHappyPathFindCandidatesBySampleIds() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf(new Date().getTime()) + "tst2");
@@ -787,7 +793,7 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testSingleSampleTwoPDOs() throws Exception {
 
         Collection<ReworkEjb.BucketCandidate> candidates = reworkEjb.findBucketCandidates(genomicSample3);
@@ -812,7 +818,7 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertTrue(expectedPDOs.isEmpty());
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testHappyPathFindCandidatesWithAncestors() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst3");
@@ -862,7 +868,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testNonExomePathFindCandidates() throws Exception {
 
         createInitialTubes(bucketSamples1, String.valueOf((new Date()).getTime()) + "tst4");
@@ -884,7 +890,7 @@ public class ReworkEjbTest extends Arquillian {
                                     .getProduct().getName() + " now?");
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testNonExomePathFindCandidatesWithAncestors() throws Exception {
 
         createInitialTubes(bucketSamples1, String.valueOf((new Date()).getTime()) + "tst5");
@@ -929,7 +935,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+    @Test
     public void testHappyPathWithValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst6");
@@ -960,7 +966,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+    @Test
     public void testAddAndValidateReworksHappyPathWithValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst6");
@@ -971,6 +977,7 @@ public class ReworkEjbTest extends Arquillian {
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder1);
             candidate.setReworkItem(true);
             bucketCandidates.add(candidate);
+            Thread.sleep(2L); // Event creation fails on duplicate location, date, and disambiguator
         }
         String unknownReason = ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
         Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates, unknownReason,
@@ -985,7 +992,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+    @Test
     public void testHappyPathWithValidationPreviouslyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1022,7 +1029,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testHappyPathWithValidationCurrentlyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1060,7 +1067,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+    @Test
     public void testHappyPathWithAncestorValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst9");
@@ -1109,7 +1116,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+    @Test
     public void testMixedDNAWithValidation() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1139,7 +1146,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+    @Test
     public void testMixedDNAWithValidationAndAncestors() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1245,7 +1252,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+    @Test
     public void testMixedDNAWithValidationAndAncestorsCurrentlyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1307,7 +1314,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testFindCandidatesMultiplePdosNoBuckets() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
@@ -1348,7 +1355,7 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @Test
     public void testFindCandidatesMultiplePdosWithBuckets() throws Exception {
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()) + "tst2");
@@ -1442,8 +1449,10 @@ public class ReworkEjbTest extends Arquillian {
 
         for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
             List<BucketEntry> bucketEntries = new ArrayList<>();
+            Thread.sleep(2L); // LabVessel#addBucketEntry() fails on npn-unique bucket, labVessel, and createdDate
             bucketEntries.add(pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(currEntry.getKey()),
                                                BucketEntry.BucketEntryType.PDO_ENTRY));
+            Thread.sleep(2L);
             bucketEntries.add(pBucket.addEntry(exExProductOrder2, barcodedTubeDao.findByBarcode(currEntry.getKey()),
                                                BucketEntry.BucketEntryType.PDO_ENTRY));
             bucketDao.persist(pBucket);
