@@ -15,11 +15,18 @@
 
             var booleanTypes = [];
             var defaultValues = [];
+            var suggestedValues = [];
 
             // The jsp loads the criteria types into an associative array by type and then operators
             var criteriaTypeToOperatorList = [];
             <c:forEach items="${actionBean.criteriaTypes}" var="criteriaType">
                 <c:if test="${criteriaType.getDisplayed(actionBean.editProduct)}">
+                    <c:if test="${not empty criteriaType.suggestedValues}">
+                        suggestedValues["${criteriaType.label}"] = [];
+                        <c:forEach items="${criteriaType.suggestedValues}" var="suggestion" varStatus="suggestionIndex">
+                        suggestedValues["${criteriaType.label}"]["${suggestionIndex.index}"] = '${suggestion}';
+                    </c:forEach>
+                    </c:if>
                     <c:choose>
                         <c:when test="${criteriaType.operators[0].type == 'BOOLEAN'}">
                             defaultValues['${criteriaType.label}'] = 'true';
@@ -91,6 +98,34 @@
                             autoSelectFirstResult: true
                         }
                     );
+
+                    $j("#suggestedValuesDialog").dialog({
+                        modal: true,
+                        autoOpen: false,
+                        position: {my: "right top", at: "right top", of: window},
+                        buttons: [
+                            {
+                                id: "chooseSuggestion",
+                                text: "Assign the Chosen Suggestion",
+                                click: function() {
+                                    var selectedValues = [];
+                                    $j("#suggestedValueList").find(":selected").foreach(function() {
+                                        selectedValues.push($(this).text());
+                                    });
+                                    var index = $j("#criteriaSuggestionIndex").val();
+                                    $j("#valueText-" + index ).val(selectedValues.join(','));
+                                    $j(this).dialog("close");
+                                }
+                            },
+                            {
+                                id: "cancel",
+                                text: "Cancel",
+                                click: function () {
+                                    $j(this).dialog("close");
+                                }
+                            }
+                        ]
+                    });
 
                     $j("#availabilityDate").datepicker();
                     $j("#discontinuedDate").datepicker();
@@ -164,6 +199,11 @@
 
                 newCriteria += '    <input style="display:none" id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
 
+                if(criteriaLabel in suggestedValues) {
+                    newCriteria += '    <a onclick="viewSuggestionPopup('+criteriaCount+', '+criteriaLabel+')" id="suggestionLink-' + criteriaCount + '" >Click here</a> for suggested values';
+
+                }
+
                 newCriteria += '</div>\n';
 
                 $j('#riskCriterion').append(newCriteria);
@@ -171,6 +211,25 @@
                 updateValueView(criteria, criteriaCount);
 
                 criteriaCount++;
+            }
+
+            function viewSuggestionPopup(criteriaIndex, criteriaLabel) {
+
+                $j("#criteriaSuggestionIndex").val(criteriaIndex);
+                $j("#suggestedValuesDialog").html('');
+
+                $j.ajax({
+                    url: "${ctxpath}/products/product.action?openRiskSuggestedValues=",
+                    data: {
+                        'criteriaIndex': criteriaIndex,
+                        'criteriaLabel': criteriaLabel,
+                        'currentChoices': $j("#valueText-"+criteriaIndex)
+                    },
+                    datatype: 'html',
+                    success: function (html) {
+                        $j("#suggestedValuesDialog").html(html).dialog("open");
+                    }
+                });
             }
 
             function updateOperatorOptions(criteriaCount) {
@@ -295,12 +354,17 @@
 
     <stripes:layout-component name="content">
 
+        <div id="suggestedValuesDialog"  title="Select from suggested values for risk criteria"  style="...">
+
+        </div>
+
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
             <stripes:hidden name="submitString"/>
 
             <div class="row">
                 <div class="form-horizontal span7" >
                 <stripes:hidden name="product"/>
+                    <stripes:hidden name="criteriaSuggestionIndex" />
 
                     <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                         <div class="control-group">
