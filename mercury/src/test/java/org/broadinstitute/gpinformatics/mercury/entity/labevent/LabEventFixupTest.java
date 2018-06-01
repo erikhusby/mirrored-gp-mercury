@@ -2160,7 +2160,7 @@ public class LabEventFixupTest extends Arquillian {
         }
 
         FixupCommentary fixupCommentary = new FixupCommentary(
-                "SUPPORT-2319 - Removing expired reagent for new one");
+                "SUPPORT-4140 - Removing expired reagent for new one");
         labEventDao.persist(fixupCommentary);
         labEventDao.flush();
 
