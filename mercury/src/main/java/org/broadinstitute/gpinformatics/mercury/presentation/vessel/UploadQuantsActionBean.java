@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -55,6 +56,7 @@ import java.util.Map;
 import java.util.Set;
 
 @UrlBinding(value = "/view/uploadQuants.action")
+@Dependent // To support injection into PicoToBspContainerTest
 public class UploadQuantsActionBean extends CoreActionBean {
 
     public static final String ENTITY_NAME = "LabMetric";
