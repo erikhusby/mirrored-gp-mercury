@@ -1,15 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 @Alternative
-@RequestScoped
+@Dependent
 public class BSPSampleDataFetcherStub extends BSPSampleDataFetcher {
+
+    public BSPSampleDataFetcherStub(){}
 
     private Map<String, BspSampleData> sampleDataBySampleId = new HashMap<>();
     private Map<String, String> samplePlasticBySampleId = new HashMap<>();

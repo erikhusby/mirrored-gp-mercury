@@ -15,7 +15,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Calendar;
@@ -29,8 +29,10 @@ import static org.broadinstitute.gpinformatics.athena.control.dao.products.Produ
 
 
 @Test(groups = TestGroups.STUBBY)
-@RequestScoped
+@Dependent
 public class ProductDaoTest extends StubbyContainerTest {
+
+    public ProductDaoTest(){}
 
     @Inject
     private ProductDao dao;

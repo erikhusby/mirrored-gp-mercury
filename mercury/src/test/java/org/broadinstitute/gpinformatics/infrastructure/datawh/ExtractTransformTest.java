@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.Query;
 import javax.transaction.UserTransaction;
@@ -48,8 +48,11 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 
 @Test(enabled = true, groups = TestGroups.ALTERNATIVES, singleThreaded = true)
-@RequestScoped
+@Dependent
 public class ExtractTransformTest extends Arquillian {
+
+    public ExtractTransformTest(){}
+
     private String datafileDir;
     private final long MSEC_IN_SEC = 1000L;
     private final String barcode = "TEST" + System.currentTimeMillis();

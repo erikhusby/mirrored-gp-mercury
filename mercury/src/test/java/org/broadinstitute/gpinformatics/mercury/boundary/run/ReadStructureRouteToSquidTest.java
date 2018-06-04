@@ -9,6 +9,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 
@@ -17,7 +18,10 @@ import javax.ws.rs.core.Response;
  * routing of read structure data to squid
  */
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class ReadStructureRouteToSquidTest extends Arquillian {
+
+    public ReadStructureRouteToSquidTest(){}
 
     @Inject SolexaRunResource solexaRunResource;
 

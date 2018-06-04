@@ -150,6 +150,9 @@ public abstract class AbstractBatchJiraFieldFactory {
         case EXTRACTION_PROJECT:
             builder = new ExtractionJiraFieldFactory(batch, productOrderDao, workflowConfig);
             break;
+        case ARRAY_PROJECT:
+            builder = new ArrayJiraFieldFactory(batch);
+            break;
         case LCSET_PROJECT:
         default:
             builder = new LCSetJiraFieldFactory(batch, productOrderDao, workflowConfig);

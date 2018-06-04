@@ -58,7 +58,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -322,46 +321,47 @@ public class LabBatchEjb {
         allBucketEntries.addAll(reworkBucketEntries);
         bucketEjb.moveFromBucketToBatch(allBucketEntries, batch);
 
-        WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName,workflowName);
+        createJiraTicket(workflowName, username, bucketName, reporter, watchers, pdoKeys, batch);
 
-        CreateFields.IssueType issueType = CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
+        return batch;
+    }
+
+    public void createJiraTicket(@Nonnull String workflowName, @Nonnull String username, String bucketName,
+            @Nonnull MessageReporter reporter, List<String> watchers, Set<String> pdoKeys, LabBatch batch) {
+        Pair<String, String> projectAndIssue = getProjectAndIssueTypes(bucketName,workflowName);
+
+        CreateFields.IssueType issueType = CreateFields.IssueType.valueOf(projectAndIssue.getRight());
 
         batchToJira(username, null, batch, issueType,
-                CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType()), reporter, watchers);
+                CreateFields.ProjectType.fromKeyPrefix(projectAndIssue.getLeft()), reporter, watchers);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : pdoKeys) {
             linkJiraBatchToTicket(pdoKey, batch);
         }
-
-        return batch;
-    }
-
-    private WorkflowBucketDef getWorkflowBucketDef(String bucketName, String workflowName) {
-        WorkflowBucketDef bucketDef = null;
-
-        ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflowName);
-        ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-        for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
-            if (bucketName.equals(bucket.getName())) {
-                bucketDef = updateBucketIssueProjectType(bucket,workflowDef);
-            }
-        }
-        return bucketDef;
     }
 
     /**
-     * This method associates the correct Jira Issue and Project Type with the given bucket.
-     *
+     * This method returns the Jira Project and Issue Type to be used when a bucket entry goes into
+     * a lab batch. Prefers the values from the bucket def if they are defined there; otherwise uses
+     * values found on the workflow def that was selected by the user.
      */
-    private WorkflowBucketDef updateBucketIssueProjectType(WorkflowBucketDef bucketDef,  ProductWorkflowDef workflowDef)
-    {
-        //If the issue & project type from workflowProcessDefs is not present. Use the one from productWorkflowDefs
-        if(bucketDef.getBatchJiraIssueType() == null && bucketDef.getBatchJiraProjectType() == null) {
-            bucketDef.setBatchJiraIssueType(workflowDef.getEffectiveVersion().getProductWorkflowDefBatchJiraIssueType());
-            bucketDef.setBatchJiraProjectType(workflowDef.getEffectiveVersion().getProductWorkflowDefBatchJiraProjectType());
+    private Pair<String, String> getProjectAndIssueTypes(String bucketName, String workflowName) {
+        String workflowIssueType = null;
+        String projectType = null;
+        ProductWorkflowDefVersion workflowVersion =
+                workflowConfig.getWorkflowByName(workflowName).getEffectiveVersion();
+
+        for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+            if (bucketName.equals(bucket.getName())) {
+                workflowIssueType = StringUtils.isNotBlank(bucket.getBatchJiraIssueType()) ?
+                        bucket.getBatchJiraIssueType() : workflowVersion.getProductWorkflowDefBatchJiraIssueType();
+                projectType = StringUtils.isNotBlank(bucket.getBatchJiraProjectType()) ?
+                        bucket.getBatchJiraProjectType() : workflowVersion.getProductWorkflowDefBatchJiraProjectType();
+                break;
+            }
         }
-        return bucketDef;
+        return Pair.of(projectType, workflowIssueType);
     }
 
      /**
@@ -568,9 +568,9 @@ public class LabBatchEjb {
         CreateFields.IssueType issueType=null;
 
         if(batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-            WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName, batch.getWorkflowName());
-            projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
-            issueType= CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
+            Pair<String, String> projectAndIssue = getProjectAndIssueTypes(bucketName, batch.getWorkflowName());
+            projectType = CreateFields.ProjectType.fromKeyPrefix(projectAndIssue.getLeft());
+            issueType= CreateFields.IssueType.valueOf(projectAndIssue.getRight());
         }
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory

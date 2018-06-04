@@ -15,6 +15,8 @@ import java.util.*;
 @Dependent
 public class TooManySamplesBSPSampleSearchService implements BSPSampleSearchService {
 
+    public TooManySamplesBSPSampleSearchService(){}
+
     @Override
     public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
         List<Map<BSPSampleSearchColumn,String>> emptyResults = new ArrayList<>();

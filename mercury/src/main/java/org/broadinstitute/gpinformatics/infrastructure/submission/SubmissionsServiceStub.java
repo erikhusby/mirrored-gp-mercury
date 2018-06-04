@@ -20,6 +20,9 @@ import java.util.Random;
 @Alternative
 @Dependent
 public class SubmissionsServiceStub implements SubmissionsService {
+
+    public SubmissionsServiceStub(){}
+
     public static final String TEST_PROJECT_NAME = "Primary submission";
     public static final String STUB_UPDATE_DATE = "Dec 17, 2001 9:30 AM";
     public static final SubmissionRepository ACTIVE_REPO = new SubmissionRepository("ACTIVE_REPO", "Active Repository", true);

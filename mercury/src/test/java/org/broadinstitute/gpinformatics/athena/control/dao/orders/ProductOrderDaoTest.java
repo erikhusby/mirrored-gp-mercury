@@ -20,6 +20,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.PersistenceUnitUtil;
 import javax.transaction.UserTransaction;
@@ -44,7 +45,10 @@ import static org.hamcrest.Matchers.is;
 
 
 @Test(groups = TestGroups.STUBBY, enabled = true)
+@Dependent
 public class ProductOrderDaoTest extends StubbyContainerTest {
+
+    public ProductOrderDaoTest(){}
 
     @Inject
     private ThreadEntityManager entityManager;
