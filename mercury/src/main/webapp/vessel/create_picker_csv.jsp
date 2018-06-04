@@ -50,7 +50,7 @@
                 <div class="control-group">
                     <stripes:label for="pickerIdentifiersText" name="Search Terms" class="control-label"/>
                     <div class="controls">
-                        <stripes:textarea id="pickerIdentifiersText" name="barcodes" rows="8"/>
+                        <textarea name="barcodes" id="pickerIdentifiersText" rows="8">${actionBean.barcodes}</textarea>
                     </div>
                 </div>
                 <div class="control-group">

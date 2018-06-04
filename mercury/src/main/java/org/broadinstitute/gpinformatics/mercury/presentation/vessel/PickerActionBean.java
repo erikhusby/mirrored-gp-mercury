@@ -7,6 +7,7 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -92,6 +93,7 @@ public class PickerActionBean extends CoreActionBean {
     public Resolution search() {
         MessageCollection messageCollection = new MessageCollection();
         List<String> barcodeList = Arrays.asList(this.barcodes.trim().split("\\s+"));
+        Set<String> foundBarcodes = new HashSet<>();
         if (barcodeList.isEmpty()) {
             addMessage("Barcodes are a required field.");
         } else {
@@ -103,6 +105,7 @@ public class PickerActionBean extends CoreActionBean {
                     for (LabBatch labBatch: labBatches) {
                         if (labBatch.getBatchName().equals(barcode)) {
                             foundBatch = true;
+                            foundBarcodes.add(labBatch.getBatchName());
                         }
                     }
                     if (!foundBatch) {
@@ -119,6 +122,8 @@ public class PickerActionBean extends CoreActionBean {
                 }
                 if (!messageCollection.hasErrors()) {
                     pickLabVessels(new ArrayList<>(startingLabVessels), messageCollection);
+                } else {
+                    this.barcodes = StringUtils.join(foundBarcodes, '\n');
                 }
                 break;
             case LAB_VESSEL_BARCODE:
@@ -128,13 +133,16 @@ public class PickerActionBean extends CoreActionBean {
                     for (LabVessel labVessel: labVessels) {
                         if (labVessel.getLabel().equals(barcode)) {
                             foundVessel = true;
+                            foundBarcodes.add(labVessel.getLabel());
                         }
                     }
                     if (!foundVessel) {
                         messageCollection.addError("Failed to find Lab Vessel " + barcode);
                     }
                 }
-                pickLabVessels(labVessels, messageCollection);
+                Set<String> notInStorage = pickLabVessels(labVessels, messageCollection);
+                foundBarcodes.removeAll(notInStorage);
+                this.barcodes = StringUtils.join(foundBarcodes, '\n');
                 break;
             }
         }
@@ -145,7 +153,7 @@ public class PickerActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    private void pickLabVessels(List<LabVessel> labVessels, MessageCollection messageCollection ) {
+    private Set<String> pickLabVessels(List<LabVessel> labVessels, MessageCollection messageCollection ) {
         this.storageLocations = new HashSet<>();
         this.unpickableBarcodes = new HashSet<>();
         SearchContext searchContext = new SearchContext();
@@ -165,6 +173,7 @@ public class PickerActionBean extends CoreActionBean {
                     storageLocations.add(labVessel.getStorageLocation().buildLocationTrail());
                 } else {
                     messageCollection.addError("Failed to find lab vessel in storage " + labVessel.getLabel());
+                    unpickableBarcodes.add(labVessel.getLabel());
                 }
                 continue;
             }
@@ -180,8 +189,11 @@ public class PickerActionBean extends CoreActionBean {
         } catch (NotInStorageException e) {
             for (String missing: e.getMissingVessels()) {
                 messageCollection.addError("Failed to find lab vessel in storage " + missing);
+                unpickableBarcodes.add(missing);
             }
         }
+
+        return unpickableBarcodes;
     }
 
     public SearchType getSearchType() {
