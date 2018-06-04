@@ -156,6 +156,7 @@ public class PickerActionBean extends CoreActionBean {
     private Set<String> pickLabVessels(List<LabVessel> labVessels, MessageCollection messageCollection ) {
         this.storageLocations = new HashSet<>();
         this.unpickableBarcodes = new HashSet<>();
+        Set<String> tubesNotInStorage = new HashSet<>();
         SearchContext searchContext = new SearchContext();
         searchContext.setBspUserList(bspUserList);
         SearchTerm searchTerm = new SearchTerm();
@@ -173,7 +174,7 @@ public class PickerActionBean extends CoreActionBean {
                     storageLocations.add(labVessel.getStorageLocation().buildLocationTrail());
                 } else {
                     messageCollection.addError("Failed to find lab vessel in storage " + labVessel.getLabel());
-                    unpickableBarcodes.add(labVessel.getLabel());
+                    tubesNotInStorage.add(labVessel.getLabel());
                 }
                 continue;
             }
@@ -189,11 +190,11 @@ public class PickerActionBean extends CoreActionBean {
         } catch (NotInStorageException e) {
             for (String missing: e.getMissingVessels()) {
                 messageCollection.addError("Failed to find lab vessel in storage " + missing);
-                unpickableBarcodes.add(missing);
+                tubesNotInStorage.add(missing);
             }
         }
 
-        return unpickableBarcodes;
+        return tubesNotInStorage;
     }
 
     public SearchType getSearchType() {
