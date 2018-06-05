@@ -110,11 +110,9 @@
                                 text: "Assign the Chosen Suggestion",
                                 click: function() {
                                     var selectedValues = [];
-                                    selectedValues.push($j("#suggestedValueList").find(":selected").text());
-
-//                                        .foreach(function() {
-//                                        selectedValues.push($(this).text());
-//                                    });
+                                    $j("#suggestedValueList").find(":selected").each(function() {
+                                        selectedValues.push($(this).val());
+                                    });
                                     var index = $j("#criteriaSuggestionIndex").val();
                                     $j("#valueText-" + index ).val(selectedValues.join(','));
                                     $j(this).dialog("close");
@@ -244,7 +242,7 @@
                     data: {
                         'criteriaIndex': criteriaIndex,
                         'criteriaLabel': criteriaLabel,
-                        'currentCriteriaChoices': $j("#valueText-"+criteriaIndex).val()
+                        'currentCriteriaChoices': $j("#valueText-"+criteriaIndex).val().split(',')
                     },
                     datatype: 'html',
                     success: function (html) {
