@@ -23,9 +23,10 @@
                 <c:if test="${criteriaType.getDisplayed(actionBean.editProduct)}">
                     <c:if test="${not empty criteriaType.suggestedValues}">
                         suggestedValues["${criteriaType.label}"] = [];
-                        <c:forEach items="${criteriaType.suggestedValues}" var="suggestion" varStatus="suggestionIndex">
-                        suggestedValues["${criteriaType.label}"]["${suggestionIndex.index}"] = '${suggestion}';
-                    </c:forEach>
+                        <%--<c:forEach items="${criteriaType.suggestedValues}" var="suggestion" varStatus="suggestionIndex">--%>
+                            <%--suggestedValues["${criteriaType.label}"]["${suggestionIndex.index}"] = '${suggestion}';--%>
+                            suggestedValues["${criteriaType.label}"] = "Yes";
+                        <%--</c:forEach>--%>
                     </c:if>
                     <c:choose>
                         <c:when test="${criteriaType.operators[0].type == 'BOOLEAN'}">
@@ -109,9 +110,11 @@
                                 text: "Assign the Chosen Suggestion",
                                 click: function() {
                                     var selectedValues = [];
-                                    $j("#suggestedValueList").find(":selected").foreach(function() {
-                                        selectedValues.push($(this).text());
-                                    });
+                                    selectedValues.push($j("#suggestedValueList").find(":selected").text());
+
+//                                        .foreach(function() {
+//                                        selectedValues.push($(this).text());
+//                                    });
                                     var index = $j("#criteriaSuggestionIndex").val();
                                     $j("#valueText-" + index ).val(selectedValues.join(','));
                                     $j(this).dialog("close");
@@ -175,7 +178,7 @@
 
 
                 // the criteria list
-                newCriteria += '    <select id="criteriaSelect-' + criteriaCount + '" onchange="updateOperatorOptions(' + criteriaCount + ')" style="width:auto;" name="criteria">';
+                newCriteria += '    <select id="criteriaSelect-' + criteriaCount + '" onchange="criteriaSelectChange(' + criteriaCount + ')" style="width:auto;" name="criteria">';
 
                 var operatorsLabel;
 
@@ -199,10 +202,13 @@
 
                 newCriteria += '    <input style="display:none" id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
 
-                if(criteriaLabel in suggestedValues) {
-                    newCriteria += '    <a onclick="viewSuggestionPopup('+criteriaCount+', '+criteriaLabel+')" id="suggestionLink-' + criteriaCount + '" >Click here</a> for suggested values';
-
+                if(criteria in suggestedValues) {
+                    newCriteria += '    <div id="suggestionClick-' + criteriaCount + '">';
+                } else {
+                    newCriteria += '    <div id="suggestionClick-' + criteriaCount + '" style=display:none >';
                 }
+                newCriteria += '    <a onclick="viewSuggestionPopup('+criteriaCount+',\''+criteriaLabel+'\')" id="suggestionLink-' + criteriaCount + '">Click here</a> for suggested values';
+                newCriteria += '    </div>';
 
                 newCriteria += '</div>\n';
 
@@ -211,6 +217,21 @@
                 updateValueView(criteria, criteriaCount);
 
                 criteriaCount++;
+            }
+
+            function criteriaSelectChange(indexedCriteria) {
+                updateOperatorOptions(indexedCriteria);
+                toggleSuggestionClick(indexedCriteria);
+            }
+
+            function toggleSuggestionClick(indexedCriteria) {
+                var selectedCriterion = $('#criteriaSelect-'+indexedCriteria).find(":selected").text();
+
+                if(selectedCriterion in suggestedValues) {
+                    $j("#suggestionClick-" + indexedCriteria).show();
+                } else {
+                    $j("#suggestionClick-" + indexedCriteria).hide();
+                }
             }
 
             function viewSuggestionPopup(criteriaIndex, criteriaLabel) {
@@ -223,13 +244,15 @@
                     data: {
                         'criteriaIndex': criteriaIndex,
                         'criteriaLabel': criteriaLabel,
-                        'currentChoices': $j("#valueText-"+criteriaIndex)
+                        'currentCriteriaChoices': $j("#valueText-"+criteriaIndex).val()
                     },
                     datatype: 'html',
                     success: function (html) {
                         $j("#suggestedValuesDialog").html(html).dialog("open");
+//                        .dialog("option", "width", 1100).dialog("option", "height", 600);
                     }
                 });
+                return false;
             }
 
             function updateOperatorOptions(criteriaCount) {
@@ -364,7 +387,7 @@
             <div class="row">
                 <div class="form-horizontal span7" >
                 <stripes:hidden name="product"/>
-                    <stripes:hidden name="criteriaSuggestionIndex" />
+                    <stripes:hidden name="criteriaSuggestionIndex" id="criteriaSuggestionIndex" />
 
                     <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                         <div class="control-group">

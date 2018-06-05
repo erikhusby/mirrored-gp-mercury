@@ -82,12 +82,14 @@ public class ProductActionBean extends CoreActionBean {
     public static final String CREATE_PRODUCT = CoreActionBean.CREATE + PRODUCT_STRING;
     private static final String EDIT_PRODUCT = CoreActionBean.EDIT + PRODUCT_STRING;
     public static final String PUBLISH_TO_SAP = "publishToSap";
+    public static final String OPEN_RISK_SUGGESTIONS = "openRiskSuggestedValues";
 
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
     public static final String PRODUCT_VIEW_PAGE = "/products/view.jsp";
     private static final String DOWNLOAD_PRODUCT_LIST = "downloadProductDescriptions";
     private static final String PUBLISH_PRODUCTS_TO_SAP = "publishProductsToSap";
+    private static final String RISK_CRITERIA_SUGGESTED_VALUES = "risk_criteria_suggested_values.jsp";
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -132,6 +134,7 @@ public class ProductActionBean extends CoreActionBean {
     private List<String> selectedProductPartNumbers;
     private List<Product> selectedProducts;
 
+    private List<String> criteriaSelectionValues = new ArrayList<>();
 
 
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
@@ -189,6 +192,10 @@ public class ProductActionBean extends CoreActionBean {
     public void setQ(String q) {
         this.q = q;
     }
+
+    private String criteriaIndex;
+    private String criteriaLabel;
+    private String currentCriteriaChoices;
 
     /**
      * Initialize the product with the passed in key for display in the form.
@@ -539,6 +546,18 @@ public class ProductActionBean extends CoreActionBean {
         }.setFilename(fileName);
     }
 
+    @HandlesEvent(OPEN_RISK_SUGGESTIONS)
+    public Resolution openRiskSuggestedValues() throws Exception {
+
+
+        RiskCriterion.RiskCriteriaType criterion = RiskCriterion.RiskCriteriaType.findByLabel(criteriaLabel);
+
+        if(CollectionUtils.isNotEmpty(criterion.getSuggestedValues())) {
+            criteriaSelectionValues.addAll(criterion.getSuggestedValues());
+        }
+        return new ForwardResolution(RISK_CRITERIA_SUGGESTED_VALUES);
+    }
+
     public static String getPdfFilename(List<Product> productList) {
         String fileName = "Product Descriptions.pdf";
         if (productList.size() == 1) {
@@ -830,5 +849,37 @@ public class ProductActionBean extends CoreActionBean {
     public boolean isProductUsedInOrders() {
         return productUsedInOrders;
     }
-    
+
+
+    public List<String> getCriteriaSelectionValues() {
+        return criteriaSelectionValues;
+    }
+
+    public void setCriteriaSelectionValues(List<String> criteriaSelectionValues) {
+        this.criteriaSelectionValues = criteriaSelectionValues;
+    }
+
+    public String getCriteriaIndex() {
+        return criteriaIndex;
+    }
+
+    public void setCriteriaIndex(String criteriaIndex) {
+        this.criteriaIndex = criteriaIndex;
+    }
+
+    public String getCriteriaLabel() {
+        return criteriaLabel;
+    }
+
+    public void setCriteriaLabel(String criteriaLabel) {
+        this.criteriaLabel = criteriaLabel;
+    }
+
+    public String getCurrentCriteriaChoices() {
+        return currentCriteriaChoices;
+    }
+
+    public void setCurrentCriteriaChoices(String currentCriteriaChoices) {
+        this.currentCriteriaChoices = currentCriteriaChoices;
+    }
 }
