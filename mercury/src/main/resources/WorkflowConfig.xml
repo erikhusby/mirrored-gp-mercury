@@ -3287,7 +3287,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
-            <batchJiraIssueType>HUMAN_PCR_FREE</batchJiraIssueType>
+            <batchJiraIssueType>HUMAN_PCR_PLUS</batchJiraIssueType>
             <effectiveDate>2017-10-22T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Cell Free Library Construction Hyper Prep UMI</workflowProcessDefs>
