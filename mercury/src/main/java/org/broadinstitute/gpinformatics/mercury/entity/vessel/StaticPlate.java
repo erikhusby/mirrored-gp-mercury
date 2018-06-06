@@ -122,6 +122,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         Plate96Microtube2000("Plate96Microtube2000", VesselGeometry.G12x8),
         Plate96RNEasyWell1000("Plate96RNEasyWell1000", VesselGeometry.G12x8),
         Plate96RoundWellBlock2000("Plate96RoundWellBlock2000", VesselGeometry.G12x8),
+        Plate96WellPowerBead("Plate96WellPowerBead", VesselGeometry.G12x8),
         Plate96SchredderSpinColumn1000("Plate96SchredderSpinColumn1000", VesselGeometry.G12x8),
         Plate96Well200("Plate96Well200", VesselGeometry.G12x8),
         Plate96Well200PCR("Plate96Well200PCR", VesselGeometry.G12x8),

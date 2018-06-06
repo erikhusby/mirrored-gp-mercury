@@ -3024,6 +3024,240 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA from Stool</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2018-04-10T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA and RNA From Stool</name>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>STOOL_STOOL</materialTypes>
+                    <workflows>DNA_RNA_EXTRACTION_STOOL</workflows>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Initial Scan</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>ALL_PREP_INITIAL_SCAN</workflowQualifier>
+                <instructions>Scan all parent source SM-IDs to cross check against samples in XTR ticket
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>RackType.Eppendorf12x8Box</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                    <buttonValue>Cross Check</buttonValue>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Prep Reagents</name>
+                <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Reagents</workflowQualifier>
+                <instructions>Heat Buffer PW1 to 55C for 10 minutes or more
+                    - Plate Buffer EB in a pcr plate and heat to 70C prior to DNA Elution
+                    - Prime heated buffer PW1 with 1:100 of BME (10ul BME per 1ml of PW1). Aliquot based of # of samples
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to Bead Plate</name>
+                <labEventTypes>STOOL_BEAD_PLATE_TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_STOOL_TO_BEAD_PLATE</workflowQualifier>
+                <instructions>Transfer to Bead Plate
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.Eppendorf12x8BoxWell</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96WellPowerBead</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bead Beating</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>ALL_PREP_BEAD_BEATING</workflowQualifier>
+                <instructions>Shake bead plate @30 Hz for 5 minutes. Once complete, rotate samples 180 degrees and repeat step
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>PlateType.Plate96WellPowerBead</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Spin</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>BEAD_PLATE</workflowQualifier>
+                <instructions>Centrifuge PowerBead plate for 6 minutes @4,500 x g
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IRS Addition</name>
+                <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>IRS_ADDITION</workflowQualifier>
+                <instructions>Add 150ul of IRS solution to each well of a clean S-Block.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer Supernatent to S-Block</name>
+                <labEventTypes>STOOL_SUPERNATENT_TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_TO_S_BLOCK</workflowQualifier>
+                <instructions>Scan container ID on bead plate and container ID on IRS S-Block . Transfer ~650ul for supernatant.
+                    - Seal and vortex gently (no splashing)
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96WellPowerBead</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Incubate</name>
+                <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>IRS1</workflowQualifier>
+                <instructions>Incubate for 1 min at room temperature.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>IRS_CENTRIFUGE</workflowQualifier>
+                <instructions>Centrifuge IRS plate for 6 minutes @4,500 x g
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer Sample + IRS to new S-Block</name>
+                <labEventTypes>STOOL_IRS_SUPERNATENT_TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_IRS_TO_S_BLOCK</workflowQualifier>
+                <instructions>Transfer ~450ul of supernatant to new S-block. Label S-Block C4
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>S-Block to RNEasy Plate</name>
+                <labEventTypes>STOOL_FILTER_PLATE_TRANSFER</labEventTypes>
+                <workflowQualifier>STOOL_FILTER_PLATE_TRANSFER</workflowQualifier>
+                <instructions>Transfer to All Prep Filter Plate (DNA) on RNA Capture Plate
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>S-Block to RNA Capture Plate</name>
+                <labEventTypes>STOOL_RNA_CAPTURE_PLATE_TRANSFER</labEventTypes>
+                <workflowQualifier>STOOL_RNA_CAPTURE_PLATE_TRANSFER</workflowQualifier>
+                <instructions>Capture S-Block to RNA Plate Barcode
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <!-- Bravo Protocols RNA Isolation in the flowthrough -->
+            <workflowStepDefs>
+                <name>RNA Isolation</name>
+                <labEventTypes>STOOL_RNA_ISOLATION</labEventTypes>
+                <workflowQualifier>STOOL_RNA_ISOLATION</workflowQualifier>
+                <instructions>Run RNA Isolation Bravo Protocol using the samples in RNA Flowthrough block
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>RNA Filter To Elution</name>
+                <labEventTypes>STOOL_RNA_FILTER_TO_ELUTION_PLATE</labEventTypes>
+                <workflowQualifier>STOOL_RNA_FILTER_TO_ELUTION_PLATE</workflowQualifier>
+                <instructions>Run RNA Elution Bravo Protocol using the samples in RNA Easy Plate
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>RNA Elution To Final Rack</name>
+                <labEventTypes>STOOL_RNA_FINAL_ELUTION</labEventTypes>
+                <workflowQualifier>STOOL_RNA_FINAL_ELUTION</workflowQualifier>
+                <instructions>Link Elution Plate to Final Rack
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96Well200PCR</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DNA Isolation</name>
+                <labEventTypes>STOOL_DNA_ISOLATION</labEventTypes>
+                <workflowQualifier>STOOL_DNA_ISOLATION</workflowQualifier>
+                <instructions>Run DNA Isolation Bravo Protocol using the samples in the DNA RNEasy Plate
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DNA Filter To Elution</name>
+                <labEventTypes>STOOL_DNA_FILTER_TO_ELUTION_PLATE</labEventTypes>
+                <workflowQualifier>STOOL_DNA_FILTER_TO_ELUTION_PLATE</workflowQualifier>
+                <instructions>Run DNA Elution Bravo Protocol using the samples in RNA Easy Plate
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DNA Elution</name>
+                <labEventTypes>STOOL_DNA_ELUTION</labEventTypes>
+                <workflowQualifier>STOOL_DNA_ELUTION</workflowQualifier>
+                <instructions>Run DNA Elution Bravo Protocol using the samples in RNA Easy Plate
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96Well200PCR</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -3351,6 +3585,17 @@
             <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA from Stool</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            <effectiveDate>2018-04-10T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA from Stool</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
