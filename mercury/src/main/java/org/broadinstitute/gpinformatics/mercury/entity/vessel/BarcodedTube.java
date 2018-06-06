@@ -59,6 +59,7 @@ public class BarcodedTube extends LabVessel {
         OrageneTube("Oragene", "Oragene Kit"),
         PaxgeneTissueContainer("PaxgeneTissueContainer", "Paxgene Tissue Container"),
         Petri("Petri", "Petri Dish"),
+        Sarstedt_Tube_2mL("Sarstedt_Tube_2mL", "Sarstedt Tube [2mL]"),
         Slide("Slide", "Slide"),
         Slide_Gates("Slide_Gates", "Slide (Gates)"),
         Slide_Large_Gates("Slide_Large_Gates", "Slide Large (Gates)"),

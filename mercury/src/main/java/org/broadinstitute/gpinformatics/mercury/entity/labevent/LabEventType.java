@@ -666,10 +666,9 @@ public enum LabEventType {
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).
                     sourceContainerPrefix("Blood").
                     targetVesselTypeGeometries(new VesselTypeGeometry[] {
-                            BarcodedTube.BarcodedTubeType.FluidX_6mL,
-                            BarcodedTube.BarcodedTubeType.FluidX_10mL
+                            BarcodedTube.BarcodedTubeType.Sarstedt_Tube_2mL
                     }).
-                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.Sarstedt_Tube_2mL).
                     targetContainerPrefix("BuffyCoat").
                     targetVolume(true).
                     requireSingleParticipant(true).
