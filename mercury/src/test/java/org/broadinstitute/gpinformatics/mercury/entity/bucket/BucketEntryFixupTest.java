@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -11,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -18,16 +21,22 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Test(groups = TestGroups.FIXUP)
+@Dependent
 public class BucketEntryFixupTest extends Arquillian {
 
     @Inject
@@ -48,6 +57,13 @@ public class BucketEntryFixupTest extends Arquillian {
     @Inject
     UserTransaction utx;
 
+    @Inject
+    private BSPUserList bspUserList;
+
+    @Inject
+    private UserBean userBean;
+    
+
     /**
      * Use test deployment here to talk to the actual jira
      *
@@ -66,19 +82,25 @@ public class BucketEntryFixupTest extends Arquillian {
     @BeforeMethod(groups = TestGroups.FIXUP)
     public void setUp() throws Exception {
         if (utx == null) {
+            System.out.println("User transaction not injected.  Leaving");
             return;
+        } else {
+            System.out.println("User transaction is injected");
         }
-        utx.begin();
+//        utx.begin();
     }
 
     @AfterMethod(groups = TestGroups.FIXUP)
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (utx == null) {
+            System.out.println("User transaction not injected.  Leaving");
             return;
+        } else {
+            System.out.println("User transaction is injected");
         }
 
-        utx.commit();
+//        utx.commit();
     }
 
 
@@ -127,6 +149,28 @@ public class BucketEntryFixupTest extends Arquillian {
 
         BucketEntry bucketEntry = bucket.findEntry(vessel);
         bucket.removeEntry(bucketEntry);
+    }
+
+    @Test(groups = TestGroups.FIXUP, enabled = true)
+    public void gplim5593RemoveBadPDOsFromBucket() {
+        Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
+
+        final BspUser ccusick = bspUserList.getByUsername("ccusick");
+        final BspUser jBoch= bspUserList.getByUsername("jboch");
+
+        System.out.println("Getting bucket entries from " + bucket.getBucketDefinitionName());
+
+        final List<BucketEntry> bucketEntriesToDelete = bucket.getBucketEntries().stream().filter(entry -> {
+            final Long pdoCreator = entry.getProductOrder().getCreatedBy();
+
+            return pdoCreator.equals(ccusick.getUserId()) || pdoCreator.equals(jBoch.getUserId()) ||
+                   entry.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Completed ||
+                   entry.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Abandoned;
+        }).collect(Collectors.toList());
+
+        System.out.println("The number of entries found are " + bucketEntriesToDelete.size() + " from a total of " + bucket.getBucketEntries().size());
+
+        System.out.println("Check out the buckets");
     }
 
     @Test(groups = TestGroups.FIXUP, enabled = false)
