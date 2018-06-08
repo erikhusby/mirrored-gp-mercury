@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.preference;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
@@ -14,7 +13,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -165,7 +163,7 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                     String termName = searchValue.getTermName();
                     if( termName.equals(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_DNA_PLATE.getTermRefName() ) ) {
                         searchInstance.setExcludeInitialEntitiesFromResults(true);
-                        searchInstance.setCustomTraversalOptionName("infiniumWells");
+                        searchInstance.setCustomTraversalOptionConfig("infiniumWells");
                         searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE);
                         isInfinium = true;
                         statusOutput.append( "Modified named search [");
@@ -174,7 +172,7 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                     } else if( termName.equals(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_AMP_PLATE.getTermRefName() )
                             || termName.equals(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_CHIP.getTermRefName() ) ) {
                         searchInstance.setExcludeInitialEntitiesFromResults(true);
-                        searchInstance.setCustomTraversalOptionName("infiniumWells");
+                        searchInstance.setCustomTraversalOptionConfig("infiniumWells");
                         searchInstance.getTraversalEvaluatorValues().put("ancestorOptionEnabled", Boolean.TRUE);
                         isInfinium = true;
                         statusOutput.append( "Modified named search [");
@@ -185,7 +183,7 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                         searchValue.setTermName("PDO");
                         searchValue.setIncludeInResults(Boolean.FALSE);
                         searchInstance.setExcludeInitialEntitiesFromResults(true);
-                        searchInstance.setCustomTraversalOptionName("infiniumPlates");
+                        searchInstance.setCustomTraversalOptionConfig("infiniumPlates");
                         searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE);
                         statusOutput.append( "Modified named search [");
                         statusOutput.append(searchInstance.getName());
@@ -199,7 +197,7 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                     // Existing ancestor/descendant logic
                     if( searchInstance.getTraversalEvaluatorValues().containsValue(Boolean.TRUE
                     && searchInstance.getCustomTraversalOptionName().equals("none"))) {
-                        searchInstance.setCustomTraversalOptionName("tubesEtcTraverser");
+                        searchInstance.setCustomTraversalOptionConfig("tubesEtcTraverser");
                         count++;
                         statusOutput.append( "Modified named search [");
                         statusOutput.append(searchInstance.getName());

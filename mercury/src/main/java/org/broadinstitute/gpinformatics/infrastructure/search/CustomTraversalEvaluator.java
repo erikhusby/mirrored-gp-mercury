@@ -7,19 +7,35 @@ import java.util.Set;
 
 /**
  * Attached to a ConfigurableSearchDefinition to expand primary list of entity identifiers
- *    to include other entities in the results (e.g. ancestors and/or descendants). <br/>
+ * to include other entities in the results (e.g. ancestors and/or descendants). <br/>
  * The CustomTraversalEvaluator allows logic to be attached to ancestor and or descendant traversals the user selects.
- * TraversalEvaluator instances are attached to a ConfigurableSearchDefinition and thus shared.
- * Any implementations must be thread-safe.
  */
 public abstract class CustomTraversalEvaluator extends TraversalEvaluator {
 
-    private String uiName;
+    /**
+     * This constructor used to produce vertical additional rows
+     * @param label Display label
+     * @param uiName UI form field name
+     * @param resultParamConfiguration User selected customization options
+     */
+    protected CustomTraversalEvaluator(String label, String uiName, ResultParamConfiguration resultParamConfiguration){
+        this( label, uiName );
+        this.resultParamConfiguration = resultParamConfiguration;
+    }
 
-    public CustomTraversalEvaluator(String label, String uiName){
+    /**
+     * This constructor used for horizontal user defined columns
+     * @param label Display label
+     * @param uiName UI form field name
+     */
+    protected CustomTraversalEvaluator(String label, String uiName){
         super(label);
         this.uiName = uiName;
     }
+
+    private String uiName;
+
+    private ResultParamConfiguration resultParamConfiguration;
 
     @Override
     public Set<Object> evaluate(List<? extends Object> rootEntities, SearchInstance searchInstance){
@@ -36,6 +52,14 @@ public abstract class CustomTraversalEvaluator extends TraversalEvaluator {
 
     public String getUiName(){
         return uiName;
+    }
+
+    public ResultParamConfiguration getResultParamConfiguration() {
+        return resultParamConfiguration;
+    }
+
+    public boolean isUserConfigurable(){
+        return resultParamConfiguration != null;
     }
 
 }

@@ -244,6 +244,7 @@ public class LabVesselSearchDefinition {
         configurableSearchDefinition.addCustomTraversalOption( InfiniumVesselTraversalEvaluator.DNA_PLATE_INSTANCE );
         configurableSearchDefinition.addCustomTraversalOption( InfiniumVesselTraversalEvaluator.DNA_PLATEWELL_INSTANCE );
         configurableSearchDefinition.addCustomTraversalOption( new TubeStripTubeFlowcellTraversalEvaluator() );
+        configurableSearchDefinition.addCustomTraversalOption( new VesselByEventTypeTraversalEvaluator() );
 
         configurableSearchDefinition.setAddRowsListenerFactory(
                 new ConfigurableSearchDefinition.AddRowsListenerFactory() {
@@ -364,9 +365,9 @@ public class LabVesselSearchDefinition {
                 }
 
                 String drillDownString = null;
-                for(Pair<String,String> value : columnParams.getParamValues() ) {
-                    if (value.getLeft().equals("drillDown")) {
-                        drillDownString = value.getRight();
+                for(ResultParamValues.ParamValue value : columnParams.getParamValues() ) {
+                    if (value.getName().equals("drillDown")) {
+                        drillDownString = value.getValue();
                         break;
                     }
                 }

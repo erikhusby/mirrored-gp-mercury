@@ -54,25 +54,25 @@ public class VesselEventResultParamConfiguration extends ResultParamConfiguratio
             return results;
         }
         List<LabEventType> eventTypes = new ArrayList<>();
-        for(Pair<String,String> value : columnParams.getParamValues() ) {
-            if( !value.getLeft().equals("eventTypes")) {
+        for(ResultParamValues.ParamValue value : columnParams.getParamValues() ) {
+            if( !value.getName().equals("eventTypes")) {
                 continue;
             } else {
                 try {
-                    LabEventType type = LabEventType.valueOf(value.getRight());
+                    LabEventType type = LabEventType.valueOf(value.getValue());
                     eventTypes.add(type);
                 } catch (Exception ex) {
                     results.clear();
-                    results.add("(No event type for param: " + value.getRight() + ")");
+                    results.add("(No event type for param: " + value.getValue() + ")");
                     return results;
                 }
             }
         }
 
         boolean captureTarget = true;  // Default
-        for(Pair<String,String> value : columnParams.getParamValues() ) {
-            if (value.getLeft().equals("srcOrTarget")) {
-                if ("source".equals(value.getRight())) {
+        for(ResultParamValues.ParamValue value : columnParams.getParamValues() ) {
+            if (value.getName().equals("srcOrTarget")) {
+                if ("source".equals(value.getValue())) {
                     captureTarget = false;
                 }
                 break;
@@ -80,8 +80,8 @@ public class VesselEventResultParamConfiguration extends ResultParamConfiguratio
         }
 
         boolean captureNearest = false; // Default
-        for(Pair<String,String> value : columnParams.getParamValues() ) {
-            if (value.getLeft().equals("captureNearest")) {
+        for(ResultParamValues.ParamValue value : columnParams.getParamValues() ) {
+            if (value.getName().equals("captureNearest")) {
                 captureNearest = true;
                 break;
             }

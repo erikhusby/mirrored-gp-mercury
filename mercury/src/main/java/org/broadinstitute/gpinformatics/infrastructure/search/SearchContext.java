@@ -40,6 +40,8 @@ public class SearchContext {
     private PaginationUtil.Pagination pagination;
     private ResultParamValues columnParams;
 
+    private ResultParamValues rowTraverserParams;
+
     /**
      * Avoid having to access EJB or web application context to get user data for display
      */
@@ -233,5 +235,17 @@ public class SearchContext {
      */
     public ResultParamValues getColumnParams(){
         return columnParams;
+    }
+
+    public ResultParamValues getRowTraverserParams() {
+        return rowTraverserParams;
+    }
+
+    /**
+     * User configurable params for a selected customizable ancestor/descendant row traversal
+     */
+    public void setRowTraverserParams(
+            ResultParamValues rowTraverserParams) {
+        this.rowTraverserParams = rowTraverserParams;
     }
 }

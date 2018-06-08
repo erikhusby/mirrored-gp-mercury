@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.ResultParamsActionBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -168,20 +169,22 @@ public class ConfigurableListContainerTest extends Arquillian {
         Map<Integer,ResultParamValues> resultParamsMap = new HashMap<>();
 
         // Configure and map result params to "Event Vessel Barcodes" search terms
-        ResultParamValues sampleParams = new ResultParamValues("Event Vessel Barcodes", "Sample Barcode");
+        ResultParamValues sampleParams = new ResultParamValues(ResultParamsActionBean.ParamType.SEARCH_TERM.name(), "LabVessel", "Event Vessel Barcodes" );
         sampleParams.addParamValue("eventTypes", "SAMPLE_IMPORT");
+        sampleParams.addParamValue("userColumnName", "Sample Barcode");
         resultParamsMap.put(new Integer(3), sampleParams );
 
-        ResultParamValues shearingParams = new ResultParamValues("Event Vessel Barcodes", "Shearing Barcode");
+        ResultParamValues shearingParams = new ResultParamValues(ResultParamsActionBean.ParamType.SEARCH_TERM.name(), "LabVessel","Event Vessel Barcodes");
         shearingParams.addParamValue("eventTypes", "SHEARING_TRANSFER");
+        shearingParams.addParamValue("userColumnName", "Shearing Barcode");
         shearingParams.addParamValue("srcOrTarget", "source");
         resultParamsMap.put(new Integer(4), shearingParams );
 
-        ResultParamValues flowcellParams = new ResultParamValues("Event Vessel Barcodes", "Flowcell Barcode");
-
+        ResultParamValues flowcellParams = new ResultParamValues(ResultParamsActionBean.ParamType.SEARCH_TERM.name(), "LabVessel","Event Vessel Barcodes");
         flowcellParams.addParamValue("eventTypes", "FLOWCELL_TRANSFER" );
         flowcellParams.addParamValue("eventTypes", "DENATURE_TO_FLOWCELL_TRANSFER");
         flowcellParams.addParamValue("eventTypes", "DILUTION_TO_FLOWCELL_TRANSFER");
+        flowcellParams.addParamValue("userColumnName", "Flowcell Barcode");
         resultParamsMap.put(new Integer(5), flowcellParams );
 
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, resultParamsMap, 1, "ASC", ColumnEntity.LAB_VESSEL);
