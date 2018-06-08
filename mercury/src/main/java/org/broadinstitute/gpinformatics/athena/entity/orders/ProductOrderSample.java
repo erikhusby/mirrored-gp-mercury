@@ -121,6 +121,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @JoinColumn(name="MERCURY_SAMPLE")
     private MercurySample mercurySample;
 
+    private String aggregationParticle;
+
     /**
      * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
      * reference would otherwise keep this sample alive.
@@ -1324,5 +1326,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public boolean isToBeBilled() {
         return getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
         && !isCompletelyBilled();
+    }
+
+    public String getAggregationParticle() {
+        return aggregationParticle;
+    }
+
+    public void setAggregationParticle(String aggregationParticle) {
+        this.aggregationParticle = aggregationParticle;
     }
 }

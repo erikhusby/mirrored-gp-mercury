@@ -532,7 +532,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeRootSamples(sampleInstanceEntity.getRootSample());
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
-            aggregationParticle = sampleInstanceEntity.getAggregationParticle();
+//            aggregationParticle = sampleInstanceEntity.getAggregationParticle();
             mercurySamples.add(mercurySample);
         } else {
             mergeDevConditions(labVessel);
@@ -733,6 +733,12 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     public String getAggregationParticle() {
+        ProductOrderSample productOrderSample = getProductOrderSampleForSingleBucket();
+        if (productOrderSample != null) {
+            if (productOrderSample.getAggregationParticle() != null) {
+                return productOrderSample.getAggregationParticle();
+            }
+        }
         return aggregationParticle;
     }
 
