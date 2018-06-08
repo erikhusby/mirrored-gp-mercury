@@ -91,6 +91,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private boolean isPooledTube;
     private String sampleLibraryName;
     private Integer readLength;
+    private String aggregationParticle;
 
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
@@ -534,6 +535,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeRootSamples(sampleInstanceEntity.getRootSample());
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
+            aggregationParticle = sampleInstanceEntity.getAggregationParticle();
             mercurySamples.add(mercurySample);
         } else {
             mergeDevConditions(labVessel);
@@ -731,6 +733,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     public TZDevExperimentData getTzDevExperimentData() {
         return this.tzDevExperimentData;
+    }
+
+    public String getAggregationParticle() {
+        return aggregationParticle;
     }
 
     /**
