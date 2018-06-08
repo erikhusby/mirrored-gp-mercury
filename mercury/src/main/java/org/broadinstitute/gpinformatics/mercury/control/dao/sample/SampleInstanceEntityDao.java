@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.sample;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
@@ -11,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEnti
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
-import org.springframework.util.CollectionUtils;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;

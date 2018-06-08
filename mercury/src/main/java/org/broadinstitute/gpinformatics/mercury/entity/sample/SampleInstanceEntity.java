@@ -68,6 +68,7 @@ public class SampleInstanceEntity {
     private Set<SampleInstanceEntityTsk> sampleInstanceEntityTsks = new HashSet<>();
 
     @ManyToOne
+    @JoinColumn(name = "SAMPLE_KIT_REQUEST")
     private SampleKitRequest sampleKitRequest;
 
     @ManyToOne
@@ -79,9 +80,11 @@ public class SampleInstanceEntity {
     private MolecularIndexingScheme molecularIndexingScheme;
 
     @ManyToOne
+    @JoinColumn(name = "ANALYSIS_TYPE")
     private AnalysisType analysisType;
 
     @ManyToOne
+    @JoinColumn(name = "REFERENCE_SEQUENCE")
     private ReferenceSequence referenceSequence;
 
     @Column(unique = true)

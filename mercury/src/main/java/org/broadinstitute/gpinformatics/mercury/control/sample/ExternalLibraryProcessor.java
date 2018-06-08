@@ -37,6 +37,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     protected List<String> organism = new ArrayList<>();
     protected List<String> pooled = new ArrayList<>();
     protected List<String> projectTitle = new ArrayList<>();
+    protected List<String> squidProject = new ArrayList<>();
     protected List<String> readLength = new ArrayList<>();
     protected List<String> referenceSequence = new ArrayList<>();
     protected List<String> sequencingTechnology = new ArrayList<>();
@@ -292,6 +293,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     public List<String> getVolume() {
         return volume;
+    }
+
+    public List<String> getSquidProject() {
+        return squidProject;
     }
 
     public String getAddress() {

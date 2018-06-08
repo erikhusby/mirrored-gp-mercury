@@ -33,6 +33,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         libraryName.add(getFromRow(dataRow, Headers.LIBRARY_NAME));
         concentration.add(getFromRow(dataRow, Headers.CONCENTRATION));
         volume.add(getFromRow(dataRow, Headers.VOLUME));
+        squidProject.add(getFromRow(dataRow, Headers.SQUID_PROJECT));
     }
 
     @Override
@@ -65,6 +66,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         LIBRARY_TYPE("Library Type", OPTIONAL),
         READ_LENGTH("Desired Read Length", OPTIONAL),
         SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", OPTIONAL),
+        SQUID_PROJECT("Squid Project", OPTIONAL),
 
         // Ignored header and data is not saved.
         BLANK("", IGNORED),
@@ -81,7 +83,6 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", IGNORED),
         REQUESTED_COMPLETION_DATE("Requested Completion Date", IGNORED),
         RESTRICTION_ENZYMES("Restriction Enzyme", IGNORED),
-        SQUID_PROJECT("Squid Project", IGNORED),
         SAMPLE_NUMBER("Sample Number", IGNORED),
         SOURCE_SAMPLE_GSSR_ID("Source Sample Gssr Id", IGNORED),
         STRAIN("Strain", IGNORED),

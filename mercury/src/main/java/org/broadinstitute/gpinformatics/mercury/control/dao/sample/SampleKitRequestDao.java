@@ -5,6 +5,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest_;
 
+import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -13,6 +17,9 @@ import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
 
+@Stateful
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+@RequestScoped
 public class SampleKitRequestDao  extends GenericDao {
 
     /** Returns one record having the specified email and organization. Also uses lastName & firstName if non-null. */

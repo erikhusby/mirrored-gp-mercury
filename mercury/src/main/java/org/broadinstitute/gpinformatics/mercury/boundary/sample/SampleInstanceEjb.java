@@ -46,6 +46,8 @@ import org.broadinstitute.gpinformatics.mercury.presentation.sample.WalkUpSequen
 import org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -72,6 +74,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil.isInBs
  * spreadsheet upload, and the various external library spreadsheet uploads.
  * In all cases a SampleInstanceEntity and associated MercurySample and LabVessel are created or overwritten.
  */
+@Stateful
+@RequestScoped
 public class SampleInstanceEjb {
     static final String CONFLICT = "Row #%d conflicting value of %s (found \"%s\", expected \"%s\" %s).";
     static final String MISSING = "Row #%d missing value of %s.";
@@ -104,9 +108,6 @@ public class SampleInstanceEjb {
     // These are the only characters allowed in a library or sample name.
     private static final String RESTRICTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_";
     static final String RESTRICTED_MESSAGE = "a-z, A-Z, 0-9, '.', '-', or '_'";
-
-    // A possible value in the IRB Number spreadsheet column.
-    public static final String IRB_EXEMPT = "IRB Exempt";
 
     private static final Map<String, IlluminaFlowcell.FlowcellType> mapSequencerToFlowcellType = new HashMap<>();
 
@@ -192,9 +193,9 @@ public class SampleInstanceEjb {
             if (processor instanceof VesselPooledTubesProcessor) {
                 return processPooledTube((VesselPooledTubesProcessor)processor, messages, overwrite);
             } else if (processor instanceof ExternalLibraryProcessorEzPass) {
-                return processLibraries((ExternalLibraryProcessorEzPass)processor, messages, overwrite);
+                return processLibraries(processor, messages, overwrite);
             } else if (processor instanceof ExternalLibraryProcessorNewTech) {
-                return processLibraries((ExternalLibraryProcessorNewTech)processor, messages, overwrite);
+                return processLibraries(processor, messages, overwrite);
             } else if (processor instanceof ExternalLibraryBarcodeUpdate) {
                 return processBarcodeUpdate((ExternalLibraryBarcodeUpdate)processor, messages, overwrite);
             } else {
@@ -887,7 +888,7 @@ public class SampleInstanceEjb {
                 }
                 if (barcode.length() == 10 && barcode.matches("[0-9]+")) {
                     messages.addError(String.format(MERCURY_FORMAT, rowNumber,
-                            (barcodeIsLibrary ? "(the Library Name)" : "")));
+                            barcodeIsLibrary ? "(Library Name)" : "", barcode));
                 }
             }
             if (isNotBlank(get(processor.getVolume(), index)) &&
@@ -900,7 +901,7 @@ public class SampleInstanceEjb {
             }
 
             nonNegativeOrBlank(get(processor.getReadLength(), index), "Read Length", rowNumber, messages);
-            nonNegativeOrBlank(get(processor.getNumberOfLanes(), index), "Numer of Lanes", rowNumber, messages);
+            nonNegativeOrBlank(get(processor.getNumberOfLanes(), index), "Number of Lanes", rowNumber, messages);
             nonNegativeOrBlank(get(processor.getInsertSize(), index), "Insert Size", rowNumber, messages);
             String referenceSequenceName = get(processor.getReferenceSequence(), index);
             if (isNotBlank(referenceSequenceName)) {
@@ -1069,7 +1070,7 @@ public class SampleInstanceEjb {
             sampleInstanceEntity.setMolecularIndexScheme(molecularIndexingSchemes.get(index));
             sampleInstanceEntity.setLibraryType(get(processor.getLibraryType(), index));
             sampleInstanceEntity.setAnalysisType(analysisTypes.get(index));
-            sampleInstanceEntity.setAggregationParticle(get(processor.getProjectTitle(), index));
+            sampleInstanceEntity.setAggregationParticle(get(processor.getSquidProject(), index));
             sampleInstanceEntity.setLabVessel(labVessel);
             sampleInstanceEntity.setMercurySample(mercurySample);
             sampleInstanceEntity.setSequencerModel(sequencerModels.get(index));
