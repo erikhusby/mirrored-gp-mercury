@@ -103,11 +103,10 @@
                     $j("#suggestedValuesDialog").dialog({
                         modal: true,
                         autoOpen: false,
-                        position: {my: "right top", at: "right top", of: window},
                         buttons: [
                             {
                                 id: "chooseSuggestion",
-                                text: "Assign the Chosen Suggestion",
+                                text: "Assign the Chosen Suggestion(s)",
                                 click: function() {
                                     var selectedValues = [];
                                     $j("#suggestedValueList").find(":selected").each(function() {
@@ -237,24 +236,25 @@
                 $j("#criteriaSuggestionIndex").val(criteriaIndex);
                 $j("#suggestedValuesDialog").html('');
 
+                var criteriaOp = $j("#operatorSelect-"+criteriaIndex+" option:selected").val();
                 $j.ajax({
                     url: "${ctxpath}/products/product.action?openRiskSuggestedValues=",
                     data: {
                         'criteriaIndex': criteriaIndex,
                         'criteriaLabel': criteriaLabel,
+                        'criteriaOp': criteriaOp,
                         'currentCriteriaChoices': $j("#valueText-"+criteriaIndex).val().split(',')
                     },
                     datatype: 'html',
                     success: function (html) {
                         $j("#suggestedValuesDialog").html(html).dialog("open");
-//                        .dialog("option", "width", 1100).dialog("option", "height", 600);
                     }
                 });
                 return false;
             }
 
             function updateOperatorOptions(criteriaCount) {
-                var criteriaLabel = $j('#criteriaSelect-' + criteriaCount + " option:selected").text();
+                var criteriaLabel = $j('#criteriaSelect-' + criteriaCount + ' option:selected').text();
 
                 $j('#operatorSelect-' + criteriaCount).html(operatorOptions(criteriaCount, criteriaLabel, criteriaLabel));
 

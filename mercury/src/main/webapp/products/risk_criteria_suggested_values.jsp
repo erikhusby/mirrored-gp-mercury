@@ -5,10 +5,24 @@
 
 <stripes:form beanclass="${actionBean.class.name}">
 
-<stripes:select id="suggestedValueList" name="" multiple="multiple">
-    <stripes:option value="">Select values for "${actionBean.criteriaLabel}"...</stripes:option>
-    <stripes:options-collection collection="${actionBean.criteriaSelectionValues}" label="" value=""/>
+    <div id="suggestionList" ></div>
 
-</stripes:select>
+    <script>
+        var criteriaOperatorValue = "${actionBean.criteriaOp}";
+        var suggestionListContent = '<select id="suggestedValueList" name="" ';
+        console.log("Operator is " + criteriaOperatorValue);
+        if(criteriaOperatorValue === "is in") {
+            suggestionListContent += 'multiple=""';
+            console.log("Found the operator to be is in");
+        }
+        suggestionListContent += '>\n';
+        suggestionListContent += '<option value="">Select value(s) for  "${actionBean.criteriaLabel}"...</option>';
+        <c:forEach items="${actionBean.criteriaSelectionValues}" var="selection">
+            suggestionListContent += '<option value="${selection}">${selection}</option>';
+        </c:forEach>
+        suggestionListContent += '</select>';
+
+        $j("#suggestionList").append(suggestionListContent);
+    </script>
 
 </stripes:form>

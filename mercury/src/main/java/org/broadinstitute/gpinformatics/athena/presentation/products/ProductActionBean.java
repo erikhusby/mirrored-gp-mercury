@@ -195,6 +195,7 @@ public class ProductActionBean extends CoreActionBean {
 
     private String criteriaIndex;
     private String criteriaLabel;
+    private String criteriaOp;
     private String currentCriteriaChoices;
 
     /**
@@ -881,5 +882,13 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setCurrentCriteriaChoices(String currentCriteriaChoices) {
         this.currentCriteriaChoices = currentCriteriaChoices;
+    }
+
+    public String getCriteriaOp() {
+        return criteriaOp;
+    }
+
+    public void setCriteriaOp(String criteriaOp) {
+        this.criteriaOp = criteriaOp;
     }
 }
