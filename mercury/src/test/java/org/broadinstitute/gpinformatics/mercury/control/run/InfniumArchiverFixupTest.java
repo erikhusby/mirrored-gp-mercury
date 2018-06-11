@@ -27,8 +27,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Dependent
 public class InfniumArchiverFixupTest extends Arquillian {
 
-    // todo jmt add instructions from ArquillianRemoteLinux.txt
-
     @Inject
     private UserBean userBean;
 
@@ -40,9 +38,26 @@ public class InfniumArchiverFixupTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        // Change dataSourceEnvironment to "prod", but leave deployment as DEV; copy yaml infiniumStarter dataPath,
+        // decodeDataPath and archivePath from PROD to DEV
+        return DeploymentBuilder.buildMercuryWar(DEV, "prod");
     }
 
+    /**
+     * This test must be run on a Linux host (the copying and zipping is much slower through a Window share).  Modify
+     * src\test\resources-dev\arquillian.xml as follows:
+     * 	<defaultProtocol type="Servlet 3.0">
+     *    <property name="host">mercuryfb.broadinstitute.org</property>
+     *  </defaultProtocol>
+     *  <container qualifier="dev" default="true">
+     *    <configuration>
+     *      <property name="managementAddress">mercuryfb.broadinstitute.org</property>
+     *      <property name="managementPort">9990</property>
+     *      <property name="username">Administrator</property>
+     *      <property name="password">TBD</property>
+     *   </configuration>
+     * </container>
+     */
     @Test(enabled = false)
     public void fixupGplim5599ArchiveOnPrem() {
         userBean.loginOSUser();
@@ -51,6 +66,7 @@ public class InfniumArchiverFixupTest extends Arquillian {
             List<String> barcodes = IOUtils.readLines(VarioskanParserTest.getTestResource("ArchiveInfiniumChips.txt"));
 
             for (String barcode : barcodes) {
+                // allow commenting out of lines
                 if (barcode.startsWith("#")) {
                     continue;
                 }
@@ -61,6 +77,7 @@ public class InfniumArchiverFixupTest extends Arquillian {
                 labVesselDao.flush();
                 labVesselDao.clear();
             }
+            // No FixupCommentary, this is not out of the ordinary
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
