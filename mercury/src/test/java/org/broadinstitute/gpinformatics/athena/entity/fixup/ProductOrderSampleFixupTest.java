@@ -162,6 +162,7 @@ public class ProductOrderSampleFixupTest extends Arquillian {
                 if (productOrderSample == null) {
                     throw new RuntimeException("Failed to find position " + fields[0] + " sample " + fields[1]);
                 }
+                System.out.println("Setting " + productOrderSample.getSampleKey() + " to " + fields[2]);
                 productOrderSample.setAggregationParticle(fields[2]);
             }
 
