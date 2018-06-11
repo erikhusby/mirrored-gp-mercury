@@ -199,7 +199,7 @@ public class ExtractTransformLongRuningTest extends Arquillian {
                 longPdoSampleIds[0]));
     }
 
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    @Test(enabled = true)
     public void testUndeletedRiskOnDevDb() throws Exception {
         // Tests backfill etl.
         long entityId = riskIds[0];
@@ -224,7 +224,7 @@ public class ExtractTransformLongRuningTest extends Arquillian {
         Assert.assertTrue(ExtractTransformTest.searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
     }
 
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    @Test(enabled = true)
     public void testDeletedRiskOnDevDb() throws Exception {
         long pdoSampleId = deletedRiskIds[1];
         long rev = deletedRiskIds[2];
@@ -241,7 +241,7 @@ public class ExtractTransformLongRuningTest extends Arquillian {
     }
 
 
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    @Test(enabled = true)
     public void testUndeletedLedgerOnDevDb() throws Exception {
         // Tests backfill etl.
         long entityId = ledgerIds[0];
@@ -269,7 +269,7 @@ public class ExtractTransformLongRuningTest extends Arquillian {
         Assert.assertTrue(ExtractTransformTest.searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
     }
 
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    @Test(enabled = true)
     public void testDeletedLedgerOnDevDb() throws Exception {
         long pdoSampleId = deletedLedgerIds[1];
         long rev = deletedLedgerIds[2];
