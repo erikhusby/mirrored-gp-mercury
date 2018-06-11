@@ -371,8 +371,8 @@ chooseColumns = function (available, chosen) {
                 return;
             } else {
                 var newOption = document.createElement('option');
-                newOption.text = option.text;
-                newOption.value = option.value;
+                newOption.text = option.text();
+                newOption.value = option.val();
                 chosen.options[chosen.options.length] = newOption;
             }
         }

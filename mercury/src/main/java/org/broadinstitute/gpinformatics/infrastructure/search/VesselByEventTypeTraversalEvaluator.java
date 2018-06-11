@@ -50,12 +50,15 @@ public class VesselByEventTypeTraversalEvaluator extends CustomTraversalEvaluato
         boolean isTargetVesselSelected = "target".equals( resultParamValues.getSingleValue( ParamConfiguration.DataField.SRC_OR_TARGET.getFormFieldId() ) );
         boolean isStopAtFirstFind = "captureNearest".equals( resultParamValues.getSingleValue( ParamConfiguration.DataField.NEAREST.getFormFieldId() ) );
 
-        // TODO JMS Handle starting vessel logic
-
         TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
                 = new TransferTraverserCriteria.VesselForEventTypeCriteria(eventTypes, isTargetVesselSelected, isStopAtFirstFind);
 
+        PaginationUtil.Pagination pagination = searchInstance.getEvalContext().getPagination();
+
         for( LabVessel startingVessel : (List<LabVessel>) rootEntities ) {
+
+            // Starting vessel = starting vessel
+            pagination.addExtraIdInfo( startingVessel.getLabel(), startingVessel.getLabel() );
 
             VesselContainer<?> vesselContainer = startingVessel.getContainerRole();
             if( vesselContainer != null ) {
@@ -63,11 +66,13 @@ public class VesselByEventTypeTraversalEvaluator extends CustomTraversalEvaluato
             } else {
                 startingVessel.evaluateCriteria(eventTypeCriteria, traversalDirection);
             }
-        }
 
-        for(Map.Entry<LabEvent, Set<LabVessel>> eventEntry : eventTypeCriteria.getVesselsForLabEventType().entrySet()) {
-            for( LabVessel eventVessel : eventEntry.getValue() ) {
-                searchResultVessels.add( eventVessel );
+            for(Map.Entry<LabEvent, Set<LabVessel>> eventEntry : eventTypeCriteria.getVesselsForLabEventType().entrySet()) {
+                for( LabVessel eventVessel : eventEntry.getValue() ) {
+                    searchResultVessels.add( eventVessel );
+                    // Handle starting vessel
+                    pagination.addExtraIdInfo( eventVessel.getLabel(), startingVessel.getLabel() );
+                }
             }
         }
 
