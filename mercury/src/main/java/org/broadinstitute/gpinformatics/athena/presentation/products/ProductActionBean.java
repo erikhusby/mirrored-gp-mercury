@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.TopLevelOnly;
@@ -170,6 +171,7 @@ public class ProductActionBean extends CoreActionBean {
     private Product editProduct;
 
     private boolean productUsedInOrders = false;
+    private List<String> suggestedValueSelections = new ArrayList();
 
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
@@ -553,6 +555,8 @@ public class ProductActionBean extends CoreActionBean {
 
         RiskCriterion.RiskCriteriaType criterion = RiskCriterion.RiskCriteriaType.findByLabel(criteriaLabel);
 
+        suggestedValueSelections = Arrays.stream(currentCriteriaChoices.split(",")).map(String::trim).collect(Collectors.toList());
+
         if(CollectionUtils.isNotEmpty(criterion.getSuggestedValues())) {
             criteriaSelectionValues.addAll(criterion.getSuggestedValues());
         }
@@ -890,5 +894,14 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setCriteriaOp(String criteriaOp) {
         this.criteriaOp = criteriaOp;
+    }
+
+
+    public List<String> getSuggestedValueSelections() {
+        return suggestedValueSelections;
+    }
+
+    public void setSuggestedValueSelections(List<String> suggestedValueSelections) {
+        this.suggestedValueSelections = suggestedValueSelections;
     }
 }

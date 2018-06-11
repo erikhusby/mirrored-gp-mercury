@@ -113,7 +113,7 @@
                                         selectedValues.push($(this).val());
                                     });
                                     var index = $j("#criteriaSuggestionIndex").val();
-                                    $j("#valueText-" + index ).val(selectedValues.join(','));
+                                    $j("#valueText-" + index ).val(selectedValues.join(', '));
                                     $j(this).dialog("close");
                                 }
                             },
@@ -237,13 +237,14 @@
                 $j("#suggestedValuesDialog").html('');
 
                 var criteriaOp = $j("#operatorSelect-"+criteriaIndex+" option:selected").val();
+                var currentCriteriaChoices = $j("#valueText-"+criteriaIndex).val();
                 $j.ajax({
                     url: "${ctxpath}/products/product.action?openRiskSuggestedValues=",
                     data: {
                         'criteriaIndex': criteriaIndex,
                         'criteriaLabel': criteriaLabel,
                         'criteriaOp': criteriaOp,
-                        'currentCriteriaChoices': $j("#valueText-"+criteriaIndex).val().split(',')
+                        'currentCriteriaChoices': currentCriteriaChoices
                     },
                     datatype: 'html',
                     success: function (html) {
