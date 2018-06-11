@@ -3057,9 +3057,9 @@
                 <name>Prep Reagents</name>
                 <labEventTypes>PREP</labEventTypes>
                 <workflowQualifier>Reagents</workflowQualifier>
-                <instructions>Heat Buffer PW1 to 55C for 10 minutes or more
+                <instructions>Heat Buffer PM1 to 55C for 10 minutes or more
                     - Plate Buffer EB in a pcr plate and heat to 70C prior to DNA Elution
-                    - Prime heated buffer PW1 with 1:100 of BME (10ul BME per 1ml of PW1). Aliquot based of # of samples
+                    - Prime heated buffer PM1 with 1:100 of BME (10ul BME per 1ml of PM1). Aliquot based of # of samples
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -3096,23 +3096,27 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>IRS Addition</name>
-                <labEventTypes>PREP</labEventTypes>
-                <workflowQualifier>IRS_ADDITION</workflowQualifier>
-                <instructions>Add 150ul of IRS solution to each well of a clean S-Block.
-                </instructions>
-            </workflowStepDefs>
-            <workflowStepDefs>
                 <name>Transfer Supernatent to S-Block</name>
                 <labEventTypes>STOOL_SUPERNATENT_TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_TO_S_BLOCK</workflowQualifier>
-                <instructions>Scan container ID on bead plate and container ID on IRS S-Block . Transfer ~650ul for supernatant.
-                    - Seal and vortex gently (no splashing)
+                <instructions>Scan container ID on bead plate and container ID on new S-Block . Transfer ~650ul for supernatant
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
                     <sourceVesselTypeGeometryString>PlateType.Plate96WellPowerBead</sourceVesselTypeGeometryString>
                     <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IRS Addition</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>ALL_PREP_IRS_ADDITION</workflowQualifier>
+                <instructions>Add 150ul of IRS solution to each sample, seal and vortex gently (no splashing).
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
                     <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
                     <targetSection>ALL96</targetSection>
                 </manualTransferDetails>
@@ -3223,22 +3227,10 @@
                 <instructions>Run DNA Isolation Bravo Protocol using the samples in the DNA RNEasy Plate
                 </instructions>
                 <manualTransferDetails>
-                    <messageType>PLATE_EVENT</messageType>
-                    <targetVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</targetVesselTypeGeometryString>
-                    <targetSection>ALL96</targetSection>
-                </manualTransferDetails>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>DNA Filter To Elution</name>
-                <labEventTypes>STOOL_DNA_FILTER_TO_ELUTION_PLATE</labEventTypes>
-                <workflowQualifier>STOOL_DNA_FILTER_TO_ELUTION_PLATE</workflowQualifier>
-                <instructions>Run DNA Elution Bravo Protocol using the samples in RNA Easy Plate
-                </instructions>
-                <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
                     <sourceVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</sourceVesselTypeGeometryString>
                     <sourceSection>ALL96</sourceSection>
-                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
                     <targetSection>ALL96</targetSection>
                 </manualTransferDetails>
             </workflowStepDefs>
@@ -3250,7 +3242,7 @@
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
-                    <sourceVesselTypeGeometryString>PlateType.Plate96Well200PCR</sourceVesselTypeGeometryString>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
                     <sourceSection>ALL96</sourceSection>
                     <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
                     <targetSection>ALL96</targetSection>

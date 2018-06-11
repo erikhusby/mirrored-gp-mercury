@@ -902,22 +902,14 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     STOOL_DNA_ISOLATION("StoolDNAIsolation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_EVENT,
-                    null,
-                    StaticPlate.PlateType.Plate96RNEasyWell1000).
-                    targetSection(SBSSection.ALL96).build(),
-            LibraryType.NONE_ASSIGNED),
-    STOOL_RNA_FILTER_TO_ELUTION_PLATE("StoolRNAFilterToElutionPlate",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
                     StaticPlate.PlateType.Plate96RNEasyWell1000,
-                    StaticPlate.PlateType.Plate96Well200PCR).
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
                     targetSection(SBSSection.ALL96).
                     sourceSection(SBSSection.ALL96).build(),
-            MaterialType.RNA_TOTAL_RNA, LibraryType.NONE_ASSIGNED),
-    STOOL_DNA_FILTER_TO_ELUTION_PLATE("StoolDNAFilterToElutionPlate",
+            LibraryType.NONE_ASSIGNED),
+    STOOL_RNA_FILTER_TO_ELUTION_PLATE("StoolRNAFilterToElutionPlate",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
