@@ -3078,7 +3078,7 @@
                 <name>Bead Beating</name>
                 <labEventTypes>IN_PLACE</labEventTypes>
                 <workflowQualifier>ALL_PREP_BEAD_BEATING</workflowQualifier>
-                <instructions>Place PowerBead Plate in TissueLyzer II and shake @30Hz for 5 minutes.
+                <instructions>[TODO Whatever this means I need an instruction]
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_EVENT</messageType>
@@ -3090,14 +3090,14 @@
                 <name>Spin</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>BEAD_PLATE</workflowQualifier>
-                <instructions>Centrifuge PowerBead plate for 6 minutes @4,500 x g
+                <instructions>[TODO GIVE ME SPIN INSTRUCTIONS]
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer Supernatent to S-Block</name>
                 <labEventTypes>STOOL_SUPERNATENT_TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_TO_S_BLOCK</workflowQualifier>
-                <instructions>Transfer 650auL of supernatent to S-BLOCK
+                <instructions>Transfer supernatent to S-BLOCK [TODO get acutal instructions]
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -3111,7 +3111,7 @@
                 <name>IRS Addition</name>
                 <labEventTypes>IN_PLACE</labEventTypes>
                 <workflowQualifier>ALL_PREP_IRS_ADDITION</workflowQualifier>
-                <instructions>Add 150ul of IRS solution to each sample, seal and vortex gently (no splashing).
+                <instructions>[TODO Whatever this means I need an instruction]
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_EVENT</messageType>
@@ -3123,7 +3123,7 @@
                 <name>Incubate</name>
                 <labEventTypes>INCUBATE</labEventTypes>
                 <workflowQualifier>IRS1</workflowQualifier>
-                <instructions>Incubate for 1 min at room temperature.
+                <instructions>Incubate for 1 min at room temperature. [TODO ACTUAL INSTRucTION]
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
