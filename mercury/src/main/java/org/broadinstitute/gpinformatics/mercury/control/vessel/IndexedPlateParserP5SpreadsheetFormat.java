@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Parser for P5 index plates from IDT
+ * Parser for P5 index plate spreadsheets from IDT
  */
 public class IndexedPlateParserP5SpreadsheetFormat extends IndexedPlateParserIDTSpreadsheetFormat {
 
