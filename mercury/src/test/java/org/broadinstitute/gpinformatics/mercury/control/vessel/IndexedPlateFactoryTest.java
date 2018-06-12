@@ -39,7 +39,7 @@ public class IndexedPlateFactoryTest extends StubbyContainerTest {
     public void testParseFile() {
         Map<String,StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseStream(
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("DuplexCOAforBroad.xlsx"),
-                IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
+                IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_IDT_P7);
         Assert.assertEquals(mapBarcodeToPlate.size(), 50, "Wrong number of plates");
     }
 
