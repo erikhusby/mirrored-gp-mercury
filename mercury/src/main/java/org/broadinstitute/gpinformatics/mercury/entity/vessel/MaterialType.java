@@ -15,9 +15,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public enum MaterialType implements Displayable {
     // These MaterialTypes already exist in the database.
@@ -152,7 +154,7 @@ public enum MaterialType implements Displayable {
                 return materialType;
             }
         }
-        throw new RuntimeException("Unknown MaterialType");
+        throw new RuntimeException(String.format("Unknown MaterialType %s", displayName));
     }
 
     public static boolean isValid(String displayName) {
@@ -167,6 +169,10 @@ public enum MaterialType implements Displayable {
             isValid=false;
         }
         return isValid;
+    }
+
+    public static Stream<MaterialType> stream() {
+        return Arrays.stream(MaterialType.values());
     }
 
     @Override

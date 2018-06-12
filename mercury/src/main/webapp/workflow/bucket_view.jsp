@@ -9,7 +9,7 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
 <c:set var="addToBatchText" value="Enter if you are adding to an existing batch"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" dataTablesVersion="1.10" withColVis="true"
-                       sectionTitle="Select Bucket">
+                       sectionTitle="Create Batches">
 <stripes:layout-component name="extraHead">
     <style type="text/css">
         .editable {
@@ -571,24 +571,9 @@
 </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <stripes:form style="margin-bottom: 10px" id="bucketForm" beanclass="${actionBean.class}">
-            <div class="form-horizontal">
-                <div class="control-group">
-                    <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
-                    <div class="controls">
-                        <stripes:select id="bucketSelect" name="selectedBucket" onchange="this.form.submit()">
-                            <stripes:option value="">Select a Bucket</stripes:option>
-                            <c:forEach items="${actionBean.mapBucketToBucketEntryCount.keySet()}" var="bucketName">
-                            <c:set var="bucketCount" value="${actionBean.mapBucketToBucketEntryCount.get(bucketName)}"/>
-                                <stripes:option value="${bucketName}"
-                                                label="${bucketName} (${bucketCount.bucketEntryCount + bucketCount.reworkEntryCount} vessels)"/>
-                            </c:forEach>
-                        </stripes:select>
-                        <img id="spinner" src="${ctxpath}/images/spinner.gif" style="display: none;" alt=""/>
-                    </div>
-                </div>
-            </div>
-        </stripes:form>
+        <stripes:link  beanclass="${actionBean.class.name}">
+            << Return to Search Page</stripes:link>
+
         <stripes:form beanclass="${actionBean.class.name}" id="bucketEntryForm" class="form-horizontal">
             <div class="form-horizontal">
                 <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>

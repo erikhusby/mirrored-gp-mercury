@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -25,7 +26,10 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BucketEntryProductOrderTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraUserTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -39,6 +43,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -71,12 +76,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @UrlBinding(value = "/workflow/bucketView.action")
 public class BucketViewActionBean extends CoreActionBean {
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
+    private static final String SEARCH_PAGE = "/workflow/bucket_search.jsp";
     private static final String ADD_TO_BATCH_ACTION = "addToBatch";
     private static final String CREATE_BATCH_ACTION = "createBatch";
+    public static final String FIND_BUCKET_ENTRIES = "findBucketEntries";
     private static final String EXISTING_TICKET = "existingTicket";
     private static final String NEW_TICKET = "newTicket";
     private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
@@ -85,6 +93,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String CHANGE_PDO = "changePdo";
     private static final String FIND_PDO = "findPdo";
     public static final String VIEW_BUCKET_ACTION = "viewBucket";
+    public static final String SEARCH_BUCKET_ACTION = "searchBucket";
     public static final String SAVE_SEARCH_DATA = "saveSearchData";
     public static final String LOAD_SEARCH_DATA = "loadSearchData";
     public static final String SELECTED_BUCKET_KEY = "selectedBucket";
@@ -92,7 +101,11 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String SELECT_NEXT_SIZE = "selectNextSize";
 
     @Inject
-    JiraUserTokenInput jiraUserTokenInput;
+    private JiraUserTokenInput jiraUserTokenInput;
+    @Inject
+    private BucketEntryProductOrderTokenInput productOrderTokenInput;
+    @Inject
+    private MaterialTypeTokenInput materialTypeTokenInput;
     @Inject
     private WorkflowConfig workflowConfig;
     @Inject
@@ -130,7 +143,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private final Set<String> buckets = new HashSet<>();
     private final List<Long> bucketEntryIds = new ArrayList<>();
     private final List<Long> reworkEntryIds = new ArrayList<>();
-    private final Set<BucketEntry> collectiveEntries = new HashSet<>();
+    private Set<BucketEntry> collectiveEntries = new HashSet<>();
     private final Map<String, String> mapBucketToJiraProject = new HashMap<>();
     private Map<String, Collection<String>> mapBucketToWorkflows;
     private List<BucketEntry> selectedEntries = new ArrayList<>();
@@ -155,14 +168,21 @@ public class BucketViewActionBean extends CoreActionBean {
     private int selectNextSize = 92;
     private String searchKey;
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private String searchString;
 
-    public String getSlowColumns(){
+    public String getSlowColumns() {
         return new JSONArray(Arrays.asList("Material Type", "Workflow", "Receipt Date", "Rework Reason",
-                "Rework Comment","Rework User", "Rework Date")).toString();
+            "Rework Comment", "Rework User", "Rework Date")).toString();
     }
+
     private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = VIEW_BUCKET_ACTION)
+    @Before(stages = LifecycleStage.BindingAndValidation, on = SEARCH_BUCKET_ACTION)
+    public void initSearchBucket() {
+        materialTypeTokenInput.setup();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {SEARCH_BUCKET_ACTION, VIEW_BUCKET_ACTION})
     public void loadTableState() {
         try {
             NameValueDefinitionValue nameValueDefinitionValue = loadSearchData();
@@ -209,6 +229,14 @@ public class BucketViewActionBean extends CoreActionBean {
         mapBucketToWorkflows = bucketWorkflows.asMap();
     }
 
+    @After(stages = LifecycleStage.BindingAndValidation)
+    public void initBucket() {
+        if (selectedBucket != null) {
+            bucket = bucketDao.findByName(selectedBucket);
+            possibleWorkflows.addAll(mapBucketToWorkflows.get(selectedBucket));
+        }
+    }
+
     private void buildHeaderVisibilityMap(State state) {
         for (Column column : state.getColumns()) {
             boolean visible = true;
@@ -230,6 +258,16 @@ public class BucketViewActionBean extends CoreActionBean {
     @HandlesEvent("watchersAutoComplete")
     public Resolution watchersAutoComplete() throws JSONException {
         return createTextResolution(jiraUserTokenInput.getJsonString(getJiraUserQuery()));
+    }
+
+    @HandlesEvent("materialTypeAutoComplete")
+    public Resolution materialTypeAutoComplete() throws JSONException {
+        return createTextResolution(materialTypeTokenInput.getJsonString(searchKey));
+    }
+
+    @HandlesEvent("productOrderAutoComplete")
+    public Resolution productOrderAutoComplete() throws JSONException {
+        return createTextResolution(productOrderTokenInput.getJsonString(bucket, searchKey));
     }
 
     @ValidationMethod(on = CREATE_BATCH_ACTION)
@@ -291,13 +329,15 @@ public class BucketViewActionBean extends CoreActionBean {
         return new StreamingResolution("application/json", jsonObject.toString());
     }
 
-    private void saveSearchData(State state) throws Exception {
+    public void saveSearchData(State state) throws Exception {
         NameValueDefinitionValue definitionValue = loadSearchData();
         if (selectedBucket != null) {
             definitionValue.put(SELECTED_BUCKET_KEY, selectedBucket);
         }
         definitionValue.put(SELECT_NEXT_SIZE, String.valueOf(selectNextSize));
-        definitionValue.put(TABLE_STATE_KEY, Collections.singletonList(objectMapper.writeValueAsString(state)));
+        if (state.getLength() > 0) {
+            definitionValue.put(TABLE_STATE_KEY, Collections.singletonList(objectMapper.writeValueAsString(state)));
+        }
 
         preferenceEjb.add(userBean.getBspUser().getUserId(), PreferenceType.BUCKET_PREFERENCES, definitionValue);
     }
@@ -321,20 +361,43 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     @DefaultHandler
+    @HandlesEvent(SEARCH_BUCKET_ACTION)
+    public Resolution searchBucketEntries() {
+        return new ForwardResolution(SEARCH_PAGE);
+    }
+
     @HandlesEvent(VIEW_BUCKET_ACTION)
     public Resolution viewBucket() {
-        if (selectedBucket != null) {
-            bucket = bucketDao.findByName(selectedBucket);
-            possibleWorkflows.addAll(mapBucketToWorkflows.get(selectedBucket));
+        return new ForwardResolution(VIEW_PAGE);
+    }
 
-            // Gets the bucket entries that are in the selected bucket.
-            if (bucket != null) {
-                collectiveEntries.addAll(bucket.getBucketEntries());
-                collectiveEntries.addAll(bucket.getReworkEntries());
-                String jiraProjectType = mapBucketToJiraProject.get(selectedBucket);
-                projectType = CreateFields.ProjectType.fromKeyPrefix(jiraProjectType);
-                preFetchSampleData(collectiveEntries);
-            }
+    @HandlesEvent(FIND_BUCKET_ENTRIES)
+    public Resolution entrySearch() {
+        List<String> searchStrings = new ArrayList<>();
+        if (StringUtils.isNotBlank(searchString)) {
+            searchStrings = Arrays.stream(searchString.split("[,|\\s]+")).collect(Collectors.toList());
+        }
+        Set<BucketEntry> bucketEntries =
+            new HashSet<>(bucketEntryDao.findBucketEntries(bucket, productOrderTokenInput.getTokenBusinessKeys(),
+                searchStrings));
+        if (bucketEntries.isEmpty()) {
+            addGlobalValidationError("No bucket entries found matching this search criteria.");
+            return new ForwardResolution(SEARCH_PAGE);
+        }
+        String jiraProjectType = mapBucketToJiraProject.get(selectedBucket);
+        projectType = CreateFields.ProjectType.fromKeyPrefix(jiraProjectType);
+        preFetchSampleData(bucketEntries);
+        List<MaterialType> selectedMaterialTypes = materialTypeTokenInput.getTokenObjects();
+        preFetchSampleData(bucketEntries);
+
+        if (CollectionUtils.isNotEmpty(selectedMaterialTypes)) {
+            long begin = System.currentTimeMillis();
+            collectiveEntries.addAll(bucketEntries.stream()
+                .filter(o -> selectedMaterialTypes.contains(o.getLabVessel().getLatestMaterialType()))
+                .collect(Collectors.toList()));
+            log.info(String.format("contains material type took %d", System.currentTimeMillis() - begin));
+        } else {
+            collectiveEntries.addAll(bucketEntries);
         }
         return new ForwardResolution(VIEW_PAGE);
     }
@@ -408,7 +471,7 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public String getLink(String batchName) {
-        String jiraUrl = jiraUrl(batchName);;
+        String jiraUrl = jiraUrl(batchName);
         return String.format("<a target='JIRA' title='%s' href='%s' class='external'>%s</a>", batchName, jiraUrl,
                 batchName);
     }
@@ -625,6 +688,23 @@ public class BucketViewActionBean extends CoreActionBean {
         this.jiraUserTokenInput = jiraUserTokenInput;
     }
 
+    public BucketEntryProductOrderTokenInput getProductOrderTokenInput() {
+        return productOrderTokenInput;
+    }
+
+    public void setProductOrderTokenInput(BucketEntryProductOrderTokenInput productOrderTokenInput) {
+        this.productOrderTokenInput = productOrderTokenInput;
+    }
+
+    public MaterialTypeTokenInput getMaterialTypeTokenInput() {
+        return materialTypeTokenInput;
+    }
+
+    public void setMaterialTypeTokenInput(
+        MaterialTypeTokenInput materialTypeTokenInput) {
+        this.materialTypeTokenInput = materialTypeTokenInput;
+    }
+
     public String getTableState() {
         return tableState;
     }
@@ -649,6 +729,14 @@ public class BucketViewActionBean extends CoreActionBean {
         this.searchKey = searchKey;
     }
 
+    public String getSearchString() {
+        return searchString;
+    }
+
+    public void setSearchString(String searchString) {
+        this.searchString = searchString;
+    }
+
     public List<String> bucketWorkflowNames(BucketEntry bucketEntry) {
         List<String> workflowNames = new ArrayList<>();
         for (Workflow workflow : bucketEntry.getWorkflows(workflowConfig)) {
@@ -659,6 +747,22 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public boolean showHeader(String columnName) {
         return headerVisibilityMap.isEmpty() || (headerVisibilityMap.get(columnName) != null && headerVisibilityMap
-                .get(columnName));
+            .get(columnName));
+    }
+
+    public enum BucketSearchType implements Displayable {
+        SAMPLES("Samples"),
+        VESSELS("Barcodes");
+
+        private String displayName;
+
+        BucketSearchType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 }

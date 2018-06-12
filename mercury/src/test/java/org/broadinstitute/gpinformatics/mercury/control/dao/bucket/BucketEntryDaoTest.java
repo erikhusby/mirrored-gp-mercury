@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -20,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.RequestScoped;
@@ -30,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 @Test(groups = TestGroups.STUBBY)
@@ -51,6 +54,9 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
     ProductOrderDao productOrderDao;
 
     @Inject
+    ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
     ProductDao productDao;
 
     @Inject
@@ -63,6 +69,7 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
     private String barcodeKey;
     private String testPoBusinessKey;
     private ProductOrder testOrder;
+    private BucketEntry testEntry;
     private Date today;
     private String sampleKey;
 
@@ -77,7 +84,7 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
 
 
         testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
-        if(testBucket == null) {
+        if (testBucket == null) {
             WorkflowBucketDef bucketDef = new WorkflowBucketDef(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 
             testBucket = new Bucket(bucketDef);
@@ -92,17 +99,7 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
         barcodeKey = "A" + suffix;
         sampleKey = "SM-" + suffix;
         testPoBusinessKey = "PDO-33";
-        testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
-        if(testOrder == null) {
-            testOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey);
-            testOrder.setTitle(testOrder.getTitle() + today.getTime());
-            testOrder.setProduct(productDao.findByBusinessKey(STANDARD_RNA_SEQ_PART_NUMBER));
-            testOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
-        }
-        BarcodedTube vessel = new BarcodedTube(barcodeKey);
-        vessel.getMercurySamples().add(new MercurySample(sampleKey, MercurySample.MetadataSource.BSP));
-
-        BucketEntry testEntry = new BucketEntry(vessel, testOrder, testBucket, BucketEntry.BucketEntryType.PDO_ENTRY);
+        fetchTestData();
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();
         bucketEntryDao.clear();
@@ -151,51 +148,49 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
                         .getCreatedDate()));
     }
 
-
-    @Test
-    public void testFindByBucketAndSample() {
-        List<BucketEntry> bySampleAndBucket =
-            bucketEntryDao.findBySampleAndBucket(Collections.singletonList(sampleKey), testBucket);
-        Assert.assertEquals(bySampleAndBucket.size(), 1);
-        validateEntry(bySampleAndBucket.iterator().next());
+    private void fetchTestData() throws InvalidProductException {
+        fetchTestData(barcodeKey, sampleKey);
     }
 
-    @Test
-    public void testFindByJiraKeyAndBucket() {
-        List<BucketEntry> bySampleAndBucket =
-            bucketEntryDao.findByProductOrderAndBucket(Collections.singletonList(testPoBusinessKey), testBucket);
-        Assert.assertEquals(bySampleAndBucket.size(), 1);
-        validateEntry(bySampleAndBucket.iterator().next());
+    private BucketEntry fetchTestData(String barcodeKey, String sampleKey) throws InvalidProductException {
+        testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
+
+        testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
+        if (testOrder == null) {
+            testOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey);
+            testOrder.setTitle(testOrder.getTitle() + today.getTime());
+            testOrder.setProduct(productDao.findByBusinessKey(STANDARD_RNA_SEQ_PART_NUMBER));
+            testOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
+            productOrderDao.persist(testOrder);
+//            productOrderDao.flush();
+        }
+
+        BarcodedTube vessel = tubeDao.findByBarcode(barcodeKey);
+        if (vessel == null) {
+            vessel = new BarcodedTube(barcodeKey);
+            MercurySample mercurySample = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
+            ProductOrderSample productOrderSample = new ProductOrderSample(sampleKey, new BspSampleData());
+            testOrder.addSample(productOrderSample);
+            productOrderSampleDao.persist(productOrderSample);
+            mercurySample.addProductOrderSample(productOrderSample);
+            tubeDao.persist(mercurySample);
+            vessel.getMercurySamples().add(mercurySample);
+            tubeDao.persist(vessel);
+//            tubeDao.flush();
+        }
+
+        testEntry = bucketEntryDao.findByVesselAndBucket(vessel, testBucket);
+        if (testEntry == null) {
+            testEntry = new BucketEntry(vessel, testOrder, testBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 0);
+        }
+        bucketEntryDao.persist(testEntry);
+        bucketEntryDao.flush();
+        return testEntry;
     }
 
-    @Test
-    public void testFindByPDOTitleAndBucket() {
-        List<BucketEntry> bySampleAndBucket =
-            bucketEntryDao.findByProductOrderAndBucket(Collections.singletonList(testPoBusinessKey), testBucket);
-        Assert.assertEquals(bySampleAndBucket.size(), 1);
-        validateEntry(bySampleAndBucket.iterator().next());
-    }
-
-    @Test
-    public void testFindByPartNumberAndBucket() {
-        List<BucketEntry> bySampleAndBucket =
-            bucketEntryDao.findByProductAndBucket(Collections.singletonList(STANDARD_RNA_SEQ_PART_NUMBER), testBucket);
-        Assert.assertEquals(bySampleAndBucket.size(), 1);
-        validateEntry(bySampleAndBucket.iterator().next());
-    }
-
-    @Test
-    public void testFindProductNameAndBucket() {
-        List<BucketEntry> bySampleAndBucket =
-            bucketEntryDao.findByProductAndBucket(Collections.singletonList(STANDARD_RNA_SEQ_PRODUCT_NAME), testBucket);
-        Assert.assertEquals(bySampleAndBucket.size(), 1);
-        validateEntry(bySampleAndBucket.iterator().next());
-    }
-
-    @Test
-    public void testFindPartialProductAndBucket() throws Exception {
+    @DataProvider(name = "bucketScenarios")
+    public Iterator<Object[]> bucketScenarios() {
         String differentPart = "P-RNA-0001";
-        String differentProductName = "Standard RNA Sequencing  - Low Coverage (15M pairs)";
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         productOrderSamples.add(new ProductOrderSample("SM-1234", new BspSampleData()));
@@ -213,29 +208,81 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
             new BucketEntry(anotherVessel, anotherOrder, testBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 0);
         bucketEntryDao.persist(anotherEntry);
         bucketEntryDao.flush();
+        List<Object[]> testCases = new ArrayList<>();
+//        testCases.add(
+//            new Object[]{, , });
 
-        List<BucketEntry> bySampleAndBucket =
-            bucketEntryDao.findByProductAndBucket(Collections.singletonList("RNA Sequencing"), testBucket);
-        Assert.assertEquals(bySampleAndBucket.size(), 2);
 
-        List<String> products = new ArrayList<>(Arrays.asList(differentProductName, STANDARD_RNA_SEQ_PRODUCT_NAME));
-
-        boolean allSamplesFound = bySampleAndBucket.stream()
-            .allMatch(bucketEntry -> products.contains(bucketEntry.getProductOrder().getProduct().getProductName()));
-        Assert.assertTrue(allSamplesFound);
+        return testCases.iterator();
     }
 
-    private void validateEntry(BucketEntry entry) {
-        SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yy");
-        Assert.assertEquals(entry.getBucket().getBucketDefinitionName(), testBucket.getBucketDefinitionName());
-        Assert.assertEquals(entry.getProductOrder(), testOrder);
-        Assert.assertEquals(entry.getProductOrder().getJiraTicketKey(), testPoBusinessKey);
-        Assert.assertEquals(entry.getProductOrder().getProduct().getPartNumber(), STANDARD_RNA_SEQ_PART_NUMBER);
-        Assert.assertEquals(entry.getProductOrder().getProduct().getProductName(), STANDARD_RNA_SEQ_PRODUCT_NAME);
-        Assert.assertEquals(dateFormatter.format(new Date()), dateFormatter.format(entry.getCreatedDate()));
-        Assert.assertEquals(entry.getStatus(), BucketEntry.Status.Active);
-        Assert.assertEquals(entry.getLabVessel().getLabel(), barcodeKey);
-        Assert.assertEquals(entry.getLabVessel().getMercurySamples().iterator().next().getSampleKey(), sampleKey);
+    @Test
+    public void testFindBucketEntriesWithVesselList() throws InvalidProductException {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        String sampleKey1 = "SM-1" + suffix;
+        String sampleKey2 = "SM-2" + suffix;
+        String sampleKey3 = "SM-3" + suffix;
+        String barcode1 = "A1" + suffix;
+        String baracode2 = "A2" + suffix;
+        String barcode3 = "A3" + suffix;
+
+        BucketEntry testEntry1 = fetchTestData(sampleKey1, barcode1);
+        BucketEntry testEntry2 = fetchTestData(sampleKey2, baracode2);
+        BucketEntry testEntry3 = fetchTestData(sampleKey3, barcode3);
+
+        List<String> orders = Collections.singletonList(testPoBusinessKey);
+        List<BucketEntry> bucketEntries =
+            bucketEntryDao.findBucketEntries(testBucket, orders, Arrays.asList(barcode1, baracode2, barcode3));
+
+        Assert.assertTrue(bucketEntries.contains(testEntry1));
+        Assert.assertTrue(bucketEntries.contains(testEntry2));
+        Assert.assertTrue(bucketEntries.contains(testEntry3));
+    }
+
+    @Test
+    public void testFindBucketEntriesWithSampleList() throws InvalidProductException {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        String sampleKey1 = "SM-1" + suffix;
+        String sampleKey2 = "SM-2" + suffix;
+        String sampleKey3 = "SM-3" + suffix;
+        String barcode1 = "A1" + suffix;
+        String baracode2 = "A2" + suffix;
+        String barcode3 = "A3" + suffix;
+
+        BucketEntry testEntry1 = fetchTestData(sampleKey1, barcode1);
+        BucketEntry testEntry2 = fetchTestData(sampleKey2, baracode2);
+        BucketEntry testEntry3 = fetchTestData(sampleKey3, barcode3);
+
+        List<String> orders = Collections.singletonList(testPoBusinessKey);
+        List<BucketEntry> bucketEntries =
+            bucketEntryDao.findBucketEntries(testBucket, orders, Arrays.asList(sampleKey1, sampleKey2, sampleKey3));
+
+        Assert.assertTrue(bucketEntries.contains(testEntry1));
+        Assert.assertTrue(bucketEntries.contains(testEntry2));
+        Assert.assertTrue(bucketEntries.contains(testEntry3));
+    }
+
+    @Test
+    public void testFindBucketEntriesWithVesselsAndSamples() throws InvalidProductException {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        String sampleKey1 = "SM-1" + suffix;
+        String sampleKey2 = "SM-2" + suffix;
+        String sampleKey3 = "SM-3" + suffix;
+        String barcode1 = "A1" + suffix;
+        String baracode2 = "A2" + suffix;
+        String barcode3 = "A3" + suffix;
+
+        BucketEntry testEntry1 = fetchTestData(sampleKey1, barcode1);
+        BucketEntry testEntry2 = fetchTestData(sampleKey2, baracode2);
+        BucketEntry testEntry3 = fetchTestData(sampleKey3, barcode3);
+
+        List<String> orders = Collections.singletonList(testPoBusinessKey);
+        List<BucketEntry> bucketEntries =
+            bucketEntryDao.findBucketEntries(testBucket, orders, Arrays.asList(sampleKey1, barcode1));
+
+        Assert.assertTrue(bucketEntries.contains(testEntry1));
+        Assert.assertFalse(bucketEntries.contains(testEntry2));
+        Assert.assertFalse(bucketEntries.contains(testEntry3));
     }
 
     @Test
@@ -309,7 +356,7 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
 
         BarcodedTube newFoundVessel = tubeDao.findByBarcode(barcodeKey);
 
-        Assert.assertNotNull(foundVessel); 
+        Assert.assertNotNull(foundVessel);
         testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
 
         BucketEntry newRetrievedEntry = bucketEntryDao.findByVesselAndPO(newFoundVessel, testOrder);

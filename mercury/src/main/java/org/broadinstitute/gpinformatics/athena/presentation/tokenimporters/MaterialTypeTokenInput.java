@@ -1,0 +1,68 @@
+/*
+ * The Broad Institute
+ * SOFTWARE COPYRIGHT NOTICE AGREEMENT
+ * This software and its documentation are copyright 2018 by the
+ * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+ *
+ * This software is supplied without any warranty or guaranteed support
+ * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+ * use, misuse, or functionality.
+ */
+
+package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
+
+import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.json.JSONException;
+
+import javax.enterprise.context.Dependent;
+import java.text.MessageFormat;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * This class is the cohort implementation of the token object
+ *
+ * @author hrafal
+ */
+@Dependent
+public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
+    public MaterialTypeTokenInput() {
+        super(SINGLE_LINE_FORMAT);
+    }
+
+    @Override
+    protected MaterialType getById(String materialType) {
+        return MaterialType.valueOf(materialType);
+    }
+
+    @Override
+    public void setup(Object... ids) {
+        if (ids.length == 0) {
+            ids = MaterialType.stream().map(Enum::name).toArray(String[]::new);
+        }
+        super.setup(ids);
+    }
+
+    public String getJsonString(String query) throws JSONException {
+        List<MaterialType> matches = MaterialType.stream()
+                .filter(materialType -> materialType.getDisplayName().toUpperCase().contains(query.toUpperCase()))
+                .collect(Collectors.toList());
+        return createItemListString(matches);
+    }
+
+    @Override
+    protected String getTokenId(MaterialType materialType) {
+        return materialType.name();
+    }
+
+    @Override
+    protected String getTokenName(MaterialType materialType) {
+        return materialType.getDisplayName();
+    }
+
+    @Override
+    protected String formatMessage(String messageString, MaterialType materialType) {
+        return MessageFormat.format(messageString, materialType.getDisplayName());
+    }
+}
