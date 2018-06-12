@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
@@ -10,66 +11,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Parser for dual indexes from IDT
+ * Parser for P5 index plates from IDT
  */
-public class IndexedPlateParserTSCAFormat extends IndexedPlateParserIDTSpreadsheetFormat {
+public class IndexedPlateParserP5SpreadsheetFormat extends IndexedPlateParserIDTSpreadsheetFormat {
 
-    final ColumnParser broadBarcodeColumnParser = new ColumnParser() {
-        @Override
-        public int getColumnIndex() {
-            return 3;
-        }
-
-        @Override
-        public String getColumnName() {
-            return "Broad Barcode";
-        }
-    };
-
-    final ColumnParser wellPositionColumnParser = new ColumnParser() {
-        @Override
-        public int getColumnIndex() {
-            return 6;
-        }
-
-        @Override
-        public String getColumnName() {
-            return "Well Position";
-        }
-    };
-
-    final ColumnParser p5AntisenseSequenceColumnParser = new ColumnParser() {
-        @Override
-        public int getColumnIndex() {
-            return 11;
-        }
-
-        @Override
-        public String getColumnName() {
-            return "i5 Primer Antisense Sequence";
-        }
-    };
-
-    final ColumnParser p7AntisenseSequenceColumnParser = new ColumnParser() {
-        @Override
-        public int getColumnIndex() {
-            return 13;
-        }
-
-        @Override
-        public String getColumnName() {
-            return "i7 Primer Antisense Sequence";
-        }
-    };
-
-    public IndexedPlateParserTSCAFormat() {
-        super(null);
+    public IndexedPlateParserP5SpreadsheetFormat(MolecularIndexingScheme.IndexPosition illuminaPositionHint) {
+        super(illuminaPositionHint);
     }
 
+    final ColumnParser sequenceColumnParser = new ColumnParser() {
+        @Override
+        public int getColumnIndex() {
+            return 8;
+        }
+
+        @Override
+        public String getColumnName() {
+            return "Sequence";
+        }
+
+        @Override
+        public String getString(Row row) {
+            Cell cell = row.getCell(getColumnIndex());
+            if (cell == null) {
+                throw new RuntimeException(getColumnName() + " is empty in row " + row.getRowNum());
+            }
+            // The sequence is triplets of bases, space separated.  The 8 variable bases are at position 37, and
+            // include 2 spaces, so we have to remove the spaces
+            return cell.getStringCellValue().substring(37, 37 + 10).replace(" ", "");
+        }
+    };
+
+    @Override
     List<ColumnParser> getColumnParsers() {
         List<ColumnParser> parsers = new ArrayList<>(5);
-        parsers.add(p5AntisenseSequenceColumnParser);
-        parsers.add(p7AntisenseSequenceColumnParser);
+        parsers.add(sequenceColumnParser);
         parsers.add(broadBarcodeColumnParser);
         parsers.add(wellPositionColumnParser);
         return parsers;
@@ -93,15 +69,17 @@ public class IndexedPlateParserTSCAFormat extends IndexedPlateParserIDTSpreadshe
         try {
             for ( ; i <= lastRowNum; i++) {
                 Row row = sheet.getRow(i);
+                // Skip blank rows
+                if(row.getLastCellNum() < 0) {
+                    continue;
+                }
                 String plateBarcode = broadBarcodeColumnParser.getString(row);
                 String wellName = wellPositionColumnParser.getString(row);
-                String p5MolecularIndex = p5AntisenseSequenceColumnParser.getString(row);
-                String p7MolecularIndex = p7AntisenseSequenceColumnParser.getString(row);
+                String p5MolecularIndex = sequenceColumnParser.getString(row);
 
                 PlateWellIndexAssociation association =
-                        new PlateWellIndexAssociation(plateBarcode, wellName, getTechnology());
+                        new PlateWellIndexAssociation(plateBarcode, wellName, MolecularIndexingScheme.IndexPosition.ILLUMINA_P5.getTechnology());
                 association.addIndex(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5, p5MolecularIndex);
-                association.addIndex(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, p7MolecularIndex);
 
                 plateIndexes.add(association);
             }

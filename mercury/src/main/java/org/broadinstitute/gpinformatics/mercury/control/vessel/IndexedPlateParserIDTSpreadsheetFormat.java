@@ -19,7 +19,11 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
 
     private final DataFormatter dataFormatter = new DataFormatter();
 
-    private final String technology = MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.getTechnology();
+    private final MolecularIndexingScheme.IndexPosition illuminaPositionHint;
+
+    public IndexedPlateParserIDTSpreadsheetFormat(MolecularIndexingScheme.IndexPosition illuminaPositionHint) {
+        this.illuminaPositionHint = illuminaPositionHint;
+    }
 
     abstract static class ColumnParser {
         public abstract int getColumnIndex();
@@ -75,7 +79,7 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
         }
     }
 
-    private final ColumnParser broadBarcodeColumnParser = new ColumnParser() {
+    final ColumnParser broadBarcodeColumnParser = new ColumnParser() {
         @Override
         public int getColumnIndex() {
             return 3;
@@ -98,7 +102,7 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
         }
     };
 
-    private final ColumnParser wellPositionColumnParser = new ColumnParser() {
+    final ColumnParser wellPositionColumnParser = new ColumnParser() {
         @Override
         public int getColumnIndex() {
             return 6;
@@ -162,9 +166,9 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
                 String molecularIndex = antisenseSequenceColumnParser.getString(row);
 
                 PlateWellIndexAssociation association =
-                        new PlateWellIndexAssociation(plateBarcode, wellName, technology);
+                        new PlateWellIndexAssociation(plateBarcode, wellName, illuminaPositionHint.getTechnology());
                 association.addIndex(
-                        MolecularIndexingScheme.getDefaultPositionHint(technology),
+                        illuminaPositionHint,
                         molecularIndex);
 
                 plateIndexes.add(association);
@@ -201,6 +205,6 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
     }
 
     String getTechnology() {
-        return technology;
+        return illuminaPositionHint.getTechnology();
     }
 }
