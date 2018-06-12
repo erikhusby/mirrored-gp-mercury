@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.TreeMultimap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -12,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -31,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -82,25 +88,21 @@ public class BucketEntryFixupTest extends Arquillian {
     @BeforeMethod(groups = TestGroups.FIXUP)
     public void setUp() throws Exception {
         if (utx == null) {
-            System.out.println("User transaction not injected.  Leaving");
             return;
         } else {
-            System.out.println("User transaction is injected");
         }
-//        utx.begin();
+        utx.begin();
     }
 
     @AfterMethod(groups = TestGroups.FIXUP)
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (utx == null) {
-            System.out.println("User transaction not injected.  Leaving");
             return;
         } else {
-            System.out.println("User transaction is injected");
         }
 
-//        utx.commit();
+        utx.commit();
     }
 
 
@@ -151,28 +153,36 @@ public class BucketEntryFixupTest extends Arquillian {
         bucket.removeEntry(bucketEntry);
     }
 
-    @Test(groups = TestGroups.FIXUP, enabled = true)
-    public void gplim5593RemoveBadPDOsFromBucket() {
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void support4176RemoveBadPDOsFromBucket() throws Exception{
+        userBean.loginOSUser();
+
         Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
 
-        final BspUser ccusick = bspUserList.getByUsername("ccusick");
-        final BspUser jBoch= bspUserList.getByUsername("jboch");
 
         System.out.println("Getting bucket entries from " + bucket.getBucketDefinitionName());
 
-        final List<BucketEntry> bucketEntriesToDelete = bucket.getBucketEntries().stream().filter(entry -> {
+        ArrayListMultimap<Bucket, BucketEntry> entryMapping = bucket.getBucketEntries().stream().filter(entry -> {
             final Long pdoCreator = entry.getProductOrder().getCreatedBy();
 
-            return pdoCreator.equals(ccusick.getUserId()) || pdoCreator.equals(jBoch.getUserId()) ||
-                   entry.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Completed ||
-                   entry.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Abandoned;
-        }).collect(Collectors.toList());
 
-        System.out.println("The number of entries found are " + bucketEntriesToDelete.size() + " from a total of " + bucket.getBucketEntries().size());
+            return (entry.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Completed ||
+                   entry.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Abandoned) &&
+                    entry.getStatus() == BucketEntry.Status.Active;
+        }).collect(ArrayListMultimap::create,(map, entry)->{
 
-        System.out.println("Check out the buckets");
+            map.put(entry.getBucket(), entry);
+        },(map, entry)->{});
+
+        System.out.println("SUPPORT-4176 Deleting " + entryMapping.values().size() + " entries from a total of " + bucket.getBucketEntries().size() + " Bucket entries which are from PDOs which are either Completed, Abandoned");
+
+        for(Map.Entry<Bucket, BucketEntry> collectionEntries: entryMapping.entries()) {
+            collectionEntries.getKey().removeEntry(collectionEntries.getValue());
+        }
+
+        bucketDao.persist(new FixupCommentary("SUPPORT-4176 Removed Completed and Abandoned bucket entries from Pico/Plating Bucket"));
     }
-
+    
     @Test(groups = TestGroups.FIXUP, enabled = false)
     public void setProductOrderReferxences() throws Exception {
 
