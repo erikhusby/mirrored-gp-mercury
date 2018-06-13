@@ -70,7 +70,7 @@
                             }
                         }
                     }
-                    $j(this).closest(".controls").find(".token-input-list").trigger("append", this);
+                    $j(this).closest(".controls").find('.token-input-list').trigger("append");
                 }
             };
 
@@ -82,11 +82,26 @@
             var $productOrdersInput = $j("#productOrders");
             var $materialTypesInput = $j("#materialTypes");
 
+            var clearChoices = function ($clearChoices, $tokenInput) {
+                $clearChoices.on('click', function () {
+                    var results = $tokenInput.tokenInput('get');
+                    for (let i in results) {
+                        $tokenInput.tokenInput('remove', results[i]);
+                    }
+
+                    $clearChoices.hide();
+                    // $j("input[name='" + $j(this).attr('name') + "']")
+                });
+                if ($tokenInput.val() !== "") {
+                    $clearChoices.show();
+                }
+            };
 
             function initMaterialTypeTokenInput() {
                 $materialTypesInput.tokenInput(
                     "${ctxpath}/workflow/bucketView.action?materialTypeAutoComplete=", {
                         hintText: "Type a material type",
+                        prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
                         resultsFormatter: formatInput,
                         tokenDelimiter: "${actionBean.materialTypeTokenInput.separator}",
                         autoSelectFirstResult: true,
@@ -97,29 +112,12 @@
                         onAdd: tokenInputFunctions.onAdd
                     }
                 );
-                $productOrdersInput.parents().closest(".controls").on("append", ".token-input-list", function () {
-                    var $clearChoices = $j("#clearPdoChoices");
-                    $clearChoices.one('click', function () {
-                        var results = $productOrdersInput.tokenInput('get');
-                        for (let i in results) {
-                            $productOrdersInput.tokenInput('remove', results[i]);
-                        }
-                        $clearChoices.hide();
-                    });
-                    $clearChoices.show();
-                });
-
                 $materialTypesInput.parents().closest(".controls").on("append", ".token-input-list", function () {
-                    var $clearMaterialChoices = $j("#clearMaterialChoices");
-                    $clearMaterialChoices.one('click', function () {
-                        var results = $materialTypesInput.tokenInput('get');
-                        for (let i in results) {
-                            $materialTypesInput.tokenInput('remove', results[i]);
-                        }
-                        $clearMaterialChoices.hide();
-                    });
-                    $clearMaterialChoices.show();
-                })
+                    clearChoices($j("#clearMaterialChoices"), $materialTypesInput)
+                });
+                if ($materialTypesInput.closest("div").find(".token-input-token").text() !== "") {
+                    clearChoices($j("#clearMaterialChoices"), $materialTypesInput);
+                }
             }
 
             function initPdoTokenInput() {
@@ -127,6 +125,7 @@
                     "${ctxpath}/workflow/bucketView.action?productOrderAutoComplete=", {
                         hintText: "Type a Product Order",
                         resultsFormatter: formatInput,
+                        prePopulate: ${actionBean.ensureStringResult(actionBean.productOrderTokenInput.completeData)},
                         tokenDelimiter: "${actionBean.productOrderTokenInput.separator}",
                         minChars: 3,
                         searchDelay: 500,
@@ -138,7 +137,12 @@
                         onAdd: tokenInputFunctions.onAdd
                     }
                 );
-
+                if ($productOrdersInput.closest("div").find(".token-input-token").text() !== "") {
+                    clearChoices($j("#clearPdoChoices"), $productOrdersInput);
+                }
+                $productOrdersInput.parents().closest(".controls").on("append", ".token-input-list", function () {
+                    clearChoices($j("#clearPdoChoices"), $productOrdersInput)
+                });
             }
 
             function updateSearchFields() {

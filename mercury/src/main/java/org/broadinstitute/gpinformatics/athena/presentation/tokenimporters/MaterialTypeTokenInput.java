@@ -36,14 +36,6 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
         return MaterialType.valueOf(materialType);
     }
 
-    @Override
-    public void setup(Object... ids) {
-        if (ids.length == 0) {
-            ids = MaterialType.stream().map(Enum::name).toArray(String[]::new);
-        }
-        super.setup(ids);
-    }
-
     public String getJsonString(String query) throws JSONException {
         List<MaterialType> matches = MaterialType.stream()
                 .filter(materialType -> materialType.getDisplayName().toUpperCase().contains(query.toUpperCase()))

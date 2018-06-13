@@ -26,7 +26,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
-import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BucketEntryProductOrderTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraUserTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
@@ -388,7 +387,6 @@ public class BucketViewActionBean extends CoreActionBean {
         projectType = CreateFields.ProjectType.fromKeyPrefix(jiraProjectType);
         preFetchSampleData(bucketEntries);
         List<MaterialType> selectedMaterialTypes = materialTypeTokenInput.getTokenObjects();
-        preFetchSampleData(bucketEntries);
 
         if (CollectionUtils.isNotEmpty(selectedMaterialTypes)) {
             long begin = System.currentTimeMillis();
@@ -750,19 +748,4 @@ public class BucketViewActionBean extends CoreActionBean {
             .get(columnName));
     }
 
-    public enum BucketSearchType implements Displayable {
-        SAMPLES("Samples"),
-        VESSELS("Barcodes");
-
-        private String displayName;
-
-        BucketSearchType(String displayName) {
-            this.displayName = displayName;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
 }

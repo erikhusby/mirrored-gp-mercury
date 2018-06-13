@@ -571,13 +571,16 @@
 </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <stripes:link  beanclass="${actionBean.class.name}">
-            << Return to Search Page</stripes:link>
-
         <stripes:form beanclass="${actionBean.class.name}" id="bucketEntryForm" class="form-horizontal">
+            <stripes:submit name="<%=BucketViewActionBean.SEARCH_BUCKET_ACTION%>"
+                                                    value=" << Return to Search Page"
+                                                    class="btn"/>
             <div class="form-horizontal">
                 <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
                 <stripes:hidden name="projectType" id="projectType" value="${actionBean.projectType}"/>
+                <stripes:hidden name="searchString"/>
+                <stripes:hidden name="productOrderTokenInput.listOfKeys"/>
+                <stripes:hidden name="materialTypeTokenInput.listOfKeys"/>
                 <div class="control-group batch-create" style="display: none;">
                     <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
                     <div class="controls">
