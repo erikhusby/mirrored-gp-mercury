@@ -44,8 +44,8 @@ public class InfniumArchiverFixupTest extends Arquillian {
     }
 
     /**
-     * This test must be run on a Linux host (the copying and zipping is much slower through a Window share).  Modify
-     * src\test\resources-dev\arquillian.xml as follows:
+     * To get reasonable performance, this test must be run on a Linux host (the copying and zipping is much slower
+     * through a Windows share).  Modify src\test\resources-dev\arquillian.xml as follows:
      * 	<defaultProtocol type="Servlet 3.0">
      *    <property name="host">mercuryfb.broadinstitute.org</property>
      *  </defaultProtocol>
@@ -70,12 +70,13 @@ public class InfniumArchiverFixupTest extends Arquillian {
                 if (barcode.startsWith("#")) {
                     continue;
                 }
-                InfiniumArchiver.archiveChip(barcode, infiniumStarterConfig);
-                LabVessel chip = labVesselDao.findByIdentifier(barcode);
-                chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
-                        1L, userBean.getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME));
-                labVesselDao.flush();
-                labVesselDao.clear();
+                if (InfiniumArchiver.archiveChip(barcode, infiniumStarterConfig)) {
+                    LabVessel chip = labVesselDao.findByIdentifier(barcode);
+                    chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
+                            1L, userBean.getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME));
+                    labVesselDao.flush();
+                    labVesselDao.clear();
+                }
             }
             // No FixupCommentary, this is not out of the ordinary
         } catch (IOException e) {
