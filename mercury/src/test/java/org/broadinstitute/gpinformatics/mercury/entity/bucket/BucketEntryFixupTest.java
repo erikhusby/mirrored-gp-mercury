@@ -157,34 +157,28 @@ public class BucketEntryFixupTest extends Arquillian {
     public void support4176RemoveBadPDOsFromBucket() throws Exception{
         userBean.loginOSUser();
 
-        Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
+        List<Bucket> buckets = bucketDao.findAll(Bucket.class);
 
-
-        System.out.println("Getting bucket entries from " + bucket.getBucketDefinitionName());
-
-        ArrayListMultimap<Bucket, BucketEntry> entryMapping = bucket.getBucketEntries().stream().filter(entry -> {
-            final Long pdoCreator = entry.getProductOrder().getCreatedBy();
-
-
-            return (entry.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Completed ||
-                   entry.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Abandoned) &&
-                    entry.getStatus() == BucketEntry.Status.Active;
-        }).collect(ArrayListMultimap::create,(map, entry)->{
-
-            map.put(entry.getBucket(), entry);
-        },(map, entry)->{});
-
-        System.out.println("SUPPORT-4176 Deleting " + entryMapping.values().size() + " entries from a total of " + bucket.getBucketEntries().size() + " Bucket entries which are from PDOs which are either Completed, Abandoned");
+        ArrayListMultimap<Bucket, BucketEntry> entryMapping = ArrayListMultimap.create();
+        for(Bucket bucket: buckets) {
+            final List<BucketEntry> collect = bucket.getBucketEntries().stream().filter(entry ->
+                    (entry.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Completed ||
+                     entry.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Abandoned) &&
+                    entry.getStatus() == BucketEntry.Status.Active)
+                    .collect(Collectors.toList());
+            entryMapping.putAll(bucket, collect);
+            System.out.println("SUPPORT-4176 Deleting " + collect.size() + " entries from a total of " + bucket.getBucketEntries().size() + " Bucket entries which are from PDOs which are either Completed, Abandoned in " +bucket.getBucketDefinitionName());
+        }
 
         for(Map.Entry<Bucket, BucketEntry> collectionEntries: entryMapping.entries()) {
             collectionEntries.getKey().removeEntry(collectionEntries.getValue());
         }
 
-        bucketDao.persist(new FixupCommentary("SUPPORT-4176 Removed Completed and Abandoned bucket entries from Pico/Plating Bucket"));
+        bucketDao.persist(new FixupCommentary("SUPPORT-4176 Removed Completed and Abandoned bucket entries from all Buckets"));
     }
     
     @Test(groups = TestGroups.FIXUP, enabled = false)
-    public void setProductOrderReferxences() throws Exception {
+    public void setProductOrderReferences() throws Exception {
 
         List<BucketEntry> bucketEntriesToFix =
                 bucketEntryDao.findList(BucketEntry.class, BucketEntry_.productOrder, null);
