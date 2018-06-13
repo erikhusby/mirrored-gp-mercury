@@ -172,6 +172,23 @@
                 });
                 updateSearchFields();
                 initMaterialTypeTokenInput();
+
+                $j("form").on('submit',function(){
+                    var hasFiter = ($j("[name='productOrderTokenInput.listOfKeys']").val() !== "")
+                        || ($j("[name='searchString']").val() !== "")
+                    || ($j("[name='materialTypeTokenInput.listOfKeys']").val()!=="");
+                    if (!hasFiter) {
+                        var selectedBucketName = $j("#bucketSelect :selected").text();
+                        if (selectedBucketName !== "") {
+                            var begin = "Pico/Plating Bucket (5005 vessels)".indexOf('(') + 1;
+                            var end = "Pico/Plating Bucket (5005 vessels)".indexOf(' vessels)');
+                            var entryCount = selectedBucketName.slice(begin, end);
+                            if (entryCount > 1000) {
+                                return confirm("This bucket contains " + entryCount + " entries. Running this search could result in slow page loading and rendering. Continue?");
+                            }
+                        }
+                    }
+                });
             });
         </script>
     </stripes:layout-component>
