@@ -12,6 +12,11 @@
                        sectionTitle="Create Batches">
 <stripes:layout-component name="extraHead">
     <style type="text/css">
+        .search-button {
+            background: url("${ctxpath}/images/search.png") no-repeat left;
+            padding-left: 20px;;
+        }
+
         .editable {
             white-space: nowrap;
         }
@@ -572,15 +577,15 @@
 
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="bucketEntryForm" class="form-horizontal">
-            <stripes:submit name="<%=BucketViewActionBean.SEARCH_BUCKET_ACTION%>"
-                                                    value=" << Return to Search Page"
-                                                    class="btn"/>
             <div class="form-horizontal">
-                <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-                <stripes:hidden name="projectType" id="projectType" value="${actionBean.projectType}"/>
-                <stripes:hidden name="searchString"/>
-                <stripes:hidden name="productOrderTokenInput.listOfKeys"/>
-                <stripes:hidden name="materialTypeTokenInput.listOfKeys"/>
+                <stripes:submit name="<%=BucketViewActionBean.SEARCH_BUCKET_ACTION%>"
+                                value="Return to Bucket Search Page" class="btn-link btn-large search-button"/>
+
+                <stripes:hidden class="actionControls" name="selectedBucket" value="${actionBean.selectedBucket}"/>
+                <stripes:hidden class="actionControls" name="projectType" id="projectType" value="${actionBean.projectType}"/>
+                <stripes:hidden class="actionControls" name="searchString"/>
+                <stripes:hidden class="actionControls" name="productOrderTokenInput.listOfKeys"/>
+                <stripes:hidden class="actionControls" name="materialTypeTokenInput.listOfKeys"/>
                 <div class="control-group batch-create" style="display: none;">
                     <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
                     <div class="controls">

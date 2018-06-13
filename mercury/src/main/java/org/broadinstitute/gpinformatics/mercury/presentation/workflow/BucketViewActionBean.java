@@ -295,7 +295,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public void addReworkToBatchValidation() {
         if (StringUtils.isBlank(selectedLcset)) {
             addValidationError("selectedLcset", "You must provide an LCSET to add to a batch.");
-            viewBucket();
+            entrySearch();
         }
     }
 
@@ -304,7 +304,7 @@ public class BucketViewActionBean extends CoreActionBean {
         if (CollectionUtils.isEmpty(selectedEntryIds)) {
             addValidationError("selectedEntryIds", "At least one item must be selected.");
             addValidationError("bucketEntryView", "At least one sample must be selected to add to the batch.");
-            viewBucket();
+            entrySearch();
         }
     }
 
@@ -432,7 +432,7 @@ public class BucketViewActionBean extends CoreActionBean {
             return new ForwardResolution(VIEW_PAGE);
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
-            return viewBucket();
+            return entrySearch();
         }
 
         addMessage(String.format("Successfully added %d %s and %d %s to batch '%s' from bucket '%s'.",
