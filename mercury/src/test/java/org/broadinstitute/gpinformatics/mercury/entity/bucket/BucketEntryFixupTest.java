@@ -156,7 +156,12 @@ public class BucketEntryFixupTest extends Arquillian {
     @Test(groups = TestGroups.FIXUP, enabled = false)
     public void support4176RemoveBadPDOsFromBucket() throws Exception{
         userBean.loginOSUser();
+        final String jiraTicket = "SUPPORT-4176";
 
+        removeBucketEntriesFromInactiveProductOrders(jiraTicket);
+    }
+
+    public void removeBucketEntriesFromInactiveProductOrders(String jiraTicket) {
         List<Bucket> buckets = bucketDao.findAll(Bucket.class);
 
         ArrayListMultimap<Bucket, BucketEntry> entryMapping = ArrayListMultimap.create();
@@ -167,16 +172,17 @@ public class BucketEntryFixupTest extends Arquillian {
                     entry.getStatus() == BucketEntry.Status.Active)
                     .collect(Collectors.toList());
             entryMapping.putAll(bucket, collect);
-            System.out.println("SUPPORT-4176 Deleting " + collect.size() + " entries from a total of " + bucket.getBucketEntries().size() + " Bucket entries which are from PDOs which are either Completed, Abandoned in " +bucket.getBucketDefinitionName());
+            System.out.println(jiraTicket + " Deleting " + collect.size() + " entries from a total of " + bucket.getBucketEntries().size() + " Bucket entries which are from PDOs which are either Completed, Abandoned in " + bucket.getBucketDefinitionName());
         }
 
         for(Map.Entry<Bucket, BucketEntry> collectionEntries: entryMapping.entries()) {
             collectionEntries.getKey().removeEntry(collectionEntries.getValue());
         }
 
-        bucketDao.persist(new FixupCommentary("SUPPORT-4176 Removed Completed and Abandoned bucket entries from all Buckets"));
+        bucketDao.persist(new FixupCommentary(
+                jiraTicket + " Removed Completed and Abandoned bucket entries from all Buckets"));
     }
-    
+
     @Test(groups = TestGroups.FIXUP, enabled = false)
     public void setProductOrderReferences() throws Exception {
 
