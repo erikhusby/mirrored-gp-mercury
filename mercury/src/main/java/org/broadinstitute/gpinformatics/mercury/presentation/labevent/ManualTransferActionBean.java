@@ -55,6 +55,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -74,6 +75,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A Stripes Action Bean to record manual transfers.
@@ -876,6 +878,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             }
                         }
                     }
+                    // TODO don't complain if its a control and lab batch isn't LCSET?
                     if (labBatch != null && direction == Direction.SOURCE &&
                             !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
                         messageCollection.addError(direction.getText() + " " + barcode + " is not in batch " + labBatch.getBatchName());
@@ -885,6 +888,16 @@ public class ManualTransferActionBean extends RackScanActionBean {
             if (labBatch != null && required && barcodes.size() != labBatch.getLabBatchStartingVessels().size()) {
                 messageCollection.addWarning("Batch has " + labBatch.getLabBatchStartingVessels().size() +
                         " vessels, but " + barcodes.size() + " were scanned.");
+            }
+            if (labBatch != null) {
+                List<String> expectedBarcodes = labBatch.getLabBatchStartingVessels()
+                        .stream().map(lbsv -> lbsv.getLabVessel().getLabel()).collect(Collectors.toList());
+                for (String missingBarcode : CollectionUtils.removeAll(expectedBarcodes, barcodes)) {
+                    messageCollection.addWarning("Expected to find " + missingBarcode + " in batch.");
+                }
+                for (String missingBarcode : CollectionUtils.removeAll(barcodes, expectedBarcodes)) {
+                    messageCollection.addWarning(missingBarcode + " is not expected to be in batch.");
+                }
             }
             returnMapBarcodeToVessel.putAll(mapBarcodeToVessel);
         }

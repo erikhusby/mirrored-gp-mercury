@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActi
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -33,13 +34,22 @@ public class LcsetActionBean extends RackScanActionBean {
     private static final String LCSET_PAGE = "/workflow/lcset_controls.jsp";
 
     public static final String SCAN_CONTROLS_EVENT = "scanControls";
+    public static final String TYPE_CONTROLS_EVENT = "typeControls";
     public static final String CONFIRM_CONTROLS_EVENT = "confirmControls";
+    public static final String CONFIRM_TYPED_CONTROLS_EVENT = "confirmTypedControls";
 
     /** Entered by the user. */
     @Validate(required = true, on = {SCAN_CONTROLS_EVENT, CONFIRM_CONTROLS_EVENT})
     private String lcsetName;
+
+    @Validate(required = true, on = {TYPE_CONTROLS_EVENT, CONFIRM_TYPED_CONTROLS_EVENT})
+    private String labBatchName;
+
     // todo jmt error if rack barcode is needed, and not supplied.
     private String rackBarcode;
+
+    @Validate(required = true, on = {TYPE_CONTROLS_EVENT})
+    private String controls;
 
     // todo jmt prevent these from accumulating barcodes for successive scans
     /** Ask the user to confirm that these should be added to the LCSET. */
@@ -95,6 +105,19 @@ public class LcsetActionBean extends RackScanActionBean {
         return new ForwardResolution(LCSET_PAGE);
     }
 
+    @HandlesEvent(TYPE_CONTROLS_EVENT)
+    public Resolution addTypedControls() {
+        MessageCollection messageCollection = new MessageCollection();
+        List<String> parsedControls = Arrays.asList(this.controls.trim().split("\\s+"));
+        LabBatchEjb.ValidateRackScanReturn validateRackScanReturn =
+                labBatchEjb.validateTypedControls(labBatchName, parsedControls, messageCollection);
+        for (LabVessel labVessel : validateRackScanReturn.getControlTubes()) {
+            controlBarcodes.add(labVessel.getLabel());
+        }
+        addMessages(messageCollection);
+        return new ForwardResolution(LCSET_PAGE);
+    }
+
     @HandlesEvent(CONFIRM_CONTROLS_EVENT)
     public Resolution confirmControls() throws ScannerException {
         try {
@@ -102,6 +125,21 @@ public class LcsetActionBean extends RackScanActionBean {
                     rackBarcode, userBean);
             if (getContext().getMessages().isEmpty()) {
                 addMessage("Made modifications to LCSET");
+            }
+        } catch (Exception e) {
+            if (getContext().getMessages().isEmpty()) {
+                addGlobalValidationError(e.getMessage());
+            }
+        }
+        return new ForwardResolution(LCSET_PAGE);
+    }
+
+    @HandlesEvent(CONFIRM_TYPED_CONTROLS_EVENT)
+    public Resolution confirmTypedControls() throws ScannerException {
+        try {
+            labBatchEjb.addControlsToLcset(labBatchName, controlBarcodes);
+            if (getContext().getMessages().isEmpty()) {
+                addMessage("Made modifications to Lab Batch");
             }
         } catch (Exception e) {
             if (getContext().getMessages().isEmpty()) {
@@ -168,5 +206,21 @@ public class LcsetActionBean extends RackScanActionBean {
 
     public VesselGeometry getVesselGeometry() {
         return vesselGeometry;
+    }
+
+    public String getControls() {
+        return controls;
+    }
+
+    public void setControls(String controls) {
+        this.controls = controls;
+    }
+
+    public String getLabBatchName() {
+        return labBatchName;
+    }
+
+    public void setLabBatchName(String labBatchName) {
+        this.labBatchName = labBatchName;
     }
 }
