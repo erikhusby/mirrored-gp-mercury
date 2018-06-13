@@ -39,7 +39,7 @@ public class InfniumArchiverFixupTest extends Arquillian {
     @Deployment
     public static WebArchive buildMercuryWar() {
         // Change dataSourceEnvironment to "prod", but leave deployment as DEV; copy yaml infiniumStarter dataPath,
-        // decodeDataPath and archivePath from PROD to DEV
+        // decodeDataPath and archivePath from PROD to DEV.  This seems safer than using PROD, which may run ETL etc.
         return DeploymentBuilder.buildMercuryWar(DEV, "prod");
     }
 
