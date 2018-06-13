@@ -18,9 +18,7 @@ public class QuoteServiceStub implements QuoteService {
     private static int workItemId = 1;
     private static volatile int invocationCount = 0;
 
-    public QuoteServiceStub() {
-
-    }
+    public QuoteServiceStub() {}
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {

@@ -282,6 +282,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                 assertThat(conditionValue.getCondition(), is(Condition.MATERIAL_PRICE));
             }
         }
+        Mockito.verify(mockQuoteService, Mockito.times(2)).getQuoteByAlphaId(Mockito.anyString());
     }
 
     @Test(enabled = true)
@@ -609,6 +610,8 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(99)).doubleValue())));
             assertThat(sapOrderItem.getProductAlias(), is(nullValue()));
         }
+        Mockito.verify(mockQuoteService, Mockito.times(2)).getQuoteByAlphaId(Mockito.anyString());
+
     }
 
     public void testTetSampleCountFreshOrderNoOverrides() throws Exception {

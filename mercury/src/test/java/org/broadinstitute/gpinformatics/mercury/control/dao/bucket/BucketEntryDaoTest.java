@@ -24,7 +24,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.text.SimpleDateFormat;
@@ -36,8 +36,10 @@ import java.util.Iterator;
 import java.util.List;
 
 @Test(groups = TestGroups.STUBBY)
-@RequestScoped
+@Dependent
 public class BucketEntryDaoTest extends StubbyContainerTest {
+
+    public BucketEntryDaoTest(){}
 
     private static final String STANDARD_RNA_SEQ_PART_NUMBER = "P-RNA-0002";
     private static final String STANDARD_RNA_SEQ_PRODUCT_NAME = "Standard RNA Sequencing  - High Coverage (50M pairs)";

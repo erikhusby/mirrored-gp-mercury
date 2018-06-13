@@ -15,6 +15,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -26,7 +27,10 @@ import java.util.List;
  * Database test of web service to import samples from BSP
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class SampleImportResourceDbTest extends StubbyContainerTest {
+
+    public SampleImportResourceDbTest(){}
 
     private static final String MATRIX_TUBE_SCREW_CAP_0_5M_L = "Matrix Tube Screw cap [0.5mL]";
     private static final String A01 = "A01";

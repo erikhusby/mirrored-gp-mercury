@@ -31,6 +31,8 @@ import java.util.Map;
 @Dependent
 public class OfflineThriftService implements ThriftService {
 
+    public OfflineThriftService(){}
+
     private static int libraryNumber = 100;
 
     @Override

@@ -11,6 +11,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
@@ -23,7 +24,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
  * Test creation and retrieval of indexes
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class MolecularIndexingSchemeFactoryTest extends StubbyContainerTest {
+
+    public MolecularIndexingSchemeFactoryTest(){}
 
     @Inject
     private MolecularIndexingSchemeFactory molecularIndexingSchemeFactory;

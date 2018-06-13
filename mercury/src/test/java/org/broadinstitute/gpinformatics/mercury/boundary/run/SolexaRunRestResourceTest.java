@@ -41,6 +41,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -56,7 +57,10 @@ import java.util.EnumMap;
  * Test run registration web service
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class SolexaRunRestResourceTest extends StubbyContainerTest {
+
+    public SolexaRunRestResourceTest(){}
 
     @Inject
     private IlluminaSequencingRunDao runDao;

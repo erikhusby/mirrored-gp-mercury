@@ -3,14 +3,11 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import com.google.common.io.LineReader;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtilityKeepScope;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.SQLQuery;
@@ -25,7 +22,7 @@ import org.testng.annotations.Test;
 
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.Query;
 import javax.transaction.UserTransaction;
@@ -48,15 +45,14 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 
 @Test(enabled = true, groups = TestGroups.ALTERNATIVES, singleThreaded = true)
-@RequestScoped
+@Dependent
 public class ExtractTransformTest extends Arquillian {
+
+    public ExtractTransformTest(){}
+
     private String datafileDir;
     private final long MSEC_IN_SEC = 1000L;
     private final String barcode = "TEST" + System.currentTimeMillis();
-    private Long[] deletedRiskIds = null;
-    private Long[] riskIds = null;
-    private Long[] deletedLedgerIds = null;
-    private Long[] ledgerIds = null;
 
     @Inject
     private ExtractTransform extractTransform;
@@ -85,45 +81,6 @@ public class ExtractTransformTest extends Arquillian {
     public void beforeMethod() throws Exception {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
-        // One time setup.
-        if (auditReaderDao != null && deletedRiskIds == null) {
-
-            deletedRiskIds = getJoinedIds("select risk_item_id as id1, product_order_sample as id2, rev  from "
-                    + "(select risk_item_id, product_order_sample, rev "
-                    + " from ATHENA.PO_SAMPLE_RISK_JOIN_AUD "
-                    + " where revtype = 2 "
-                    + " and exists (select 1 from revchanges rc where rc.rev = ATHENA.PO_SAMPLE_RISK_JOIN_AUD.rev) "
-                    + " and rev in (select rev from ATHENA.product_order_sample_aud "
-                    + "             group by rev having count(*) between 10 and 100) "
-                    + ") where rownum = 1");
-            Assert.assertFalse(deletedRiskIds == null || deletedRiskIds.length < 3);
-
-            riskIds = getJoinedIds("select risk_item_id as id1, product_order_sample as id2, rev  from " +
-                    " (select risk_item_id, product_order_sample, rev " +
-                    "  from ATHENA.PO_SAMPLE_RISK_JOIN_AUD p1 " +
-                    "  where revtype = 0 " +
-                    "  and exists (select 1 from revchanges rc where rc.rev = p1.rev)" +
-                    "  and not exists (select 1 from ATHENA.PO_SAMPLE_RISK_JOIN_AUD p2 " +
-                    "                  where p2.risk_item_id = p1.risk_item_id and p2.revtype = 2) " +
-                    "  and rev in (select rev from ATHENA.product_order_sample_aud " +
-                    "              group by rev having count(*) between 10 and 100) " +
-                    " ) where rownum = 1");
-            Assert.assertFalse(riskIds == null || riskIds.length < 3);
-
-            deletedLedgerIds = getJoinedIds("select p1.ledger_id as id1, p2.product_order_sample_id as id2, p1.rev" +
-                    " from ATHENA.BILLING_LEDGER_AUD p1, ATHENA.BILLING_LEDGER_AUD p2" +
-                    " where p1.revtype = 2 and p2.revtype = 0 and p1.ledger_id = p2.ledger_id " +
-                    " and exists (select 1 from revchanges rc where rc.rev = p1.rev)" +
-                    " and rownum = 1");
-            Assert.assertFalse(deletedLedgerIds == null || deletedLedgerIds.length < 3);
-
-            ledgerIds = getJoinedIds("select ledger_id as id1, product_order_sample_id as id2, rev " +
-                    " from ATHENA.BILLING_LEDGER_AUD p1 where revtype = 0 and rownum = 1" +
-                    " and exists (select 1 from revchanges rc where rc.rev = p1.rev)" +
-                    " and not exists (select 1 from ATHENA.BILLING_LEDGER_AUD p2" +
-                    " where p2.ledger_id = p1.ledger_id and p2.revtype = 2)");
-            Assert.assertFalse(ledgerIds == null || ledgerIds.length < 3);
-        }
     }
 
     @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
@@ -202,93 +159,6 @@ public class ExtractTransformTest extends Arquillian {
                 .addScalar("rev", LongType.INSTANCE);
         Object[] obj = (Object[])query.getSingleResult();
         return new Long[]{(Long)obj[0], (Long)obj[1], (Long)obj[2]};
-    }
-
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
-    public void testUndeletedRiskOnDevDb() throws Exception {
-        // Tests backfill etl.
-        long entityId = riskIds[0];
-        long pdoSampleId = riskIds[1];
-        Response response = extractTransform.backfillEtl(RiskItem.class.getName(), entityId, entityId);
-        Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-
-        final String datFileEnding = "_product_order_sample_risk.dat";
-        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
-
-        // Test incremental etl.
-        EtlTestUtilities.deleteEtlFiles(datafileDir);
-        long rev = riskIds[2];
-        RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
-        // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
-        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
-        long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
-        int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
-        Assert.assertTrue(recordCount > 0);
-        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
-    }
-
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
-    public void testDeletedRiskOnDevDb() throws Exception {
-        long pdoSampleId = deletedRiskIds[1];
-        long rev = deletedRiskIds[2];
-        RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
-        // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
-        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
-        long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
-        int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
-        Assert.assertTrue(recordCount > 0);
-        final String datFileEnding = "_product_order_sample_risk.dat";
-        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", pdoSampleId));
-    }
-
-
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
-    public void testUndeletedLedgerOnDevDb() throws Exception {
-        // Tests backfill etl.
-        long entityId = ledgerIds[0];
-        long pdoSampleId = ledgerIds[1];
-        Response response = extractTransform.backfillEtl(LedgerEntry.class.getName(), entityId, entityId + 2000);
-        Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-
-        final String datFileEnding = "product_order_sample_bill.dat";
-        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
-
-        EtlTestUtilities.deleteEtlFiles(datafileDir);
-        Assert.assertFalse(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
-
-        // Test incremental etl.
-        long rev = ledgerIds[2];
-        RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
-        // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
-        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
-        long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
-        int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
-        Assert.assertTrue(recordCount > 0);
-        // Filename is "back dated".
-        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
-    }
-
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
-    public void testDeletedLedgerOnDevDb() throws Exception {
-        long pdoSampleId = deletedLedgerIds[1];
-        long rev = deletedLedgerIds[2];
-        RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
-        // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
-        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
-        long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
-        int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
-        Assert.assertTrue(recordCount > 0);
-
-        final String datFileEnding = "_product_order_sample_bill.dat";
-        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", pdoSampleId));
     }
 
     @Test(enabled = true, groups = TestGroups.ALTERNATIVES)

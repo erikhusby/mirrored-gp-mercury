@@ -14,6 +14,8 @@ import java.util.Date;
 @Dependent
 public class WsMessageStoreStub implements WsMessageStore{
 
+    public WsMessageStoreStub(){}
+
     @Override
     public void store(String resourceType, String message, Date receivedDate) {
         // do nothing
