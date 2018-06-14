@@ -1209,4 +1209,15 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-5598-1" author="thompson">
+        <addColumn tableName="PRODUCT_ORDER_SAMPLE" schemaName="athena">
+            <column name="AGGREGATION_PARTICLE" type="varchar2(20)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5598-2" author="thompson">
+        <addColumn tableName="PRODUCT_ORDER_SAMPLE_AUD" schemaName="athena">
+            <column name="AGGREGATION_PARTICLE" type="varchar2(20)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

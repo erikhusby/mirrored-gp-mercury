@@ -27,6 +27,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -46,6 +47,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric.M
  * Test the Varioskan upload with persistence.
  */
 @Test(groups = TestGroups.STANDARD)
+@Dependent // To support injection into PicoToBspContainerTest
 public class VarioskanParserContainerTest extends Arquillian {
     private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMddHHmmss");
     private static final float A01_384_VALUE = 44.229f; // From Varioskan384Output.xls

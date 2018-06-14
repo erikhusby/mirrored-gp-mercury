@@ -551,6 +551,7 @@ public class ZimsIlluminaRunFactory {
         // These items are pulled off the project or product.
         String aligner = null;
         boolean analyzeUmi = false;
+        String aggregationParticle;
         if (productOrder != null) {
             // Product stuff.
             Product product = productOrder.getProduct();
@@ -593,6 +594,7 @@ public class ZimsIlluminaRunFactory {
                 submissionMetadataList.add(metadata);
             }
         }
+        aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
 
         LibraryBean libraryBean = new LibraryBean(
                 library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
@@ -600,7 +602,8 @@ public class ZimsIlluminaRunFactory {
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
-                metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList, analyzeUmi);
+                metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList, analyzeUmi,
+                aggregationParticle);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }

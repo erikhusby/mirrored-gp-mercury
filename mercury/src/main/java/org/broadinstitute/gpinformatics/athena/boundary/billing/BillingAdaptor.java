@@ -377,7 +377,7 @@ public class BillingAdaptor implements Serializable {
                     {
 
                         if(item.getQuantityForSAP() != 0) {
-                            sapBillingId = sapService.billOrder(item, replacementMultiplier, item.getWorkCompleteDate());
+                            sapBillingId = sapService.billOrder(item, replacementMultiplier, new Date());
                         }
                         result.setSAPBillingId(sapBillingId);
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
