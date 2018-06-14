@@ -149,6 +149,7 @@ public class ExtractTransformTest extends Arquillian {
         }
     }
 
+    @Test
     public void testEtl() throws Exception {
         final BarcodedTube labVessel = new BarcodedTube(barcode);
         final String datFileEnding = "_lab_vessel.dat";
@@ -215,7 +216,6 @@ public class ExtractTransformTest extends Arquillian {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }
 
-
     private Long[] getJoinedIds(String queryString) {
         Query query = auditReaderDao.getEntityManager().createNativeQuery(queryString);
         query.unwrap(SQLQuery.class)
@@ -226,6 +226,7 @@ public class ExtractTransformTest extends Arquillian {
         return new Long[]{(Long)obj[0], (Long)obj[1], (Long)obj[2]};
     }
 
+    @Test
     public void testUndeletedRiskOnDevDb() throws Exception {
         // Tests backfill etl.
         long entityId = riskIds[0];
@@ -250,6 +251,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
     }
 
+    @Test
     public void testDeletedRiskOnDevDb() throws Exception {
         long pdoSampleId = deletedRiskIds[1];
         long rev = deletedRiskIds[2];
@@ -265,7 +267,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", pdoSampleId));
     }
 
-
+    @Test
     public void testUndeletedLedgerOnDevDb() throws Exception {
         // Tests backfill etl.
         long entityId = ledgerIds[0];
@@ -293,6 +295,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
     }
 
+    @Test
     public void testDeletedLedgerOnDevDb() throws Exception {
         long pdoSampleId = deletedLedgerIds[1];
         long rev = deletedLedgerIds[2];
@@ -309,6 +312,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", pdoSampleId));
     }
 
+    @Test
     public void testBackfill() throws Exception {
         // Tests every class that can be backfilled.
         for (String genericEntityEtlName : extractTransform.getEtlInstanceNames()) {
@@ -322,6 +326,7 @@ public class ExtractTransformTest extends Arquillian {
         }
     }
 
+    @Test
     public void testVesselBackfill() throws Exception {
         // Tests vessel backfill gets event_fact and sequencing_sample_fact entries
         // Normalization tube 0182870410
@@ -377,6 +382,7 @@ public class ExtractTransformTest extends Arquillian {
     /**
      * Every audit table must index rev as the primary column.
      */
+    @Test
     public void testAudIndexes() throws Exception {
         Query query = auditReaderDao.getEntityManager().createNativeQuery(
                 "select table_name from all_tables " +
@@ -394,6 +400,7 @@ public class ExtractTransformTest extends Arquillian {
      * Every non-empty audit table should index the entity id as the primary column.
      * E.g. if LAB_EVENT_AUD has PK on (REV, LAB_EVENT_ID) there should be an index on (LAB_EVENT_ID).
      */
+    @Test
     public void testAudEntityIndexes() throws Exception {
         Query query = auditReaderDao.getEntityManager().createNativeQuery(
                 "select m1.table_name||'('||m1.column_name||')' " +
@@ -420,6 +427,7 @@ public class ExtractTransformTest extends Arquillian {
      *    (event_fact, sequencing_sample_fact) which may have been ETL'ed
      */
     @TransactionAttribute(TransactionAttributeType.NEVER)
+    @Test
     public void testEventFixUpEtl() throws Exception {
 
        // Use existing fixup commentary revision ID for a deleted shearing transfer event
@@ -486,6 +494,7 @@ public class ExtractTransformTest extends Arquillian {
      *    (event_fact, sequencing_sample_fact) which may have been ETL'ed
      */
     @TransactionAttribute(TransactionAttributeType.NEVER)
+    @Test
     public void testBatchFixUpEtl() throws Exception {
 
         // Use existing fixup commentary revision ID for a lab batch starting vessel modification
