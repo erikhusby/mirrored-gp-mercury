@@ -551,10 +551,7 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(OPEN_RISK_SUGGESTIONS)
     public Resolution openRiskSuggestedValues() throws Exception {
-
-
         RiskCriterion.RiskCriteriaType criterion = RiskCriterion.RiskCriteriaType.findByLabel(criteriaLabel);
-
         suggestedValueSelections = Arrays.stream(currentCriteriaChoices.split(",")).map(String::trim).collect(Collectors.toList());
 
         if(CollectionUtils.isNotEmpty(criterion.getSuggestedValues())) {

@@ -23,10 +23,7 @@
                 <c:if test="${criteriaType.getDisplayed(actionBean.editProduct)}">
                     <c:if test="${not empty criteriaType.suggestedValues}">
                         suggestedValues["${criteriaType.label}"] = [];
-                        <%--<c:forEach items="${criteriaType.suggestedValues}" var="suggestion" varStatus="suggestionIndex">--%>
-                            <%--suggestedValues["${criteriaType.label}"]["${suggestionIndex.index}"] = '${suggestion}';--%>
                             suggestedValues["${criteriaType.label}"] = "Yes";
-                        <%--</c:forEach>--%>
                     </c:if>
                     <c:choose>
                         <c:when test="${criteriaType.operators[0].type == 'BOOLEAN'}">
