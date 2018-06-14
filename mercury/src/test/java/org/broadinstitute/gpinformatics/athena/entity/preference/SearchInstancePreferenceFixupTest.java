@@ -11,8 +11,25 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import javax.inject.Inject;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -214,6 +231,103 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
 
             if( count > 0 ) {
                 preference.setData(searchInstanceList.marshal());
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return count;
+    }
+
+    /**
+     * GPLIM-5579 JSON structure of user configurable column params was changed.  Modify any saved searches containing columns:
+     * Vessel Drill Downs
+     * Event Vessel Barcodes
+     * Event Vessel Positions
+     * Event Vessel Date
+     *
+     */
+    @Test(enabled=false)
+    public void refactorColumnParamsGPLIM5579(){
+
+        int replaceCount = 0;
+        try {
+            userBean.loginOSUser();
+
+            // Do the global search instance
+            List<Preference> preferences = preferenceDao.getPreferences(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES);
+            for (Preference preference : preferences) {
+                int nbrFixed = fixGPLIM5579Preference( preference );
+                if( nbrFixed > 0 ) {
+                    replaceCount += nbrFixed;
+                }
+            }
+
+            // Do the user search instances
+            preferences = preferenceDao.getPreferences(PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES);
+            for (Preference preference : preferences) {
+                int nbrFixed = fixGPLIM5579Preference( preference );
+                if( nbrFixed > 0 ) {
+                    replaceCount += nbrFixed;
+                }
+            }
+
+            preferenceDao.persist(new FixupCommentary("GPLIM-5579 UDS result column parameter refactoring, " + replaceCount
+                                                      + " saved searches modified"));
+            preferenceDao.flush();
+
+        } catch ( Exception e ) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private int fixGPLIM5579Preference( Preference preference ){
+        int count = 0;
+
+        String preferenceData = preference.getData();
+        //  Quick bailout test
+        if( !preferenceData.contains("paramValues")){
+            return 0;
+        }
+
+        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+
+        try {
+            // Unmarshall of existing will fail miserably - manipulate at XML level
+            DocumentBuilder builder = documentBuilderFactory.newDocumentBuilder();
+            Document document = builder.parse(new InputSource(new StringReader(preferenceData)));
+            NodeList nodeList = document.getElementsByTagName("predefinedViewColumns");
+            for( int i = 0; i < nodeList.getLength(); i++ ) {
+                Node node = nodeList.item(i);
+                String columnText = node.getTextContent();
+
+                if( columnText.startsWith("{") ) {
+                    count++;
+                    StringBuilder stringBuilder = new StringBuilder(columnText);
+
+                    int start = stringBuilder.indexOf("\"searchTermName\"");
+                    int end = start + 16;
+                    stringBuilder.delete(start, end);
+                    stringBuilder.insert(start, "\"paramType\":\"SEARCH_TERM\",\"entityName\":\"LabVessel\",\"elementName\"");
+
+                    start = stringBuilder.indexOf("\"userColumnName\"",0);
+                    end = stringBuilder.indexOf(",", start );
+                    stringBuilder.delete(start, end + 1);
+
+                    node.setTextContent(stringBuilder.toString());
+                }
+            }
+
+            if( count > 0 ) {
+                StringWriter writer = new StringWriter();
+                Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                transformer.setOutputProperty("omit-xml-declaration", "yes");
+                DOMSource source = new DOMSource(document);
+                StreamResult result = new StreamResult(writer);
+                transformer.transform(source, result);
+                preference.setData(writer.getBuffer().toString());
+                System.out.println(preference.getPreferenceType().toString() + " had " + count + " modifications");
             }
 
         } catch (Exception e) {
