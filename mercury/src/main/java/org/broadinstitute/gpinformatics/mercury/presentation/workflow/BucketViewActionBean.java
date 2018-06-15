@@ -379,7 +379,11 @@ public class BucketViewActionBean extends CoreActionBean {
             new HashSet<>(bucketEntryDao.findBucketEntries(bucket, productOrderTokenInput.getTokenBusinessKeys(),
                 searchStrings));
         if (bucketEntries.isEmpty()) {
-            addGlobalValidationError("No bucket entries found matching this search criteria.");
+
+            // If we got here by hitting the "search" button then we were expecting results and didn't find any.
+            if (StringUtils.isNotBlank(getContext().getRequest().getParameter(FIND_BUCKET_ENTRIES))) {
+                addGlobalValidationError("No bucket entries found matching this search criteria.");
+            }
             return new ForwardResolution(SEARCH_PAGE);
         }
         String jiraProjectType = mapBucketToJiraProject.get(selectedBucket);
@@ -439,7 +443,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 bucketEntryIds.size(), Noun.pluralOf("sample", bucketEntryIds.size()),
                 reworkEntryIds.size(), Noun.pluralOf("rework", reworkEntryIds.size()),
                 getLink(selectedLcset), selectedBucket));
-        return viewBucket();
+        return entrySearch();
     }
 
     /**
