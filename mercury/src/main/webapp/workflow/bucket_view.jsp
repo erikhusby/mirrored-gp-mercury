@@ -9,7 +9,7 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
 <c:set var="addToBatchText" value="Enter if you are adding to an existing batch"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" dataTablesVersion="1.10" withColVis="true"
-                       sectionTitle="Create Batches">
+                       sectionTitle="Create and Update Batches">
 <stripes:layout-component name="extraHead">
     <style type="text/css">
         .search-button {
