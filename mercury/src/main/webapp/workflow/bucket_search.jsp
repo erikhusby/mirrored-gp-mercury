@@ -173,7 +173,7 @@
                 updateSearchFields();
                 initMaterialTypeTokenInput();
 
-                $j("form").on('submit',function(){
+                $j("#bucketForm").on('submit',function(){
                     var hasFiter = ($j("[name='productOrderTokenInput.listOfKeys']").val() !== "")
                         || ($j("[name='searchString']").val() !== "")
                     || ($j("[name='materialTypeTokenInput.listOfKeys']").val()!=="");
