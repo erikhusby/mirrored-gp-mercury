@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.LabEventSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.ResultParamValues;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -50,6 +51,9 @@ public class ConfigurableListContainerTest extends Arquillian {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private ConfigurableListFactory configurableListFactory;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -150,8 +154,9 @@ public class ConfigurableListContainerTest extends Arquillian {
 
 
     /**
-     * This test verifies the stability of the LabVesselSearchDefinition.VesselsForEventTraverserCriteria
-     * Using a sample vessel, validate shearing tube and flowcell are found in the descendant traversal
+     * This test verifies the stability of the LabVesselSearchDefinition.VesselsForEventTraverserCriteria and user customizable result columns. <br />
+     * Using a sample vessel, validate shearing tube and flowcell are found in the descendant traversal <br />
+     * This result puts values horizontally in one row as opposed to testVesselTraversalDescendantLookups()
      */
     public void testVesselDescendantLookups() {
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
@@ -221,13 +226,77 @@ public class ConfigurableListContainerTest extends Arquillian {
     }
 
     /**
+     * This test verifies the stability of the LabVesselSearchDefinition.VesselsForEventTraverserCriteria and user customizable traversers. <br />
+     * Using a sample vessel, validate shearing tube and flowcell are found in the descendant traversal <br />
+     * This result puts values vertically in multiple rows as opposed to testVesselDescendantLookups()
+     */
+    public void testVesselTraversalDescendantLookups() {
+        ConfigurableSearchDefinition configurableSearchDef =
+                SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
+
+        SearchInstance searchInstance = buildDummyVesselSearchInstance(configurableSearchDef);
+
+        searchInstance.getSearchValues().iterator().next().setValues(Arrays.asList("1109099877"));
+
+        searchInstance.setPredefinedViewColumns(Arrays.asList("Barcode","Starting Barcode"));
+
+        searchInstance.setExcludeInitialEntitiesFromResults(false);
+        searchInstance.getTraversalEvaluatorValues().put(LabEventSearchDefinition.TraversalEvaluatorName.DESCENDANTS.getId(),Boolean.TRUE);
+        ResultParamValues resultParamValues = new ResultParamValues(ResultParamsActionBean.ParamType.CUSTOM_TRAVERSER.name(),"LabVessel", "vesselEventTypeTraverser" );
+        resultParamValues.addParamValue( "srcOrTarget", "target");
+        resultParamValues.addParamValue( "eventTypes", "DENATURE_TO_FLOWCELL_TRANSFER" );
+        resultParamValues.addParamValue( "eventTypes", "DILUTION_TO_FLOWCELL_TRANSFER" );
+        resultParamValues.addParamValue( "eventTypes", "FLOWCELL_TRANSFER" );
+        resultParamValues.addParamValue( "eventTypes", "SAMPLE_IMPORT" );
+        resultParamValues.addParamValue( "eventTypes", "SHEARING_TRANSFER" );
+        searchInstance.setCustomTraversalOptionConfig(resultParamValues.toString());
+        searchInstance.establishRelationships(configurableSearchDef);
+
+        SearchContext context = buildSearchContext();
+        context.setSearchInstance(searchInstance);
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(searchInstance,configurableSearchDef, null, 1, null, "ASC", "LabVessel");
+
+        ConfigurableList.ResultList resultList = firstPageResults.getResultList();
+        
+        /* Expected values:
+         * 000003072303 1109099877 (shearing target)
+         * 0175488349   1109099877 (sample import)
+         * 1109099877   1109099877 (sample vessel)
+         * HJJH5ADXX    1109099877
+         * HJLCHADXX    1109099877
+         * HJLCMADXX    1109099877
+         * HJVHFADXX    1109099877    */
+
+        Assert.assertEquals(resultList.getResultRows().size(), 7);
+
+        // Test column values Barcode - Starting vessel
+        ConfigurableList.ResultRow resultRow = resultList.getResultRows().get(0);
+        Assert.assertEquals(resultRow.getRenderableCells().get(0), "000003072303");
+        Assert.assertEquals(resultRow.getRenderableCells().get(1), "1109099877");
+
+        resultRow = resultList.getResultRows().get(1);
+        Assert.assertEquals(resultRow.getRenderableCells().get(0), "0175488349");
+        Assert.assertEquals(resultRow.getRenderableCells().get(1), "1109099877");
+
+        resultRow = resultList.getResultRows().get(2);
+        Assert.assertEquals(resultRow.getRenderableCells().get(0), "1109099877");
+        Assert.assertEquals(resultRow.getRenderableCells().get(1), "1109099877");
+
+        resultRow = resultList.getResultRows().get(6);
+        Assert.assertEquals(resultRow.getResultId(), "HJVHFADXX");
+        Assert.assertEquals(resultRow.getRenderableCells().get(0), "HJVHFADXX");
+        Assert.assertEquals(resultRow.getRenderableCells().get(1), "1109099877");
+    }
+
+    /**
      *  BSP user lookup required in column eval expression
      *  Use context to avoid need to test in container
      */
     private SearchContext buildSearchContext(){
         SearchContext evalContext = new SearchContext();
         evalContext.setBspUserList( bspUserList );
-        evalContext.setPagination(new PaginationUtil.Pagination(1));
+        evalContext.setPagination(new PaginationUtil.Pagination(80));
 
         return evalContext;
     }

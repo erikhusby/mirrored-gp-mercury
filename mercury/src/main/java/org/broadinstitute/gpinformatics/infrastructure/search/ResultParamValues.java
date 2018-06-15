@@ -106,10 +106,8 @@ public class ResultParamValues {
         return false;
     }
 
-
     /**
-     * Pseudo JSON serializer
-     * @return
+     * JSON serializer
      */
     @Override
     public String toString(){
@@ -133,10 +131,12 @@ public class ResultParamValues {
         }
     }
 
+    /**
+     * JSON Deserializer with the option to simply return null if just a search term or traverser name
+     */
     public static ResultParamValues fromString( String json ){
-        // Quick JSON test - this value might be simply the value of the element (search term or traverser)
-        int index = json.indexOf("{");
-        if (index < 0) {
+        // Quick JSON test, although index of { should always be 0
+        if (json.indexOf("{") < 0) {
             return null;
         }
         try {
