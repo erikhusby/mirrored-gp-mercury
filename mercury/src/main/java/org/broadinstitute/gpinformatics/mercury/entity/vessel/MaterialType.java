@@ -187,4 +187,8 @@ public enum MaterialType implements Displayable {
         }
         return displayNames;
     }
+
+    public boolean containsIgnoringCase(String text) {
+        return this.getDisplayName().toUpperCase().contains(text.toUpperCase());
+    }
 }

@@ -699,8 +699,7 @@ public class BucketViewActionBean extends CoreActionBean {
         return materialTypeTokenInput;
     }
 
-    public void setMaterialTypeTokenInput(
-        MaterialTypeTokenInput materialTypeTokenInput) {
+    public void setMaterialTypeTokenInput(MaterialTypeTokenInput materialTypeTokenInput) {
         this.materialTypeTokenInput = materialTypeTokenInput;
     }
 

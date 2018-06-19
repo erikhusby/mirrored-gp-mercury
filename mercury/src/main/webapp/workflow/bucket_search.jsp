@@ -94,6 +94,8 @@
                 });
                 if ($tokenInput.val() !== "") {
                     $clearChoices.show();
+                } else {
+                    $clearChoices.hide();
                 }
             };
 
@@ -161,6 +163,7 @@
                 $j("#bucketSelect").on("change", function (event) {
                     if (event.type === 'change') {
                         $productOrdersInput.tokenInput("destroy");
+                        clearChoices($j("#clearPdoChoices"), $productOrdersInput);
                     }
                     updateSearchFields();
                     $j.ajax({

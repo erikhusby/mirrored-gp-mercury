@@ -17,8 +17,10 @@ import org.json.JSONException;
 
 import javax.enterprise.context.Dependent;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class is the cohort implementation of the token object
@@ -37,9 +39,17 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
     }
 
     public String getJsonString(String query) throws JSONException {
-        List<MaterialType> matches = MaterialType.stream()
-                .filter(materialType -> materialType.getDisplayName().toUpperCase().contains(query.toUpperCase()))
+        List<String> searchTerms = new ArrayList<>();
+        if (query != null) {
+            searchTerms = Stream.of(query.split(","))
+                .map(String::trim)
+                .map(String::toUpperCase)
                 .collect(Collectors.toList());
+        }
+        List<MaterialType> matches = new ArrayList<>();
+        searchTerms.forEach(s -> MaterialType.stream()
+            .filter(materialType -> materialType.containsIgnoringCase(s))
+            .collect(Collectors.toCollection(() -> matches)));
         return createItemListString(matches);
     }
 
