@@ -28,6 +28,7 @@ public enum Workflow {
     CELL_FREE_HYPER_PREP_UMIS("Cell Free HyperPrep With UMIs"),
     ICE_EXOME_EXPRESS_HYPER_PREP("Hyper Prep ICE Exome Express"),
     ICE_EXOME_EXPRESS_HYPER_PREP_UMIS("Hyper Prep ICE Exome Express With UMIs"),
+    CUSTOM_SELECTION("Custom Selection"),
     ICE("ICE"),
     ICE_CRSP("ICE CRSP"),
     CLINICAL_WHOLE_BLOOD_EXTRACTION("Clinical Whole Blood Extraction"),

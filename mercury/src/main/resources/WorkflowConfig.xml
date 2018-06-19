@@ -1285,6 +1285,14 @@
                 <reEntryPoint>false</reEntryPoint>
                 <ancestryEtlFlag>false</ancestryEtlFlag>
             </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionConcentrationTransfer</name>
+                <labEventTypes>SELECTION_CONCENTRAION_POOLING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
             <!-- next two are alternatives -->
             <workflowStepDefs>
                 <name>SelectionHybSetup</name>
@@ -1296,7 +1304,14 @@
             <workflowStepDefs>
                 <name>SelectionBaitPick</name>
                 <labEventTypes>SELECTION_BAIT_PICK</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionBaitAddition</name>
+                <labEventTypes>SELECTION_BAIT_ADDITION</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -1310,6 +1325,13 @@
             <workflowStepDefs>
                 <name>SelectionCapture</name>
                 <labEventTypes>SELECTION_CAPTURE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionCatchPCR</name>
+                <labEventTypes>SELECTION_CATCH_PCR</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -3797,7 +3819,7 @@
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
             <workflowProcessDefs>PCR Plus Pond HyperPrep</workflowProcessDefs>
-            <workflowProcessDefs>ICE</workflowProcessDefs>
+            <workflowProcessDefs>Custom Selection</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
