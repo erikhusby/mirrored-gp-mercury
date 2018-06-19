@@ -1350,8 +1350,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation,
-            on = {VIEW_ACTION})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
     public void viewPageInit() {
         buildCustomizationHelper();
     }
@@ -1360,7 +1359,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             buildJsonCustomizationsFromProductOrder(editOrder);
         } catch (JSONException e) {
-            if(userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
+            if (userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
                 addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
             }
         }
