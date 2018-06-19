@@ -1263,7 +1263,7 @@
         <name>Custom Selection</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
-            <effectiveDate>2014-03-04T00:00:00.000-04:00</effectiveDate>
+            <effectiveDate>2018-06-18T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Custom Selection Bucket</name>
                 <labEventTypes>CUSTOM_SELECTION_BUCKET</labEventTypes>
@@ -1293,7 +1293,6 @@
                 <reEntryPoint>false</reEntryPoint>
                 <ancestryEtlFlag>false</ancestryEtlFlag>
             </workflowStepDefs>
-            <!-- next two are alternatives -->
             <workflowStepDefs>
                 <name>SelectionHybSetup</name>
                 <labEventTypes>SELECTION_HYB_SETUP</labEventTypes>
