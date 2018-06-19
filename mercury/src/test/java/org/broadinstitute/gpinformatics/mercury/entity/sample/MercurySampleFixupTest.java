@@ -526,9 +526,14 @@ public class MercurySampleFixupTest extends Arquillian {
 
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddSampleToVessel.txt"));
         for (int i = 1; i < lines.size(); i++) {
-            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(lines.get(i));
+            String line = lines.get(i);
+            // Allow commenting out of lines, to recover from errors
+            if (line.startsWith("#")) {
+                continue;
+            }
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(line);
             if (fields.length != 2) {
-                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+                throw new RuntimeException("Expected two white-space separated fields in " + line);
             }
             String barcode = fields[0];
             LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
@@ -544,6 +549,11 @@ public class MercurySampleFixupTest extends Arquillian {
             }
             System.out.println("Adding " + mercurySample.getSampleKey() + " to " + labVessel.getLabel());
             labVessel.addSample(mercurySample);
+            // Limit the size of each transaction, to avoid overloading FixUpEtl
+            if (i % 100 == 0) {
+                labVesselDao.persist(new FixupCommentary(lines.get(0)));
+                labVesselDao.flush();
+            }
         }
 
         labVesselDao.persist(new FixupCommentary(lines.get(0)));
