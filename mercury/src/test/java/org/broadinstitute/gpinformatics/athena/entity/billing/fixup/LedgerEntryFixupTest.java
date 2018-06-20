@@ -2,8 +2,12 @@ package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryFixupDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -12,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -41,6 +46,7 @@ import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -79,6 +85,9 @@ public class LedgerEntryFixupTest extends Arquillian {
 
     @Inject
     private QuoteServiceImpl quoteService;
+
+    @Inject
+    private BillingEjb billingEjb;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -349,16 +358,38 @@ public class LedgerEntryFixupTest extends Arquillian {
     @Test(enabled=false)
     public void support4208RePostQuoteServerPosts() {
         userBean.loginOSUser();
-        Multimap<String, LedgerEntry> collectedEntriesByQuoteId = ArrayListMultimap.create();
-        ledgerEntryFixupDao.findListByList(LedgerEntry.class,
-                LedgerEntry_.workItem, Stream.of("282484", "282485", "282488", "282509", "282489", "282494",
-                        "282495", "282496", "282501", "282502").collect(Collectors.toList()))
-                .stream().forEach((entry)->collectedEntriesByQuoteId.put(entry.getWorkItem(), entry));
+        QuoteImportInfo collectedEntriesByQuoteId = new QuoteImportInfo();
+        final List<String> workItemsToUpdate = Stream.of("282484", "282485", "282488", "282509", "282489", "282494",
+                        "282495", "282496", "282501", "282502").collect(Collectors.toList());
+        ledgerEntryFixupDao.findListByList(LedgerEntry.class, LedgerEntry_.workItem, workItemsToUpdate)
+                .forEach(collectedEntriesByQuoteId::addQuantity);
 
-        for(Map.Entry<String, Collection<LedgerEntry>> workIdEntries: collectedEntriesByQuoteId.asMap().entrySet()) {
+        List<String> newWorkItems = new ArrayList<>();
+        try {
+            final List<QuoteImportItem> quoteImportItems = collectedEntriesByQuoteId.getQuoteImportItems(priceListCache);
+            for (QuoteImportItem item : quoteImportItems) {
+                Quote quote = item.getProductOrder().getQuote(quoteService);
+                System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
+                                   + item.getLedgerItems().size() + " ledger entries");
+                final PriceList priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
+                String newWorkId = quoteService.registerNewWork(quote,
+                        QuotePriceItem.convertMercuryPriceItem(item.getPriceItem()),
+                        item.getPrimaryForReplacement(priceItemsForDate),
+                        item.getWorkCompleteDate(),
+                        item.getQuantity(),
+                        "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4208",
+                        "SupportTicket","SUPPORT-4208",null);
 
-            System.out.println("For Work ID " + workIdEntries.getKey() + " found a total of " +
-                               workIdEntries.getValue().size() + " entries");
+                newWorkItems.add(newWorkId);
+                item.updateLedgerEntries(null, BillingSession.SUCCESS, newWorkId, Collections.emptyList(),
+                        item.getSapItems());
+            }
+
+        } catch (QuoteNotFoundException | QuoteServerException e) {
+            Assert.fail();
         }
+        ledgerEntryFixupDao.persist(new FixupCommentary("SUPPORT-4208 Replaced work item references " +
+                                                        StringUtils.join(workItemsToUpdate,",")
+                                                        + " Found in Ledger entries, with " + StringUtils.join(newWorkItems, ",")));
     }
 }
