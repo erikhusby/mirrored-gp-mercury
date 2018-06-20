@@ -369,8 +369,14 @@ public class LedgerEntryFixupTest extends Arquillian {
             final List<QuoteImportItem> quoteImportItems = collectedEntriesByQuoteId.getQuoteImportItems(priceListCache);
             for (QuoteImportItem item : quoteImportItems) {
                 Quote quote = item.getProductOrder().getQuote(quoteService);
+
+                final ArrayList<Long> collectionOfIds = item.getLedgerItems().stream().collect(
+                        ArrayList::new,
+                        (list, entry) -> list.add(entry.getLedgerId()),
+                        (list, entries)->list.addAll(Collections.emptyList()));
+
                 System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
-                                   + item.getLedgerItems().size() + " ledger entries");
+                                   + item.getLedgerItems().size() + " ledger entries: " + StringUtils.join(collectionOfIds, ","));
                 final PriceList priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
                 String newWorkId = quoteService.registerNewWork(quote,
                         QuotePriceItem.convertMercuryPriceItem(item.getPriceItem()),
@@ -381,6 +387,7 @@ public class LedgerEntryFixupTest extends Arquillian {
                         "SupportTicket","SUPPORT-4208",null);
 
                 newWorkItems.add(newWorkId);
+
                 item.updateLedgerEntries(null, BillingSession.SUCCESS, newWorkId, Collections.emptyList(),
                         item.getSapItems());
             }
