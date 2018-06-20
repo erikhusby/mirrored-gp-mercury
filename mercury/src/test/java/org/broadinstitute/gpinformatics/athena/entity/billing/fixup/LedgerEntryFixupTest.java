@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
@@ -42,8 +44,12 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -338,5 +344,21 @@ public class LedgerEntryFixupTest extends Arquillian {
 
         ledgerEntryFixupDao.persist(new FixupCommentary("Support-4164 Removing Ledger entry that was created "
                                                         + "in the wrong way.  Quote server correction is found at work item " + correction));
+    }
+
+    @Test(enabled=false)
+    public void support4208RePostQuoteServerPosts() {
+        userBean.loginOSUser();
+        Multimap<String, LedgerEntry> collectedEntriesByQuoteId = ArrayListMultimap.create();
+        ledgerEntryFixupDao.findListByList(LedgerEntry.class,
+                LedgerEntry_.workItem, Stream.of("282484", "282485", "282488", "282509", "282489", "282494",
+                        "282495", "282496", "282501", "282502").collect(Collectors.toList()))
+                .stream().forEach((entry)->collectedEntriesByQuoteId.put(entry.getWorkItem(), entry));
+
+        for(Map.Entry<String, Collection<LedgerEntry>> workIdEntries: collectedEntriesByQuoteId.asMap().entrySet()) {
+
+            System.out.println("For Work ID " + workIdEntries.getKey() + " found a total of " +
+                               workIdEntries.getValue().size() + " entries");
+        }
     }
 }
