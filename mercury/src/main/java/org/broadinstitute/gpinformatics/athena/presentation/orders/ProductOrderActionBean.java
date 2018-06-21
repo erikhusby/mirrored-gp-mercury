@@ -1330,13 +1330,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             populateAttributes(editOrder.getProductOrderId());
 
-            try {
-                buildJsonCustomizationsFromProductOrder(editOrder);
-            } catch (JSONException e) {
-                if(userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
-                    addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
-                }
-            }
+            buildCustomizationHelper();
 
             QuotePriceItem priceItemByKeyFields = null;
             if (editOrder.getProduct() != null) {
@@ -1352,6 +1346,21 @@ public class ProductOrderActionBean extends CoreActionBean {
                 if (addOnPriceItemByKeyFields != null ) {
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
                 }
+            }
+        }
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    public void viewPageInit() {
+        buildCustomizationHelper();
+    }
+
+    public void buildCustomizationHelper() {
+        try {
+            buildJsonCustomizationsFromProductOrder(editOrder);
+        } catch (JSONException e) {
+            if (userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
+                addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
             }
         }
     }
