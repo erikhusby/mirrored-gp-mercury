@@ -259,6 +259,8 @@ public class SampleMetadataFixupTest extends Arquillian {
      * it can be used for other similar fixups, without writing a new test.
      * Line 1 is the fixup commentary.
      * Line 2 and subsequent are SampleId\tMetadata.Key\tOld value\tNew value.
+     * Note: currently, each sample can appear only once in the file; if there are multiple lines for the same sample,
+     * all but the last are ignored.
      * Example contents of the file are:
      * CRSP-538
      * SM-CEM8Z	TUMOR_NORMAL	NA	Normal
@@ -403,8 +405,12 @@ class MetaDataFixupItem {
         }
 
         Metadata metadataRecord = findMetadataRecord(mercurySample);
-
-        if (metadataRecord != null && metadataRecord.getValue() != null) {
+        if (metadataRecord == null) {
+            metadataRecord = new Metadata(metadataKey, newValue);
+            mercurySample.getMetadata().add(metadataRecord);
+            log.info(String.format("Successfully created metadata for sample '%s': '[%s, %s]", sampleKey,
+                    metadataRecord.getKey(), metadataRecord.getValue()));
+        } else if (metadataRecord.getValue() != null) {
             metadataRecord.setStringValue(newValue);
             log.info(String.format("Successfully updated metadata for sample '%s': '[%s, %s]", sampleKey,
                     metadataRecord.getKey(), metadataRecord.getValue()));
