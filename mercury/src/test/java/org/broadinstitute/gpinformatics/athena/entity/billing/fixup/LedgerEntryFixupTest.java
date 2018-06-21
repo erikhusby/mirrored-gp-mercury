@@ -47,6 +47,7 @@ import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -359,8 +360,8 @@ public class LedgerEntryFixupTest extends Arquillian {
     public void support4208RePostQuoteServerPosts() {
         userBean.loginOSUser();
         QuoteImportInfo collectedEntriesByQuoteId = new QuoteImportInfo();
-        final List<String> workItemsToUpdate = Stream.of("282484", "282485", "282488", "282509", "282489", "282494",
-                        "282495", "282496", "282501", "282502").collect(Collectors.toList());
+        final List<String> workItemsToUpdate = Arrays.asList("282484", "282485", "282488", "282509", "282489", "282494",
+                "282495", "282496", "282501", "282502");
 
         Multimap<String, Long> entriesByWorkItem = ArrayListMultimap.create();
         ledgerEntryFixupDao.findListByList(LedgerEntry.class, LedgerEntry_.workItem, workItemsToUpdate)
