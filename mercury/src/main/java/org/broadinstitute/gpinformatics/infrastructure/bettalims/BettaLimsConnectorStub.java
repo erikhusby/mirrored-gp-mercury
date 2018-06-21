@@ -16,6 +16,8 @@ import javax.ws.rs.core.Response;
 @Dependent
 public class BettaLimsConnectorStub implements BettaLimsConnector {
 
+    public BettaLimsConnectorStub(){}
+
     @Override
     public BettaLimsResponse sendMessage(String message) {
         return new BettaLimsResponse(500, "");

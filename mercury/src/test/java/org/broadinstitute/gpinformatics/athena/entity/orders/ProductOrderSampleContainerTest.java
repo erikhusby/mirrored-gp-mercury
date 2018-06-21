@@ -4,19 +4,32 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Collections;
 
-@Test(groups = TestGroups.STUBBY)
-public class ProductOrderSampleContainerTest extends StubbyContainerTest {
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
+@Test(groups = TestGroups.STANDARD)
+@Dependent
+public class ProductOrderSampleContainerTest extends Arquillian {
+
+    public ProductOrderSampleContainerTest(){}
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV);
+    }
 
     public static final String PDO_TO_LEDGER_ENTRY_COUNT_PROVIDER = "PDO-To-Ledger-Entry-Count-Provider";
 
@@ -29,39 +42,17 @@ public class ProductOrderSampleContainerTest extends StubbyContainerTest {
     @Inject
     private SampleDataSourceResolver sampleDataSourceResolver;
 
-
     public void testOrderSampleConstruction() {
         ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN");
         Assert.assertTrue(testSample.isInBspFormat());
         Assert.assertTrue(testSample.needsBspMetaData());
 
-        try {
-            SampleData sampleData = testSample.getSampleData();
-            sampleDataSourceResolver.populateSampleDataSources(Collections.singleton(testSample));
-            Assert.assertTrue(testSample.isSampleAvailable());
-            Assert.assertTrue(sampleData.isActiveStock());
+        SampleData sampleData = testSample.getSampleData();
 
-            Assert.assertEquals(String.valueOf(sampleData.getVolume()), BSPSampleSearchServiceStub.SM_1P3XN_VOLUME);
-            Assert.assertEquals(sampleData.getRootSample(), BSPSampleSearchServiceStub.SM_1P3XN_ROOT_SAMP);
-            Assert.assertEquals(sampleData.getStockSample(), BSPSampleSearchServiceStub.SM_1P3XN_STOCK_SAMP);
-            Assert.assertEquals(sampleData.getCollection(), BSPSampleSearchServiceStub.SM_1P3XN_COLL);
-            Assert.assertEquals(sampleData.getCollaboratorsSampleName(), BSPSampleSearchServiceStub.SM_1P3XN_COLLAB_SAMP_ID);
-            Assert.assertEquals(sampleData.getContainerId(), BSPSampleSearchServiceStub.SM_1P3XN_CONTAINER_ID);
-            Assert.assertEquals(sampleData.getPatientId(), BSPSampleSearchServiceStub.SM_1P3XN_PATIENT_ID);
-            Assert.assertEquals(sampleData.getOrganism(), BSPSampleSearchServiceStub.SM_1P3XN_SPECIES);
-            Assert.assertEquals(sampleData.getSampleLsid(), BSPSampleSearchServiceStub.SM_1P3XN_LSID);
+        sampleDataSourceResolver.populateSampleDataSources(Collections.singleton(testSample));
 
-            Assert.assertEquals(sampleData.getCollaboratorParticipantId(), BSPSampleSearchServiceStub.SM_1P3XN_COLLAB_PID);
-            Assert.assertEquals(sampleData.getMaterialType(), BSPSampleSearchServiceStub.SM_1P3XN_MAT_TYPE);
-            Assert.assertEquals(String.valueOf(sampleData.getTotal()), BSPSampleSearchServiceStub.SM_1P3XN_DNA);
-            Assert.assertEquals(sampleData.getSampleType(), ProductOrderSample.NORMAL_IND);
-            Assert.assertEquals(sampleData.getPrimaryDisease(), BSPSampleSearchServiceStub.SM_1P3XN_DISEASE);
-            Assert.assertEquals(sampleData.getGender(), ProductOrderSample.MALE_IND);
-            Assert.assertEquals(sampleData.getStockType(), ProductOrderSample.ACTIVE_IND);
-
-        } catch (IllegalStateException ise) {
-            Assert.fail();
-        }
+        Assert.assertNotNull(sampleData.getVolume());
+        Assert.assertNotNull(sampleData.getRootSample());
     }
 
 

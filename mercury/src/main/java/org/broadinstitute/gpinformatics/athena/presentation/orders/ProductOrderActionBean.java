@@ -762,9 +762,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
+        Quote quote = validateQuote(editOrder);
 
-        String quoteId = editOrder.getQuoteId();
-        Quote quote = validateQuoteId(quoteId);
         try {
             if (quote != null) {
                 ProductOrder.checkQuoteValidity(quote);
@@ -788,12 +787,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
         } catch (QuoteServerException e) {
-            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
         } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " +
-                                     quoteId +": " +e.getMessage());
+                                     editOrder.getQuoteId() +": " +e.getMessage());
             logger.error(e);
         }
 
@@ -805,16 +804,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
      * remaining on the quote
-     *
-     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *  @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
      *                  collection of orders to include in evaluating and the funds remaining
      * @param errorLevel indicator for if the user should see a validation error or just a warning
-     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
-     *                        Pending
      */
-    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders)
+    private void validateQuoteDetails(ProductOrder productOrder, final ErrorLevel errorLevel, boolean countOpenOrders)
             throws InvalidProductException, SAPIntegrationException {
-        Quote quote = validateQuoteId(quoteId);
+        Quote quote = validateQuote(productOrder);
 
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, 0);
@@ -827,18 +823,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      * refelcted on the order.
      *
      * The scenario for this is when the user clicks on the "Add Samples" button of a placed order
-     *
-     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *  @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
      *                  collection of orders to include in evaluating and the funds remaining
      * @param errorLevel indicator for if the user should see a validation error or just a warning
      * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
-     *                        Pending
+ *                        Pending
      * @param additionalSamplesCount Number of extra samples to be considered which are not currently
      */
-    private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
+    private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder, final ErrorLevel errorLevel,
                                                       boolean countOpenOrders, int additionalSamplesCount)
             throws InvalidProductException, QuoteServerException, SAPIntegrationException {
-        Quote quote = validateQuoteId(quoteId);
+        Quote quote = validateQuote(productOrder);
         ProductOrder.checkQuoteValidity(quote);
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
@@ -1335,13 +1330,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             populateAttributes(editOrder.getProductOrderId());
 
-            try {
-                buildJsonCustomizationsFromProductOrder(editOrder);
-            } catch (JSONException e) {
-                if(userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
-                    addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
-                }
-            }
+            buildCustomizationHelper();
 
             QuotePriceItem priceItemByKeyFields = null;
             if (editOrder.getProduct() != null) {
@@ -1357,6 +1346,21 @@ public class ProductOrderActionBean extends CoreActionBean {
                 if (addOnPriceItemByKeyFields != null ) {
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
                 }
+            }
+        }
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    public void viewPageInit() {
+        buildCustomizationHelper();
+    }
+
+    public void buildCustomizationHelper() {
+        try {
+            buildJsonCustomizationsFromProductOrder(editOrder);
+        } catch (JSONException e) {
+            if (userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
+                addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
             }
         }
     }
@@ -1776,7 +1780,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             there is an issue
             */
             if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
+                validateQuoteDetails(editOrder, ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
             }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
@@ -1839,7 +1843,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
-        if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
+        if(editOrder.isPriorToSAP1_5() && editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
            (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL) < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
             shareSapOrder = true;
         }
@@ -1949,8 +1953,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
             } catch (NoJiraTransitionException | ProductOrderEjb.NoSuchPDOException |
-                    ProductOrderEjb.SampleDeliveryStatusChangeException | IOException e) {
-                throw new RuntimeException(e);
+                    ProductOrderEjb.SampleDeliveryStatusChangeException | IOException | SAPInterfaceException e) {
+                addGlobalValidationError(e.getMessage());
+                return getSourcePageResolution();
             }
         }
 
@@ -2653,7 +2658,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void addSampleExtraValidations() throws Exception {
         try {
             if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetailsWithAddedSamples(editOrder.getQuoteId(), ErrorLevel.ERROR,
+                validateQuoteDetailsWithAddedSamples(editOrder, ErrorLevel.ERROR,
                         !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());
             }
         } catch (QuoteServerException e) {

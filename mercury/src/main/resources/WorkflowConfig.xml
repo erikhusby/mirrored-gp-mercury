@@ -77,6 +77,7 @@
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                     <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_QIAGEN</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -2886,7 +2887,8 @@
                     <materialTypes>DNA_DNA_WGA_CLEANED</materialTypes>
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
-                <!-- No JIRA setup, because BSP creates ARRAY tickets -->
+                <batchJiraProjectType>ARRAY</batchJiraProjectType>
+                <batchJiraIssueType>INFINIUM_8</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>InfiniumMethylationZymoTransferElution</name>
@@ -2952,7 +2954,8 @@
                     <materialTypes>DNA_DNA_WGA_CLEANED</materialTypes>
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
-                <!-- No JIRA setup, because BSP creates ARRAY tickets -->
+                <batchJiraProjectType>ARRAY</batchJiraProjectType>
+                <batchJiraIssueType>INFINIUM_8</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>InfiniumAmplification</name>
@@ -3284,7 +3287,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
-            <batchJiraIssueType>HUMAN_PCR_FREE</batchJiraIssueType>
+            <batchJiraIssueType>HUMAN_PCR_PLUS</batchJiraIssueType>
             <effectiveDate>2017-10-22T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Cell Free Library Construction Hyper Prep UMI</workflowProcessDefs>

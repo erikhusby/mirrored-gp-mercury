@@ -13,6 +13,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -28,7 +29,19 @@ import static org.hamcrest.Matchers.equalTo;
  * Container test for {@link UnknownUserException} to make sure that it returns the appropriate status code and content.
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class UnknownUserExceptionContainerTest extends RestServiceContainerTest {
+
+    public UnknownUserExceptionContainerTest(){}
+
+    /**
+     * Force stubby alternatives without extending StubbyContainerTest
+     * (But this class tagged with TestGroups.STUBBY so it gets rolled into whatever deployment is used for the Arquillian Suite)
+     */
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return StubbyContainerTest.buildMercuryWar();
+    }
 
     /**
      * Test resource that always throws {@link UnknownUserException} with the username from the request.
@@ -46,13 +59,6 @@ public class UnknownUserExceptionContainerTest extends RestServiceContainerTest 
         }
     }
 
-    /**
-     * Force use of stubby alternatives
-     */
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return StubbyContainerTest.buildMercuryWar();
-    }
 
     @Override
     protected String getResourcePath() {

@@ -1668,6 +1668,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </c:forEach>
 </c:if>
 <div class="view-control-group control-group">
+    <label class="control-label label-form">Analyze UMIs</label>
+    <div class="controls">
+        <div class="form-value">
+                ${actionBean.editOrder.analyzeUmiOverride ? "Yes" : "No"}
+        </div>
+    </div>
+</div>
+<div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
     <div class="controls">

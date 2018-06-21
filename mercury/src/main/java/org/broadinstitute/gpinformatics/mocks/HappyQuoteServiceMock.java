@@ -31,6 +31,8 @@ import java.util.Set;
 @ApplicationScoped
 public class HappyQuoteServiceMock implements QuoteService {
 
+    public HappyQuoteServiceMock(){}
+
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
         return new PriceList();
