@@ -10,8 +10,13 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -20,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -64,6 +70,9 @@ public class LedgerEntryFixupTest extends Arquillian {
 
     @Inject
     private ProductOrderEjb productOrderEjb;
+
+    @Inject
+    private QuoteServiceImpl quoteService;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -253,7 +262,7 @@ public class LedgerEntryFixupTest extends Arquillian {
     @Test(enabled = false)
     public void gplim4143FixEntryBilledAsAddOnInsteadOfPrimary()
             throws IOException, ProductOrderEjb.NoSuchPDOException, SystemException, NotSupportedException,
-            HeuristicRollbackException, HeuristicMixedException, RollbackException {
+            HeuristicRollbackException, HeuristicMixedException, RollbackException, SAPInterfaceException {
         userBean.loginOSUser();
 
         /*
@@ -298,5 +307,36 @@ public class LedgerEntryFixupTest extends Arquillian {
         ledgerEntryFixupDao.persist(new FixupCommentary(
                 String.format("SUPPORT-2120 Backfilled \"%s\" billing message for %d billed ledger entries",
                         BillingSession.SUCCESS, ledgerEntries.size())));
+    }
+
+    @Test(enabled = false)
+    public void support4164ReverseIncorrectQuantity() {
+        userBean.loginOSUser();
+
+        LedgerEntry entryToCorrect= ledgerEntryFixupDao.findSingle(LedgerEntry.class, LedgerEntry_.workItem, "282137");
+
+        Quote quoteByAlphaId = null;
+        try {
+            quoteByAlphaId = quoteService.getQuoteByAlphaId(entryToCorrect.getQuoteId());
+        } catch (QuoteServerException e) {
+            Assert.fail();
+        } catch (QuoteNotFoundException e) {
+            Assert.fail();
+        }
+
+        final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
+                QuotePriceItem.convertMercuryPriceItem(entryToCorrect.getPriceItem()), null,
+                entryToCorrect.getWorkCompleteDate(), -entryToCorrect.getQuantity(),
+                "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4164",
+                "correction", "SUPPORT-4164", null);
+
+        entryToCorrect.getProductOrderSample().getLedgerItems().remove(entryToCorrect);
+//        ledgerEntryFixupDao.remove(entryToCorrect);
+
+        System.out.println("Corrected value in Quote server for quote " + entryToCorrect.getQuoteId() +
+                           " with work item id " + correction);
+
+        ledgerEntryFixupDao.persist(new FixupCommentary("Support-4164 Removing Ledger entry that was created "
+                                                        + "in the wrong way.  Quote server correction is found at work item " + correction));
     }
 }

@@ -22,6 +22,7 @@ import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
@@ -35,7 +36,10 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class ProductOrderEjbContainerTest extends Arquillian {
+
+    public ProductOrderEjbContainerTest(){}
 
     private static final String TEST_PDO = "PDO-312";
     @Inject

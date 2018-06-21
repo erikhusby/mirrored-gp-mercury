@@ -557,6 +557,11 @@ public class LabBatch {
 
         ISSUE_TYPE_MAP("Issue Type", false),
         ISSUE_TYPE_NAME("name", false),
+
+        // ARRAY tickets
+        NUMBER_OF_EMPTIES("Number of Empties", true),
+        NUMBER_OF_WELLS("Total Samples, Controls, and Empties", true),
+        CONTAINER_ID("Container ID", true),
         ;
 
 

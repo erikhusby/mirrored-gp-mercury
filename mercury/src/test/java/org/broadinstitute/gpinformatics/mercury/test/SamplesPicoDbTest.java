@@ -19,6 +19,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -30,7 +31,10 @@ import java.util.List;
  * A database test of the Samples Pico process
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class SamplesPicoDbTest extends StubbyContainerTest {
+
+    public SamplesPicoDbTest(){}
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
 

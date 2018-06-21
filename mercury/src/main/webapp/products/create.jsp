@@ -652,6 +652,15 @@
                                 <stripes:checkbox id="pairedEndRead" name="editProduct.pairedEndRead" style="margin-top: 10px;"/>
                             </div>
                         </div>
+
+                        <div class="control-group">
+                            <stripes:label for="analyzeUmi" class="control-label">
+                                Analyze UMIs
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:checkbox id="analyzeUmi" name="editProduct.analyzeUmi" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
                     </fieldset>
                 </div>
             </div>

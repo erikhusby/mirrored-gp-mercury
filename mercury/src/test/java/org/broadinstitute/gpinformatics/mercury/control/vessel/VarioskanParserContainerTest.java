@@ -27,6 +27,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -46,6 +47,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric.M
  * Test the Varioskan upload with persistence.
  */
 @Test(groups = TestGroups.STANDARD)
+@Dependent // To support injection into PicoToBspContainerTest
 public class VarioskanParserContainerTest extends Arquillian {
     private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMddHHmmss");
     private static final float A01_384_VALUE = 44.229f; // From Varioskan384Output.xls
@@ -71,10 +73,10 @@ public class VarioskanParserContainerTest extends Arquillian {
         final boolean PERSIST_VESSELS = true;
         final boolean ACCEPT_PICO_REDO = true;
 
-        Triple<LabMetricRun, Result, Set<StaticPlate>> triple1 = makeVarioskanRun(plate1Barcode, plate2Barcode,
+        Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple1 = makeVarioskanRun(plate1Barcode, plate2Barcode,
                 timestamp, messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS);
 
-        Assert.assertNotNull(triple1.getMiddle().getTubeFormation());
+        Assert.assertNotNull(triple1.getMiddle().get(0).getTubeFormation());
         Assert.assertTrue(CollectionUtils.isNotEmpty(triple1.getRight()));
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
@@ -83,7 +85,7 @@ public class VarioskanParserContainerTest extends Arquillian {
 
         // Should fail the pico redo due to previous quants of the same type.
         messageCollection.clearAll();
-        Triple<LabMetricRun, Result, Set<StaticPlate>> triple2 = makeVarioskanRun(plate1Barcode, plate2Barcode,
+        Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple2 = makeVarioskanRun(plate1Barcode, plate2Barcode,
                 timestamp + "2", messageCollection, !ACCEPT_PICO_REDO, !PERSIST_VESSELS);
 
         Assert.assertTrue(messageCollection.hasErrors());
@@ -92,10 +94,10 @@ public class VarioskanParserContainerTest extends Arquillian {
 
         // Should accept the pico redo when told to, despite previous quants.
         messageCollection.clearAll();
-        Triple<LabMetricRun, Result, Set<StaticPlate>> triple3 = makeVarioskanRun(plate1Barcode, plate2Barcode,
+        Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple3 = makeVarioskanRun(plate1Barcode, plate2Barcode,
                 timestamp + "3", messageCollection, ACCEPT_PICO_REDO, !PERSIST_VESSELS);
 
-        Assert.assertNotNull(triple3.getMiddle().getTubeFormation());
+        Assert.assertNotNull(triple3.getMiddle().get(0).getTubeFormation());
         Assert.assertTrue(CollectionUtils.isNotEmpty(triple3.getRight()));
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
@@ -114,10 +116,10 @@ public class VarioskanParserContainerTest extends Arquillian {
         final boolean PERSIST_VESSELS = true;
         final boolean ACCEPT_PICO_REDO = true;
 
-        Triple<LabMetricRun, Result, Set<StaticPlate>> triple1 = make384RiboVarioskanRun(plateBarcode, timestamp,
+        Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple1 = make384RiboVarioskanRun(plateBarcode, timestamp,
                 messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS);
 
-        Assert.assertNotNull(triple1.getMiddle().getTubeFormation());
+        Assert.assertNotNull(triple1.getMiddle().get(0).getTubeFormation());
         Assert.assertTrue(CollectionUtils.isNotEmpty(triple1.getRight()));
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
@@ -127,7 +129,8 @@ public class VarioskanParserContainerTest extends Arquillian {
 
         // Should fail the pico redo due to previous quants of the same type.
         messageCollection.clearAll();
-        Triple<LabMetricRun, Result, Set<StaticPlate>> triple2 = make384RiboVarioskanRun(plateBarcode, timestamp + "2",
+        Triple<LabMetricRun, List<Result>, Set<StaticPlate>>
+                triple2 = make384RiboVarioskanRun(plateBarcode, timestamp + "2",
                 messageCollection, !ACCEPT_PICO_REDO, !PERSIST_VESSELS);
 
         Assert.assertTrue(messageCollection.hasErrors());
@@ -136,10 +139,11 @@ public class VarioskanParserContainerTest extends Arquillian {
 
         // Should accept the pico redo when told to, despite previous quants.
         messageCollection.clearAll();
-        Triple<LabMetricRun, Result, Set<StaticPlate>> triple3 = make384RiboVarioskanRun(plateBarcode, timestamp + "3",
+        Triple<LabMetricRun, List<Result>, Set<StaticPlate>>
+                triple3 = make384RiboVarioskanRun(plateBarcode, timestamp + "3",
                 messageCollection, ACCEPT_PICO_REDO, !PERSIST_VESSELS);
 
-        Assert.assertNotNull(triple3.getMiddle().getTubeFormation());
+        Assert.assertNotNull(triple3.getMiddle().get(0).getTubeFormation());
         Assert.assertTrue(CollectionUtils.isNotEmpty(triple3.getRight()));
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
@@ -156,10 +160,10 @@ public class VarioskanParserContainerTest extends Arquillian {
         final boolean PERSIST_VESSELS = true;
         final boolean ACCEPT_PICO_REDO = true;
 
-        Triple<LabMetricRun, Result, Set<StaticPlate>> triple = triplicateNoDilution(plateBarcode, timestamp,
+        Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple = triplicateNoDilution(plateBarcode, timestamp,
                 messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS);
 
-        Assert.assertNotNull(triple.getMiddle().getTubeFormation());
+        Assert.assertNotNull(triple.getMiddle().get(0).getTubeFormation());
         Assert.assertTrue(CollectionUtils.isNotEmpty(triple.getRight()));
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
@@ -178,10 +182,10 @@ public class VarioskanParserContainerTest extends Arquillian {
         final boolean PERSIST_VESSELS = true;
         final boolean ACCEPT_PICO_REDO = true;
 
-        Triple<LabMetricRun, Result, Set<StaticPlate>> triple = triplicateDilution(dilutionBarcode,
+        Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple = triplicateDilution(dilutionBarcode,
                 microfluorBarcode, timestamp, messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS);
 
-        Assert.assertNotNull(triple.getMiddle().getTubeFormation());
+        Assert.assertNotNull(triple.getMiddle().get(0).getTubeFormation());
         Assert.assertTrue(CollectionUtils.isNotEmpty(triple.getRight()));
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
@@ -191,8 +195,33 @@ public class VarioskanParserContainerTest extends Arquillian {
         Assert.assertEquals(triple.getLeft().getLabMetrics().size(), metricCount);
     }
 
-    private Triple<LabMetricRun, Result, Set<StaticPlate>> make384RiboVarioskanRun(String plateBarcode,
-            String namePrefix, MessageCollection messageCollection, boolean acceptRePico, boolean persistVessels)
+    @Test
+    public void test384TwoCurveTriplicate() throws Exception {
+        int numSamples = 10;
+        String timestamp = SIMPLE_DATE_FORMAT.format(new Date());
+        String dilutionBarcode = timestamp + "04";
+        String microfluorBarcode = timestamp + "05";
+        MessageCollection messageCollection = new MessageCollection();
+        final boolean PERSIST_VESSELS = true;
+        final boolean ACCEPT_PICO_REDO = true;
+
+        Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple = triplicateDilution(dilutionBarcode,
+                microfluorBarcode, timestamp, messageCollection, ACCEPT_PICO_REDO, PERSIST_VESSELS,
+                VarioskanParserTest.VARIOSKAN_384_2CURVE_OUTPUT);
+
+        Assert.assertNotNull(triple.getMiddle().get(0).getTubeFormation());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(triple.getRight()));
+        Assert.assertFalse(messageCollection.hasErrors());
+        Assert.assertFalse(messageCollection.hasWarnings());
+        Assert.assertNotNull(triple.getLeft());
+        // For each sample, expects one metric for each microflour well plus a metric for the average.
+        int metricCount = numSamples * 4;
+        Set<LabMetric> labMetrics = triple.getLeft().getLabMetrics();
+        Assert.assertEquals(triple.getLeft().getLabMetrics().size(), metricCount);
+    }
+
+    private Triple<LabMetricRun, List<Result>, Set<StaticPlate>> make384RiboVarioskanRun(String plateBarcode,
+                                                                                         String namePrefix, MessageCollection messageCollection, boolean acceptRePico, boolean persistVessels)
             throws Exception {
 
         Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
@@ -208,8 +237,8 @@ public class VarioskanParserContainerTest extends Arquillian {
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
     }
 
-    private Triple<LabMetricRun, Result, Set<StaticPlate>> makeVarioskanRun(String plate1Barcode, String plate2Barcode,
-            String namePrefix, MessageCollection messageCollection, boolean acceptRePico, boolean persistVessels)
+    private Triple<LabMetricRun, List<Result>, Set<StaticPlate>> makeVarioskanRun(String plate1Barcode, String plate2Barcode,
+                                                                                  String namePrefix, MessageCollection messageCollection, boolean acceptRePico, boolean persistVessels)
             throws Exception {
 
         BufferedInputStream quantStream = makeVarioskanSpreadsheet(new String[]{plate1Barcode, plate2Barcode},
@@ -226,8 +255,8 @@ public class VarioskanParserContainerTest extends Arquillian {
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
     }
 
-    private Triple<LabMetricRun, Result, Set<StaticPlate>> triplicateNoDilution(String plateBarcode, String namePrefix,
-            MessageCollection messageCollection, boolean acceptRePico, boolean persistVessels) throws Exception {
+    private Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triplicateNoDilution(String plateBarcode, String namePrefix,
+                                                                                      MessageCollection messageCollection, boolean acceptRePico, boolean persistVessels) throws Exception {
 
         Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
         Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.
@@ -242,9 +271,17 @@ public class VarioskanParserContainerTest extends Arquillian {
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
     }
 
-    private Triple<LabMetricRun, Result, Set<StaticPlate>> triplicateDilution(String dilutionBarcode,
-            String microfluorBarcode, String namePrefix, MessageCollection messageCollection, boolean acceptRePico,
-            boolean persistVessels) throws Exception {
+    private Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triplicateDilution(String dilutionBarcode,
+                                                                                    String microfluorBarcode, String namePrefix, MessageCollection messageCollection, boolean acceptRePico,
+                                                                                    boolean persistVessels) throws Exception {
+        return triplicateDilution(dilutionBarcode, microfluorBarcode, namePrefix, messageCollection, acceptRePico,
+                persistVessels, VarioskanParserTest.VARIOSKAN_384_OUTPUT);
+    }
+
+    private Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triplicateDilution(String dilutionBarcode,
+                                                                                    String microfluorBarcode, String namePrefix, MessageCollection messageCollection, boolean acceptRePico,
+                                                                                    boolean persistVessels,
+                                                                                    String filename) throws Exception {
 
         Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
         Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.
@@ -254,7 +291,7 @@ public class VarioskanParserContainerTest extends Arquillian {
             labVesselDao.persistAll(mapPositionToTube.values());
         }
         BufferedInputStream inputStream = makeVarioskanSpreadsheet(new String[]{microfluorBarcode},
-                VarioskanParserTest.VARIOSKAN_384_OUTPUT, namePrefix);
+                filename, namePrefix);
         return vesselEjb.createVarioskanRun(inputStream, INITIAL_PICO,
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
     }
