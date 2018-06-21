@@ -126,9 +126,14 @@ public class VesselEjb {
 
         // Determine which barcodes are already known to Mercury.
         List<BarcodedTube> previouslyRegisteredTubes = barcodedTubeDao.findListByBarcodes(tubeBarcodes);
+        Map<String, BarcodedTube> mapRegisteredButUnlinked = new HashMap<>();
         Set<String> previouslyRegisteredTubeBarcodes = new HashSet<>();
         for (BarcodedTube tube : previouslyRegisteredTubes) {
-            previouslyRegisteredTubeBarcodes.add(tube.getLabel());
+            if (tube.getMercurySamples() == null || tube.getMercurySamples().isEmpty()) {
+                mapRegisteredButUnlinked.put(tube.getLabel(), tube);
+            } else {
+                previouslyRegisteredTubeBarcodes.add(tube.getLabel());
+            }
         }
 
         // The Set of tube barcodes that are known to BSP but not Mercury.
@@ -176,8 +181,14 @@ public class VesselEjb {
             }
         }
         for (String tubeBarcode : tubeBarcodesToRegister) {
-            BarcodedTube tube = barcodedTubeType != null ?
-                    new BarcodedTube(tubeBarcode, barcodedTubeType) : new BarcodedTube(tubeBarcode);
+            BarcodedTube tube;
+            if (mapRegisteredButUnlinked.containsKey(tubeBarcode)) {
+                tube = mapRegisteredButUnlinked.get(tubeBarcode);
+            } else {
+                tube = barcodedTubeType != null ?
+                        new BarcodedTube(tubeBarcode, barcodedTubeType) : new BarcodedTube(tubeBarcode);
+            }
+
             String sampleId = sampleInfoMap.get(tube.getLabel()).getSampleId();
             tube.addSample(sampleNameToMercurySample.get(sampleId));
             mercurySampleDao.persist(tube);
