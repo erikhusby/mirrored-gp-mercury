@@ -153,13 +153,14 @@ public class LabBatchResource {
                             LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW,
                     labBatchBean.getCreatedDate());
         }
-        addToBatch(labVesselSet, labBatch, labBatchBean.getWorkflowName(), labBatchBean.getUsername(), bucketEjb);
+        addToBatch(labVesselSet, labBatch, labBatchBean.getWorkflowName(), labBatchBean.getUsername(),
+                labBatchBean.getCreatedDate(), bucketEjb);
 
         return labBatch;
     }
 
     public static Set<ProductOrder> addToBatch(Set<LabVessel> labVesselSet, LabBatch labBatch, String productFamilyName,
-            String username, BucketEjb bucketEjb) {
+            String username, Date createdDate, BucketEjb bucketEjb) {
         // Create bucket entries (if any) and add to batch
         LabVessel.loadSampleDataForBuckets(labVesselSet);
         ListMultimap<ProductOrder, LabVessel> mapPdoToVessels = ArrayListMultimap.create();
@@ -220,15 +221,15 @@ public class LabBatchResource {
             }
 
             // Get existing PDOs
-            Date createdDate = labBatchBean.getCreatedDate();
+            Date localCreatedDate = createdDate;
             if (offset > 0) {
                 // Avoid unique constraint on bucket lab events
-                createdDate = new Date(createdDate.getTime() + offset);
+                localCreatedDate = new Date(createdDate.getTime() + offset);
             }
             Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                     bucketEjb.applyBucketCriteria(noBucketEntryVessels,
                             productOrder, username,
-                            ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS, createdDate);
+                            ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS, localCreatedDate);
             ProductWorkflowDefVersion productWorkflowDefVersion = workflowBucketEntriesPair.getLeft();
             if (productWorkflowDefVersion == null) {
                 throw new RuntimeException("No workflow for " + productOrder.getJiraTicketKey());
