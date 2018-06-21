@@ -361,8 +361,14 @@ public class LedgerEntryFixupTest extends Arquillian {
         QuoteImportInfo collectedEntriesByQuoteId = new QuoteImportInfo();
         final List<String> workItemsToUpdate = Stream.of("282484", "282485", "282488", "282509", "282489", "282494",
                         "282495", "282496", "282501", "282502").collect(Collectors.toList());
+
+        Multimap<String, Long> entriesByWorkItem = ArrayListMultimap.create();
         ledgerEntryFixupDao.findListByList(LedgerEntry.class, LedgerEntry_.workItem, workItemsToUpdate)
-                .forEach(collectedEntriesByQuoteId::addQuantity);
+                .forEach((entry)->{
+            collectedEntriesByQuoteId.addQuantity(entry);
+            entriesByWorkItem.put(entry.getWorkItem(), entry.getLedgerId());
+        }
+        );
 
         List<String> newWorkItems = new ArrayList<>();
         try {
@@ -370,13 +376,9 @@ public class LedgerEntryFixupTest extends Arquillian {
             for (QuoteImportItem item : quoteImportItems) {
                 Quote quote = item.getProductOrder().getQuote(quoteService);
 
-                final ArrayList<Long> collectionOfIds = item.getLedgerItems().stream().collect(
-                        ArrayList::new,
-                        (list, entry) -> list.add(entry.getLedgerId()),
-                        (list, entries)->list.addAll(Collections.emptyList()));
-
                 System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
-                                   + item.getLedgerItems().size() + " ledger entries: " + StringUtils.join(collectionOfIds, ","));
+                                   + item.getLedgerItems().size() + " ledger entries: "
+                                   + StringUtils.join(entriesByWorkItem.get(item.getSingleWorkItem()), ","));
                 final PriceList priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
                 String newWorkId = quoteService.registerNewWork(quote,
                         QuotePriceItem.convertMercuryPriceItem(item.getPriceItem()),
