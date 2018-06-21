@@ -200,6 +200,7 @@ public class LabBatchResource {
             }
         }
 
+        int offset = 0;
         for (ProductOrder productOrder : mapPdoToVessels.keySet()) {
             // Remove vessels that have already been bucketed for this PDO
             List<LabVessel> vessels = mapPdoToVessels.get(productOrder);
@@ -218,10 +219,15 @@ public class LabBatchResource {
             }
 
             // Get existing PDOs
+            Date createdDate = labBatchBean.getCreatedDate();
+            if (offset > 0) {
+                // Avoid unique constraint on bucket lab events
+                createdDate = new Date(createdDate.getTime() + offset);
+            }
             Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                     bucketEjb.applyBucketCriteria(noBucketEntryVessels,
                             productOrder, labBatchBean.getUsername(),
-                            ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS, labBatchBean.getCreatedDate());
+                            ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS, createdDate);
             ProductWorkflowDefVersion productWorkflowDefVersion = workflowBucketEntriesPair.getLeft();
             if (productWorkflowDefVersion == null) {
                 throw new RuntimeException("No workflow for " + productOrder.getJiraTicketKey());
@@ -229,6 +235,7 @@ public class LabBatchResource {
             labBatch.setWorkflowName(productWorkflowDefVersion.getProductWorkflowDef().getName());
             // todo jmt check that bucket entries count matches lab vessel count?
             bucketEjb.moveFromBucketToBatch(workflowBucketEntriesPair.getRight(), labBatch);
+            offset++;
         }
 
         return labBatch;
