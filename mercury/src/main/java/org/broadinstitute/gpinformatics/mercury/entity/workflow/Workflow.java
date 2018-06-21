@@ -32,7 +32,6 @@ public enum Workflow {
     ICE_CRSP("ICE CRSP"),
     CLINICAL_WHOLE_BLOOD_EXTRACTION("Clinical Whole Blood Extraction"),
     DNA_RNA_EXTRACTION_CELL_PELLETS("DNA and RNA from Cell Pellets"),
-    DNA_RNA_EXTRACTION_STOOL("DNA and RNA from Stool"),
     TRU_SEQ_STRAND_SPECIFIC_CRSP("TruSeq Strand Specific CRSP"),
     TEN_X("10X"),
     INFINIUM("Infinium"),
@@ -72,7 +71,7 @@ public enum Workflow {
                     DNA_RNA_EXTRACTION_CELL_PELLETS, TRU_SEQ_STRAND_SPECIFIC_CRSP, PCR_FREE, PCR_PLUS,
                     PCR_FREE_HYPER_PREP, PCR_PLUS_HYPER_PREP, CELL_FREE_HYPER_PREP, ICE_EXOME_EXPRESS_HYPER_PREP,
                     TEN_X, INFINIUM, INFINIUM_METHYLATION, MALARIA, CELL_FREE_HYPER_PREP_UMIS,
-                    ICE_EXOME_EXPRESS_HYPER_PREP_UMIS, DNA_RNA_EXTRACTION_STOOL
+                    ICE_EXOME_EXPRESS_HYPER_PREP_UMIS
             );
 
     public boolean isWorkflowSupportedByMercury() {

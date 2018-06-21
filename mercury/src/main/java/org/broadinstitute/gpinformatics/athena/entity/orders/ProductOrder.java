@@ -590,18 +590,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
                            List<ProductOrderSample> samples) throws InvalidProductException {
         updateAddOnProducts(addOnProducts);
-        if(product != null && !product.equals(this.product)) {
-            this.clearCustomPriceAdjustment();
-            if(product.getSapMaterial() != null) {
-                if(product.isExternalOnlyProduct() || product.isClinicalProduct()) {
-                    final ProductOrderPriceAdjustment priceAdjustment = new ProductOrderPriceAdjustment();
-                    priceAdjustment.setAdjustmentValue(new BigDecimal(product.getSapMaterial().getBasePrice()));
-                    this.addCustomPriceAdjustment(priceAdjustment);
-                }
-            }
-        } else if (product == null) {
-            this.clearCustomPriceAdjustment();
-        }
+        this.clearCustomPriceAdjustment();
         setProduct(product);
         setResearchProject(researchProject);
         setSamples(samples);
