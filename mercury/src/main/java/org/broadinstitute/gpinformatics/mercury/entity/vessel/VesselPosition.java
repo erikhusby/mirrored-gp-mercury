@@ -689,16 +689,12 @@ public enum VesselPosition {
     _4_11,
     _5_11,
     _6_11,
-    _7_11,
-    _8_11,
     _1_12,
     _2_12,
     _3_12,
     _4_12,
     _5_12,
     _6_12,
-    _7_12,
-    _8_12,
 
     R01C01, //Infinium Chip Locations
     R01C02,
