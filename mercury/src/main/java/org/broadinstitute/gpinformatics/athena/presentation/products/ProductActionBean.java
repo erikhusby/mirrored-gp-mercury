@@ -703,7 +703,12 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     public Collection<PipelineDataType> getPipelineDataTypes() {
-        return pipelineDataTypeDao.findAll();
+        List<PipelineDataType> pipelineDataTypes = pipelineDataTypeDao.findActive();
+        PipelineDataType currentDataType = editProduct.getPipelineDataType();
+        if (currentDataType != null && !pipelineDataTypes.contains(currentDataType)) {
+            pipelineDataTypes.add(currentDataType);
+        }
+        return pipelineDataTypes;
     }
 
     /**
