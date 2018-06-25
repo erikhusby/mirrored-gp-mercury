@@ -702,6 +702,11 @@ public class ProductActionBean extends CoreActionBean {
         return getDisplayableItemInfo(businessKey, reagentDesignDao);
     }
 
+    /**
+     * @return list of all <i>active</i> PipelineDataTypes <b>and</b> the PipelineDataType of editProduct if it is
+     * <i>inactive</i>. The UI should not allow you to save inactive PipelineDataTypes but it should allow viewing them
+     * if they have been set when they were active.
+     */
     public Collection<PipelineDataType> getPipelineDataTypes() {
         List<PipelineDataType> pipelineDataTypes = pipelineDataTypeDao.findActive();
         PipelineDataType currentDataType = editProduct.getPipelineDataType();
