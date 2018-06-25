@@ -53,7 +53,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 zamboniLibrary.getWorkRequestType(),
                 zamboniLibrary.getWorkRequestDomain(),
                 null,
-                null,
+                pdo != null ? pdo.getProduct().getPipelineDataTypeString() : "",
                 null,
                 null,
                 false,

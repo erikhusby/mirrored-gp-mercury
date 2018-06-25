@@ -608,7 +608,7 @@ public class ZimsIlluminaRunFactoryTest {
                 assertThat(libraryBean.getResearchProjectName(), equalTo("Test Project"));
                 assertThat(libraryBean.getResearchProjectId(), equalTo("TestRP-1"));
                 assertThat(libraryBean.getProduct(), equalTo("Test Product"));
-                assertThat(libraryBean.getDataType(), equalTo("agg type"));
+                assertThat(libraryBean.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
                 assertThat(libraryBean.getProductFamily(), equalTo("Test Product Family"));
                 assertThat(libraryBean.getRootSample(), equalTo(sampleId + "root"));
                 assertThat(libraryBean.getGender(), equalTo("M"));
