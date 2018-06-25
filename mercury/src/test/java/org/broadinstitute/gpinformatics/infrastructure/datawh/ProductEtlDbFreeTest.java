@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -39,7 +38,6 @@ public class ProductEtlDbFreeTest {
     private static final Workflow WORKFLOW = Workflow.AGILENT_EXOME_EXPRESS;
     private static final String PRODUCT_FAMILY_NAME = "Test ProductFamily";
     private static final long PRIMARY_PRICE_ITEM_ID = 987654321L;
-    private static final PipelineDataType AGGREGATION_DATA_TYPE = new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true);
     private static final boolean commercialIndicator = true;
     private static final boolean savedInSapIndicator = true;
 
@@ -97,7 +95,7 @@ public class ProductEtlDbFreeTest {
         EasyMock.expect(product.getWorkflow()).andReturn(WORKFLOW).anyTimes();
         EasyMock.expect(product.getProductFamily()).andReturn(family).anyTimes();
         EasyMock.expect(product.getPrimaryPriceItem()).andReturn(primaryPriceItem).anyTimes();
-        EasyMock.expect(product.getPipelineDataType()).andReturn(AGGREGATION_DATA_TYPE).anyTimes();
+        EasyMock.expect(product.getPipelineDataTypeString()).andReturn(Aggregation.DATA_TYPE_EXOME).anyTimes();
 
         EasyMock.expect(primaryPriceItem.getPriceItemId()).andReturn(PRIMARY_PRICE_ITEM_ID);
 
@@ -133,7 +131,7 @@ public class ProductEtlDbFreeTest {
         Assert.assertEquals(parts[i++], WORKFLOW.getWorkflowName());
         Assert.assertEquals(parts[i++], PRODUCT_FAMILY_NAME);
         Assert.assertEquals(parts[i++], String.valueOf(PRIMARY_PRICE_ITEM_ID));
-        Assert.assertEquals(parts[i++], String.valueOf(AGGREGATION_DATA_TYPE));
+        Assert.assertEquals(parts[i++], Aggregation.DATA_TYPE_EXOME);
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(commercialIndicator));
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(savedInSapIndicator));
         Assert.assertEquals(parts.length, 17);
