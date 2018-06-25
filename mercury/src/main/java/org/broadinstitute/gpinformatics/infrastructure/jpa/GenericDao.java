@@ -531,7 +531,7 @@ public class GenericDao {
      *                          there is inheritance
      * @param <ENTITY_TYPE>     the type of the entity to return
      *
-     * @return list of entities that match the value, or empty list if not found
+     * @return list of entities who's values are not in singularAttribute, or empty list if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findAllNotInList(
         Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute,
