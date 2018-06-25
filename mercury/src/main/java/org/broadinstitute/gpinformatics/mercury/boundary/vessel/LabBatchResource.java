@@ -171,13 +171,18 @@ public class LabBatchResource {
                 SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
                 List<ProductOrder> productOrders = new ArrayList<>();
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                    Product product = productOrderSample.getProductOrder().getProduct();
-                    if (product.getProductFamily().getName().equals(productFamilyName) ||
-                            // Some array / sequencing combo products are in family "Exome"
-                            productFamilyName.equals(ProductFamily.WHOLE_GENOME_GENOTYPING) &&
-                                    product.getWorkflow().name().contains("INFINIUM")) {
-                        if (productOrderSample.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
-                            productOrders.add(productOrderSample.getProductOrder());
+                    // For backfill from GAP, the bean specifies the PDO
+                    if (productOrderSample.getProductOrder().getBusinessKey().equals(productFamilyName)) {
+                        productOrders.add(productOrderSample.getProductOrder());
+                    } else {
+                        Product product = productOrderSample.getProductOrder().getProduct();
+                        if (product.getProductFamily().getName().equals(productFamilyName) ||
+                                // Some array / sequencing combo products are in family "Exome"
+                                productFamilyName.equals(ProductFamily.WHOLE_GENOME_GENOTYPING) &&
+                                        product.getWorkflow().name().contains("INFINIUM")) {
+                            if (productOrderSample.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
+                                productOrders.add(productOrderSample.getProductOrder());
+                            }
                         }
                     }
                 }
