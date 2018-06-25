@@ -47,9 +47,14 @@ public class LabBatchResourceTest extends Arquillian {
         ParentVesselBean parentVesselBean = new ParentVesselBean("CO-19484878", null, "Plate 96 Well PCR [200ul]",
                 childVesselBeans);
         labBatchBean.setParentVesselBean(parentVesselBean);
+        labBatchBean.setWorkflowName("Infinium");
         labBatchResource.createLabBatch(labBatchBean);
 
         LabBatch labBatch = labBatchDao.findByBusinessKey(batchId);
-        Assert.assertEquals(labBatch.getBucketEntries().size(), 2);
+        // Bucket entries never happen on these samples.
+        // See PDO logic in LabBatchResource#createLabBatchByParentVessel - Product = PICO Only, PDO status = Completed
+        Assert.assertEquals(labBatch.getBucketEntries().size(), 0);
+        // Batch starting vessels do happen
+        Assert.assertEquals(labBatch.getLabBatchStartingVessels().size(), 2);
     }
 }

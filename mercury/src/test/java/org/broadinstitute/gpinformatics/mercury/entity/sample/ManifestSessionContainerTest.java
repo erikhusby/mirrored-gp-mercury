@@ -75,7 +75,10 @@ import static org.hamcrest.Matchers.notNullValue;
  * Container tests for ManifestSessions.
  */
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class ManifestSessionContainerTest extends Arquillian {
+
+    public ManifestSessionContainerTest(){}
 
     private static Log logger = LogFactory.getLog(ManifestSessionContainerTest.class);
 
@@ -146,6 +149,9 @@ public class ManifestSessionContainerTest extends Arquillian {
     @Alternative
     @Dependent
     public static class BSPCohortListProducer {
+
+        public BSPCohortListProducer(){}
+
         @Produces
         @Alternative
         public static BSPCohortList produce() {
@@ -1215,7 +1221,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         ParentVesselBean bean2 = new ParentVesselBean(sampleId2, sampleId2, "Cryo vial [2.0 (1.8)mL]", null);
         List<LabVessel> labVessels =
                 labVesselFactory.buildLabVessels(Arrays.asList(bean1, bean2), "QADudeLM", new Date(), null,
-                        MercurySample.MetadataSource.MERCURY);
+                        MercurySample.MetadataSource.MERCURY).getLeft();
         labVesselDao.persistAll(labVessels);
         manifestSessionDao.flush(); manifestSessionDao.clear();
 

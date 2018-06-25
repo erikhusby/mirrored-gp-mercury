@@ -1141,7 +1141,16 @@
             <column name="lab_vessel"/>
         </createIndex>
     </changeSet>
-
+    <changeSet author="jsacco" id="GPLIM-4886-1">
+        <addColumn schemaName="mercury" tableName="reagent">
+            <column name="first_use" type="date"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jsacco" id="GPLIM-4886-2">
+        <addColumn schemaName="mercury" tableName="reagent_aud">
+            <column name="first_use" type="date"/>
+        </addColumn>
+    </changeSet>
     <changeSet id="GPLIM-5122-1" author="thompson">
         <createTable tableName="fingerprint" schemaName="mercury">
             <column name="fingerprint_id" type="number(19,0)">
@@ -1213,17 +1222,17 @@
             <column name="snp" type="number(19,0)"/>
         </createTable>
         <addPrimaryKey tableName="fp_genotype_aud" schemaName="mercury" columnNames="rev, fp_genotype_id"
-                constraintName="PK_FP_GENOTYPE_AUD"/>
+                       constraintName="PK_FP_GENOTYPE_AUD"/>
     </changeSet>
     <changeSet id="GPLIM-5122-7-1" author="thompson">
         <addForeignKeyConstraint constraintName="FK_FPG_FINGERPRINT"
-                baseTableName="fp_genotype" baseColumnNames="fingerprint"
-                referencedTableName="fingerprint" referencedColumnNames="fingerprint_id"/>
+                                 baseTableName="fp_genotype" baseColumnNames="fingerprint"
+                                 referencedTableName="fingerprint" referencedColumnNames="fingerprint_id"/>
     </changeSet>
     <changeSet id="GPLIM-5122-7-3" author="thompson">
         <addForeignKeyConstraint constraintName="FK_FPGA_REV_INFO"
-                baseTableName="fp_genotype_aud" baseColumnNames="rev"
-                referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+                                 baseTableName="fp_genotype_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
     <changeSet id="GPLIM-5122-7-4" author="thompson">
         <createSequence sequenceName="SEQ_FP_GENOTYPE" schemaName="mercury" startValue="1" incrementBy="50"/>
@@ -1249,20 +1258,20 @@
             <column name="is_gender" type="number(1,0)"/>
         </createTable>
         <addPrimaryKey tableName="snp_aud" schemaName="mercury" columnNames="rev, snp_id"
-                constraintName="PK_SNP_AUD"/>
+                       constraintName="PK_SNP_AUD"/>
     </changeSet>
     <changeSet id="GPLIM-5122-9-1" author="thompson">
         <addForeignKeyConstraint constraintName="FK_SA_REV_INFO"
-                baseTableName="snp_aud" baseColumnNames="rev"
-                referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+                                 baseTableName="snp_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
     <changeSet id="GPLIM-5122-9-2" author="thompson">
         <createSequence sequenceName="SEQ_SNP" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
     <changeSet id="GPLIM-5122-7-2" author="thompson">
         <addForeignKeyConstraint constraintName="FK_FPG_SNP"
-                baseTableName="fp_genotype" baseColumnNames="snp"
-                referencedTableName="snp" referencedColumnNames="snp_id"/>
+                                 baseTableName="fp_genotype" baseColumnNames="snp"
+                                 referencedTableName="snp" referencedColumnNames="snp_id"/>
     </changeSet>
 
     <changeSet id="GPLIM-5122-10" author="thompson">
@@ -1281,20 +1290,20 @@
             <column name="name" type="varchar2(255)"/>
         </createTable>
         <addPrimaryKey tableName="snp_list_aud" schemaName="mercury" columnNames="rev, snp_list_id"
-                constraintName="PK_SNP_LIST_AUD"/>
+                       constraintName="PK_SNP_LIST_AUD"/>
     </changeSet>
     <changeSet id="GPLIM-5122-11-2" author="thompson">
         <addForeignKeyConstraint constraintName="FK_SLA_REV_INFO"
-                baseTableName="snp_list_aud" baseColumnNames="rev"
-                referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+                                 baseTableName="snp_list_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
     <changeSet id="GPLIM-5122-11-3" author="thompson">
         <createSequence sequenceName="SEQ_SNP_LIST" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
     <changeSet id="GPLIM-5122-3-1" author="thompson">
         <addForeignKeyConstraint constraintName="FK_FP_SNP_LIST"
-                baseTableName="fingerprint" baseColumnNames="snp_list"
-                referencedTableName="snp_list" referencedColumnNames="snp_list_id"/>
+                                 baseTableName="fingerprint" baseColumnNames="snp_list"
+                                 referencedTableName="snp_list" referencedColumnNames="snp_list_id"/>
     </changeSet>
 
     <changeSet id="GPLIM-5122-12" author="thompson">
@@ -1304,7 +1313,7 @@
             <column name="snps_order" type="number(10,0)"/>
         </createTable>
         <addPrimaryKey tableName="snp_list_snps" schemaName="mercury" columnNames="snp_list, snps_order"
-                constraintName="PK_SNP_LIST_SNPS"/>
+                       constraintName="PK_SNP_LIST_SNPS"/>
     </changeSet>
     <changeSet id="GPLIM-5122-13" author="thompson">
         <createTable tableName="snp_list_snps_aud" schemaName="mercury">
@@ -1315,22 +1324,22 @@
             <column name="snps_order" type="number(10,0)"/>
         </createTable>
         <addPrimaryKey tableName="snp_list_snps_aud" schemaName="mercury" columnNames="rev, snp_list, snps, snps_order"
-                constraintName="PK_SNP_LIST_SNPS_AUD"/>
+                       constraintName="PK_SNP_LIST_SNPS_AUD"/>
     </changeSet>
     <changeSet id="GPLIM-5122-13-1" author="thompson">
         <addForeignKeyConstraint constraintName="FK_SLS_SNP_LIST"
-                baseTableName="snp_list_snps" baseColumnNames="snp_list"
-                referencedTableName="snp_list" referencedColumnNames="snp_list_id"/>
+                                 baseTableName="snp_list_snps" baseColumnNames="snp_list"
+                                 referencedTableName="snp_list" referencedColumnNames="snp_list_id"/>
     </changeSet>
     <changeSet id="GPLIM-5122-13-2" author="thompson">
         <addForeignKeyConstraint constraintName="FK_SLS_SNP"
-                baseTableName="snp_list_snps" baseColumnNames="snps"
-                referencedTableName="snp" referencedColumnNames="snp_id"/>
+                                 baseTableName="snp_list_snps" baseColumnNames="snps"
+                                 referencedTableName="snp" referencedColumnNames="snp_id"/>
     </changeSet>
     <changeSet id="GPLIM-5122-13-3" author="thompson">
         <addForeignKeyConstraint constraintName="FK_SLSA_REV_INFO"
-                baseTableName="snp_list_snps_aud" baseColumnNames="rev"
-                referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+                                 baseTableName="snp_list_snps_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
 
 </databaseChangeLog>

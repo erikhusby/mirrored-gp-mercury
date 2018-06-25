@@ -108,7 +108,7 @@
                         dataTable="true"/>
 
                 <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
-                <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
+                <stripes:hidden name="tubeFormationLabels" value="${actionBean.tubeFormationLabels}"/>
                 <stripes:hidden name="quantType" value="${actionBean.quantType}"/>
                 <stripes:label for="overrideDecision" class="control-label">Override Decision</stripes:label>
                 <div class="controls">
@@ -126,7 +126,9 @@
 
             <c:if test="${actionBean.quantType == 'INITIAL_PICO'}">
                 <stripes:form action="${actionBean.picoDispositionActionBeanUrl}" id="nextStepsForm" class="form-horizontal">
-                    <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
+                    <c:forEach items="${actionBean.tubeFormationLabels}" var="item" varStatus="loop">
+                        <stripes:hidden name="tubeFormationLabels[${loop.index}]" value="${item}"/>
+                    </c:forEach>
                     <stripes:submit name="view" value="View Next Steps" class="btn btn-primary" id="viewNextStepsBtn"/>
                 </stripes:form>
             </c:if>

@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignation
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -42,6 +43,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BspNewRootHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.CreateLabBatchHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
@@ -223,7 +225,7 @@ public class BaseEventTest {
 
         EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(
                 new DenatureToDilutionTubeHandler(), flowcellMessageHandler, flowcellLoadedHandler,
-                new BspNewRootHandler());
+                new BspNewRootHandler(), new CreateLabBatchHandler());
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
@@ -1027,6 +1029,13 @@ public class BaseEventTest {
                 thenReturn(flowcellDesignations);
         Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
                 thenReturn(flowcellDesignations);
+        AttributeArchetypeDao attributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
+        Mockito.when(attributeArchetypeDao.findWorkflowMetadata(Mockito.anyString())).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return null;
+            }
+        });
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
         sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().load());
@@ -1045,7 +1054,7 @@ public class BaseEventTest {
                 },
                 sequencingTemplateFactory,
                 productOrderDao,
-                crspPipelineUtils, flowcellDesignationEjb
+                crspPipelineUtils, flowcellDesignationEjb, attributeArchetypeDao
         );
     }
 

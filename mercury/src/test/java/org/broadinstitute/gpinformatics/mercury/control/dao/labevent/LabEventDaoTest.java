@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.Calendar;
@@ -24,7 +25,10 @@ import java.util.Set;
  * Test persisting LabEvents, including reagents.
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class LabEventDaoTest extends StubbyContainerTest {
+
+    public LabEventDaoTest(){}
 
     @Inject
     private LabEventDao labEventDao;
@@ -34,8 +38,8 @@ public class LabEventDaoTest extends StubbyContainerTest {
         LabEvent labEvent = new LabEvent(LabEventType.A_BASE, eventDate, "PERIPHERAL_VISION_MAN", 1L, 101L, "Bravo");
         String barcode = Long.toString(System.currentTimeMillis());
         BigDecimal volume = new BigDecimal("1.2");
-        labEvent.addReagentVolume(new GenericReagent("ETOH", barcode, null),
-                volume);
+        Reagent reagent = new GenericReagent("ETOH", barcode, null);
+        labEvent.addReagentVolume(reagent, volume);
 
         labEventDao.persist(labEvent);
         labEventDao.flush();
@@ -50,6 +54,10 @@ public class LabEventDaoTest extends StubbyContainerTest {
         LabEventReagent labEventReagent = labEvent1.getLabEventReagents().iterator().next();
         Assert.assertEquals(labEventReagent.getVolume(), volume);
         Assert.assertEquals(labEventReagent.getReagent().getLot(), barcode);
+        Assert.assertTrue(
+                DateUtils.truncatedEquals(labEventReagent.getReagent().getFirstUse()
+                        , eventDate
+                        , Calendar.SECOND), "Reagent first use does not match event date" );
     }
 
     public void testReagentWithMetadata() {
@@ -75,6 +83,10 @@ public class LabEventDaoTest extends StubbyContainerTest {
         LabEventReagent labEventReagent = labEvent1.getLabEventReagents().iterator().next();
         Assert.assertEquals(labEventReagent.getReagent().getLot(), barcode);
         Assert.assertEquals(labEventReagent.getReagent().getName(), name);
+        Assert.assertTrue(
+                DateUtils.truncatedEquals(labEventReagent.getReagent().getFirstUse()
+                        , eventDate
+                        , Calendar.SECOND), "Reagent first use does not match event date" );
         metadataSet = labEventReagent.getMetadata();
         Assert.assertEquals(metadataSet.size(), 1);
         Metadata metadata1 = metadataSet.iterator().next();

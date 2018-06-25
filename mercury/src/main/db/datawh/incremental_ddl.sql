@@ -1,20 +1,7 @@
 -- --------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-5070
--- Support array pipeline blacklist and abandoned vessel
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-5155
+-- Constrain MERCURYDW.LEDGER_ENTRY.VALID_WORK_ITEM to be NULL or a number
 -- --------------------------------
-DROP TABLE MERCURYDW.IM_ABANDON_VESSEL_POSITION;
 
-DROP TABLE MERCURYDW.IM_ABANDON_VESSEL;
-
-CREATE TABLE MERCURYDW.IM_ABANDON_VESSEL (
-  LINE_NUMBER NUMBER(9,0),
-  ETL_DATE DATE,
-  IS_DELETE CHAR,
-  ABANDON_ID NUMBER(19,0),
-  ABANDON_VESSEL_ID NUMBER(19,0),
-  REASON VARCHAR2(64),
-  ABANDONED_ON DATE,
-  VESSEL_POSITION VARCHAR2(32)
-);
-
-
+ALTER TABLE MERCURYDW.LEDGER_ENTRY
+ADD CONSTRAINT VALID_WORK_ITEM CHECK (TO_NUMBER( NVL( QUOTE_SERVER_WORK_ITEM, '1') ) > 0) ENABLE;

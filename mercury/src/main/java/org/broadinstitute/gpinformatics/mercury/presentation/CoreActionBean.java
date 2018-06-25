@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -635,14 +636,14 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
         return createTitle;
     }
 
-    protected Quote validateQuoteId(String quoteId) {
+    protected Quote validateQuote(ProductOrder productOrder) {
         Quote quoteDetails = null;
         try {
-            quoteDetails = quoteService.getQuoteByAlphaId(quoteId);
+            quoteDetails = productOrder.getQuote(quoteService);
         } catch (QuoteServerException e) {
-            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", productOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+            addGlobalValidationError("The quote ''{2}'' was not found ", productOrder.getQuoteId());
         }
         return quoteDetails;
     }
