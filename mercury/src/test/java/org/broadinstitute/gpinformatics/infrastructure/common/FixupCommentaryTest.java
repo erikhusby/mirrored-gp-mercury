@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditedRevDto;
@@ -20,15 +20,20 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.List;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 
 @Test(groups = TestGroups.STANDARD)
-public class FixupCommentaryTest extends ContainerTest {
+public class FixupCommentaryTest extends Arquillian {
 
     @Inject
     private AuditReaderDao auditReaderDao;
@@ -38,6 +43,11 @@ public class FixupCommentaryTest extends ContainerTest {
 
     @Inject
     private UserBean userBean;
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
 
     @Test(groups = TestGroups.STANDARD)
     public void fixupCommentaryTest () throws InterruptedException {

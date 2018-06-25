@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jaxrs;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
 
 import javax.inject.Inject;
@@ -14,8 +15,7 @@ import javax.ws.rs.ext.Provider;
 @Provider
 public class TExceptionMapper implements ExceptionMapper<TException> {
 
-    @Inject
-    private Log log;
+    private Log log = LogFactory.getLog(this.getClass());
 
     @Override
     public Response toResponse(TException e) {

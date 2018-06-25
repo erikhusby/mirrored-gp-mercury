@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mocks;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.*;
 
@@ -11,7 +12,10 @@ import java.util.*;
  * but keeps all values null.  Given n sample ids, n "empty" maps are returned.
  */
 @Alternative
+@Dependent
 public class NullValuesBSPSampleSearchService implements BSPSampleSearchService {
+
+    public NullValuesBSPSampleSearchService(){}
 
     @Override
     public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {

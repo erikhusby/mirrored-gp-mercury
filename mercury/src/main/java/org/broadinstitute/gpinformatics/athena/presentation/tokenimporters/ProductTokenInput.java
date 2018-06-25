@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.List;
  *
  * @author hrafal
  */
+@Dependent
 public class ProductTokenInput extends TokenInput<Product> {
 
     @Inject

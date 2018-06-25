@@ -67,6 +67,7 @@ public class LedgerEntry implements Serializable {
 
     @Index(name = "ix_ledger_billing_session")
     @ManyToOne
+    @JoinColumn(name="BILLING_SESSION")
     private BillingSession billingSession;
 
     @Column(name = "WORK_COMPLETE_DATE")

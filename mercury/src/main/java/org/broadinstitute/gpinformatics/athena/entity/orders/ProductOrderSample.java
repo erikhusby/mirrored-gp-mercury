@@ -89,7 +89,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Index(name = "ix_pos_product_order")
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(insertable = false, updatable = false)
+    @JoinColumn(insertable = false, updatable = false, name = "PRODUCT_ORDER")
     private ProductOrder productOrder;
 
     @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
@@ -118,7 +118,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     Set<SampleReceiptValidation> sampleReceiptValidations = new HashSet<>();
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name="MERCURY_SAMPLE")
     private MercurySample mercurySample;
+
+    private String aggregationParticle;
 
     /**
      * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
@@ -1323,5 +1326,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public boolean isToBeBilled() {
         return getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
         && !isCompletelyBilled();
+    }
+
+    public String getAggregationParticle() {
+        return aggregationParticle;
+    }
+
+    public void setAggregationParticle(String aggregationParticle) {
+        this.aggregationParticle = aggregationParticle;
     }
 }

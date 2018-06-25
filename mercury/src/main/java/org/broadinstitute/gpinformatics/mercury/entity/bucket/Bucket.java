@@ -33,7 +33,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "mercury", name = "bucket",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"bucketDefinitionName"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"bucket_definition_name"}))
 public class Bucket {
 
     // todo wire up to workflow definition

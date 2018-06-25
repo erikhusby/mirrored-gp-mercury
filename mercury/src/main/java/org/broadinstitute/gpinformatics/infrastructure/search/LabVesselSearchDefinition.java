@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInstanceNameCache;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
@@ -15,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPl
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselLayoutPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -346,6 +349,65 @@ public class LabVesselSearchDefinition {
                 return (String) context.getPagination().getIdExtraInfo().get(labVessel.getLabel());
             }
         });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Drill Downs");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String label = ((LabVessel) entity).getLabel();
+
+                ResultParamValues columnParams = context.getColumnParams();
+                if( columnParams == null ) {
+                    return "(Params required)";
+                }
+
+                String drillDownString = null;
+                for(Pair<String,String> value : columnParams.getParamValues() ) {
+                    if (value.getLeft().equals("drillDown")) {
+                        drillDownString = value.getRight();
+                        break;
+                    }
+                }
+
+                if( drillDownString == null ) {
+                    return "(No drill down selected)";
+                }
+
+                SearchInstanceNameCache.DrillDownOption drillDownOption = SearchInstanceNameCache.DrillDownOption.buildFromString(drillDownString);
+
+                Map<String,String[]> terms = new HashMap<>();
+                String[] values = {label};
+                terms.put(drillDownOption.getSearchTermName(), values);
+
+                return SearchDefinitionFactory.buildDrillDownLink("", drillDownOption.getTargetEntity(), drillDownOption.getPreferenceScope().name() + "|" + drillDownOption.getPreferenceName() + "|" + drillDownOption.getSearchName(), terms, context);
+            }
+        });
+        searchTerm.setResultParamConfigurationExpression(
+            new SearchTerm.Evaluator<ResultParamConfiguration>() {
+
+                @Override
+                public ResultParamConfiguration evaluate(Object entity, SearchContext context) {
+                    ResultParamConfiguration drillDownConfiguration = new ResultParamConfiguration();
+                    ResultParamConfiguration.ParamInput searchNameInput =
+                            new ResultParamConfiguration.ParamInput("drillDown", ResultParamConfiguration.InputType.PICKLIST, "Select drill down search:");
+                    List<ConstrainedValue> options = new ArrayList<>();
+                    SearchInstanceNameCache instanceNameCache = ServiceAccessUtility.getBean(SearchInstanceNameCache.class);
+                    for( SearchInstanceNameCache.DrillDownOption drillDown : instanceNameCache.getDrillDowns(ColumnEntity.LAB_VESSEL.getEntityName()) ) {
+                        options.add(new ConstrainedValue(drillDown.toString(), drillDown.getSearchName() ));
+                    }
+                    if( options.size() == 0 ) {
+                        options.add(new ConstrainedValue("", "(None Available)" ));
+                    }
+                    searchNameInput.setOptionItems(options);
+                    drillDownConfiguration.addParamInput(searchNameInput);
+
+                    return drillDownConfiguration;
+                }
+            }
+        );
+        searchTerm.setHelpText("Creates a column with a link to an existing search which functions as a drill-down.  <br/>Note: Selected search MUST have a single term which expects a barcode value.");
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -718,6 +780,62 @@ public class LabVesselSearchDefinition {
         searchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
         searchTerm.setSearchValueConversionExpression(new SearchDefinitionFactory.EventTypeValueConversionExpression());
         searchTerms.add(searchTerm);
+
+        /****  Result Criteria ****/
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Event Vessel Barcodes");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                return VesselEventResultParamConfiguration.getDisplayValue(
+                        entity, context, VesselEventResultParamConfiguration.ResultEventData.BARCODE);
+            }
+        });
+        searchTerm.setResultParamConfigurationExpression(new SearchTerm.Evaluator<ResultParamConfiguration>() {
+            @Override
+            public ResultParamConfiguration evaluate(Object entity, SearchContext context) {
+                return new VesselEventResultParamConfiguration();
+            }
+        });
+        searchTerm.setHelpText("Traverses all transfers from a vessel and finds barcodes at all user selected event types.");
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Event Vessel Positions");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                return VesselEventResultParamConfiguration.getDisplayValue(
+                        entity, context, VesselEventResultParamConfiguration.ResultEventData.POSITION);
+            }
+        });
+        searchTerm.setResultParamConfigurationExpression(new SearchTerm.Evaluator<ResultParamConfiguration>() {
+            @Override
+            public ResultParamConfiguration evaluate(Object entity, SearchContext context) {
+                return new VesselEventResultParamConfiguration();
+            }
+        });
+        searchTerm.setHelpText("Traverses all transfers from a vessel and finds container positions at all user selected event types.");
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Event Vessel Date");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                return VesselEventResultParamConfiguration.getDisplayValue(
+                        entity, context, VesselEventResultParamConfiguration.ResultEventData.DATE);
+            }
+        });
+        searchTerm.setResultParamConfigurationExpression(new SearchTerm.Evaluator<ResultParamConfiguration>() {
+            @Override
+            public ResultParamConfiguration evaluate(Object entity, SearchContext context) {
+                return new VesselEventResultParamConfiguration();
+            }
+        });
+        searchTerm.setHelpText("Traverses all transfers from a vessel and finds dates of all user selected event types.");
+        searchTerms.add(searchTerm);
+        /****  Result Criteria ****/
 
         class EventMaterialTypeEvaluator extends SearchTerm.Evaluator<Object> {
 
@@ -1615,6 +1733,7 @@ public class LabVesselSearchDefinition {
                 return reasons;
             }
         });
+        searchTerm.setHelpText("These abandon terms only looks backwards in transfers and gather any past vessel abandons, otherwise results would be ambiguous for reworks looking forward.  Infinium related logic requires using 'Infinium Array Metrics' term.");
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -2416,6 +2535,8 @@ public class LabVesselSearchDefinition {
 
         // Want to be able to find vessel for latest event if more than one event (e.g infinium rehyb chip)
         private boolean captureLatestEventVesselsFlag = false;
+        // Want to be able to find all events related to a traversal
+        private boolean captureAllEventVesselsFlag = false;
         private Map<LabEvent,LabVessel> eventMap;
 
         // Traversal state control
@@ -2468,6 +2589,14 @@ public class LabVesselSearchDefinition {
         }
 
         /**
+         * Flags traversal process to capture all events. <br />
+         */
+        public void captureAllEvents() {
+            captureAllEventVesselsFlag = true;
+            eventMap = new TreeMap<>(LabEvent.BY_EVENT_DATE);
+        }
+
+        /**
          * Obtains the outcome of the traversal
          * @return A set of barcode-position pairs.
          * Note:  If the vessel in the event of interest is not in a container, the position value will be null.
@@ -2485,6 +2614,14 @@ public class LabVesselSearchDefinition {
                 }
             }
             return positions;
+        }
+
+        public Set<LabEvent> getAllEvents() {
+            if( captureLatestEventVesselsFlag || captureAllEventVesselsFlag ) {
+                return eventMap.keySet();
+            } else {
+                throw new IllegalStateException("Instance is not flagged to capture events");
+            }
         }
 
         @Override
@@ -2512,7 +2649,7 @@ public class LabVesselSearchDefinition {
                     positions.put(vesselPositionEntry.getKey(), vesselPositionEntry.getValue() );
                     catchThisVessel = true;
 
-                    if(captureLatestEventVesselsFlag) {
+                    if(captureLatestEventVesselsFlag || captureAllEventVesselsFlag ) {
                         eventMap.put(eventNode.getLabEvent(),vesselPositionEntry.getKey());
                     }
                 } else {
@@ -2524,7 +2661,7 @@ public class LabVesselSearchDefinition {
                             positions.put(vesselPositionEntry.getKey(), vesselPositionEntry.getValue());
                             catchThisVessel = true;
 
-                            if(captureLatestEventVesselsFlag) {
+                            if(captureLatestEventVesselsFlag || captureAllEventVesselsFlag) {
                                 eventMap.put(eventNode.getLabEvent(),vesselPositionEntry.getKey());
                             }
                             break;

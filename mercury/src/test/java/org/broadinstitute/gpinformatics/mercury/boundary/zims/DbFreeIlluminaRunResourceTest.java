@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
@@ -63,7 +64,7 @@ public class DbFreeIlluminaRunResourceTest {
 
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 brokenThrift,
-                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
+                new BSPSampleDataFetcherImpl(new BSPSampleSearchServiceStub()),
                 illuminaSequencingRunDao
         ).getRun("whatever");
 
@@ -90,7 +91,7 @@ public class DbFreeIlluminaRunResourceTest {
 
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 brokenThrift,
-                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
+                new BSPSampleDataFetcherImpl(new BSPSampleSearchServiceStub()),
                 illuminaSequencingRunDao
         ).getMercuryRun("whatever");
 
@@ -115,7 +116,7 @@ public class DbFreeIlluminaRunResourceTest {
         System.out.println("----DBFree IRR test : " + thriftRun.getImagedAreaPerLaneMM2());
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 new MockThriftService(),
-                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
+                new BSPSampleDataFetcherImpl(new BSPSampleSearchServiceStub()),
                 illuminaSequencingRunDao
         ).getRun(thriftRun, new HashMap<String, SampleData>(), new SquidThriftLibraryConverter(), getMockDao()
         );

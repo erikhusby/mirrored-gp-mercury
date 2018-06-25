@@ -12,9 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
-import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -27,7 +25,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -571,72 +568,6 @@ public class EventEtlDbFreeTest {
         verifyRecord(records.iterator().next(), LabEventType.PICO_PLATING_BUCKET.getName() );
 
         EasyMock.verify(mocks);
-    }
-
-    public void testNoFixups() throws Exception {
-        Collection<Long> deletedEntityIds = new ArrayList<>();
-        Collection<Long> modifiedEntityIds = new ArrayList<>();
-        Collection<Long> addedEntityIds = new ArrayList<>();
-        String etlDateStr = "20130623182000";
-
-        tst.processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
-    }
-
-    @Test(groups = TestGroups.DATABASE_FREE, enabled = true)
-    public void testFixups() throws Exception {
-        Long modEventId = 9L;
-        Long seqRunId = 8L;
-        Long cartridgeEventId = 7L;
-        String etlDateStr = "20130623182000";
-
-        Set<Long> deletedEntityIds = new HashSet<>();
-        Set<Long> modifiedEntityIds = new HashSet<>();
-
-        modifiedEntityIds.add(modEventId);
-
-        // modEvent is the modified event and it has one vessel, denature.
-        // Denature has one descendant vessel, cartridge, which has one event, cartridgeEvent.
-        //
-        // modEvent should cause cartridgeEvent to be put on the modifiedIds list.
-
-        EasyMock.expect(dao.findById(LabEvent.class, modEventId)).andReturn(modEvent);
-
-        EasyMock.expect(modEvent.getLabEventId()).andReturn(modEventId);
-        EasyMock.expect(modEvent.getTargetLabVessels()).andReturn(Collections.<LabVessel>emptySet());
-        EasyMock.expect(modEvent.getInPlaceLabVessel()).andReturn(denature);
-
-        Collection<LabVessel> cartridges = new ArrayList<>();
-        cartridges.add(cartridge);
-        EasyMock.expect(denature.getDescendantVessels()).andReturn(cartridges);
-
-        Set<LabEvent> denatureEvents = new HashSet<>();
-        denatureEvents.add(modEvent);
-        EasyMock.expect(denature.getEvents()).andReturn(denatureEvents);
-
-        Set<LabEvent> cartridgeEvents = new HashSet<>();
-        cartridgeEvents.add(cartridgeEvent);
-        EasyMock.expect(cartridge.getEvents()).andReturn(cartridgeEvents);
-        EasyMock.expect(cartridgeEvent.getLabEventId()).andReturn(cartridgeEventId);
-
-        EasyMock.expect(denature.getType()).andReturn(LabVessel.ContainerType.TUBE);
-        EasyMock.expect(cartridge.getType()).andReturn(LabVessel.ContainerType.FLOWCELL);
-
-        SequencingRun seqRun = new IlluminaSequencingRun(
-                flowcell, "runName", "runBarcode", "machine", 1234L, false, new Date(), "/tmp");
-        seqRun.setSequencingRunId(seqRunId);
-        Set<SequencingRun> seqRuns = new HashSet<>();
-        seqRuns.add(seqRun);
-
-        EasyMock.expect(cartridge.getSequencingRuns()).andReturn(seqRuns);
-
-        EasyMock.replay(mocks);
-
-        tst.processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
-
-        Assert.assertEquals(deletedEntityIds.size(), 0);
-        Assert.assertEquals(modifiedEntityIds.size(), 2);
-
-        // (Does not need to verify mocks.)
     }
 
 

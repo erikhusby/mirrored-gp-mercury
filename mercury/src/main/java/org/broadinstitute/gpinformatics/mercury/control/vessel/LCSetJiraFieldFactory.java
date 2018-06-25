@@ -70,7 +70,11 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             }
             for (LabVessel rework : batch.getReworks()) {
                 for (SampleInstanceV2 sampleInstance : rework.getSampleInstancesV2()) {
-                    String pdoKey = sampleInstance.getSingleProductOrderSample().getProductOrder().getBusinessKey();
+                    ProductOrderSample pdoSample = sampleInstance.getSingleProductOrderSample();
+                    if( pdoSample == null ) {
+                        continue;
+                    }
+                    String pdoKey = pdoSample.getProductOrder().getBusinessKey();
                     if (!pdoToVesselMap.containsKey(pdoKey)) {
                         pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
                     }

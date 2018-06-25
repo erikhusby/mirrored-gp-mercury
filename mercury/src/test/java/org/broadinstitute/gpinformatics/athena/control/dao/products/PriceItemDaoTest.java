@@ -1,29 +1,31 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
-import org.apache.commons.logging.Log;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.List;
 
 
 @Test(groups = {TestGroups.STUBBY})
-public class PriceItemDaoTest extends ContainerTest {
+@Dependent
+public class PriceItemDaoTest extends StubbyContainerTest {
+
+    public PriceItemDaoTest(){}
 
     @Inject
     private PriceItemDao dao;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private Log log;
+    private Log log = LogFactory.getLog(this.getClass());
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject

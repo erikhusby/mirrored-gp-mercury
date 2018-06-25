@@ -38,6 +38,7 @@ public class SearchContext {
     private ResultCellTargetPlatform resultCellTargetPlatform = ResultCellTargetPlatform.TEXT;
     private String baseSearchURL;
     private PaginationUtil.Pagination pagination;
+    private ResultParamValues columnParams;
 
     /**
      * Avoid having to access EJB or web application context to get user data for display
@@ -152,19 +153,23 @@ public class SearchContext {
 
     /**
      * Rack scan data (if used as search term input for multiple vessel barcodes) is passed from browser as JSON.
-     * This method avoids having to re-parse JSON for every required result column and row.
+     * This method avoids having to re-parse JSON for every required result column and row. <br/>
+     * Note:  Only a single rack scan can be associated with a search instance
      */
     public JSONObject getScanData(){
-        if( getSearchValue() == null || getSearchValue().getRackScanData() == null ) {
-            return null;
-        }
         if( rackScanData != null ) {
             return rackScanData;
-        }
-        try {
-            rackScanData = new JSONObject(new JSONTokener(getSearchValue().getRackScanData()));
-        } catch (JSONException jse) {
-            throw new RuntimeException("Unable to parse JSON rack scan data", jse);
+        } else {
+            try {
+                for (SearchInstance.SearchValue searchValue : searchInstance.getSearchValues()) {
+                    if (searchValue.getRackScanData() != null) {
+                        rackScanData = new JSONObject(new JSONTokener(searchValue.getRackScanData()));
+                        break;
+                    }
+                }
+            } catch (JSONException jse) {
+                throw new RuntimeException("Unable to parse JSON rack scan data", jse);
+            }
         }
         return rackScanData;
     }
@@ -214,5 +219,19 @@ public class SearchContext {
 
     public void setPagination(PaginationUtil.Pagination pagination) {
         this.pagination = pagination;
+    }
+
+    /**
+     * Sets a copy of result column parameter values for use in generating output header and value
+     */
+    public void setColumnParams( ResultParamValues columnParams ) {
+        this.columnParams = columnParams;
+    }
+
+    /**
+     * Gets a copy of result column parameter values for use in generating output header and value
+     */
+    public ResultParamValues getColumnParams(){
+        return columnParams;
     }
 }

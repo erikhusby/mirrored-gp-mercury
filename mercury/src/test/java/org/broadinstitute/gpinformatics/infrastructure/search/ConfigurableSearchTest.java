@@ -183,7 +183,7 @@ public class ConfigurableSearchTest extends Arquillian {
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
 
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", ColumnEntity.LAB_EVENT);
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, Collections.EMPTY_MAP, 0, "ASC", ColumnEntity.LAB_EVENT);
 
         LabEvent labEvent = labEventDao.findById(LabEvent.class, new Long("268634"));
         List<LabEvent> entityList = new ArrayList<>();

@@ -37,13 +37,18 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.HashMap;
 import java.util.Map;
 
 @Test(groups = TestGroups.STUBBY)
-public class HibernateMetadataTest extends ContainerTest {
+@Dependent
+public class HibernateMetadataTest extends StubbyContainerTest {
+
+    public HibernateMetadataTest(){}
+
     @PersistenceContext(unitName = "mercury_pu")
     private EntityManager entityManager;
 

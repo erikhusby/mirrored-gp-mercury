@@ -5,8 +5,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product: #{actionBean.editProduct.partNumber}"
-                       sectionTitle="View Product: #{actionBean.editProduct.partNumber}"
+<stripes:layout-render name="/layout.jsp" pageTitle="View Product: ${actionBean.editProduct.partNumber}"
+                       sectionTitle="View Product: ${actionBean.editProduct.partNumber}"
                        businessKeyValue="${actionBean.editProduct.businessKey}">
 
     <stripes:layout-component name="content">
@@ -353,6 +353,15 @@
                     <div class="controls">
                         <div class="form-value">
                                 ${actionBean.editProduct.pairedEndRead}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Analyze UMIs</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.analyzeUmi ? "Yes" : "No"}
                         </div>
                     </div>
                 </div>

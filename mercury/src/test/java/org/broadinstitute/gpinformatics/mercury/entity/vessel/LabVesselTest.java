@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -34,15 +34,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 @SuppressWarnings("FeatureEnvy")
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LabVesselTest {
     public void testGetLatestMaterialTypeForVessel() {
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-        BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
+        BSPSetVolumeConcentration bspSetVolumeConcentration = new BSPSetVolumeConcentrationStub();
         LabEventFactory labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
         BarcodedTube sourceVessel = new BarcodedTube("A_SOURCE_VESSEL", BarcodedTube.BarcodedTubeType.MatrixTube075);
         MaterialType startingMaterialType = MaterialType.FRESH_BLOOD;
@@ -114,7 +114,7 @@ public class LabVesselTest {
                 mapBarcodeToVessel, new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
                 new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
-                MercurySample.MetadataSource.BSP);
+                MercurySample.MetadataSource.BSP).getLeft();
         Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = sourceTube1.findVesselsForLabEventType(
                 LabEventType.SAMPLE_IMPORT, true);
         Assert.assertEquals(vesselsForLabEventType.size(), 1);
@@ -167,7 +167,7 @@ public class LabVesselTest {
                 mapBarcodeToVessel, new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
                 new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
-                MercurySample.MetadataSource.BSP);
+                MercurySample.MetadataSource.BSP).getLeft();
 
         BarcodedTube tube1 = (BarcodedTube)labVessels.get(0);
         Assert.assertEquals(tube1.getTubeType(), BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3);

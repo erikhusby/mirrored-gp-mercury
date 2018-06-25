@@ -162,7 +162,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean.SAMPLE_TYPE;
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
 /**
@@ -212,7 +211,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
     public static final String GET_SAMPLE_DATA = "getSampleData";
+    public static final String GET_SAMPLE_SUMMARY = "getSampleSummary";
     public static final String OPEN_CUSTOM_VIEW_ACTION = "openCustomView";
+
     private String sampleSummary;
     private State state;
 
@@ -436,6 +437,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private RegulatoryInfoDao regulatoryInfoDao;
 
     private Map<String, Date> productOrderSampleReceiptDates;
+
+    public String getSlowColumns() {
+        return new JSONArray(ProductOrderSampleBean.SLOW_COLUMNS).toString();
+    }
 
     private List<ProductOrderKitDetail> kitDetails = new ArrayList<>();
 
@@ -757,9 +762,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
+        Quote quote = validateQuote(editOrder);
 
-        String quoteId = editOrder.getQuoteId();
-        Quote quote = validateQuoteId(quoteId);
         try {
             if (quote != null) {
                 ProductOrder.checkQuoteValidity(quote);
@@ -783,12 +787,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
         } catch (QuoteServerException e) {
-            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
         } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " +
-                                     quoteId +": " +e.getMessage());
+                                     editOrder.getQuoteId() +": " +e.getMessage());
             logger.error(e);
         }
 
@@ -800,16 +804,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
      * remaining on the quote
-     *
-     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *  @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
      *                  collection of orders to include in evaluating and the funds remaining
      * @param errorLevel indicator for if the user should see a validation error or just a warning
-     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
-     *                        Pending
      */
-    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders)
+    private void validateQuoteDetails(ProductOrder productOrder, final ErrorLevel errorLevel, boolean countOpenOrders)
             throws InvalidProductException, SAPIntegrationException {
-        Quote quote = validateQuoteId(quoteId);
+        Quote quote = validateQuote(productOrder);
 
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, 0);
@@ -822,18 +823,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      * refelcted on the order.
      *
      * The scenario for this is when the user clicks on the "Add Samples" button of a placed order
-     *
-     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *  @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
      *                  collection of orders to include in evaluating and the funds remaining
      * @param errorLevel indicator for if the user should see a validation error or just a warning
      * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
-     *                        Pending
+ *                        Pending
      * @param additionalSamplesCount Number of extra samples to be considered which are not currently
      */
-    private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
+    private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder, final ErrorLevel errorLevel,
                                                       boolean countOpenOrders, int additionalSamplesCount)
             throws InvalidProductException, QuoteServerException, SAPIntegrationException {
-        Quote quote = validateQuoteId(quoteId);
+        Quote quote = validateQuote(productOrder);
         ProductOrder.checkQuoteValidity(quote);
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
@@ -1007,7 +1007,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (product.getSupportsNumberOfLanes()) {
             int totalCount = productOrder.getLaneCount();
             unbilledCount = (int) ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalCount);
-        } 
+        }
         return unbilledCount;
     }
 
@@ -1313,7 +1313,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
-            on = {EDIT_ACTION, VIEW_ACTION, GET_SAMPLE_DATA, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
+            on = {EDIT_ACTION, GET_SAMPLE_DATA, GET_SAMPLE_SUMMARY, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
                     DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
@@ -1330,13 +1330,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             populateAttributes(editOrder.getProductOrderId());
 
-            try {
-                buildJsonCustomizationsFromProductOrder(editOrder);
-            } catch (JSONException e) {
-                if(userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
-                    addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
-                }
-            }
+            buildCustomizationHelper();
 
             QuotePriceItem priceItemByKeyFields = null;
             if (editOrder.getProduct() != null) {
@@ -1352,6 +1346,21 @@ public class ProductOrderActionBean extends CoreActionBean {
                 if (addOnPriceItemByKeyFields != null ) {
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
                 }
+            }
+        }
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    public void viewPageInit() {
+        buildCustomizationHelper();
+    }
+
+    public void buildCustomizationHelper() {
+        try {
+            buildJsonCustomizationsFromProductOrder(editOrder);
+        } catch (JSONException e) {
+            if (userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
+                addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
             }
         }
     }
@@ -1771,7 +1780,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             there is an issue
             */
             if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
+                validateQuoteDetails(editOrder, ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
             }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
@@ -1834,7 +1843,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
-        if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
+        if(editOrder.isPriorToSAP1_5() && editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
            (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL) < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
             shareSapOrder = true;
         }
@@ -1944,8 +1953,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
             } catch (NoJiraTransitionException | ProductOrderEjb.NoSuchPDOException |
-                    ProductOrderEjb.SampleDeliveryStatusChangeException | IOException e) {
-                throw new RuntimeException(e);
+                    ProductOrderEjb.SampleDeliveryStatusChangeException | IOException | SAPInterfaceException e) {
+                addGlobalValidationError(e.getMessage());
+                return getSourcePageResolution();
             }
         }
 
@@ -2217,12 +2227,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final Collection<String> allVisibleColumns = preferenceSaver.visibleColumns();
 
                 Set<String> bspColumns = Sets.newHashSet(ProductOrderSampleBean.COLLABORATOR_SAMPLE_ID,
-                        ProductOrderSampleBean.PARTICIPANT_ID, ProductOrderSampleBean.COLLABORATOR_PARTICIPANT_ID,
-                        SAMPLE_TYPE, ProductOrderSampleBean.MATERIAL_TYPE, ProductOrderSampleBean.VOLUME,
-                        ProductOrderSampleBean.SHIPPED_DATE, ProductOrderSampleBean.CONCENTRATION,
-                        ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
-                        ProductOrderSampleBean.DV2000, ProductOrderSampleBean.PICO_RUN_DATE,
-                        ProductOrderSampleBean.RACKSCAN_MISMATCH, ProductOrderSampleBean.RECEIVED_DATE);
+                    ProductOrderSampleBean.PARTICIPANT_ID, ProductOrderSampleBean.COLLABORATOR_PARTICIPANT_ID,
+                    ProductOrderSampleBean.SAMPLE_TYPE, ProductOrderSampleBean.MATERIAL_TYPE,
+                    ProductOrderSampleBean.VOLUME, ProductOrderSampleBean.SHIPPED_DATE,
+                    ProductOrderSampleBean.CONCENTRATION, ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
+                    ProductOrderSampleBean.DV2000, ProductOrderSampleBean.PICO_RUN_DATE,
+                    ProductOrderSampleBean.RACKSCAN_MISMATCH, ProductOrderSampleBean.RECEIVED_DATE);
 
                 boolean withSampleData = false;
                 for (String visibleColumn : allVisibleColumns) {
@@ -2244,38 +2254,65 @@ public class ProductOrderActionBean extends CoreActionBean {
                     int rowsWithSampleData=0;
                     if (initialLoad){
                         List<ProductOrderSample> firstPage = getPageOneSamples(state, samples);
-                        writeProductOrderSampleBean(jsonGenerator, firstPage, true, preferenceSaver);
+                        writeProductOrderSampleBean(jsonGenerator, firstPage, true, initialLoad, preferenceSaver);
                         rowsWithSampleData = firstPage.size();
                         List<ProductOrderSample> otherPages = new ArrayList<>(samples);
                         otherPages.removeAll(firstPage);
                         if (CollectionUtils.isNotEmpty(otherPages)) {
-                            writeProductOrderSampleBean(jsonGenerator, otherPages, false, preferenceSaver);
+                            writeProductOrderSampleBean(jsonGenerator, otherPages, false, initialLoad, preferenceSaver);
                         }
                     } else {
                         if (withSampleData) {
                             rowsWithSampleData = samples.size();
                         }
-                        writeProductOrderSampleBean(jsonGenerator, samples, withSampleData, preferenceSaver);
+                        writeProductOrderSampleBean(jsonGenerator, samples, withSampleData, true, preferenceSaver);
                     }
                     jsonGenerator.writeEndArray();
                     jsonGenerator.writeObjectField(ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT, rowsWithSampleData);
-                    if (includeSampleSummary) {
-                        ProductOrder.loadSampleData(samples);
-                        List<String> comments = new ArrayList<>();
-                        String samplesNotReceivedString = "";
-                        try {
-                            comments = editOrder.getSampleSummaryComments();
-                            samplesNotReceivedString = getSamplesNotReceivedString();
-                        } catch (Exception e) {
-                            logger.error("Could not get sample summary.", e);
-                        }
-                        jsonGenerator.writeArrayFieldStart("comments");
-                        for (String comment : comments) {
-                            jsonGenerator.writeObject(comment);
-                        }
-                        jsonGenerator.writeEndArray();
-                        jsonGenerator.writeObjectField("numberSamplesNotReceived", samplesNotReceivedString);
+                    jsonGenerator.writeEndObject();
+                } catch (BSPLookupException e) {
+                    handleBspLookupFailed(e);
+                } catch (Exception e){
+                    logger.error(e);
+                } finally {
+                    if (jsonGenerator!=null) {
+                        jsonGenerator.close();
                     }
+                }
+            }
+        };
+        return resolution;
+    }
+
+    @HandlesEvent(GET_SAMPLE_SUMMARY)
+    public Resolution getSampleSummary() {
+        Resolution resolution = new StreamingResolution("text/json"){
+            @Override
+            protected void stream(HttpServletResponse response)  throws IOException{
+                List<ProductOrderSample> samples = editOrder.getSamples();
+
+                JsonFactory jsonFactory = new JsonFactory();
+                JsonGenerator jsonGenerator = null;
+                try {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    OutputStream outputStream = response.getOutputStream();
+                    jsonGenerator = jsonFactory.createJsonGenerator(outputStream);
+                    jsonGenerator.setCodec(objectMapper);
+                    jsonGenerator.writeStartObject();
+                    List<String> comments = new ArrayList<>();
+                    String samplesNotReceivedString = "";
+                    try {
+                        comments = editOrder.getSampleSummaryComments();
+                        samplesNotReceivedString = getSamplesNotReceivedString();
+                    } catch (Exception e) {
+                        logger.error("Could not get sample summary.", e);
+                    }
+                    jsonGenerator.writeArrayFieldStart("summary");
+                    for (String comment : comments) {
+                        jsonGenerator.writeObject(comment);
+                    }
+                    jsonGenerator.writeEndArray();
+                    jsonGenerator.writeObjectField(ProductOrderSampleBean.SAMPLES_NOT_RECEIVED, samplesNotReceivedString);
                     jsonGenerator.writeEndObject();
                 } catch (BSPLookupException e) {
                     handleBspLookupFailed(e);
@@ -2310,10 +2347,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void writeProductOrderSampleBean(JsonGenerator jsonGenerator, List<ProductOrderSample> productOrderSamples,
-                                             final boolean includeSampleData,
+                                             final boolean includeSampleData, boolean initialLoad,
                                              final DatatablesStateSaver preferenceSaver) throws IOException {
         if (includeSampleData) {
             ProductOrder.loadSampleData(productOrderSamples);
+            if (preferenceSaver.showColumn(ProductOrderSampleBean.SHIPPED_DATE) ||
+                preferenceSaver.showColumn(ProductOrderSampleBean.RECEIVED_DATE)) {
+                ProductOrder.loadLabEventSampleData(productOrderSamples);
+            }
         }
         for (ProductOrderSample sample : productOrderSamples) {
             SampleLink sampleLink = null;
@@ -2325,7 +2366,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
             ProductOrderSampleBean bean =
-                    new ProductOrderSampleBean(sample, includeSampleData, preferenceSaver, sampleLink);
+                new ProductOrderSampleBean(sample, includeSampleData, initialLoad, preferenceSaver, sampleLink);
             jsonGenerator.writeObject(bean);
 
         }
@@ -2617,7 +2658,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void addSampleExtraValidations() throws Exception {
         try {
             if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetailsWithAddedSamples(editOrder.getQuoteId(), ErrorLevel.ERROR,
+                validateQuoteDetailsWithAddedSamples(editOrder, ErrorLevel.ERROR,
                         !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());
             }
         } catch (QuoteServerException e) {
@@ -2799,7 +2840,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         while(keys.hasNext()) {
             String productPartNumber = (String)keys.next();
             JSONObject currentCustomization = (JSONObject) customizationJson.get(productPartNumber);
-            
+
             final Product product = productDao.findByPartNumber(productPartNumber);
 
             final CustomizationValues customizedProductInfo = new CustomizationValues(productPartNumber,

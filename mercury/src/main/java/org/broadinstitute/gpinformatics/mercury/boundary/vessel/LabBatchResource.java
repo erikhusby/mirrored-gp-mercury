@@ -6,6 +6,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -34,7 +36,6 @@ import javax.ws.rs.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -121,9 +122,10 @@ public class LabBatchResource {
      * create bucket entries and associate them with the batch.
      */
     private LabBatch createLabBatchByParentVessel(LabBatchBean labBatchBean) {
+        // Process is only interested in the primary vessels
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(
                 Collections.singletonList(labBatchBean.getParentVesselBean()), labBatchBean.getUsername(),
-                new Date(), null, MercurySample.MetadataSource.BSP);
+                new Date(), null, MercurySample.MetadataSource.BSP).getLeft();
 
         // Gather vessels for each PDO (if any)
         Set<LabVessel> labVesselSet = new HashSet<>();
@@ -150,7 +152,13 @@ public class LabBatchResource {
                     labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
                             LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
         }
+        addToBatch(labVesselSet, labBatch, labBatchBean.getWorkflowName(), labBatchBean.getUsername(), bucketEjb);
 
+        return labBatch;
+    }
+
+    public static Set<ProductOrder> addToBatch(Set<LabVessel> labVesselSet, LabBatch labBatch, String productFamilyName,
+            String username, BucketEjb bucketEjb) {
         // Create bucket entries (if any) and add to batch
         LabVessel.loadSampleDataForBuckets(labVesselSet);
         ListMultimap<ProductOrder, LabVessel> mapPdoToVessels = ArrayListMultimap.create();
@@ -161,8 +169,11 @@ public class LabBatchResource {
                 SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
                 List<ProductOrder> productOrders = new ArrayList<>();
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                    if (productOrderSample.getProductOrder().getProduct().getProductFamily().getName().equals(
-                            labBatchBean.getWorkflowName())) {
+                    Product product = productOrderSample.getProductOrder().getProduct();
+                    if (product.getProductFamily().getName().equals(productFamilyName) ||
+                            // Some array / sequencing combo products are in family "Exome"
+                            productFamilyName.equals(ProductFamily.WHOLE_GENOME_GENOTYPING) &&
+                                    product.getWorkflow().name().contains("INFINIUM")) {
                         if (productOrderSample.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
                             productOrders.add(productOrderSample.getProductOrder());
                         }
@@ -170,12 +181,7 @@ public class LabBatchResource {
                 }
                 // Choose most recently submitted PDO
                 if (productOrders.size() > 1) {
-                    Collections.sort(productOrders, new Comparator<ProductOrder>() {
-                        @Override
-                        public int compare(ProductOrder o1, ProductOrder o2) {
-                            return o2.getPlacedDate().compareTo(o1.getPlacedDate());
-                        }
-                    });
+                    productOrders.sort((o1, o2) -> o2.getPlacedDate().compareTo(o1.getPlacedDate()));
                 }
                 if (productOrders.isEmpty()) {
                     // assume it's a control
@@ -214,7 +220,7 @@ public class LabBatchResource {
             // Get existing PDOs
             Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                     bucketEjb.applyBucketCriteria(noBucketEntryVessels,
-                            productOrder, labBatchBean.getUsername(),
+                            productOrder, username,
                             ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS);
             ProductWorkflowDefVersion productWorkflowDefVersion = workflowBucketEntriesPair.getLeft();
             if (productWorkflowDefVersion == null) {
@@ -224,8 +230,7 @@ public class LabBatchResource {
             // todo jmt check that bucket entries count matches lab vessel count?
             bucketEjb.moveFromBucketToBatch(workflowBucketEntriesPair.getRight(), labBatch);
         }
-
-        return labBatch;
+        return mapPdoToVessels.keySet();
     }
 
     /**

@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -57,28 +58,26 @@ import java.util.Set;
 @Stateful
 @RequestScoped
 public class BucketEjb {
-    private final LabEventFactory labEventFactory;
-    private final JiraService jiraService;
-    private final BucketDao bucketDao;
-    private final LabVesselDao labVesselDao;
-    private final BucketEntryDao bucketEntryDao;
-    private final WorkflowConfig workflowConfig;;
-    private final BSPUserList bspUserList;
-    private final LabVesselFactory labVesselFactory;
-    private final MercurySampleDao mercurySampleDao;
+    private LabEventFactory labEventFactory;
+    private JiraService jiraService;
+    private BucketDao bucketDao;
+    private LabVesselDao labVesselDao;
+    private BucketEntryDao bucketEntryDao;
+    private WorkflowLoader workflowLoader;
+    private BSPUserList bspUserList;
+    private LabVesselFactory labVesselFactory;
+    private MercurySampleDao mercurySampleDao;
 
     /*
      * Uses BSPSampleDataFetcher (rather than SampleDataFetcher) to create LabVessels for samples that are in BSP but
      * are not yet known to Mercury.
      */
-    private final BSPSampleDataFetcher bspSampleDataFetcher;
-    private final ProductOrderDao productOrderDao;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private ProductOrderDao productOrderDao;
 
     private static final Log logger = LogFactory.getLog(BucketEjb.class);
 
-    public BucketEjb() {
-        this(null, null, null, null, null, null, null, null, null, null, null);
-    }
+    public BucketEjb() {}
 
     @Inject
     public BucketEjb(LabEventFactory labEventFactory,
@@ -89,7 +88,7 @@ public class BucketEjb {
                      LabVesselFactory labVesselFactory,
                      BSPSampleDataFetcher bspSampleDataFetcher,
                      BSPUserList bspUserList,
-                     WorkflowConfig workflowConfig, ProductOrderDao productOrderDao, MercurySampleDao mercurySampleDao) {
+                     WorkflowLoader workflowLoader, ProductOrderDao productOrderDao, MercurySampleDao mercurySampleDao) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
@@ -98,7 +97,7 @@ public class BucketEjb {
         this.labVesselFactory = labVesselFactory;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.bspUserList = bspUserList;
-        this.workflowConfig = workflowConfig;
+        this.workflowLoader = workflowLoader;
         this.productOrderDao = productOrderDao;
         this.mercurySampleDao = mercurySampleDao;
     }
@@ -439,7 +438,7 @@ public class BucketEjb {
         ProductWorkflowDefVersion workflowDefVersion = null;
         for (Product product : possibleProducts) {
             if (product.getWorkflow() != Workflow.NONE) {
-                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(product.getWorkflow());
+                ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflow(product.getWorkflow());
                 workflowDefVersion = productWorkflowDef.getEffectiveVersion();
                 Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
                         workflowDefVersion.getInitialBucket(productOrder, vessels, bucketingSource);
@@ -473,9 +472,10 @@ public class BucketEjb {
             if (bspSampleData != null &&
                 StringUtils.isNotBlank(bspSampleData.getBarcodeForLabVessel())) {
                 if (bspSampleData.isSampleReceived()) {
-                    vessels.addAll(
-                            labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
-                                    username, new Date(), MercurySample.MetadataSource.BSP));
+                    // Process is only interested in the primary vessels
+                    List<LabVessel> sampleVessels = labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
+                            username, new Date(), MercurySample.MetadataSource.BSP).getLeft();
+                    vessels.addAll(sampleVessels );
                 }
             } else {
                 cannotAddToBucket.add(sampleName);
