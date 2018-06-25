@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +83,7 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
         Set<LabVessel> labVesselSet = new HashSet<>(targetLabVessel.getContainerRole().getContainedVessels());
         LabBatch labBatch = new LabBatch("dummy" , labVesselSet, LabBatch.LabBatchType.WORKFLOW);
         Set<ProductOrder> productOrders = LabBatchResource.addToBatch(labVesselSet, labBatch,
-                ProductFamily.WHOLE_GENOME_GENOTYPING, username, new Date(), bucketEjb);
+                ProductFamily.WHOLE_GENOME_GENOTYPING, username, targetEvent.getEventDate(), bucketEjb);
         String bucketDefinitionName = labBatch.getBucketEntries().iterator().next().getBucket().getBucketDefinitionName();
         Set<String> pdoKeys = productOrders.stream().map(ProductOrder::getBusinessKey).collect(Collectors.toSet());
         labBatchEjb.createJiraTicket(labBatch.getWorkflowName(), username, bucketDefinitionName, MessageReporter.UNUSED,
