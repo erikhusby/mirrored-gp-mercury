@@ -1,13 +1,24 @@
-package org.broadinstitute.gpinformatics.infrastructure.cognos;
+/*
+ * The Broad Institute
+ * SOFTWARE COPYRIGHT NOTICE AGREEMENT
+ * This software and its documentation are copyright 2018 by the
+ * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+ *
+ * This software is supplied without any warranty or guaranteed support
+ * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+ * use, misuse, or functionality.
+ */
+
+package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsentKey_;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent_;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject_;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsentKey_;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent_;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject_;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 
 import javax.annotation.Nullable;
@@ -43,7 +54,7 @@ import java.util.List;
 @TransactionAttribute(TransactionAttributeType.NEVER)
 public class OrspProjectDao {
 
-    @PersistenceContext(unitName = "metrics_pu")
+    @PersistenceContext(unitName = "analytics_pu")
     private EntityManager entityManager;
 
     /**
