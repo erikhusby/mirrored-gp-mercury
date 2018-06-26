@@ -154,7 +154,7 @@ public class ZimsIlluminaRunFactory {
                     vesselPosition)) {
                 BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                 if (singleBucketEntry != null) {
-                    if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getPipelineDataTypeString(),
+                    if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
                         Aggregation.DATA_TYPE_WGS)) {
                         mixedLaneOk = true;
                         break;
@@ -327,7 +327,7 @@ public class ZimsIlluminaRunFactory {
             if (productOrder != null) {
                 Product product = productOrder.getProduct();
                 analysisTypes.add(product.getAnalysisTypeKey());
-                aggregationDataTypes.add(product.getPipelineDataTypeString());
+                aggregationDataTypes.add(product.getAggregationDataType());
                 ResearchProject project = productOrder.getResearchProject();
                 if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
                     referenceSequenceKeys.add(project.getReferenceSequenceKey());

@@ -607,7 +607,8 @@ public class ReworkEjbTest extends Arquillian {
                                       null,
                                       true,
                                       workflow,
-                                      false);
+                                      false,
+                                      null);
 
         product.setPrimaryPriceItem(priceItem);
         return product;

@@ -52,6 +52,7 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -647,7 +648,7 @@ public class SequencingTemplateFactory {
         }
         boolean mixedFlowcellOk = false;
         for (Product product : products) {
-            if (Objects.equals(product.getPipelineDataTypeString(), Aggregation.DATA_TYPE_WGS)) {
+            if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
                 mixedFlowcellOk = true;
                 break;
             }
