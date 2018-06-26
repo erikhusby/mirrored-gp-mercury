@@ -3134,7 +3134,7 @@
                 <name>Bravo: IRS supernatant transfer to C4 in new S-Block</name>
                 <labEventTypes>STOOL_IRS_SUPERNATENT_TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_IRS_TO_S_BLOCK</workflowQualifier>
-                <instructions>Start Script: 1) Qiagen AllPrep Initial Filter" to transfer ~450ul of supernatant to new C4 Lysate S-Block
+                <instructions>Start Script: 1) Qiagen AllPrep Initial Filter to transfer ~450ul of supernatant to new C4 Lysate S-Block
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -3162,7 +3162,7 @@
                 <name>Bravo: RNA FT S-Block to RNA Filter Plate</name>
                 <labEventTypes>STOOL_RNA_CAPTURE_PLATE_TRANSFER</labEventTypes>
                 <workflowQualifier>STOOL_RNA_CAPTURE_PLATE_TRANSFER</workflowQualifier>
-                <instructions>Start Script: 2) Qiagen AllPrep RNA Isolation Washes". Scan barcode of RNA flow through S-Block to barcode of RNA Filter Plate.
+                <instructions>Start Script: 2) Qiagen AllPrep RNA Isolation Washes. Scan barcode of RNA flow through S-Block to barcode of RNA Filter Plate.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -3191,7 +3191,7 @@
                 <name>Bravo: RNA Filter To Elution</name>
                 <labEventTypes>STOOL_RNA_FILTER_TO_ELUTION_PLATE</labEventTypes>
                 <workflowQualifier>STOOL_RNA_FILTER_TO_ELUTION_PLATE</workflowQualifier>
-                <instructions>Start Bravo Script: 3) Qiagen AllPrep RNA Final Elution" using the samples in RNAeasy Filter Plate
+                <instructions>Start Bravo Script: 3) Qiagen AllPrep RNA Final Elution using the samples in RNAeasy Filter Plate
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -3231,7 +3231,7 @@
                 <name>Bravo: DNA Filter To Elution</name>
                 <labEventTypes>STOOL_DNA_FILTER_TO_ELUTION_PLATE</labEventTypes>
                 <workflowQualifier>STOOL_DNA_FILTER_TO_ELUTION_PLATE</workflowQualifier>
-                <instructions>Start Bravo Script: 5) Qiagen AllPrep DNA final elution" using the samples in AllPrep Filter Plate and heated EB buffer plate.
+                <instructions>Start Bravo Script: 5) Qiagen AllPrep DNA final elution using the samples in AllPrep Filter Plate and heated EB buffer plate.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
