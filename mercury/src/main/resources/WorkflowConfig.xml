@@ -3045,7 +3045,7 @@
                 <labEventTypes>IN_PLACE</labEventTypes>
                 <workflowQualifier>ALL_PREP_INITIAL_SCAN</workflowQualifier>
                 <instructions>Scan parent source CO-ID. Press "validate barcodes" to cross check against samples in XTR ticket.
-                    Ensure control samples have been added to Mercury.
+                    Ensure control samples have been added to Mercury. Eppendorf 12x8 Box Well Format
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_EVENT</messageType>
@@ -3068,7 +3068,7 @@
                 <name>Transfer material to PowerBead Plate</name>
                 <labEventTypes>STOOL_BEAD_PLATE_TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_STOOL_TO_BEAD_PLATE</workflowQualifier>
-                <instructions>Aliquot 75-100mg of sample to PowerBead Plate and update the masses in the spreadsheet if needed.
+                <instructions>Aliquot sample to PowerBead Plate and update the masses in the spreadsheet if needed.
                     - Checking the checkbox next to mass removed will deplete the sample and any mass in source will be transferred.
                 </instructions>
                 <manualTransferDetails>
@@ -3102,7 +3102,7 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Transfer Supernatent to "IRS" S-Block</name>
+                <name>Transfer Supernatent to IRS S-Block</name>
                 <labEventTypes>STOOL_SUPERNATENT_TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_TO_S_BLOCK</workflowQualifier>
                 <instructions>Scan container ID on bead plate and container ID on IRS S-Block . Transfer ~650ul for supernatant.
@@ -3124,17 +3124,17 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Centrifuge "IRS Lysate" S-Block</name>
+                <name>Centrifuge IRS Lysate S-Block</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>IRS_CENTRIFUGE</workflowQualifier>
-                <instructions>Centrifuge "IRS lysate" S-Block for 6 minutes @4,500 x g
+                <instructions>Centrifuge IRS lysate S-Block for 6 minutes @4,500 x g
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Bravo: IRS supernatant transfer to C4 in new S-Block</name>
                 <labEventTypes>STOOL_IRS_SUPERNATENT_TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_IRS_TO_S_BLOCK</workflowQualifier>
-                <instructions>Start Script "1) Qiagen AllPrep Initial Filter" to transfer ~450ul of supernatant to new "C4 Lysate" S-Block
+                <instructions>Start Script: 1) Qiagen AllPrep Initial Filter" to transfer ~450ul of supernatant to new C4 Lysate S-Block
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -3162,7 +3162,7 @@
                 <name>Bravo: RNA FT S-Block to RNA Filter Plate</name>
                 <labEventTypes>STOOL_RNA_CAPTURE_PLATE_TRANSFER</labEventTypes>
                 <workflowQualifier>STOOL_RNA_CAPTURE_PLATE_TRANSFER</workflowQualifier>
-                <instructions>Start Script "2) Qiagen AllPrep RNA Isolation Washes". Scan barcode of RNA flow through S-Block to barcode of RNA Filter Plate.
+                <instructions>Start Script: 2) Qiagen AllPrep RNA Isolation Washes". Scan barcode of RNA flow through S-Block to barcode of RNA Filter Plate.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -3191,7 +3191,7 @@
                 <name>Bravo: RNA Filter To Elution</name>
                 <labEventTypes>STOOL_RNA_FILTER_TO_ELUTION_PLATE</labEventTypes>
                 <workflowQualifier>STOOL_RNA_FILTER_TO_ELUTION_PLATE</workflowQualifier>
-                <instructions>Start Bravo Script "3) Qiagen AllPrep RNA Final Elution" using the samples in RNAeasy Filter Plate
+                <instructions>Start Bravo Script: 3) Qiagen AllPrep RNA Final Elution" using the samples in RNAeasy Filter Plate
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -3219,7 +3219,7 @@
                 <name>Bravo: DNA Isolation</name>
                 <labEventTypes>STOOL_DNA_ISOLATION</labEventTypes>
                 <workflowQualifier>STOOL_DNA_ISOLATION</workflowQualifier>
-                <instructions>Start Bravo Script "4) Qiagen AllPrep DNA Isolation Washes" using the samples in the stored DNA AllPrep Filter Plate
+                <instructions>Start Bravo Script: 4) Qiagen AllPrep DNA Isolation Washes using the samples in the stored DNA AllPrep Filter Plate
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_EVENT</messageType>
@@ -3231,7 +3231,7 @@
                 <name>Bravo: DNA Filter To Elution</name>
                 <labEventTypes>STOOL_DNA_FILTER_TO_ELUTION_PLATE</labEventTypes>
                 <workflowQualifier>STOOL_DNA_FILTER_TO_ELUTION_PLATE</workflowQualifier>
-                <instructions>Start Bravo Script " 5) Qiagen AllPrep DNA final elution" using the samples in AllPrep Filter Plate and heated EB buffer plate.
+                <instructions>Start Bravo Script: 5) Qiagen AllPrep DNA final elution" using the samples in AllPrep Filter Plate and heated EB buffer plate.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
