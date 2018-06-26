@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerT
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
@@ -34,6 +35,7 @@ import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -178,7 +180,7 @@ public class SubmissionDtoFetcherTest {
 
     private void verifyTuple(Map<SubmissionTuple, Aggregation> tupleMap, Aggregation aggregation,
                              ProductOrderSample productOrderSample) {
-        SubmissionTuple tuple = aggregation.getTuple();
+        SubmissionTuple tuple = aggregation.getSubmissionTuple();
         assertThat(tupleMap.get(tuple), is(aggregation));
         assertThat(tuple.getSampleName(), is(productOrderSample.getSampleData().getCollaboratorsSampleName()));
     }
@@ -187,7 +189,23 @@ public class SubmissionDtoFetcherTest {
                                            String processingLocation) {
         return new Aggregation(project, sample, null, 1, 1, libraryDescriptor.getName(),
             Collections.<AggregationAlignment>emptySet(), null, null,
-            null, null, null, processingLocation);
+            null, null, null, new PicardAggregationSample(project, project, sample, libraryDescriptor.getName()), processingLocation);
     }
 
+    /**
+     * A MessageReporter that records its messages. This is useful for testing.
+     */
+    class StringReporter implements MessageReporter {
+        private List<String> messages = new ArrayList<>();
+
+        @Override
+        public String addMessage(String message, Object... arguments) {
+            messages.add(MessageFormat.format(message, arguments));
+            return message;
+        }
+
+        public List<String> getMessages() {
+            return messages;
+        }
+    }
 }

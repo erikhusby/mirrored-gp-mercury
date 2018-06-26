@@ -293,7 +293,7 @@ public class ResearchProjectEjb {
             SubmissionBean submissionBean =
                     new SubmissionBean(dtoByTracker.getKey().createSubmissionIdentifier(),
                             userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean, repository,
-                            submissionLibraryDescriptor, researchProjectBusinessKey,
+                            submissionLibraryDescriptor, dtoByTracker.getValue().getAggregationProject(),
                             String.valueOf(dtoByTracker.getValue().getVersion()));
             submissionBeans.add(submissionBean);
         }
