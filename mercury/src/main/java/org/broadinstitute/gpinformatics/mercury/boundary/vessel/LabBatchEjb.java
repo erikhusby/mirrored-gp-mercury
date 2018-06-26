@@ -90,6 +90,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender.BSP_CONTAINER_UPDATE_LAYOUT;
 import static org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationActionBean.CONTROLS;
@@ -662,6 +663,18 @@ public class LabBatchEjb {
         List<String> controlAliases = new ArrayList<>();
         for (Control control : controls) {
             controlAliases.add(control.getCollaboratorParticipantId());
+        }
+
+        List<LabVessel> startingVessels = labBatch.getLabBatchStartingVessels().stream()
+                .map(LabBatchStartingVessel::getLabVessel)
+                .collect(Collectors.toList());
+        List<LabVessel> controlsInBatch = mapBarcodeToTube.values().stream()
+                .filter(startingVessels::contains)
+                .collect(Collectors.toList());
+        if (!controlsInBatch.isEmpty()) {
+            for (LabVessel labVessel: controlsInBatch) {
+                messageCollection.addError(labVessel.getLabel() + " already in lab batch.");
+            }
         }
 
         List<String> sampleNames = new ArrayList<>();

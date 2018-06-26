@@ -111,6 +111,11 @@ public class LcsetActionBean extends RackScanActionBean {
     public Resolution addTypedControls() {
         MessageCollection messageCollection = new MessageCollection();
         List<String> parsedControls = Arrays.asList(this.controls.trim().split("\\s+"));
+        for (String control: parsedControls) {
+            if (controlBarcodes.contains(control)) {
+                messageCollection.addError("Already submitted " + control);
+            }
+        }
         LabBatchEjb.ValidateRackScanReturn validateRackScanReturn =
                 labBatchEjb.validateTypedControls(labBatchName, parsedControls, messageCollection);
         if (!messageCollection.hasErrors()) {
@@ -151,6 +156,9 @@ public class LcsetActionBean extends RackScanActionBean {
                     this, addBarcodes, Collections.emptyList(), allBarcodes);
             if (getContext().getMessages().isEmpty()) {
                 addMessage("Made modifications to Lab Batch");
+                controlBarcodes.clear();
+                addBarcodes.clear();
+                controls = "";
             }
         } catch (Exception e) {
             if (getContext().getMessages().isEmpty()) {
