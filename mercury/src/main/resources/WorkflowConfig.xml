@@ -3703,6 +3703,17 @@
             <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA from Stool</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            <effectiveDate>2018-04-10T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA from Stool</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
     <sequencingConfigDefs>
         <name>Resequencing-Pool-Default</name>
         <instrumentWorkflow>Resequencing</instrumentWorkflow>
