@@ -4,7 +4,6 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -15,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -40,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -88,10 +87,10 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 // TODO: extend and use capabilities of BaseEventTest
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -168,7 +167,7 @@ public class ZimsIlluminaRunFactoryTest {
         // Create a test product
         testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                                           "P-EX-0011", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
-                                          true, Workflow.AGILENT_EXOME_EXPRESS, false, new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true));
+                                          true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
         ResearchProject positiveControlResearchProject = new ResearchProject(101L, "Positive controls",
                 "Positive Controls", false, ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
         positiveControlResearchProject.setJiraTicketKey("RP-805");

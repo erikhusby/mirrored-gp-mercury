@@ -37,7 +37,7 @@ public class RiskItemTest {
             public final long ID = new Random().nextInt(Integer.MAX_VALUE);
             @Override public Product create() {
                 Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
-                        1814400, 1814400, 184, null, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false);
+                        1814400, 1814400, 184, null, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
                 return product;
             }
         }

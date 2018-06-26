@@ -354,7 +354,7 @@ public class LibraryBean {
 
             Product product = productOrder.getProduct();
             if (product != null) {
-                this.dataType = productOrder.getProduct().getPipelineDataTypeString();
+                this.dataType = productOrder.getProduct().getAggregationDataType();
                 this.product = product.getProductName();
                 ProductFamily family = product.getProductFamily();
                 if (family != null) {
