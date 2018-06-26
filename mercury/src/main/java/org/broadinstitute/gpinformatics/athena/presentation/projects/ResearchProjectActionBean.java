@@ -47,11 +47,14 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
@@ -214,6 +217,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             new TypeReference<List<SubmissionDto>>() {
             };
     private Boolean submissionsServiceAvailable=null;
+
+    private QuoteService quoteService;
 
     public Map<String, String> getBioSamples() {
         return bioSamples;
@@ -448,6 +453,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
 
         validateQuoteId(collaborationQuoteId);
+    }
+
+    private void validateQuoteId(String quoteId) {
+        try {
+            quoteService.getQuoteByAlphaId(quoteId);
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+        }
     }
 
     public Map<String, Long> getResearchProjectCounts() {
@@ -1464,4 +1479,12 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         this.bioProjectList = bioProjectList;
     }
 
+    public QuoteService getQuoteService() {
+        return quoteService;
+    }
+
+    @Inject
+    public void setQuoteService(QuoteService quoteService) {
+        this.quoteService = quoteService;
+    }
 }

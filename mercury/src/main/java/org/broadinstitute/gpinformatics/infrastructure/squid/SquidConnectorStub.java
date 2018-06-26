@@ -8,19 +8,15 @@ import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
 import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
 import edu.mit.broad.prodinfo.bean.generated.OligioGroups;
 import edu.mit.broad.prodinfo.bean.generated.SampleReceptacleGroup;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.inject.Alternative;
 import javax.ws.rs.core.Response;
 
 /**
- * Stub for Squid Connector
+ * Stub for Squid Connector testing (non-CDI managed)
  */
-@Stub
-@Alternative
 public class SquidConnectorStub implements SquidConnector{
 
     @Override

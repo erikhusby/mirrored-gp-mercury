@@ -115,7 +115,7 @@ AS
                 FROM im_event_fact
                WHERE is_delete = 'F' ) im
        WHERE e.lab_event_id = im.lab_event_id
-         AND e.etl_date     < im.etl_date;
+         AND e.etl_date     <= im.etl_date;
 
       IF V_PK_DEL_ARR.COUNT > 0 THEN
         -- Wipe links in LIBRARY_LCSET_SAMPLE_BASE
@@ -688,12 +688,6 @@ AS
       FOR new IN (SELECT * FROM im_lab_metric WHERE is_delete = 'F') LOOP
         BEGIN
 
-          -- RPT-3131 - Delete any older metrics for same vessel
-          DELETE FROM lab_metric
-          WHERE vessel_barcode =  new.vessel_barcode
-                AND quant_type     =  new.quant_type
-                AND run_date       < new.run_date;
-
           SELECT MAX(ETL_DATE)
           INTO V_LATEST_ETL_DATE
           FROM lab_metric
@@ -727,19 +721,12 @@ AS
               lab_vessel_id, vessel_barcode, rack_position,
               decision, decision_date, decider,
               override_reason, etl_date )
-              SELECT new.lab_metric_id,
+              VALUES( new.lab_metric_id,
                 new.quant_type, new.quant_units, new.quant_value,
                 new.run_name, new.run_date,
                 new.lab_vessel_id, new.vessel_barcode, new.rack_position,
                 new.decision, new.decision_date, new.decider,
-                new.override_reason, new.etl_date
-              FROM dual
-              WHERE NOT EXISTS (
-                  SELECT 'Y'
-                  FROM lab_metric
-                  WHERE vessel_barcode =  new.vessel_barcode
-                        AND quant_type     =  new.quant_type
-                        AND run_date       > new.run_date );
+                new.override_reason, new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
 
@@ -1530,61 +1517,68 @@ AS
   PROCEDURE MERGE_EVENT_FACT
   IS
     V_INS_COUNT PLS_INTEGER;
-    V_DO_INSERT CHAR;
+
+    -- There are cases where a fix-up can result in multiple rows in the same file
+    -- (unique by lab_event_id, ef.sample_name, lcset_sample_name, and ef.position)
+    cursor cur_dups is
+      SELECT max(rowid) as rowtokeep, min(line_number) as line_number
+        FROM im_event_fact
+       WHERE is_delete = 'F'
+      GROUP BY lab_event_id, sample_name, lcset_sample_name, position;
+
+    type rowid_arr_ty is table of rowid index by pls_integer;
+    v_rowid_arr rowid_arr_ty;
+
+    type nbr_arr_ty is table of number(10) index by pls_integer;
+    v_nbr_arr nbr_arr_ty;
+
+    v_rowid rowid;
+    V_IDX pls_integer;
+
+    v_etldate DATE;
+
     BEGIN
       V_INS_COUNT := 0;
 
-      FOR new IN (SELECT *
-                  FROM im_event_fact
-                  WHERE is_delete = 'F') LOOP
+      OPEN cur_dups;
+      FETCH cur_dups BULK COLLECT INTO v_rowid_arr, v_nbr_arr;
+      CLOSE cur_dups;
+
+      IF v_rowid_arr.count > 0 THEN
+        -- Only one batch per run - all dates (should be) the same
+        SELECT ETL_DATE INTO v_etldate FROM im_event_fact WHERE ROWNUM < 2;
+
+        -- TODO Bulk collect errors in a single FORALL statement?
+        FOR V_IDX IN v_rowid_arr.FIRST .. v_rowid_arr.LAST LOOP
         BEGIN
+          v_rowid := v_rowid_arr(V_IDX);
           -- All older ETL records deleted from import tables, inserts only
           INSERT INTO event_fact (
-            event_fact_id,
-            lab_event_id,
-            workflow_id,
-            process_id,
-            lab_event_type,
-            product_order_id,
-            sample_name,
-            lcset_sample_name,
-            batch_name,
-            station_name,
-            lab_vessel_id,
-            position,
-            event_date,
-            etl_date,
-            program_name,
-            molecular_indexing_scheme,
-            library_name
-          ) VALUES (
-            event_fact_id_seq.nextval,
-            new.lab_event_id,
-            new.workflow_id,
-            new.process_id,
-            new.lab_event_type,
-            new.product_order_id,
-            new.sample_name,
-            new.lcset_sample_name,
-            new.batch_name,
-            new.station_name,
-            new.lab_vessel_id,
-            new.position,
-            new.event_date,
-            new.etl_date,
-            new.program_name,
-            new.molecular_indexing_scheme,
-            new.library_name );
+            event_fact_id, lab_event_id, workflow_id,
+            process_id, lab_event_type, product_order_id,
+            sample_name, lcset_sample_name, batch_name,
+            station_name, lab_vessel_id, position,
+            event_date, etl_date, program_name,
+            molecular_indexing_scheme, library_name
+          ) SELECT event_fact_id_seq.nextval, lab_event_id, workflow_id,
+                   process_id, lab_event_type, product_order_id,
+                   sample_name, lcset_sample_name, batch_name,
+                   station_name, lab_vessel_id, position,
+                   event_date, etl_date, program_name,
+                   molecular_indexing_scheme, library_name
+              from IM_EVENT_FACT
+             where rowid = v_rowid;
 
           V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
-          EXCEPTION
+        EXCEPTION
           WHEN OTHERS THEN
           errmsg := SQLERRM;
           DBMS_OUTPUT.PUT_LINE(
-              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' || errmsg);
+              TO_CHAR(v_etldate, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || v_nbr_arr(V_IDX) || '  ' || errmsg);
           CONTINUE;
         END;
-      END LOOP;
+        END LOOP;
+      END IF;
       SHOW_ETL_STATS(  0, V_INS_COUNT, 'event_fact' );
     END MERGE_EVENT_FACT;
 
@@ -1597,9 +1591,12 @@ AS
     BEGIN
       V_ANCEST_INS_COUNT := 0;
       -- All older ETL records deleted from import tables, inserts only
-      FOR new IN (SELECT *
-                  FROM im_library_ancestry
-                  WHERE is_delete = 'F') LOOP
+      -- De-duplicate in cases where a fixup may put duplicated events in a single file
+      FOR new IN (SELECT DISTINCT ancestor_event_id, ancestor_library_id, ancestor_library_type,
+                         ancestor_library_creation, child_event_id, child_library_id,
+                         child_library_type, child_library_creation, etl_date
+                    FROM im_library_ancestry
+                   WHERE is_delete = 'F') LOOP
         BEGIN
           INSERT INTO library_ancestry (
             ancestor_event_id, ancestor_library_id, ancestor_library_type, ancestor_library_creation,
@@ -1618,7 +1615,7 @@ AS
           EXCEPTION WHEN OTHERS THEN
           errmsg := SQLERRM;
           DBMS_OUTPUT.PUT_LINE(
-              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_library_ancestry.dat line ' || new.line_number || '  ' || errmsg);
+              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_library_ancestry.dat ancestor/child event ' || new.ancestor_event_id || ' / ' || new.child_event_id || ' : ' || errmsg);
           CONTINUE;
         END;
       END LOOP;
@@ -1703,8 +1700,7 @@ AS
         lab_vessel_id, position,
         'N' as split_on_rehyb
       FROM im_array_process
-      WHERE lab_event_type = 'ArrayPlatingDilution'  -- Sanity - should only be this one type
-            AND is_delete = 'F'
+      WHERE is_delete = 'F'
       UNION ALL
       SELECT LINE_NUMBER, ETL_DATE,
         product_order_id, batch_name, lcset_sample_name, sample_name,

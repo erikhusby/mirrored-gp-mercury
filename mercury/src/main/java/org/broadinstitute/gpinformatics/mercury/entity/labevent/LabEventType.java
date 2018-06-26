@@ -666,12 +666,12 @@ public enum LabEventType {
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).
                     sourceContainerPrefix("Blood").
                     targetVesselTypeGeometries(new VesselTypeGeometry[] {
-                            BarcodedTube.BarcodedTubeType.FluidX_6mL,
-                            BarcodedTube.BarcodedTubeType.FluidX_10mL
+                            BarcodedTube.BarcodedTubeType.Sarstedt_Tube_2mL
                     }).
-                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.Sarstedt_Tube_2mL).
                     targetContainerPrefix("BuffyCoat").
                     targetVolume(true).
+                    requireSingleParticipant(true).
                     build(),
             LibraryType.NONE_ASSIGNED, "_BC", Metadata.Key.TUMOR_NORMAL, "Normal", MaterialType.WHOLE_BLOOD_BUFFY_COAT),
     BLOOD_PLASMA_TRANSFER("BloodPlasmaBuffyTransfer",
@@ -685,14 +685,15 @@ public enum LabEventType {
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
                     targetContainerPrefix("Plasma").
                     secondaryEvent(BLOOD_BUFFY_COAT_TRANSFER).
+                    requireSingleParticipant(true).
                     build(),
             MaterialType.PLASMA_PLASMA, LibraryType.NONE_ASSIGNED),
     PLASMA_CENTRIFUGE("PlasmaCentrifuge",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_EVENT,
-                    RackOfTubes.RackType.FlipperRackRow8,
-                    RackOfTubes.RackType.FlipperRackRow8).build(),
+                    RackOfTubes.RackType.FlipperRackRow24,
+                    RackOfTubes.RackType.FlipperRackRow24).build(),
             LibraryType.NONE_ASSIGNED),
     BLOOD_PLASMA_SECOND_TRANSFER("BloodPlasmaSecondTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -703,8 +704,50 @@ public enum LabEventType {
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetVolume(true).
+                    requireSingleParticipant(true).
                     build(),
             LibraryType.NONE_ASSIGNED, "_P", Metadata.Key.TUMOR_NORMAL, "Tumor", MaterialType.PLASMA_PLASMA),
+    CSF_TRANSFER("CsfTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT,
+                    RackOfTubes.RackType.FlipperRackRow8,
+                    RackOfTubes.RackType.FlipperRackRow8).
+                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).
+                    sourceContainerPrefix("CSFSource").
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
+                    targetContainerPrefix("CSFTarget").
+                    targetVolume(true).
+                    requireSingleParticipant(true).
+                    build(),
+            MaterialType.BODILY_FLUID_CEREBROSPINAL_FLUID, LibraryType.NONE_ASSIGNED),
+    URINE_TRANSFER("UrineTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT,
+                    RackOfTubes.RackType.FlipperRackRow8,
+                    RackOfTubes.RackType.FlipperRackRow8).
+                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).
+                    sourceContainerPrefix("UrineSource").
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
+                    targetContainerPrefix("UrineTarget").
+                    requireSingleParticipant(true).
+                    build(),
+            MaterialType.BODILY_FLUID_URINE, LibraryType.NONE_ASSIGNED),
+    URINE_SECOND_TRANSFER("UrineSecondTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT,
+                    RackOfTubes.RackType.FlipperRackRow8,
+                    RackOfTubes.RackType.FlipperRackRow8).
+                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
+                    sourceContainerPrefix("UrineSource").
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
+                    targetContainerPrefix("UrineTarget").
+                    targetVolume(true).
+                    requireSingleParticipant(true).
+                    build(),
+            MaterialType.BODILY_FLUID_URINE, LibraryType.POOLED),
     BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -1146,7 +1189,7 @@ public enum LabEventType {
     ARRAY_PLATING_DILUTION("ArrayPlatingDilution",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
     SHEARING_ALIQUOT("ShearingAliquot",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -2170,7 +2213,7 @@ public enum LabEventType {
         private int numEvents = 1;
 
         /** Prompts user for reagents. */
-        private String[] reagentNames;
+        private String[] reagentNames = {};
 
         /** Prompts user with a list of machines. */
         private String[] machineNames = {};
@@ -2204,6 +2247,9 @@ public enum LabEventType {
         /** If transfer can be filled from a generated LIMs file from automation. */
         private boolean limsFile = false;
 
+        /** True if all sources in a cherry pick must be from one participant. */
+        private boolean requireSingleParticipant = false;
+
         /** For JAXB */
         public ManualTransferDetails() {
         }
@@ -2235,6 +2281,7 @@ public enum LabEventType {
             sourceVesselTypeGeometries = builder.sourceVesselTypeGeometries;
             targetVesselTypeGeometries = builder.targetVesselTypeGeometries;
             limsFile = builder.limsFile;
+            requireSingleParticipant = builder.requireSingleParticipant;
         }
 
         public static class Builder {
@@ -2264,6 +2311,7 @@ public enum LabEventType {
             private boolean targetExpectedToExist = false;
             private boolean targetExpectedEmpty = true;
             private boolean limsFile = false;
+            private boolean requireSingleParticipant = false;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -2379,6 +2427,11 @@ public enum LabEventType {
 
             public Builder limsFile(boolean limsFile) {
                 this.limsFile = limsFile;
+                return this;
+            }
+
+            public Builder requireSingleParticipant(boolean requireSingleParticipant) {
+                this.requireSingleParticipant = requireSingleParticipant;
                 return this;
             }
 
@@ -2540,6 +2593,10 @@ public enum LabEventType {
 
         public boolean isLimsFile() {
             return limsFile;
+        }
+
+        public boolean isRequireSingleParticipant() {
+            return requireSingleParticipant;
         }
     }
 

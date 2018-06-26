@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,7 +23,11 @@ import java.util.Date;
 import java.util.List;
 
 @Alternative
+@Dependent
 public class SubmissionsWillAlwaysFailSubmissionsService extends SubmissionsServiceStub {
+
+    public SubmissionsWillAlwaysFailSubmissionsService(){}
+
     String[] errors = {"Blame the Sirius Cybernetics Corporation", "I'd make a suggestion, but you wouldn't listen.",
             "Here I am, brain the size of a planet, and they ask me to take you to the bridge. Call that job satisfaction, 'cause I don't."};
     @Override

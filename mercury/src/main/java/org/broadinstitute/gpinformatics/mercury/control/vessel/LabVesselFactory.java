@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -60,9 +61,11 @@ public class LabVesselFactory implements Serializable {
      * @param eventDate         when the action was performed
      * @param labEventType      type of event to create
      *
-     * @return vessels, associated with samples
+     * @return A pair containing 2 lists of lab vessels: <br/>
+     *   Left are primary vessels, e.g. associated with samples for batch starting vessels <br/>
+     *   Right are vessels which may require persisting to support container logic (e.g. tube formations, racks)
      */
-    public List<LabVessel> buildLabVessels(
+    public Pair<List<LabVessel>,List<LabVessel>> buildLabVessels(
             List<ParentVesselBean> parentVesselBeans,
             String userName,
             Date eventDate,
@@ -73,17 +76,51 @@ public class LabVesselFactory implements Serializable {
         for (ParentVesselBean parentVesselBean : parentVesselBeans) {
             barcodes.add(parentVesselBean.getManufacturerBarcode() == null ? parentVesselBean.getSampleId() :
                                  parentVesselBean.getManufacturerBarcode());
+
+            String parentVesselType = parentVesselBean.getVesselType();
+
             if (parentVesselBean.getSampleId() != null) {
                 sampleIds.add(parentVesselBean.getSampleId());
             }
             // todo jmt recurse to support 3-level containers?
             if (parentVesselBean.getChildVesselBeans() != null) {
+
+                // Possibly needed to build tube formation
+                Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+
                 for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
-                    barcodes.add(childVesselBean.getManufacturerBarcode() == null ? childVesselBean.getSampleId() :
-                                         childVesselBean.getManufacturerBarcode());
+
+                    String childBarcode = childVesselBean.getManufacturerBarcode() == null ?
+                            childVesselBean.getSampleId() :
+                            childVesselBean.getManufacturerBarcode();
+                    barcodes.add(childBarcode);
+
                     if (childVesselBean.getSampleId() != null) {
                         sampleIds.add(childVesselBean.getSampleId());
                     }
+
+                    // If rack of tubes, build a tube formation to see if it already exists!
+                    if (parentVesselType.toLowerCase().contains("rack") || parentVesselType.toLowerCase()
+                            .contains("box")
+                        || RackOfTubes.RackType.getByName(parentVesselType) != null) {
+
+                        VesselPosition vesselPosition = VesselPosition.getByName(childVesselBean.getPosition());
+                        if (vesselPosition == null) {
+                            throw new RuntimeException("Unknown vessel position " + childVesselBean.getPosition());
+                        }
+                        BarcodedTube barcodedTube = new BarcodedTube(childBarcode);
+                        mapPositionToTube.put(vesselPosition, barcodedTube);
+                    }
+                }
+
+                if( !mapPositionToTube.isEmpty()) {
+                    RackOfTubes.RackType tubeFormationType = RackOfTubes.RackType.getByName(parentVesselType);
+                    if (tubeFormationType == null) {
+                        tubeFormationType = RackOfTubes.RackType.Matrix96;
+                    }
+                    TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, tubeFormationType);
+                    // Query for existing tube formation
+                    barcodes.add(tubeFormation.getLabel());
                 }
             }
         }
@@ -106,9 +143,11 @@ public class LabVesselFactory implements Serializable {
      * @param userName   the BSP user
      * @param eventDate  when the action was performed
      *
-     * @return vessels, associated with samples
+     * @return A pair containing 2 lists of lab vessels: <br/>
+     *   Left are primary vessels, e.g. associated with samples for batch starting vessels <br/>
+     *   Right are vessels which may require persisting to support container logic (e.g. tube formations, racks)
      */
-    public List<LabVessel> buildInitialLabVessels(String sampleName, String barcode, String userName, Date eventDate,
+    public Pair<List<LabVessel>,List<LabVessel>> buildInitialLabVessels(String sampleName, String barcode, String userName, Date eventDate,
             MercurySample.MetadataSource metadataSource) {
         List<String> barcodes = new ArrayList<>();
         barcodes.add(barcode);
@@ -139,10 +178,12 @@ public class LabVesselFactory implements Serializable {
      * @param parentVesselBeans        top level plastic
      * @param labEventType             type of event to create
      *
-     * @return vessels, associated with samples
+     * @return A pair containing 2 lists of lab vessels: <br/>
+     *   Left are primary vessels, e.g. associated with samples for batch starting vessels <br/>
+     *   Right are vessels which may require persisting to support container logic (e.g. tube formations, racks)
      */
     @DaoFree
-    public List<LabVessel> buildLabVesselDaoFree(
+    public Pair<List<LabVessel>,List<LabVessel>> buildLabVesselDaoFree(
             Map<String, LabVessel> mapBarcodeToVessel,
             Map<String, MercurySample> mapIdToListMercurySample,
             Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples,
@@ -152,7 +193,11 @@ public class LabVesselFactory implements Serializable {
             LabEventType labEventType,
             MercurySample.MetadataSource metadataSource) {
 
-        List<LabVessel> labVessels = new ArrayList<>();
+        // These are directly related to downstream assignments (e.g. batch starting vessels)
+        List<LabVessel> primaryLabVessels = new ArrayList<>();
+        // These require persisting to support container logic (e.g. tube formations, racks)
+        List<LabVessel> secondaryLabVessels = new ArrayList<>();
+
         BspUser bspUser = bspUserList.getByUsername(userName);
         if (bspUser == null) {
             throw new RuntimeException("Failed to find user " + userName);
@@ -185,7 +230,7 @@ public class LabVesselFactory implements Serializable {
                                                                   operator, "BSP"));
                     disambiguator++;
                 }
-                labVessels.add(barcodedTube);
+                primaryLabVessels.add(barcodedTube);
             } else {
                 if (vesselType.toLowerCase().contains("plate")) {
                     StaticPlate.PlateType plateType = StaticPlate.PlateType.getByAutomationName(vesselType);
@@ -200,7 +245,7 @@ public class LabVesselFactory implements Serializable {
                     } else {
                         staticPlate.setName(parentVesselBean.getPlateName());
                     }
-                    labVessels.add(staticPlate);
+                    primaryLabVessels.add(staticPlate);
 
                     for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
                         VesselPosition vesselPosition = VesselPosition.getByName(childVesselBean.getPosition());
@@ -234,6 +279,9 @@ public class LabVesselFactory implements Serializable {
                     } else {
                         rackOfTubes.setName(parentVesselBean.getPlateName());
                     }
+                    // Insure it's persisted
+                    secondaryLabVessels.add(rackOfTubes);
+
                     Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
                     for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
                         VesselPosition vesselPosition = VesselPosition.getByName(childVesselBean.getPosition());
@@ -254,7 +302,7 @@ public class LabVesselFactory implements Serializable {
                         }
                         disambiguator++;
                         mapPositionToTube.put(vesselPosition, barcodedTube);
-                        labVessels.add(barcodedTube);
+                        primaryLabVessels.add(barcodedTube);
                     }
                     RackOfTubes.RackType tubeFormationType = RackOfTubes.RackType.getByName(vesselType);
                     if (tubeFormationType == null) {
@@ -262,6 +310,7 @@ public class LabVesselFactory implements Serializable {
                     }
                     TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, tubeFormationType);
 
+                    // Is there an existing tube formation?
                     TubeFormation existingTubeFormation =
                             (TubeFormation) mapBarcodeToVessel.get(tubeFormation.getLabel());
                     if (existingTubeFormation != null) {
@@ -272,6 +321,8 @@ public class LabVesselFactory implements Serializable {
                         tubeFormation.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
                                 "BSP"));
                     }
+                    // Insure it's persisted
+                    secondaryLabVessels.add(tubeFormation);
                 } else {
                     throw new RuntimeException("Unexpected vessel type with child vessels " +
                                                parentVesselBean.getVesselType());
@@ -279,7 +330,7 @@ public class LabVesselFactory implements Serializable {
             }
         }
 
-        return labVessels;
+        return Pair.of(primaryLabVessels, secondaryLabVessels);
     }
 
     /**

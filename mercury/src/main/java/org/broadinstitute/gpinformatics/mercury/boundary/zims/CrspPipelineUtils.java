@@ -10,11 +10,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Dependent
 public class CrspPipelineUtils {
 
     private Deployment deployment;
@@ -117,7 +119,7 @@ public class CrspPipelineUtils {
      * needs the LSID in this format.  No explicit BSP format check
      * is done here to allow for flexibility in test data.
      */
-    public String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
+    public static String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
         return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
     }
 

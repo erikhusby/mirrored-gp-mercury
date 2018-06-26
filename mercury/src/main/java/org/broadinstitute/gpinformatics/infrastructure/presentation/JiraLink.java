@@ -2,11 +2,13 @@ package org.broadinstitute.gpinformatics.infrastructure.presentation;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
  * This class is used to generate JIRA links for the UI.
  */
+@Dependent
 public class JiraLink {
     private static final String BROWSE = "/browse/";
 

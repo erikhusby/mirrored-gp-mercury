@@ -1005,7 +1005,7 @@
 
         function updateFundsRemaining() {
             var quoteIdentifier = $j("#quote").val();
-            var productOrderKey = $j("input[name='productOrder'").val();
+            var productOrderKey = $j("input[name='productOrder']").val();
             if ($j.trim(quoteIdentifier)) {
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier + "&productOrder=" + productOrderKey,
@@ -1721,6 +1721,21 @@
                     <c:forEach items="${actionBean.chipDefaults}" var="item">
                         <stripes:hidden name="chipDefaults[${item.key}]" value="${item.value}"/>
                     </c:forEach>
+                </c:if>
+
+                <c:if test="${not empty actionBean.editOrder.product}">
+                    <div class="control-group">
+                        <stripes:label for="analyzeUmiOverride" class="control-label">
+                            Analyze UMIs
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:select name="editOrder.analyzeUmiOverride" id="analyzeUmiOverride"
+                                            value="${actionBean.editOrder.getAnalyzeUmiOverride()}">
+                                <stripes:option value="true">True</stripes:option>
+                                <stripes:option value="false">False</stripes:option>
+                            </stripes:select>
+                        </div>
+                    </div>
                 </c:if>
 
                 <div class="control-group">

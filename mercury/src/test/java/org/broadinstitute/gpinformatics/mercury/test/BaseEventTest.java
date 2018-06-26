@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
@@ -18,8 +18,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignation
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -42,6 +43,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BspNewRootHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.CreateLabBatchHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
@@ -186,7 +188,7 @@ public class BaseEventTest {
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         labBatchEJB = new LabBatchEjb();
-        JiraService jiraService = JiraServiceProducer.stubInstance();
+        JiraService jiraService = JiraServiceTestProducer.stubInstance();
         labBatchEJB.setJiraService(jiraService);
         labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDao.class));
 
@@ -204,7 +206,7 @@ public class BaseEventTest {
         labBatchEJB.setWorkflowConfig(new WorkflowLoader().load());
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-        BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
+        BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
         labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
@@ -212,18 +214,18 @@ public class BaseEventTest {
         EmailSender emailSender = new EmailSender();
 
         FlowcellMessageHandler flowcellMessageHandler = new FlowcellMessageHandler();
-        flowcellMessageHandler.setJiraService(JiraServiceProducer.stubInstance());
+        flowcellMessageHandler.setJiraService(JiraServiceTestProducer.stubInstance());
         flowcellMessageHandler.setEmailSender(emailSender);
         flowcellMessageHandler.setAppConfig(appConfig);
 
         FlowcellLoadedHandler flowcellLoadedHandler = new FlowcellLoadedHandler();
-        flowcellLoadedHandler.setJiraService(JiraServiceProducer.stubInstance());
+        flowcellLoadedHandler.setJiraService(JiraServiceTestProducer.stubInstance());
         flowcellLoadedHandler.setEmailSender(emailSender);
         flowcellLoadedHandler.setAppConfig(appConfig);
 
         EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(
                 new DenatureToDilutionTubeHandler(), flowcellMessageHandler, flowcellLoadedHandler,
-                new BspNewRootHandler());
+                new BspNewRootHandler(), new CreateLabBatchHandler());
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
@@ -1027,6 +1029,13 @@ public class BaseEventTest {
                 thenReturn(flowcellDesignations);
         Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
                 thenReturn(flowcellDesignations);
+        AttributeArchetypeDao attributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
+        Mockito.when(attributeArchetypeDao.findWorkflowMetadata(Mockito.anyString())).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return null;
+            }
+        });
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
         sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().load());
@@ -1045,7 +1054,7 @@ public class BaseEventTest {
                 },
                 sequencingTemplateFactory,
                 productOrderDao,
-                crspPipelineUtils, flowcellDesignationEjb
+                crspPipelineUtils, flowcellDesignationEjb, attributeArchetypeDao
         );
     }
 

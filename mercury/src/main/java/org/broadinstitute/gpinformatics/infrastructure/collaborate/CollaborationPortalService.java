@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientServ
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -24,6 +25,7 @@ import javax.ws.rs.core.Response;
  * Service to talk to the CollaborationData Portal.
  */
 @Default
+@Dependent
 public class CollaborationPortalService extends AbstractJerseyClientService {
 
     private static final long serialVersionUID = 5340477906783139812L;
