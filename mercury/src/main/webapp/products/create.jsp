@@ -104,6 +104,26 @@
                     <c:forEach items="${actionBean.genotypingChipInfo}" var="iterator" varStatus="iteratorStatus">
                         addGenotypingChip('${iterator.left}', '${iterator.middle}', '${iterator.right}');
                     </c:forEach>
+
+                    <c:set var="pipelineDataType" value="${actionBean.editProduct.pipelineDataType}"/>;
+                    if ("${pipelineDataType}" !== "") {
+                        <c:set var="dt_type" value="${pipelineDataType.name}"/>
+
+                        // Check if the selected aggregation type is valid
+                        var $pipelineDataTypeOption = $j("#pipelineDataType");
+                        $pipelineDataTypeOption.find("option:contains('${dt_type}')").attr('selected', true);
+                    }
+                    $pipelineDataTypeOption.on("change", function () {
+                        var $selectedOption = $pipelineDataTypeOption.find("option:selected");
+                        var dtActive = !$selectedOption.attr('disabled');
+                        if ($selectedOption != undefined && dtActive === false) {
+                            $pipelineDataTypeOption.addClass("error")
+                        } else {
+                            $pipelineDataTypeOption.removeClass("error")
+                        }
+                        $j("input[name='save']").attr("disabled", $pipelineDataTypeOption.hasClass("error"));
+                    });
+                    $pipelineDataTypeOption.trigger("change");
                 }
             );
 
@@ -585,8 +605,19 @@
                         <div class="control-group">
                             <stripes:label for="aggregationDataType" name="AggregationDataType" class="control-label"/>
                             <div class="controls">
-                                <stripes:text id="aggregationDataType" name="editProduct.aggregationDataType"
-                                              class="defaultText" title="Enter data type to use for aggregation"/>
+                                <stripes:select name="editProduct.pipelineDataType" id="pipelineDataType">
+                                    <stripes:option value="">Choose...</stripes:option>
+                                    <c:forEach items="${actionBean.pipelineDataTypes}" var="dataType">
+                                        <c:choose>
+                                            <c:when test="${actionBean.editProduct.pipelineDataType != null}">
+                                                <stripes:option disabled="${! dataType.active}" value="${dataType.name}">${dataType.name}</stripes:option>
+                                            </c:when>
+                                            <c:when test="${actionBean.editProduct.pipelineDataType == null || actionBean.editProduct.pipelineDataType.active==true}">
+                                                <stripes:option value="${dataType.name}">${dataType.name}</stripes:option>
+                                            </c:when>
+                                        </c:choose>
+                                    </c:forEach>
+                                </stripes:select>
                             </div>
                         </div>
 

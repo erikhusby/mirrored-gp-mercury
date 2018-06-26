@@ -21,12 +21,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineDataTypeDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -102,6 +104,9 @@ public class ProductActionBean extends CoreActionBean {
     private ProductTokenInput addOnTokenInput;
 
     @Inject
+    private PipelineDataTypeDao pipelineDataTypeDao;
+
+    @Inject
     private PriceItemTokenInput priceItemTokenInput;
 
     @Inject
@@ -156,6 +161,7 @@ public class ProductActionBean extends CoreActionBean {
     private String controlsProject;
 
     @ValidateNestedProperties({
+        @Validate(field = "pipelineDataType", converter = PipelineDataTypeConverter.class),
             @Validate(field = "productName", required = true, maxlength = 255, on = {SAVE_ACTION},
                     label = "Product Name"),
             @Validate(field = "partNumber", required = true, maxlength = 255, on = {SAVE_ACTION},
@@ -464,11 +470,10 @@ public class ProductActionBean extends CoreActionBean {
         return createTextResolution(externalPriceItemTokenInput.getExternalJsonString(getQ()));
     }
 
-
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         // Sets paired end non-null when sequencing params are present.
-        if (StringUtils.isNotBlank(editProduct.getAggregationDataType())) {
+        if (editProduct.getPipelineDataType()!=null) {
             editProduct.setPairedEndRead(editProduct.getPairedEndRead());
         }
         productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
@@ -697,6 +702,10 @@ public class ProductActionBean extends CoreActionBean {
         return getDisplayableItemInfo(businessKey, reagentDesignDao);
     }
 
+    public Collection<PipelineDataType> getPipelineDataTypes() {
+        return pipelineDataTypeDao.findAll();
+    }
+
     /**
      * Get the analysis type.
      *
@@ -830,5 +839,4 @@ public class ProductActionBean extends CoreActionBean {
     public boolean isProductUsedInOrders() {
         return productUsedInOrders;
     }
-    
 }

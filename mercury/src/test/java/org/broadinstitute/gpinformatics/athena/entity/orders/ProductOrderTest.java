@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFa
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
@@ -149,7 +148,7 @@ public class ProductOrderTest {
             @Override
             public ProductOrder create() {
                 Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
-                        1814400, 1814400, 184, null, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
+                        1814400, 1814400, 184, null, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false);
                 ResearchProject researchProject =
                         new ResearchProject(ID, PDO_TITLE, "RP title", ResearchProject.IRB_NOT_ENGAGED,
                                             ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
