@@ -85,20 +85,20 @@
                                 </div>
                             </div>
                             <div class="control-group">
-                                <label for="controlsTextArea" class="control-label">Control Barcodes</label>
+                                <label for="controlsTextArea" class="control-label">Lab Vessel Barcodes To Add</label>
                                 <div class="controls">
                                     <textarea id="controlsTextArea" name="controls" cols="80" rows="4">${actionBean.controls}</textarea>
                                 </div>
                             </div>
                             <div class="controls">
-                                <stripes:submit value="Submit" id="scanBtn" class="btn btn-primary"
+                                <stripes:submit value="Submit" id="typeSubmitBtn" class="btn btn-primary"
                                                 name="<%= LcsetActionBean.TYPE_CONTROLS_EVENT %>"/>
                             </div>
                             <c:if test="${not empty actionBean.controlBarcodes or not empty actionBean.addBarcodes or not empty actionBean.removeBarcodes}">
                                 <c:set var="batchName" value="${actionBean.labBatchName}" scope="request"/>
                                 <jsp:include page="lcset_control_confirm.jsp"/>
                                 <div class="controls">
-                                    <stripes:submit value="Confirm" id="confirmBtn" class="btn btn-primary"
+                                    <stripes:submit value="Confirm" id="typeConfirmBtn" class="btn btn-primary"
                                                     name="<%= LcsetActionBean.CONFIRM_TYPED_CONTROLS_EVENT %>"/>
                                 </div>
                             </c:if>

@@ -59,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -648,10 +649,13 @@ public class LabBatchEjb {
         LabBatch labBatch = labBatchDao.findByBusinessKey(labBatchName);
         if (labBatch == null) {
             messageCollection.addError("Failed to find " + labBatchName);
-            return new ValidateRackScanReturn(Collections.emptyList(), null, null);
+            return new ValidateRackScanReturn(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         }
         if (labBatch.getBatchName().startsWith("LCSET")) {
             messageCollection.addError("LCSETs must be rack scanned to add controls.");
+        }
+        if (!labBatch.getWorkflowName().equals(Workflow.DNA_RNA_EXTRACTION_STOOL.getWorkflowName())) {
+            messageCollection.addError("Only available for DNA and RNA from Stool");
         }
         Map<String, LabVessel> mapBarcodeToTube = tubeDao.findByBarcodes(parsedControls);
         List<Control> controls = controlDao.findAllActive();
@@ -683,6 +687,10 @@ public class LabBatchEjb {
             LabVessel barcodedTube = entry.getValue();
             buildSamplesToAddAndRemove(labBatchName, controlAliases, barcodedTube, controlTubes,
                     addTubes, bucketEntries, mapBarcodeToSampleInfo, mapSampleNameToData, messageCollection);
+        }
+
+        if (messageCollection.hasErrors()) {
+            return new ValidateRackScanReturn(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         }
 
         return new ValidateRackScanReturn(controlTubes, addTubes, null);
@@ -797,9 +805,19 @@ public class LabBatchEjb {
                         break;
                     }
                 }
+                // Check pending buckets for XTR tickets
+                if (!found) {
+                    for (BucketEntry bucketEntry : sampleInstance.getPendingBucketEntries()) {
+                        bucketEntries.add(bucketEntry);
+                        if (bucketEntry.getProductOrder().getProduct().getWorkflow() == Workflow.DNA_RNA_EXTRACTION_STOOL) {
+                            addAndRemoveSamples = true;
+                        }
+                        break;
+                    }
+                }
                 if (controlAliases.contains(sampleData.getCollaboratorParticipantId())) {
                     if (found) {
-                        messageCollection.addWarning(barcodedTube.getLabel() +  " is already in this LCSET");
+                        messageCollection.addWarning(barcodedTube.getLabel() +  " is already in this Lab Batch");
                     } else {
                         controlTubes.add(barcodedTube);
                     }
@@ -808,7 +826,7 @@ public class LabBatchEjb {
                         if (addAndRemoveSamples) {
                             addTubes.add(barcodedTube);
                         } else {
-                            messageCollection.addError(barcodedTube.getLabel() + " is not in this LCSET");
+                            messageCollection.addError(barcodedTube.getLabel() + " is not in this Lab Batch");
                         }
                     }
                 }
@@ -846,19 +864,16 @@ public class LabBatchEjb {
      * @param messageReporter action bean
      * @param addBarcodes tubes added to the rack since the LCSET was created
      * @param removeBarcodes tubes removed from the rack since the LCSET was created
-     * @param rackScan map from position to barcode
-     * @param rackBarcode needed to update layout in BSP
-     * @param userBean logged in user
      */
-    public void updateLcsetFromScan(String lcsetName, List<String> controlBarcodes, MessageReporter messageReporter,
-            Collection<String> addBarcodes, List<String> removeBarcodes, Map<String, String> rackScan,
-            String rackBarcode, UserBean userBean) {
+    public Map<String, BarcodedTube> updateLcsetFromScan(String lcsetName, List<String> controlBarcodes,
+            MessageReporter messageReporter, Collection<String> addBarcodes, List<String> removeBarcodes,
+            List<String> allBarcodes) {
 
         // Reflect addition of control tubes by re-array
         addControlsToLcset(lcsetName, controlBarcodes);
 
         // Add to batch
-        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(rackScan.values());
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(allBarcodes);
         mapBarcodeToTube.putAll(barcodedTubeDao.findByBarcodes(removeBarcodes));
         List<Long> bucketEntryIds = new ArrayList<>();
         String bucketName = null;
@@ -901,8 +916,23 @@ public class LabBatchEjb {
                 throw new RuntimeException(e);
             }
         }
+        return mapBarcodeToTube;
+    }
 
-        // Determine whether rack needs to be exported from BSP
+    /**
+     * Exports an LCSET after it is scanned on the LCSET Controls page.  Actions are:
+     * <ul>
+     * <li>update rack layout in BSP (controls are not added through automation)</li>
+     * <li>auto-export from BSP to Mercury</li>
+     * </ul>
+     * @param mapBarcodeToTube map from position to barcode
+     * @param rackBarcode needed to update layout in BSP
+     * @param rackScan map from position to barcode
+     * @param userBean logged in user
+     * @param messageReporter action bean
+     */
+    public void exportRack(Map<String, BarcodedTube> mapBarcodeToTube, String rackBarcode,
+                                Map<String, String> rackScan, UserBean userBean, MessageReporter messageReporter) {
         List<LabVessel> bspTubes = new ArrayList<>();
         for (String barcode : rackScan.values()) {
             BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);

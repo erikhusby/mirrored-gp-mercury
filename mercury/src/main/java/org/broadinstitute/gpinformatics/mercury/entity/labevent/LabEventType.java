@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -835,10 +836,10 @@ public enum LabEventType {
                     RackOfTubes.RackType.Eppendorf12x8BoxWell,
                     StaticPlate.PlateType.Plate96WellPowerBead).
                     targetSection(SBSSection.ALL96).
-                    sourceSection(SBSSection.ALL96)
-                    .sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.Cryovial2018)
-                    .build(),
-            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+                    sourceSection(SBSSection.ALL96).targetWellTypeGeometry(PlateWell.WellType.Well2000).
+                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.Cryovial2018).sourceMassRemoved(true).
+                    build(),
+            LibraryType.NONE_ASSIGNED),
     STOOL_BEAD_BEATING("BeadBeating",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -2311,6 +2312,9 @@ public enum LabEventType {
         /** Whether to allow entry of target volumes. */
         private boolean targetVolume;
 
+        /** Whether to allow entry of target mass. */
+        private boolean sourceMassRemoved;
+
         /** For containers that don't have barcodes (e.g. flipper racks), the prefix to the synthetic barcode. */
         private String targetContainerPrefix;
 
@@ -2352,6 +2356,12 @@ public enum LabEventType {
         /** For target rack geometries, specifies the type of tube in the rack */
         private BarcodedTube.BarcodedTubeType targetBarcodedTubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
 
+        @XmlTransient
+        private VesselTypeGeometry targetWellTypeGeometry;
+
+        /** For Jaxb **/
+        private String targetWellTypeString;
+
         /** Allows a transfer from one source to two destinations */
         private LabEventType secondaryEvent;
 
@@ -2386,6 +2396,7 @@ public enum LabEventType {
             targetBarcodedTubeType = builder.targetBarcodedTubeType;
             targetSection = builder.targetSection;
             targetVolume = builder.targetVolume;
+            sourceMassRemoved = builder.sourceMassRemoved;
             targetContainerPrefix = builder.targetContainerPrefix;
             reagentFieldCounts = builder.reagentFieldCounts;
             expirationDateIncluded = builder.expirationDateIncluded;
@@ -2402,12 +2413,14 @@ public enum LabEventType {
             targetVesselTypeGeometries = builder.targetVesselTypeGeometries;
             limsFile = builder.limsFile;
             requireSingleParticipant = builder.requireSingleParticipant;
+            targetWellTypeGeometry = builder.targetWellTypeGeometry;
         }
 
         public static class Builder {
             private final MessageType messageType;
             private final VesselTypeGeometry sourceVesselTypeGeometry;
             private final VesselTypeGeometry targetVesselTypeGeometry;
+            private VesselTypeGeometry targetWellTypeGeometry;
 
             private SBSSection sourceSection;
             private SBSSection targetSection;
@@ -2423,6 +2436,7 @@ public enum LabEventType {
             private VesselTypeGeometry[] targetVesselTypeGeometries = {};
             private BarcodedTube.BarcodedTubeType targetBarcodedTubeType;
             private boolean targetVolume;
+            private boolean sourceMassRemoved;
             private String targetContainerPrefix;
             private LabEventType secondaryEvent;
             private LabEventType repeatedEvent;
@@ -2510,6 +2524,11 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder sourceMassRemoved(boolean sourceMassRemoved) {
+                this.sourceMassRemoved = sourceMassRemoved;
+                return this;
+            }
+
             public Builder targetContainerPrefix(String targetContainerPrefix) {
                 this.targetContainerPrefix = targetContainerPrefix;
                 return this;
@@ -2555,6 +2574,11 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder targetWellTypeGeometry(PlateWell.WellType wellType) {
+                this.targetWellTypeGeometry = wellType;
+                return this;
+            }
+
             public ManualTransferDetails build() {
                 return new ManualTransferDetails(this);
             }
@@ -2583,6 +2607,9 @@ public enum LabEventType {
                     break;
                 case "BarcodedTubeType":
                     vesselTypeGeometry = BarcodedTube.BarcodedTubeType.getByAutomationName(strings[1]);
+                    break;
+                case "WellType":
+                    vesselTypeGeometry = PlateWell.WellType.getByAutomationName(strings[1]);
                     break;
                 default:
                     throw new RuntimeException("Unknown type " + strings[0]);
@@ -2615,6 +2642,10 @@ public enum LabEventType {
 
         public boolean targetVolume() {
             return targetVolume;
+        }
+
+        public boolean sourceMassRemoved() {
+            return sourceMassRemoved;
         }
 
         public String getTargetContainerPrefix() {
@@ -2671,6 +2702,13 @@ public enum LabEventType {
 
         public BarcodedTube.BarcodedTubeType getTargetBarcodedTubeType() {
             return targetBarcodedTubeType;
+        }
+
+        public VesselTypeGeometry getTargetWellType() {
+            if (targetWellTypeGeometry == null && targetWellTypeString != null) {
+                targetWellTypeGeometry = convertGeometryString(targetWellTypeString);
+            }
+            return targetWellTypeGeometry;
         }
 
         public int[] getReagentFieldCounts() {

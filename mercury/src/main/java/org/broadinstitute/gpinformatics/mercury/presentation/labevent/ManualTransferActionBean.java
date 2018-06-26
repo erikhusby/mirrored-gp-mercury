@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -42,6 +43,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParser;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -50,12 +52,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -129,6 +131,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private LimsFileType limsFileType;
 
     private boolean isParseLimsFile;
+
+    private Map<VesselPosition, Boolean> mapPositionToDepleteFlag;
+
+    private Map<Integer, Boolean> depleteAll;
 
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
@@ -878,9 +884,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             }
                         }
                     }
-                    // TODO don't complain if its a control and lab batch isn't LCSET?
                     if (labBatch != null && direction == Direction.SOURCE &&
-                            !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
+                            !labVessel.getWorkflowLabBatches().contains(labBatch)) {
                         messageCollection.addError(direction.getText() + " " + barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
@@ -1048,6 +1053,17 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         plateTransferEventType.setSourcePlate(firstPlateTransferEventType.getSourcePlate());
                         plateTransferEventType.setSourcePositionMap(firstPlateTransferEventType.getSourcePositionMap());
                     }
+                    if (manualTransferDetails.getTargetWellType() != null &&
+                        manualTransferDetails.getTargetWellType() != PlateWell.WellType.None) {
+                        addWellTypes(plateTransferEventType, plateTransferEventType.getPlate().getBarcode(),
+                                manualTransferDetails.getTargetVesselTypeGeometry(), manualTransferDetails.getTargetWellType());
+                    }
+                    if (manualTransferDetails.sourceMassRemoved()) {
+                        addMass(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getPositionMap());
+                        boolean depleteAll = getDepleteAll() != null && getDepleteAll().containsKey(eventIndex) &&
+                                             getDepleteAll().get(eventIndex);
+                        addDepleteMetadata(plateTransferEventType.getSourcePositionMap(), depleteAll);
+                    }
                     bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
                 } else if (stationEvent instanceof PlateEventType) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
@@ -1099,6 +1115,58 @@ public class ManualTransferActionBean extends RackScanActionBean {
             }
         }
         return bettaLIMSMessage;
+    }
+
+    /**
+     * For plates, add a Well Type to position map in order to include things later like Volume, Concentration, or Mass.
+     */
+    private void addWellTypes(PlateEventType plateEventType, String plateBarcode, VesselTypeGeometry vesselTypeGeometry,
+                              VesselTypeGeometry targetWellType) {
+        if (plateEventType.getPositionMap() == null) {
+            plateEventType.setPositionMap(new PositionMapType());
+            plateEventType.getPositionMap().setBarcode(plateBarcode);
+        }
+        for (VesselPosition vesselPosition: vesselTypeGeometry.getVesselGeometry().getVesselPositions()) {
+            ReceptacleType receptacleType = new ReceptacleType();
+            String wellType = PlateWell.WellType.getByDisplayName(targetWellType.getDisplayName()).getAutomationName();
+            receptacleType.setReceptacleType(wellType);
+            receptacleType.setPosition(vesselPosition.name());
+            plateEventType.getPositionMap().getReceptacle().add(receptacleType);
+        }
+    }
+
+    private void addMass(PositionMapType sourcePositionMap, PositionMapType positionMapType) {
+        if (positionMapType != null) {
+            for (ReceptacleType receptacleType: positionMapType.getReceptacle()) {
+                for (ReceptacleType sourceReceptacle: sourcePositionMap.getReceptacle()) {
+                    if (receptacleType.getPosition() != null &&
+                        receptacleType.getPosition().equals(sourceReceptacle.getPosition())) {
+                        receptacleType.setMass(sourceReceptacle.getMass());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * User can deplete all via a checkbox at top, or individually on a well level, priority being check all at top.
+     * @param positionMapType - position map to update receptacle metadata tag.
+     * @param depleteAll - if for given event the user selected deplete all checkbox.
+     */
+    private void addDepleteMetadata(PositionMapType positionMapType, boolean depleteAll) {
+        if (mapPositionToDepleteFlag == null && !depleteAll) {
+            return;
+        }
+        for (ReceptacleType receptacleType: positionMapType.getReceptacle()) {
+            VesselPosition vesselPosition = VesselPosition.getByName(receptacleType.getPosition());
+            if (depleteAll || mapPositionToDepleteFlag.containsKey(vesselPosition)) {
+                MetadataType depleteMeta = new MetadataType();
+                Boolean depleteFlag = depleteAll || mapPositionToDepleteFlag.get(vesselPosition);
+                depleteMeta.setName(Metadata.Key.DEPLETE_WELL.getDisplayName());
+                depleteMeta.setValue(String.valueOf(depleteFlag));
+                receptacleType.getMetadata().add(depleteMeta);
+            }
+        }
     }
 
     private void cleanupPositionMap(PositionMapType positionMapType, PlateType plate,
@@ -1269,5 +1337,21 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     public void setParseLimsFile(boolean parseLimsFile) {
         isParseLimsFile = parseLimsFile;
+    }
+
+    public Map<VesselPosition, Boolean> getMapPositionToDepleteFlag() {
+        return mapPositionToDepleteFlag;
+    }
+
+    public void setMapPositionToDepleteFlag(Map<VesselPosition, Boolean> mapPositionToDepleteFlag) {
+        this.mapPositionToDepleteFlag = mapPositionToDepleteFlag;
+    }
+
+    public Map<Integer, Boolean> getDepleteAll() {
+        return depleteAll;
+    }
+
+    public void setDepleteAll(Map<Integer, Boolean> depleteAll) {
+        this.depleteAll = depleteAll;
     }
 }
