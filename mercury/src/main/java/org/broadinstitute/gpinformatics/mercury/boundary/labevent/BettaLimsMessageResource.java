@@ -68,8 +68,8 @@ import java.util.Set;
  * defined by bettalims.xsd.  There is a BettaLIMS server that is part of the Squid suite of applications.
  */
 @Path("/bettalimsmessage")
-@Stateful
 @RequestScoped
+@Stateful
 public class BettaLimsMessageResource {
 
     /**
@@ -120,6 +120,7 @@ public class BettaLimsMessageResource {
     }
 
     @PostConstruct
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void postConstructor() {
         // Does the one-time lab event setup that is needed when processing messages.
         LabEvent.setupEventTypesThatCanFollowBucket(workflowConfig);

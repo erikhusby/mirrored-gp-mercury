@@ -48,10 +48,10 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTe
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -65,6 +65,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Dependent
 public class SequencingTemplateFactory {
     @Inject
     private IlluminaFlowcellDao illuminaFlowcellDao;
@@ -646,7 +647,7 @@ public class SequencingTemplateFactory {
         }
         boolean mixedFlowcellOk = false;
         for (Product product : products) {
-            if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
+            if (Objects.equals(product.getPipelineDataTypeString(), Aggregation.DATA_TYPE_WGS)) {
                 mixedFlowcellOk = true;
                 break;
             }

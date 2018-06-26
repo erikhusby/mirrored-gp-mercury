@@ -37,6 +37,8 @@ public class Aggregation {
     public static final String DATA_TYPE_EXOME = "Exome";
     public static final String DATA_TYPE_RNA = "RNA";
     public static final String DATA_TYPE_WGS = "WGS";
+    public static final String DATA_TYPE_10X_WGS = "10X_WGS";
+
     @SuppressWarnings("unused")
     @Id @Column(name = "ID")
     private Integer id;

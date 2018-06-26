@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsEmptyCollection.emptyCollectionOf;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, singleThreaded = true)
 public class SubmissionsServiceImplTest {
 
     private static int sequenceNumber = 1;

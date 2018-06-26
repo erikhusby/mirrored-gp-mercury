@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +27,10 @@ public class BioProjectServiceDownTest {
     }
 
     @Alternative
+    @Dependent
     public static final class SubmissionsServiceThatRefusesConnections implements SubmissionsService {
+
+        public SubmissionsServiceThatRefusesConnections(){}
 
         private static final ConnectionException CONNECTION_REFUSED_EXCEPTION =  new ConnectionException("Connection refused, dude.");
 

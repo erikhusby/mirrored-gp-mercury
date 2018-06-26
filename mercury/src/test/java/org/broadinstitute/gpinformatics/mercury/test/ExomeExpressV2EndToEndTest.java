@@ -7,10 +7,10 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -89,7 +89,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-        BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
+        BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
         LabEventFactory labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
 
         labEventFactory.setEventHandlerSelector(getLabEventFactory().getEventHandlerSelector());
@@ -101,7 +101,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                                                                     "Test product family"), "test", "1234", null, null,
                                                                     10000, 20000, 100,
                                                                     40, null, null, true,
-                                                                    Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
+                                                                    Workflow.AGILENT_EXOME_EXPRESS, false),
                                                             new ResearchProject(101L, "Test RP", "Test synopsis",
                                                                                 false,
                                                                                 ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
@@ -112,7 +112,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceTestProducer.stubInstance());
 
         LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
         labBatchEJB.setTubeDao(tubeDao);

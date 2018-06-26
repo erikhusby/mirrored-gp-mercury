@@ -5,12 +5,12 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -56,7 +56,7 @@ public class LabBatchTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, workflow, false, "agg type"),
+                40, null, null, true, workflow, false),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false, ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         productOrder.setJiraTicketKey(pdoBusinessName);
@@ -130,7 +130,7 @@ public class LabBatchTest {
         Assert.assertNotNull(testBatch.getCreatedOn());
         Assert.assertEquals(formatter.format(new Date()), formatter.format(testBatch.getCreatedOn()));
 
-        testBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), testLCSetTicketKey));
+        testBatch.setJiraTicket(new JiraTicket(JiraServiceTestProducer.stubInstance(), testLCSetTicketKey));
 
         Assert.assertNotNull(testBatch.getJiraTicket());
 

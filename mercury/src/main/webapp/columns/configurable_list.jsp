@@ -36,6 +36,12 @@
 <%-- Render a DataTable (only useful if there is only one page, disables server-side Excel and paging) --%>
 <%--@elvariable id="dataTable" type="java.lang.Boolean"--%>
 
+<%-- call jQuery to initialize the datatable: true if null (useful if calling script wants to initialize differently) --%>
+<%--@elvariable id="loadDatatable" type="java.lang.Boolean"--%>
+
+<%-- show 'jump to end' hyperlink, defaults to true if null --%>
+<%--@elvariable id="showJumpToEnd" type="java.lang.Boolean"--%>
+
 <script type="text/javascript">
     atLeastOneChecked = function (name, form) {
         var checkboxes = $j( ":checkbox", form );
@@ -67,7 +73,7 @@
     Count: ${resultList.resultRows[0].sortableCells[0]}
 </c:when>
 <c:otherwise>
-<c:if test="${fn:length(resultList.resultRows) > 0}">
+<c:if test="${fn:length(resultList.resultRows) > 0 && (showJumpToEnd == null || showJumpToEnd)}">
     <div class="control-group"><a href="#search${entityName}ListEnd">Jump to end</a></div>
 </c:if>
 
@@ -294,13 +300,15 @@
 </c:if>
 <c:if test="${dataTable}">
     <script type="text/javascript">
-        $j('#${entityName}ResultsTable').dataTable({
-            "oTableTools": ttExportDefines,
-            "aoColumnDefs" : [
-                { "bSortable": false, "aTargets": "no-sort" },
-                { "bSortable": true, "sType": "numeric", "aTargets": "sort-numeric" }
-            ]
-        });
+        if (${loadDatatable == null || loadDatatable}) {
+            $j('#${entityName}ResultsTable').dataTable({
+                "oTableTools": ttExportDefines,
+                "aoColumnDefs" : [
+                    { "bSortable": false, "aTargets": "no-sort" },
+                    { "bSortable": true, "sType": "numeric", "aTargets": "sort-numeric" }
+                ]
+            });
+        }
     </script>
 </c:if>
 </c:otherwise>

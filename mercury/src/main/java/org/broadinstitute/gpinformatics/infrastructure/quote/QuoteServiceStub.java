@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -11,14 +12,13 @@ import java.util.Set;
 
 @Stub
 @Alternative
+@ApplicationScoped
 public class QuoteServiceStub implements QuoteService {
 
     private static int workItemId = 1;
     private static volatile int invocationCount = 0;
 
-    public QuoteServiceStub() {
-
-    }
+    public QuoteServiceStub() {}
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {

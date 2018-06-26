@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.QpcrRunBean;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.ws.rs.core.Response;
 
@@ -12,7 +13,10 @@ import javax.ws.rs.core.Response;
  */
 @Stub
 @Alternative
+@Dependent
 public class BettaLimsConnectorStub implements BettaLimsConnector {
+
+    public BettaLimsConnectorStub(){}
 
     @Override
     public BettaLimsResponse sendMessage(String message) {

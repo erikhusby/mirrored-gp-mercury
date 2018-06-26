@@ -75,9 +75,9 @@ import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventT
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.PREFLIGHT_CLEANUP;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.SAMPLE_RECEIPT;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Mockito.mock;
@@ -287,12 +287,11 @@ public class SystemRouterTest extends BaseEventTest {
 
         ProductFamily family = new ProductFamily("Test Product Family");
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
-                                  0, 0, 0, 0, "Test samples only", "None", true, Workflow.WHOLE_GENOME, false,
-                                  "agg type");
+                                  0, 0, 0, 0, "Test samples only", "None", true, Workflow.WHOLE_GENOME, false);
 
         exomeExpress = new Product("Exome Express", family, "Exome express", "P-EX-1", new Date(), new Date(),
                                    0, 0, 0, 0, "Test exome express samples only", "None", true,
-                                   Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
+                                   Workflow.AGILENT_EXOME_EXPRESS, false);
 
         picoBucket = new Bucket("Pico/Plating Bucket");
     }

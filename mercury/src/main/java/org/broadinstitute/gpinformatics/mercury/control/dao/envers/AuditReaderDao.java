@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
-import com.sun.xml.ws.developer.Stateful;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -17,12 +16,13 @@ import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
-import org.hibernate.envers.query.order.PropertyAuditOrder;
-import org.hibernate.envers.query.property.RevisionPropertyPropertyName;
+import org.hibernate.envers.query.internal.property.RevisionPropertyPropertyName;
+import org.hibernate.envers.query.order.internal.PropertyAuditOrder;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TimestampType;
 
+import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;

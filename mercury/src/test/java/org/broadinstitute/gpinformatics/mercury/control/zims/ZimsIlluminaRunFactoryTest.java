@@ -4,6 +4,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -14,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -21,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
@@ -37,9 +40,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.WorkflowMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -55,6 +60,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.SubmissionMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
@@ -62,12 +68,15 @@ import org.broadinstitute.gpinformatics.mercury.test.CrspControlsTestUtils;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -79,10 +88,10 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 // TODO: extend and use capabilities of BaseEventTest
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -103,6 +112,7 @@ public class ZimsIlluminaRunFactoryTest {
     private static final short LANE_NUMBER = 1;
     private final Map<String, SampleData> mapSampleIdToDto = new HashMap<>();
     private final Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
+    private final Map<String, WorkflowMetadata> mapWorkflowToMetadata = new HashMap<>();
     private final List<String> testSampleIds = new ArrayList<>();
     private BarcodedTube testTube;
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
@@ -158,15 +168,22 @@ public class ZimsIlluminaRunFactoryTest {
         // Create a test product
         testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                                           "P-EX-0011", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
-                                          true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
+                                          true, Workflow.AGILENT_EXOME_EXPRESS, false, new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true));
         ResearchProject positiveControlResearchProject = new ResearchProject(101L, "Positive controls",
                 "Positive Controls", false, ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
         positiveControlResearchProject.setJiraTicketKey("RP-805");
         testProduct.setPositiveControlResearchProject(positiveControlResearchProject);
         testProduct.setAnalysisTypeKey("HybridSelection.Resequencing");
-
+        AttributeArchetypeDao attributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
+        Mockito.when(attributeArchetypeDao.findWorkflowMetadata(Mockito.anyString())).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return null;
+            }
+        });
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
-                sequencingTemplateFactory, productOrderDao, crspPipelineUtils, flowcellDesignationEjb);
+                sequencingTemplateFactory, productOrderDao, crspPipelineUtils, flowcellDesignationEjb,
+                attributeArchetypeDao);
 
         // Create a test research project
         testResearchProject = new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true,
@@ -321,7 +338,7 @@ public class ZimsIlluminaRunFactoryTest {
                                         LabBatch.LabBatchType.BSP);
         try {
             List<LibraryBean> zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
-                    instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                    instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, mapWorkflowToMetadata);
 
         } catch (RuntimeException r) {
             assertThat(r.getLocalizedMessage(), equalTo("Expected one LabBatch but found 2."));
@@ -565,7 +582,7 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(instanceDtoList.size(), equalTo(numSampleInstancesExpected));
 
         List<LibraryBean>  zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
-                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, mapWorkflowToMetadata);
 
         int numPositiveControls = 0;
         boolean foundNonControlSamples = false;
@@ -627,7 +644,7 @@ public class ZimsIlluminaRunFactoryTest {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
                 createSampleInstanceDto(false, LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.BSP);
         List<LibraryBean>  zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
-                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, mapWorkflowToMetadata);
 
         boolean found = false;
         for (LibraryBean libraryBean : zimsIlluminaRuns) {
@@ -660,7 +677,7 @@ public class ZimsIlluminaRunFactoryTest {
                 createSampleInstanceDto(true, LabBatch.LabBatchType.WORKFLOW);
 
         List<LibraryBean>  libraryBeans = zimsIlluminaRunFactory.makeLibraryBeans(
-                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, controlMap);
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, controlMap, mapWorkflowToMetadata);
 
         boolean hasPositiveControl = false;
         for (LibraryBean libraryBean : libraryBeans) {
@@ -689,7 +706,7 @@ public class ZimsIlluminaRunFactoryTest {
                 createSampleInstanceDto(true, LabBatch.LabBatchType.WORKFLOW);
 
         List<LibraryBean> libraryBeans = zimsIlluminaRunFactory.makeLibraryBeans(
-                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, controlMap);
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, controlMap, mapWorkflowToMetadata);
 
         for (LibraryBean libraryBean : libraryBeans) {
             Assert.assertNull(libraryBean.getAligner());
@@ -713,7 +730,7 @@ public class ZimsIlluminaRunFactoryTest {
 
         // First tests that no consolidation happens, because the sample names are different.
         List<LibraryBean> unconsolidatedBeans1 = zimsIlluminaRunFactory.makeLibraryBeans(dtoList1,
-                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, mapWorkflowToMetadata);
         assertThat(unconsolidatedBeans1.size(), equalTo(testSampleIds.size()));
 
 
@@ -725,7 +742,7 @@ public class ZimsIlluminaRunFactoryTest {
 
         // Second tests no consolidation of same sample, different molecular name dtos.
         List<LibraryBean> unconsolidatedBeans2 = zimsIlluminaRunFactory.makeLibraryBeans(dtoList2,
-                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, mapWorkflowToMetadata);
         assertThat(unconsolidatedBeans2.size(), equalTo(testSampleIds.size()));
 
         // Using the dto list with first two dtos having same sampleId, make all the molecular index names the same.
@@ -734,10 +751,41 @@ public class ZimsIlluminaRunFactoryTest {
             dto.getSampleInstance().addReagent(reagents.get(0));
         }
 
+
         // Tests consolidation of the first two dtos.
         List<LibraryBean> consolidatedBeans = zimsIlluminaRunFactory.makeLibraryBeans(dtoList2,
-                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, mapWorkflowToMetadata);
         assertThat(consolidatedBeans.size(), equalTo(testSampleIds.size() - 1));
+    }
+
+    public void testSubmissionsMetadata() {
+        AttributeDefinition lcPrepKitAttr = new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                "workflowMetadata", "library_preparation_kit_name", true);
+        AttributeDefinition targetCaptureAttr = new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                "workflowMetadata", "target_capture_kit_vendor", true);
+        WorkflowMetadata workflowMetadata = new WorkflowMetadata("Submissions", Arrays.asList(
+                lcPrepKitAttr, targetCaptureAttr
+        ));
+        workflowMetadata.addOrSetAttribute("library_preparation_kit_name", "KAPA");
+        workflowMetadata.addOrSetAttribute("target_capture_kit_vendor", "Illumina");
+        mapWorkflowToMetadata.put("Agilent Exome Express", workflowMetadata);
+
+        List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
+                createSampleInstanceDto(true, LabBatch.LabBatchType.WORKFLOW);
+
+        List<LibraryBean> libraryBeans = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, controlMap, mapWorkflowToMetadata);
+
+        Map<String, String> mapSubmissionResultsToValue = new HashMap<>();
+        for (LibraryBean libraryBean : libraryBeans) {
+            for (SubmissionMetadata submissionMetadata: libraryBean.getSubmissionMetadata()) {
+                mapSubmissionResultsToValue.put(submissionMetadata.getKey(), submissionMetadata.getValue());
+            }
+        }
+        Assert.assertEquals(mapSubmissionResultsToValue.size(), 2);
+        Assert.assertEquals(mapSubmissionResultsToValue.get("library_preparation_kit_name"), "KAPA");
+        Assert.assertEquals(mapSubmissionResultsToValue.get("target_capture_kit_vendor"), "Illumina");
+
     }
 
     /** Creates some reagents having molecular barcodes for test purposes. */
