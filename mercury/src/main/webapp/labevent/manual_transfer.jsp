@@ -59,8 +59,9 @@
                 $j.validator.classRuleSettings.unique = { unique: true };
                 $j("#transferForm").validate();
 
-                var camHeight = 612;//$(window).height() - 60;
-                var camWidth = 816;//$(window).width() - 60;//
+                //video: {width: {min: 1280}, height: {min: 720}}
+                var camHeight = 720;//$(window).height() - 60;
+                var camWidth = 1280;//$(window).width() - 60;//
                 var camInitialized = false;
                 var barcodeCounter = 0;
                 $j("#camera_overlay").dialog({
@@ -201,8 +202,11 @@
                     }
                 });
                 function initializeCamera() {
+                    var hdConstraints = {
+                        video: {width: {min: 1280}, height: {min: 720}}
+                    };
                     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                        navigator.mediaDevices.getUserMedia({video: true}).then(function (stream) {
+                        navigator.mediaDevices.getUserMedia(hdConstraints).then(function (stream) {
                             var video = $j('<video id="video" width="' + camWidth + '" height="' + camHeight + '" autoplay></video>');
                             $j("#camera_overlay").append(video);
                             var canvas = $j('<canvas id="canvas" width="' + camWidth + '" height="' + camHeight + '"></canvas>').hide();
