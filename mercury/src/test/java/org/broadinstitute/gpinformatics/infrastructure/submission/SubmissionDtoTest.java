@@ -19,13 +19,10 @@ import org.hamcrest.Matchers;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SubmissionDtoTest {
@@ -57,8 +54,8 @@ public class SubmissionDtoTest {
         assertThat(submissionDTO.getAggregation(), is(Matchers.notNullValue()));
 
         assertThat(submissionDTO.getSampleName(), equalTo(TEST_SAMPLE));
-//        assertThat(submissionDTO.getBioSample());
-        assertThat(submissionDTO.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
+        assertThat(submissionDTO.getDataType(),
+            equalTo(SubmissionLibraryDescriptor.getNormalizedLibraryName(Aggregation.DATA_TYPE_EXOME)));
         assertThat(submissionDTO.getProductOrders(), containsInAnyOrder(PRODUCT_ORDER_ID));
         assertThat(submissionDTO.getAggregationProject(), equalTo(AGGREGATION_PROJECT));
         assertThat(submissionDTO.getVersion(), equalTo(VERSION));
@@ -67,8 +64,6 @@ public class SubmissionDtoTest {
         assertThat(submissionDTO.getContaminationString(), equalTo(CONTAMINATION_STRING));
         assertThat(submissionDTO.getFingerprintLOD(), equalTo(FINGERPRINT_LOD));
         assertThat(submissionDTO.getLanesInAggregation(), Matchers.equalTo(2));
-//        assertThat(submissionDTO.getBlacklistedLanes(), blacklistedLanes);
-//        assertThat(submissionDTO.getSubmittedVersion(), submittedVersion);
         assertThat(submissionDTO.getResearchProject(), Matchers.equalTo(RESEARCH_PROJECT));
         assertThat(submissionDTO.getSubmittedStatus(), Matchers.equalTo(String.format(
                 SubmissionStatusDetailBean.Status.SUBMITTED.getKey(),

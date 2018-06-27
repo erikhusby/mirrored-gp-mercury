@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
@@ -16,9 +15,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyIterableOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.core.Is.is;
 
 /**
  * Tests for the connection to the Picard aggregation metrics database as well as the JPA entity mappings.
@@ -84,8 +83,8 @@ public class AggregationMetricsFetcherTest extends StubbyContainerTest {
         LevelOfDetection lod = aggregation.getLevelOfDetection();
         assertThat(lod.getMax(), equalTo(MAX_LOD));
         assertThat(lod.getMin(), equalTo(MIN_LOD));
-        AggregationReadGroup readGroup = aggregation.getAggregationReadGroups().iterator().next();
-        assertThat(aggregation.getPicardAggregationSample().getProductOrder(), Matchers.either(is("PDO-3853")).or(is("PDO-3974")));
+
+        assertThat(aggregation.getPicardAggregationSample().getProductOrderList(), Matchers.containsInAnyOrder("PDO-3853","PDO-3974"));
     }
 
     public void testFetchMetricsWithBadProject() {
@@ -93,14 +92,14 @@ public class AggregationMetricsFetcherTest extends StubbyContainerTest {
             Integer.toString(MERCURY_AGGREGATION_VERSION),
             SubmissionBioSampleBean.ON_PREM, EXOME);
         List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(submissionTuple));
-        assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
+        assertThat(aggregationResults, emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsWithBadSample() {
         List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
                 new SubmissionTuple(MERCURY_PROJECT, MERCURY_PROJECT, "BAD-" + SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
                     SubmissionBioSampleBean.ON_PREM, EXOME)));
-        assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
+        assertThat(aggregationResults, emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsForSampleAggregatedBySquidProject() {

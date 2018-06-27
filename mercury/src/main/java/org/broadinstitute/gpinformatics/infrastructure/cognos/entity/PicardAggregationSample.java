@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.cognos.entity;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -21,6 +22,10 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Entity
@@ -44,9 +49,11 @@ public class PicardAggregationSample implements Serializable {
     public PicardAggregationSample() {
     }
 
-    public PicardAggregationSample(String researchProject, String project, String sample, String dataType) {
+    public PicardAggregationSample(String researchProject, String project, String productOrders, String sample,
+                                   String dataType) {
         this.researchProject = researchProject;
         this.project = project;
+        this.productOrder = productOrders;
         this.sample = sample;
         this.dataType = dataType;
     }
@@ -67,8 +74,11 @@ public class PicardAggregationSample implements Serializable {
         return researchProject;
     }
 
-    public String getProductOrder() {
-        return productOrder;
+    public List<String> getProductOrderList() {
+        if (StringUtils.isBlank(productOrder)) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(productOrder.split(",")).map(String::trim).collect(Collectors.toList());
     }
 
     /*
