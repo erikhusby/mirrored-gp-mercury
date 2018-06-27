@@ -35,6 +35,7 @@ import java.util.Map;
  * A Test to import reagents from Squid.  This prepares an empty database to accept messages.  This must
  * be in the same package as MolecularIndexingScheme, because it uses package visible methods on that class.
  * <p/>
+ * Wildfly rejects deploying with non-existing persistence unit - uncomment attribute if running <br />
  * Use the following VM options in the test: -Xmx1G -XX:MaxPermSize=128M
  * <p/>
  * As of January 2013, the test takes about 35 minutes to run.
@@ -43,7 +44,7 @@ import java.util.Map;
 public class ImportFromSquidTest extends Arquillian {
 
     public static final String TEST_MERCURY_URL = "https://localhost:8443/Mercury";
-    @PersistenceContext(unitName = "squid_pu")
+    // @PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
     @Inject
@@ -60,15 +61,6 @@ public class ImportFromSquidTest extends Arquillian {
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
-
-    @Inject
-    private ResearchProjectDao researchProjectDao;
-
-    @Inject
-    private ProductDao productDao;
-
-    @Inject
-    private ProductOrderDao productOrderDao;
 
     @Inject
     private ReagentDesignDao reagentDesignDao;

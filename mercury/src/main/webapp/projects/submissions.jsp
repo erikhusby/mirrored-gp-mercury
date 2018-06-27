@@ -132,7 +132,7 @@
             $j("${submissionsTabSelector}").click(function () {
                 function buildMessage(jqXHR) {
                     var responseText = jqXHR.responseJSON;
-                    if (responseText.stripesMessages) {
+                    if (responseText && responseText.stripesMessages) {
                         outerDiv = jQuery("<div></div>", {
                             "id": "stripesMessageOuter",
                             "style": "position: relative;z-index:5",
@@ -183,12 +183,14 @@
                         if (Array.isArray(data)) {
                             var pdos=[];
                             for (var i = 0; i < data.length; i++) {
-                                pdoPair = data[i].split(/:\s+/);
-                                pdos.push( jQuery("<a/>", {
-                                    href: "${ctxpath}/orders/order.action?view=&productOrder=" + pdoPair[0],
-                                    class: "noWrap",
-                                    text: pdoPair[0],
-                                })[0].outerHTML);
+                                if (data[i] != null) {
+                                    pdoPair = data[i].split(/:\s+/);
+                                    pdos.push( jQuery("<a/>", {
+                                        href: "${ctxpath}/orders/order.action?view=&productOrder=" + pdoPair[0],
+                                        class: "noWrap",
+                                        text: pdoPair[0],
+                                    })[0].outerHTML);
+                                }
                             }
                             return pdos.join(", ");
                         }
@@ -299,12 +301,21 @@
                             }
                         }
 
+                        // recheck previously checked values. Stripes can't do this itself since datatables is rendered later.
+                        var selectedSubmissions = ${actionBean.selectedSubmissionTuples};
+                        if (selectedSubmissions != undefined) {
+                            for (var i = 0; i<selectedSubmissions.length; i++) {
+                                $j("input[value='" + JSON.stringify(selectedSubmissions[i]) + "']").attr('checked','checked');
+                            }
+                        }
+
                         updateSearchText();
                         $j(findFilterTextInput(oTable).on("change init", updateSearchText));
-                    },
-                    "fnDrawCallback": function () {
+
                         $j(".submissionControls").show();
                         $j(".accordion").show();
+                    },
+                    "fnDrawCallback": function () {
                         $j(".ui-accordion-content").css('overflow', 'visible');
                         $j('.shiftCheckbox').enableCheckboxRangeSelection();
 

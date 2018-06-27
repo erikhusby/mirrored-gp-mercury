@@ -27,6 +27,8 @@ import java.util.Set;
 @Alternative
 public class SapIntegrationServiceStub implements SapIntegrationService {
 
+     public SapIntegrationServiceStub(){}
+
     public static final String TEST_SAP_NUMBER = "Test000001";
     public static final String TEST_CUSTOMER_NUMBER = "CUST_000002";
     public static final String TEST_DELIVERY_DOCUMENT_ID = "DD_0000003";
@@ -37,7 +39,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException {
+    public void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
     }
 
     @Override
@@ -284,7 +286,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
         Integer testPrice = new Integer(1000);
         for (String productDump : initialTest) {
             String[] dividedProductInfo = StringUtils.split(productDump);
-            SAPMaterial initialMaterial = new SAPMaterial(dividedProductInfo[0],testPrice.toString(), Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet());
+            SAPMaterial initialMaterial = new SAPMaterial(dividedProductInfo[0],testPrice.toString(), Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
             testPrice += 10;
             sapMaterials.add(initialMaterial);
         }

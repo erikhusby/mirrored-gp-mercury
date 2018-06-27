@@ -16,6 +16,7 @@ import org.hibernate.envers.Audited;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 /**
@@ -30,6 +31,7 @@ public class DesignedReagent extends Reagent {
     // In production code, the reagentDesign will always exist first, so there's no need for cascade, but in tests
     // DesignedReagent and ReagentDesign are created at the same time.
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "REAGENT_DESIGN")
     private ReagentDesign reagentDesign;
 
     public DesignedReagent(ReagentDesign reagentDesign) {

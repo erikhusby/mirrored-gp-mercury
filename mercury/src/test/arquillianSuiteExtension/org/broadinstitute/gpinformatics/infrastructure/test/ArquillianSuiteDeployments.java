@@ -22,7 +22,7 @@ public class ArquillianSuiteDeployments {
         }
         switch (property) {
         case TestGroups.STUBBY:
-            return DeploymentBuilder.buildMercuryWar();
+            return StubbyContainerTest.buildMercuryWar();
         case TestGroups.STANDARD:
             return DeploymentBuilder.buildMercuryWar(DEV);
         default:

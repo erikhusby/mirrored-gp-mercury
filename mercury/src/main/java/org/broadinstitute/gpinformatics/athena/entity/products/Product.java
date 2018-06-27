@@ -3,11 +3,15 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +21,8 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -33,6 +39,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -41,6 +48,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -80,6 +88,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private String alternateExternalName;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
+    @JoinColumn(name="PRODUCT_FAMILY")
     private ProductFamily productFamily;
 
     @Column(name = "DESCRIPTION", length = 2000)
@@ -132,13 +141,17 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
      * Primary price item for the product.
      */
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    @JoinColumn(name="PRIMARY_PRICE_ITEM")
     private PriceItem primaryPriceItem;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    @JoinColumn(name = "EXTERNAL_PRICE_ITEM")
     private PriceItem externalPriceItem;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "athena")
+    @JoinTable(schema = "athena", name = "PRODUCT_ADD_ONS"
+            , joinColumns = {@JoinColumn(name = "PRODUCT")}
+            , inverseJoinColumns = {@JoinColumn(name = "ADD_ONS")})
     private final Set<Product> addOns = new HashSet<>();
 
     // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.
@@ -153,6 +166,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
+
+    @Transient
+    private SAPMaterial sapMaterial;
 
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
@@ -190,6 +206,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Column(name="CLINICAL_ONLY_PRODUCT")
     private Boolean clinicalProduct = false;
+
+    @Column(name = "ANALYZE_UMI")
+    private Boolean analyzeUmi = false;
 
     /**
      * Helper method to allow the quick creation of a new Product based on the contents of an existing product
@@ -887,5 +906,81 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public boolean isClinicalProduct() {
         return clinicalProduct;
+    }
+
+    public Boolean getAnalyzeUmi() {
+        return analyzeUmi == null ? false : analyzeUmi;
+    }
+
+    public void setAnalyzeUmi(Boolean analyzeUmi) {
+        this.analyzeUmi = analyzeUmi;
+    }
+
+    public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyConfiguration () {
+
+        SapIntegrationClientImpl.SAPCompanyConfiguration configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+
+        if(isClinicalProduct() || isExternalOnlyProduct()) {
+            configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+        }
+        return configuration;
+    }
+
+    public void setSapMaterial(SAPMaterial sapMaterial) {
+        this.sapMaterial = sapMaterial;
+    }
+
+    public SAPMaterial getSapMaterial() {
+        return sapMaterial;
+    }
+
+    public String getSapClinicalCharge() {
+        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.CLINICAL_CHARGE):"";
+    }
+    
+    public String getSapCommercialCharge() {
+        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.COMMERCIAL_CHARGE):"";
+    }
+
+    public String getSapSSFIntercompanyCharge() {
+        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.INTERCOMPANY_FEE):"";
+    }
+
+    public String getSapFullPrice() {
+        String price = "";
+        if(this.sapMaterial != null && StringUtils.isNotBlank(this.sapMaterial.getBasePrice())) {
+            final BigDecimal basePrice = new BigDecimal(this.sapMaterial.getBasePrice());
+            if (basePrice.doubleValue() > 0d) {
+                price = NumberFormat.getCurrencyInstance().format(basePrice);
+            }
+        }
+        return price;
+    }
+
+    public String getQuoteServerPrice() {
+        String price = "";
+        if(getPrimaryPriceItem() != null && StringUtils.isNotBlank(getPrimaryPriceItem().getPrice())) {
+            final BigDecimal quotePrice = new BigDecimal(getPrimaryPriceItem().getPrice());
+            if (quotePrice.doubleValue() > 0d) {
+                price = NumberFormat.getCurrencyInstance().format(quotePrice);
+            }
+        }
+        return price;
+    }
+
+    private String getFeeByCondition(Condition condition) {
+        String fee = "";
+        if (this.sapMaterial != null) {
+            final Map<Condition, BigDecimal> possibleOrderConditions = this.sapMaterial.getPossibleOrderConditions();
+            if(possibleOrderConditions.containsKey(condition)) {
+
+                final BigDecimal bigDecimalCharge = possibleOrderConditions.get(condition);
+                if(bigDecimalCharge != null && bigDecimalCharge.doubleValue() > 0d) {
+                    fee = NumberFormat.getCurrencyInstance().format(bigDecimalCharge);
+                }
+            }
+        }
+        return fee;
+
     }
 }

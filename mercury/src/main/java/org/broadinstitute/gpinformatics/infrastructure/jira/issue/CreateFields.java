@@ -91,7 +91,8 @@ public class CreateFields extends UpdateFields {
         PRODUCT_ORDERING("Product Ordering", "PDO"),
         RESEARCH_PROJECTS("Research Projects", "RP"),
         RECEIPT_PROJECT("Sample Receipt Tracking", "RCT"),
-        EXTRACTION_PROJECT("Extractions", "XTR");
+        EXTRACTION_PROJECT("Extractions", "XTR"),
+        ARRAY_PROJECT("Array Tracking", "ARRAY");
 
         private final String projectName;
         private final String keyPrefix;
@@ -165,12 +166,13 @@ public class CreateFields extends UpdateFields {
         MISEQ("MiSeq"),
         SAMPLE_INITIATION("Sample Initiation"),
         RECEIPT("Receipt"),
-        ALLPREP("AllPrep"),
+        ALLPREP("AllPrep Extraction"),
         DNA_EXTRACTION("DNA Extraction"),
         EXTRACTION_OTHER("Extraction (Other)"),
         RNA_EXTRACTION("RNA Extraction"),
         HUMAN_PCR_FREE("Human PCR-Free"),
-        HUMAN_PCR_PLUS("Human PCR-Plus");
+        HUMAN_PCR_PLUS("Human PCR-Plus"),
+        INFINIUM_8("Infinium-8"); // todo jmt -12, -24
 
         private final String jiraName;
 

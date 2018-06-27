@@ -110,29 +110,32 @@
             </div>
         </c:if>
     </c:if>
-    <fieldset>
-        <legend>Manage Storage Location</legend>
-        <div class="control-group">
-            <stripes:label for="storageName" class="control-label"/>
-            <div class="controls">
-                <stripes:hidden id="storageId" name="storageId"/>
-                <stripes:hidden id="containerBarcode" name="containerBarcode"/>
-                <stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true" style="width:${empty actionBean.locationTrail ? 200 : actionBean.locationTrail.length() * 8}px"/>
-                <c:if test="${not empty actionBean.staticPlate or (actionBean.showLayout && !actionBean.editLayout)}">
-                    <stripes:submit name="browse" id="browse" value="Browse"
-                                    class="btn"/>
-                    <stripes:submit id="saveStorageLocation" name="saveLocation" value="Save To Location"
-                                    class="btn btn-primary"/>
-                </c:if>
-            </div>
-        </div>
-        <c:if test="${not empty actionBean.storageLocation && actionBean.showLayout && !actionBean.editLayout}">
+    <c:if test="${!actionBean.editLayout}">
+        <fieldset>
+            <legend>Manage Storage Location</legend>
             <div class="control-group">
+                <stripes:label for="storageName" class="control-label"/>
                 <div class="controls">
-                    <stripes:submit id="removeFromStorage" name="removeLocation" value="Remove From Storage"
-                                    class="btn btn-danger"/>
+                    <stripes:hidden id="storageId" name="storageId"/>
+                    <stripes:hidden id="containerBarcode" name="containerBarcode"/>
+                    <stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true" style="width:${empty actionBean.locationTrail ? 200 : actionBean.locationTrail.length() * 8}px"/>
+                    <c:if test="${not empty actionBean.staticPlate or (actionBean.showLayout && !actionBean.editLayout)}">
+                        <stripes:submit name="browse" id="browse" value="Browse"
+                                        class="btn"/>
+                        <stripes:submit id="saveStorageLocation" name="saveLocation" value="Save To Location"
+                                        class="btn btn-primary"/>
+                    </c:if>
                 </div>
             </div>
-        </c:if>
-    </fieldset>
+            <c:if test="${not empty actionBean.storageLocation and (not empty actionBean.staticPlate or actionBean.showLayout)
+                          and !actionBean.editLayout}">
+                <div class="control-group">
+                    <div class="controls">
+                        <stripes:submit id="removeFromStorage" name="removeLocation" value="Remove From Storage"
+                                        class="btn btn-danger"/>
+                    </div>
+                </div>
+            </c:if>
+        </fieldset>
+    </c:if>
 </stripes:form>

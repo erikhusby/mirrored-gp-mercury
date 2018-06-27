@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.analysis;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.AnalysisDataTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
@@ -21,7 +22,10 @@ import javax.inject.Inject;
  * will typically be perormed.
  */
 @Test(groups = TestGroups.STUBBY, enabled = true)
-public class AnalysisEjbTest extends ContainerTest {
+@Dependent
+public class AnalysisEjbTest extends StubbyContainerTest {
+
+    public AnalysisEjbTest(){}
 
     @Inject
     private AnalysisEjb analysisEjb;

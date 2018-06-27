@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
@@ -77,19 +78,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
     private LabBatchDao labBatchDao;
 
     @Inject
-    private BucketDao bucketDao;
-
-    @Inject
     private UserTransaction utx;
-
-    @Inject
-    private ProductDao productDao;
-
-    @Inject
-    private ResearchProjectDao researchProjectDao;
-
-    @Inject
-    private BarcodedTubeDao tubeDao;
 
     @Inject
     private JiraService jiraService;
@@ -99,6 +88,13 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
     @Inject
     private FlowcellDesignationEjb flowcellDesignationEjb;
+
+    /**
+     * Need this here because Arquillian CDI enricher does something strange with scopes <br/>
+     * See note in BatchToJiraTest
+     */
+    @Inject
+    private WorkflowConfig workflowConfig;
 
     private Bucket bucket;
     private boolean isClinical;
@@ -429,7 +425,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
             Map<String, String> barcodeToLcset = new HashMap<>();
             int laneCount = 0;
             // Makes action bean dtos that are queued designations.
-            Set<DesignationDto> designationDtos = new HashSet<>();
+            List<DesignationDto> designationDtos = new ArrayList<>();
             for (LabVessel loadingTube : lanesPerTubeMap.keySet()) {
                 DesignationDto dto = new DesignationDto();
                 dto.setBarcode(loadingTube.getLabel());
@@ -453,7 +449,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 if (dto.getNumberLanes() == 17) {
                     dto.setPriority(FlowcellDesignation.Priority.LOW);
                     splitDtoBarcode = dto.getBarcode();
-                    splitDtoGrouping = dto.fctGrouping(false);
+                    splitDtoGrouping = LabBatchEjb.dtoGroupDescription(dto);
                 }
                 designationDtos.add(dto);
                 barcodeToLcset.put(dto.getBarcode(), dto.getLcset());
@@ -586,10 +582,9 @@ public class LabBatchEjbStandardTest extends Arquillian {
         }
     }
 
-
     @Test(groups = TestGroups.STANDARD)
     public void testContiguousLanes() throws Exception {
-        final Set<DesignationDto> designationDtos = new HashSet<>();
+        final List<DesignationDto> designationDtos = new ArrayList<>();
         final StringBuilder messages = new StringBuilder();
         final MessageReporter messageReporter = new MessageReporter() {
             @Override
@@ -767,8 +762,8 @@ public class LabBatchEjbStandardTest extends Arquillian {
             DesignationDto dto = dtos.get(index);
             int emptyLanes = flowcellType.getVesselGeometry().getVesselPositions().length -
                              (index < 4 ? numberLanes : 2 * numberLanes);
-            String msg = MessageFormat.format(LabBatchEjb.PARTIAL_FCT_MESSAGE, dto.fctGrouping(false), emptyLanes);
-
+            String msg = MessageFormat.format(LabBatchEjb.PARTIAL_FCT_MESSAGE, LabBatchEjb.dtoGroupDescription(dto),
+                    emptyLanes);
             Assert.assertTrue(messageLines.remove(msg), "Expected: " + msg);
         }
         Assert.assertTrue(CollectionUtils.isEmpty(messageLines), "Unexpected: " + StringUtils.join(messageLines, ", "));
@@ -808,14 +803,14 @@ public class LabBatchEjbStandardTest extends Arquillian {
         messages.setLength(0);
         list = designationErrorHelper(messages, messageReporter,
                 Pair.of("CLIA PCR-Free Whole Genome", DesignationUtils.CLINICAL),
-                Pair.of("PCR-Free Human WGS - 30x v1.1", DesignationUtils.RESEARCH));
+                Pair.of("PCR-Free Human WGS - 30x v1", DesignationUtils.RESEARCH));
         Assert.assertEquals(list.size(), 1, messages.toString());
 
         // Validates a Genome mixed designation just fine.
         messages.setLength(0);
         list = designationErrorHelper(messages, messageReporter,
                 Pair.of("CLIA PCR-Free Whole Genome", DesignationUtils.MIXED),
-                Pair.of("PCR-Free Human WGS - 30x v1.1", DesignationUtils.MIXED));
+                Pair.of("PCR-Free Human WGS - 30x v1", DesignationUtils.MIXED));
         Assert.assertEquals(list.size(), 1, messages.toString());
         Assert.assertEquals(messages.length(), 0, messages.toString());
     }

@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -90,6 +91,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private boolean isPooledTube;
     private String sampleLibraryName;
     private Integer readLength;
+    private String aggregationParticle;
 
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
@@ -424,6 +426,19 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return molecularIndexingScheme;
     }
 
+    @Nullable
+    public Set<UMIReagent> getUmiReagents() {
+        Set<UMIReagent> umiReagents = new HashSet<>();
+        for (Reagent reagent: getReagents()) {
+            if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
+                UMIReagent umiReagent =
+                        OrmUtil.proxySafeCast(reagent, UMIReagent.class);
+                umiReagents.add(umiReagent);
+            }
+        }
+        return umiReagents;
+    }
+
     public boolean isReagentOnly() {
         return mercurySamples.isEmpty() && !reagents.isEmpty();
     }
@@ -517,6 +532,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeRootSamples(sampleInstanceEntity.getRootSample());
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
+//            aggregationParticle = sampleInstanceEntity.getAggregationParticle();
             mercurySamples.add(mercurySample);
         } else {
             mergeDevConditions(labVessel);
@@ -580,9 +596,13 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             materialType = resultingMaterialType;
         }
 
+        if (labEvent.getManualOverrideLcSet() != null) {
+            singleWorkflowBatch = labEvent.getManualOverrideLcSet();
+            setSingleBucketEntry(labEventType, singleWorkflowBatch);
+        }
         // Multiple workflow batches need help.
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
-        if (singleWorkflowBatch == null) {
+        else if (singleWorkflowBatch == null) {
             Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
             if (computedLcsets.size() != 1) {
@@ -600,19 +620,23 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             if (computedLcsets.size() == 1) {
                 LabBatch workflowBatch = computedLcsets.iterator().next();
                 singleWorkflowBatch = workflowBatch;
-                for (BucketEntry bucketEntry : allBucketEntries) {
-                    // If there's a bucket entry that matches the computed LCSET, use it.
-                    if (bucketEntry.getLabBatch() != null &&
-                            bucketEntry.getLabBatch().equals(workflowBatch)) {
-                        singleBucketEntry = bucketEntry;
-                        if (LabVessel.DIAGNOSTICS) {
-                            log.info("Setting singleBucketEntry to " +
-                                    singleBucketEntry.getLabBatch().getBatchName() + " in " +
-                                    labEventType.getName());
-                        }
-                        break;
-                    }
+                setSingleBucketEntry(labEventType, workflowBatch);
+            }
+        }
+    }
+
+    private void setSingleBucketEntry(LabEventType labEventType, LabBatch workflowBatch) {
+        for (BucketEntry bucketEntry : allBucketEntries) {
+            // If there's a bucket entry that matches the computed LCSET, use it.
+            if (bucketEntry.getLabBatch() != null &&
+                    bucketEntry.getLabBatch().equals(workflowBatch)) {
+                singleBucketEntry = bucketEntry;
+                if (LabVessel.DIAGNOSTICS) {
+                    log.info("Setting singleBucketEntry to " +
+                            singleBucketEntry.getLabBatch().getBatchName() + " in " +
+                            labEventType.getName());
                 }
+                break;
             }
         }
     }
@@ -706,6 +730,16 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     public TZDevExperimentData getTzDevExperimentData() {
         return this.tzDevExperimentData;
+    }
+
+    public String getAggregationParticle() {
+        ProductOrderSample productOrderSample = getProductOrderSampleForSingleBucket();
+        if (productOrderSample != null) {
+            if (productOrderSample.getAggregationParticle() != null) {
+                return productOrderSample.getAggregationParticle();
+            }
+        }
+        return aggregationParticle;
     }
 
     /**

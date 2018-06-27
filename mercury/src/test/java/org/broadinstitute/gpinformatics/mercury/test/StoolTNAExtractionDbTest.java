@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.filter.LoggingFilter;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
@@ -18,6 +18,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -28,7 +29,10 @@ import java.util.Date;
  * A database test of the Stool TNA Extraction process
  */
 @Test(groups = TestGroups.STUBBY)
-public class StoolTNAExtractionDbTest extends ContainerTest {
+@Dependent
+public class StoolTNAExtractionDbTest extends StubbyContainerTest {
+
+    public StoolTNAExtractionDbTest(){}
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
 

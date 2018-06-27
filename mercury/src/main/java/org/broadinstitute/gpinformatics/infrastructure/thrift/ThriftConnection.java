@@ -9,6 +9,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
@@ -25,6 +26,7 @@ import javax.inject.Inject;
  * @author andrew
  * @author breilly
  */
+@Dependent
 public class ThriftConnection {
 
     /**

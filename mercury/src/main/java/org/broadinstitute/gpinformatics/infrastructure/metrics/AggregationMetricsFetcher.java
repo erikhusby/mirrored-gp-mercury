@@ -4,6 +4,8 @@ import com.google.common.collect.Iterables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
@@ -16,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFing
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint_;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -41,6 +44,7 @@ import java.util.Map;
  * Not a {@link GenericDao} because it uses a different persistence unit.
  */
 @Stateful
+@RequestScoped
 public class AggregationMetricsFetcher {
 
     private static final Log log = LogFactory.getLog(AggregationMetricsFetcher.class);
@@ -55,6 +59,8 @@ public class AggregationMetricsFetcher {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
+        root.fetch(Aggregation_.aggregationWgs);
+        Join<Aggregation, PicardAggregationSample> picardAggregationSampleJoin = root.join(Aggregation_.picardAggregationSample);
 
         List<Aggregation> allResults = new ArrayList<>();
         Map<String, Collection<SubmissionTuple>> tuplesByProject = SubmissionTuple.byProject(tuples);
@@ -65,8 +71,14 @@ public class AggregationMetricsFetcher {
             for (List<SubmissionTuple> tuplesSublist : Iterables.partition(tupleList, MAX_AGGREGATION_FETCHER_QUERY_SIZE)) {
                 List<Aggregation> aggregations = new ArrayList<>();
                 List<Predicate> predicates = new ArrayList<>();
-
-                predicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), projectName));
+                Predicate projectJoin = criteriaBuilder.and(
+                    criteriaBuilder.or(
+                        criteriaBuilder.equal(
+                            picardAggregationSampleJoin.get(PicardAggregationSample_.researchProject), projectName),
+                        criteriaBuilder.equal(
+                            picardAggregationSampleJoin.get(PicardAggregationSample_.project), projectName)
+                ));
+                predicates.add(projectJoin);
                 predicates.add(criteriaBuilder.isNull(root.get(Aggregation_.library)));
                 predicates.add(criteriaBuilder.isTrue(root.get(Aggregation_.latest)));
                 predicates.add(root.get(Aggregation_.sample).in(SubmissionTuple.extractSampleNames(tuplesSublist)));

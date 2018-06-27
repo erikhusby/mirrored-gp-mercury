@@ -9,7 +9,10 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.control.reagent.ControlReagentFactory;
+import org.broadinstitute.gpinformatics.mercury.control.reagent.UniqueMolecularIdentifierReagentFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -23,7 +26,8 @@ import java.util.List;
 public class ReagentActionBean extends CoreActionBean {
 
     public enum ReagentFormat {
-        CONTROLS("Control tubes");
+        CONTROLS("Control tubes"),
+        UMI("Unique Molecular Identifiers");
         private String displayName;
 
         ReagentFormat(String displayName) {
@@ -47,6 +51,9 @@ public class ReagentActionBean extends CoreActionBean {
     @Inject
     private ControlReagentFactory controlReagentFactory;
 
+    @Inject
+    private UniqueMolecularIdentifierReagentFactory umiReagentFactory;
+
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
@@ -57,18 +64,28 @@ public class ReagentActionBean extends CoreActionBean {
     public Resolution upload() {
         try {
             MessageCollection messageCollection = new MessageCollection();
-            List<BarcodedTube> barcodedTubes;
+            int uploadCount;
             switch (reagentFormat) {
             case CONTROLS:
-                barcodedTubes = controlReagentFactory.buildTubesFromSpreadsheet(
+                List<BarcodedTube> barcodedTubes = controlReagentFactory.buildTubesFromSpreadsheet(
                         reagentsFile.getInputStream(), messageCollection);
+                uploadCount = barcodedTubes.size();
+                break;
+            case UMI:
+                List<LabVessel> staticPlates =
+                        umiReagentFactory.buildUMIFromSpreadsheet(reagentsFile.getInputStream(), messageCollection);
+                if (!messageCollection.hasErrors() && staticPlates != null) {
+                    uploadCount = staticPlates.size();
+                } else {
+                    uploadCount = 0;
+                }
                 break;
             default:
                 throw new RuntimeException("Unexpected reagent format " + reagentFormat);
             }
             addMessages(messageCollection);
             if (!messageCollection.hasErrors()) {
-                addMessage("Uploaded {0} tubes.", barcodedTubes.size());
+                addMessage("Uploaded {0} reagents.", uploadCount);
             }
             return new ForwardResolution(REAGENT_UPLOAD_PAGE);
         } catch (IOException e) {

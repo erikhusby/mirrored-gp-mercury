@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -17,7 +18,11 @@ import java.util.Random;
 
 @Stub
 @Alternative
+@Dependent
 public class SubmissionsServiceStub implements SubmissionsService {
+
+    public SubmissionsServiceStub(){}
+
     public static final String TEST_PROJECT_NAME = "Primary submission";
     public static final String STUB_UPDATE_DATE = "Dec 17, 2001 9:30 AM";
     public static final SubmissionRepository ACTIVE_REPO = new SubmissionRepository("ACTIVE_REPO", "Active Repository", true);
@@ -41,14 +46,14 @@ public class SubmissionsServiceStub implements SubmissionsService {
         for (String uuid : uuids) {
             SubmissionStatusDetailBean detail =
                     new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.SUBMITTED,
-                            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription(),
+                            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
                             getDateOfLastUpdate());
             results.getSubmissionStatuses().add(detail);
         }
         for (String uuid : uuids) {
             SubmissionStatusDetailBean detail =
                     new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.FAILURE,
-                            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription(),
+                            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
                             getDateOfLastUpdate(), "And error was returned from NCBI");
             results.getSubmissionStatuses().add(detail);
         }

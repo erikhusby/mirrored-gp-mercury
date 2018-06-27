@@ -9,15 +9,14 @@ app:
       jmsPort:  5445
       workflowValidationEmail:
 
-
     AUTO_BUILD:
-      host:     mercurydev.broadinstitute.org
-      port:     8444
-      jmsPort:  5446
+      host:     vmercurydev.broadinstitute.org
+      port:     8443
+      jmsPort:  5445
       workflowValidationEmail:
 
     TEST:
-      host:     mercurydev.broadinstitute.org
+      host:     mercuryfb.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
@@ -240,7 +239,12 @@ infiniumStarter:
 
     DEV:
         dataPath: /humgen/illumina_data/dev
+#        dataPath: \\neon\humgen_illumina_data\dev
         minimumIdatFileLength: -1
+        decodeDataPath: /humgen/illumina_decode_data/Decode_data/dev
+#        decodeDataPath: \\neon\humgen_illumina_decode_data\Decode_data\dev
+        archivePath: /tmp/gap_archive/infinium
+        numChipsPerArchivePeriod: 10
         jmsHost: picard-jms-dev.broadinstitute.org
         jmsPort: 61616
         jmsQueue: broad.arrays.enqueue.staging
@@ -250,6 +254,9 @@ infiniumStarter:
     QA:
         dataPath: /humgen/illumina_data/qa
         minimumIdatFileLength: -1
+        decodeDataPath: /humgen/illumina_decode_data/Decode_data/qa
+        archivePath: /tmp/gap_archive/infinium
+        numChipsPerArchivePeriod: 10
         jmsHost: picard-jms-dev.broadinstitute.org
         jmsPort: 61616
         jmsQueue: broad.arrays.enqueue.staging
@@ -259,6 +266,9 @@ infiniumStarter:
     PROD:
         dataPath: /humgen/illumina_data
         minimumIdatFileLength: 2000000
+        decodeDataPath: /humgen/illumina_decode_data/Decode_data
+        archivePath: /seq/tier3b/gap_archive/infinium
+        numChipsPerArchivePeriod: 100
         jmsHost: picard-jms.broadinstitute.org
         jmsPort: 61616
         jmsQueue: broad.arrays.enqueue
@@ -289,22 +299,22 @@ sap:
     DEV:
       login:      GPCOMU
       password:   SAPERD300!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     TEST:
       login:      GPCOMU
       password:   temp1!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     RC:
       login:      GPCOMU
       password:   temp1!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     PROD:
       login:      GPCOMU
@@ -331,7 +341,7 @@ mercury:
       collaborate: DEV
       submission: DEV
       infiniumStarter: DEV
-      sap:  TEST
+      sap:  RC
 
 
     AUTO_BUILD:
@@ -341,7 +351,7 @@ mercury:
       gap:      DEV
       jira:     TEST
       quote:    QA
-      squid:    DEV
+      squid:    TEST
       tableau:  PROD
       thrift:   TEST
       deckMsgs: DEV
@@ -370,7 +380,7 @@ mercury:
       collaborate: DEV
       submission: DEV
       infiniumStarter: DEV
-      sap:  TEST
+      sap:  RC
 
     QA:
       app:      QA

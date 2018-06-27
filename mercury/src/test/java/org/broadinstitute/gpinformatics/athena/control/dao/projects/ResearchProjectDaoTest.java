@@ -4,13 +4,14 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.text.MessageFormat;
@@ -21,7 +22,10 @@ import java.util.Map;
  * Tests for the research project dao
  */
 @Test(groups = TestGroups.STUBBY, enabled = true)
-public class ResearchProjectDaoTest extends ContainerTest {
+@Dependent
+public class ResearchProjectDaoTest extends StubbyContainerTest {
+
+    public ResearchProjectDaoTest(){}
 
     @Inject
     private UserTransaction utx;

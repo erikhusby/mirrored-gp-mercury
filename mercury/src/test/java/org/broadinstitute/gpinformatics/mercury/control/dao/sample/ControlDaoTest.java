@@ -1,13 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.sample;
 
-import org.testng.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
@@ -20,7 +21,10 @@ import java.util.List;
  *         Time: 1:50 PM
  */
 @Test(groups = TestGroups.STUBBY)
-public class ControlDaoTest extends ContainerTest {
+@Dependent
+public class ControlDaoTest extends StubbyContainerTest {
+
+    public ControlDaoTest(){}
 
     @Inject
     ControlDao controlDao;

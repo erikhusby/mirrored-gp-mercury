@@ -23,6 +23,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -63,7 +64,12 @@ public class ConfigurableListFactory {
             @Nullable ConfigurableSearchDefinition configurableSearchDefinition) {
 
         List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, columnEntity);
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", columnEntity);
+        ConfigurableList configurableList;
+        if( evalContext.getSearchInstance() == null ) {
+            configurableList = new ConfigurableList(columnTabulations, Collections.EMPTY_MAP,0, "ASC", columnEntity);
+        } else {
+            configurableList = new ConfigurableList(columnTabulations, evalContext.getSearchInstance().getViewColumnParamMap(),0, "ASC", columnEntity);
+        }
         if (configurableSearchDefinition != null) {
             configurableList.addAddRowsListeners(configurableSearchDefinition);
         }
@@ -341,7 +347,7 @@ public class ConfigurableListFactory {
         List<?> entityList = PaginationUtil.getPage(configurableSearchDao.getEntityManager(), pagination, 0);
 
         // Format the results into columns
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations,
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, searchInstance.getViewColumnParamMap(),
                 pagination.getNumberPages() == 1 ? sortColumnIndex : null, sortDirection,
                 ColumnEntity.getByName(entityName));
 
@@ -409,7 +415,7 @@ public class ConfigurableListFactory {
         for (SearchInstance.SearchValue displaySearchValue : displaySearchValues) {
             columnTabulations.add(displaySearchValue);
         }
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, null,
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, searchInstance.getViewColumnParamMap(), null,
                 ColumnEntity.getByName(entityName));
 
         // Add any row listeners
@@ -430,7 +436,7 @@ public class ConfigurableListFactory {
             columnTabulations = buildColumnSetTabulations(downloadColumnSetName,
                     ColumnEntity.getByName(entityName));
         }
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, searchInstance.getViewColumnParamMap(), 0, "ASC",
                 ColumnEntity.getByName(entityName));
 
         // Add any row listeners

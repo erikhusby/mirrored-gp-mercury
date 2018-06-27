@@ -7,11 +7,12 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.common.QueryStringSplitter;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -26,7 +27,8 @@ import java.util.Map;
 /**
  * This class encapsulates all the Rest calls to the submissions service
  */
-@Impl
+@Dependent
+@Default
 public class SubmissionsServiceImpl implements SubmissionsService {
 
     private static final Log log = LogFactory.getLog(SubmissionsServiceImpl.class);
@@ -156,9 +158,12 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     }
 
     private ClientResponse clientResponseGet(String servicePath, Map<String, List<String>> parameters) {
-        ClientResponse response = JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
-                MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
-        return response;
+        try {
+            return JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
+                    MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
+        } catch (Exception e) {
+            throw new InformaticsServiceException("Error communicating with Submissions server. Please contact support using the <span class='badge'>Feedback</span> link above", e);
+        }
     }
 
 

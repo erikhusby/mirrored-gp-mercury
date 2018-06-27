@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -10,9 +10,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -24,9 +24,13 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
 
 /**
  * Imports from Squid the pooling transfers that were done in the user interface, before this transfer was messaged.
+ * Wildfly rejects deploying with non-existing persistence unit - uncomment attribute if running
  */
 @Test(groups = TestGroups.STUBBY)
-public class CreatePoolingTransfersTest extends ContainerTest {
+@Dependent
+public class CreatePoolingTransfersTest extends StubbyContainerTest {
+
+    public CreatePoolingTransfersTest(){}
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
@@ -34,7 +38,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
     @Inject
     private LabEventDao labEventDao;
 
-    @PersistenceContext(unitName = "squid_pu")
+    //@PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
     @Inject

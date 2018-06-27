@@ -327,7 +327,7 @@ public class QuoteImportItem {
 
         if (replacedProductQuotePriceItem == null || replacedProductQuotePriceItem.getPrice() == null) {
             throw new QuoteServerException(
-                    "The price was not found for price item " + replacedProductQuotePriceItem.getName());
+                    "The price was not found for price item " + priceItem.getDisplayName());
         }
 
         getPriceItem().setPrice(replacedProductQuotePriceItem.getPrice());
