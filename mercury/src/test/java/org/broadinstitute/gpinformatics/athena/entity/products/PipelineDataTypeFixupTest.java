@@ -33,6 +33,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_10X_WGS;
 import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_EXOME;
 import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_RNA;
+import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_SHORT_RANGE_PCR;
 import static org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation.DATA_TYPE_WGS;
 
 @Test(groups = TestGroups.FIXUP)
@@ -66,14 +67,16 @@ public class PipelineDataTypeFixupTest extends Arquillian {
         userBean.loginOSUser();
         utx.begin();
 
-        List<String> validDataTypes = Arrays.asList(DATA_TYPE_10X_WGS, DATA_TYPE_EXOME, DATA_TYPE_RNA, DATA_TYPE_WGS);
+        List<String> validDataTypes =
+            Arrays.asList(DATA_TYPE_10X_WGS, DATA_TYPE_EXOME, DATA_TYPE_RNA, DATA_TYPE_WGS, DATA_TYPE_SHORT_RANGE_PCR);
 
         validDataTypes.stream()
             .map(dataType -> new PipelineDataType(dataType, true))
             .forEach(pipelineDataTypeDao::persist);
 
         List<Product> allNotInList =
-            productDao.findAllNotInList(Product.class, Product_.aggregationDataType, validDataTypes);
+            productDao.findAllNotInList(Product.class,
+                org.broadinstitute.gpinformatics.athena.entity.products.Product_.aggregationDataType, validDataTypes);
 
         allNotInList.stream()
             .map(Product::getAggregationDataType).distinct()
@@ -93,7 +96,8 @@ public class PipelineDataTypeFixupTest extends Arquillian {
 
         //noinspection unchecked
         List<Product> productsWithDataType =
-            productDao.findListWithWildcard(Product.class, "%", false, Product_.aggregationDataType);
+            productDao.findListWithWildcard(Product.class, "%", false,
+                org.broadinstitute.gpinformatics.athena.entity.products.Product_.aggregationDataType);
 
         productsWithDataType.stream().filter(PipelineDataTypeFixupTest::isNullPipelineDataType).forEach(product -> {
 
