@@ -162,7 +162,8 @@ public class SubmissionDtoFetcherTest {
         Aggregation testAggregation1 = getTestAggregation(rpId, productOrder.getBusinessKey(),
             sample1.getSampleData().getCollaboratorsSampleName(),
             SubmissionLibraryDescriptor.WHOLE_EXOME, SubmissionBioSampleBean.GCP);
-        Aggregation testAggregation2 = getTestAggregation(rpId, productOrder.getBusinessKey(),
+        String pdoKey = String.format("%s,%s", productOrder.getBusinessKey(), "PDO-2");
+        Aggregation testAggregation2 = getTestAggregation(rpId, pdoKey,
             sample2.getSampleData().getCollaboratorsSampleName(),
             SubmissionLibraryDescriptor.RNA_SEQ, SubmissionBioSampleBean.ON_PREM);
 

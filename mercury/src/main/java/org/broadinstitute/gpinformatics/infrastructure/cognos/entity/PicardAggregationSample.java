@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.cognos.entity;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -26,6 +25,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Entity
@@ -49,11 +49,11 @@ public class PicardAggregationSample implements Serializable {
     public PicardAggregationSample() {
     }
 
-    public PicardAggregationSample(String researchProject, String project, String productOrder, String sample,
+    public PicardAggregationSample(String researchProject, String project, String productOrders, String sample,
                                    String dataType) {
         this.researchProject = researchProject;
         this.project = project;
-        this.productOrder = productOrder;
+        this.productOrder = productOrders;
         this.sample = sample;
         this.dataType = dataType;
     }
@@ -75,11 +75,10 @@ public class PicardAggregationSample implements Serializable {
     }
 
     public List<String> getProductOrderList() {
-        String[] productOrderArray = StringUtils.split(productOrder, ",");
-        if (ArrayUtils.isNotEmpty(productOrderArray)) {
-            return Arrays.asList(productOrderArray);
+        if (StringUtils.isBlank(productOrder)) {
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
+        return Arrays.stream(productOrder.split(",")).map(String::trim).collect(Collectors.toList());
     }
 
     /*
