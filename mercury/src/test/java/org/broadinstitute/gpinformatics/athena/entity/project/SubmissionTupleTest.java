@@ -172,7 +172,7 @@ public class SubmissionTupleTest {
         SubmissionDto submissionDto = new SubmissionDto(
             new Aggregation("p1", "s1", null, 1, 2, Aggregation.DATA_TYPE_RNA, alignments, null, null,
                 Collections.<AggregationReadGroup>emptySet(), null, null,
-                new PicardAggregationSample("p1", "p1", "s1", Aggregation.DATA_TYPE_RNA),
+                new PicardAggregationSample("p1", "p1", "pdo1", "s1", Aggregation.DATA_TYPE_RNA),
                 SubmissionBioSampleBean.ON_PREM), new SubmissionStatusDetailBean());
         assertThat(SubmissionTuple.hasTuple(Arrays.<ISubmissionTuple>asList(tracker1, submissionDto), tracker1), is(true));
     }
@@ -188,7 +188,7 @@ public class SubmissionTupleTest {
         SubmissionDto submissionDto = new SubmissionDto(
             new Aggregation("p1", "s1", null, 1, 2, EXOME, alignments, null, new AggregationHybridSelection(1d),
                 Collections.<AggregationReadGroup>emptySet(), null, null,
-                new PicardAggregationSample("p1", "p1", "s1", Aggregation.DATA_TYPE_RNA),
+                new PicardAggregationSample("p1", "p1", "pdo1", "s1", Aggregation.DATA_TYPE_RNA),
                 SubmissionBioSampleBean.ON_PREM), new SubmissionStatusDetailBean());
 
         List<? extends ISubmissionTuple> tuples = Arrays.asList(tracker1, submissionDto);

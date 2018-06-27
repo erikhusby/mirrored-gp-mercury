@@ -186,7 +186,7 @@ public class SubmissionDto implements ISubmissionTuple {
             }
             readGroupCount = aggregation.getReadGroupCount();
             contaminationString = aggregation.getContaminationString();
-            productOrders.add(aggregation.getPicardAggregationSample().getProductOrder());
+            productOrders.addAll(aggregation.getPicardAggregationSample().getProductOrderList());
         }
         initializeStatusDetailBean(statusDetailBean);
         submittedErrorsArray = submittedErrors.toArray(new String[submittedErrors.size()]);

@@ -159,9 +159,11 @@ public class SubmissionDtoFetcherTest {
 
         String rpId = productOrder.getResearchProject().getBusinessKey();
 
-        Aggregation testAggregation1 = getTestAggregation(rpId, sample1.getSampleData().getCollaboratorsSampleName(),
+        Aggregation testAggregation1 = getTestAggregation(rpId, productOrder.getBusinessKey(),
+            sample1.getSampleData().getCollaboratorsSampleName(),
             SubmissionLibraryDescriptor.WHOLE_EXOME, SubmissionBioSampleBean.GCP);
-        Aggregation testAggregation2 = getTestAggregation(rpId, sample2.getSampleData().getCollaboratorsSampleName(),
+        Aggregation testAggregation2 = getTestAggregation(rpId, productOrder.getBusinessKey(),
+            sample2.getSampleData().getCollaboratorsSampleName(),
             SubmissionLibraryDescriptor.RNA_SEQ, SubmissionBioSampleBean.ON_PREM);
 
         aggregations = Arrays.asList(testAggregation1, testAggregation2);
@@ -185,11 +187,11 @@ public class SubmissionDtoFetcherTest {
         assertThat(tuple.getSampleName(), is(productOrderSample.getSampleData().getCollaboratorsSampleName()));
     }
 
-    private Aggregation getTestAggregation(String project, String sample, SubmissionLibraryDescriptor libraryDescriptor,
+    private Aggregation getTestAggregation(String project, String productOrder, String sample, SubmissionLibraryDescriptor libraryDescriptor,
                                            String processingLocation) {
         return new Aggregation(project, sample, null, 1, 1, libraryDescriptor.getName(),
             Collections.<AggregationAlignment>emptySet(), null, null,
-            null, null, null, new PicardAggregationSample(project, project, sample, libraryDescriptor.getName()), processingLocation);
+            null, null, null, new PicardAggregationSample(project, project, productOrder, sample, libraryDescriptor.getName()), processingLocation);
     }
 
     /**
