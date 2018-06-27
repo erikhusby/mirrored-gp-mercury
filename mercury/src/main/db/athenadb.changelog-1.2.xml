@@ -1224,6 +1224,14 @@
             <column name="ACTIVE" type="number(1,0)"/>
         </createTable>
     </changeSet>
+    <changeSet id="GPLIM-5521-02-AUDPK" author="dryan">
+        <addPrimaryKey constraintName="PK_PIPELINE_DT_AUD" tableName="PIPELINE_DATA_TYPE_AUD"
+                       columnNames="PIPELINE_DATA_TYPE_ID, rev" schemaName="athena"/>
+        <addForeignKeyConstraint constraintName="FK_PIPELINE_DT_AUD" baseTableSchemaName="athena"
+                                 baseTableName="PIPELINE_DATA_TYPE_AUD" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
     <changeSet id="GPLIM-5521-03-ADDCOLUMN" author="dryan">
             <preConditions onFail="MARK_RAN">
                 <not>
