@@ -177,6 +177,20 @@ public class SubmissionTupleTest {
         assertThat(SubmissionTuple.hasTuple(Arrays.<ISubmissionTuple>asList(tracker1, submissionDto), tracker1), is(true));
     }
 
+    public void testTupleEqualMultPdosInPicardAggSample(){
+        SubmissionTracker tracker1 =
+            new SubmissionTracker(null, "p1", "s1", "1", FileType.BAM, SubmissionBioSampleBean.ON_PREM,
+                Aggregation.DATA_TYPE_RNA);
+        Set<AggregationAlignment> alignments = Collections.singleton(new AggregationAlignment(1l, "foo"));
+
+        SubmissionDto submissionDto = new SubmissionDto(
+            new Aggregation("p1", "s1", null, 1, 2, Aggregation.DATA_TYPE_RNA, alignments, null, null,
+                Collections.<AggregationReadGroup>emptySet(), null, null,
+                new PicardAggregationSample("p1", "p1", "pdo1,pdo2 ,pdo3", "s1", Aggregation.DATA_TYPE_RNA),
+                SubmissionBioSampleBean.ON_PREM), new SubmissionStatusDetailBean());
+        assertThat(SubmissionTuple.hasTuple(Arrays.<ISubmissionTuple>asList(tracker1, submissionDto), tracker1), is(true));
+    }
+
     public void testTupleNotEqual(){
         SubmissionTracker tracker1 = new SubmissionTracker(null, "p2", "s1", "1", FileType.BAM, SubmissionBioSampleBean.ON_PREM, EXOME);
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject("RP-1");
