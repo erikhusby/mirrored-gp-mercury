@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPl
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselLayoutPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.VolumeHistoryAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -94,7 +95,9 @@ public class LabVesselSearchDefinition {
     public enum MultiRefTerm {
         INFINIUM_DNA_PLATE("DNA Array Plate Barcode"),
         INFINIUM_AMP_PLATE("Amp Plate Barcode"),
-        INFINIUM_CHIP("Infinium Chip Barcode");
+        INFINIUM_CHIP("Infinium Chip Barcode"),
+        INITIAL_VOLUME("Initial Volume"),
+        VOLUME_HISTORY("Volume History");
 
         MultiRefTerm(String termRefName ) {
             this.termRefName = termRefName;
@@ -252,6 +255,7 @@ public class LabVesselSearchDefinition {
                     public Map<String, ConfigurableList.AddRowsListener> getAddRowsListeners() {
                         Map<String, ConfigurableList.AddRowsListener> listeners = new HashMap<>();
                         listeners.put(SampleDataFetcherAddRowsListener.class.getSimpleName(), new SampleDataFetcherAddRowsListener());
+                        listeners.put(VolumeHistoryAddRowsListener.class.getSimpleName(), new VolumeHistoryAddRowsListener());
                         return listeners;
                     }
                 });
@@ -337,6 +341,53 @@ public class LabVesselSearchDefinition {
             public BigDecimal evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
                 return labVessel.getConcentration();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName(MultiRefTerm.INITIAL_VOLUME.getTermRefName());
+        searchTerm.setValueType(ColumnValueType.STRING);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String value = "";
+                LabVessel labVessel = (LabVessel) entity;
+                VolumeHistoryAddRowsListener volumeHistoryAddRowsListener = (VolumeHistoryAddRowsListener)
+                        context.getRowsListener( VolumeHistoryAddRowsListener.class.getSimpleName() );
+                Pair<Date, BigDecimal> initialVolumeData = volumeHistoryAddRowsListener.getInitialVolumeData(labVessel.getLabel());
+                if( initialVolumeData != null ) {
+                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(initialVolumeData.getRight(), "")
+                     + " - " + ColumnValueType.DATE_TIME.format(initialVolumeData.getLeft(), "");
+                }
+                return value;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName(MultiRefTerm.VOLUME_HISTORY.getTermRefName());
+        searchTerm.setValueType(ColumnValueType.STRING);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String value = "";
+                LabVessel labVessel = (LabVessel) entity;
+                VolumeHistoryAddRowsListener volumeHistoryAddRowsListener = (VolumeHistoryAddRowsListener)
+                        context.getRowsListener( VolumeHistoryAddRowsListener.class.getSimpleName() );
+                Collection<Pair<Date, BigDecimal>> volumeHistoryData = volumeHistoryAddRowsListener.getVolumeHistoryData(labVessel.getLabel());
+                if( volumeHistoryData != null && volumeHistoryData.size() > 0 ) {
+                    StringBuilder valueBuilder = new StringBuilder();
+                    for( Pair<Date, BigDecimal> initialVolumeData : volumeHistoryData ) {
+                        valueBuilder.append(ColumnValueType.TWO_PLACE_DECIMAL.format(initialVolumeData.getRight() , ""))
+                                .append(" - ")
+                                .append(  ColumnValueType.DATE_TIME.format(initialVolumeData.getLeft(), "") )
+                        .append(", ");
+                    }
+                    value = valueBuilder.substring(0, valueBuilder.length() - 2);
+                }
+                return value;
+
             }
         });
         searchTerms.add(searchTerm);

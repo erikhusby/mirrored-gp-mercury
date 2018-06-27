@@ -16,7 +16,7 @@ $j( document ).ready( function() {
     // Attach an onchange listener to custom traversal
     $j("#customTraversalOptionConfig").change(showCustomTraverserOptions);
     $j("#customTraversalOptionEdit").click(showCustomTraverserOptions);
-    $j("#addTermBtn").click = addTerm;
+    $j("#addTermBtn").click(addTerm);
 
 } );
 
