@@ -15,6 +15,7 @@ plate / rack.
 <%--@elvariable id="section" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"--%>
 <%--@elvariable id="stationEventIndex" type="java.lang.Integer"--%>
 <%--@elvariable id="source" type="java.lang.Boolean"--%>
+<%--@elvariable id="massRemoved" type="java.lang.Boolean"--%>
 
 <style>
     .btn {
@@ -87,6 +88,13 @@ plate / rack.
                 </stripes:select>
             </c:otherwise>
         </c:choose>
+            <c:if test="${source and massRemoved}">
+                <label for="${source ? 'src' : 'dst'}PltMass${stationEventIndex}">Mass To Remove</label>
+                <input type="text" id="${source ? 'src' : 'dst'}PltMass${stationEventIndex}" autocomplete="off"
+                       name="massesRemoved[${stationEventIndex}]"
+                       value="${actionBean.massesRemoved[stationEventIndex]}" class="barcode"/>
+
+            </c:if>
         </div>
     </c:if>
     <c:if test="${not empty positionMap}">

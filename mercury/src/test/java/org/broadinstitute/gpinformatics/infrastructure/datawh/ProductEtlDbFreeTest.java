@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -39,7 +37,7 @@ public class ProductEtlDbFreeTest {
     private static final Workflow WORKFLOW = Workflow.AGILENT_EXOME_EXPRESS;
     private static final String PRODUCT_FAMILY_NAME = "Test ProductFamily";
     private static final long PRIMARY_PRICE_ITEM_ID = 987654321L;
-    private static final PipelineDataType AGGREGATION_DATA_TYPE = new PipelineDataType(Aggregation.DATA_TYPE_EXOME, true);
+    private static final String AGGREGATION_DATA_TYPE = "Exome";
     private static final boolean commercialIndicator = true;
     private static final boolean savedInSapIndicator = true;
 
@@ -97,7 +95,7 @@ public class ProductEtlDbFreeTest {
         EasyMock.expect(product.getWorkflow()).andReturn(WORKFLOW).anyTimes();
         EasyMock.expect(product.getProductFamily()).andReturn(family).anyTimes();
         EasyMock.expect(product.getPrimaryPriceItem()).andReturn(primaryPriceItem).anyTimes();
-        EasyMock.expect(product.getPipelineDataType()).andReturn(AGGREGATION_DATA_TYPE).anyTimes();
+        EasyMock.expect(product.getAggregationDataType()).andReturn(AGGREGATION_DATA_TYPE).anyTimes();
 
         EasyMock.expect(primaryPriceItem.getPriceItemId()).andReturn(PRIMARY_PRICE_ITEM_ID);
 

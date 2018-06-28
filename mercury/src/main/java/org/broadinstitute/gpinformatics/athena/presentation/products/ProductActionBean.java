@@ -21,14 +21,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineDataTypeDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
-import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -64,6 +62,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -105,9 +104,6 @@ public class ProductActionBean extends CoreActionBean {
 
     @Inject
     private ProductTokenInput addOnTokenInput;
-
-    @Inject
-    private PipelineDataTypeDao pipelineDataTypeDao;
 
     @Inject
     private PriceItemTokenInput priceItemTokenInput;
@@ -165,7 +161,6 @@ public class ProductActionBean extends CoreActionBean {
     private String controlsProject;
 
     @ValidateNestedProperties({
-        @Validate(field = "pipelineDataType", converter = PipelineDataTypeConverter.class),
             @Validate(field = "productName", required = true, maxlength = 255, on = {SAVE_ACTION},
                     label = "Product Name"),
             @Validate(field = "partNumber", required = true, maxlength = 255, on = {SAVE_ACTION},
@@ -480,10 +475,11 @@ public class ProductActionBean extends CoreActionBean {
         return createTextResolution(externalPriceItemTokenInput.getExternalJsonString(getQ()));
     }
 
+
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         // Sets paired end non-null when sequencing params are present.
-        if (editProduct.getPipelineDataType()!=null) {
+        if (StringUtils.isNotBlank(editProduct.getAggregationDataType())) {
             editProduct.setPairedEndRead(editProduct.getPairedEndRead());
         }
         productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
@@ -557,7 +553,9 @@ public class ProductActionBean extends CoreActionBean {
     @HandlesEvent(OPEN_RISK_SUGGESTIONS)
     public Resolution openRiskSuggestedValues() throws Exception {
         RiskCriterion.RiskCriteriaType criterion = RiskCriterion.RiskCriteriaType.findByLabel(criteriaLabel);
-        suggestedValueSelections = Arrays.stream(currentCriteriaChoices.split(",")).map(String::trim).collect(Collectors.toList());
+        Optional<String> optionalCriterion = Optional.ofNullable(currentCriteriaChoices);
+        optionalCriterion.ifPresent(s -> suggestedValueSelections =
+                Arrays.stream(s.split(",")).map(String::trim).collect(Collectors.toList()));
 
         if(CollectionUtils.isNotEmpty(criterion.getSuggestedValues())) {
             criteriaSelectionValues.addAll(criterion.getSuggestedValues());
@@ -723,10 +721,6 @@ public class ProductActionBean extends CoreActionBean {
         return getDisplayableItemInfo(businessKey, reagentDesignDao);
     }
 
-    public Collection<PipelineDataType> getPipelineDataTypes() {
-        return pipelineDataTypeDao.findAll();
-    }
-
     /**
      * Get the analysis type.
      *
@@ -860,4 +854,55 @@ public class ProductActionBean extends CoreActionBean {
     public boolean isProductUsedInOrders() {
         return productUsedInOrders;
     }
+
+
+    public List<String> getCriteriaSelectionValues() {
+        return criteriaSelectionValues;
+    }
+
+    public void setCriteriaSelectionValues(List<String> criteriaSelectionValues) {
+        this.criteriaSelectionValues = criteriaSelectionValues;
+    }
+
+    public String getCriteriaIndex() {
+        return criteriaIndex;
+    }
+
+    public void setCriteriaIndex(String criteriaIndex) {
+        this.criteriaIndex = criteriaIndex;
+    }
+
+    public String getCriteriaLabel() {
+        return criteriaLabel;
+    }
+
+    public void setCriteriaLabel(String criteriaLabel) {
+        this.criteriaLabel = criteriaLabel;
+    }
+
+    public String getCriteriaOp() {
+        return criteriaOp;
+    }
+
+    public void setCriteriaOp(String criteriaOp) {
+        this.criteriaOp = criteriaOp;
+    }
+
+    public String getCurrentCriteriaChoices() {
+        return currentCriteriaChoices;
+    }
+
+    public void setCurrentCriteriaChoices(String currentCriteriaChoices) {
+        this.currentCriteriaChoices = currentCriteriaChoices;
+    }
+
+
+    public List<String> getSuggestedValueSelections() {
+        return suggestedValueSelections;
+    }
+
+    public void setSuggestedValueSelections(List<String> suggestedValueSelections) {
+        this.suggestedValueSelections = suggestedValueSelections;
+    }
+
 }

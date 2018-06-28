@@ -10,14 +10,12 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.PipelineDataTypeDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -29,7 +27,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -150,9 +147,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Inject
     private ProductDao productDao;
-
-    @Inject
-    private PipelineDataTypeDao pipelineDataTypeDao;
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -732,12 +726,11 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private ProductOrder buildProductOrder(String testPrefix, int numberOfSamples, Workflow workflow) {
         String partNumber = mapWorkflowToPartNum.get(workflow);
         Product product = productDao.findByPartNumber(partNumber);
-        PipelineDataType dataType = pipelineDataTypeDao.findDataType(Aggregation.DATA_TYPE_EXOME);
         if (product == null) {
             // todo jmt change to exome express
             product = new Product("Standard Exome Sequencing", productFamilyDao.find("Exome"),
                     "Standard Exome Sequencing", "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null,
-                    null, true, Workflow.HYBRID_SELECTION, false, dataType);
+                    null, true, Workflow.HYBRID_SELECTION, false, "agg type");
             product.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics",
                     "Standard Pony"));
             productDao.persist(product);

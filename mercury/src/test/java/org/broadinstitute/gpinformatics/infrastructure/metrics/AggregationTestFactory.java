@@ -30,12 +30,12 @@ public class AggregationTestFactory {
                                                LevelOfDetection fingerprintLod, String dataType,
                                                Double pctTargetBases20X, Long totalReadsAlignedInPairs,
                                                Double meanCoverageWgs, String processingLocation) {
-
         AggregationContam aggregationContam = new AggregationContam(contamination);
         AggregationHybridSelection aggregationHybridSelection = new AggregationHybridSelection(pctTargetBases20X);
         AggregationAlignment aggregationAlignment = new AggregationAlignment(totalReadsAlignedInPairs, "PAIR");
         AggregationWgs aggregationWgs=new AggregationWgs(meanCoverageWgs);
-        PicardAggregationSample picardAggregationSample = new PicardAggregationSample(project, project, sample, dataType);
+        PicardAggregationSample picardAggregationSample = new PicardAggregationSample(project, project, productOrder,
+            sample, dataType);
         AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null);
 
         Integer readGroupCount = 2;
