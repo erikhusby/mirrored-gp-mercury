@@ -265,7 +265,7 @@ public class ManifestSessionFixupTest extends Arquillian {
      * it can be used for other similar fixups, without writing a new test.
      * Line 1 is the fixup commentary.
      * Line 2 is the session prefix.
-     * Line 3 and subsequent are SAMPLE_ID|BROAD_SAMPLE_ID\tMetadata.Key\value.
+     * Line 3 and subsequent are SAMPLE_ID or BROAD_SAMPLE_ID\tMetadata.Key\tvalue.
      * Example contents of the file are:
      * CRSP-616
      * ORDER-15598
