@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -99,10 +101,11 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionDto bA = getSubmissionDto(dummyProductOrder, "A", ON_PREM, TEST_VERSION_1);
         SubmissionDto bA2 = getSubmissionDto(dummyProductOrder, "A", ON_PREM, TEST_VERSION_2);
         SubmissionDto bApicard = getSubmissionDto(dummyProductOrder, "A", GCP, TEST_VERSION_1);
-
+        ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject("P123");
         SubmissionTracker stA =
                 new SubmissionTracker("P123", bA.getSampleName(), String.valueOf(bA.getVersion()), bA.getFileType(),
                     bA.getProcessingLocation(), bA.getDataType());
+        stA.setResearchProject(testResearchProject);
 
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{"TEST-1", Collections.singletonList(bA), Collections.emptyList(), true});

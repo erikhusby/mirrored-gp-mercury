@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -17,7 +18,11 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * This class handles all the needs for defining an item of a criteria list. Each item has a type, which defines
@@ -231,7 +236,15 @@ public class RiskCriterion implements Serializable {
             public String getValue(ProductOrderSample sample) {
                 return getStringValueOfOrNull(sample.getSampleData().getDv200());
             }
-        });
+        }),
+        MATERIAL_TYPE("Material Type", Operator.OperatorType.STRING, new ValueProvider() {
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                return sample.getSampleData().getMaterialType();
+            }
+        }, Arrays.stream(MaterialType.values()).map(MaterialType::getDisplayName)
+                .collect(Collectors.toList())
+        );
 
         private static String getStringValueOfOrNull(Double value) {
             if (value == null) {
@@ -244,11 +257,17 @@ public class RiskCriterion implements Serializable {
         private final Operator.OperatorType operatorType;
         private final String label;
         private final ValueProvider valueProvider;
+        private final List<String> suggestedValues;
 
         RiskCriteriaType(String label, Operator.OperatorType operatorType, ValueProvider valueProvider) {
+            this(label, operatorType, valueProvider, null);
+        }
+        RiskCriteriaType(String label, Operator.OperatorType operatorType, ValueProvider valueProvider,
+                         List<String> suggestedValues) {
             this.label = label;
             this.operatorType = operatorType;
             this.valueProvider = valueProvider;
+            this.suggestedValues = suggestedValues;
         }
 
         public Operator.OperatorType getOperatorType() {
@@ -271,6 +290,10 @@ public class RiskCriterion implements Serializable {
             } else {
                 return operator.apply(valueFromSample, value);
             }
+        }
+
+        public List<String> getSuggestedValues() {
+            return suggestedValues;
         }
 
         public List<Operator> getOperators() {

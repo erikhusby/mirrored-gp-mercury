@@ -180,12 +180,14 @@
                         if (Array.isArray(data)) {
                             var pdos=[];
                             for (var i = 0; i < data.length; i++) {
-                                pdoPair = data[i].split(/:\s+/);
-                                pdos.push( jQuery("<a/>", {
-                                    href: "${ctxpath}/orders/order.action?view=&productOrder=" + pdoPair[0],
-                                    class: "noWrap",
-                                    text: pdoPair[0],
-                                })[0].outerHTML);
+                                if (data[i] != null) {
+                                    pdoPair = data[i].split(/:\s+/);
+                                    pdos.push( jQuery("<a/>", {
+                                        href: "${ctxpath}/orders/order.action?view=&productOrder=" + pdoPair[0],
+                                        class: "noWrap",
+                                        text: pdoPair[0],
+                                    })[0].outerHTML);
+                                }
                             }
                             return pdos.join(", ");
                         }
@@ -196,7 +198,7 @@
                     "bDeferRender": true,
                     "oLanguage": {
                         "sInfo": "_TOTAL_ submissions displayed.",
-                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, BSP, and Picard. This may take a few minutes."
+                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, BSP and Picard. This may take a few minutes."
                     },
                     "oTableTools": ttExportDefines,
                     "bStateSave": true,

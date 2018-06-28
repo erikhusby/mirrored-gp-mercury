@@ -27,7 +27,7 @@ public class ProductTestFactory {
         Product product =
                 new Product("productName", new ProductFamily("Test product family"), "description", partNumber,
                         new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
-                        workflow, pdmOrderableOnly, "an aggregation data type");
+                        workflow, pdmOrderableOnly);
         product.setReadLength(76);
         product.setPairedEndRead(true);
         if (addRisk) {
@@ -53,7 +53,7 @@ public class ProductTestFactory {
                     "*Funding and compliance requirements must be in place - this includes a valid IRB or letter of non-engagement where needed \n"
                     + "*Minimum Sample data including - Collaborator Participant ID, Collaborator Sample ID, Gender",
                     "Data delivery will include a de-multiplexed, aggregated Picard BAM file which will be accessed via the BASS file server system or FTP for non-Broad users. Data storage for 5 years is provided.",
-                    true, Workflow.WHOLE_GENOME, false, null);
+                    true, Workflow.WHOLE_GENOME, false);
             product.addRiskCriteria(
                     new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "2"));
             product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.FFPE, Operator.IS, null));

@@ -82,7 +82,9 @@ var kitDefinitionIndex = 0;
 
 $j(document).ready(function () {
     $j('body').popover({selector: '[rel=popover]'});
-//    if ($j("#sampleData tbody>tr").length > 0) {
+    $j(document).on('click', '#ledgerLink', function () {
+        window.stop();
+    });
     enableDefaultPagingOptions();
     function loadBspData(settings, refresh=false) {
         var api = new $j.fn.dataTable.Api(settings);

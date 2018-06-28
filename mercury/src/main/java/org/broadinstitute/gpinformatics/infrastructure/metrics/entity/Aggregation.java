@@ -14,6 +14,9 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
+import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
+import org.broadinstitute.gpinformatics.infrastructure.submission.ISubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.annotations.BatchSize;
@@ -23,8 +26,10 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.text.MessageFormat;
@@ -33,10 +38,12 @@ import java.util.Set;
 
 @Entity
 @Table(name = "AGGREGATION", schema = "METRICS")
-public class Aggregation {
+public class Aggregation implements ISubmissionTuple  {
     public static final String DATA_TYPE_EXOME = "Exome";
     public static final String DATA_TYPE_RNA = "RNA";
     public static final String DATA_TYPE_WGS = "WGS";
+    public static final String DATA_TYPE_10X_WGS = "10X_WGS";
+
     @SuppressWarnings("unused")
     @Id @Column(name = "ID")
     private Integer id;
@@ -86,6 +93,14 @@ public class Aggregation {
     @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationWgs aggregationWgs;
 
+    @OneToOne
+    @JoinColumns({
+        @JoinColumn(name="PROJECT", referencedColumnName = "PROJECT", insertable = false, updatable = false),
+        @JoinColumn(name = "SAMPLE", referencedColumnName = "SAMPLE", insertable = false, updatable = false),
+        @JoinColumn(name = "DATA_TYPE", referencedColumnName = "DATA_TYPE", insertable = false, updatable = false),
+    })
+    private PicardAggregationSample picardAggregationSample;
+
     @Transient
     private LevelOfDetection levelOfDetection;
     @Transient
@@ -95,13 +110,10 @@ public class Aggregation {
     }
 
     public Aggregation(String project, String sample, String library, Integer version, Integer readGroupCount,
-                       String dataType,
-                       Set<AggregationAlignment> aggregationAlignments,
-                       AggregationContam aggregationContam,
-                       AggregationHybridSelection aggregationHybridSelection,
-                       Set<AggregationReadGroup> aggregationReadGroups,
-                       AggregationWgs aggregationWgs,
-                       LevelOfDetection levelOfDetection,
+                       String dataType, Set<AggregationAlignment> aggregationAlignments,
+                       AggregationContam aggregationContam, AggregationHybridSelection aggregationHybridSelection,
+                       Set<AggregationReadGroup> aggregationReadGroups, AggregationWgs aggregationWgs,
+                       LevelOfDetection levelOfDetection, PicardAggregationSample picardAggregationSample,
                        String processingLocation) {
         this.project = project;
         this.sample = sample;
@@ -109,6 +121,7 @@ public class Aggregation {
         this.version = version;
         this.readGroupCount = readGroupCount;
         this.dataType = dataType;
+        this.picardAggregationSample = picardAggregationSample;
         this.processingLocation = processingLocation;
         this.aggregationAlignments = aggregationAlignments;
         this.aggregationContam = aggregationContam;
@@ -118,13 +131,17 @@ public class Aggregation {
         this.levelOfDetection = levelOfDetection;
     }
 
+    public String getMercuryProject() {
+        return picardAggregationSample.getResearchProject();
+    }
 
+    @Override
     @Transient
-    public SubmissionTuple getTuple() {
+    public SubmissionTuple getSubmissionTuple() {
         // These aggregation metrics are specific to BAM files, so the BassFileType is always BAM.
         if (submissionTuple == null) {
             String library = SubmissionLibraryDescriptor.getNormalizedLibraryName(getDataType());
-            submissionTuple = new SubmissionTuple(getProject(), getSample(), getVersion().toString(),
+            submissionTuple = new SubmissionTuple(getProject(), getMercuryProject(), getSample(), getVersion().toString(),
                 getProcessingLocation(), library);
         }
         return submissionTuple;
@@ -180,6 +197,7 @@ public class Aggregation {
         return MessageFormat.format("{0,number,#.##%}", decimalValue);
     }
 
+    @Override
     public String getProject() {
         return project;
     }
@@ -187,6 +205,17 @@ public class Aggregation {
     public String getSample() {
         return sample;
     }
+
+    @Override
+    public String getSampleName() {
+        return getSample();
+    }
+
+    @Override
+    public String getVersionString() {
+        return Integer.toString(getVersion());
+    }
+
     public Integer getVersion() {
         return version;
     }
@@ -195,6 +224,7 @@ public class Aggregation {
         return readGroupCount;
     }
 
+    @Override
     public String getDataType() {
         return dataType;
     }
@@ -219,8 +249,14 @@ public class Aggregation {
         }
     }
 
+    @Override
     public String getProcessingLocation() {
         return processingLocation;
+    }
+
+    @Override
+    public FileType getFileType() {
+        return FileType.BAM;
     }
 
     public void setProcessingLocation(String processingLocation) {
@@ -255,6 +291,15 @@ public class Aggregation {
         this.levelOfDetection = levelOfDetection;
     }
 
+    public PicardAggregationSample getPicardAggregationSample() {
+        return picardAggregationSample;
+    }
+
+    public void setPicardAggregationSample(
+        PicardAggregationSample picardAggregationSample) {
+        this.picardAggregationSample = picardAggregationSample;
+    }
+
     @Override
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object o) {
@@ -272,54 +317,37 @@ public class Aggregation {
 
         Aggregation that = OrmUtil.proxySafeCast(o, Aggregation.class);
 
-        return new EqualsBuilder()
-            .append(latest, that.latest)
+        EqualsBuilder equalsBuilder = new EqualsBuilder()
             .append(id, that.id)
-            .append(project, that.project)
-            .append(sample, that.sample)
             .append(library, that.library)
-            .append(version, that.version)
             .append(readGroupCount, that.readGroupCount)
-            .append(processingLocation, that.processingLocation)
-            .append(dataType, that.dataType)
+            .append(latest, that.latest)
             .append(aggregationAlignments, that.aggregationAlignments)
             .append(aggregationContam, that.aggregationContam)
             .append(aggregationHybridSelection, that.aggregationHybridSelection)
             .append(aggregationReadGroups, that.aggregationReadGroups)
             .append(aggregationWgs, that.aggregationWgs)
-            .append(levelOfDetection, that.levelOfDetection)
-            .isEquals();
+            .append(getSubmissionTuple(), that.getSubmissionTuple())
+            .append(picardAggregationSample, that.picardAggregationSample)
+            .append(levelOfDetection, that.levelOfDetection);
+        return equalsBuilder.isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder(17, 37)
             .append(id)
-            .append(project)
-            .append(sample)
             .append(library)
-            .append(version)
             .append(readGroupCount)
-            .append(processingLocation)
             .append(latest)
-            .append(dataType)
             .append(aggregationAlignments)
             .append(aggregationContam)
             .append(aggregationHybridSelection)
             .append(aggregationReadGroups)
             .append(aggregationWgs)
-            .append(levelOfDetection)
-            .toHashCode();
-    }
-
-    public Set<SubmissionLibraryDescriptor> getLibraryTypes() {
-        Set<SubmissionLibraryDescriptor> submissionLibraryDescriptors = new HashSet<>();
-        for (AggregationReadGroup aggregationReadGroup : getAggregationReadGroups()) {
-            ReadGroupIndex readGroupIndex = aggregationReadGroup.getReadGroupIndex();
-            if (readGroupIndex != null) {
-                submissionLibraryDescriptors.add(readGroupIndex.getLibraryType());
-            }
-        }
-        return submissionLibraryDescriptors;
+            .append(getSubmissionTuple())
+            .append(picardAggregationSample)
+            .append(levelOfDetection);
+        return hashCodeBuilder.toHashCode();
     }
 }
