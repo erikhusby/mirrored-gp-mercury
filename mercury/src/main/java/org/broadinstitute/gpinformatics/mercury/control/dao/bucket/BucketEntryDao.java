@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -11,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket_;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
@@ -26,14 +26,13 @@ import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Scott Matthews
@@ -77,30 +76,20 @@ public class BucketEntryDao extends GenericDao {
         CriteriaQuery<BucketEntry> query = criteriaBuilder.createQuery(BucketEntry.class);
         Root<BucketEntry> root = query.from(BucketEntry.class);
 
-        List<Predicate> morePredicates = new ArrayList<>();
-
-        Predicate baseCriteria = criteriaBuilder.and(
-            criteriaBuilder.equal(root.get(BucketEntry_.bucket), bucket),
-            criteriaBuilder.equal(root.get(BucketEntry_.status), BucketEntry.Status.Active)
-        );
+        List<Predicate> andPredicates = new ArrayList<>();
+        andPredicates.add(criteriaBuilder.equal(root.get(BucketEntry_.bucket), bucket));
+        andPredicates.add(criteriaBuilder.equal(root.get(BucketEntry_.status), BucketEntry.Status.Active));
         if (CollectionUtils.isNotEmpty(productOrders)) {
             Join<BucketEntry, ProductOrder> productOrderJoin = root.join(BucketEntry_.productOrder);
-            morePredicates.add(productOrderJoin.get(ProductOrder_.jiraTicketKey).in(productOrders));
+            andPredicates.add(productOrderJoin.get(ProductOrder_.jiraTicketKey).in(productOrders));
         }
         if (CollectionUtils.isNotEmpty(searchIds)) {
-            Set<String> vesselIdsToSearch = new HashSet<>(searchIds);
-            List<ProductOrderSample> samples =
-                findListByList(ProductOrderSample.class, ProductOrderSample_.sampleName, searchIds);
-
-            samples.forEach(productOrderSample ->
-                productOrderSample.getMercurySample().getLabVessel().forEach(labVessel ->
-                    labVessel.getDescendantVessels().stream().map(LabVessel::getLabel).forEach(vesselIdsToSearch::add))
-            );
-
             Join<BucketEntry, LabVessel> labVesselJoin = root.join(BucketEntry_.labVessel,JoinType.LEFT);
-            morePredicates.add(labVesselJoin.get(LabVessel_.label).in(vesselIdsToSearch));
+            SetJoin<LabVessel, MercurySample> mercurySamplesJoin = labVesselJoin.join(LabVessel_.mercurySamples,JoinType.LEFT);
+            andPredicates.add(criteriaBuilder.and(criteriaBuilder.or(labVesselJoin.get(LabVessel_.label).in(searchIds),
+                mercurySamplesJoin.get(MercurySample_.sampleKey).in(searchIds))));
         }
-        query.where(baseCriteria, criteriaBuilder.and(morePredicates.toArray(new Predicate[0])));
+        query.where(criteriaBuilder.and(andPredicates.toArray(new Predicate[0])));
         try {
             return getEntityManager().createQuery(query).getResultList();
         } catch (NoResultException ignored) {
