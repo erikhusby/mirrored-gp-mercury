@@ -28,6 +28,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +71,7 @@ public class BucketEntryDao extends GenericDao {
      * @param searchIds     list of sample keys or vessel labels (barcodes). if an empty list is passed in
      *                      all samples/vessels are returned.
      */
-    public List<BucketEntry> findBucketEntries(Bucket bucket, List<String> productOrders, List<String> searchIds) {
+    public List<BucketEntry> findBucketEntries(Bucket bucket, List<String> productOrders, Collection<String> searchIds) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<BucketEntry> query = criteriaBuilder.createQuery(BucketEntry.class);
         Root<BucketEntry> root = query.from(BucketEntry.class);
@@ -83,8 +84,8 @@ public class BucketEntryDao extends GenericDao {
             andPredicates.add(productOrderJoin.get(ProductOrder_.jiraTicketKey).in(productOrders));
         }
         if (CollectionUtils.isNotEmpty(searchIds)) {
-            Join<BucketEntry, LabVessel> labVesselJoin = root.join(BucketEntry_.labVessel);
-            SetJoin<LabVessel, MercurySample> mercurySamplesJoin = labVesselJoin.join(LabVessel_.mercurySamples);
+            Join<BucketEntry, LabVessel> labVesselJoin = root.join(BucketEntry_.labVessel,JoinType.LEFT);
+            SetJoin<LabVessel, MercurySample> mercurySamplesJoin = labVesselJoin.join(LabVessel_.mercurySamples,JoinType.LEFT);
             andPredicates.add(criteriaBuilder.and(criteriaBuilder.or(labVesselJoin.get(LabVessel_.label).in(searchIds),
                 mercurySamplesJoin.get(MercurySample_.sampleKey).in(searchIds))));
         }
