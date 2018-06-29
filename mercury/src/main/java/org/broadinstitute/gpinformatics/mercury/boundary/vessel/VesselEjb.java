@@ -252,10 +252,13 @@ public class VesselEjb {
             Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
 
             List<VarioskanPlateProcessor.PlateWellResult> plateWellResults;
+            boolean multipleCurves = false;
             if (workbook.getSheet(VarioskanPlateProcessorTwoCurve.PicoCurve.HIGH_SENSE.getSheetname()) != null) {
                 VarioskanPlateProcessorTwoCurve varioskanPlateProcessorTwoCurve =
                         new VarioskanPlateProcessorTwoCurve(workbook);
-                plateWellResults = varioskanPlateProcessorTwoCurve.processMultipleCurves(metricType);
+                // TODO
+                plateWellResults = null;//varioskanPlateProcessorTwoCurve.processMultipleCurves(metricType);
+                multipleCurves = true;
             } else {
                 VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
                         VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB, metricType);
@@ -327,9 +330,16 @@ public class VesselEjb {
                             }
                         }
                         if (!messageCollection.hasErrors()) {
-                            LabMetricRun run = createVarioskanRunDaoFree(mapNameValueToValue, metricType,
-                                    plateWellResults, mapBarcodeToPlate, decidingUser, messageCollection,
-                                    mapBarcodeToTraverserResult);
+                            LabMetricRun run = null;
+                            if (multipleCurves) {
+                                run = createVarioskanRunDaoFree(mapNameValueToValue, metricType,
+                                        plateWellResults, mapBarcodeToPlate, decidingUser, messageCollection,
+                                        mapBarcodeToTraverserResult);
+                            } else {
+                                run = createVarioskanRunDaoFreeMultiCurve(mapNameValueToValue, metricType,
+                                        plateWellResults, mapBarcodeToPlate, decidingUser, messageCollection,
+                                        mapBarcodeToTraverserResult);
+                            }
                             triple = Triple.of(run, traverserResults, microfluorPlates);
                             if (messageCollection.hasErrors()) {
                                 ejbContext.setRollbackOnly();
@@ -346,6 +356,59 @@ public class VesselEjb {
         } catch (IOException | InvalidFormatException | ValidationException e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    @DaoFree
+    public LabMetricRun createVarioskanRunDaoFreeMultiCurve(Map<VarioskanRowParser.NameValue, String> mapNameValueToValue,
+                                                     LabMetric.MetricType metricType,
+                                                     List<VarioskanPlateProcessor.PlateWellResult> plateWellResults,
+                                                     Map<String, StaticPlate> mapBarcodeToPlate, Long decidingUser,
+                                                     MessageCollection messageCollection,
+                                                     Map<String, StaticPlate.TubeFormationByWellCriteria.Result> mapBarcodeToTraverser) {
+        Map<LabVessel, List<BigDecimal>> mapTubeToListValues = new HashMap<>();
+        Map<LabVessel, VesselPosition> mapTubeToPosition = new HashMap<>();
+
+        // Create the run
+        Date runStarted = parseRunDate(mapNameValueToValue);
+        LabMetricRun labMetricRun = new LabMetricRun(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME),
+                runStarted, metricType);
+
+        String r2 = mapNameValueToValue.get(VarioskanRowParser.NameValue.CORRELATION_COEFFICIENT_R2);
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.CORRELATION_COEFFICIENT_R2, r2));
+        boolean runFailed = false;
+        if (new BigDecimal(r2).compareTo(new BigDecimal("0.97")) == -1) {
+            runFailed = true;
+        }
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
+                mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_NAME)));
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_SERIAL_NUMBER,
+                mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_SERIAL_NUMBER)));
+
+        // Determines the sensitivity and dilution factors.
+        Float factor = extractFactor(
+                mapBarcodeToTraverser.values().iterator().next().getLabEventMetadata(), SensitivityFactor);
+        BigDecimal sensitivityFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
+        factor = extractFactor(
+                mapBarcodeToTraverser.values().iterator().next().getLabEventMetadata(), DilutionFactor);
+        BigDecimal dilutionFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
+
+        // Goals: Store Each Lab Metric on the Plate Well of the pico plate
+        // Order the results into 2 groups per triplicate
+        Map<LabVessel, Pair<List<VarioskanPlateProcessor.PlateWellResult>, List<VarioskanPlateProcessor.PlateWellResult>>>
+                mapLabVesselToCurveResults = new HashMap<>();
+        for (VarioskanPlateProcessor.PlateWellResult plateWellResult : plateWellResults) {
+            Result traverserResult = mapBarcodeToTraverser.get(plateWellResult.getPlateBarcode());
+            VesselPosition wellPosition = plateWellResult.getVesselPosition();
+            VesselPosition tubePosition = traverserResult.getWellToTubePosition().get(wellPosition);
+            LabVessel sourceTube = traverserResult.getTubeFormation().getContainerRole().
+                    getVesselAtPosition(tubePosition);
+            if (sourceTube != null) {
+
+            }
+        }
+
+        return null;
     }
 
     /**

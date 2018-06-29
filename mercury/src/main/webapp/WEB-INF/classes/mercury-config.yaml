@@ -45,8 +45,8 @@ bsp:
     DEV:
       login:    seqsystem
       password: bspbsp
-      host:     gapdev.broadinstitute.org
-      port:     8080
+      host:     localhost.broadinstitute.org
+      port:     2222
 
     RC:
       login:    seqsystem
