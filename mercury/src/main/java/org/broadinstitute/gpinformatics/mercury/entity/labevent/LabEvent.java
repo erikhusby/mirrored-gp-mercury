@@ -150,24 +150,28 @@ public class LabEvent {
      * for transfers using a tip box, e.g. Bravo
      */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent", orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<SectionTransfer> sectionTransfers = new HashSet<>();
 
     /**
      * for random access transfers, e.g. MultiProbe
      */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent", orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<>();
 
     /**
      * for transfers from a single vessel to an entire section, e.g. from a tube to a plate
      */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent", orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<>();
 
     /**
      * Typically for tube to tube transfers
      */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent", orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<VesselToVesselTransfer> vesselToVesselTransfers = new HashSet<>();
 
     /**
