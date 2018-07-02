@@ -179,6 +179,14 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 20)
     private Set<LabEvent> inPlaceLabEvents = new HashSet<>();
 
+    /**
+     * Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
+     * avoid an unnecessary database round trip
+     */
+    @NotAudited
+    @Formula("(select count(*) from lab_event where lab_event.in_place_lab_vessel = lab_vessel_id)")
+    private Integer inPlaceEventsCount = 0;
+
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 20)
     private Set<AbandonVessel> abandonVessels = new HashSet<>();
@@ -670,7 +678,10 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<LabEvent> getInPlaceLabEvents() {
-        return inPlaceLabEvents;
+        if (inPlaceEventsCount != null && inPlaceEventsCount > 0) {
+            return inPlaceLabEvents;
+        }
+        return Collections.emptySet();
     }
 
     public Set<LabEvent> getInPlaceEventsWithContainers() {
@@ -692,6 +703,10 @@ public abstract class LabVessel implements Serializable {
     public void addInPlaceEvent(LabEvent labEvent) {
         inPlaceLabEvents.add(labEvent);
         labEvent.setInPlaceLabVessel(this);
+        if (inPlaceEventsCount == null) {
+            inPlaceEventsCount = 0;
+        }
+        inPlaceEventsCount++;
     }
 
     public abstract ContainerType getType();
