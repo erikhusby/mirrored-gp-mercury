@@ -1229,4 +1229,14 @@
 /
         </sql>
     </changeSet>
+    <changeSet author="jsacco" id="GPLIM-5218-1">
+        <addColumn schemaName="mercury" tableName="abandon_vessel">
+            <column name="abandoned_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jsacco" id="GPLIM-5218-2">
+        <addColumn schemaName="mercury" tableName="abandon_vessel_aud">
+            <column name="abandoned_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

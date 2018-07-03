@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -42,6 +43,8 @@ public class AbandonVessel {
 
     private Date abandonedOn;
 
+    private Long abandonedBy;
+
     @Enumerated(EnumType.STRING)
     private VesselPosition vesselPosition;
 
@@ -76,6 +79,14 @@ public class AbandonVessel {
 
     public void setAbandonedOn(Date abandonedOn) {
         this.abandonedOn = abandonedOn;
+    }
+
+    public Long getAbandonedBy() {
+        return abandonedBy;
+    }
+
+    public void setAbandonedBy(Long abandonedBy) {
+        this.abandonedBy = abandonedBy;
     }
 
     public enum Reason implements Displayable {
