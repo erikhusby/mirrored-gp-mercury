@@ -3,7 +3,7 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://www.jboss.org/ironjacamar/schema http://docs.jboss.org/ironjacamar/schema/datasources_1_1.xsd">
     <datasource jndi-name="java:jboss/jdbc/metrics_pool" pool-name="metrics_pool" enabled="true" jta="true">
-        <connection-url>jdbc:oracle:thin:@seqdev:1521/seqdev3</connection-url>
+        <connection-url>jdbc:oracle:thin:@seqdev1:1521:seqdev1</connection-url>
         <driver-class>oracle.jdbc.OracleDriver</driver-class>
         <driver>oracle</driver>
         <security>
