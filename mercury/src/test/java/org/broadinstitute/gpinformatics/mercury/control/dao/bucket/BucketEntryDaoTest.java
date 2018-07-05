@@ -225,16 +225,16 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
         String sampleKey2 = "SM-2" + suffix;
         String sampleKey3 = "SM-3" + suffix;
         String barcode1 = "A1" + suffix;
-        String baracode2 = "A2" + suffix;
+        String barcode2 = "A2" + suffix;
         String barcode3 = "A3" + suffix;
 
-        BucketEntry testEntry1 = fetchTestData(sampleKey1, barcode1);
-        BucketEntry testEntry2 = fetchTestData(sampleKey2, baracode2);
-        BucketEntry testEntry3 = fetchTestData(sampleKey3, barcode3);
+        BucketEntry testEntry1 = fetchTestData(barcode1, sampleKey1);
+        BucketEntry testEntry2 = fetchTestData(barcode2, sampleKey2);
+        BucketEntry testEntry3 = fetchTestData(barcode3, sampleKey3);
 
         List<String> orders = Collections.singletonList(testPoBusinessKey);
         List<BucketEntry> bucketEntries =
-            bucketEntryDao.findBucketEntries(testBucket, orders, Arrays.asList(barcode1, baracode2, barcode3));
+            bucketEntryDao.findBucketEntries(testBucket, orders, Arrays.asList(barcode1, barcode2, barcode3));
 
         Assert.assertTrue(bucketEntries.contains(testEntry1));
         Assert.assertTrue(bucketEntries.contains(testEntry2));
@@ -248,12 +248,12 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
         String sampleKey2 = "SM-2" + suffix;
         String sampleKey3 = "SM-3" + suffix;
         String barcode1 = "A1" + suffix;
-        String baracode2 = "A2" + suffix;
+        String barcode2 = "A2" + suffix;
         String barcode3 = "A3" + suffix;
 
-        BucketEntry testEntry1 = fetchTestData(sampleKey1, barcode1);
-        BucketEntry testEntry2 = fetchTestData(sampleKey2, baracode2);
-        BucketEntry testEntry3 = fetchTestData(sampleKey3, barcode3);
+        BucketEntry testEntry1 = fetchTestData(barcode1, sampleKey1);
+        BucketEntry testEntry2 = fetchTestData(barcode2, sampleKey2);
+        BucketEntry testEntry3 = fetchTestData(barcode3, sampleKey3);
 
         List<String> orders = Collections.singletonList(testPoBusinessKey);
         List<BucketEntry> bucketEntries =
@@ -271,12 +271,12 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
         String sampleKey2 = "SM-2" + suffix;
         String sampleKey3 = "SM-3" + suffix;
         String barcode1 = "A1" + suffix;
-        String baracode2 = "A2" + suffix;
+        String barcode2 = "A2" + suffix;
         String barcode3 = "A3" + suffix;
 
-        BucketEntry testEntry1 = fetchTestData(sampleKey1, barcode1);
-        BucketEntry testEntry2 = fetchTestData(sampleKey2, baracode2);
-        BucketEntry testEntry3 = fetchTestData(sampleKey3, barcode3);
+        BucketEntry testEntry1 = fetchTestData(barcode1, sampleKey1);
+        BucketEntry testEntry2 = fetchTestData(barcode2, sampleKey2);
+        BucketEntry testEntry3 = fetchTestData(barcode3, sampleKey3);
 
         List<String> orders = Collections.singletonList(testPoBusinessKey);
         List<BucketEntry> bucketEntries =

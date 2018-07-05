@@ -62,6 +62,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -552,7 +553,9 @@ public class ProductActionBean extends CoreActionBean {
     @HandlesEvent(OPEN_RISK_SUGGESTIONS)
     public Resolution openRiskSuggestedValues() throws Exception {
         RiskCriterion.RiskCriteriaType criterion = RiskCriterion.RiskCriteriaType.findByLabel(criteriaLabel);
-        suggestedValueSelections = Arrays.stream(currentCriteriaChoices.split(",")).map(String::trim).collect(Collectors.toList());
+        Optional<String> optionalCriterion = Optional.ofNullable(currentCriteriaChoices);
+        optionalCriterion.ifPresent(s -> suggestedValueSelections =
+                Arrays.stream(s.split(",")).map(String::trim).collect(Collectors.toList()));
 
         if(CollectionUtils.isNotEmpty(criterion.getSuggestedValues())) {
             criteriaSelectionValues.addAll(criterion.getSuggestedValues());
@@ -851,5 +854,55 @@ public class ProductActionBean extends CoreActionBean {
     public boolean isProductUsedInOrders() {
         return productUsedInOrders;
     }
-    
+
+
+    public List<String> getCriteriaSelectionValues() {
+        return criteriaSelectionValues;
+    }
+
+    public void setCriteriaSelectionValues(List<String> criteriaSelectionValues) {
+        this.criteriaSelectionValues = criteriaSelectionValues;
+    }
+
+    public String getCriteriaIndex() {
+        return criteriaIndex;
+    }
+
+    public void setCriteriaIndex(String criteriaIndex) {
+        this.criteriaIndex = criteriaIndex;
+    }
+
+    public String getCriteriaLabel() {
+        return criteriaLabel;
+    }
+
+    public void setCriteriaLabel(String criteriaLabel) {
+        this.criteriaLabel = criteriaLabel;
+    }
+
+    public String getCriteriaOp() {
+        return criteriaOp;
+    }
+
+    public void setCriteriaOp(String criteriaOp) {
+        this.criteriaOp = criteriaOp;
+    }
+
+    public String getCurrentCriteriaChoices() {
+        return currentCriteriaChoices;
+    }
+
+    public void setCurrentCriteriaChoices(String currentCriteriaChoices) {
+        this.currentCriteriaChoices = currentCriteriaChoices;
+    }
+
+
+    public List<String> getSuggestedValueSelections() {
+        return suggestedValueSelections;
+    }
+
+    public void setSuggestedValueSelections(List<String> suggestedValueSelections) {
+        this.suggestedValueSelections = suggestedValueSelections;
+    }
+
 }

@@ -82,7 +82,8 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
             assertThat(submissionDto.getVersion(), equalTo(version));
             assertThat(submissionDto.getSampleName(), equalTo(COLLABORATOR_SAMPLE_ID));
             assertThat(submissionDto.getAggregationProject(), equalTo(RESEARCH_PROJECT_ID));
-            assertThat(submissionDto.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
+            assertThat(submissionDto.getDataType(),
+                equalTo(SubmissionLibraryDescriptor.getNormalizedLibraryName(Aggregation.DATA_TYPE_EXOME)));
             assertThat(submissionDto.getContamination(), equalTo(contamination));
             assertThat(submissionDto.getResearchProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(String.format("expected LOD min to be %f but was %f", lodMin,
