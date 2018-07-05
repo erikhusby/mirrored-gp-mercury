@@ -198,7 +198,7 @@
                     "bDeferRender": true,
                     "oLanguage": {
                         "sInfo": "_TOTAL_ submissions displayed.",
-                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, BSP and Picard. This may take a few minutes."
+                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from BSP, Mercury, Epsilon 9 and the Pipeline. This may take a few minutes."
                     },
                     "oTableTools": ttExportDefines,
                     "bStateSave": true,
