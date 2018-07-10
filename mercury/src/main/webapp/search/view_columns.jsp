@@ -29,17 +29,6 @@ buttons to move columns from one to the other --%>
             ></c:forEach
         ></c:forEach>];
 
-        /*
-         * Result columns with parameters need to be flagged as such by attaching data
-         */
-        var columnsWithParams = [<c:set var="listDelim" value=""
-        /><c:forEach items="${availableMapGroupToColumnNames}" var="entry"
-            ><c:forEach items="${entry.value}" var="columnConfig"
-            ><c:if test="${not columnConfig.isExcludedFromResultColumns() and not empty columnConfig.resultParamConfigurationExpression}"><c:out value ="${listDelim}"/><c:set var="listDelim" value=","
-        />"${columnConfig.name}"</c:if
-        ></c:forEach
-        ></c:forEach>];
-
         $j( document ).ready( function() {
             $j( "#pageSizeSlider" ).slider({
                 value:${actionBean.searchInstance.pageSize},
@@ -81,6 +70,8 @@ buttons to move columns from one to the other --%>
                                 <c:if test="${not columnConfig.isExcludedFromResultColumns()}">
                                     <option id="${columnConfig.uiId}_col" value="${columnConfig.name}"
                                             <c:if test="${not empty columnConfig.helpText}"> class="help-option"</c:if>
+                                            <c:if test="${not empty columnConfig.resultParamConfigurationExpression}"> data-has-params="true" data-element-name="${columnConfig.name}" </c:if>
+                                            <c:if test="${empty columnConfig.resultParamConfigurationExpression}"> data-has-params="false" </c:if>
                                             ondblclick="chooseColumns($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]);">${columnConfig.name}</option>
                                 </c:if>
                             </c:forEach>
@@ -101,8 +92,8 @@ buttons to move columns from one to the other --%>
                         multiple="true" size="10" style="width: 280px">
                     <c:if test="${not empty predefinedViewColumns}">
                         <c:forEach items="${predefinedViewColumns}" var="entry" varStatus="iter">
-                            <c:if test="${not empty viewColumnParamMap[iter.index]}"><option value='${fn:escapeXml( viewColumnParamMap[iter.index] )}'>${viewColumnParamMap[iter.index].getSingleValue("userColumnName")}</option></c:if>
-                            <c:if test="${empty viewColumnParamMap[iter.index]}"><option>${entry}</option></c:if>
+                            <c:if test="${not empty viewColumnParamMap[iter.index]}"><option data-has-params="true" data-element-name="${viewColumnParamMap[iter.index].getElementName()}" ondblclick="var evt=$j.Event('dblclick');evt.delegateTarget=this;editColumnParams(evt);" value='${fn:escapeXml( viewColumnParamMap[iter.index] )}'>${viewColumnParamMap[iter.index].getSingleValue("userColumnName")}</option></c:if>
+                            <c:if test="${empty viewColumnParamMap[iter.index]}"><option data-has-params="false">${entry}</option></c:if>
                         </c:forEach>
                     </c:if>
                 </select>
