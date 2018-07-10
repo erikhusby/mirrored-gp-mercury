@@ -305,7 +305,12 @@ public class ResearchProjectEjb {
             log.error("Error serializing " + SubmissionRequestBean.class.getName(), e);
         }
 
-        Collection<SubmissionStatusDetailBean> submissionResults = submissionsService.postSubmissions(requestBean);
+        Collection<SubmissionStatusDetailBean> submissionResults;
+        try {
+            submissionResults = submissionsService.postSubmissions(requestBean);
+        } catch (Exception e) {
+            throw new InformaticsServiceException(e.getMessage(), e);
+        }
 
         Map<String, SubmissionTracker> submissionIdentifierToTracker = Maps
                 .uniqueIndex(submissionProject.getSubmissionTrackers(), new Function<SubmissionTracker, String>() {
