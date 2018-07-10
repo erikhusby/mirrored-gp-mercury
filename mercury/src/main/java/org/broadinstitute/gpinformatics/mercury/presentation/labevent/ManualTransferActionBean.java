@@ -884,9 +884,15 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             }
                         }
                     }
-                    if (labBatch != null && direction == Direction.SOURCE &&
-                            !labVessel.getWorkflowLabBatches().contains(labBatch)) {
-                        messageCollection.addError(direction.getText() + " " + barcode + " is not in batch " + labBatch.getBatchName());
+
+                    if (labBatch != null && direction == Direction.SOURCE) {
+                        Collection<LabBatch> nearestWorkflowLabBatches = labVessel.getNearestWorkflowLabBatches();
+                        List<LabBatch> workflowLabBatches = labVessel.getWorkflowLabBatches();
+                        if (!workflowLabBatches.contains(labBatch) && nearestWorkflowLabBatches != null &&
+                            !nearestWorkflowLabBatches.contains(labBatch)) {
+                            messageCollection.addError(direction.getText() + " " + barcode + " is not in batch " + labBatch
+                                            .getBatchName());
+                        }
                     }
                 }
             }
@@ -894,7 +900,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 messageCollection.addWarning("Batch has " + labBatch.getLabBatchStartingVessels().size() +
                         " vessels, but " + barcodes.size() + " were scanned.");
             }
-            if (labBatch != null) {
+            if (labBatch != null && required && direction == Direction.SOURCE) {
                 List<String> expectedBarcodes = labBatch.getLabBatchStartingVessels()
                         .stream().map(lbsv -> lbsv.getLabVessel().getLabel()).collect(Collectors.toList());
                 for (String missingBarcode : CollectionUtils.removeAll(expectedBarcodes, barcodes)) {
