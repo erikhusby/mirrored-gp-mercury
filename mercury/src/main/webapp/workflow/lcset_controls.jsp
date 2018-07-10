@@ -94,7 +94,7 @@
                                 <stripes:submit value="Submit" id="typeSubmitBtn" class="btn btn-primary"
                                                 name="<%= LcsetActionBean.TYPE_CONTROLS_EVENT %>"/>
                             </div>
-                            <c:if test="${not empty actionBean.controlBarcodes or not empty actionBean.addBarcodes or not empty actionBean.removeBarcodes}">
+                            <c:if test="${empty actionBean.rackScan and (not empty actionBean.controlBarcodes or not empty actionBean.addBarcodes or not empty actionBean.removeBarcodes)}">
                                 <c:set var="batchName" value="${actionBean.labBatchName}" scope="request"/>
                                 <jsp:include page="lcset_control_confirm.jsp"/>
                                 <div class="controls">
