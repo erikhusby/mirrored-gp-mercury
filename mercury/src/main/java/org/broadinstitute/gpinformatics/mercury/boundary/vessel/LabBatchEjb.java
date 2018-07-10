@@ -696,10 +696,11 @@ public class LabBatchEjb {
         List<LabVessel> controlTubes = new ArrayList<>();
         List<LabVessel> addTubes = new ArrayList<>();
         Set<BucketEntry> bucketEntries = new HashSet<>();
+        boolean addAndRemoveSamples = false;
         for (Map.Entry<String, LabVessel> entry : mapBarcodeToTube.entrySet()) {
             LabVessel barcodedTube = entry.getValue();
-            buildSamplesToAddAndRemove(labBatchName, controlAliases, barcodedTube, controlTubes,
-                    addTubes, bucketEntries, mapBarcodeToSampleInfo, mapSampleNameToData, messageCollection);
+            addAndRemoveSamples = buildSamplesToAddAndRemove(labBatchName, controlAliases, barcodedTube, controlTubes,
+                    addTubes, bucketEntries, mapBarcodeToSampleInfo, mapSampleNameToData, messageCollection, addAndRemoveSamples);
         }
 
         if (messageCollection.hasErrors()) {
@@ -750,7 +751,7 @@ public class LabBatchEjb {
         for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
             LabVessel barcodedTube = mapBarcodeToTube.get(positionBarcodeEntry.getValue());
             addAndRemoveSamples = buildSamplesToAddAndRemove(lcsetName, controlAliases, barcodedTube, controlTubes, addTubes,
-                    bucketEntries, mapBarcodeToSampleInfo, mapSampleNameToData, messageCollection);
+                    bucketEntries, mapBarcodeToSampleInfo, mapSampleNameToData, messageCollection, addAndRemoveSamples);
         }
 
         // Any tubes that are in the LCSET, but not in the scan, will need to be removed
@@ -792,8 +793,8 @@ public class LabBatchEjb {
     private boolean buildSamplesToAddAndRemove(String lcsetName, List<String> controlAliases, LabVessel barcodedTube,
                                                List<LabVessel> controlTubes, List<LabVessel> addTubes, Set<BucketEntry> bucketEntries,
                                                Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo,
-                                               Map<String, SampleData> mapSampleNameToData, MessageCollection messageCollection) {
-        boolean addAndRemoveSamples = false;
+                                               Map<String, SampleData> mapSampleNameToData, MessageCollection messageCollection,
+                                               boolean addAndRemoveSamples) {
         if (barcodedTube != null) {
             Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
             if (sampleInstances.size() == 1) {
