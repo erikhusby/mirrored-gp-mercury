@@ -1,3 +1,6 @@
+<%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
@@ -483,11 +486,13 @@
                                rpKey="${actionBean.editResearchProject.businessKey}"
                                rpTitle="${actionBean.editResearchProject.title}" />
 
-
-        <div style="clear:both;" class="tableBar">
-            <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
-            <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory Information</a>
-        </div>
+            <div style="clear:both;" class="tableBar">
+        <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
+                <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
+                <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory
+                    Information</a>
+        </security:authorizeBlock>
+            </div>
         <div>
             <h5>${actionBean.complianceStatement}</h5>
         </div>
@@ -511,16 +516,27 @@
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
                             <td style="text-align:center">
-                                <c:choose>
-                                    <c:when test="${actionBean.isRegulatoryInfoEditAllowed(regulatoryInfo)}">
-                                        <a href="#" class="editRegulatoryInfo" regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}">Edit...</a>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <span class="disabled-link" style="font-size: 12px;" title="Editing regulatory information from the ORSP Portal is not allowed.">Edit...</span>
-                                    </c:otherwise>
-                                </c:choose>
+                                <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
+                                    <c:choose>
+                                        <c:when test="${actionBean.isRegulatoryInfoEditAllowed(regulatoryInfo)}">
+                                            <a href="#" class="editRegulatoryInfo"
+                                               regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}">Edit...</a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="disabled-link" style="font-size: 12px;"
+                                                  title="Editing regulatory information from the ORSP Portal is not allowed.">Edit...</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </security:authorizeBlock>
                             </td>
-                            <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" disabled="${actionBean.isRegulatoryInfoInProductOrdersForThisResearchProject(regulatoryInfo)}" class="btn">Remove</stripes:submit></td>
+                            <td style="text-align:center">
+                                <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
+                                    <stripes:submit name="remove"
+                                                    onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});"
+                                                    disabled="${actionBean.isRegulatoryInfoInProductOrdersForThisResearchProject(regulatoryInfo)}"
+                                                    class="btn">Remove</stripes:submit>
+                                </security:authorizeBlock>
+                            </td>
                         </tr>
                     </c:forEach>
                 </tbody>
@@ -538,12 +554,15 @@
 
             <div id="ordersTab">
 
-            <stripes:link title="Create product order with research project ${actionBean.editResearchProject.title}"
-                          beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
-                <stripes:param name="researchProjectKey" value="${actionBean.editResearchProject.businessKey}"/>
-                <i class="icon-plus"></i>
-                Add New Product Order
-            </stripes:link>
+                <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
+                    <stripes:link
+                            title="Create product order with research project ${actionBean.editResearchProject.title}"
+                            beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
+                        <stripes:param name="researchProjectKey" value="${actionBean.editResearchProject.businessKey}"/>
+                        <i class="icon-plus"></i>
+                        Add New Product Order
+                    </stripes:link>
+                </security:authorizeBlock>
 
         <table id="orderList" class="table simple">
             <thead>
