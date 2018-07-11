@@ -41,6 +41,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Date;
@@ -175,6 +176,9 @@ public class BSPRestSender implements Serializable {
                             receptacleType.getMetadata().add(metadataType);
                         }
                     }
+
+                    // Check to see whether the event expects to handle sources in a unique way.
+                    addSourceHandlingException(targetEvent.getLabEventType(), plateCherryPickEvent.getSourcePositionMap());
                 } else {
                     // Queue up tubes to remove from position maps
                     ReceptacleType sourceReceptacleType = mapSourcePosToReceptacle.get(sourceVesselPosition);
@@ -209,6 +213,59 @@ public class BSPRestSender implements Serializable {
         return atLeastOneTransfer ? plateCherryPickEvent : null;
     }
 
+    /**
+     * Check whether the event type expects to handle sources in a special way and add the metadata if necessary.
+     *
+     * @param targetEventType   LabEventType of the lab event
+     * @param sourcePositionMap List of sources
+     */
+    private void addSourceHandlingException(LabEventType targetEventType, List<PositionMapType> sourcePositionMap) {
+        // Check to see if the SourceHandling 'DEPLETE' or 'TERMINATE_DEPLETED' flag is set on the lab event type.
+        if (targetEventType.depleteSources() || targetEventType.terminateDepletedSources()) {
+            for (PositionMapType positionMapType : sourcePositionMap) {
+                addSourceHandlingException(targetEventType, positionMapType);
+            }
+        }
+    }
+
+    /**
+     * Check whether the event type expects to handle sources in a special way and add the metadata if necessary.
+     *
+     * @param targetEventType   LabEventType of the lab event
+     * @param PositionMapType   PositionMapType object containing the sources of a transfer
+     */
+    private void addSourceHandlingException(LabEventType targetEventType, PositionMapType sourcePositionMap) {
+        // Check to see if the SourceHandling 'DEPLETE' or 'TERMINATE_DEPLETED' flag is set on the lab event type.
+        if (targetEventType.depleteSources() || targetEventType.terminateDepletedSources()) {
+            for (ReceptacleType sourceReceptacleType : sourcePositionMap.getReceptacle()) {
+                addSourceHandlingException(targetEventType, sourceReceptacleType);
+            }
+        }
+    }
+
+    /**
+     * Check whether the event type expects to handle sources in a special way and do so if necessary.
+     *
+     * @param targetEventType      LabEventType of the lab event
+     * @param sourceReceptacleType Source
+     */
+    private void addSourceHandlingException(LabEventType targetEventType, ReceptacleType sourceReceptacleType) {
+        // Check to see if 'DEPLETE' or 'TERMINATE_DEPLETED' flag is set on the lab event type.
+        if (targetEventType.depleteSources() || targetEventType.terminateDepletedSources()) {
+
+            MetadataType metadataType = new MetadataType();
+            // Always add the 'terminate_depleted' enum as BSP will handle termination if the volume is zero.
+            metadataType.setName(LabEventType.SourceHandling.TERMINATE_DEPLETED.getDisplayName());
+            metadataType.setValue(Boolean.TRUE.toString());
+            sourceReceptacleType.getMetadata().add(metadataType);
+
+            // If we are set to deplete the sources then we need to ensure it's volume is zero.
+            if (targetEventType.depleteSources()) {
+                sourceReceptacleType.setVolume(BigDecimal.ZERO);
+            }
+        }
+    }
+
     private Map<VesselPosition, ReceptacleType> buildMapPosToReceptacle(List<PositionMapType> positionMaps) {
         Map<VesselPosition, ReceptacleType> mapPosToReceptacle = new HashMap<>();
         if (positionMaps != null && !positionMaps.isEmpty()) {
@@ -225,9 +282,11 @@ public class BSPRestSender implements Serializable {
         // is two events in one message, but only one is configured to forward to BSP.
         BettaLIMSMessage copy = new BettaLIMSMessage();
         boolean atLeastOneEvent = false;
+
         for (PlateCherryPickEvent plateCherryPickEvent : message.getPlateCherryPickEvent()) {
             if(LabEventType.getByName(plateCherryPickEvent.getEventType()).getForwardMessage() ==
                     LabEventType.ForwardMessage.BSP) {
+                addSourceHandlingException(LabEventType.getByName(plateCherryPickEvent.getEventType()), plateCherryPickEvent.getSourcePositionMap());
                 // todo jmt method to filter out clinical samples
                 copy.getPlateCherryPickEvent().add(plateCherryPickEvent);
                 atLeastOneEvent = true;
@@ -244,6 +303,7 @@ public class BSPRestSender implements Serializable {
                         atLeastOneEvent = true;
                     }
                 } else {
+                    addSourceHandlingException(labEventType, plateTransferEventType.getSourcePositionMap());
                     copy.getPlateTransferEvent().add(plateTransferEventType);
                     atLeastOneEvent = true;
                 }
@@ -253,6 +313,7 @@ public class BSPRestSender implements Serializable {
             if(LabEventType.getByName(receptacleTransferEventType.getEventType()).getForwardMessage() ==
                     LabEventType.ForwardMessage.BSP) {
                 // todo jmt method to filter out clinical samples
+                addSourceHandlingException(LabEventType.getByName(receptacleTransferEventType.getEventType()), receptacleTransferEventType.getSourceReceptacle());
                 copy.getReceptacleTransferEvent().add(receptacleTransferEventType);
                 atLeastOneEvent = true;
             }

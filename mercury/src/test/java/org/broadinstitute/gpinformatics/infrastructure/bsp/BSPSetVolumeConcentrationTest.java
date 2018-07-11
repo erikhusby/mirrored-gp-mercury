@@ -31,7 +31,7 @@ public class BSPSetVolumeConcentrationTest  {
 
         for (int i = 0; i < newVolume.length; ++i) {
             String result = bspSetVolumeConcentration.setVolumeAndConcentration(
-                    testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i]);
+                    testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i], Boolean.FALSE);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
             SampleData bspSampleData = dataFetcher.fetchSingleSampleFromBSP(testSampleId);

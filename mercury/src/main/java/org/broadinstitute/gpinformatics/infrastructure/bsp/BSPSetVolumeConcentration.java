@@ -16,12 +16,13 @@ public interface BSPSetVolumeConcentration extends Serializable {
     /**
      * The actual code to set the volume and concentration.
      *
-     * @param barcode       The barcode for the sample being set.
-     * @param volume        The volume value to set.
-     * @param concentration The concentration value to set.
+     * @param barcode           The barcode for the sample being set.
+     * @param volume            The volume value to set.
+     * @param concentration     The concentration value to set.
+     * @param terminateDepleted Whether to terminate the sample if it is depleted.
      *
      * @return OK or error message
      */
     String setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration,
-            BigDecimal receptacleWeight);
+                                     BigDecimal receptacleWeight, Boolean terminateDepleted);
 }
