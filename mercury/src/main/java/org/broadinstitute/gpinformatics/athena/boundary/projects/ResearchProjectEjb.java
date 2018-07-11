@@ -309,6 +309,7 @@ public class ResearchProjectEjb {
         try {
             submissionResults = submissionsService.postSubmissions(requestBean);
         } catch (Exception e) {
+            log.error("Error Posting to Submission Service " + e.getMessage(), e);
             throw new InformaticsServiceException(e.getMessage(), e);
         }
 
