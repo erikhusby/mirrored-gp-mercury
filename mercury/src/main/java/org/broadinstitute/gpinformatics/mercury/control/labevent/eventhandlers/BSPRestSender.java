@@ -254,7 +254,7 @@ public class BSPRestSender implements Serializable {
         if (targetEventType.depleteSources() || targetEventType.terminateDepletedSources()) {
 
             MetadataType metadataType = new MetadataType();
-            // Always add the 'terminate_depleted' enum as BSP will handle termination if the volume is zero.
+            // Always add the 'Terminate Depleted' enum display name as BSP will handle termination if the volume is zero.
             metadataType.setName(LabEventType.SourceHandling.TERMINATE_DEPLETED.getDisplayName());
             metadataType.setValue(Boolean.TRUE.toString());
             sourceReceptacleType.getMetadata().add(metadataType);
