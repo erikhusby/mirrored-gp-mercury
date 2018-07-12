@@ -123,7 +123,9 @@ buttons to move columns from one to the other --%>
                             <option value="none">None</option>
                             <c:forEach items="${actionBean.configurableSearchDef.customTraversalOptions}" var="customTraversalOption">
                                 <c:if test="${actionBean.searchInstance.customTraversalOptionName eq customTraversalOption.key}">
-                                    <option value="${fn:escapeXml( actionBean.searchInstance.customTraversalOptionParams )}" data-element-name="${customTraversalOption.key}" data-has-user-customization="${customTraversalOption.value.userConfigurable}" selected="true" >${customTraversalOption.value.label}</option>
+                                    <option <c:if test='${empty actionBean.searchInstance.customTraversalOptionParams}'>
+                                        value="${customTraversalOption.key}"</c:if><c:if test='${not empty actionBean.searchInstance.customTraversalOptionParams}'>
+                                        value="${fn:escapeXml( actionBean.searchInstance.customTraversalOptionParams )}"</c:if> data-element-name="${customTraversalOption.key}" data-has-user-customization="${customTraversalOption.value.userConfigurable}" selected="true" >${customTraversalOption.value.label}</option>
                                 </c:if>
                                 <c:if test="${actionBean.searchInstance.customTraversalOptionName ne customTraversalOption.key}">
                                     <option value="${customTraversalOption.key}" data-element-name="${customTraversalOption.key}" data-has-user-customization="${customTraversalOption.value.userConfigurable}">${customTraversalOption.value.label}</option>
