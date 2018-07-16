@@ -47,6 +47,7 @@
 
         .submissionControls {
             width: auto;
+            margin-bottom: 20px;
             display: none;
         }
 
@@ -80,7 +81,9 @@
             padding: 12px;
             left: -12px;
         }
-
+        .autoWidth {
+            width: auto;
+        }
     </style>
     <script src="${ctxpath}/resources/scripts/jquery.pasteSelect.js" type="text/javascript"></script>
     <link rel="stylesheet" href="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.min.css">
@@ -194,17 +197,19 @@
                     }
                     return data;
                 }
+                enableDefaultPagingOptions();
                 oTable = $j('#submissionSamples').dataTable({
                     "bDeferRender": true,
                     "oLanguage": {
-                        "sInfo": "_TOTAL_ submissions displayed.",
-                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from BSP, Mercury, Epsilon 9 and the Pipeline. This may take a few minutes."
+                        "sInfo": "Displaying _START_ to _END_ of _TOTAL_ submission entries",
+                        "sInfoFiltered": "(filtered from _MAX_)",
+                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes."
                     },
                     "oTableTools": ttExportDefines,
                     "bStateSave": true,
                     "bProcessing": true,
                     "bInfo": true,
-                    "sDom": "r<'row-fluid'<'span12'T>><'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' i>'span2'>>>t<'row-fluid'<'span6'><'span6'p>>",
+                    "sDom": "r<'#filtering.accordion'<'row-fluid autoWidth'<'span12' <'columnFilter'i>><'row-fluid'<'span12'f>>>> <'row-fluid evenHeight'<'span6' l><'span6'T>>t   <'row-fluid'<'span6' l><'span6'p>>",
                     "sAjaxSource": '${ctxpath}/projects/project.action',
                     "fnServerData": function (sSource, aoData, fnCallback, oSettings) {
                         aoData.push({"name": "researchProject", "value": "${researchProject}"});
