@@ -31,7 +31,8 @@ public class BSPSetVolumeConcentrationTest  {
 
         for (int i = 0; i < newVolume.length; ++i) {
             String result = bspSetVolumeConcentration.setVolumeAndConcentration(
-                    testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i], Boolean.FALSE);
+                    testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i],
+                    BSPSetVolumeConcentration.TerminateAction.LEAVE_CURRENT_STATE);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
             SampleData bspSampleData = dataFetcher.fetchSingleSampleFromBSP(testSampleId);
@@ -54,7 +55,8 @@ public class BSPSetVolumeConcentrationTest  {
         // Test terminating depleted a sample.
         String testSampleId2 = "SM-11HX";
         String result = bspSetVolumeConcentration.setVolumeAndConcentration(
-                testSampleId2, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, Boolean.TRUE);
+                testSampleId2, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+                BSPSetVolumeConcentration.TerminateAction.TERMINATE_DEPLETED);
         Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
         SampleData bspSampleData = dataFetcher.fetchSingleSampleFromBSP(testSampleId2);

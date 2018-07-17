@@ -222,7 +222,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
                 }
                 String result = bspSetVolumeConcentration.setVolumeAndConcentration(sourceLabVessel.getLabel(),
                         BigDecimal.ZERO, sourceLabVessel.getConcentration(),
-                        sourceLabVessel.getReceptacleWeight(), true);
+                        sourceLabVessel.getReceptacleWeight(), BSPSetVolumeConcentration.TerminateAction.TERMINATE_DEPLETED);
                 if (!result.equals(BSPSetVolumeConcentration.RESULT_OK)) {
                     logger.error(result);
                 }

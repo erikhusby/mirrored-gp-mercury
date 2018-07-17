@@ -89,20 +89,20 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
      * Call BSP WebService which sets the volume and or the concentration of the thing barcoded.
      * At lease one of must be Nonnull.
      *
-     * @param barcode           The thing having its quant updated. In BSP this currently can be a SM id or a manufacturer
-     *                          barcode.
-     * @param volume            New volume of the sample. Can be null.
-     * @param concentration     The new concentration of the sample. Can be null.
-     * @param terminateDepleted Whether to terminate the sample if it is depleted.
+     * @param barcode         The thing having its quant updated. In BSP this currently can be a SM id or a manufacturer
+     *                        barcode.
+     * @param volume          New volume of the sample. Can be null.
+     * @param concentration   The new concentration of the sample. Can be null.
+     * @param terminateAction Whether to terminate the sample if it is depleted or leave the sample in the same state.
      */
     @Override
     public String setVolumeAndConcentration(@Nonnull String barcode, @Nullable BigDecimal volume,
                                             @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight,
-                                            @Nullable Boolean terminateDepleted) {
+                                            @Nullable TerminateAction terminateAction) {
         BufferedReader rdr = null;
         String result;
         try {
-            String queryString = getQueryString(barcode, volume, concentration, receptacleWeight, terminateDepleted);
+            String queryString = getQueryString(barcode, volume, concentration, receptacleWeight, terminateAction.getTerminateDepleted());
             String urlString = getUrl(queryString);
 
             WebResource webResource = getJerseyClient().resource(urlString);

@@ -1212,9 +1212,13 @@ public class LabEventFactory implements Serializable {
                         }
                     }
 
+                    BSPSetVolumeConcentration.TerminateAction terminateAction =
+                            terminateDepleted ? BSPSetVolumeConcentration.TerminateAction.TERMINATE_DEPLETED :
+                                    BSPSetVolumeConcentration.TerminateAction.LEAVE_CURRENT_STATE;
                     String result = bspSetVolumeConcentration.setVolumeAndConcentration(receptacleType.getBarcode(),
                             receptacleType.getVolume(), receptacleType.getConcentration(),
-                            receptacleType.getReceptacleWeight(), terminateDepleted);
+                            receptacleType.getReceptacleWeight(),
+                            terminateAction);
                     if (!result.equals(BSPSetVolumeConcentration.RESULT_OK)) {
                         logger.error(result);
                     }
