@@ -190,6 +190,7 @@ public class BillingSessionFixupTest extends Arquillian {
         userBean.loginOSUser();
         String deliveryDocument = "0200003565";
         String pdoKey = "PDO-14753";
+        String quoteServerWorkItem = "288337";
 
         Set<LedgerEntry> negativelyBilledEntries =
             ledgerEntryDao.findNegativelyBilledEntriesByOrder(Collections.singletonList(pdoKey));
@@ -197,10 +198,12 @@ public class BillingSessionFixupTest extends Arquillian {
         assertThat(negativelyBilledEntries.size(), equalTo(1));
 
         LedgerEntry ledgerEntry = negativelyBilledEntries.iterator().next();
+
+        assertThat(ledgerEntry.getWorkItem(), equalTo(quoteServerWorkItem));
         assertThat(ledgerEntry.getSapDeliveryDocumentId(), nullValue());
         ledgerEntry.setSapDeliveryDocumentId(deliveryDocument);
         ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
 
-        ledgerEntryDao.persist(new FixupCommentary("GPLIM-5653: Associate SAP Deliver Document with negatively billed ledger entry."));
+        ledgerEntryDao.persist(new FixupCommentary("GPLIM-5653: Associate SAP Delivery Document with negatively billed ledger entry."));
     }
 }

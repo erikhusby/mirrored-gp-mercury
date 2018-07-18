@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class LedgerEntryDao extends GenericDao {
 
-    private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED, CONFIRMATION_UPLOAD, SESSION_BILLED_WITH_ERROR }
+    private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED, CONFIRMATION_UPLOAD }
 
     public List<LedgerEntry> findAll() {
         return findAll(LedgerEntry.class);
@@ -110,14 +110,6 @@ public class LedgerEntryDao extends GenericDao {
             Predicate hasSession = ledgerRoot.get(LedgerEntry_.billingSession).isNotNull();
             Predicate isBilled = criteriaBuilder.equal(ledgerRoot.get(LedgerEntry_.billingMessage), BillingSession.SUCCESS);
             fullPredicate = criteriaBuilder.and(orderInPredicate, hasSession, isBilled);
-        } else if (inclusion == BillingSessionInclusion.SESSION_BILLED_WITH_ERROR) {
-
-            // A billing session was saved but did not have a successful status.
-            Predicate hasSession = ledgerRoot.get(LedgerEntry_.billingSession).isNotNull();
-            Predicate isNotBilledSuccessfully = criteriaBuilder
-                .not(criteriaBuilder.equal(ledgerRoot.get(LedgerEntry_.billingMessage), BillingSession.SUCCESS));
-            fullPredicate = criteriaBuilder.and(orderInPredicate, hasSession, isNotBilledSuccessfully);
-
         } else {
             fullPredicate = orderInPredicate;
         }
@@ -130,12 +122,11 @@ public class LedgerEntryDao extends GenericDao {
         } catch (NoResultException ignored) {
             return Collections.emptySet();
         }
-
     }
 
     public Set<LedgerEntry> findNegativelyBilledEntriesByOrder(@Nonnull List<String> productOrderBusinessKeys) {
         Set<LedgerEntry> orderList =
-            findByOrderList(null, productOrderBusinessKeys, BillingSessionInclusion.SESSION_BILLED_WITH_ERROR);
+            findByOrderList(null, productOrderBusinessKeys, BillingSessionInclusion.NO_SESSION_STARTED);
         Set<LedgerEntry> negativeEntries = orderList.stream()
             .filter(ledgerEntry -> ledgerEntry.getQuantity() < 0
                                    && !StringUtils.equals(ledgerEntry.getBillingMessage(), BillingSession.SUCCESS)
