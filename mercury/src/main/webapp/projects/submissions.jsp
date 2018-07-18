@@ -85,7 +85,6 @@
             width: auto;
         }
     </style>
-    <script src="${ctxpath}/resources/scripts/jquery.pasteSelect.js" type="text/javascript"></script>
     <link rel="stylesheet" href="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.min.css">
     <script type="text/javascript" src="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.jquery.min.js"></script>
     <script type="text/javascript" src="${ctxpath}/resources/scripts/dataTables-filterColumn.js"></script>
@@ -95,11 +94,31 @@
             return "<li>" + item.dropdownItem + extraCount + '</li>';
         }
 
-        $j(document).ready(function () {
-            $j("#submissionSamples").pasteSelect({
-                columnNames: ["BioSample"],
-                noun: "Sample"
+        function initPasteBarcodesDeprecated() {
+
+            // GPLIM-5660
+            // Inform users that this is deprecated on this page and show them how do do this using filters.
+            var $pasteInBarcodesDisabledDialog = $j("#listOfBarcodesDisabledForm").dialog({
+                buttons: {
+                    Ok: function () {
+                        $j(this).dialog("close");
+                    }
+                },
+                autoOpen: false,
+                title: "This functionality has been deprecated",
+                width: '475',
+                height: 'auto',
+                modal: true,
             });
+            $("#PasteBarcodesListDisabled").on("click", function () {
+                $pasteInBarcodesDisabledDialog.dialog("open");
+            });
+        }
+
+        $j(document).ready(function () {
+
+            // GPLIM-5660 This should be removed in a future release.
+            initPasteBarcodesDeprecated();
 
             $j("#bioProject").tokenInput(
                     "${ctxpath}/projects/project.action?bioProjectAutocomplete=", {
@@ -399,7 +418,7 @@
         <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>"
                         value="Post Selected Submissions" class="btn submissionControls"
                         disabled="${!actionBean.validateViewOrPostSubmissions(true)}"/>
-        <a href="javascript:void(0)" id="PasteBarcodesList"
+        <a href="javascript:void(0)" id="PasteBarcodesListDisabled"
            title="Select samples using a pasted-in list of values.">Choose via list of samples...</a>
     </div>
     <table class="table simple" id="submissionSamples">
@@ -437,4 +456,15 @@
                     disabled="${!actionBean.validateViewOrPostSubmissions(true)}" style="display:none;"/>
 
 </stripes:form>
+    <%--GPLIM-5660 This div should be removed in a future release.--%>
+    <div id="listOfBarcodesDisabledForm" class="ui-dialog-content ui-widget-content" style="display:none;">
+    <p style="font-weight: bold">To choose from a list of samples, paste the sample list into the text filter:</p>
+        <div style="margin-left: 2em; border-style: dashed; border-width: 1px; padding: 5px; border-color: grey;">
+            <img src="${ctxpath}/images/deprecate/filter-any.png" alt="">
+        </div>
+        <br/>
+        <p style="font-weight: bold">and click the "select all" checkbox at the top of the table:</p>
+    <div style="margin-left: 2em; border-style: dashed; border-width: 1px; padding: 5px; border-color: grey;">
+            <img src="${ctxpath}/images/deprecate/check-all.png" alt="">
+        </div>
 </stripes:layout-definition>
