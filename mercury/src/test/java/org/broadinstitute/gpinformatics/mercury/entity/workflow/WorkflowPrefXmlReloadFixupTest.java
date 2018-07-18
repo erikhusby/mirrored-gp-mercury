@@ -54,7 +54,7 @@ public class WorkflowPrefXmlReloadFixupTest extends Arquillian {
     /**
      * Used to (initially) load workflow configuration from a file to a global preference
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3557LoadWorkflowConfigPrefsFromFile() throws Exception {
 
         userBean.loginOSUser();
