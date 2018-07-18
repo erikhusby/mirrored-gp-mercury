@@ -293,7 +293,7 @@ public class ResearchProjectEjb {
             SubmissionBean submissionBean =
                     new SubmissionBean(dtoByTracker.getKey().createSubmissionIdentifier(),
                             userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean, repository,
-                            submissionLibraryDescriptor, researchProjectBusinessKey,
+                            submissionLibraryDescriptor, dtoByTracker.getValue().getAggregationProject(),
                             String.valueOf(dtoByTracker.getValue().getVersion()));
             submissionBeans.add(submissionBean);
         }
@@ -305,7 +305,13 @@ public class ResearchProjectEjb {
             log.error("Error serializing " + SubmissionRequestBean.class.getName(), e);
         }
 
-        Collection<SubmissionStatusDetailBean> submissionResults = submissionsService.postSubmissions(requestBean);
+        Collection<SubmissionStatusDetailBean> submissionResults;
+        try {
+            submissionResults = submissionsService.postSubmissions(requestBean);
+        } catch (Exception e) {
+            log.error("Error Posting to Submission Service " + e.getMessage(), e);
+            throw new InformaticsServiceException(e.getMessage(), e);
+        }
 
         Map<String, SubmissionTracker> submissionIdentifierToTracker = Maps
                 .uniqueIndex(submissionProject.getSubmissionTrackers(), new Function<SubmissionTracker, String>() {
