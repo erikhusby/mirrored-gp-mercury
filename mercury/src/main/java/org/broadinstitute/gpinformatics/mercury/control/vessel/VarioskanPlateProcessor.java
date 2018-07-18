@@ -80,6 +80,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
         private boolean naN;
         private VarioskanPlateProcessorTwoCurve.PicoCurve curve;
         private BigDecimal value;
+        private boolean overTheCurve = false;
 
         public PlateWellResult(String plateBarcode,
                                VesselPosition vesselPosition, BigDecimal result) {
@@ -119,6 +120,14 @@ public class VarioskanPlateProcessor extends TableProcessor {
 
         public BigDecimal getValue() {
             return value;
+        }
+
+        public void setOverTheCurve(boolean overTheCurve) {
+            this.overTheCurve = overTheCurve;
+        }
+
+        public boolean isOverTheCurve() {
+            return overTheCurve;
         }
     }
 

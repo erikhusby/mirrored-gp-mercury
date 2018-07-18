@@ -23,6 +23,8 @@ public final class VarioskanPlateProcessorTwoCurve {
     private final List<String> validationMessages = new ArrayList<>();
 
     public enum PicoCurve {
+        // Plating Pico curve actually goes to 20 but the software extrapolates to a max of 100
+        PLATING_BROAD_RANGE("QuantitativeCurveFit1", BigDecimal.ZERO, new BigDecimal("100")),
         BROAD_RANGE("QuantitativeCurveFit1", BigDecimal.TEN, new BigDecimal("100")),
         HIGH_SENSE("QuantitativeCurveFit2", BigDecimal.ZERO, BigDecimal.TEN);
 
@@ -60,9 +62,7 @@ public final class VarioskanPlateProcessorTwoCurve {
         }
     }
 
-    public List<VarioskanPlateProcessor.PlateWellResult> processMultipleCurves(
-            Map<String, StaticPlate.TubeFormationByWellCriteria.Result> mapBarcodeToTraverser,
-            LabMetric.MetricType metricType)
+    public List<VarioskanPlateProcessor.PlateWellResult> processMultipleCurves(LabMetric.MetricType metricType)
             throws ValidationException {
         List<VarioskanPlateProcessor.PlateWellResult> finalValues = new ArrayList<>();
         List<VarioskanPlateProcessor.PlateWellResult> broadRange = parseSheet(PicoCurve.BROAD_RANGE, metricType);
@@ -70,60 +70,27 @@ public final class VarioskanPlateProcessorTwoCurve {
 
         Iterator<VarioskanPlateProcessor.PlateWellResult> brIter = broadRange.iterator();
         Iterator<VarioskanPlateProcessor.PlateWellResult> hsIter = highSense.iterator();
-        Map<LabVessel, List<VarioskanPlateProcessor.PlateWellResult>> mapBarcodeToBroadRange = new HashMap<>();
-        Map<LabVessel, List<VarioskanPlateProcessor.PlateWellResult>> mapBarcodeToHighSense= new HashMap<>();
         while (brIter.hasNext() && hsIter.hasNext()) {
-            VarioskanPlateProcessor.PlateWellResult hsResult = hsIter.next();
             VarioskanPlateProcessor.PlateWellResult brResult = brIter.next();
-            StaticPlate.TubeFormationByWellCriteria.Result result = mapBarcodeToTraverser.get(hsResult.getPlateBarcode());
-            if (result == null) {
-                continue;
-            }
-            VesselPosition tubePos = result.getWellToTubePosition().get(hsResult.getVesselPosition());
-            LabVessel sourceTube = result.getTubeFormation().getContainerRole().getVesselAtPosition(tubePos);
-            if (sourceTube != null) {
-                // Broad Range Over the Curve - Set to top of the curve.
-                if (brResult.isNaN() && brResult.getValue().compareTo(BigDecimal.ZERO) > 0) {
+            VarioskanPlateProcessor.PlateWellResult hsResult = hsIter.next();
+            if (brResult.isNaN()) {
+                if (brResult.getValue().compareTo(PicoCurve.BROAD_RANGE.getHighestAccurateRead()) > 0) {
                     brResult.setResult(PicoCurve.BROAD_RANGE.getHighestAccurateRead());
-                }
-                if (!mapBarcodeToBroadRange.containsKey(sourceTube)) {
-                    mapBarcodeToBroadRange.put(sourceTube, new ArrayList<>());
-                }
-                if (!mapBarcodeToHighSense.containsKey(sourceTube)) {
-                    mapBarcodeToHighSense.put(sourceTube, new ArrayList<>());
-                }
-                mapBarcodeToBroadRange.get(sourceTube).add(brResult);
-                mapBarcodeToHighSense.get(sourceTube).add(hsResult);
-            }
-        }
-
-        // Go through triplicates and determine if BR should be used or HS curve
-        for (LabVessel sourceTube: mapBarcodeToBroadRange.keySet()) {
-            List<VarioskanPlateProcessor.PlateWellResult> brTrips = mapBarcodeToBroadRange.get(sourceTube);
-            List<VarioskanPlateProcessor.PlateWellResult> hsTrips = mapBarcodeToHighSense.get(sourceTube);
-            List<VarioskanPlateProcessor.PlateWellResult> brNaN =
-                    brTrips.stream().filter(VarioskanPlateProcessor.PlateWellResult::isNaN)
-                            .collect(Collectors.toList());
-            boolean useHighSense = false;
-            if (brNaN.size() >= 2) { // Check HS Curve
-                useHighSense = true;
-            } else {
-                OptionalDouble optAverage = brTrips.stream().filter(res -> !res.isNaN())
-                        .mapToDouble(res -> res.getResult().floatValue()).average();
-                if (optAverage.isPresent()) {
-                    BigDecimal avg = new BigDecimal(optAverage.getAsDouble());
-                    if (avg.compareTo(PicoCurve.BROAD_RANGE.getLowestAccurateRead()) > 0) {
-                        finalValues.addAll(brTrips);
-                    } else {
-                        useHighSense = true;
-                    }
+                    brResult.setOverTheCurve(true);
+                    finalValues.add(brResult);
+                } else if (hsResult.isNaN()) {
+                    hsResult.setResult(null);
+                    finalValues.add(hsResult);
                 } else {
-                    System.out.println("What ahppended?");
+                    finalValues.add(hsResult);
                 }
-            }
-
-            if (useHighSense) {
-                finalValues.addAll(hsTrips);
+            } else if (brResult.getResult().compareTo(PicoCurve.BROAD_RANGE.getLowestAccurateRead()) > 0) {
+                finalValues.add(brResult);
+            } else if (hsResult.isNaN()) {
+                hsResult.setResult(BigDecimal.ZERO);
+                finalValues.add(hsResult);
+            } else {
+                finalValues.add(hsResult);
             }
         }
 

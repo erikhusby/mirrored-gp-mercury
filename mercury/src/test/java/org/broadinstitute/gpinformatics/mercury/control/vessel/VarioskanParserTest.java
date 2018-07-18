@@ -71,7 +71,7 @@ public class VarioskanParserTest {
             }
 
             List<VarioskanPlateProcessor.PlateWellResult> plateWellResults =
-                    plateProcessorTwoCurve.processMultipleCurves(mapBarcodeToResult, LabMetric.MetricType.INITIAL_PICO);
+                    plateProcessorTwoCurve.processMultipleCurves(LabMetric.MetricType.INITIAL_PICO);
 
             Assert.assertEquals(plateWellResults.size(), numSamples * 3);
             Assert.assertEquals(plateProcessorTwoCurve.getMessages().size(), 0);
