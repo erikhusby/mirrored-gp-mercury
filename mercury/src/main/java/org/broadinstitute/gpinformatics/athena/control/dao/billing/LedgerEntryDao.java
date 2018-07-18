@@ -1,7 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.*;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
@@ -15,12 +19,18 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Database interactions involving Billing Ledger
@@ -30,7 +40,7 @@ import java.util.Set;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class LedgerEntryDao extends GenericDao {
 
-    private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED, CONFIRMATION_UPLOAD }
+    private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED, CONFIRMATION_UPLOAD, SESSION_BILLED_WITH_ERROR }
 
     public List<LedgerEntry> findAll() {
         return findAll(LedgerEntry.class);
@@ -100,6 +110,14 @@ public class LedgerEntryDao extends GenericDao {
             Predicate hasSession = ledgerRoot.get(LedgerEntry_.billingSession).isNotNull();
             Predicate isBilled = criteriaBuilder.equal(ledgerRoot.get(LedgerEntry_.billingMessage), BillingSession.SUCCESS);
             fullPredicate = criteriaBuilder.and(orderInPredicate, hasSession, isBilled);
+        } else if (inclusion == BillingSessionInclusion.SESSION_BILLED_WITH_ERROR) {
+
+            // A billing session was saved but did not have a successful status.
+            Predicate hasSession = ledgerRoot.get(LedgerEntry_.billingSession).isNotNull();
+            Predicate isNotBilledSuccessfully = criteriaBuilder
+                .not(criteriaBuilder.equal(ledgerRoot.get(LedgerEntry_.billingMessage), BillingSession.SUCCESS));
+            fullPredicate = criteriaBuilder.and(orderInPredicate, hasSession, isNotBilledSuccessfully);
+
         } else {
             fullPredicate = orderInPredicate;
         }
@@ -113,6 +131,19 @@ public class LedgerEntryDao extends GenericDao {
             return Collections.emptySet();
         }
 
+    }
+
+    public Set<LedgerEntry> findNegativelyBilledEntriesByOrder(@Nonnull List<String> productOrderBusinessKeys) {
+        Set<LedgerEntry> orderList =
+            findByOrderList(null, productOrderBusinessKeys, BillingSessionInclusion.SESSION_BILLED_WITH_ERROR);
+        Set<LedgerEntry> negativeEntries = orderList.stream()
+            .filter(ledgerEntry -> ledgerEntry.getQuantity() < 0
+                                   && !StringUtils.equals(ledgerEntry.getBillingMessage(), BillingSession.SUCCESS)
+            ).collect(Collectors.toSet());
+        if (negativeEntries == null) {
+            negativeEntries = Collections.emptySet();
+        }
+        return negativeEntries;
     }
 
     private Set<LedgerEntry> findByOrderList(@Nonnull List<String> productOrderBusinessKeys, BillingSessionInclusion inclusion) {

@@ -23,10 +23,19 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.FIXUP)
 public class BillingSessionFixupTest extends Arquillian {
@@ -174,5 +183,24 @@ public class BillingSessionFixupTest extends Arquillian {
                                                       + "ledger entries which successfully created Delivery documents "
                                                       + "in SAP but SAP incorrectly recorded a failure along with the "
                                                       + "success so the success was not captured"));
+    }
+
+    @Test(enabled = false)
+    public void gplim5653UpdateLedgerItemsWithDeliveryDocument(){
+        userBean.loginOSUser();
+        String deliveryDocument = "0200003565";
+        String pdoKey = "PDO-14753";
+
+        Set<LedgerEntry> negativelyBilledEntries =
+            ledgerEntryDao.findNegativelyBilledEntriesByOrder(Collections.singletonList(pdoKey));
+
+        assertThat(negativelyBilledEntries.size(), equalTo(1));
+
+        LedgerEntry ledgerEntry = negativelyBilledEntries.iterator().next();
+        assertThat(ledgerEntry.getSapDeliveryDocumentId(), nullValue());
+        ledgerEntry.setSapDeliveryDocumentId(deliveryDocument);
+        ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+
+        ledgerEntryDao.persist(new FixupCommentary("GPLIM-5653: Associate SAP Deliver Document with negatively billed ledger entry."));
     }
 }
