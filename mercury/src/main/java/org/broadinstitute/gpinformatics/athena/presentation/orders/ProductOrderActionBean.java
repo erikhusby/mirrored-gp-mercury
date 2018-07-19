@@ -88,9 +88,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -1330,13 +1330,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             populateAttributes(editOrder.getProductOrderId());
 
-            try {
-                buildJsonCustomizationsFromProductOrder(editOrder);
-            } catch (JSONException e) {
-                if(userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
-                    addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
-                }
-            }
+            buildCustomizationHelper();
 
             QuotePriceItem priceItemByKeyFields = null;
             if (editOrder.getProduct() != null) {
@@ -1352,6 +1346,21 @@ public class ProductOrderActionBean extends CoreActionBean {
                 if (addOnPriceItemByKeyFields != null ) {
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
                 }
+            }
+        }
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    public void viewPageInit() {
+        buildCustomizationHelper();
+    }
+
+    public void buildCustomizationHelper() {
+        try {
+            buildJsonCustomizationsFromProductOrder(editOrder);
+        } catch (JSONException e) {
+            if (userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
+                addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
             }
         }
     }

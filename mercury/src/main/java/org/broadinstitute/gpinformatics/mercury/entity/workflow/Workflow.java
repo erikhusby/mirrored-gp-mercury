@@ -33,12 +33,12 @@ public enum Workflow {
     ICE_CRSP("ICE CRSP"),
     CLINICAL_WHOLE_BLOOD_EXTRACTION("Clinical Whole Blood Extraction"),
     DNA_RNA_EXTRACTION_CELL_PELLETS("DNA and RNA from Cell Pellets"),
-    DNA_RNA_EXTRACTION_STOOL("DNA and RNA from Stool"),
     TRU_SEQ_STRAND_SPECIFIC_CRSP("TruSeq Strand Specific CRSP"),
     TEN_X("10X"),
     INFINIUM("Infinium"),
     INFINIUM_METHYLATION("Infinium Methylation"),
     MALARIA("Malaria"),
+    DNA_RNA_EXTRACTION_STOOL("DNA and RNA from Stool"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 

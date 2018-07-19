@@ -499,6 +499,17 @@ public class DateUtils {
     }
 
     /**
+     * Get the date "monthCount" ago or until now.
+     * @param monthCount how many months ahead or behinde (negative number)
+     * @return
+     */
+    public static Date getByMonthOffset(int monthCount) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, monthCount);
+        return calendar.getTime();
+    }
+
+    /**
      * Get the Date for the start of the day.
      * 
      * @return first possible millisecond of the day
