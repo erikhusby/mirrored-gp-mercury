@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationAlignment;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
@@ -83,10 +84,12 @@ public class ResearchProjectEjbTest extends Arquillian {
         submissionTrackerDao.persist(submissionTracker);
 
         Map<SubmissionTracker, SubmissionDto> submissionDtoMap = new HashMap<>();
+        PicardAggregationSample picardAggregationSample =
+            new PicardAggregationSample(dummy.getBusinessKey(), project, "pdo-1234", sampleName, dataType);
         submissionDtoMap.put(submissionTracker, new SubmissionDto(
             new Aggregation(project, sampleName, dataType, version, 1, dataType,
                 Collections.<AggregationAlignment>emptySet(), null, null, Collections.<AggregationReadGroup>emptySet(),
-                null, null, location), null
+                null, null, picardAggregationSample, location), null
         ));
         Collection<SubmissionStatusDetailBean> submissionResults = new HashSet<>();
         List<String> errors = new ArrayList<>();
