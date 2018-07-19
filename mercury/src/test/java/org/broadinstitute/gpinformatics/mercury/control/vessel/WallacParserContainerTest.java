@@ -50,6 +50,13 @@ public class WallacParserContainerTest extends Arquillian {
     public static final String PLATE_1_BARCODE = "2408120";
     public static final String PLATE_2_BARCODE = "2408020";
 
+    /**
+     * Lab Metric Run granular to seconds only! <br />
+     * Change seconds to unique values for each run to avoid "A previous upload has the same Run Started timestamp." errors <br />
+     * xlsSheetRunStartTime.replaceAll(":[0-9]{2} ", ":xx ");
+     */
+    private String xlsSheetRunStartTime = new SimpleDateFormat("EEEE, MMMM d, yyyy HH:mm:ss a").format(new Date());
+
     @Inject
     private VesselEjb vesselEjb;
 
@@ -74,21 +81,20 @@ public class WallacParserContainerTest extends Arquillian {
         final int numSamples = 96;
 
         Pair<LabMetricRun, String> pair1 = makeWallac96Run(numSamples, plate1Barcode, plate2Barcode, timestamp,
-                messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS);
+                messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS, xlsSheetRunStartTime.replaceAll(":[0-9]{2} ", ":30 "));
 
         Assert.assertTrue(StringUtils.isNotBlank(pair1.getRight()));
-        if (messageCollection.hasErrors()) {
-            log.error(StringUtils.join(messageCollection.getErrors(), ","));
-        }
-        Assert.assertFalse(messageCollection.hasErrors());
-        Assert.assertFalse(messageCollection.hasWarnings());
+        Assert.assertFalse(messageCollection.hasErrors(), "Errors exist: " + StringUtils
+                .join(messageCollection.getErrors(), ","));
+        Assert.assertFalse(messageCollection.hasWarnings(), "Warnings exist: " + StringUtils
+                .join(messageCollection.getWarnings(), ","));
         Assert.assertNotNull(pair1.getLeft());
         Assert.assertEquals(pair1.getLeft().getLabMetrics().size(), 96 * 3);
 
         // Should fail the pico redo due to previous quants of the same type.
         messageCollection.clearAll();
         Pair<LabMetricRun, String> pair2 = makeWallac96Run(numSamples, plate1Barcode, plate2Barcode, timestamp + "2",
-                messageCollection, !ACCEPT_PICO_REDO, !PERSIST_VESSELS);
+                messageCollection, !ACCEPT_PICO_REDO, !PERSIST_VESSELS, xlsSheetRunStartTime.replaceAll(":[0-9]{2} ", ":35 "));
 
         Assert.assertTrue(messageCollection.hasErrors());
         Assert.assertTrue(messageCollection.getErrors().get(0).contains("Pond Pico was previously done on tubes"));
@@ -97,14 +103,16 @@ public class WallacParserContainerTest extends Arquillian {
         // Should accept the pico redo when told to, despite previous quants.
         messageCollection.clearAll();
         Pair<LabMetricRun, String> pair3 = makeWallac96Run(numSamples, plate1Barcode, plate2Barcode, timestamp + "3",
-                messageCollection, ACCEPT_PICO_REDO, !PERSIST_VESSELS);
+                messageCollection, ACCEPT_PICO_REDO, !PERSIST_VESSELS, xlsSheetRunStartTime.replaceAll(":[0-9]{2} ", ":40 "));
 
         Assert.assertTrue(StringUtils.isNotBlank(pair3.getRight()));
         if (messageCollection.hasErrors()) {
             log.error(StringUtils.join(messageCollection.getErrors(), ","));
         }
-        Assert.assertFalse(messageCollection.hasErrors());
-        Assert.assertFalse(messageCollection.hasWarnings());
+        Assert.assertFalse(messageCollection.hasErrors(), "Errors exist: " + StringUtils
+                .join(messageCollection.getErrors(), ","));
+        Assert.assertFalse(messageCollection.hasWarnings(), "Warnings exist: " + StringUtils
+                .join(messageCollection.getWarnings(), ","));
         Assert.assertNotNull(pair3.getLeft());
         Assert.assertEquals(pair3.getLeft().getLabMetrics().size(), 96 * 3);
     }
@@ -124,18 +132,20 @@ public class WallacParserContainerTest extends Arquillian {
         final int expectedNumOfLabMetrics = (96 * 2) + numSamples;
 
         Pair<LabMetricRun, String> pair1 = makeWallac96Run(numSamples, plate1Barcode, plate2Barcode, timestamp,
-                messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS);
+                messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS, xlsSheetRunStartTime.replaceAll(":[0-9]{2} ", ":00 "));
 
         Assert.assertTrue(StringUtils.isNotBlank(pair1.getRight()));
-        Assert.assertFalse(messageCollection.hasErrors());
-        Assert.assertFalse(messageCollection.hasWarnings());
+        Assert.assertFalse(messageCollection.hasErrors(), "Errors exist: " + StringUtils
+                .join(messageCollection.getErrors(), ","));
+        Assert.assertFalse(messageCollection.hasWarnings(), "Warnings exist: " + StringUtils
+                .join(messageCollection.getWarnings(), ","));
         Assert.assertNotNull(pair1.getLeft());
         Assert.assertEquals(pair1.getLeft().getLabMetrics().size(), expectedNumOfLabMetrics);
 
         // Should fail the pico redo due to previous quants of the same type.
         messageCollection.clearAll();
         Pair<LabMetricRun, String> pair2 = makeWallac96Run(numSamples, plate1Barcode, plate2Barcode, timestamp + "2",
-                messageCollection, !ACCEPT_PICO_REDO, !PERSIST_VESSELS);
+                messageCollection, !ACCEPT_PICO_REDO, !PERSIST_VESSELS, xlsSheetRunStartTime.replaceAll(":[0-9]{2} ", ":05 "));
 
         Assert.assertTrue(messageCollection.hasErrors());
         Assert.assertTrue(messageCollection.getErrors().get(0).contains("Pond Pico was previously done on tubes"));
@@ -144,23 +154,24 @@ public class WallacParserContainerTest extends Arquillian {
         // Should accept the pico redo when told to, despite previous quants.
         messageCollection.clearAll();
         Pair<LabMetricRun, String> pair3 = makeWallac96Run(numSamples, plate1Barcode, plate2Barcode, timestamp + "3",
-                messageCollection, ACCEPT_PICO_REDO, !PERSIST_VESSELS);
+                messageCollection, ACCEPT_PICO_REDO, !PERSIST_VESSELS, xlsSheetRunStartTime.replaceAll(":[0-9]{2} ", ":10 "));
 
         Assert.assertTrue(StringUtils.isNotBlank(pair3.getRight()));
-        Assert.assertFalse(messageCollection.hasErrors());
-        Assert.assertFalse(messageCollection.hasWarnings());
+        Assert.assertFalse(messageCollection.hasErrors(), "Errors exist: " + StringUtils
+                .join(messageCollection.getErrors(), ","));
+        Assert.assertFalse(messageCollection.hasWarnings(), "Warnings exist: " + StringUtils
+                .join(messageCollection.getWarnings(), ","));
         Assert.assertNotNull(pair3.getLeft());
         Assert.assertEquals(pair3.getLeft().getLabMetrics().size(), expectedNumOfLabMetrics);
     }
 
     private Pair<LabMetricRun, String> makeWallac96Run(int numSamples, String plate1Barcode, String plate2Barcode,
                                                        String namePrefix, MessageCollection messageCollection,
-                                                       boolean acceptRePico, boolean persistVessels)
+                                                       boolean acceptRePico, boolean persistVessels, String runStartTime )
             throws Exception {
 
         Workbook workbook = WorkbookFactory.create(VarioskanParserTest.getSpreadsheet(WALLAC_OUTPUT));
         Sheet curveSheet = workbook.getSheet(WallacRowParser.MEASURE_DETAILS_TAB);
-        String runStartTime = new SimpleDateFormat("EEEE, MMMM d, yyyy HH:mm:ss a").format(new Date());
         for (int i = 0; i <= curveSheet.getLastRowNum(); i++) {
             Row row = curveSheet.getRow(i);
             if (row != null) {

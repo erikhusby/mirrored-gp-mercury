@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
@@ -21,7 +22,10 @@ import javax.inject.Inject;
  * will typically be perormed.
  */
 @Test(groups = TestGroups.STUBBY, enabled = true)
+@Dependent
 public class AnalysisEjbTest extends StubbyContainerTest {
+
+    public AnalysisEjbTest(){}
 
     @Inject
     private AnalysisEjb analysisEjb;

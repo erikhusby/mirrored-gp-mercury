@@ -299,22 +299,22 @@ sap:
     DEV:
       login:      GPCOMU
       password:   SAPERD300!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     TEST:
       login:      GPCOMU
       password:   temp1!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     RC:
       login:      GPCOMU
       password:   temp1!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     PROD:
       login:      GPCOMU

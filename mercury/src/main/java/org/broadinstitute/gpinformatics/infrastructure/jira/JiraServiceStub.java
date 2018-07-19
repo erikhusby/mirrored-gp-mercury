@@ -38,6 +38,8 @@ import java.util.Map;
 @Alternative
 public class JiraServiceStub implements JiraService {
 
+    public JiraServiceStub(){}
+
     /**
      * Controls the suffix of the new batch name e.g. "LCSET-123"
      */

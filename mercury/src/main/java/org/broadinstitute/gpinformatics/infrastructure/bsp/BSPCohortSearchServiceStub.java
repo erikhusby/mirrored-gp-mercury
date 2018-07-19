@@ -16,6 +16,8 @@ import java.util.Set;
 @Dependent
 public class BSPCohortSearchServiceStub implements BSPCohortSearchService {
 
+    public BSPCohortSearchServiceStub(){}
+
     private static final long serialVersionUID = -4537906882178920633L;
 
     @Override

@@ -47,11 +47,14 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
@@ -214,6 +217,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             new TypeReference<List<SubmissionDto>>() {
             };
     private Boolean submissionsServiceAvailable=null;
+
+    private QuoteService quoteService;
 
     public Map<String, String> getBioSamples() {
         return bioSamples;
@@ -448,6 +453,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
 
         validateQuoteId(collaborationQuoteId);
+    }
+
+    private void validateQuoteId(String quoteId) {
+        try {
+            quoteService.getQuoteByAlphaId(quoteId);
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+        }
     }
 
     public Map<String, Long> getResearchProjectCounts() {
@@ -952,16 +967,17 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
 
             for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject, this)) {
-                Set<SubmissionLibraryDescriptor> libraryTypes = submissionDto.getAggregation().getLibraryTypes();
                 if (tupleToSampleMap.containsKey(submissionDto.getSubmissionTuple())) {
                     // All required data are in the submissionDto
                     selectedSubmissions.add(submissionDto);
-                    for (SubmissionLibraryDescriptor libraryType : libraryTypes) {
-                        if (!libraryType.getName().equals(selectedSubmissionLibraryDescriptor)) {
-                            addGlobalValidationError("Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
-                                submissionDto.getSampleName(), libraryType.getName(), selectedSubmissionLibraryDescriptor);
-                            errors = true;
-                        }
+
+                    if (!Arrays.asList(selectedSubmissionLibraryDescriptor, "N/A")
+                        .contains(submissionDto.getDataType())) {
+                        addGlobalValidationError(
+                            "Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
+                            submissionDto.getSampleName(), submissionDto.getDataType(),
+                            selectedSubmissionLibraryDescriptor);
+                        errors = true;
                     }
                 }
             }
@@ -1463,4 +1479,12 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         this.bioProjectList = bioProjectList;
     }
 
+    public QuoteService getQuoteService() {
+        return quoteService;
+    }
+
+    @Inject
+    public void setQuoteService(QuoteService quoteService) {
+        this.quoteService = quoteService;
+    }
 }

@@ -25,6 +25,9 @@ import java.util.List;
 @Alternative
 @Dependent
 public class SubmissionsWillAlwaysFailSubmissionsService extends SubmissionsServiceStub {
+
+    public SubmissionsWillAlwaysFailSubmissionsService(){}
+
     String[] errors = {"Blame the Sirius Cybernetics Corporation", "I'd make a suggestion, but you wouldn't listen.",
             "Here I am, brain the size of a planet, and they ask me to take you to the bridge. Call that job satisfaction, 'cause I don't."};
     @Override

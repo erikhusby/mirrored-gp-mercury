@@ -8,6 +8,8 @@
 
 <stripes:layout-component name="extraHead">
     <script src="${ctxpath}/resources/scripts/hSpinner.js"></script>
+    <script src="${ctxpath}/resources/scripts/modalMessages.js"></script>
+    <script src="${ctxpath}/resources/scripts/jquery.ajaxMultiQueue.js"></script>
 
 <%-- ================ Page-specific CSS ================ --%>
 
@@ -150,19 +152,44 @@
             padding-top: 5px;
             padding-left: 1em;
         }
+
+        div.alert {
+            margin: 8px;
+        }
+
+        .alert ul {
+            margin-bottom: 0px;
+        }
     </style>
 
 <%-- ================ Page-specific JavaScript ================ --%>
-
     <script type="text/javascript">
 
         // Holds AJAX-fetched ledger data for the data table
         var ledgerDetails;
 
         var dateCompleteWarningThreshold = new Date(${actionBean.threeMonthsAgo});
+        var $selectedRows=undefined;
+        function getSelectedRows() {
+            if ($selectedRows == undefined) {
+                $selectedRows = $j('#ledger tbody input[name=selectedProductOrderSampleIds]:checked').closest("tr");
+            }
+            return $selectedRows;
+        }
+
+        function clearSuccessFromUrl() {
+            var baseUrl = location.href.split('?')[0];
+            var search = location.href.split('?')[1];
+            var parameterMap = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
+            if (delete parameterMap['successMessage']){
+                history.replaceState({}, 'title', baseUrl + '?' + $j.param(parameterMap));
+            }
+        }
 
         $j(document).ready(function() {
-
+            clearSuccessFromUrl();
+            var ledgerForm = $j('#ledgerForm');
+            modalMessages("intercept");
             /*
              * Extract the values from the quantity fields to use when sorting.
              */
@@ -176,8 +203,9 @@
              * Configure ledger datatable.
              */
             enableDefaultPagingOptions();
-            var ledgerQuantities = $j('input.ledgerQuantity');
-            var ledgerTable = $j('#ledger').dataTable({
+            var $ledger = $j("#ledger");
+            var $ledgerQuantities = $ledger.find('input.ledgerQuantity');
+            var ledgerTable = $ledger.dataTable({
                 <%-- copy/csv/print buttons don't work very will with the hidden columns and text inputs. Buttons need
                      to be overridden with custom mColumns and fnCellRender. Disabling this feature for now by removing
                      the "T" from the sDom string.
@@ -189,7 +217,7 @@
                  * they are filtered out of the DOM when the page loads
                  */
                 'bStateSave': false,
-                'aaSorting': [[2, 'asc']],
+                "iDisplayLength": 50,
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
                     {'bVisible': false},                                                    // 1: search text
@@ -210,53 +238,71 @@
 
                     {'bSortable': true, 'sType': 'title-string'}    // billed
                 ],
+                fnDrawCallback: function(settings){
+                    var wasWarned = localStorage.getItem("largeTableWarningAck");
+                    if (wasWarned === "false" && settings._iDisplayLength >= 1000) {
+                        var message = modalMessages("warning",{
+                            onClose: function() {
+                                localStorage.setItem("largeTableWarningAck", true);
+                                modalMessages("warning").clear();
+                            }
+                        }).add("Please be aware that the user interface is less responsive when large amounts of data are displayed. (clicking things takes longer)", 'slowMessage');
+
+                    }
+                },
                 fnInitComplete: function(){
                     /*
                      * Set up hSpinner widgets for controlling ledger quantities.
                      */
-                    ledgerQuantities.hSpinner({
-                        originalValue: function(element) {
-                            return $j(element).siblings().filter('input:hidden').eq(0).val();
+                    $ledgerQuantities.hSpinner({
+                        additionalChangedSelector: "tr",
+                        originalValue: function (element) {
+                            return element.querySelector('input[type="hidden"]').value;
                         },
-                        incremented: function(event, inputName) {
-                            updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
-                            applyToSelected(inputName, 'increment');
+                        incremented: function (event, inputName) {
+                            var $escaped = $j("#" + escapeForSelector(inputName));
+                            updateUnbilledStatus($escaped, $dateCompleteInputs);
+                            applyToSelected(inputName, $escaped, $dateCompleteInputs, 'increment');
                             updateSubmitButton();
                         },
-                        decremented: function(event, inputName) {
-                            updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
-                            applyToSelected(inputName, 'decrement');
+                        decremented: function (event, inputName) {
+                            var $escaped = $j("#" + escapeForSelector(inputName));
+                            updateUnbilledStatus($escaped, $dateCompleteInputs);
+                            applyToSelected(inputName, $escaped, $dateCompleteInputs, 'decrement');
                             updateSubmitButton();
                         },
                         // hSpinner widget "input" event, not to be confused with the browser built-in DOM "input" event.
-                        input: function(event, inputName) {
-                            updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
-                            applyToSelected(inputName, 'setValue');
+                        input: function (event, inputName) {
+                            var $escaped = $j("#" + escapeForSelector(inputName));
+                            updateUnbilledStatus($escaped, $dateCompleteInputs);
+                            applyToSelected(inputName, $escaped, $dateCompleteInputs, 'setValue');
                             updateSubmitButton();
                         }
                     });
+
                     /**
                      * When rows are selected and one "date complete" is changed, change all selected rows.
                      */
                     $j('#ledger').on('change', '.dateComplete', function(event) {
-                        var $selectedRows = getSelectedRows();
                         var $input = $j(event.target);
                         var value = $input.val();
-                        if ($selectedRows.length > 0) {
+                        if (getSelectedRows().length > 0) {
                             var inputName = $input.attr('name');
-                            var $selectedInputs = $selectedRows.find('input.dateComplete:enabled');
+                            var $selectedInputs = getSelectedRows().find('input.dateComplete:enabled');
                             for (var i = 0; i < $selectedInputs.length; i++) {
                                 var $selectedInput = $selectedInputs.eq(i);
                                 if ($selectedInput.attr('name') != inputName) {
                                     $selectedInput.val(value);
                                     var changed = value != $selectedInput.attr('originalValue');
                                     $selectedInput.toggleClass('changed', changed);
+                                    $selectedInput.closest("tr").toggleClass('changed', changed);
                                     updateDateCompleteValidation($selectedInput);
                                 }
                             }
                         }
                         var changed = value != $input.attr('originalValue');
                         $input.toggleClass('changed', changed);
+                        $input.closest("tr").toggleClass('changed', changed);
                         updateDateCompleteValidation($input);
 
                         updateSubmitButton();
@@ -264,8 +310,9 @@
                 }
             });
             // Reuse the existing filter input, but unbind its usual behavior and replace it with our own.
-            $j(".dataTables_filter input").unbind('keyup');
-            $j('.dataTables_filter input').on('input', function() {
+            var $datatablesFilter = $j("#ledger_filter").find("input");
+            $datatablesFilter.unbind('keyup');
+            $datatablesFilter.on('input', function() {
                 var tab = RegExp("\\t", "g");
                 var filter = $j(this).val().trim().replace(tab, " ");
                 var regexFilter = '.';
@@ -274,6 +321,16 @@
                 }
                 ledgerTable.fnFilter(regexFilter, 1, true, false);
             });
+
+            function autoFill() {
+                $j('#ledger .autoFillQuantity').each(function() {
+                    var $autoFillValueInput = $j(this);
+                    var $ledgerQuantityInput = $autoFillValueInput.parent().find('.ledgerQuantity');
+                    $ledgerQuantityInput.hSpinner('setValue', $autoFillValueInput.val());
+                    updateUnbilledStatus($ledgerQuantityInput, $dateCompleteInputs)
+                });
+                updateSubmitButton();
+            }
 
             /*
              * Set up ledger datatable filters.
@@ -289,7 +346,8 @@
                 'abandoned': 3,
                 'modified': 4
             };
-            $j('#filters .filterOption').click(function(event) {
+            var $filters = $j('#filters');
+            $filters.on('click', ".filterOption", function(event) {
                 var $target = $j(event.target);
                 var filterIndex = filterIndexes[$target.attr('name')];
                 var filterFunction = window[$target.attr('value')];
@@ -305,7 +363,7 @@
                 ledgerTable.fnDraw();
                 event.preventDefault();
             });
-            $j('#filters').show();
+            $filters.show();
 
             /*
              * Set up on-risk hover.
@@ -315,39 +373,67 @@
             /*
              * Set up date pickers for date complete.
              */
-            $j('.dateComplete').datepicker({ dateFormat: 'M d, yy', maxDate: 0 }).datepicker('refresh');
-
+            var $dateCompleteInputs = $ledger.find("input.dateComplete");
+            $dateCompleteInputs.on("click", function(){
+                var $thisInput = $j(this);
+                function destroyMe(){
+                    $j(this).datepicker("destroy");
+                }
+                $thisInput.datepicker({ onClose: destroyMe, dateFormat: 'M d, yy', maxDate: 0}).datepicker('refresh');
+                $thisInput.datepicker("show");
+            });
             // Update display styles for all date complete inputs when the page loads.
-            var dateCompleteInputs = $j('.dateComplete');
-            for (var i = 0; i < dateCompleteInputs.length; i++) {
-                updateDateCompleteValidation(dateCompleteInputs.eq(i));
+            for (var i = 0; i < $dateCompleteInputs.length; i++) {
+                updateDateCompleteValidation($dateCompleteInputs.eq(i));
             }
 
             // Update display styles in response to change event fired after auto-fill.
-            ledgerQuantities.on('change', function(event) {
-                updateUnbilledStatus($j(event.target));
+            $ledgerQuantities.on('change', function(event) {
+                updateUnbilledStatus($j(event.target), $dateCompleteInputs);
                 updateSubmitButton();
             });
 
             // Update display styles for all quantities when the page loads.
-            for (var i = 0; i < ledgerQuantities.length; i++) {
-                updateUnbilledStatus(ledgerQuantities.eq(i));
+            for (var i = 0; i < $ledgerQuantities.length; i++) {
+                updateUnbilledStatus($ledgerQuantities.eq(i), $dateCompleteInputs);
             }
+
+            function toggleHidden(row) {
+                var $hspinner = $j(row).find(".hSpinner");
+                if ($hspinner.hSpinner('option','hidden') === false){
+                    $hspinner.hSpinner('option',{hidden:true});
+                } else {
+                    $hspinner.hSpinner('option',{hidden:false});
+                }
+            }
+
+            $ledger.on('click', 'tbody tr', function(event){
+                var $hSpinner = $j(".hSpinner");
+                $hSpinner.filter(":visible").hSpinner('option',{hidden:true});
+                toggleHidden(event.currentTarget, "toggle");
+            });
 
             /*
              * Handle enable/disable of row inputs based on checkboxes.
              */
-            $j('#ledger').on('click', 'input:checkbox', function() {
-                var allRows = $j('#ledger tbody tr');
-                var selectedRows = getSelectedRows();
-                if (selectedRows.length > 0) {
-                    allRows.find('input.dateComplete').datepicker().datepicker('disable');
-                    allRows.find('input.ledgerQuantity').hSpinner().hSpinner('disable');
-                    selectedRows.find('input.dateComplete.pending').datepicker().datepicker('enable');
-                    selectedRows.find('input.ledgerQuantity').hSpinner().hSpinner('enable');
+            $ledger.on('change', 'input:checkbox', function () {
+                $selectedRows=undefined;
+                getSelectedRows();
+
+                var unselectedRows = $j("#ledger").find("tbody tr").not($selectedRows);
+                var inputs = unselectedRows.find("input");
+
+                if ($selectedRows.length > 0) {
+                    unselectedRows.filter(".dateComplete").prop('disabled',true);
+                    unselectedRows.filter(".ledgerQuantity").hSpinner().hSpinner('disable');
+                    var isChecked = function () {
+                        $j(this).closest("tr").filter("input[name=selectedProductOrderSampleIds]:checked") !== 0;
+                    };
+                    inputs.filter(".dateComplete.pending").prop('disabled', false);
+                    $ledgerQuantities.filter(isChecked()).hSpinner().hSpinner('enable');
                 } else {
-                    allRows.find('input.dateComplete.pending').datepicker().datepicker('enable');
-                    allRows.find('input.ledgerQuantity').hSpinner().hSpinner('enable');
+                    inputs.filter(".dateComplete.pending").prop('disabled', false);
+                    inputs.filter(".ledgerQuantity").hSpinner().hSpinner('enable');
                 }
             });
 
@@ -363,34 +449,108 @@
                 autoFill();
             });
 
-            $j('#ledgerForm').submit(function (event) {
-                var changedInputs;
-                var originalState;
-                var hiddenInputContainer = $j('#hiddenRowInputs');
+            ledgerForm.submit(function (event) {
+                var infoMessages = modalMessages("info");
+                var statusNamespace = "updateStatus";
+                infoMessages.add("Updating Ledger", statusNamespace);
+
+                // clear any previous success messages
+                modalMessages('success').clear();
+
+                var formData = $j(event.target).serializeArray();
+
                 try {
-                    originalState = $j(ledgerTable.fnGetNodes()).find('input').not(":disabled").prop("disabled",true);
-                    $j(ledgerTable.fnGetNodes()).find('input').prop('disabled', true);
-
-                    // Find and enable (un-disable?) table rows that have changed inputs.
-                    changedInputs = $j(ledgerTable.fnGetNodes()).filter(function(){
-                        return $j(this).find("input.changed").length > 0;
-                    }).find('input').prop('disabled', false);
-
-                    hiddenInputContainer.append(changedInputs);
-                } catch (e) {
-                    var errorMessage = "Error collecting ledger entries: '" + e + "'";
-                    console.log(errorMessage);
-                    var errorBlock = $j("<div>", {'class': "modal alert alert-block"});
-                    errorBlock.append($j("<p>", {
-                        text: errorMessage,
-                        'class': 'text-error',
-                        css: 'font-weight: bold; margin-left: 50px'
-                    }));
-                    originalState.prop('disabled', false);
-                    changedInputs.prop('disabled', true);
-                    hiddenInputContainer.empty();
-                    errorBlock.appendTo(document.body);
+                    var allDataByRow = {};
+                    var allRows = [];
+                    var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
+                    var dom = changedRows.find("input").filter("[name^='ledgerData']").get();
+                    var totalRowsToUpdate=0;
+                    for (var i = dom.length - 1; i >= 0; i--) {
+                        var input = {};
+                        input['name'] = dom[i].name;
+                        input['value'] = dom[i].value;
+                        if (dom[i].name.indexOf("sample") > 0) {
+                            totalRowsToUpdate++;
+                        }
+                        var rowNum = dom[i].getAttribute('data-rownum');
+                        row = allDataByRow[rowNum];
+                        if (row === undefined) {
+                            row = [];
+                        }
+                        row.push(input);
+                        allDataByRow[rowNum] = row;
+                        if (allRows.indexOf(rowNum) === -1) {
+                            allRows.push(rowNum);
+                        }
+                    }
                     event.preventDefault();
+
+                    // get keys as an array;
+                    var rowsRemaining = allRows.length;
+                    var rowsCompleted = 0;
+                    var queue = $j.ajaxMultiQueue(5);
+                    while (allRows.length > 0) {
+                        var submitRows = allRows.splice(0, 1000);
+                        var submitData = formData;
+                        submitRows.forEach(function (key) {
+                            allDataByRow[key].forEach(function (mapEntry) {
+                                submitData = submitData.concat(mapEntry);
+                            });
+                        });
+                        if (allRows.length === 0) {
+                            submitData.push({name: 'redirectOnSuccess', value: true})
+                        }
+                        queue.queue({
+                            url: '${ctxpath}/orders/ledger.action?updateLedgers&orderId=${actionBean.productOrder.businessKey}',
+                            data: $j(submitData),
+                            type: 'post',
+                            dataType: 'json',
+                            success: function (json) {
+                                var dataItems = json['data'];
+                                var samples = [];
+                                for (var i = 0; i < dataItems.length; i++) {
+                                    samples.push(dataItems[i].sampleName);
+                                }
+                                var message = undefined;
+                                rowsRemaining -= samples.length;
+                                rowsCompleted += samples.length;
+                                if (samples.length <= 20) {
+                                    message = "Ledger data updated for ".concat(samples.join(", ")).concat(".");
+                                } else {
+                                    message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples, ").concat(rowsRemaining).concat(" remaining.");
+                                }
+                                infoMessages.add(message, statusNamespace);
+                                message = "&successMessage=Successfully updated ".concat(totalRowsToUpdate).concat(" ledger entries.");
+                                if (json.redirectOnSuccess) {
+                                    modalMessages("info").clear();
+                                    modalMessages('success').add("Updates complete, reloading page...");
+
+                                    $j(".changed").removeClass("changed");
+                                    setTimeout(function () {
+                                        window.location.replace("${ctxpath}/orders/ledger.action?orderId=${actionBean.productOrder.businessKey}" + message);
+                                    }, 5000);
+                                }
+                            },
+                            error: function (jqxhr, status, thrownError) {
+                                var errorMessages = modalMessages("error");
+                                if (jqxhr.responseJSON) {
+                                    var errors = jqxhr.responseJSON['error'];
+                                    for (var i = 0; i < errors.length; i++) {
+                                        errorMessages.add(errors[i]);
+                                    }
+                                    if (errors.length === 0) {
+                                        errorMessages.add("Unknown Error: " + jqxhr.statusText);
+                                    }
+                                } else {
+                                    errorMessages.add(thrownError);
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {
+                    errorMessages = modalMessages("error");
+                    var errorMessage = "Error collecting ledger entries: '" + e + "'";
+                    errorMessages.add(errorMessage);
                 }
             });
 
@@ -407,49 +567,66 @@
              * Data for this table comes from DOM and is initially hidden and shown only after applying DataTables. This
              * avoids extra rendering and repositioning/flickering.
              */
-            $j('#ledger').show();
+            $ledger.show();
 
             // Enable the submit button if there are changes from a previous form submit that had validation errors
             updateSubmitButton();
 
-            // Last thing to do on document-ready: AJAX-fetch ledger details
-            $j.ajax({
-                url: '${ctxpath}/orders/ledger.action',
-                data: {
-                    ledgerDetails: '',
-                    orderId: '${actionBean.productOrder.businessKey}'
-                },
-                dataType: 'json',
-                success: function (data) {
-                    ledgerDetails = data;
-
-                    /*
-                     * Set up ledger detail expand buttons.
-                     */
-                    $j('#ledger').on('click', 'td.expand', function() {
-                        var parentRow = this.parentNode;
-                        var icon = $j('i', this);
-                        if (ledgerTable.fnIsOpen(parentRow)) {
-                            ledgerTable.fnClose(parentRow);
-                            icon.removeClass('icon-minus-sign');
-                            icon.addClass('icon-plus-sign');
-                        } else {
-                            var position = $j(parentRow.children[1]).text();
-                            var detailTable = $j('<table class="subTable" style="width: 100%;"><thead><tr><th>Price Item</th><th>Quantity</th><th>Quote</th><th>Work Complete</th><th>Billing Session</th><th>Billed Date</th><th>Billing Message</th></tr></thead><tbody></tbody></table>');
+            $j("td.expand").on('click', function(){
+                var $cell = $j(this);
+                var parentRow = this.parentNode;
+                var productOrderSampleId = $j(parentRow).find("input[name='selectedProductOrderSampleIds']").val()
+                var detailTable = $j(parentRow).next().find(".subTable");
+                var icon = $j('i', this);
+                if (detailTable.length === 0) {
+                    $cell.addClass('loading');
+                    $j.ajax({
+                        url: '${ctxpath}/orders/ledger.action',
+                        data: {
+                            ledgerDetails: '',
+                            orderId: '${actionBean.productOrder.businessKey}',
+                            productOrderSampleId: productOrderSampleId
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            ledgerDetails = data;
+                            detailTable = $j('<table class="subTable" style="width: 100%;"><thead><tr><th>Price Item</th><th>Quantity</th><th>Quote</th><th>Work Complete</th><th>Billing Session</th><th>Billed Date</th><th>Billing Message</th></tr></thead><tbody></tbody></table>');
                             detailTable.dataTable({
-                                aaData: ledgerDetails[position - 1],
+                                aaData: ledgerDetails,
                                 "aaSorting": [[5, 'asc']]
                             });
                             var detailRow = ledgerTable.fnOpen(parentRow, detailTable, 'ledgerDetail');
                             $j(detailRow).addClass(parentRow.className);
                             icon.removeClass('icon-plus-sign');
                             icon.addClass('icon-minus-sign');
+                            $cell.removeClass('loading');
                         }
                     });
-
-                    $j('#ledger').find('td.expand').removeClass('loading');
+                } else {
+                    ledgerTable.fnClose(parentRow, detailTable, 'ledgerDetail');
+                    icon.removeClass('icon-minus-sign');
+                    icon.addClass('icon-plus-sign');
                 }
             });
+            function applyToSelected(inputName, input, dateComplete, action) {
+                /*
+                 * Select starting with the checked samples, find the parent rows, find the child inputs for the
+                 * same price item, but not the current input, and apply the action.
+                 */
+                var priceItemId = input.attr('priceItemId');
+                var $quantityInputs = getSelectedRows().find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
+                var value = input.val();
+
+                for (var i = 0; i < $quantityInputs.length; i++) {
+                    var $quantityInput = $quantityInputs.eq(i);
+                    var name = $quantityInput.attr('name');
+                    if (name != inputName) {
+                        $quantityInput.hSpinner(action, value);
+                        updateUnbilledStatus($j('#' + escapeForSelector(name)), dateComplete);
+                    }
+                }
+            }
+
         });
 
         /*
@@ -498,12 +675,13 @@
              * Therefore, we need to look at the actual rows to extract the current value.
              */
             var row = oSettings.oApi._fnGetTrNodes(oSettings)[iDataIndex];
+            var $children = $j(row).children();
 
             for (var i = 0; i < numPriceItems; i++) {
                 // aData has all data, including hidden cells, so a little math is needed.
                 var original = parseFloat(aData[10 + i*2]);
                 // cells contains only the visible cells, so no need to skip over the hidden ones.
-                var current = parseFloat($j(row).children().eq(9 + i).find('input:text').val());
+                var current = parseFloat($children.eq(9 + i).find('input:text').val());
                 if (original != current) {
                     return true;
                 }
@@ -522,30 +700,6 @@
 </c:if>
         }
 
-        function getSelectedRows() {
-            return $j('input[name=selectedProductOrderSampleIds]:checked').parentsUntil('tbody', 'tr');
-        }
-
-        function applyToSelected(inputName, action) {
-            /*
-             * Select starting with the checked samples, find the parent rows, find the child inputs for the
-             * same price item, but not the current input, and apply the action.
-             */
-            var selectedRows = getSelectedRows();
-            var input = $j('#' + escapeForSelector(inputName));
-            var priceItemId = input.attr('priceItemId');
-            var value = input.val();
-            var $quantityInputs = selectedRows.find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
-            for (var i = 0; i < $quantityInputs.length; i++) {
-                var $quantityInput = $quantityInputs.eq(i);
-                var name = $quantityInput.attr('name');
-                if (name != inputName) {
-                    $quantityInput.hSpinner(action, value);
-                }
-                updateUnbilledStatus($j('#' + escapeForSelector(name)));
-            }
-        }
-
         /**
          * Updates the style for date complete inputs based on range validation rules.
          */
@@ -562,30 +716,14 @@
          * and as an asterisk in the "Billed" column. This is an indication that whether or not the sample is billed is
          * dependent on the pending processing of the unbilled ledger entries.
          */
-        function updateUnbilledStatus($input) {
+        function updateUnbilledStatus($input, dateComplete) {
             var hasUnbilledQuantity = parseFloat($input.val()) != parseFloat($input.attr('billedQuantity'));
             $input.toggleClass('pending', hasUnbilledQuantity);
             var row = $input.parentsUntil('tbody', 'tr');
             var hasUnbilledQuantityForAnyPriceItem = row.find('input.ledgerQuantity.pending').length > 0;
             row.find('.unbilledStatus').text(hasUnbilledQuantityForAnyPriceItem ? '*' : '');
-            var dateComplete = row.find('.dateComplete');
+            var dateComplete = row.find('.donefinddateComplete');
             dateComplete.toggleClass('pending', hasUnbilledQuantityForAnyPriceItem);
-            var datePicker = dateComplete.datepicker();
-            if (hasUnbilledQuantityForAnyPriceItem) {
-                datePicker.datepicker('enable');
-            } else {
-                datePicker.datepicker('disable');
-            }
-        }
-
-        function autoFill() {
-            $j('#ledger .autoFillQuantity').each(function() {
-                var $autoFillValueInput = $j(this);
-                var $ledgerQuantityInput = $autoFillValueInput.parent().find('.ledgerQuantity');
-                $ledgerQuantityInput.hSpinner('setValue', $autoFillValueInput.val());
-                updateUnbilledStatus($ledgerQuantityInput)
-            });
-            updateSubmitButton();
         }
 
         function escapeForSelector(value) {
@@ -719,13 +857,7 @@
 
         <%-- Hidden form data for order context --%>
         <stripes:hidden name="orderId"/>
-
-        <%-- If any rows are hidden due to filtering or paging, the hidden input values will not be submitted. This
-             could lead to action bean errors and requested changes not being applied. Therefore, when the form is
-             submitted, inputs from hidden rows will be gathered and moved into this div. --%>
-        <div id="hiddenRowInputs" style="display: none;"></div>
-
-        <stripes:hidden name="renderedSampleNames"/>
+        <stripes:hidden formatType="date" formatPattern="EEE MMM dd HH:mm:ss zzz yyyy" name="modifiedDate" value="${actionBean.productOrder.modifiedDate}"/>
         <stripes:hidden name="renderedPriceItemNames"/>
 
         <%-- Datatable filters --%>
@@ -796,7 +928,7 @@
         <div id="dtButtons" style="text-align: right; display: none;">
             <button id="autoFillButton" class="btn btn-mini">Auto Fill</button>
         </div>
-
+    </stripes:form>
         <%-- The actual ledger table. Initially hidden to avoid rendering the table before the datatable widget is
              ready. --%>
         <table id="ledger" class="table simple" style="display: none">
@@ -840,12 +972,12 @@
                     <td style="text-align: right">
                         ${info.sample.samplePosition + 1}
                     </td>
-                    <td class="expand loading">
+                    <td class="expand">
                         <i class="icon-plus-sign"></i>
                     </td>
                     <td>
                         ${info.sample.name}
-                        <input type="hidden"
+                        <input type="hidden" data-rownum = "${info.sample.samplePosition}"
                                name="ledgerData[${info.sample.samplePosition}].sampleName"
                                value="${info.sample.name}"/>
                     </td>
@@ -871,7 +1003,7 @@
                         <c:set var="currentValue"
                                value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
                         <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
-                               value="${currentValue}"
+                               value="${currentValue}" data-rownum = "${info.sample.samplePosition}"
                                originalValue="${info.dateCompleteFormatted}"
                                class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
                     </td>
@@ -881,14 +1013,14 @@
                                 ${info.getTotalForPriceItem(priceItem)}
                         </td>
                         <td style="text-align: center">
-                            <input type="hidden"
+                            <input type="hidden" data-rownum = "${info.sample.samplePosition}"
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
                                    value="${info.getTotalForPriceItem(priceItem)}"/>
                             <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[priceItem.priceItemId].submittedQuantity}"/>
                             <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
                                    value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
-                                   class="ledgerQuantity"
+                                   class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
                                    priceItemId="${priceItem.priceItemId}"
                                    billedQuantity="${info.getBilledForPriceItem(priceItem)}">
                             <c:if test="${priceItem == actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product) && info.autoFillQuantity != 0}">
@@ -910,7 +1042,6 @@
             </c:forEach>
         </tbody>
     </table>
-    </stripes:form>
 
 </stripes:layout-component>
 </stripes:layout-render>

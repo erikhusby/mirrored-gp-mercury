@@ -8,12 +8,16 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Date;
 import java.util.List;
 
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class RegulatoryInfoDaoTest extends StubbyContainerTest {
+
+    public RegulatoryInfoDaoTest(){}
 
     @Inject
     private RegulatoryInfoDao regulatoryInfoDao;

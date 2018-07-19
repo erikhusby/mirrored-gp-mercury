@@ -1723,6 +1723,21 @@
                     </c:forEach>
                 </c:if>
 
+                <c:if test="${not empty actionBean.editOrder.product}">
+                    <div class="control-group">
+                        <stripes:label for="analyzeUmiOverride" class="control-label">
+                            Analyze UMIs
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:select name="editOrder.analyzeUmiOverride" id="analyzeUmiOverride"
+                                            value="${actionBean.editOrder.getAnalyzeUmiOverride()}">
+                                <stripes:option value="true">True</stripes:option>
+                                <stripes:option value="false">False</stripes:option>
+                            </stripes:select>
+                        </div>
+                    </div>
+                </c:if>
+
                 <div class="control-group">
                     <stripes:label for="comments" class="control-label">
                         Description
