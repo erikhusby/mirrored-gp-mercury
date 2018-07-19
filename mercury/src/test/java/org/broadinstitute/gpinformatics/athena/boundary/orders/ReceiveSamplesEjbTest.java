@@ -18,6 +18,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +28,10 @@ import java.util.Map;
 import java.util.Set;
 
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class ReceiveSamplesEjbTest extends StubbyContainerTest {
+
+    public ReceiveSamplesEjbTest(){}
 
     @Inject
     ProductOrderSampleDao productOrderSampleDao;

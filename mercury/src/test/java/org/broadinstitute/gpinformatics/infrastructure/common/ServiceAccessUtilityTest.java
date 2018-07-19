@@ -33,6 +33,8 @@ import java.util.List;
 @Dependent
 public class ServiceAccessUtilityTest {
 
+    public ServiceAccessUtilityTest(){}
+
     /**
      * A simple interface to act as a bean type for injection.
      */
@@ -46,6 +48,7 @@ public class ServiceAccessUtilityTest {
     @Default
     @Dependent
     public static class AnImplementation implements AnInterface {
+        public AnImplementation(){}
         @Override
         public String getName() {
             return AnImplementation.class.getName();
@@ -58,6 +61,7 @@ public class ServiceAccessUtilityTest {
     @Alternative
     @Dependent
     public static class AlternativeImplementation implements AnInterface {
+        public AlternativeImplementation(){}
         @Override
         public String getName() {
             return AlternativeImplementation.class.getName();
@@ -69,6 +73,7 @@ public class ServiceAccessUtilityTest {
      */
     @Dependent
     public static class AClass {
+        public AClass(){}
         String getName() {
             return AClass.class.getName();
         }
@@ -80,6 +85,7 @@ public class ServiceAccessUtilityTest {
     @Alternative
     @Dependent
     public static class ASubclass extends AClass {
+        public ASubclass(){}
         @Override
         String getName() {
             return ASubclass.class.getName();
@@ -91,7 +97,11 @@ public class ServiceAccessUtilityTest {
      * been activated in beans.xml.
      */
     @Test(groups = TestGroups.ALTERNATIVES)
+    @Dependent
     public static class InactiveAlternativeImplementation extends Arquillian {
+
+        public InactiveAlternativeImplementation(){}
+
         @Deployment
         public static Archive createDeployment() {
             return ServiceAccessUtilityTest.createDeployment(EmptyAsset.INSTANCE);
@@ -114,7 +124,11 @@ public class ServiceAccessUtilityTest {
      * iterator().next() on a Set returned from a BeanManager call.
      */
     @Test(groups = TestGroups.ALTERNATIVES)
+    @Dependent
     public static class ActiveAlternativeImplementation extends Arquillian {
+
+        public ActiveAlternativeImplementation(){}
+
         @Deployment
         public static Archive createDeployment() {
             return ServiceAccessUtilityTest.createDeployment(

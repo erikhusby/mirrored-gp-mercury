@@ -119,7 +119,7 @@ public class CrspPipelineUtils {
      * needs the LSID in this format.  No explicit BSP format check
      * is done here to allow for flexibility in test data.
      */
-    public String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
+    public static String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
         return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
     }
 

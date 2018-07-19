@@ -29,6 +29,8 @@
             <xs:element type="xs:string" name="sourceSection" minOccurs="0"/>
             <xs:element type="xs:string" name="targetVesselTypeGeometryString"/>
             <xs:element type="xs:string" name="targetSection"/>
+            <xs:element type="xs:string" name="targetWellTypeString"/>
+            <xs:element type="xs:boolean" name="sourceMassRemoved"/>
             <xs:element type="xs:string" name="buttonValue" minOccurs="0"/>
             <xs:element type="xs:string" name="targetExpectedToExist" minOccurs="0"/>
             <xs:element type="xs:string" name="targetExpectedEmpty" minOccurs="0"/>
@@ -60,6 +62,7 @@
                     <xs:restriction base="xs:string">
                         <xs:enumeration value="LCSET"/>
                         <xs:enumeration value="XTR"/>
+                        <xs:enumeration value="ARRAY"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>

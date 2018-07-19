@@ -33,6 +33,10 @@ public abstract class AbstractBatchJiraFieldFactory {
     // Determines whether to use nearest or earliest sample name in the Jira ticket.
     protected boolean jiraSampleFromNearest = true;
 
+    public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType) {
+        this(batch, projectType, null, null);
+    }
+
     public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType,
             ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
         this.batch = batch;
@@ -120,23 +124,34 @@ public abstract class AbstractBatchJiraFieldFactory {
      * Returns a subclass depending on the type of JIRA ticket.
      *
      * @param projectType         type of JIRA Project for which the user needs to generate submission values
+     *                            If null, defaults to FCT.
      * @param batch               an instance of a {@link LabBatch} entity and is the primary source of the data from
      *                            which the custom submission fields will be generated
      */
-    public static AbstractBatchJiraFieldFactory getInstance(@Nonnull CreateFields.ProjectType projectType,
+    public static AbstractBatchJiraFieldFactory getInstance(CreateFields.ProjectType projectType,
             @Nonnull LabBatch batch, ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
 
         if (projectType == null || projectType == CreateFields.ProjectType.FCT_PROJECT) {
-            if (batch.getLabBatchType() == LabBatch.LabBatchType.MISEQ ||
-                    batch.getLabBatchType() == LabBatch.LabBatchType.FCT) {
+            switch (batch.getLabBatchType()) {
+            case MISEQ:
+            case FCT:
                 return new FCTJiraFieldFactory(batch);
-            } else {
+            default:
                 throw new IllegalArgumentException(projectType + " ticket type cannot be used with a " +
                         batch.getLabBatchType() + " batch type.");
             }
-        } else if (projectType == CreateFields.ProjectType.EXTRACTION_PROJECT) {
-            return new ExtractionJiraFieldFactory(batch, productOrderDao, workflowConfig);
         }
-        return new LCSetJiraFieldFactory(batch, productOrderDao, workflowConfig);
+
+        switch (projectType) {
+        case EXTRACTION_PROJECT:
+            return new ExtractionJiraFieldFactory(batch, productOrderDao, workflowConfig);
+
+        case ARRAY_PROJECT:
+            return new ArrayJiraFieldFactory(batch);
+
+        case LCSET_PROJECT:
+        default:
+            return new LCSetJiraFieldFactory(batch, productOrderDao, workflowConfig);
+        }
     }
 }

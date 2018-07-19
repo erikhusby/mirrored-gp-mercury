@@ -18,14 +18,9 @@ public class WorkflowConfigProducer {
     @Inject
     WorkflowLoader loader;
 
-    private WorkflowConfig workflowConfig;
-
     @Produces
     @Default
-    public WorkflowConfig load() {
-        if (workflowConfig == null){
-            workflowConfig = loader.load();
-        }
-        return workflowConfig;
+    public WorkflowConfig produce() {
+        return loader.load();
     }
 }

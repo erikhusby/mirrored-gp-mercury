@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationAlignment;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationContam;
@@ -18,9 +19,10 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.ReadGroupIndex;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AggregationTestFactory {
     public static Aggregation buildAggregation(String project, String productOrder, String sample,
@@ -28,19 +30,20 @@ public class AggregationTestFactory {
                                                LevelOfDetection fingerprintLod, String dataType,
                                                Double pctTargetBases20X, Long totalReadsAlignedInPairs,
                                                Double meanCoverageWgs, String processingLocation) {
-
         AggregationContam aggregationContam = new AggregationContam(contamination);
         AggregationHybridSelection aggregationHybridSelection = new AggregationHybridSelection(pctTargetBases20X);
         AggregationAlignment aggregationAlignment = new AggregationAlignment(totalReadsAlignedInPairs, "PAIR");
         AggregationWgs aggregationWgs=new AggregationWgs(meanCoverageWgs);
-
-        AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null,
-            new ReadGroupIndex(null, null, 2, null, null, null, project, sample, productOrder));
+        PicardAggregationSample picardAggregationSample = new PicardAggregationSample(project, project, productOrder,
+            sample, dataType);
+        AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null);
 
         Integer readGroupCount = 2;
+        Set<AggregationReadGroup> aggregationReadGroupSet = new HashSet<>();
+        aggregationReadGroupSet.add(aggregationReadGroup);
 
         return new Aggregation(project, sample, null, version, readGroupCount, dataType,
                 Collections.singleton(aggregationAlignment), aggregationContam, aggregationHybridSelection,
-                Collections.singleton(aggregationReadGroup), aggregationWgs, fingerprintLod, processingLocation);
+            aggregationReadGroupSet, aggregationWgs, fingerprintLod, picardAggregationSample, processingLocation);
     }
 }

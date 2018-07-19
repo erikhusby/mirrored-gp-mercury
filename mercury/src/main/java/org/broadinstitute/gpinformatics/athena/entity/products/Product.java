@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
@@ -20,6 +21,8 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -203,6 +206,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Column(name="CLINICAL_ONLY_PRODUCT")
     private Boolean clinicalProduct = false;
+
+    @Column(name = "ANALYZE_UMI")
+    private Boolean analyzeUmi = false;
 
     /**
      * Helper method to allow the quick creation of a new Product based on the contents of an existing product
@@ -900,6 +906,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public boolean isClinicalProduct() {
         return clinicalProduct;
+    }
+
+    public Boolean getAnalyzeUmi() {
+        return analyzeUmi == null ? false : analyzeUmi;
+    }
+
+    public void setAnalyzeUmi(Boolean analyzeUmi) {
+        this.analyzeUmi = analyzeUmi;
     }
 
     public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyConfiguration () {
