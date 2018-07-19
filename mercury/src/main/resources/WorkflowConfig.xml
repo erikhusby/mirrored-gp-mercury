@@ -1312,7 +1312,8 @@
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                     <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
-                </workflowStepDefs>
+                <jiraSampleFromNearest>false</jiraSampleFromNearest>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pooling Transfer</name>
                 <labEventTypes>POOLING_TRANSFER</labEventTypes>

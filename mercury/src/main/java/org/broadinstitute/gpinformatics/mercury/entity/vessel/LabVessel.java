@@ -1494,15 +1494,22 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Goes through all the {@link #getSampleInstancesV2()} and creates
-     * a collection of the unique String sample names from {@link MercurySample#getSampleKey()}
-     *
-     * @return The names
+     * Returns the sample names of the most recent ancestors of samples in the vessel.
      */
     public Collection<String> getSampleNames() {
+        return getSampleNames(true);
+    }
+
+    /**
+     * Returns the sample names of all samples in the vessel, looking for either the most
+     * recent ancestors or the root (or earliest) ancestors.
+     */
+    public Collection<String> getSampleNames(boolean useNearestSample) {
         Set<String> sampleNames = new HashSet<>();
         for (SampleInstanceV2 sampleInstance : getSampleInstancesV2()) {
-            MercurySample sample = sampleInstance.getNearestMercurySample();
+            MercurySample sample = useNearestSample ?
+                    sampleInstance.getNearestMercurySample() :
+                    sampleInstance.getRootOrEarliestMercurySample();
             if (sample != null) {
                 String sampleKey = StringUtils.trimToNull(sample.getSampleKey());
                 if (sampleKey != null) {
@@ -1511,10 +1518,6 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return sampleNames;
-    }
-
-    public String[] getSampleNamesArray() {
-        return getSampleNames().toArray(new String[]{});
     }
 
     /**
