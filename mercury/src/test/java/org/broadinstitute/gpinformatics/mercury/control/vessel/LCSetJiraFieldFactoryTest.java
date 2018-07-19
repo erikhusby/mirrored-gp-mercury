@@ -116,7 +116,7 @@ public class LCSetJiraFieldFactoryTest {
             mercurySample.addProductOrderSample(currentProductOrderSample);
             mercurySample.addLabVessel(bspAliquot);
             bucket.addEntry(currentProductOrderSample.getProductOrder(), bspAliquot,
-                    BucketEntry.BucketEntryType.PDO_ENTRY, Workflow.AGILENT_EXOME_EXPRESS);
+                    BucketEntry.BucketEntryType.PDO_ENTRY, new Date());
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 

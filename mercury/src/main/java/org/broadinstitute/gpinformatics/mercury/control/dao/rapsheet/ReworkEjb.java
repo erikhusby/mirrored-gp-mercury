@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -312,7 +313,7 @@ public class ReworkEjb {
     private LabVessel addCandidate(@Nonnull final LabVessel candidateVessel, final WorkflowBucketDef bucketDef,
                                    @Nonnull ProductOrder productOrder, ReworkReason reworkReason,
                                    LabEventType reworkFromStep, String comment, @Nonnull String userName,
-                                   boolean reworkCandidate) throws ValidationException {
+                                   boolean reworkCandidate, Date date) throws ValidationException {
         Map<WorkflowBucketDef, Collection<LabVessel>> bucketCandidate =
                 new HashMap<WorkflowBucketDef, Collection<LabVessel>>() {
                     {
@@ -321,7 +322,7 @@ public class ReworkEjb {
 
         Collection<BucketEntry> bucketEntries = bucketEjb.add(bucketCandidate,
                 reworkCandidate ? BucketEntry.BucketEntryType.REWORK_ENTRY : BucketEntry.BucketEntryType.PDO_ENTRY,
-                LabEvent.UI_PROGRAM_NAME, userName, LabEvent.UI_EVENT_LOCATION, productOrder);
+                LabEvent.UI_PROGRAM_NAME, userName, LabEvent.UI_EVENT_LOCATION, productOrder, date);
 
         // TODO: create the event in this scope instead of getting the "latest" event
         if (reworkCandidate) {
@@ -427,7 +428,7 @@ public class ReworkEjb {
                 bucketCandidate.isReworkItem());
 
         addCandidate(reworkVessel, bucketDef, bucketCandidate.getProductOrder(), reworkReason, reworkFromStep,
-                comment, userName, bucketCandidate.isReworkItem());
+                comment, userName, bucketCandidate.isReworkItem(), new Date());
     }
 
     /**
