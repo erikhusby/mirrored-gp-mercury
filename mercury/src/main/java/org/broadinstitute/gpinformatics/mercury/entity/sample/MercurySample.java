@@ -333,10 +333,13 @@ public class MercurySample extends AbstractSample {
     }
 
     public LabEvent getReceiptEvent() {
-        for(LabVessel currentVessel:labVessel) {
-            Map<LabEvent, Set<LabVessel>> vesselsForEvent = currentVessel
-                    .findVesselsForLabEventType(LabEventType.SAMPLE_RECEIPT, true,
-                            EnumSet.of(TransferTraverserCriteria.TraversalDirection.Ancestors));
+        for(LabVessel currentVessel : labVessel) {
+            TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                    new TransferTraverserCriteria.VesselForEventTypeCriteria(
+                            Collections.singletonList(LabEventType.SAMPLE_RECEIPT), true, true);
+            currentVessel.evaluateCriteria(vesselForEventTypeCriteria,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors);
+            Map<LabEvent, Set<LabVessel>> vesselsForEvent = vesselForEventTypeCriteria.getVesselsForLabEventType();
             if (!vesselsForEvent.isEmpty()) {
                 return vesselsForEvent.keySet().iterator().next();
             }

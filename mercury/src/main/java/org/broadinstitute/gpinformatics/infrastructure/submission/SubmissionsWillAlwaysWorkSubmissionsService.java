@@ -24,6 +24,9 @@ import java.util.List;
 @Alternative
 @Dependent
 public class SubmissionsWillAlwaysWorkSubmissionsService extends SubmissionsServiceStub {
+
+    public SubmissionsWillAlwaysWorkSubmissionsService(){}
+
     @Override
     public Collection<SubmissionStatusDetailBean> postSubmissions(SubmissionRequestBean submission) {
         List<SubmissionStatusDetailBean> results = new ArrayList<>();

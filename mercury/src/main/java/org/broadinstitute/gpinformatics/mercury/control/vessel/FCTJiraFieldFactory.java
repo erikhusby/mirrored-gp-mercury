@@ -26,9 +26,8 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      */
     public static String LANE_INFO_HEADER = "||Lane||Loading Vessel||Loading Concentration||LCSET||Product||\n";
 
-
     public FCTJiraFieldFactory(@Nonnull LabBatch batch) {
-        super(batch, CreateFields.ProjectType.FCT_PROJECT);
+        super(batch, CreateFields.ProjectType.FCT_PROJECT, null, null);
     }
 
     @Override

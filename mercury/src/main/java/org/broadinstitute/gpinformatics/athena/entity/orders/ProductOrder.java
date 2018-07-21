@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
@@ -33,14 +32,15 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -105,6 +105,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final String REQUISITION_PREFIX = "REQ-";
 
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
+
+    public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
+        if (cachedQuote==null) {
+            cachedQuote = quoteService.getQuoteByAlphaId(quoteId);
+        }
+        return cachedQuote;
+    }
 
     public enum SaveType {CREATING, UPDATING}
 
@@ -268,6 +275,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "CLINICAL_ATTESTATION_CONFIRMED")
     private Boolean clinicalAttestationConfirmed = false;
 
+    @Column(name = "ANALYZE_UMI_OVERRIDE")
+    private Boolean analyzeUmiOverride;
+
+    @Transient
+    private Quote cachedQuote;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -578,18 +590,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
                            List<ProductOrderSample> samples) throws InvalidProductException {
         updateAddOnProducts(addOnProducts);
-        if(product != null && !product.equals(this.product)) {
-            this.clearCustomPriceAdjustment();
-            if(product.getSapMaterial() != null) {
-                if(product.isExternalOnlyProduct() || product.isClinicalProduct()) {
-                    final ProductOrderPriceAdjustment priceAdjustment = new ProductOrderPriceAdjustment();
-                    priceAdjustment.setAdjustmentValue(new BigDecimal(product.getSapMaterial().getBasePrice()));
-                    this.addCustomPriceAdjustment(priceAdjustment);
-                }
-            }
-        } else if (product == null) {
-            this.clearCustomPriceAdjustment();
-        }
+        this.clearCustomPriceAdjustment();
         setProduct(product);
         setResearchProject(researchProject);
         setSamples(samples);
@@ -765,6 +766,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setQuoteId(String quoteId) {
+        if (!StringUtils.equals(this.quoteId, quoteId)) {
+            cachedQuote = null;
+        }
         this.quoteId = quoteId;
     }
 
@@ -2213,6 +2217,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setClinicalAttestationConfirmed(Boolean clinicalAttestationConfirmed) {
         this.clinicalAttestationConfirmed = clinicalAttestationConfirmed;
+    }
+
+    public boolean getAnalyzeUmiOverride() {
+        if (analyzeUmiOverride == null) {
+            return getProduct() != null && getProduct().getAnalyzeUmi();
+        }
+        return analyzeUmiOverride;
+    }
+
+    public void setAnalyzeUmiOverride(boolean analyzeUmiOverride) {
+        this.analyzeUmiOverride = analyzeUmiOverride;
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {

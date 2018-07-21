@@ -27,6 +27,8 @@ import java.util.Set;
 @Alternative
 public class SapIntegrationServiceStub implements SapIntegrationService {
 
+     public SapIntegrationServiceStub(){}
+
     public static final String TEST_SAP_NUMBER = "Test000001";
     public static final String TEST_CUSTOMER_NUMBER = "CUST_000002";
     public static final String TEST_DELIVERY_DOCUMENT_ID = "DD_0000003";
@@ -37,7 +39,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException {
+    public void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
     }
 
     @Override

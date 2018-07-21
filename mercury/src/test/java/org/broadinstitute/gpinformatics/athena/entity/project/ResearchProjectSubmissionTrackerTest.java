@@ -40,7 +40,7 @@ public class ResearchProjectSubmissionTrackerTest {
                 new SubmissionTrackerStub(TEST_PROJECT_ID, TEST_ACCESSION_ID + 2, TEST_VERSION + 2, FileType.PICARD);
         testResearchProject.addSubmissionTracker(tracker, tracker2);
         SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(TEST_PROJECT_ID,
-            TEST_ACCESSION_ID, TEST_VERSION, SubmissionBioSampleBean.ON_PREM, EXOME));
+            testResearchProject.getJiraTicketKey(), TEST_ACCESSION_ID, TEST_VERSION, SubmissionBioSampleBean.ON_PREM, EXOME));
         assertThat(tracker, equalTo(resultTracker));
     }
 
@@ -51,7 +51,7 @@ public class ResearchProjectSubmissionTrackerTest {
                 new SubmissionTrackerStub(TEST_PROJECT_ID, TEST_ACCESSION_ID, TEST_VERSION, TEST_FILE_TYPE);
         testResearchProject.addSubmissionTracker(tracker, tracker);
         SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(TEST_PROJECT_ID,
-            TEST_ACCESSION_ID, TEST_VERSION, SubmissionBioSampleBean.ON_PREM, EXOME));
+            testResearchProject.getJiraTicketKey(), TEST_ACCESSION_ID, TEST_VERSION, SubmissionBioSampleBean.ON_PREM, EXOME));
         assertThat(resultTracker, equalTo(resultTracker));
     }
 
@@ -61,8 +61,8 @@ public class ResearchProjectSubmissionTrackerTest {
             TEST_FILE_TYPE, TEST_PROCESSING_LOCATION, TEST_DATA_TYPE);
         testResearchProject.addSubmissionTracker(tracker);
         SubmissionTracker resultTracker = testResearchProject
-                .getSubmissionTracker(new SubmissionTuple("other", "using", "arguments",
-                    SubmissionBioSampleBean.GCP, EXOME));
+                .getSubmissionTracker(new SubmissionTuple("other", testResearchProject.getJiraTicketKey(),
+                    "using", "arguments", SubmissionBioSampleBean.GCP, EXOME));
         assertThat(resultTracker, nullValue());
     }
 

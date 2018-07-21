@@ -77,6 +77,7 @@
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                     <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_QIAGEN</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -1259,6 +1260,98 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>Custom Selection</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-06-18T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Custom Selection Bucket</name>
+                <labEventTypes>CUSTOM_SELECTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionPoolingTransfer</name>
+                <labEventTypes>SELECTION_POOLING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionConcentrationTransfer</name>
+                <labEventTypes>SELECTION_CONCENTRAION_POOLING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionHybSetup</name>
+                <labEventTypes>SELECTION_HYB_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionBaitPick</name>
+                <labEventTypes>SELECTION_BAIT_PICK</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionBaitAddition</name>
+                <labEventTypes>SELECTION_BAIT_ADDITION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionBeadBinding</name>
+                <labEventTypes>SELECTION_BEAD_BINDING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionCapture</name>
+                <labEventTypes>SELECTION_CAPTURE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionCatchPCR</name>
+                <labEventTypes>SELECTION_CATCH_PCR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SelectionCatchRegistration</name>
+                <labEventTypes>SELECTION_CATCH_REGISTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceCatchPico</name>
+                <labEventTypes>ICE_CATCH_PICO</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>SAGE</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
@@ -1311,7 +1404,8 @@
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                     <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
-                </workflowStepDefs>
+                <jiraSampleFromNearest>false</jiraSampleFromNearest>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pooling Transfer</name>
                 <labEventTypes>POOLING_TRANSFER</labEventTypes>
@@ -2886,7 +2980,8 @@
                     <materialTypes>DNA_DNA_WGA_CLEANED</materialTypes>
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
-                <!-- No JIRA setup, because BSP creates ARRAY tickets -->
+                <batchJiraProjectType>ARRAY</batchJiraProjectType>
+                <batchJiraIssueType>INFINIUM_8</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>InfiniumMethylationZymoTransferElution</name>
@@ -2952,7 +3047,8 @@
                     <materialTypes>DNA_DNA_WGA_CLEANED</materialTypes>
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
-                <!-- No JIRA setup, because BSP creates ARRAY tickets -->
+                <batchJiraProjectType>ARRAY</batchJiraProjectType>
+                <batchJiraIssueType>INFINIUM_8</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>InfiniumAmplification</name>
@@ -3018,6 +3114,239 @@
                 <name>InfiniumXStain</name>
                 <labEventTypes>INFINIUM_XSTAIN</labEventTypes>
                 <optional>false</optional>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA from Stool</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2018-04-10T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA and RNA From Stool</name>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>STOOL_STOOL</materialTypes>
+                    <workflows>DNA_RNA_EXTRACTION_STOOL</workflows>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Initial Scan</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>ALL_PREP_INITIAL_SCAN</workflowQualifier>
+                <instructions>Scan parent source CO-ID. Press "validate barcodes" to cross check against samples in XTR ticket.
+                    Ensure control samples have been added to Mercury. Eppendorf 12x8 Box Well Format
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>RackType.Eppendorf12x8Box</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                    <buttonValue>Cross Check</buttonValue>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Prep Reagents</name>
+                <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Reagents</workflowQualifier>
+                <instructions>Heat Buffer PW1 to 55C for 30 minutes or more
+                    - prime heated buffer PW1 with 1:100 of BME (10ul BME per 1ml of PW1). Aliquot based off # of samples.
+                    - Add required EtOH to RPE, AW1, and AW2. Plate Buffer EB in a PCR plate and heat to 70C prior to DNA Elution.
+                    - Prepare reagent S-Blocks for all Bravo protocols.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer material to PowerBead Plate</name>
+                <labEventTypes>STOOL_BEAD_PLATE_TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_STOOL_TO_BEAD_PLATE</workflowQualifier>
+                <instructions>Aliquot sample to PowerBead Plate and update the masses in the spreadsheet if needed.
+                    - Checking the checkbox next to mass removed will deplete the sample and any mass in source will be transferred.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.Eppendorf12x8BoxWell</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96WellPowerBead</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                    <targetSection>ALL96</targetSection>
+                    <sourceMassRemoved>true</sourceMassRemoved>
+                    <targetWellTypeString>WellType.Well2000</targetWellTypeString>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bead Beating</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>ALL_PREP_BEAD_BEATING</workflowQualifier>
+                <instructions>Shake PowerBead plate @ 20 Hz for 5 minutes. Once complete, rotate samples 180 degrees and repeat step.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>PlateType.Plate96WellPowerBead</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Spin</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>BEAD_PLATE</workflowQualifier>
+                <instructions>Centrifuge PowerBead plate for 6 minutes @4,500 x g
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer Supernatent to IRS S-Block</name>
+                <labEventTypes>STOOL_SUPERNATENT_TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_TO_S_BLOCK</workflowQualifier>
+                <instructions>Scan container ID on bead plate and container ID on IRS S-Block . Transfer ~650ul for supernatant.
+                    - Seal and vortex gently (no splashing)
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96WellPowerBead</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Incubate</name>
+                <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>IRS1</workflowQualifier>
+                <instructions>Incubate for 1 min at room temperature.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge IRS Lysate S-Block</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>IRS_CENTRIFUGE</workflowQualifier>
+                <instructions>Centrifuge IRS lysate S-Block for 6 minutes @4,500 x g
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bravo: IRS supernatant transfer to C4 in new S-Block</name>
+                <labEventTypes>STOOL_IRS_SUPERNATENT_TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_IRS_TO_S_BLOCK</workflowQualifier>
+                <instructions>Start Script: 1) Qiagen AllPrep Initial Filter to transfer ~450ul of supernatant to new C4 Lysate S-Block
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bravo: S-Block to AllPrep Filter Plate</name>
+                <labEventTypes>STOOL_FILTER_PLATE_TRANSFER</labEventTypes>
+                <workflowQualifier>STOOL_FILTER_PLATE_TRANSFER</workflowQualifier>
+                <instructions>**TNA SPLIT STEP** Scan barcodes for sample transfer to All Prep Filter Plate (DNA) on RNA FT S-Block
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bravo: RNA FT S-Block to RNA Filter Plate</name>
+                <labEventTypes>STOOL_RNA_CAPTURE_PLATE_TRANSFER</labEventTypes>
+                <workflowQualifier>STOOL_RNA_CAPTURE_PLATE_TRANSFER</workflowQualifier>
+                <instructions>Start Script: 2) Qiagen AllPrep RNA Isolation Washes. Scan barcode of RNA flow through S-Block to barcode of RNA Filter Plate.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <!-- Bravo Protocols RNA Isolation in the flowthrough -->
+            <workflowStepDefs>
+                <name>Bravo: RNA Isolation</name>
+                <labEventTypes>STOOL_RNA_ISOLATION</labEventTypes>
+                <workflowQualifier>STOOL_RNA_ISOLATION</workflowQualifier>
+                <instructions>Return RNA Filter plate to deck and continue Bravo script.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RoundWellBlock2000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bravo: RNA Filter To Elution</name>
+                <labEventTypes>STOOL_RNA_FILTER_TO_ELUTION_PLATE</labEventTypes>
+                <workflowQualifier>STOOL_RNA_FILTER_TO_ELUTION_PLATE</workflowQualifier>
+                <instructions>Start Bravo Script: 3) Qiagen AllPrep RNA Final Elution using the samples in RNAeasy Filter Plate
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bravo: RNA Elution To Final Rack</name>
+                <labEventTypes>STOOL_RNA_FINAL_ELUTION</labEventTypes>
+                <workflowQualifier>STOOL_RNA_FINAL_ELUTION</workflowQualifier>
+                <instructions>Link Elution Plate to Final Rack
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96Well200PCR</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bravo: DNA Isolation</name>
+                <labEventTypes>STOOL_DNA_ISOLATION</labEventTypes>
+                <workflowQualifier>STOOL_DNA_ISOLATION</workflowQualifier>
+                <instructions>Start Bravo Script: 4) Qiagen AllPrep DNA Isolation Washes using the samples in the stored DNA AllPrep Filter Plate
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bravo: DNA Filter To Elution</name>
+                <labEventTypes>STOOL_DNA_FILTER_TO_ELUTION_PLATE</labEventTypes>
+                <workflowQualifier>STOOL_DNA_FILTER_TO_ELUTION_PLATE</workflowQualifier>
+                <instructions>Start Bravo Script: 5) Qiagen AllPrep DNA final elution using the samples in AllPrep Filter Plate and heated EB buffer plate.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96RNEasyWell1000</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>PlateType.Plate96Well200PCR</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bravo: DNA Elution To Final Rack</name>
+                <labEventTypes>STOOL_DNA_ELUTION</labEventTypes>
+                <workflowQualifier>STOOL_DNA_ELUTION</workflowQualifier>
+                <instructions>Link Elution Plate to Final Rack
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>PlateType.Plate96Well200PCR</sourceVesselTypeGeometryString>
+                    <sourceSection>ALL96</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
+                    <targetSection>ALL96</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -3284,7 +3613,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
-            <batchJiraIssueType>HUMAN_PCR_FREE</batchJiraIssueType>
+            <batchJiraIssueType>HUMAN_PCR_PLUS</batchJiraIssueType>
             <effectiveDate>2017-10-22T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Cell Free Library Construction Hyper Prep UMI</workflowProcessDefs>
@@ -3465,6 +3794,41 @@
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>DNA and RNA from Cell Pellets</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA from Stool</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            <effectiveDate>2018-04-10T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA from Stool</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Custom Selection</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <effectiveDate>2018-06-15T22:04:23.932-04:00</effectiveDate>
+            <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
+            <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
+            <workflowProcessDefs>PCR Plus Pond HyperPrep</workflowProcessDefs>
+            <workflowProcessDefs>Custom Selection</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <sequencingConfigDefs>
