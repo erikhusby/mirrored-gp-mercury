@@ -222,7 +222,7 @@ public class SapIntegrationServiceImplDBFreeTest {
             }
         }
 
-        SAPOrder convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true);
+        SAPOrder convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true, false);
         for(SAPOrderItem item:convertedOrder3.getOrderItems()) {
             assertThat(item.getItemQuantity().doubleValue(), equalTo(
                     (new BigDecimal(conversionPdo.getSamples().size())).doubleValue()));
@@ -365,7 +365,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         }
 
 
-        SAPOrder convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true);
+        SAPOrder convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true, false);
         for(SAPOrderItem item:convertedOrder3.getOrderItems()) {
             if(item.getProductIdentifier().equals(primaryProduct.getPartNumber())) {
                 assertThat(item.getItemQuantity().doubleValue(), equalTo(
@@ -379,7 +379,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true, false);
         for(SAPOrderItem item:convertedOrder3.getOrderItems()) {
             if(item.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
-                assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
+                assertThat(item.getItemQuantity().doubleValue(), equalTo(new BigDecimal(conversionPdo.getSamples().size()).doubleValue()));
             }
             else {
                 assertThat((item.getItemQuantity()).doubleValue(), equalTo((new BigDecimal(1)).doubleValue()));
@@ -499,7 +499,7 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(sapOrderItem.getItemQuantity().doubleValue(), is(equalTo((new BigDecimal(99)).doubleValue())));
             assertThat(sapOrderItem.getProductAlias(), is(nullValue()));
         }
-        Mockito.verify(mockQuoteService, Mockito.times(2)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
 
     }
 
