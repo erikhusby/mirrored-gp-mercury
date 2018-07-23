@@ -38,7 +38,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -436,7 +435,13 @@ public class BucketEjb {
         }
         possibleProducts.add(productOrder.getProduct());
         ProductWorkflowDefVersion workflowDefVersion = null;
+        int offset = 0;
         for (Product product : possibleProducts) {
+            Date localDate = date;
+            if (offset > 0) {
+                // Avoid unique constraint on bucket lab events
+                localDate = new Date(date.getTime() + offset);
+            }
             if (product.getWorkflow() != Workflow.NONE) {
                 ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflow(product.getWorkflow());
                 workflowDefVersion = productWorkflowDef.getEffectiveVersion();
@@ -445,10 +450,11 @@ public class BucketEjb {
 
                 if (!initialBucket.isEmpty()) {
                     Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
-                            LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder, date);
+                            LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder, localDate);
                     bucketEntries.addAll(entries);
                 }
             }
+            offset++;
         }
         return new ImmutablePair<>(workflowDefVersion, bucketEntries);
     }
