@@ -159,6 +159,7 @@ public class PickerActionBean extends CoreActionBean {
         Set<String> tubesNotInStorage = new HashSet<>();
         SearchContext searchContext = new SearchContext();
         searchContext.setBspUserList(bspUserList);
+        searchContext.setUserBean(userBean);
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("XL20 Picker");
         searchTerm.setPluginClass(PickerVesselPlugin.class);

@@ -306,6 +306,10 @@ public class UserBean implements Serializable {
         return roles.contains(Role.GPProjectManager);
     }
 
+    public boolean isViewer() {
+        return roles.contains(Role.Viewer);
+    }
+
     public String getRolesString() {
         if (roles.isEmpty()) {
             return "No Roles";

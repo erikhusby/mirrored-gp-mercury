@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -239,15 +241,25 @@ public enum DisplayExpression {
     COLLABORATOR_SAMPLE_ID(SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
+            
             SampleData sampleData = (SampleData) entity;
-            return sampleData.getCollaboratorsSampleName();
+            String collaboratorsSampleName = "";
+            if (!context.getUserBean().isViewer()) {
+                collaboratorsSampleName = sampleData.getCollaboratorsSampleName();
+            }
+            return collaboratorsSampleName;
         }
     }),
     COLLABORATOR_PARTICIPANT_ID(SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
+
             SampleData sampleData = (SampleData) entity;
-            return sampleData.getCollaboratorParticipantId();
+            String collaboratorParticipantId = "";
+            if (!context.getUserBean().isViewer()) {
+                collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
+            }
+            return collaboratorParticipantId;
         }
     }),
     SAMPLE_TYPE(SampleData.class, new SearchTerm.Evaluator<String>() {
@@ -271,6 +283,29 @@ public enum DisplayExpression {
             return sampleData.getOriginalMaterialType();
         }
     }),
+    QUOTE(ProductOrder.class, new SearchTerm.Evaluator<String>() {
+
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            ProductOrder orderData = (ProductOrder) entity;
+
+            return orderData.getQuoteId();
+        }
+    }),
+    ORDER_STATUS(ProductOrder.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            ProductOrder orderData = (ProductOrder)entity;
+            return orderData.getOrderStatus().getDisplayName();
+        }
+    }),
+    PRIMARY_PRODUCT(ProductOrder.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            ProductOrder orderData = (ProductOrder) entity;
+            return orderData.getProduct().getDisplayName();
+        }
+    })
     ;
 
     private final Class<?> expressionClass;

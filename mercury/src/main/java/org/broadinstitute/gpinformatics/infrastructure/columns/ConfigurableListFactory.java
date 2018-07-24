@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hibernate.Criteria;
 
 import javax.annotation.Nonnull;
@@ -45,6 +46,9 @@ public class ConfigurableListFactory {
 
     @Inject
     private ThreadEntityManager threadEntityManager;
+
+    @Inject
+    private UserBean userBean;
 
     /**
      * Create a ConfigurableList instance.
@@ -463,6 +467,7 @@ public class ConfigurableListFactory {
         evalContext.setBspUserList( bspUserList );
         evalContext.setSearchInstance(searchInstance);
         evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
+        evalContext.setUserBean(userBean);
         return evalContext;
     }
 }

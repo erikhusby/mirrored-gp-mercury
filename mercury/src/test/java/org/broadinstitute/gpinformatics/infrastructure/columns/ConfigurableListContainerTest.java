@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -49,6 +50,9 @@ public class ConfigurableListContainerTest extends Arquillian {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private UserBean userBean;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -225,7 +229,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         SearchContext evalContext = new SearchContext();
         evalContext.setBspUserList( bspUserList );
         evalContext.setPagination(new PaginationUtil.Pagination(1));
-
+        evalContext.setUserBean(userBean);
         return evalContext;
     }
 

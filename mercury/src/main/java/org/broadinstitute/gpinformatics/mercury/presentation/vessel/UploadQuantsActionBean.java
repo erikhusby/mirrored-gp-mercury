@@ -341,6 +341,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
         SearchContext searchContext = new SearchContext();
         searchContext.setBspUserList(bspUserList);
+        searchContext.setUserBean(userBean);
         ConfigurableList configurableList = configurableListFactory.create(labMetricList, "Default",
                 ColumnEntity.LAB_METRIC, searchContext,
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_METRIC.getEntityName()));

@@ -133,6 +133,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         evalContext.setBspUserList( bspUserList );
         evalContext.setSearchInstance(searchInstance);
         evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
+        evalContext.setUserBean(userBean);
         return evalContext;
     }
 

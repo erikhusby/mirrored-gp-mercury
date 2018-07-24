@@ -527,6 +527,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         searchInstance.getEvalContext().setSearchInstance(searchInstance);
         searchInstance.getEvalContext().setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.WEB);
         searchInstance.getEvalContext().setBaseSearchURL(getContext().getRequest().getRequestURL());
+        searchInstance.getEvalContext().setUserBean(userBean);
     }
 
     /**
