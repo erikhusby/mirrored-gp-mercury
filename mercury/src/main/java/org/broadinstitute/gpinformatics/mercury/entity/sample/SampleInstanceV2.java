@@ -736,6 +736,12 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     public String getAggregationParticle() {
+        ProductOrderSample productOrderSample = getProductOrderSampleForSingleBucket();
+        if (productOrderSample != null) {
+            if (productOrderSample.getAggregationParticle() != null) {
+                return productOrderSample.getAggregationParticle();
+            }
+        }
         return aggregationParticle;
     }
 

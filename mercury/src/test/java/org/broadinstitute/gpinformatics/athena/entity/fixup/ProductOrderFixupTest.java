@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +38,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
@@ -50,6 +53,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
@@ -99,8 +103,15 @@ import static org.hamcrest.Matchers.is;
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
  * Set @Test(enabled=false) after running once.
  */
-@Test(groups = TestGroups.FIXUP)
+@Test(groups = TestGroups.FIXUP, singleThreaded = true)
+@RequestScoped
 public class ProductOrderFixupTest extends Arquillian {
+
+    public ProductOrderFixupTest() {
+    }
+
+    @Inject
+    BucketEjb bucketEjb;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -1480,6 +1491,57 @@ public class ProductOrderFixupTest extends Arquillian {
             Assert.fail("Error occured attempting to update SAP in fixupTest");
 
         }
+        productOrderDao.persist(new FixupCommentary(fixupReason));
+        commitTransaction();
+    }
+
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/SamplesToAddToClosedPDO.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX Adding samples to completed pdos PDO-xxx, PDO-xxx1
+     * PDO-xxx SM-329482
+     * PDO-xxx SM-2938239
+     * PDO-xxx1 SM-329482
+     * PDO-xxx1 SM-2938239
+     * ...
+     * ...
+     */
+    @Test(enabled = false)
+    public void addSamplesToClosedOrder() throws Exception {
+
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("SamplesToAddToClosedPDO.txt"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(fixupLines), "The file SamplesToAddToClosedPDO.txt has no content.");
+        final String fixupReason = fixupLines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
+
+        Multimap<String, ProductOrderSample> samplesToAdd = ArrayListMultimap.create();
+        fixupLines.subList(1, fixupLines.size())
+                .forEach((pdoSampleString)->samplesToAdd.put(pdoSampleString.split(" ")[0],
+                        new ProductOrderSample(pdoSampleString.split(" ")[1])));
+
+        samplesToAdd.asMap().forEach((String pdoKey, Collection<ProductOrderSample> samples) -> {
+            ProductOrder pdo = productOrderDao.findByBusinessKey(pdoKey);
+            pdo.addSamples(samples);
+
+            pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+            productOrderEjb.attachMercurySamples(new ArrayList<>(samples));
+
+            pdo.prepareToSave(userBean.getBspUser());
+            productOrderDao.persist(pdo);
+            productOrderEjb.handleSamplesAdded(pdoKey, samples, MessageReporter.UNUSED);
+
+            try {
+                productOrderEjb.updateSamples(pdo, samples, MessageReporter.UNUSED, "added");
+            } catch (IOException | ProductOrderEjb.NoSuchPDOException | SAPInterfaceException e) {
+                Assert.fail();
+            }
+        });
+
         productOrderDao.persist(new FixupCommentary(fixupReason));
         commitTransaction();
     }

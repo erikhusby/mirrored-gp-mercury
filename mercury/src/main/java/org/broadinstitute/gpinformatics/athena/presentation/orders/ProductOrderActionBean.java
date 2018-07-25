@@ -88,9 +88,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -860,7 +860,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, (editOrder.isChildOrder())?editOrder.getParentOrder():editOrder);
+        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
         double valueOfCurrentOrder = 0;
 
         if (fundsRemaining <= 0d ||
@@ -939,19 +939,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         Set<ProductOrder> justParents = new HashSet<>();
         for (ProductOrder order : ordersWithCommonQuote) {
-            if(order.isChildOrder()) {
-                if((order.getParentOrder().isSavedInSAP() && exclusionSapOrders.contains(order.getParentOrder().getSapOrderNumber())) ||
-                   (order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber()))) {
-                    continue;
-                }
-                justParents.add(order.getParentOrder());
-
-            } else {
-                if(order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber())) {
-                    continue;
-                }
-                justParents.add(order);
+            if(order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber())) {
+                continue;
             }
+            justParents.add(order);
         }
 
         for (ProductOrder testOrder : justParents) {
@@ -1330,13 +1321,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             populateAttributes(editOrder.getProductOrderId());
 
-            try {
-                buildJsonCustomizationsFromProductOrder(editOrder);
-            } catch (JSONException e) {
-                if(userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
-                    addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
-                }
-            }
+            buildCustomizationHelper();
 
             QuotePriceItem priceItemByKeyFields = null;
             if (editOrder.getProduct() != null) {
@@ -1352,6 +1337,21 @@ public class ProductOrderActionBean extends CoreActionBean {
                 if (addOnPriceItemByKeyFields != null ) {
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
                 }
+            }
+        }
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    public void viewPageInit() {
+        buildCustomizationHelper();
+    }
+
+    public void buildCustomizationHelper() {
+        try {
+            buildJsonCustomizationsFromProductOrder(editOrder);
+        } catch (JSONException e) {
+            if (userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
+                addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
             }
         }
     }
@@ -2050,7 +2050,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray jsonResults = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
-        if (!getSampleList().isEmpty() && !editOrder.isChildOrder()) {
+        if (!getSampleList().isEmpty()) {
             List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
             // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
             ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,

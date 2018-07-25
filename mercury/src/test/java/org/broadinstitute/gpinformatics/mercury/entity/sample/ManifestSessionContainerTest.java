@@ -1152,7 +1152,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         LabVessel labVessel = new BarcodedTube("A" + sampleId, BarcodedTube.BarcodedTubeType.MatrixTube);
         LabEvent labEvent = new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "inTheLab", 0l,
                 0l, "mercury");
-        labVessel.getInPlaceLabEvents().add(labEvent);
+        labVessel.addInPlaceEvent(labEvent);
         mercurySample.addLabVessel(labVessel);
         mercurySampleDao.persist(mercurySample);
 

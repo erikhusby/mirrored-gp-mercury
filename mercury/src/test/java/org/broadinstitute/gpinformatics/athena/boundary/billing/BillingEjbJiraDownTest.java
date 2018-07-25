@@ -88,7 +88,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryDeployment() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class, SapIntegrationServiceStub.class);
     }
 
     private String writeFixtureData() {

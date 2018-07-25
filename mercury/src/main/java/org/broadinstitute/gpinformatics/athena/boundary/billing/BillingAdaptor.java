@@ -205,7 +205,9 @@ public class BillingAdaptor implements Serializable {
                             BigDecimal listPrice = new BigDecimal(price);
                             BigDecimal effectivePrice = new BigDecimal(itemForPriceUpdate.getEffectivePrice());
 
-                            if(!itemForPriceUpdate.getProductOrder().needsCustomization(itemForPriceUpdate.getProduct()) && listPrice.compareTo(effectivePrice) !=0) {
+                            if(itemForPriceUpdate.getProductOrder().getOrderType() != ProductOrder.OrderAccessType.COMMERCIAL
+                               && !itemForPriceUpdate.getProductOrder().needsCustomization(itemForPriceUpdate.getProduct())
+                               && listPrice.compareTo(effectivePrice) != 0) {
                                 itemForPriceUpdate.getProductOrder().addQuoteAdjustment(itemForPriceUpdate.getProduct(), effectivePrice, listPrice);
                             }
                             productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, false, itemForPriceUpdate.getWorkCompleteDate());
@@ -377,7 +379,7 @@ public class BillingAdaptor implements Serializable {
                     {
 
                         if(item.getQuantityForSAP() != 0) {
-                            sapBillingId = sapService.billOrder(item, replacementMultiplier, item.getWorkCompleteDate());
+                            sapBillingId = sapService.billOrder(item, replacementMultiplier, new Date());
                         }
                         result.setSAPBillingId(sapBillingId);
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,

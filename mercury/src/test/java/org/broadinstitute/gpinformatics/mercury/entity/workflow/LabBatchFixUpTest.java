@@ -11,24 +11,29 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableListMultimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -53,6 +58,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -78,7 +84,6 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -86,10 +91,12 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -111,9 +118,6 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private LabBatchEjb labBatchEjb;
-
-    @Inject
-    private BucketDao bucketDao;
 
     @Inject
     private UserTransaction userTransaction;
@@ -153,6 +157,74 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.persist(new FixupCommentary("GPLIM-4393: Remove samples from LCSET-9978"));
     }
 
+    @Test(enabled = false)
+    public void gplim5572removeSamplesFromLcset() throws Exception {
+        removeSamplesFromLcset("RemoveFromLCSET.txt");
+    }
+
+    /**
+     * Remove samples from LCSET(s)
+     * Expected format is
+     * <pre>
+     * fixup commentary
+     * LCSET-1  SM-1    SM-2    SM-3
+     * LCSET-2  SM-4    SM-5    SM-6
+     * </pre>
+     * Assertions will fail if any samples to be removed are not present in the LCSET
+     * @param testDataFile
+     * @throws IOException
+     */
+    private void removeSamplesFromLcset(String testDataFile) throws IOException {
+        userBean.loginOSUser();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource(testDataFile));
+        Assert.assertTrue(CollectionUtils.size(fixupLines) >= 2, String.format("The file %s has no content.", testDataFile));
+        String fixupReason = fixupLines.get(0).trim();
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
+
+        List<String> lcsetData = fixupLines.subList(1, fixupLines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(lcsetData), "No data found in file.");
+        ImmutableListMultimap<String, String> lcsetToSamples =
+            lcsetData.stream().collect(
+                ImmutableListMultimap.flatteningToImmutableListMultimap(
+                    key -> key.split("\\s+")[0],
+                    values -> {
+                        List<String> split = Arrays.asList(values.split("\\s+"));
+                        return split.subList(1, split.size()).stream();
+                    }));
+
+        ArrayListMultimap<String, BucketEntry> bucketEntriesToRemove = ArrayListMultimap.create();
+        labBatchDao.findByListIdentifier(new ArrayList<>(lcsetToSamples.keySet()))
+            .forEach(labBatch -> {
+                String businessKey = labBatch.getBusinessKey();
+                labBatch.getBucketEntries().stream()
+                    .filter(bucketEntry -> bucketEntry.getLabVessel().getMercurySamples().stream()
+                        .anyMatch(mercurySample -> lcsetToSamples.get(businessKey).contains(mercurySample.getSampleKey())))
+                    .forEach(bucketEntriesToRemove.get(businessKey)::add);
+            });
+
+        // Validate that the fix-up has not already been run
+        lcsetToSamples.asMap().keySet().forEach(key -> {
+            Assert.assertEquals(lcsetToSamples.get(key).size(), bucketEntriesToRemove.get(key).size());
+        });
+
+        bucketEntriesToRemove.asMap().forEach((batchName, bucketEntries) -> {
+            List<Long> bucketEntryIds =
+                bucketEntries.stream().map(BucketEntry::getBucketEntryId).collect(Collectors.toList());
+
+            String bucketName = bucketEntries.iterator().next().getBucket().getBucketDefinitionName();
+            try {
+                labBatchEjb
+                    .updateLabBatch(batchName, Collections.emptyList(), Collections.emptyList(), bucketEntryIds,
+                        bucketName, MessageReporter.UNUSED, Collections.emptyList());
+            } catch (ValidationException | IOException e) {
+                Assert.fail(e.getMessage(), e);
+            }
+        });
+
+        labBatchDao.persist(new FixupCommentary(fixupReason));
+    }
+
     private List<LabBatchStartingVessel> removeSamples(List<String> sampleNames, LabBatch labBatch) {
         List<LabBatchStartingVessel> vesselsToRemove = new ArrayList<>();
         List<String> sampleNamesFound = new ArrayList<>();
@@ -167,13 +239,45 @@ public class LabBatchFixUpTest extends Arquillian {
                 }
             }
         }
-        Assert.assertEquals(sampleNamesFound, sampleNames, labBatch.getBatchName() + " does not contain " +
+        Assert.assertTrue(sampleNamesFound.containsAll(sampleNames), labBatch.getBatchName() + " does not contain " +
                 StringUtils.join(CollectionUtils.subtract(sampleNames, sampleNamesFound), ", "));
         for (LabBatchStartingVessel vesselToRemove : vesselsToRemove) {
             labBatch.getLabBatchStartingVessels().remove(vesselToRemove);
             vesselToRemove.getLabVessel().getLabBatchStartingVessels().remove(vesselToRemove);
         }
         return vesselsToRemove;
+    }
+
+    /**
+     * Removes samples from Jira. Note: this will not remove rework!!!
+     */
+    private void removeSamplesFromJira(List<String> sampleNames, LabBatch batch, String fixupReason) {
+        try {
+            JiraIssue issue = batch.getJiraTicket().getJiraDetails();
+            String issueField = (String) issue.getField(LabBatch.TicketFields.GSSR_IDS.getName());
+            List<String> samplesInJira =
+                Arrays.stream(issueField.split("\n"))
+                    .filter(sample -> !sampleNames.contains(sample))
+                    .collect(Collectors.toList());
+
+            String joinedSamples = String.join("\n", samplesInJira);
+
+            Collection<CustomField> customFieldList = new LinkedList<>();
+            Map<String, CustomFieldDefinition> customFieldMap = issue
+                .getCustomFields(LabBatch.TicketFields.GSSR_IDS.getName(),
+                    LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName());
+
+            int numSamples = samplesInJira.size();
+            customFieldList.add(new CustomField(customFieldMap, LabBatch.TicketFields.GSSR_IDS, joinedSamples));
+            customFieldList.add(new CustomField(customFieldMap, LabBatch.TicketFields.NUMBER_OF_SAMPLES, numSamples));
+            issue.updateIssue(customFieldList);
+            issue.addComment(
+                String.format("Removed %d samples because \"%s\". The samples removed were:\n%s", sampleNames.size(), fixupReason,
+                    sampleNames.stream().collect(Collectors.joining("\n"))));
+
+        } catch (IOException e) {
+            Assert.fail(e.getMessage(), e);
+        }
     }
 
     @Test(enabled = false)

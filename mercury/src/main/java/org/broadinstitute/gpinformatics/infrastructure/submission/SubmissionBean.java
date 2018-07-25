@@ -30,8 +30,8 @@ public class SubmissionBean implements Serializable {
     private String submissionRepository;
     @JsonProperty(value = "submissionDatatype")
     private String submissionDatatype;
-    @JsonProperty
-    private String broadProject;
+    @JsonProperty(value = "broadProject")
+    private String aggregationProject;
     @JsonProperty
     private String bamVersion;
 
@@ -40,7 +40,7 @@ public class SubmissionBean implements Serializable {
 
     public SubmissionBean(String uuid, String studyContact, BioProject bioProject, SubmissionBioSampleBean submissionSample,
                           SubmissionRepository submissionRepository,
-                          SubmissionLibraryDescriptor submissionLibraryDescriptor, String broadProject,
+                          SubmissionLibraryDescriptor submissionLibraryDescriptor, String aggregationProject,
                           String bamVersion) {
         this.uuid = uuid;
         this.studyContact = studyContact;
@@ -48,7 +48,7 @@ public class SubmissionBean implements Serializable {
         this.submissionSample = submissionSample;
         this.submissionRepository = submissionRepository.getName();
         this.submissionDatatype = submissionLibraryDescriptor.getName();
-        this.broadProject = broadProject;
+        this.aggregationProject = aggregationProject;
         this.bamVersion = bamVersion;
     }
 
@@ -100,12 +100,12 @@ public class SubmissionBean implements Serializable {
         this.submissionDatatype = submissionDatatype;
     }
 
-    public String getBroadProject() {
-        return broadProject;
+    public String getAggregationProject() {
+        return aggregationProject;
     }
 
-    public void setBroadProject(String broadProject) {
-        this.broadProject = broadProject;
+    public void setAggregationProject(String aggregationProject) {
+        this.aggregationProject = aggregationProject;
     }
 
     public String getBamVersion() {
@@ -140,7 +140,7 @@ public class SubmissionBean implements Serializable {
             .append(getSubmissionSample(), that.getSubmissionSample())
             .append(getSubmissionRepository(), that.getSubmissionRepository())
             .append(getSubmissionDatatype(), that.getSubmissionDatatype())
-            .append(getBroadProject(), that.getBroadProject())
+            .append(getAggregationProject(), that.getAggregationProject())
             .append(getBamVersion(), that.getBamVersion())
             .isEquals();
     }
@@ -154,7 +154,7 @@ public class SubmissionBean implements Serializable {
             .append(getSubmissionSample())
             .append(getSubmissionRepository())
             .append(getSubmissionDatatype())
-            .append(getBroadProject())
+            .append(getAggregationProject())
             .append(getBamVersion())
             .toHashCode();
     }

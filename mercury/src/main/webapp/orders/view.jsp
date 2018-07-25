@@ -82,7 +82,9 @@ var kitDefinitionIndex = 0;
 
 $j(document).ready(function () {
     $j('body').popover({selector: '[rel=popover]'});
-//    if ($j("#sampleData tbody>tr").length > 0) {
+    $j(document).on('click', '#ledgerLink', function () {
+        window.stop();
+    });
     enableDefaultPagingOptions();
     function loadBspData(settings, refresh=false) {
         var api = new $j.fn.dataTable.Api(settings);
@@ -1172,15 +1174,15 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     <textarea id="abandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
-<%--<div id="unAbandonDialog" style="width:600px;display:none;">--%>
-    <%--<p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>--%>
+<div id="unAbandonDialog" style="width:600px;display:none;">
+    <p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>
 
-    <%--<p style="clear:both">--%>
-        <%--<label for="unAbandonSampleCommentId">Comment:</label>--%>
-    <%--</p>--%>
+    <p style="clear:both">
+        <label for="unAbandonSampleCommentId">Comment:</label>
+    </p>
 
-    <%--<textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>--%>
-<%--</div>--%>
+    <textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+</div>
 
 <div id="recalculateRiskDialog" style="width:600px;display:none;">
     <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
@@ -1238,7 +1240,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 <stripes:hidden id="proceedOos" name="proceedOos" value=""/>
 <stripes:hidden id="abandonComment" name="abandonComment" value=""/>
     <stripes:hidden name="replacementSampleList" id="replacementSampleList" value="" />
-<%--<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>--%>
+<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
 
@@ -1772,56 +1774,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <h4 style="display:inline">Replacement Sample Orders</h4>
     </div>
 
-    <table id="orderList" class="table simple display compact">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Order ID</th>
-                <th>Status</th>
-                <th>Updated</th>
-                <th width="80">%&nbsp;Complete</th>
-                <th>Replacement Sample Count</th>
-            </tr>
-            </thead>
-            <tbody>
-            <c:forEach items="${actionBean.editOrder.childOrders}" var="order">
-                <tr>
-                    <td>
-                        <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                event="view">
-                            <stripes:param name="productOrder" value="${order.businessKey}"/>
-                            ${order.title}
-                        </stripes:link>
-                    </td>
-                    <td>
-                        <c:choose>
-
-                            <%-- draft PDO --%>
-                            <c:when test="${order.draft}">
-                                <span title="DRAFT">&#160;</span>
-                            </c:when>
-                            <c:otherwise>
-                                <a class="external" target="JIRA" href="${actionBean.jiraUrl(order.jiraTicketKey)}"
-                                   class="external" target="JIRA">
-                                        ${order.jiraTicketKey}
-                                </a>
-                            </c:otherwise>
-                        </c:choose>
-                    </td>
-                    <td>${order.orderStatus}</td>
-                    <td>
-                        <fmt:formatDate value="${order.modifiedDate}" pattern="${actionBean.datePattern}"/>
-                    </td>
-                    <td align="center">
-                        <stripes:layout-render name="/orders/sample_progress_bar.jsp"
-                                               status="${actionBean.progressFetcher.getStatus(order.businessKey)}"/>
-                    </td>
-                    <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
-                </tr>
-            </c:forEach>
-            </tbody>
-        </table>
 <c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.sampleInitiation}">
 
     <div class="borderHeader">
@@ -1839,11 +1791,9 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                                         style="margin-left:15px;"
                                         onclick="showAbandonDialog()"/>
 
-                        <c:if test="${!actionBean.editOrder.childOrder}">
-                            <stripes:button name="replaceOrderSamples" id="replaceOrderSamples" value="Replace Abandoned Samples"
-                                            onclick="showSampleReplacementDialog()" class="btn padright"
-                                            title="Click to add replacement samples for abandoned samples" />
-                        </c:if>
+                        <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
+                                        style="margin-left:15px;"
+                                        onclick="showUnAbandonDialog()"/>
                     </c:if>
                     <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
                                     style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>

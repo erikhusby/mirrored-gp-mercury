@@ -44,7 +44,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 
 
-@Test(groups = TestGroups.STUBBY, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true, singleThreaded = true)
 @Dependent
 public class ProductOrderDaoTest extends StubbyContainerTest {
 

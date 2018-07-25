@@ -386,13 +386,6 @@ public class ProductOrderEjb {
                         final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange,allProductsOrdered,
                                 effectivePricesForProducts, messageCollection, priceChangeForNewOrder, true);
 
-                        // Create orders for any Child orders that does not share
-                        for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
-                            if(!ProductOrder.sharesSAPOrderWithParent(childOrder, newSapOrderNumber)) {
-                                createOrderInSAP(childOrder, quoteIdChange, allProductsOrdered, effectivePricesForProducts,
-                                        messageCollection, priceChangeForNewOrder, true);
-                            }
-                        }
 
                 } else if(orderToPublish.isSavedInSAP()){
 
@@ -506,13 +499,7 @@ public class ProductOrderEjb {
             String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
                           " is being associated with a new quote by "+
                           userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
-            for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
-                if(ProductOrder.sharesSAPOrderWithParent(childOrder, oldNumber)) {
-                    childOrder.addSapOrderDetail(orderToPublish.latestSapOrderDetail());
-                }
-            }
-
-//            sendSapOrderShortCloseRequest(body);
+            sendSapOrderShortCloseRequest(body);
         }
         orderToPublish.setPriorToSAP1_5(false);
         messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
@@ -1374,7 +1361,7 @@ public class ProductOrderEjb {
 
     private void conditionallyShortCloseOrder(ProductOrder productOrder) throws SAPInterfaceException {
 
-        ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(productOrder);
+        ProductOrder targetSapPdo = productOrder;
 
         if(targetSapPdo.isSavedInSAP() &&
            ((targetSapPdo.allOrdersAreComplete() &&
@@ -1423,11 +1410,11 @@ public class ProductOrderEjb {
      * @param jiraTicketKey the order's JIRA key
      * @param sampleIds     the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
-     * @param reporter
+     * @param messageCollection
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> sampleIds,
-                                 @Nonnull String comment, @Nonnull MessageCollection reporter)
+                                 @Nonnull String comment, @Nonnull MessageCollection messageCollection)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException, SAPInterfaceException {
 
         List<ProductOrderSample> samples = productOrderSampleDao.findListByList(ProductOrderSample.class,
@@ -1442,10 +1429,10 @@ public class ProductOrderEjb {
         }
 
         transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
-                DeliveryStatus.NOT_STARTED, samples, comment, reporter);
+                DeliveryStatus.NOT_STARTED, samples, comment, messageCollection);
 
-        reporter.addInfo("Un-Abandoned samples: {0}.",
-                StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+        messageCollection.addInfo("Un-Abandoned samples: " +
+                StringUtils.join(ProductOrderSample.getSampleNames(samples), ", ") +".");
     }
 
     /**
@@ -1457,7 +1444,7 @@ public class ProductOrderEjb {
      * <li>if necessary, update the order status based on the new list of samples</li>
      * </ul>
      */
-    private void updateSamples(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
+    public void updateSamples(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
                                String operation) throws IOException, NoSuchPDOException, SAPInterfaceException {
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
 
@@ -1581,7 +1568,7 @@ public class ProductOrderEjb {
     /**
      * Makes the association between ProductOrderSample and MercurySample.
      */
-    private void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) {
+    public void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) {
         ImmutableListMultimap<String, ProductOrderSample> samplesBySampleId =
                 Multimaps.index(samples, new Function<ProductOrderSample, String>() {
                     @Override
