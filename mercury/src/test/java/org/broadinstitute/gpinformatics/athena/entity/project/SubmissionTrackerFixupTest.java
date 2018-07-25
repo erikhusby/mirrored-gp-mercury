@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTr
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -104,7 +105,7 @@ public class SubmissionTrackerFixupTest extends Arquillian {
     public void gplim5408BackfillLocationAndType(){
         userBean.loginOSUser();
 
-        List<SubmissionTracker> allTrackers = submissionTrackerDao.findTrackersMissingDatatypeAndLocation();
+        List<SubmissionTracker> allTrackers = submissionTrackerDao.findTrackersMissingDatatypeOrLocation();
 
         Map<String, SubmissionTracker> submissionTrackersByUuid = new HashMap<>();
         for (SubmissionTracker submissionTracker : allTrackers) {
@@ -121,7 +122,9 @@ public class SubmissionTrackerFixupTest extends Arquillian {
                 SubmissionTracker submissionTracker =
                     submissionTrackersByUuid.get(submissionStatusDetailBean.getUuid());
                 if (submissionTracker != null) {
-                    submissionTracker.setDataType(submissionStatusDetailBean.getSubmissionDatatype());
+                    String dataType = SubmissionLibraryDescriptor
+                        .getNormalizedLibraryName(submissionStatusDetailBean.getSubmissionDatatype());
+                    submissionTracker.setDataType(dataType);
                     submissionTracker.setProcessingLocation(SubmissionBioSampleBean.ON_PREM);
                 } else {
                     log.info(

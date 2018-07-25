@@ -67,13 +67,13 @@ public class SubmissionTrackerDao extends GenericDao {
         return getEntityManager().createQuery(criteriaQuery).getResultList();
     }
 
-    public List<SubmissionTracker> findTrackersMissingDatatypeAndLocation(){
+    public List<SubmissionTracker> findTrackersMissingDatatypeOrLocation(){
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
         CriteriaQuery<SubmissionTracker> criteriaQuery = criteriaBuilder.createQuery(SubmissionTracker.class);
         Root<SubmissionTracker> root = criteriaQuery.from(SubmissionTracker.class);
         criteriaQuery.where(
-            criteriaBuilder.and(
+            criteriaBuilder.or(
                 criteriaBuilder.isNull(root.get(SubmissionTracker_.dataType)),
                 criteriaBuilder.isNull(root.get(SubmissionTracker_.processingLocation))
             ));
