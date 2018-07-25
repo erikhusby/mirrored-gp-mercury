@@ -70,6 +70,7 @@ public class SearchDefinitionFactory {
         fact.buildReagentSearchDef();
         fact.buildLabMetricSearchDef();
         fact.buildLabMetricRunSearchDef();
+        fact.buildProductOrderSearchDef();
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
@@ -85,6 +86,7 @@ public class SearchDefinitionFactory {
             fact.buildReagentSearchDef();
             fact.buildLabMetricSearchDef();
             fact.buildLabMetricRunSearchDef();
+            fact.buildProductOrderSearchDef();
         }
 
         return MAP_NAME_TO_DEF.get(entity);
@@ -124,6 +126,12 @@ public class SearchDefinitionFactory {
         ConfigurableSearchDefinition configurableSearchDefinition
                 = new LabMetricRunSearchDefinition().buildSearchDefinition();
         MAP_NAME_TO_DEF.put(ColumnEntity.LAB_METRIC_RUN.getEntityName(), configurableSearchDefinition);
+    }
+
+    private void buildProductOrderSearchDef() {
+        ConfigurableSearchDefinition productOrderSearchDefinition
+                = new ProductOrderSearchDefinition().buildSearchDefinition();
+        MAP_NAME_TO_DEF.put(ColumnEntity.PRODUCT_ORDER.getEntityName(), productOrderSearchDefinition);
     }
 
     static SearchTerm.Evaluator<Object> getBatchNameInputConverter(){
