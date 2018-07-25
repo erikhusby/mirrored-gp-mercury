@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -30,7 +29,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Database interactions involving Billing Ledger
@@ -40,7 +38,7 @@ import java.util.stream.Collectors;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class LedgerEntryDao extends GenericDao {
 
-    private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED, CONFIRMATION_UPLOAD }
+    public enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED, CONFIRMATION_UPLOAD }
 
     public List<LedgerEntry> findAll() {
         return findAll(LedgerEntry.class);
@@ -124,20 +122,7 @@ public class LedgerEntryDao extends GenericDao {
         }
     }
 
-    public Set<LedgerEntry> findNegativelyBilledEntriesByOrder(@Nonnull List<String> productOrderBusinessKeys) {
-        Set<LedgerEntry> orderList =
-            findByOrderList(null, productOrderBusinessKeys, BillingSessionInclusion.NO_SESSION_STARTED);
-        Set<LedgerEntry> negativeEntries = orderList.stream()
-            .filter(ledgerEntry -> ledgerEntry.getQuantity() < 0
-                                   && !StringUtils.equals(ledgerEntry.getBillingMessage(), BillingSession.SUCCESS)
-            ).collect(Collectors.toSet());
-        if (negativeEntries == null) {
-            negativeEntries = Collections.emptySet();
-        }
-        return negativeEntries;
-    }
-
-    private Set<LedgerEntry> findByOrderList(@Nonnull List<String> productOrderBusinessKeys, BillingSessionInclusion inclusion) {
+    public Set<LedgerEntry> findByOrderList(@Nonnull List<String> productOrderBusinessKeys, BillingSessionInclusion inclusion) {
         return findByOrderList(null, productOrderBusinessKeys, inclusion);
     }
 
