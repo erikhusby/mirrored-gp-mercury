@@ -78,7 +78,7 @@ public class SubmissionTrackerDaoTest extends StubbyContainerTest {
     }
 
     public void testFindSubmissionTrackersNoneExist() throws Exception {
-        SubmissionDto submissionDto = getSubmissionDto(PDO_ID, "P123", sampleName, 1, SubmissionBioSampleBean.ON_PREM,
+        SubmissionDto submissionDto = getSubmissionDto(PDO_ID, RP_ID, sampleName, 1, SubmissionBioSampleBean.ON_PREM,
             Aggregation.DATA_TYPE_EXOME);
         List<SubmissionTracker> submissionTrackers =
                 submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto));
@@ -87,7 +87,7 @@ public class SubmissionTrackerDaoTest extends StubbyContainerTest {
 
     public void testFindSubmissionTrackersWithResult() throws Exception {
         SubmissionDto submissionDto =
-                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, null, Aggregation.DATA_TYPE_EXOME);
+                getSubmissionDto(PDO_ID, RP_ID, sampleName, DEFAULT_VERSION, null, Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker = addTracker(submissionDto);
 
         persistTrackers(Collections.singleton(submissionTracker));
@@ -101,13 +101,13 @@ public class SubmissionTrackerDaoTest extends StubbyContainerTest {
 
     public void testFindSubmissionTrackersWithNewVersion() throws Exception {
         SubmissionDto submissionDto1 =
-            getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, SubmissionBioSampleBean.ON_PREM,
+            getSubmissionDto(PDO_ID, RP_ID, sampleName, DEFAULT_VERSION, SubmissionBioSampleBean.ON_PREM,
                 Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         int newVersion = DEFAULT_VERSION + 1;
         SubmissionDto submissionDto2 =
-            getSubmissionDto(PDO_ID, "P123", sampleName, newVersion, SubmissionBioSampleBean.ON_PREM,
+            getSubmissionDto(PDO_ID, RP_ID, sampleName, newVersion, SubmissionBioSampleBean.ON_PREM,
                 Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
@@ -126,13 +126,13 @@ public class SubmissionTrackerDaoTest extends StubbyContainerTest {
 
     public void testSubmissionTrackersWithDifferentDataTypes(){
         // SubmissionTracker 1
-        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,
+        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, RP_ID, sampleName, DEFAULT_VERSION,
             SubmissionBioSampleBean.ON_PREM, Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         // SubmissionTracker 2
         SubmissionDto submissionDto2 =
-            getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,
+            getSubmissionDto(PDO_ID, RP_ID, sampleName, DEFAULT_VERSION,
                 SubmissionBioSampleBean.ON_PREM, Aggregation.DATA_TYPE_RNA);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
@@ -141,13 +141,13 @@ public class SubmissionTrackerDaoTest extends StubbyContainerTest {
 
     public void testFindSubmissionTrackersWithDifferentLocations() throws Exception {
         // SubmissionTracker 1
-        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,
+        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, RP_ID, sampleName, DEFAULT_VERSION,
             SubmissionBioSampleBean.ON_PREM, Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         // SubmissionTracker 2
         SubmissionDto submissionDto2 =
-            getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, SubmissionBioSampleBean.GCP,
+            getSubmissionDto(PDO_ID, RP_ID, sampleName, DEFAULT_VERSION, SubmissionBioSampleBean.GCP,
                 Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 

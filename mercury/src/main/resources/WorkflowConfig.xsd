@@ -29,6 +29,8 @@
             <xs:element type="xs:string" name="sourceSection" minOccurs="0"/>
             <xs:element type="xs:string" name="targetVesselTypeGeometryString"/>
             <xs:element type="xs:string" name="targetSection"/>
+            <xs:element type="xs:string" name="targetWellTypeString"/>
+            <xs:element type="xs:boolean" name="sourceMassRemoved"/>
             <xs:element type="xs:string" name="buttonValue" minOccurs="0"/>
             <xs:element type="xs:string" name="targetExpectedToExist" minOccurs="0"/>
             <xs:element type="xs:string" name="targetExpectedEmpty" minOccurs="0"/>
@@ -79,6 +81,7 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
+            <xs:element type="xs:boolean" name="jiraSampleFromNearest" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="workflowConfigType">

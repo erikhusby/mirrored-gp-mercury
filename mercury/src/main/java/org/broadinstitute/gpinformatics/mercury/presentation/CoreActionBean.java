@@ -68,6 +68,8 @@ import java.util.Map;
 public abstract class CoreActionBean implements ActionBean, MessageReporter {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
+    public static final String ERROR_CONTACT_SUPPORT =
+        "Please contact support using the <span class='badge'>Feedback</span> link above.";
     public static final String DATE_PATTERN = "MM/dd/yyyy";
     private static final String DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm";
     private static final String PRECISE_DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm:ss.S";

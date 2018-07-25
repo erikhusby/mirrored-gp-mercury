@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationContam;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
@@ -164,15 +163,14 @@ public class SubmissionDto implements ISubmissionTuple {
         dateCompleted = null;
         if (aggregation != null) {
             sample = aggregation.getSample();
-            datatype = aggregation.getDataType();
+            datatype = SubmissionLibraryDescriptor.getNormalizedLibraryName(aggregation.getDataType());
             project = aggregation.getProject();
             version = aggregation.getVersion();
-            rpid = aggregation.getProject();
+            rpid = aggregation.getMercuryProject();
             processingLocation = aggregation.getProcessingLocation();
-            submissionTuple = aggregation.getTuple();
+            submissionTuple = aggregation.getSubmissionTuple();
             fileType = submissionTuple.getFileType();
             fileTypeString = fileType.toString();
-            String datatype = aggregation.getDataType();
             if (StringUtils.isNotBlank(datatype)) {
                 qualityMetric = aggregation.getQualityMetric();
             }
@@ -188,11 +186,7 @@ public class SubmissionDto implements ISubmissionTuple {
             }
             readGroupCount = aggregation.getReadGroupCount();
             contaminationString = aggregation.getContaminationString();
-            for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
-                if (aggregationReadGroup.getReadGroupIndex() != null) {
-                    productOrders.add(aggregationReadGroup.getReadGroupIndex().getProductOrderId());
-                }
-            }
+            productOrders.addAll(aggregation.getPicardAggregationSample().getProductOrderList());
         }
         initializeStatusDetailBean(statusDetailBean);
         submittedErrorsArray = submittedErrors.toArray(new String[submittedErrors.size()]);
@@ -421,15 +415,9 @@ public class SubmissionDto implements ISubmissionTuple {
             .append(submittedErrorsArray, that.submittedErrorsArray)
             .append(submissionTuple, that.submissionTuple)
             .append(uuid, that.uuid)
-            .append(sample, that.sample)
-            .append(datatype, that.datatype)
-            .append(project, that.project)
             .append(fileTypeString, that.fileTypeString)
-            .append(fileType, that.fileType)
-            .append(version, that.version)
             .append(qualityMetricString, that.qualityMetricString)
             .append(contaminationString, that.contaminationString)
-            .append(rpid, that.rpid)
             .append(readGroupCount, that.readGroupCount)
             .append(fileName, that.fileName)
             .append(processingLocation, that.processingLocation)
@@ -458,15 +446,9 @@ public class SubmissionDto implements ISubmissionTuple {
             .append(submittedErrorsArray)
             .append(submissionTuple)
             .append(uuid)
-            .append(sample)
-            .append(datatype)
-            .append(project)
             .append(fileTypeString)
-            .append(fileType)
-            .append(version)
             .append(qualityMetricString)
             .append(contaminationString)
-            .append(rpid)
             .append(readGroupCount)
             .append(fileName)
             .append(processingLocation)

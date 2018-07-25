@@ -59,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -89,6 +90,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender.BSP_CONTAINER_UPDATE_LAYOUT;
 import static org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationActionBean.CONTROLS;
@@ -643,6 +645,71 @@ public class LabBatchEjb {
         }
     }
 
+    public ValidateRackScanReturn validateTypedControls(String labBatchName, List<String> parsedControls,
+                                      MessageCollection messageCollection) {
+        LabBatch labBatch = labBatchDao.findByBusinessKey(labBatchName);
+        if (labBatch == null) {
+            messageCollection.addError("Failed to find " + labBatchName);
+            return new ValidateRackScanReturn(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        }
+        if (labBatch.getBatchName().startsWith("LCSET")) {
+            messageCollection.addError("LCSETs must be rack scanned to add controls.");
+        }
+        if (!labBatch.getWorkflowName().equals(Workflow.DNA_RNA_EXTRACTION_STOOL.getWorkflowName())) {
+            messageCollection.addError("Only available for DNA and RNA from Stool");
+        }
+        Map<String, LabVessel> mapBarcodeToTube = tubeDao.findByBarcodes(parsedControls);
+        List<Control> controls = controlDao.findAllActive();
+        List<String> controlAliases = new ArrayList<>();
+        for (Control control : controls) {
+            controlAliases.add(control.getCollaboratorParticipantId());
+        }
+
+        List<LabVessel> startingVessels = labBatch.getLabBatchStartingVessels().stream()
+                .map(LabBatchStartingVessel::getLabVessel)
+                .collect(Collectors.toList());
+        List<LabVessel> controlsInBatch = mapBarcodeToTube.values().stream()
+                .filter(startingVessels::contains)
+                .collect(Collectors.toList());
+        if (!controlsInBatch.isEmpty()) {
+            for (LabVessel labVessel: controlsInBatch) {
+                messageCollection.addError(labVessel.getLabel() + " already in lab batch.");
+            }
+        }
+
+        List<String> sampleNames = new ArrayList<>();
+        Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo = new HashMap<>();
+        for (Map.Entry<String,LabVessel> entry: mapBarcodeToTube.entrySet()) {
+            LabVessel barcodedTube = entry.getValue();
+            if (barcodedTube == null) {
+                messageCollection.addError("Failed to find tube " + entry.getKey());
+            } else {
+                Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
+                buildSampleNamesFromInstance(sampleInstances, barcodedTube, sampleNames, mapBarcodeToSampleInfo,
+                        messageCollection);
+            }
+        }
+
+        Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
+
+        // Check each tube to determine whether it's a control, and whether it needs to be added to the LCSET.
+        List<LabVessel> controlTubes = new ArrayList<>();
+        List<LabVessel> addTubes = new ArrayList<>();
+        Set<BucketEntry> bucketEntries = new HashSet<>();
+        boolean addAndRemoveSamples = false;
+        for (Map.Entry<String, LabVessel> entry : mapBarcodeToTube.entrySet()) {
+            LabVessel barcodedTube = entry.getValue();
+            addAndRemoveSamples = buildSamplesToAddAndRemove(labBatchName, controlAliases, barcodedTube, controlTubes,
+                    addTubes, bucketEntries, mapBarcodeToSampleInfo, mapSampleNameToData, messageCollection, addAndRemoveSamples);
+        }
+
+        if (messageCollection.hasErrors()) {
+            return new ValidateRackScanReturn(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        }
+
+        return new ValidateRackScanReturn(controlTubes, addTubes, null);
+    }
+
     /**
      * Finds the controls in a scan of a new LCSET rack.  Also find tubes that need to be added to and removed
      * from the LCSET.
@@ -670,20 +737,8 @@ public class LabBatchEjb {
                 messageCollection.addError("Failed to find tube " + positionBarcodeEntry.getValue());
             } else {
                 Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
-                if (sampleInstances.size() == 1) {
-                    SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-                    if (sampleInstance.getEarliestMercurySampleName() == null) {
-                        // Assume this is a control that has no history in Mercury, so fetch from BSP by barcode
-                        // todo jmt accumulate these and fetch in bulk?
-                        mapBarcodeToSampleInfo.putAll(sampleDataFetcher.fetchSampleDetailsByBarcode(
-                                Collections.singletonList(sampleInstance.getInitialLabVessel().getLabel())));
-                        sampleNames.add(mapBarcodeToSampleInfo.get(sampleInstance.getInitialLabVessel().getLabel()).getSampleId());
-                    } else {
-                        sampleNames.add(sampleInstance.getEarliestMercurySampleName());
-                    }
-                } else {
-                    messageCollection.addError("Multiple samples in " + barcodedTube.getLabel());
-                }
+                buildSampleNamesFromInstance(sampleInstances, barcodedTube, sampleNames, mapBarcodeToSampleInfo,
+                        messageCollection);
             }
         }
         Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
@@ -695,47 +750,8 @@ public class LabBatchEjb {
         boolean addAndRemoveSamples = false;
         for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
             LabVessel barcodedTube = mapBarcodeToTube.get(positionBarcodeEntry.getValue());
-            if (barcodedTube != null) {
-                Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
-                if (sampleInstances.size() == 1) {
-                    SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-                    String earliestMercurySampleName = sampleInstance.getEarliestMercurySampleName();
-                    if (earliestMercurySampleName == null) {
-                        // Assume this is a control that has no history in Mercury, so lookup by barcode
-                        earliestMercurySampleName = mapBarcodeToSampleInfo.get(sampleInstance.getInitialLabVessel().getLabel()).getSampleId();
-                    }
-                    SampleData sampleData = mapSampleNameToData.get(earliestMercurySampleName);
-                    boolean found = false;
-                    for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
-                        if (Objects.equals(bucketEntry.getLabBatch().getBatchName(), lcsetName)) {
-                            bucketEntries.add(bucketEntry);
-                            // Exome Express currently does strange things with multiple LCSETs at shearing, so
-                            // limit this logic to WGS.
-                            if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
-                                    Aggregation.DATA_TYPE_WGS)) {
-                                addAndRemoveSamples = true;
-                            }
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (controlAliases.contains(sampleData.getCollaboratorParticipantId())) {
-                        if (found) {
-                            messageCollection.addWarning(barcodedTube.getLabel() +  " is already in this LCSET");
-                        } else {
-                            controlTubes.add(barcodedTube);
-                        }
-                    } else {
-                        if (!found) {
-                            if (addAndRemoveSamples) {
-                                addTubes.add(barcodedTube);
-                            } else {
-                                messageCollection.addError(barcodedTube.getLabel() + " is not in this LCSET");
-                            }
-                        }
-                    }
-                }
-            }
+            addAndRemoveSamples = buildSamplesToAddAndRemove(lcsetName, controlAliases, barcodedTube, controlTubes, addTubes,
+                    bucketEntries, mapBarcodeToSampleInfo, mapSampleNameToData, messageCollection, addAndRemoveSamples);
         }
 
         // Any tubes that are in the LCSET, but not in the scan, will need to be removed
@@ -756,12 +772,90 @@ public class LabBatchEjb {
         return new ValidateRackScanReturn(controlTubes, addTubes, removeTubes);
     }
 
+    private void buildSampleNamesFromInstance(Set<SampleInstanceV2> sampleInstances, LabVessel barcodedTube, List<String> sampleNames,
+                      Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo, MessageCollection messageCollection) {
+        if (sampleInstances.size() == 1) {
+            SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+            if (sampleInstance.getEarliestMercurySampleName() == null) {
+                // Assume this is a control that has no history in Mercury, so fetch from BSP by barcode
+                // todo jmt accumulate these and fetch in bulk?
+                mapBarcodeToSampleInfo.putAll(sampleDataFetcher.fetchSampleDetailsByBarcode(
+                        Collections.singletonList(sampleInstance.getInitialLabVessel().getLabel())));
+                sampleNames.add(mapBarcodeToSampleInfo.get(sampleInstance.getInitialLabVessel().getLabel()).getSampleId());
+            } else {
+                sampleNames.add(sampleInstance.getEarliestMercurySampleName());
+            }
+        } else {
+            messageCollection.addError("Multiple samples in " + barcodedTube.getLabel());
+        }
+    }
+
+    private boolean buildSamplesToAddAndRemove(String lcsetName, List<String> controlAliases, LabVessel barcodedTube,
+                                               List<LabVessel> controlTubes, List<LabVessel> addTubes, Set<BucketEntry> bucketEntries,
+                                               Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo,
+                                               Map<String, SampleData> mapSampleNameToData, MessageCollection messageCollection,
+                                               boolean addAndRemoveSamples) {
+        if (barcodedTube != null) {
+            Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
+            if (sampleInstances.size() == 1) {
+                SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+                String earliestMercurySampleName = sampleInstance.getEarliestMercurySampleName();
+                if (earliestMercurySampleName == null) {
+                    // Assume this is a control that has no history in Mercury, so lookup by barcode
+                    earliestMercurySampleName = mapBarcodeToSampleInfo.get(sampleInstance.getInitialLabVessel().getLabel()).getSampleId();
+                }
+                SampleData sampleData = mapSampleNameToData.get(earliestMercurySampleName);
+                boolean found = false;
+                for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+                    if (Objects.equals(bucketEntry.getLabBatch().getBatchName(), lcsetName)) {
+                        bucketEntries.add(bucketEntry);
+                        // Exome Express currently does strange things with multiple LCSETs at shearing, so
+                        // limit this logic to WGS.
+                        if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                                Aggregation.DATA_TYPE_WGS)) {
+                            addAndRemoveSamples = true;
+                        }
+                        found = true;
+                        break;
+                    }
+                }
+                // Check pending buckets for XTR tickets
+                if (!found) {
+                    for (BucketEntry bucketEntry : sampleInstance.getPendingBucketEntries()) {
+                        bucketEntries.add(bucketEntry);
+                        if (bucketEntry.getProductOrder().getProduct().getWorkflow() == Workflow.DNA_RNA_EXTRACTION_STOOL) {
+                            addAndRemoveSamples = true;
+                        }
+                        break;
+                    }
+                }
+                if (controlAliases.contains(sampleData.getCollaboratorParticipantId())) {
+                    if (found) {
+                        messageCollection.addWarning(barcodedTube.getLabel() +  " is already in this Lab Batch");
+                    } else {
+                        controlTubes.add(barcodedTube);
+                    }
+                } else {
+                    if (!found) {
+                        if (addAndRemoveSamples) {
+                            addTubes.add(barcodedTube);
+                        } else {
+                            messageCollection.addError(barcodedTube.getLabel() + " is not in this Lab Batch");
+                        }
+                    }
+                }
+            }
+        }
+
+        return addAndRemoveSamples;
+    }
+
     /**
      * Adds controls to an LCSET, without bucket entries.
      * @param lcsetName LCSET-1234
      * @param controlBarcodes list of barcodes that was confirmed by the user
      */
-    private void addControlsToLcset(String lcsetName, List<String> controlBarcodes) {
+    public void addControlsToLcset(String lcsetName, List<String> controlBarcodes) {
         LabBatch lcset = labBatchDao.findByName(lcsetName);
         Map<String, LabVessel> mapBarcodeToTube = tubeDao.findByBarcodes(controlBarcodes);
         for (Map.Entry<String, LabVessel> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
@@ -784,19 +878,16 @@ public class LabBatchEjb {
      * @param messageReporter action bean
      * @param addBarcodes tubes added to the rack since the LCSET was created
      * @param removeBarcodes tubes removed from the rack since the LCSET was created
-     * @param rackScan map from position to barcode
-     * @param rackBarcode needed to update layout in BSP
-     * @param userBean logged in user
      */
-    public void updateLcsetFromScan(String lcsetName, List<String> controlBarcodes, MessageReporter messageReporter,
-            Collection<String> addBarcodes, List<String> removeBarcodes, Map<String, String> rackScan,
-            String rackBarcode, UserBean userBean) {
+    public Map<String, BarcodedTube> updateLcsetFromScan(String lcsetName, List<String> controlBarcodes,
+            MessageReporter messageReporter, Collection<String> addBarcodes, List<String> removeBarcodes,
+            List<String> allBarcodes) {
 
         // Reflect addition of control tubes by re-array
         addControlsToLcset(lcsetName, controlBarcodes);
 
         // Add to batch
-        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(rackScan.values());
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(allBarcodes);
         mapBarcodeToTube.putAll(barcodedTubeDao.findByBarcodes(removeBarcodes));
         List<Long> bucketEntryIds = new ArrayList<>();
         String bucketName = null;
@@ -839,8 +930,23 @@ public class LabBatchEjb {
                 throw new RuntimeException(e);
             }
         }
+        return mapBarcodeToTube;
+    }
 
-        // Determine whether rack needs to be exported from BSP
+    /**
+     * Exports an LCSET after it is scanned on the LCSET Controls page.  Actions are:
+     * <ul>
+     * <li>update rack layout in BSP (controls are not added through automation)</li>
+     * <li>auto-export from BSP to Mercury</li>
+     * </ul>
+     * @param mapBarcodeToTube map from position to barcode
+     * @param rackBarcode needed to update layout in BSP
+     * @param rackScan map from position to barcode
+     * @param userBean logged in user
+     * @param messageReporter action bean
+     */
+    public void exportRack(Map<String, BarcodedTube> mapBarcodeToTube, String rackBarcode,
+                                Map<String, String> rackScan, UserBean userBean, MessageReporter messageReporter) {
         List<LabVessel> bspTubes = new ArrayList<>();
         for (String barcode : rackScan.values()) {
             BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);

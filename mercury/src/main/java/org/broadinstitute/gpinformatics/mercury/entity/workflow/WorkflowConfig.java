@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.HashMultimap;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionCreator;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
 
@@ -201,4 +202,17 @@ public class WorkflowConfig implements PreferenceDefinitionValue, Serializable {
         }
         return null;
     }
+
+    public WorkflowBucketDef findWorkflowBucketDef(@Nonnull ProductOrder productOrder, String bucketName) {
+        for (Workflow productWorkflow : productOrder.getProductWorkflows()) {
+            ProductWorkflowDefVersion workflowDefVersion = getWorkflow(productWorkflow)
+                    .getEffectiveVersion();
+            WorkflowBucketDef bucketDef = workflowDefVersion.findBucketDefByName(bucketName);
+            if (bucketDef != null) {
+                return bucketDef;
+            }
+        }
+        return null;
+    }
+
 }
