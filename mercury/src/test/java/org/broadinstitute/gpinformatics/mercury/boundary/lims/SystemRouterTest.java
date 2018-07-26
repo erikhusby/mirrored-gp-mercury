@@ -287,12 +287,11 @@ public class SystemRouterTest extends BaseEventTest {
 
         ProductFamily family = new ProductFamily("Test Product Family");
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
-                                  0, 0, 0, 0, "Test samples only", "None", true, Workflow.WHOLE_GENOME, false,
-                                  "agg type");
+                                  0, 0, 0, 0, "Test samples only", "None", true, Workflow.WHOLE_GENOME, false);
 
         exomeExpress = new Product("Exome Express", family, "Exome express", "P-EX-1", new Date(), new Date(),
                                    0, 0, 0, 0, "Test exome express samples only", "None", true,
-                                   Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
+                                   Workflow.AGILENT_EXOME_EXPRESS, false);
 
         picoBucket = new Bucket("Pico/Plating Bucket");
     }

@@ -101,7 +101,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                                                                     "Test product family"), "test", "1234", null, null,
                                                                     10000, 20000, 100,
                                                                     40, null, null, true,
-                                                                    Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
+                                                                    Workflow.AGILENT_EXOME_EXPRESS, false),
                                                             new ResearchProject(101L, "Test RP", "Test synopsis",
                                                                                 false,
                                                                                 ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));

@@ -42,6 +42,9 @@ public class Aggregation implements ISubmissionTuple  {
     public static final String DATA_TYPE_EXOME = "Exome";
     public static final String DATA_TYPE_RNA = "RNA";
     public static final String DATA_TYPE_WGS = "WGS";
+    public static final String DATA_TYPE_10X_WGS = "10X_WGS";
+    public static final String DATA_TYPE_SHORT_RANGE_PCR = "ShortRangePCR";
+
     @SuppressWarnings("unused")
     @Id @Column(name = "ID")
     private Integer id;

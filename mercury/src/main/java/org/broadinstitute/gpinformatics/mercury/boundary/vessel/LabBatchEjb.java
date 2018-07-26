@@ -1248,7 +1248,7 @@ public class LabBatchEjb {
         for (String productName : designationDto.getProductNames()) {
             if (!productName.equals(CONTROLS)) {
                 Product product = productDao.findByName(productName);
-                if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
+                if (Objects.equals(product.getPipelineDataTypeString(), Aggregation.DATA_TYPE_WGS)) {
                     mixedFlowcellOk = true;
                     break;
                 }
