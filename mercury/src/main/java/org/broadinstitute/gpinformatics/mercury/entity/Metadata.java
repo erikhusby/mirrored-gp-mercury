@@ -58,9 +58,6 @@ public class Metadata {
     @Column(name = "date_value")
     private Date dateValue;
 
-    @Column(name = "boolean_value")
-    private Boolean booleanValue;
-
     /**
      * For JPA
      */
@@ -88,14 +85,6 @@ public class Metadata {
         this.dateValue = dateValue;
         if (key.getDataType() != DataType.DATE) {
             throw new RuntimeException("Date value passed to " + key.toString());
-        }
-    }
-
-    public Metadata(@Nonnull Key key, Boolean booleanValue) {
-        this.key = key;
-        this.booleanValue = booleanValue;
-        if (key.getDataType() != DataType.BOOLEAN) {
-            throw new RuntimeException("Boolean value passed to " + key.toString());
         }
     }
 
@@ -207,6 +196,23 @@ public class Metadata {
         NONE
     }
 
+    public enum YesNoUnknown implements Displayable {
+        YES("Yes"),
+        NO("No"),
+        UNKNOWN("Unknown");
+
+        private final String displayName;
+
+        YesNoUnknown(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
     /**
      * This enum is part of an external API and should not be changed.
      */
@@ -297,7 +303,7 @@ public class Metadata {
         BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
         DEPLETE_WELL(Category.SAMPLE, DataType.STRING, "Deplete Well", Visibility.USER),
         CELL_TYPE(Category.SAMPLE, DataType.STRING, "Cell Type", Visibility.USER),
-        CELLS_PER_WELL(Category.SAMPLE, DataType.STRING, "Cell Per Well", Visibility.USER),
+        CELLS_PER_WELL(Category.SAMPLE, DataType.NUMBER, "Cell Per Well", Visibility.USER),
         COLLABORATOR_SAMPLE_ID(Category.SAMPLE, DataType.STRING, "Collaborator Sample ID", Visibility.USER),
         POSITIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Positive Control", Visibility.USER),
         NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER),

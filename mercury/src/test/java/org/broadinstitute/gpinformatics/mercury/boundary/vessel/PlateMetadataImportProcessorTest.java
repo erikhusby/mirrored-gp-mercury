@@ -22,6 +22,9 @@ import static org.hamcrest.Matchers.startsWith;
 public class PlateMetadataImportProcessorTest {
     private static final String TEST_MANIFEST_DIRECTORY = "plate-receipt-metadata";
     private static final String TEST_MANIFEST_XLSX = TEST_MANIFEST_DIRECTORY + "/SingleCellGood.xlsx";
+    private static final String TEST_MANIFEST_DUPLICATE_COL_XLSX = TEST_MANIFEST_DIRECTORY + "/SingleCellDuplicateCols.xlsx";
+
+    private static final String ROW_NUMBER_PREFIX = "Row #%s ";
 
     private PlateMetadataImportProcessor processor;
 
@@ -38,6 +41,13 @@ public class PlateMetadataImportProcessorTest {
         validateRecords(processor);
         assertThat(processor.getMessages(), emptyCollectionOf(String.class));
         assertThat(processor.getWarnings(), emptyCollectionOf(String.class));
+    }
+
+    @Test(expectedExceptions = ValidationException.class)
+    public void testImportDuplicateColumns() throws Exception {
+        InputStream inputStream = VarioskanParserTest.getSpreadsheet(TEST_MANIFEST_DUPLICATE_COL_XLSX);
+        PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
+        validateRecords(processor);
     }
 
     /**

@@ -31,19 +31,16 @@ public class PlateMetadataImportProcessor extends TableProcessor {
     }
 
     @Override
-    public int getNumHeaderRows() {
-        return 2;
-    }
-
-    @Override
     public void processHeader(List<String> headers, int row) {
         List<String> errors = new ArrayList<>();
         List<String> seenHeaders = new ArrayList<>();
         for (String header : headers) {
-            if (seenHeaders.contains(header) && !header.equalsIgnoreCase("Alias")) {
-                addDataMessage(String.format(DUPLICATE_HEADER_FORMAT, header), row);
+            if (!header.isEmpty()) {
+                if (seenHeaders.contains(header)) {
+                    addDataMessage(String.format(DUPLICATE_HEADER_FORMAT, header), row);
+                }
+                seenHeaders.add(header);
             }
-            seenHeaders.add(header);
         }
 
         Collection<? extends ColumnHeader> foundHeaders =
@@ -63,7 +60,16 @@ public class PlateMetadataImportProcessor extends TableProcessor {
     }
 
     private void validateRow(Map<String, String> dataRow, int dataRowIndex) {
-        //TODO Validate Plate and such, true/false perhaps, numbers on cell type
+        for(Map.Entry<String, String> rowEntry: dataRow.entrySet()) {
+            Headers header = Headers.fromColumnName(rowEntry.getKey());
+//            if (header.getMetadataKey().getDataType() == DataType.BOOLEAN) {
+//                String val = rowEntry.getValue();
+//                if (!val.equalsIgnoreCase("Yes") && !val.equalsIgnoreCase("No") &&
+//                    !val.equalsIgnoreCase("Unknown")) {
+//                    addDataMessage("Invalid format for column: " + header.getText() + " Expect Yes, No, Or Unknown", dataRowIndex);
+//                }
+//            }
+        }
     }
 
     @Override
@@ -88,39 +94,24 @@ public class PlateMetadataImportProcessor extends TableProcessor {
         return rowMetadataRecords;
     }
 
-    //TODO DOn't have the stupid collected after thing yet
     private enum Headers implements ColumnHeader {
         PLATE("Plate Barcode", null),
         WELL("Well", null),
+        CONTROL("Control", null),
         SAMPLE("Sample ID", Metadata.Key.SAMPLE_ID),
-        CELL_TYPE("Types of cell", Metadata.Key.CELL_TYPE),
+        CELL_TYPE("Types Of Cell", Metadata.Key.CELL_TYPE),
         SPECIES("Species", Metadata.Key.SPECIES),
-        POSITIVE_CONTROL("positive control?", Metadata.Key.CELL_TYPE, DataType.BOOLEAN),
-        NEGATIVE_CONTROL("negative control?", Metadata.Key.CELL_TYPE, DataType.BOOLEAN),
-        COLLABORATOR_PARTICIPANT_ID("Alias", "Collaborator Participant ID", Metadata.Key.COLLABORATOR_PARTICIPANT_ID,
-                DataType.STRING),
-        COLLABORATOR_SAMPLE_ID("Alias", "Collaborator Sample ID", Metadata.Key.COLLABORATOR_SAMPLE_ID, DataType.STRING),
-        CELLS_PER_WELL("Cells per well", Metadata.Key.CELLS_PER_WELL, DataType.NUMBER);
+        COLLABORATOR_PARTICIPANT_ID("Collaborator Participant ID", Metadata.Key.COLLABORATOR_PARTICIPANT_ID),
+        COLLABORATOR_SAMPLE_ID("Collaborator Sample ID", Metadata.Key.COLLABORATOR_SAMPLE_ID),
+        COLLECTION_DATE("Collection Date", Metadata.Key.COLLECTION_DATE),
+        CELLS_PER_WELL("Cells Per Well", Metadata.Key.CELLS_PER_WELL);
 
         private final String header;
-        private final String subHeader;
-        private final DataType dataType;
         private final Metadata.Key metadataKey;
 
-        Headers(String text, Metadata.Key metadataKey) {
-            this (text, metadataKey, DataType.STRING);
-        }
-
-        Headers(String text, Metadata.Key metadataKey, DataType dataType) {
-            this(text, null, metadataKey, dataType);
-        }
-
-        Headers(String header, String subHeader, Metadata.Key metadataKey, DataType dataType) {
-
+        Headers(String header, Metadata.Key metadataKey) {
             this.header = header;
-            this.subHeader = subHeader;
             this.metadataKey = metadataKey;
-            this.dataType = dataType;
         }
 
         public static List<String> headerNames(ColumnHeader... columnHeaders) {
@@ -148,28 +139,16 @@ public class PlateMetadataImportProcessor extends TableProcessor {
 
         @Override
         public boolean isDateColumn() {
-            return false;
+            return metadataKey.getDataType() == Metadata.DataType.DATE;
         }
 
         @Override
         public boolean isStringColumn() {
-            return dataType == DataType.STRING;
-        }
-
-        public boolean isBooleanColumn() {
-            return dataType == DataType.BOOLEAN;
-        }
-
-        public boolean isNumberColumn() {
-            return dataType == DataType.NUMBER;
+            return metadataKey.getDataType() == Metadata.DataType.STRING;
         }
 
         public Metadata.Key getMetadataKey() {
             return metadataKey;
-        }
-
-        public DataType getDataType() {
-            return dataType;
         }
 
         static Collection<Headers> fromColumnName(List<String> errors, String... columnNames) {
@@ -216,9 +195,6 @@ public class PlateMetadataImportProcessor extends TableProcessor {
                     case NUMBER:
                         metadata = new Metadata(header.getMetadataKey(), new BigDecimal(columnEntry.getValue()));
                         break;
-                    case BOOLEAN:
-                        metadata = new Metadata(header.getMetadataKey(), Boolean.valueOf(columnEntry.getValue()));
-                        break;
                     case DATE:
                         throw new RuntimeException("Date Metadata keys not used in this upload");
                     }
@@ -252,11 +228,5 @@ public class PlateMetadataImportProcessor extends TableProcessor {
         public List<Metadata> getMetadata() {
             return metadata;
         }
-    }
-
-    public enum DataType {
-        STRING,
-        NUMBER,
-        BOOLEAN
     }
 }
