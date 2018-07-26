@@ -2619,6 +2619,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
 
             addMessages(abandonSamplesMessageCollection);
+        } else {
+            addMessage("You cannot abandon samples since have not selected any samples that are eligible to abandon");
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
