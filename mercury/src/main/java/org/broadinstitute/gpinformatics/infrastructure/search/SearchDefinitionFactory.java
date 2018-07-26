@@ -51,7 +51,7 @@ public class SearchDefinitionFactory {
      */
     private static SearchTerm.Evaluator<Object> pdoConverter = new SearchTerm.Evaluator<Object>() {
         @Override
-        public Object evaluate(Object entity, SearchContext context) {
+        public String evaluate(Object entity, SearchContext context) {
             String value = context.getSearchValueString();
             if( value.matches("[0-9]*")){
                 value = "PDO-" + value;
@@ -59,6 +59,15 @@ public class SearchDefinitionFactory {
             return value;
         }
     };
+
+    private static SearchTerm.Evaluator<Object> billingSessionConverter = new SearchTerm.Evaluator<Object>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            String value = context.getSearchValueString();
+
+            return null;
+        }
+    }
 
     private SearchDefinitionFactory(){}
 
@@ -140,6 +149,10 @@ public class SearchDefinitionFactory {
 
     static SearchTerm.Evaluator<Object> getPdoInputConverter(){
         return pdoConverter;
+    }
+
+    static SearchTerm.Evaluator<Object> getBillingSessionConverter() {
+        return billingSessionConverter;
     }
 
     /**

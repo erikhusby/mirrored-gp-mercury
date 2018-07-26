@@ -47,6 +47,11 @@ public class ProductOrderSearchDefinition {
         final ArrayList<SearchTerm> searchTerms = new ArrayList<>();
 
 
+        List<SearchTerm.CriteriaPath> billingSessionCriteriaList = new ArrayList<>();
+        SearchTerm billingSessionTerm = new SearchTerm();
+        billingSessionTerm.setName("Billing Session Id");
+        billingSessionTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBillingSessionConverter());
+
         return searchTerms;
     }
 
@@ -65,18 +70,28 @@ public class ProductOrderSearchDefinition {
         productTerm.setCriteriaPaths(productCriteriaPathList);
         productTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, SearchContext context) {
+            public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
                 return ((ProductOrder) entity).getProduct().getDisplayName() ;
             }
         });
-
+        searchTerms.add(productTerm);
 
         //For searching by quotes, and displaying quotes
         List<SearchTerm.CriteriaPath> quoteCriteriaPaths = new ArrayList<>();
         SearchTerm quoteTerm = new SearchTerm();
         quoteTerm.setName("Quote Identifier");
-        SearchTerm.CriteriaPath quoteCriteraPath
+        SearchTerm.CriteriaPath quoteCriteraPath = new SearchTerm.CriteriaPath();
+        quoteCriteraPath.setPropertyName("quoteId");
+        quoteCriteriaPaths.add(quoteCriteraPath);
+        quoteTerm.setCriteriaPaths(quoteCriteriaPaths);
+        quoteTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                return null;
+            }
+        });
+        searchTerms.add(quoteTerm);
 
         return searchTerms;
     }
@@ -97,7 +112,15 @@ public class ProductOrderSearchDefinition {
         pdoTicketCriteriaPath.setPropertyName("jiraTicketKey");
         pdoKeyCriteriaPathList.add(pdoTicketCriteriaPath);
         pdoJiraTicketTerm.setCriteriaPaths(pdoKeyCriteriaPathList);
+        pdoJiraTicketTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                ProductOrder order = (ProductOrder) entity;
+                return ((ProductOrder) entity).getBusinessKey();
+            }
+        });
         searchTerms.add(pdoJiraTicketTerm);
+
 
         List<SearchTerm.CriteriaPath> sampleCriteriaPathList = new ArrayList<>();
         SearchTerm sampleTerm = new SearchTerm();
@@ -121,7 +144,7 @@ public class ProductOrderSearchDefinition {
                 return sampleNames;
             }
         });
-
+        searchTerms.add(sampleTerm);
 
         List<SearchTerm.CriteriaPath> sapCriteriaPathList = new ArrayList<>();
         SearchTerm sapOrderTerm = new SearchTerm();
@@ -149,7 +172,7 @@ public class ProductOrderSearchDefinition {
                 return sapIdResults;
             }
         });
-
+        searchTerms.add(sapOrderTerm);
 
         return searchTerms;
     }
