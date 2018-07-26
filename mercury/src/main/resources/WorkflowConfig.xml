@@ -1322,6 +1322,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>SelectionHybridizationThermoCyclerLoaded</name>
+                <labEventTypes>SELECTION_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>SelectionCapture</name>
                 <labEventTypes>SELECTION_CAPTURE</labEventTypes>
                 <optional>false</optional>
