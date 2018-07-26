@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Builds the configurable search Definition for product order defined search logic
@@ -53,14 +55,14 @@ public class ProductOrderSearchDefinition {
 
         ArrayList<SearchTerm> searchTerms = new ArrayList<>();
 
-        List<SearchTerm.CriteriaPath> productCriteriaPaths = new ArrayList<>();
+        List<SearchTerm.CriteriaPath> productCriteriaPathList = new ArrayList<>();
         SearchTerm productTerm = new SearchTerm();
-        productTerm.setName("Product Part Number");
+        productTerm.setName("Primary Product Part Number");
         SearchTerm.CriteriaPath productCriteriaPath = new SearchTerm.CriteriaPath();
         productCriteriaPath.setPropertyName("partNumber");
         productCriteriaPath.setCriteria(Arrays.asList("Products", "product"));
-        productCriteriaPaths.add(productCriteriaPath);
-        productTerm.setCriteriaPaths(productCriteriaPaths);
+        productCriteriaPathList.add(productCriteriaPath);
+        productTerm.setCriteriaPaths(productCriteriaPathList);
         productTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, SearchContext context) {
@@ -70,6 +72,11 @@ public class ProductOrderSearchDefinition {
         });
 
 
+        //For searching by quotes, and displaying quotes
+        List<SearchTerm.CriteriaPath> quoteCriteriaPaths = new ArrayList<>();
+        SearchTerm quoteTerm = new SearchTerm();
+        quoteTerm.setName("Quote Identifier");
+        SearchTerm.CriteriaPath quoteCriteraPath
 
         return searchTerms;
     }
@@ -127,10 +134,19 @@ public class ProductOrderSearchDefinition {
         sapOrderTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> sapIdResults = new HashSet<>();
+                ProductOrder order = (ProductOrder) entity;
+                boolean first = true;
+                String currentSapOrderNumber = order.getSapOrderNumber();
+                sapIdResults.add("Current Sap order " + currentSapOrderNumber);
 
-                
-
-                return ;
+                if(order.getSapReferenceOrders().size() >1) {
+                    sapIdResults.addAll(order.getSapReferenceOrders().stream().sorted()
+                            .filter(sapOrderDetail -> !sapOrderDetail.getSapOrderNumber().equals(currentSapOrderNumber))
+                            .map(SapOrderDetail::getSapOrderNumber)
+                            .collect(Collectors.toSet()));
+                }
+                return sapIdResults;
             }
         });
 
