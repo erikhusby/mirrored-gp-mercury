@@ -38,7 +38,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -115,7 +114,7 @@ public class BucketEjb {
     public Collection<BucketEntry> add(@Nonnull Map<WorkflowBucketDef, Collection<LabVessel>> entriesToAdd,
                                        @Nonnull BucketEntry.BucketEntryType entryType, @Nonnull String programName,
                                        @Nonnull String operator, @Nonnull String eventLocation,
-                                       @Nonnull ProductOrder pdo) {
+                                       @Nonnull ProductOrder pdo, @Nonnull Date date) {
         List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
         for (Map.Entry<WorkflowBucketDef, Collection<LabVessel>> bucketVesselsEntry : entriesToAdd.entrySet()) {
             Collection<LabVessel> bucketVessels = bucketVesselsEntry.getValue();
@@ -126,11 +125,11 @@ public class BucketEjb {
 
             for (LabVessel currVessel : bucketVessels) {
                 if (!currVessel.checkCurrentBucketStatus(pdo, bucketDef.getName(), BucketEntry.Status.Active)) {
-                    listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, workflow));
+                    listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, date));
                 }
             }
             labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, eventLocation, programName,
-                    bucketEventType);
+                    bucketEventType, date);
         }
 
         return listOfNewEntries;
@@ -403,7 +402,7 @@ public class BucketEjb {
         }
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair = applyBucketCriteria(
-                vessels, order, username, bucketingSource);
+                vessels, order, username, bucketingSource, new Date());
         Collection<BucketEntry> newBucketEntries = workflowBucketEntriesPair.getRight();
 
         Map<String, Collection<ProductOrderSample>> samplesAdded = new HashMap<>();
@@ -426,7 +425,7 @@ public class BucketEjb {
 
     public Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> applyBucketCriteria(
             List<LabVessel> vessels, ProductOrder productOrder, String username,
-            ProductWorkflowDefVersion.BucketingSource bucketingSource) {
+            ProductWorkflowDefVersion.BucketingSource bucketingSource, Date date) {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         List<Product> possibleProducts = new ArrayList<>();
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
@@ -436,7 +435,13 @@ public class BucketEjb {
         }
         possibleProducts.add(productOrder.getProduct());
         ProductWorkflowDefVersion workflowDefVersion = null;
+        int offset = 0;
         for (Product product : possibleProducts) {
+            Date localDate = date;
+            if (offset > 0) {
+                // Avoid unique constraint on bucket lab events
+                localDate = new Date(date.getTime() + offset);
+            }
             if (product.getWorkflow() != Workflow.NONE) {
                 ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflow(product.getWorkflow());
                 workflowDefVersion = productWorkflowDef.getEffectiveVersion();
@@ -445,10 +450,11 @@ public class BucketEjb {
 
                 if (!initialBucket.isEmpty()) {
                     Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
-                            LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
+                            LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder, localDate);
                     bucketEntries.addAll(entries);
                 }
             }
+            offset++;
         }
         return new ImmutablePair<>(workflowDefVersion, bucketEntries);
     }

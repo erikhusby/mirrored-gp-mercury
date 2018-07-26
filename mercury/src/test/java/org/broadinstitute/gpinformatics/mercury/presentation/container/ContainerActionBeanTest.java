@@ -113,7 +113,7 @@ public class ContainerActionBeanTest {
         newRearrayRack.getTubeFormations().add(rearrayFormation);
         LabEvent labEvent2 = new LabEvent(LabEventType.STORAGE_CHECK_OUT, checkoutDate, "UnitTest", 1L, 1L, "UnitTest");
         labEvent2.setInPlaceLabVessel(rearrayFormation);
-        rearrayFormation.getInPlaceLabEvents().add(labEvent2);
+        rearrayFormation.addInPlaceEvent(labEvent2);
 
         actionBean.buildPositionMapping();
         Assert.assertEquals(actionBean.getMapPositionToVessel().isEmpty(), true);
@@ -148,7 +148,7 @@ public class ContainerActionBeanTest {
         rackOfTubes.getTubeFormations().add(tubeFormation);
         LabEvent labEvent = new LabEvent(labEventType, new Date(), "UnitTest", 1L, 1L, "UnitTest");
         labEvent.setInPlaceLabVessel(tubeFormation);
-        tubeFormation.getInPlaceLabEvents().add(labEvent);
+        tubeFormation.addInPlaceEvent(labEvent);
         return labEvent;
     }
 }
