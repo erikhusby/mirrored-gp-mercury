@@ -1420,7 +1420,6 @@ public class ProductOrderEjb {
         List<ProductOrderSample> samples = productOrderSampleDao.findListByList(ProductOrderSample.class,
                 ProductOrderSample_.productOrderSampleId, sampleIds);
 
-        if (StringUtils.isNotBlank(comment)) {
             Iterator<ProductOrderSample> unAbandonedSamples = samples.iterator();
 
             while(unAbandonedSamples.hasNext()) {
@@ -1429,10 +1428,11 @@ public class ProductOrderEjb {
                 if(sample.getDeliveryStatus() != DeliveryStatus.ABANDONED) {
                     unAbandonedSamples.remove();
                 } else {
-                    sample.setSampleComment(comment);
+                    if(StringUtils.isNotBlank(comment)) {
+                        sample.setSampleComment(comment);
+                    }
                 }
             }
-        }
 
         if(CollectionUtils.isNotEmpty(samples)) {
             transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
