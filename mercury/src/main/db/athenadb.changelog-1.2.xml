@@ -1215,7 +1215,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="revtype" type="number(3,0)"/>
-            <column name="PIPELINE_DATA_TYPE_ID" type="number(19,0)"
+            <column name="PIPELINE_DATA_TYPE_ID" type="number(19,0)"/>
             <column name="NAME" type="varchar2(50)"/>
             <column name="ACTIVE" type="number(1,0)"/>
         </createTable>
