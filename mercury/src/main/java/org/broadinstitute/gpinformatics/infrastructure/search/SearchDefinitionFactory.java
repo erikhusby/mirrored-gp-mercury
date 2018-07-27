@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequestBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchValueBean;
@@ -20,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Configurable search definitions for various entities.
@@ -65,9 +68,26 @@ public class SearchDefinitionFactory {
         public String evaluate(Object entity, SearchContext context) {
             String value = context.getSearchValueString();
 
-            return null;
+            if(value.startsWith(BillingSession.ID_PREFIX)) {
+                value = value.split(BillingSession.ID_PREFIX)[0];
+            }
+            return value;
         }
-    }
+    };
+    private static SearchTerm.Evaluator<Object> userIdConverter = new SearchTerm.Evaluator<Object>() {
+        @Override
+        public Long evaluate(Object entity, SearchContext context) {
+
+            String value = context.getSearchValueString();
+            final Optional<BspUser> searchBspUser = Optional.of(context.getBspUserList().getByUsername(value));
+
+            Long userId = null;
+            if(searchBspUser.isPresent()) {
+                userId = searchBspUser.get().getUserId();
+            }
+            return userId;
+        }
+    };
 
     private SearchDefinitionFactory(){}
 
@@ -154,6 +174,11 @@ public class SearchDefinitionFactory {
     static SearchTerm.Evaluator<Object> getBillingSessionConverter() {
         return billingSessionConverter;
     }
+
+    static SearchTerm.Evaluator<Object> getUserIdConverter() {
+        return userIdConverter;
+    }
+
 
     /**
      * Shared logic to extract the type of any lab vessel

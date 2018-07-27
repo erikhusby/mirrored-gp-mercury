@@ -283,7 +283,7 @@ public enum DisplayExpression {
             return sampleData.getOriginalMaterialType();
         }
     }),
-    QUOTE(ProductOrder.class, new SearchTerm.Evaluator<String>() {
+    PDO_QUOTE(ProductOrder.class, new SearchTerm.Evaluator<String>() {
 
         @Override
         public String evaluate(Object entity, SearchContext context) {
@@ -299,7 +299,7 @@ public enum DisplayExpression {
             return orderData.getOrderStatus().getDisplayName();
         }
     }),
-    PRIMARY_PRODUCT(ProductOrder.class, new SearchTerm.Evaluator<String>() {
+    PRIMARY_PDO_PRODUCT(ProductOrder.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
             ProductOrder orderData = (ProductOrder) entity;

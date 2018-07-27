@@ -481,6 +481,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return displayExpression;
     }
 
+    /**
+     * Using an expression implementation pre-defined in the enum DisplayExpression, this method sets the
+     * implementation to extract value(s) from the base entity object to be used as the source of the result column
+     * value presented in UI or download.
+     *
+     * @param displayExpression
+     */
     public void setDisplayExpression(DisplayExpression displayExpression) {
         this.displayExpression = displayExpression;
     }
