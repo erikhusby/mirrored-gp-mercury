@@ -217,7 +217,6 @@
                  * they are filtered out of the DOM when the page loads
                  */
                 'bStateSave': false,
-                "iDisplayLength": 50,
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
                     {'bVisible': false},                                                    // 1: search text
