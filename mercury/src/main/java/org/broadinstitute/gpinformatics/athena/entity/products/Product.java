@@ -268,16 +268,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, Workflow.NONE, false, null);
     }
 
-    public Product(String productName, ProductFamily productFamily, String description, String partNumber,
-                   Date availabilityDate, Date discontinuedDate, Integer expectedCycleTimeSeconds,
-                   Integer guaranteedCycleTimeSeconds, Integer samplesPerWeek, Integer minimumOrderSize,
-                   String inputRequirements, String deliverables, boolean topLevelProduct, @Nonnull Workflow workflow,
-                   boolean pdmOrderableOnly) {
-        this(productName, productFamily, description, partNumber, availabilityDate, discontinuedDate,
-            expectedCycleTimeSeconds, guaranteedCycleTimeSeconds, samplesPerWeek, minimumOrderSize, inputRequirements,
-            deliverables, topLevelProduct, workflow, pdmOrderableOnly, null);
-    }
-
     public Product(String productName,
                    ProductFamily productFamily,
                    String description,
