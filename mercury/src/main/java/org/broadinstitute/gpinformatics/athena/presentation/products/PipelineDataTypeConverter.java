@@ -21,6 +21,11 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import java.util.Collection;
 import java.util.Locale;
 
+/**
+ * This class is used by the Stripes Validation system for converting from String to PipelineDataType.
+ *
+ * @see net.sourceforge.stripes.validation.TypeConverter
+ */
 public class PipelineDataTypeConverter implements TypeConverter<PipelineDataType> {
 
     private PipelineDataTypeDao pipelineDataTypeDao = ServiceAccessUtility.getBean(PipelineDataTypeDao.class);
