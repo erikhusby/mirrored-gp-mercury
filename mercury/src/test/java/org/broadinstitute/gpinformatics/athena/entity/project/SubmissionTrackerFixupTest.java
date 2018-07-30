@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
@@ -29,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -102,7 +104,7 @@ public class SubmissionTrackerFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void gplim5408BackfillLocationAndType(){
+    public void gplim5678BackfillLocationAndType() {
         userBean.loginOSUser();
 
         List<SubmissionTracker> allTrackers = submissionTrackerDao.findTrackersMissingDatatypeOrLocation();
@@ -122,10 +124,56 @@ public class SubmissionTrackerFixupTest extends Arquillian {
                 SubmissionTracker submissionTracker =
                     submissionTrackersByUuid.get(submissionStatusDetailBean.getUuid());
                 if (submissionTracker != null) {
-                    String dataType = SubmissionLibraryDescriptor
-                        .getNormalizedLibraryName(submissionStatusDetailBean.getSubmissionDatatype());
-                    submissionTracker.setDataType(dataType);
-                    submissionTracker.setProcessingLocation(SubmissionBioSampleBean.ON_PREM);
+                    if (StringUtils.isBlank(submissionTracker.getDataType())) {
+                        String dataType = SubmissionLibraryDescriptor
+                            .getNormalizedLibraryName(submissionStatusDetailBean.getSubmissionDatatype());
+                        submissionTracker.setDataType(dataType);
+                    }
+                    if (StringUtils.isBlank(submissionTracker.getProcessingLocation())) {
+                        submissionTracker.setProcessingLocation(SubmissionBioSampleBean.ON_PREM);
+                    }
+                } else {
+                    log.info(
+                        String.format("SubmissionTracker not found for %s", submissionStatusDetailBean.getUuid()));
+                }
+                if (index++ % 500 == 0) {
+                    log.info(String.format("Processed %d of %d", index, total));
+                }
+            }
+            submissionTrackerDao.persist(new FixupCommentary("GPLIM-5678 Back-fill processingLocation and datatype"));
+        }
+    }
+
+    @Test(enabled = false)
+    public void gplim5408BackfillLocationAndType(){
+        userBean.loginOSUser();
+
+        List<SubmissionTracker> allTrackers = submissionTrackerDao.findTrackersMissingDatatypeAndLocation();
+
+        Map<String, SubmissionTracker> submissionTrackersByUuid = new HashMap<>();
+        for (SubmissionTracker submissionTracker : allTrackers) {
+            if (submissionTracker.getProcessingLocation() == null || submissionTracker.getDataType() == null) {
+                submissionTrackersByUuid.put(submissionTracker.createSubmissionIdentifier(), submissionTracker);
+            }
+        }
+        int index = 1;
+        Set<String> keys = submissionTrackersByUuid.keySet();
+        int total = keys.size();
+        if (!keys.isEmpty()) {
+            Collection<SubmissionStatusDetailBean> submissionStatus =
+                submissionService.getSubmissionStatus(keys.toArray(new String[0]));
+
+            for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
+                SubmissionTracker submissionTracker =
+                    submissionTrackersByUuid.get(submissionStatusDetailBean.getUuid());
+                if (submissionTracker != null) {
+                    String submissionDatatype = submissionStatusDetailBean.getSubmissionDatatype();
+                    if (submissionTracker.getDataType() == null) {
+                        submissionTracker.setDataType(submissionDatatype);
+                    }
+                    if (submissionTracker.getProcessingLocation() == null) {
+                        submissionTracker.setProcessingLocation(SubmissionBioSampleBean.ON_PREM);
+                    }
                 } else {
                     log.info(
                         String.format("SubmissionTracker not found for %s", submissionStatusDetailBean.getUuid()));
@@ -135,6 +183,8 @@ public class SubmissionTrackerFixupTest extends Arquillian {
                 }
             }
             submissionTrackerDao.persist(new FixupCommentary("GPLIM-5408 Back-fill processingLocation and datatype"));
+        } else {
+            Assert.fail("Error updating records");
         }
     }
 
