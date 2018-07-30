@@ -23,7 +23,6 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import java.util.List;
 
 @Entity
 @Audited
@@ -44,10 +43,6 @@ public class PipelineDataType  {
     public PipelineDataType(String name, boolean active) {
         this.name = name;
         this.active = active;
-    }
-
-    public static boolean contains(List<PipelineDataType> pipelineDataTypes, String aggregationDataType) {
-        return pipelineDataTypes.stream().anyMatch(agg -> agg.getName().equals(aggregationDataType));
     }
 
     public String getName() {
