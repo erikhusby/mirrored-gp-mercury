@@ -30,7 +30,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -152,9 +151,7 @@ public class SubmissionTrackerFixupTest extends Arquillian {
 
         Map<String, SubmissionTracker> submissionTrackersByUuid = new HashMap<>();
         for (SubmissionTracker submissionTracker : allTrackers) {
-            if (submissionTracker.getProcessingLocation() == null || submissionTracker.getDataType() == null) {
-                submissionTrackersByUuid.put(submissionTracker.createSubmissionIdentifier(), submissionTracker);
-            }
+            submissionTrackersByUuid.put(submissionTracker.createSubmissionIdentifier(), submissionTracker);
         }
         int index = 1;
         Set<String> keys = submissionTrackersByUuid.keySet();
@@ -167,13 +164,8 @@ public class SubmissionTrackerFixupTest extends Arquillian {
                 SubmissionTracker submissionTracker =
                     submissionTrackersByUuid.get(submissionStatusDetailBean.getUuid());
                 if (submissionTracker != null) {
-                    String submissionDatatype = submissionStatusDetailBean.getSubmissionDatatype();
-                    if (submissionTracker.getDataType() == null) {
-                        submissionTracker.setDataType(submissionDatatype);
-                    }
-                    if (submissionTracker.getProcessingLocation() == null) {
-                        submissionTracker.setProcessingLocation(SubmissionBioSampleBean.ON_PREM);
-                    }
+                    submissionTracker.setDataType(submissionStatusDetailBean.getSubmissionDatatype());
+                    submissionTracker.setProcessingLocation(SubmissionBioSampleBean.ON_PREM);
                 } else {
                     log.info(
                         String.format("SubmissionTracker not found for %s", submissionStatusDetailBean.getUuid()));
@@ -183,8 +175,6 @@ public class SubmissionTrackerFixupTest extends Arquillian {
                 }
             }
             submissionTrackerDao.persist(new FixupCommentary("GPLIM-5408 Back-fill processingLocation and datatype"));
-        } else {
-            Assert.fail("Error updating records");
         }
     }
 
