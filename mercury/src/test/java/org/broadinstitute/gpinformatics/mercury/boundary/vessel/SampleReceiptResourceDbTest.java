@@ -14,6 +14,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -24,7 +25,10 @@ import java.util.Date;
  * Database test of receiving samples from BSP
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class SampleReceiptResourceDbTest extends StubbyContainerTest {
+
+    public SampleReceiptResourceDbTest(){}
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMddHHmmss");
 

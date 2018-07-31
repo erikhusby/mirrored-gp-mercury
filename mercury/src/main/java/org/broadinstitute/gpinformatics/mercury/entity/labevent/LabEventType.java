@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -666,10 +667,9 @@ public enum LabEventType {
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).
                     sourceContainerPrefix("Blood").
                     targetVesselTypeGeometries(new VesselTypeGeometry[] {
-                            BarcodedTube.BarcodedTubeType.FluidX_6mL,
-                            BarcodedTube.BarcodedTubeType.FluidX_10mL
+                            BarcodedTube.BarcodedTubeType.Sarstedt_Tube_2mL
                     }).
-                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.Sarstedt_Tube_2mL).
                     targetContainerPrefix("BuffyCoat").
                     targetVolume(true).
                     requireSingleParticipant(true).
@@ -827,6 +827,126 @@ public enum LabEventType {
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
+
+    // Qiagen All Prep Stool Extraction
+    STOOL_BEAD_PLATE_TRANSFER("StoolBeadPlateTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    RackOfTubes.RackType.Eppendorf12x8BoxWell,
+                    StaticPlate.PlateType.Plate96WellPowerBead).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).targetWellTypeGeometry(PlateWell.WellType.Well2000).
+                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.Cryovial2018).sourceMassRemoved(true).
+                    build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_BEAD_BEATING("BeadBeating",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_EVENT,
+                    null,
+                    StaticPlate.PlateType.Plate96WellPowerBead).
+                    targetSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_SUPERNATENT_TRANSFER("StoolSupernatentTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96WellPowerBead,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_IRS_ADDITION("StoolIRSAddition",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_EVENT,
+                    null,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
+                    targetSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_IRS_SUPERNATENT_TRANSFER("StoolIRSSupernatentTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_FILTER_PLATE_TRANSFER("StoolFilterPlateTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000,
+                    StaticPlate.PlateType.Plate96RNEasyWell1000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_RNA_CAPTURE_PLATE_TRANSFER("StoolRNACapturePlateTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_RNA_ISOLATION("StoolRNAIsolation",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RoundWellBlock2000,
+                    StaticPlate.PlateType.Plate96RNEasyWell1000).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_DNA_ISOLATION("StoolDNAIsolation",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_EVENT,
+                    null,
+                    StaticPlate.PlateType.Plate96RNEasyWell1000).
+                    targetSection(SBSSection.ALL96).build(),
+            LibraryType.NONE_ASSIGNED),
+    STOOL_RNA_FILTER_TO_ELUTION_PLATE("StoolRNAFilterToElutionPlate",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RNEasyWell1000,
+                    StaticPlate.PlateType.Plate96Well200PCR).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            MaterialType.RNA_TOTAL_RNA, LibraryType.NONE_ASSIGNED),
+    STOOL_DNA_FILTER_TO_ELUTION_PLATE("StoolDNAFilterToElutionPlate",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RNEasyWell1000,
+                    StaticPlate.PlateType.Plate96Well200PCR).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).build(),
+            MaterialType.RNA_TOTAL_RNA, LibraryType.NONE_ASSIGNED),
+    STOOL_RNA_FINAL_ELUTION("StoolRNAFinalElution",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96Well200PCR,
+                    RackOfTubes.RackType.Matrix96SlotRack075).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
+            MaterialType.RNA_TOTAL_RNA, LibraryType.NONE_ASSIGNED),
+    STOOL_DNA_ELUTION("StoolDNAElution",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.Plate96RNEasyWell1000,
+                    RackOfTubes.RackType.Matrix96SlotRack075).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
+            MaterialType.DNA_GENOMIC, LibraryType.NONE_ASSIGNED),
 
     // TruSeq Custom Amplicon
     TSCA_POST_NORM_TRANSFER("TSCAPostNormTransfer",
@@ -1190,7 +1310,7 @@ public enum LabEventType {
     ARRAY_PLATING_DILUTION("ArrayPlatingDilution",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
     SHEARING_ALIQUOT("ShearingAliquot",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1553,6 +1673,52 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.BOTH, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
+
+    // Custom Selection (e.g. twist)
+    CUSTOM_SELECTION_BUCKET("CustomSelectionBucket",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SELECTION_POOLING("SelectionPoolingTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SELECTION_CONCENTRAION_POOLING("SelectionConcentrationTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SELECTION_HYB_SETUP("SelectionHybSetup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SELECTION_BAIT_PICK("SelectionBaitPick",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SELECTION_BAIT_ADDITION("SelectionBaitAddition",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SELECTION_HYBRIDIZATION_THERMO_CYCLER_LOADED("SelectionHybridizationThermoCyclerLoaded",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SELECTION_BEAD_BINDING("SelectionBeadBinding",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SELECTION_CAPTURE("SelectionCapture",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SELECTION_CATCH_PCR("SelectionCatchPCR",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    SELECTION_CATCH_REGISTRATION("SelectionCatchRegistration",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.SELECTION_CATCH),
 
     // Cell Free
     CF_DNA_PCR_SETUP("CFDnaPCRSetup",
@@ -2094,6 +2260,7 @@ public enum LabEventType {
         NEXTERA_POOLED_NORMALIZED_LIBRARY("Nextera Pooled Normalized", "Pooled"),
         NEXTERA_SPRI_CONCENTRATED_POOL("Nextera SPRI Concentrated Pool", "Pooled"),
         NEXOME_CATCH("Nexome Catch", "Catch"),
+        SELECTION_CATCH("Selection Catch", "Catch"),
         POOLED("Pooled"),
         CALIBRATED_POOLED("Calibrated Pooled"),
         MISEQ_FLOWCELL("MiSeq Flowcell"),
@@ -2192,6 +2359,9 @@ public enum LabEventType {
         /** Whether to allow entry of target volumes. */
         private boolean targetVolume;
 
+        /** Whether to allow entry of target mass. */
+        private boolean sourceMassRemoved;
+
         /** For containers that don't have barcodes (e.g. flipper racks), the prefix to the synthetic barcode. */
         private String targetContainerPrefix;
 
@@ -2233,6 +2403,12 @@ public enum LabEventType {
         /** For target rack geometries, specifies the type of tube in the rack */
         private BarcodedTube.BarcodedTubeType targetBarcodedTubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
 
+        @XmlTransient
+        private VesselTypeGeometry targetWellTypeGeometry;
+
+        /** For Jaxb **/
+        private String targetWellTypeString;
+
         /** Allows a transfer from one source to two destinations */
         private LabEventType secondaryEvent;
 
@@ -2267,6 +2443,7 @@ public enum LabEventType {
             targetBarcodedTubeType = builder.targetBarcodedTubeType;
             targetSection = builder.targetSection;
             targetVolume = builder.targetVolume;
+            sourceMassRemoved = builder.sourceMassRemoved;
             targetContainerPrefix = builder.targetContainerPrefix;
             reagentFieldCounts = builder.reagentFieldCounts;
             expirationDateIncluded = builder.expirationDateIncluded;
@@ -2283,12 +2460,14 @@ public enum LabEventType {
             targetVesselTypeGeometries = builder.targetVesselTypeGeometries;
             limsFile = builder.limsFile;
             requireSingleParticipant = builder.requireSingleParticipant;
+            targetWellTypeGeometry = builder.targetWellTypeGeometry;
         }
 
         public static class Builder {
             private final MessageType messageType;
             private final VesselTypeGeometry sourceVesselTypeGeometry;
             private final VesselTypeGeometry targetVesselTypeGeometry;
+            private VesselTypeGeometry targetWellTypeGeometry;
 
             private SBSSection sourceSection;
             private SBSSection targetSection;
@@ -2304,6 +2483,7 @@ public enum LabEventType {
             private VesselTypeGeometry[] targetVesselTypeGeometries = {};
             private BarcodedTube.BarcodedTubeType targetBarcodedTubeType;
             private boolean targetVolume;
+            private boolean sourceMassRemoved;
             private String targetContainerPrefix;
             private LabEventType secondaryEvent;
             private LabEventType repeatedEvent;
@@ -2391,6 +2571,11 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder sourceMassRemoved(boolean sourceMassRemoved) {
+                this.sourceMassRemoved = sourceMassRemoved;
+                return this;
+            }
+
             public Builder targetContainerPrefix(String targetContainerPrefix) {
                 this.targetContainerPrefix = targetContainerPrefix;
                 return this;
@@ -2436,6 +2621,11 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder targetWellTypeGeometry(PlateWell.WellType wellType) {
+                this.targetWellTypeGeometry = wellType;
+                return this;
+            }
+
             public ManualTransferDetails build() {
                 return new ManualTransferDetails(this);
             }
@@ -2464,6 +2654,9 @@ public enum LabEventType {
                     break;
                 case "BarcodedTubeType":
                     vesselTypeGeometry = BarcodedTube.BarcodedTubeType.getByAutomationName(strings[1]);
+                    break;
+                case "WellType":
+                    vesselTypeGeometry = PlateWell.WellType.getByAutomationName(strings[1]);
                     break;
                 default:
                     throw new RuntimeException("Unknown type " + strings[0]);
@@ -2496,6 +2689,10 @@ public enum LabEventType {
 
         public boolean targetVolume() {
             return targetVolume;
+        }
+
+        public boolean sourceMassRemoved() {
+            return sourceMassRemoved;
         }
 
         public String getTargetContainerPrefix() {
@@ -2552,6 +2749,13 @@ public enum LabEventType {
 
         public BarcodedTube.BarcodedTubeType getTargetBarcodedTubeType() {
             return targetBarcodedTubeType;
+        }
+
+        public VesselTypeGeometry getTargetWellType() {
+            if (targetWellTypeGeometry == null && targetWellTypeString != null) {
+                targetWellTypeGeometry = convertGeometryString(targetWellTypeString);
+            }
+            return targetWellTypeGeometry;
         }
 
         public int[] getReagentFieldCounts() {

@@ -15,6 +15,8 @@ import java.util.*;
 @Dependent
 public class NullValuesBSPSampleSearchService implements BSPSampleSearchService {
 
+    public NullValuesBSPSampleSearchService(){}
+
     @Override
     public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
         List<Map<BSPSampleSearchColumn,String>> emptyResults = new ArrayList<>();

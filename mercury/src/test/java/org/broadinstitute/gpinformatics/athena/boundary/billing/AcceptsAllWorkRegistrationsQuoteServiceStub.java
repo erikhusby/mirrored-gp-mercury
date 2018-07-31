@@ -33,6 +33,8 @@ import java.util.Set;
 @ApplicationScoped
 class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
+    public AcceptsAllWorkRegistrationsQuoteServiceStub(){}
+
     private static int counter = 0;
 
     public static final String WORK_ITEM_PREPEND = "workItemId\t";
