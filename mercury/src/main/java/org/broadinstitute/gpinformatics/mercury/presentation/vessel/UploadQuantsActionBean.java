@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
@@ -100,6 +101,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private BSPRestSender bspRestSender;
     @Inject
     private TubeFormationDao tubeFormationDao;
+    @Inject
+    private JiraConfig jiraConfig;
 
     @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
@@ -342,6 +345,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
         SearchContext searchContext = new SearchContext();
         searchContext.setBspUserList(bspUserList);
         searchContext.setUserBean(userBean);
+        searchContext.setJiraConfig(jiraConfig);
         ConfigurableList configurableList = configurableListFactory.create(labMetricList, "Default",
                 ColumnEntity.LAB_METRIC, searchContext,
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_METRIC.getEntityName()));

@@ -10,7 +10,11 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
-import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
+import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -45,10 +51,18 @@ public class ProductOrderSearchDefinition {
 
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections =
                 new ArrayList<>();
-        ConfigurableSearchDefinition productOrderSearchDefinition =
-                new ConfigurableSearchDefinition(ColumnEntity.PRODUCT_ORDER, criteriaProjections, mapGroupSearchTerms);
 
-        return productOrderSearchDefinition;
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("BillingSessions",
+                "productOrderId", "samples", ProductOrder.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("Products",
+                "productOrderId", "product", ProductOrder.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOSamples",
+                "productOrderId", "samples", ProductOrder.class));
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("SAPOrders",
+                "productOrderId", "sapReferenceOrders", ProductOrder.class));
+
+        return new ConfigurableSearchDefinition(ColumnEntity.PRODUCT_ORDER, criteriaProjections, mapGroupSearchTerms);
     }
 
     @NotNull
@@ -65,35 +79,43 @@ public class ProductOrderSearchDefinition {
         billingSessionTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
-                String billingSessionHtmlPostWrap = "";
-                String billingSessionHtmlPreWrap = "";
 
-                List<String> billingSessionResults = getBillingSessionDisplay((ProductOrder) entity,
-                        billingSessionHtmlPostWrap, billingSessionHtmlPreWrap);
-
-                return billingSessionResults;
+                return getBillingSessionDisplay((ProductOrder) entity);
             }
         });
 
         billingSessionTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
+                List<String> displayOutput;
+                displayOutput = (ArrayList<String>) entity;
+                String replacementFormat = "<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?view=&sessionKey=%s\">%s</a>";
+                StringBuffer uiOutput = new StringBuffer();
+                Pattern pattern = Pattern.compile("BILL\\-[\\w]*");
 
-                return StringUtils.join(getBillingSessionDisplay((ProductOrder) entity,
-                        "<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?view=&sessionKey=", "\"</a>"), "<br>");
+                for (String billingString : displayOutput) {
+                    Matcher match = pattern.matcher(billingString);
+                    if(match.find()) {
+                        match.appendReplacement(uiOutput,
+                                String.format(replacementFormat, match.group(0), match.group(0)));
+                        match.appendTail(uiOutput);
+                        uiOutput.append("<br>");
+                    }
+                }
+                return uiOutput.toString();
             }
         });
         searchTerms.add(billingSessionTerm);
-
-
-
         return searchTerms;
     }
 
+    /**
+     * Encapsulates the logic to collect and aggregate Billing sessions with
+     * @param order
+     * @return
+     */
     @NotNull
-    public List<String> getBillingSessionDisplay(ProductOrder entity, String billingSessionHtmlPostWrap,
-                                                 String billingSessionHtmlPreWrap) {
-        ProductOrder order = entity;
+    private List<String> getBillingSessionDisplay(ProductOrder order) {
         List<String> billingSessionResults = new ArrayList<>();
         final Multimap<String, String> samplesByBillingSession = LinkedListMultimap.create();
 
@@ -107,7 +129,7 @@ public class ProductOrderSearchDefinition {
         }
 
         for (String billingSession : samplesByBillingSession.keys()) {
-            billingSessionResults.add(billingSessionHtmlPreWrap + billingSession + billingSessionHtmlPostWrap + "-->("
+            billingSessionResults.add(billingSession + "-->("
                                       + StringUtils.join(samplesByBillingSession.get(billingSession), ",") + ")");
         }
         return billingSessionResults;
@@ -124,7 +146,13 @@ public class ProductOrderSearchDefinition {
         productCriteriaPath.setPropertyName("partNumber");
         productCriteriaPath.setCriteria(Arrays.asList("Products", "product"));
         productTerm.setCriteriaPaths(Collections.singletonList(productCriteriaPath));
-        productTerm.setDisplayExpression(DisplayExpression.PRIMARY_PDO_PRODUCT);
+        productTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                ProductOrder orderData = (ProductOrder) entity;
+                return orderData.getProduct().getDisplayName();
+            }
+        });
         searchTerms.add(productTerm);
 
         //For searching by quotes, and displaying quotes
@@ -133,7 +161,14 @@ public class ProductOrderSearchDefinition {
         SearchTerm.CriteriaPath quoteCriteraPath = new SearchTerm.CriteriaPath();
         quoteCriteraPath.setPropertyName("quoteId");
         quoteTerm.setCriteriaPaths(Collections.singletonList(quoteCriteraPath));
-        quoteTerm.setDisplayExpression(DisplayExpression.PDO_QUOTE);
+        quoteTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                ProductOrder orderData = (ProductOrder) entity;
+
+                return orderData.getQuoteId();
+            }
+        });
         searchTerms.add(quoteTerm);
 
 
@@ -159,8 +194,101 @@ public class ProductOrderSearchDefinition {
 
         SearchTerm pdoStatusTerm = new SearchTerm();
         pdoStatusTerm.setName("Order Status");
-        pdoStatusTerm.setDisplayExpression(DisplayExpression.ORDER_STATUS);
+        pdoStatusTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                ProductOrder orderData = (ProductOrder)entity;
+                return orderData.getOrderStatus().getDisplayName();
+            }
+        });
         searchTerms.add(pdoStatusTerm);
+
+        SearchTerm rpSearchTerm = new SearchTerm();
+        rpSearchTerm.setName("Research Project ID");
+        SearchTerm.CriteriaPath rpCriteriaPath = new SearchTerm.CriteriaPath();
+        rpCriteriaPath.setPropertyName("jiraTicketKey");
+        rpCriteriaPath.setCriteria(Arrays.asList("ResearchProject", "researchProject"));
+        rpSearchTerm.setCriteriaPaths(Collections.singletonList(rpCriteriaPath));
+        rpSearchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                ProductOrder order = (ProductOrder) entity;
+                return order.getResearchProject().getJiraTicketKey();
+            }
+        });
+        rpSearchTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String output = (String) entity;
+                return "<a class=\"external\" target=\"new\" href=\"/Mercury/projects/project.action?view=&researchProject="
+                       + output +"\">"+ output +"</a>";
+            }
+        });
+        searchTerms.add(rpSearchTerm);
+
+        SearchTerm lcsetTerm = new SearchTerm();
+        lcsetTerm.setName("LCSET");
+        lcsetTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
+        List<SearchTerm.CriteriaPath> lcsetPathList = new ArrayList<>();
+
+        SearchTerm.CriteriaPath lcsetVesselPath = new SearchTerm.CriteriaPath();
+        SearchTerm.CriteriaPath lcsetReworkPath = new SearchTerm.CriteriaPath();
+
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.IN, LabBatch.LabBatchType.WORKFLOW,
+                LabBatch.LabBatchType.FCT);
+        lcsetVesselPath.setPropertyName("batchName");
+        lcsetVesselPath.addImmutableTermFilter(workflowOnlyFilter);
+        lcsetVesselPath.setCriteria(Arrays.asList("BatchVessels", "samples", "mercurySample", "labVessel", "labBatches", "labBatch"));
+
+        lcsetReworkPath.setPropertyName("batchName");
+        lcsetReworkPath.addImmutableTermFilter(workflowOnlyFilter);
+        lcsetReworkPath.setCriteria(Arrays.asList("BatchVessels", "samples", "mercurySample", "labVessel", "reworkLabBatches"));
+        lcsetPathList.addAll(Arrays.asList(lcsetReworkPath, lcsetVesselPath));
+        lcsetTerm.setCriteriaPaths(lcsetPathList);
+        lcsetTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                ProductOrder order = (ProductOrder) entity;
+                Set<String> results = new HashSet<>();
+                for (ProductOrderSample productOrderSample : order.getSamples()) {
+                    final Optional<MercurySample> mercurySample = Optional.of(productOrderSample.getMercurySample());
+                    mercurySample.ifPresent(mercurySample1 -> {
+                        for (LabVessel labVessel : mercurySample1.getLabVessel()) {
+                            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                                for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
+                                    results.add(labBatch.getBatchName());
+                                }
+                            }
+                        }
+                    });
+                }
+                return results;
+            }
+        });
+        lcsetTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+
+                Set<String> batchNames = (HashSet<String>) entity;
+                StringBuffer uiOutput = new StringBuffer();
+                Pattern batchPattern = Pattern.compile("([LCSET]|[FCT])[-\\\\w]*");
+                final String jiraBatchLinkFormat = "<a class=\"external\" target=\"JIRA\" href=\"" +
+                        context.getJiraConfig().getUrlBase() + JiraLink.BROWSE + "%s\">%s</a>";
+
+                for (String batchName : batchNames) {
+
+                    Matcher batchMatch = batchPattern.matcher(batchName);
+                    if(batchMatch.find()) {
+                        batchMatch.appendReplacement(uiOutput, String.format(jiraBatchLinkFormat,batchMatch.group()));
+                        batchMatch.appendTail(uiOutput);
+                        uiOutput.append("<br>");
+                    }
+                }
+                return uiOutput.toString();
+            }
+        });
+        searchTerms.add(lcsetTerm);
 
         return searchTerms;
     }
@@ -183,7 +311,16 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
-                return ((ProductOrder) entity).getBusinessKey();
+                return ((ProductOrder) entity).getBusinessKey() + " -- " +  order.getName();
+            }
+        });
+        pdoJiraTicketTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+
+                String pdoOutput = (String) entity;
+                return "<a class=\"external\" target=\"new\" href=\"/Mercury/orders/order.action?view=&productOrder="
+                       + pdoOutput +"\">"+ pdoOutput +"</a>";
             }
         });
         searchTerms.add(pdoJiraTicketTerm);
@@ -224,7 +361,9 @@ public class ProductOrderSearchDefinition {
                 ProductOrder order = (ProductOrder) entity;
                 boolean first = true;
                 String currentSapOrderNumber = order.getSapOrderNumber();
-                sapIdResults.add("Current Sap order " + currentSapOrderNumber);
+                if(StringUtils.isNotBlank(currentSapOrderNumber)) {
+                    sapIdResults.add("Current Sap order " + currentSapOrderNumber);
+                }
 
                 if(order.getSapReferenceOrders().size() >1) {
                     sapIdResults.addAll(order.getSapReferenceOrders().stream().sorted()

@@ -73,7 +73,7 @@ public enum ColumnEntity {
             PreferenceType.GLOBAL_LAB_METRIC_RUN_COLUMN_SETS, PreferenceType.USER_LAB_METRIC_RUN_COLUMN_SETS,
             new PreferenceType[]{PreferenceType.GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES,
                     PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES}),
-    PRODUCT_ORDER("ProductOrder", "Product Order", "productorderid", ProductOrder.class,
+    PRODUCT_ORDER("ProductOrder", "Product Order", "productOrderId", ProductOrder.class,
             new IdGetter() {
                 @Override
                 public String getId(Object entity) {

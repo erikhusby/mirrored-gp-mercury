@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.ResultParamValues;
@@ -53,6 +54,9 @@ public class ConfigurableListContainerTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private JiraConfig jiraConfig;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -230,6 +234,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         evalContext.setBspUserList( bspUserList );
         evalContext.setPagination(new PaginationUtil.Pagination(1));
         evalContext.setUserBean(userBean);
+        evalContext.setJiraConfig(jiraConfig);
         return evalContext;
     }
 

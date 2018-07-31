@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.PickerVesselPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -71,6 +72,9 @@ public class PickerActionBean extends CoreActionBean {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private JiraConfig jiraConfig;
 
     @Validate(required = true, on = {SEARCH_ACTION})
     private String barcodes;
@@ -160,6 +164,7 @@ public class PickerActionBean extends CoreActionBean {
         SearchContext searchContext = new SearchContext();
         searchContext.setBspUserList(bspUserList);
         searchContext.setUserBean(userBean);
+        searchContext.setJiraConfig(jiraConfig);
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("XL20 Picker");
         searchTerm.setPluginClass(PickerVesselPlugin.class);

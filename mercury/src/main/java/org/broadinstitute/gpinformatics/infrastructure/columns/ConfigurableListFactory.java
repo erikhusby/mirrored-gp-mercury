@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPrefe
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
@@ -49,6 +50,9 @@ public class ConfigurableListFactory {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private JiraConfig jiraConfig;
 
     /**
      * Create a ConfigurableList instance.
@@ -468,6 +472,7 @@ public class ConfigurableListFactory {
         evalContext.setSearchInstance(searchInstance);
         evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
         evalContext.setUserBean(userBean);
+        evalContext.setJiraConfig(jiraConfig);
         return evalContext;
     }
 }

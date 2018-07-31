@@ -1,18 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
-import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -282,31 +279,7 @@ public enum DisplayExpression {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getOriginalMaterialType();
         }
-    }),
-    PDO_QUOTE(ProductOrder.class, new SearchTerm.Evaluator<String>() {
-
-        @Override
-        public String evaluate(Object entity, SearchContext context) {
-            ProductOrder orderData = (ProductOrder) entity;
-
-            return orderData.getQuoteId();
-        }
-    }),
-    ORDER_STATUS(ProductOrder.class, new SearchTerm.Evaluator<String>() {
-        @Override
-        public String evaluate(Object entity, SearchContext context) {
-            ProductOrder orderData = (ProductOrder)entity;
-            return orderData.getOrderStatus().getDisplayName();
-        }
-    }),
-    PRIMARY_PDO_PRODUCT(ProductOrder.class, new SearchTerm.Evaluator<String>() {
-        @Override
-        public String evaluate(Object entity, SearchContext context) {
-            ProductOrder orderData = (ProductOrder) entity;
-            return orderData.getProduct().getDisplayName();
-        }
-    })
-    ;
+    });
 
     private final Class<?> expressionClass;
     private final SearchTerm.Evaluator<?> evaluator;

@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -58,6 +59,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
     @Inject
     private ThreadEntityManager threadEntityManager;
+
+    @Inject
+    private JiraConfig jiraConfig;
 
     /**
      * Stream an Excel spreadsheet, from a list of IDs
@@ -134,6 +138,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         evalContext.setSearchInstance(searchInstance);
         evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
         evalContext.setUserBean(userBean);
+        evalContext.setJiraConfig(jiraConfig);
         return evalContext;
     }
 

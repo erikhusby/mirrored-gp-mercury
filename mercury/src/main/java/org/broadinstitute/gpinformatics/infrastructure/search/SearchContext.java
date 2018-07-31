@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,6 +41,7 @@ public class SearchContext {
     private String baseSearchURL;
     private PaginationUtil.Pagination pagination;
     private ResultParamValues columnParams;
+    private JiraConfig jiraConfig;
 
     private UserBean userBean;
 
@@ -244,5 +246,13 @@ public class SearchContext {
 
     public void setUserBean(UserBean userBean) {
         this.userBean = userBean;
+    }
+
+    public JiraConfig getJiraConfig() {
+        return jiraConfig;
+    }
+
+    public void setJiraConfig(JiraConfig jiraConfig) {
+        this.jiraConfig = jiraConfig;
     }
 }
