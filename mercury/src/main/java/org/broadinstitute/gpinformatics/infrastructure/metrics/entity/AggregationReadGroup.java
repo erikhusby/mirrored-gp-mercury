@@ -15,9 +15,7 @@ import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.io.Serializable;
 
@@ -45,23 +43,13 @@ public class AggregationReadGroup implements Serializable {
             updatable = false)
     private Aggregation aggregation;
 
-    @OneToOne
-    @JoinColumns({
-        @JoinColumn(name="FLOWCELL_BARCODE", referencedColumnName = "FLOWCELL_BARCODE", insertable = false, updatable = false),
-        @JoinColumn(name = "LIBRARY_NAME", referencedColumnName = "LIBRARY_NAME", insertable = false, updatable = false),
-        @JoinColumn(name = "LANE", referencedColumnName = "LANE", insertable = false, updatable = false),
-    })
-    private ReadGroupIndex readGroupIndex;
-
     public AggregationReadGroup() {
     }
 
-    public AggregationReadGroup(String flowcellBarcode, long lane, String libraryName,
-                                ReadGroupIndex readGroupIndex) {
+    public AggregationReadGroup(String flowcellBarcode, long lane, String libraryName) {
         this.flowcellBarcode = flowcellBarcode;
         this.lane = lane;
         this.libraryName = libraryName;
-        this.readGroupIndex = readGroupIndex;
     }
 
     public String getFlowcellBarcode() {
@@ -78,10 +66,6 @@ public class AggregationReadGroup implements Serializable {
 
     public Aggregation getAggregation() {
         return aggregation;
-    }
-
-    public ReadGroupIndex getReadGroupIndex() {
-        return readGroupIndex;
     }
 
 }

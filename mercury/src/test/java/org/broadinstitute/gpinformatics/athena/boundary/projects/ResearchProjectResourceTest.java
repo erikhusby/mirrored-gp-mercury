@@ -16,7 +16,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.core.Response;
@@ -25,13 +25,16 @@ import java.util.UUID;
 
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.BROAD;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.FARBER;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.STUBBY)
-@RequestScoped
+@Dependent
 public class ResearchProjectResourceTest extends StubbyContainerTest {
+
+    public ResearchProjectResourceTest(){}
+
     private Date now;
     private static final long TEST_CREATOR = 10;
     private static final long TEST_SCIENTIST_1 = 14567;

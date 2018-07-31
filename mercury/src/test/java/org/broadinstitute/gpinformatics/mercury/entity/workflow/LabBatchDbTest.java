@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +29,10 @@ import java.util.Set;
  * Tests of the LabBatch entity, using a database
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class LabBatchDbTest extends StubbyContainerTest {
+
+    public LabBatchDbTest(){}
 
     @Inject
     private LabBatchDao labBatchDao;

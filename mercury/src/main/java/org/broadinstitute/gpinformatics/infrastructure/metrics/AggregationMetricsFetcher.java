@@ -4,6 +4,8 @@ import com.google.common.collect.Iterables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
@@ -58,6 +60,7 @@ public class AggregationMetricsFetcher {
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
         root.fetch(Aggregation_.aggregationWgs);
+        Join<Aggregation, PicardAggregationSample> picardAggregationSampleJoin = root.join(Aggregation_.picardAggregationSample);
 
         List<Aggregation> allResults = new ArrayList<>();
         Map<String, Collection<SubmissionTuple>> tuplesByProject = SubmissionTuple.byProject(tuples);
@@ -68,8 +71,14 @@ public class AggregationMetricsFetcher {
             for (List<SubmissionTuple> tuplesSublist : Iterables.partition(tupleList, MAX_AGGREGATION_FETCHER_QUERY_SIZE)) {
                 List<Aggregation> aggregations = new ArrayList<>();
                 List<Predicate> predicates = new ArrayList<>();
-
-                predicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), projectName));
+                Predicate projectJoin = criteriaBuilder.and(
+                    criteriaBuilder.or(
+                        criteriaBuilder.equal(
+                            picardAggregationSampleJoin.get(PicardAggregationSample_.researchProject), projectName),
+                        criteriaBuilder.equal(
+                            picardAggregationSampleJoin.get(PicardAggregationSample_.project), projectName)
+                ));
+                predicates.add(projectJoin);
                 predicates.add(criteriaBuilder.isNull(root.get(Aggregation_.library)));
                 predicates.add(criteriaBuilder.isTrue(root.get(Aggregation_.latest)));
                 predicates.add(root.get(Aggregation_.sample).in(SubmissionTuple.extractSampleNames(tuplesSublist)));

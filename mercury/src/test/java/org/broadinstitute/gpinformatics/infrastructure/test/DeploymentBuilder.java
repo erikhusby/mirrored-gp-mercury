@@ -136,7 +136,6 @@ public class DeploymentBuilder {
         return war;
     }
 
-    @SuppressWarnings("UnusedDeclaration")
     public static WebArchive buildMercuryWarWithAlternatives(String... alternatives) {
         StringBuilder sbAlts = new StringBuilder();
         sbAlts.append("  <alternatives>\n");
@@ -221,9 +220,7 @@ public class DeploymentBuilder {
     @SuppressWarnings("UnusedDeclaration")
     private static JavaArchive addTestHelpers(JavaArchive archive) {
         // TODO: put all test helpers into a single package or two to import all at once
-        return archive
-                .addClass(StubbyContainerTest.class)
-                .addClass(BettaLimsMessageTestFactory.class);
+        return archive.addClass(BettaLimsMessageTestFactory.class);
     }
 
     /**

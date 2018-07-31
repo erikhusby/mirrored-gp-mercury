@@ -1,3 +1,4 @@
+<%--suppress ALL --%>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
@@ -6,7 +7,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver" %>
-<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -53,6 +53,21 @@
             background: #c4eec0;
             height: 15px;
         }
+        /* css used to indicate slow columns */
+        .em-turtle {
+            background-image: url("${ctxpath}/images/turtle.png") !important;
+            background-size: 16px 16px;
+            background-repeat: no-repeat;
+            background-position: right 5px center;
+        }
+        .image-small {
+            width: 16px;
+            height: 16px;
+        }
+        .slow-colunms-hidden {
+            box-shadow: inset 0 0 10px orange
+        }
+
         .sampleDataProgressText{
             position: absolute;
             margin-left: 1em;
@@ -67,17 +82,48 @@ var kitDefinitionIndex = 0;
 
 $j(document).ready(function () {
     $j('body').popover({selector: '[rel=popover]'});
-//    if ($j("#sampleData tbody>tr").length > 0) {
+    $j(document).on('click', '#ledgerLink', function () {
+        window.stop();
+    });
     enableDefaultPagingOptions();
-    function loadBspData(settings) {
+    function loadBspData(settings, refresh=false) {
         var api = new $j.fn.dataTable.Api(settings);
         var table = api.table();
         var remainingSamples = [];
-        table.column(0).data().each(function (cell) {
-            remainingSamples.push($j(cell)[0]);
+        table.rows().data().each(function (row) {
+            var data = $j(row);
+            data.each(function () {
+                var pdoId = this.PRODUCT_ORDER_SAMPLE_ID;
+                if ((!this.includeSampleData) && remainingSamples.indexOf(pdoId) < 0 || refresh) {
+                    remainingSamples.push(pdoId);
+                }
+            });
         });
-
         sampleInfoBatchUpdate(remainingSamples, table);
+        updateSampleSummary();
+    }
+
+    function updateSampleSummary(){
+        $j.ajax({
+            url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_SUMMARY %>",
+            data: {
+                'productOrder': "${actionBean.editOrder.businessKey}",
+            },
+            method: 'POST',
+            dataType: 'json',
+            error: function (obj, error, ex) {
+                console.log(error, obj.responseText, JSON.stringify(ex));
+            },
+            success: function (json) {
+                if (json['summary']) {
+                    writeSummaryData(json);
+                }
+                if (json['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
+                    $j("#numberSamplesNotReceived").html(json['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
+                }
+            }
+        })
+
     }
 
     function sampleInfoBatchUpdate(samplesToFetch, settings) {
@@ -88,12 +134,11 @@ $j(document).ready(function () {
         var table = new $j.fn.dataTable.Api(settings).table();
 
         // When there are greater than 1000 samples split the call to updateSampleInformation
-        if (pdoSampleCount > 1000) {
-            fetchSize = Math.ceil(pdoSampleCount / 2);
-            updateSampleInformation(samplesToFetch.splice(0, fetchSize), table, true);
-            updateSampleInformation(samplesToFetch.splice(0, fetchSize), table, false);
-        } else {
-            updateSampleInformation(samplesToFetch, table, true);
+        fetchSize = pdoSampleCount > 2000 ? 2000: pdoSampleCount;
+        while (samplesToFetch.length > 0) {
+            (function (samples) {
+                updateSampleInformation(samples, table, false);
+            }(samplesToFetch.splice(0, fetchSize)));
         }
     }
 
@@ -177,10 +222,11 @@ $j(document).ready(function () {
                     }
                 }],
             }, standardButtons()],
-            order: [[ 1, 'desc' ]],
+            order: [[ 1, 'asc' ]],
             ajax: {
                 url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
                 method: 'POST',
+                dataType: 'json',
                 data: function (data, settings) {
                     data.productOrder = "${actionBean.editOrder.businessKey}";
                     data.initialLoad = true;
@@ -193,12 +239,6 @@ $j(document).ready(function () {
                     var rowsWithSampleData = data['<%=ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT%>'];
                     var recordsTotal = data['<%=ProductOrderSampleBean.RECORDS_TOTAL%>'];
                     initSampleDataProgress(rowsWithSampleData, recordsTotal);
-                    if (data['<%=ProductOrderSampleBean.COMMENT%>']) {
-                        writeSummaryData(data);
-                    }
-                    if (data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
-                        $j("#numberSamplesNotReceived").html(data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
-                    }
                 },
             },
             "columns": [
@@ -231,7 +271,7 @@ $j(document).ready(function () {
                 {"data": "${columnHeaderOnRiskString}", "title": "${columnHeaderOnRisk}"},
                 {"data": "${columnHeaderProceedOutOfSpec}", "title": "${columnHeaderProceedOutOfSpec}"},
                 {"data": "${columnHeaderStatus}", "title": "${columnHeaderStatus}"},
-                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "title-string", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
+                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "boolean", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
             ],
             "stateSaveCallback": function (settings, data) {
                 var api = new $j.fn.dataTable.Api(settings);
@@ -313,37 +353,34 @@ $j(document).ready(function () {
 });
 
     function renderRackscanMismatch(data, type, row, meta) {
-        var result = data;
         if (type === 'display') {
             if (data === true) {
-                result = imageForBoolean(data, "${ctxpath}/images/error.png")
+                return imageForBoolean(data, "${ctxpath}/images/error.png")
             } else {
-                result = "";
+                return "";
             }
         }
-        return result;
+        return data;
     }
 
     function renderBilled(data, type, row, meta) {
-        var result = data;
         if (type === 'display') {
             if (data && data === true) {
                 return imageForBoolean(data, "${ctxpath}/images/check.png");
             } else {
-                result = "";
+                return "";
             }
         }
-        return result;
+        return data;
     }
 
-    function imageForBoolean(data, image) {
+    function imageForBoolean(data, imageSrc) {
         var result = data;
         if (data) {
-            tagAttributes = {
-                src: image,
-                title: true
-            }
-            result = jQuery("<img/>", tagAttributes)[0].outerHTML;
+            var image = document.createElement("img");
+            image.src = imageSrc;
+            image.title = true;
+            result = image.outerHTML;
         }
         return result;
     }
@@ -352,20 +389,66 @@ $j(document).ready(function () {
 
     function initColumnVisibility(settings) {
         var api=$j.fn.dataTable.Api(settings);
-        var columnVisibilityKey = "columnVisibility";
-        $j('#sampleData').on('column-visibility.dt', function (e, settings, column, state) {
-            $j("body").data(columnVisibilityKey, state);
+        var columnVisibilityChangedKey = "columnVisibilityChanged";
+        var $sampleDataTable = $j('#sampleData');
+        var $colVis = $j(".buttons-colvis");
+
+        $sampleDataTable.on('column-visibility.dt', function (e, settings, column, state) {
+            $j("body").data(columnVisibilityChangedKey, state);
         });
+
+
+        $colVis.popover({
+            trigger: "hover", placement: 'top', html: true, delay: { "show": 500, "hide": 100 },
+            content: "Click to change column visibility. Columns marked with a <img src='${ctxpath}/images/turtle.png' class='image-small'/> will negatively impact page loading time.</div>"
+        });
+
+        function updateShowHideButton() {
+            if (api.column(":hidden").length>0) {
+                $colVis.addClass("slow-colunms-hidden");
+                $colVis.attr('data-original-title','Some data columns are hidden.');
+            } else {
+                $colVis.removeClass("slow-colunms-hidden");
+                $colVis.attr('data-original-title','Hide unneeded columns.');
+            }
+        }
+
+        $j(".slow-colunms-hidden").on('hover', function(){
+           this.setAttribute('tooltip', 'Some data columns are hidden')
+        });
+        $sampleDataTable.on('init.dt', updateShowHideButton);
+
+        var slowColumns = ${actionBean.slowColumns}
+
+            // When the "Show or Hide" button is clicked
+            $j(document.body).on("click", "a.buttons-colvis", function (event) {
+                // When colvis modal is loading
+                $j.when($j(event.target).load()).then(function (event2) {
+                    var slowButtons = $j("a.buttons-columnVisibility").filter(function () {
+                        var $button = $j(this);
+                        // test if the column headers is in the slowColumns array.
+                        // the check for undefined is to prevent this from being called very time
+                        return $button.data('tooltip') === undefined && slowColumns.indexOf($button.text().trim()) >= 0;
+                    });
+                    slowButtons.addClass("em-turtle");
+                    slowButtons.attr('title', 'Enabling this column may slow page loading');
+                    slowButtons.tooltip();
+                });
+//                updateHowHideButton();
+            });
 
         // If a column that was previously hidden but becomes visible the page
         // must be reloaded since there is no data in that column.
         $j(document.body).on("click", ".dt-button-background", function () {
             api.state.save();
-            var sessionVisibility = !undefined && $j("body").data(columnVisibilityKey) || false;
+            updateShowHideButton();
+
+            var sessionVisibility = !undefined && $j("body").data(columnVisibilityChangedKey) || false;
             if (sessionVisibility) {
-//                api.ajax.reload();
-                loadBspData(settings);
-//                location.reload();
+                loadBspData(settings, true);
+
+                // After data reload, reset the columnVisibilityChanged flag to false.
+                $j("body").data(columnVisibilityChangedKey, false);
             }
         });
     }
@@ -381,14 +464,14 @@ $j(document).ready(function () {
     function renderCheckbox(data, type, row) {
         var result = data;
         if (type === 'display') {
-            tagAttributes = {
-                "name": "selectedProductOrderSampleIds",
-                "value": data,
-                "type": "checkbox",
-                "class": "shiftCheckbox",
-                "data-sample-checkbox" :row["<%= ProductOrderSampleBean.SAMPLE_ID %>"]
-            };
-            result = jQuery("<input/>", tagAttributes)[0].outerHTML;
+            var input = document.createElement("input");
+            input.name = "selectedProductOrderSampleIds"
+            input.className = "shiftCheckbox";
+            input.type = "checkbox";
+            input.value = data;
+            input.setAttribute("data-sample-checkbox", row["<%= ProductOrderSampleBean.SAMPLE_ID %>"]);
+
+            result = input.outerHTML;
         }
         return result;
 
@@ -650,7 +733,7 @@ function setupDialogs() {
 
 function writeSummaryData(json) {
     var dataList = '<ul>';
-    json.comments.map(function (item) {
+    json.summary.map(function (item) {
         dataList += '<li>' + item + '</li>'
     });
     dataList += '</ul>';
@@ -727,24 +810,13 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
             },
             success: function (json) {
                 if (json) {
-                    var dataMap = {};
                     for (var item of json.data) {
-                        dataMap[item.rowId] = item;
+                        var row = table.row("#"+item.rowId);
+                        row.data(item);
+                        row.invalidate;
                     }
-                    table.rows().every(function () {
-                        var newData = dataMap[this.data().rowId];
-                        if (newData) {
-                            this.data(newData);
-                            this.invalidate();
-                        }
-                    });
-                    if (json.comments) {
-                        writeSummaryData(json);
-                    }
+
                     updateSampleDataProgress(json.rowsWithSampleData, recordsTotal);
-                    if (json.numberSamplesNotReceived) {
-                        $j("#numberSamplesNotReceived").html(json.numberSamplesNotReceived);
-                    }
                 }
             },
             complete: function () {
@@ -758,12 +830,11 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
 
 function renderPico(data, type, row, meta) {
     var result = data;
-    if (result === null) {
-        result = "";
-    }
     if (type === 'display') {
-        if (result === "") {
-            result = "No Pico";
+        var outerDiv = document.createElement("div");
+        var picoSpan=document.createElement("span");
+        if (result === "" && row.includeSampleData) {
+            picoSpan.innerHTML = "No Pico";
         } else {
             var oneYearAgo = meta.settings.oneYearAgo;
             var almostOneYearAgo = meta.settings.almostOneYearAgo;
@@ -785,10 +856,11 @@ function renderPico(data, type, row, meta) {
             } else if (picoDate.getTime() < almostOneYearAgo.getTime()) {
                 containerClass = "label label-warning";
             }
-
+            picoSpan.innerHTML=data;
+            picoSpan.className=containerClass;
         }
-        var $container = $j("<span></span>", {text: result, class: containerClass});
-        result = $container.wrap("<div></div>").parent().html();
+        outerDiv.appendChild(picoSpan);
+        result = outerDiv.outerHTML;
     }
     return result;
 }
@@ -1102,15 +1174,15 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     <textarea id="abandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
-<%--<div id="unAbandonDialog" style="width:600px;display:none;">--%>
-    <%--<p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>--%>
+<div id="unAbandonDialog" style="width:600px;display:none;">
+    <p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>
 
-    <%--<p style="clear:both">--%>
-        <%--<label for="unAbandonSampleCommentId">Comment:</label>--%>
-    <%--</p>--%>
+    <p style="clear:both">
+        <label for="unAbandonSampleCommentId">Comment:</label>
+    </p>
 
-    <%--<textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>--%>
-<%--</div>--%>
+    <textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+</div>
 
 <div id="recalculateRiskDialog" style="width:600px;display:none;">
     <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
@@ -1168,7 +1240,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 <stripes:hidden id="proceedOos" name="proceedOos" value=""/>
 <stripes:hidden id="abandonComment" name="abandonComment" value=""/>
     <stripes:hidden name="replacementSampleList" id="replacementSampleList" value="" />
-<%--<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>--%>
+<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
 
@@ -1598,6 +1670,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </c:forEach>
 </c:if>
 <div class="view-control-group control-group">
+    <label class="control-label label-form">Analyze UMIs</label>
+    <div class="controls">
+        <div class="form-value">
+                ${actionBean.editOrder.analyzeUmiOverride ? "Yes" : "No"}
+        </div>
+    </div>
+</div>
+<div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
     <div class="controls">
@@ -1694,56 +1774,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <h4 style="display:inline">Replacement Sample Orders</h4>
     </div>
 
-    <table id="orderList" class="table simple display compact">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Order ID</th>
-                <th>Status</th>
-                <th>Updated</th>
-                <th width="80">%&nbsp;Complete</th>
-                <th>Replacement Sample Count</th>
-            </tr>
-            </thead>
-            <tbody>
-            <c:forEach items="${actionBean.editOrder.childOrders}" var="order">
-                <tr>
-                    <td>
-                        <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                event="view">
-                            <stripes:param name="productOrder" value="${order.businessKey}"/>
-                            ${order.title}
-                        </stripes:link>
-                    </td>
-                    <td>
-                        <c:choose>
-
-                            <%-- draft PDO --%>
-                            <c:when test="${order.draft}">
-                                <span title="DRAFT">&#160;</span>
-                            </c:when>
-                            <c:otherwise>
-                                <a class="external" target="JIRA" href="${actionBean.jiraUrl(order.jiraTicketKey)}"
-                                   class="external" target="JIRA">
-                                        ${order.jiraTicketKey}
-                                </a>
-                            </c:otherwise>
-                        </c:choose>
-                    </td>
-                    <td>${order.orderStatus}</td>
-                    <td>
-                        <fmt:formatDate value="${order.modifiedDate}" pattern="${actionBean.datePattern}"/>
-                    </td>
-                    <td align="center">
-                        <stripes:layout-render name="/orders/sample_progress_bar.jsp"
-                                               status="${actionBean.progressFetcher.getStatus(order.businessKey)}"/>
-                    </td>
-                    <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
-                </tr>
-            </c:forEach>
-            </tbody>
-        </table>
 <c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.sampleInitiation}">
 
     <div class="borderHeader">
@@ -1761,11 +1791,9 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                                         style="margin-left:15px;"
                                         onclick="showAbandonDialog()"/>
 
-                        <c:if test="${!actionBean.editOrder.childOrder}">
-                            <stripes:button name="replaceOrderSamples" id="replaceOrderSamples" value="Replace Abandoned Samples"
-                                            onclick="showSampleReplacementDialog()" class="btn padright"
-                                            title="Click to add replacement samples for abandoned samples" />
-                        </c:if>
+                        <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
+                                        style="margin-left:15px;"
+                                        onclick="showUnAbandonDialog()"/>
                     </c:if>
                     <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
                                     style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>

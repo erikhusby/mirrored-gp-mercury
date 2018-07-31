@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -26,7 +27,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
  * Wildfly rejects deploying with non-existing persistence unit - uncomment attribute if running
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class CreatePoolingTransfersTest extends StubbyContainerTest {
+
+    public CreatePoolingTransfersTest(){}
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
