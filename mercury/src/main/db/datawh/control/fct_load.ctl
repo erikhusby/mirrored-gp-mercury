@@ -7,6 +7,6 @@ TRAILING NULLCOLS
    line_number,
    etl_date       DATE "YYYYMMDDHH24MISS",
    is_delete,
-   designation_id,
+   batch_starting_vessel_id,
    flowcell_barcode
 )
