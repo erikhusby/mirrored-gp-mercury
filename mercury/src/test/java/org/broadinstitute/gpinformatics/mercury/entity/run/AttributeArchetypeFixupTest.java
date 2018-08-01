@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -630,4 +632,147 @@ public class AttributeArchetypeFixupTest extends Arquillian {
 
     }
 
+    /**
+     * Adds key-value archetypes, attributes, and attribute definitions. The key-values must have the same
+     * key-value mapping name (a.k.a. the archetype group). An input file is used, and needs this content:
+     *   The first line has the Fixup Commentary.
+     *   The second line starts with "mappingName" followed by the mapping name
+     *   Attribute definitions are in lines that start with "definition" followed by the attribute name.
+     *   Archetypes are in lines that starts with "archetype" followed by the key (a.k.a. archetype name).
+     *   Attribute lines starts with "attribute" followed by the key, '|', the attribute name, '|', the attribute value.
+     *
+     * For example:
+     *   GPLIM-4205 add initial bait to product part number mapping
+     *   mappingName BaitToProductMapping
+     *   definition theValue
+     *   archetype Buick_v6_0_2014
+     *   attribute Buick_v6_0_2014|theValue|P-EX-0011
+     *
+     * This method can also change an existing attribute value to a new value. The definition lines can be omitted.
+     */
+    @Test(enabled = false)
+    public void addKeyValueMappings() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("keyValueArchetypes.txt"));
+        Assert.assertTrue(lines.size() >= 3);
+
+        String fixupCommentary = lines.get(0);
+        String mappingName = StringUtils.substringAfter(lines.get(1), "mappingName ");
+
+        List<AttributeArchetype> archetypes = new ArrayList<>();
+        List<AttributeDefinition> definitions = new ArrayList<>();
+
+        // Parses input for definitions first, then archetypes, then attributes.
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("definition")) {
+                String attributeName = StringUtils.substringAfter(line, " ");
+                final boolean IS_DISPLAYABLE = true;
+                definitions.add(new AttributeDefinition(AttributeDefinition.DefinitionType.KEY_VALUE_MAPPING,
+                        mappingName, attributeName, IS_DISPLAYABLE));
+            }
+        }
+
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("archetype")) {
+                String key = StringUtils.substringAfter(line, " ");
+                AttributeArchetype archetype = attributeArchetypeDao.findKeyValueByKeyAndMappingName(key, mappingName);
+                if (archetype == null) {
+                    System.out.println("Adding new " + mappingName + " key " + key);
+                    archetype = new KeyValueMapping(mappingName, key, definitions);
+                }
+                archetypes.add(archetype);
+            }
+        }
+
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("attribute")) {
+                String tokens[] = StringUtils.substringAfter(line, " ").split("\\|");
+                Assert.assertEquals(tokens.length, 3,  "at line " + rowIndex);
+                String key = tokens[0];
+                String attributeName = tokens[1];
+                String attributeValue = tokens[2];
+                boolean found = false;
+                for (AttributeArchetype archetype : archetypes) {
+                    if (archetype.getGroup().equals(mappingName) && archetype.getArchetypeName().equals(key)) {
+                        found = true;
+                        System.out.println("Adding " + mappingName + " key-value (" + key + ", " + attributeValue + ")");
+                        archetype.addOrSetAttribute(attributeName, attributeValue);
+                    }
+                }
+                Assert.assertTrue(found, "No archetype found at line " + rowIndex);
+            }
+        }
+        attributeArchetypeDao.persist(new FixupCommentary(fixupCommentary));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(archetypes);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * Deletes key-value archetypes and attributes. All must have the same key-value mapping name.
+     * Uses an input file that has the same format shown above for adding key-value mappings.
+     * The attribute value need not be given in the file.
+     */
+    @Test(enabled = false)
+    public void deleteKeyValueMappings() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("keyValueArchetypeDeletes.txt"));
+        Assert.assertTrue(lines.size() >= 3);
+        String fixupCommentary = lines.get(0);
+        String mappingName = StringUtils.substringAfter(lines.get(1), "mappingName ");
+
+        // Parses the file for attributes first, then definitions, then archetypes.
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("attribute")) {
+                String tokens[] = StringUtils.substringAfter(line, " ").split("\\|");
+                Assert.assertTrue(tokens.length >= 2, " at line " + rowIndex);
+                String key = tokens[0];
+                String attributeName = tokens[1];
+                AttributeArchetype archetype = attributeArchetypeDao.findKeyValueByKeyAndMappingName(key, mappingName);
+                Assert.assertNotNull(archetype, "Cannot find archetype at line " + rowIndex);
+                ArchetypeAttribute attribute = archetype.getAttribute(attributeName);
+                Assert.assertNotNull(attribute, "Cannot find attribute at line " + rowIndex);
+                System.out.println("Removing " + attributeName + " from " + key);
+                archetype.getAttributes().remove(attribute);
+                attributeArchetypeDao.remove(attribute);
+            }
+        }
+
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("definition")) {
+                String attributeName = StringUtils.substringAfter(line, " ");
+                Map<String, AttributeDefinition> nameAndDefinition =
+                        attributeArchetypeDao.findAttributeNamesByTypeAndGroup(
+                                AttributeDefinition.DefinitionType.KEY_VALUE_MAPPING, mappingName);
+                Assert.assertTrue(nameAndDefinition != null && !nameAndDefinition.isEmpty(), " at line " + rowIndex);
+                AttributeDefinition definition = nameAndDefinition.get(attributeName);
+                Assert.assertNotNull(definition, " at line rowIndex");
+                attributeArchetypeDao.remove(definition);
+            }
+        }
+
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("archetype")) {
+                String key = StringUtils.substringAfter(line, " ");
+                AttributeArchetype archetype = attributeArchetypeDao.findKeyValueByKeyAndMappingName(key, mappingName);
+                Assert.assertNotNull(archetype, " at line " + rowIndex);
+                System.out.println("Deleting " + mappingName + " key " + key);
+                attributeArchetypeDao.remove(archetype);
+            }
+        }
+        attributeArchetypeDao.persist(new FixupCommentary(fixupCommentary));
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
 }
