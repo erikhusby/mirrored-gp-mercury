@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ProductOrderBillingPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -79,37 +78,77 @@ public class ProductOrderSearchDefinition {
         billingSessionPath.setPropertyName("billingSessionId");
         billingSessionPath.setCriteria(Arrays.asList("BillingSessions", "samples", "ledgerItems", "billingSession"));
         billingSessionTerm.setCriteriaPaths(Collections.singletonList(billingSessionPath));
-//        billingSessionTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-//            @Override
-//            public List<String> evaluate(Object entity, SearchContext context) {
-//
-//                return getBillingSessionDisplay((ProductOrder) entity);
-//            }
-//        });
-//
-//        billingSessionTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
-//            @Override
-//            public String evaluate(Object entity, SearchContext context) {
-//                List<String> displayOutput;
-//                displayOutput = (ArrayList<String>) entity;
-//                String replacementFormat = "<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?view=&sessionKey=%s\">%s</a>";
-//                StringBuffer uiOutput = new StringBuffer();
-//                Pattern pattern = Pattern.compile(BillingSession.ID_PREFIX + "[\\w]*");
-//
-//                for (String billingString : displayOutput) {
-//                    Matcher match = pattern.matcher(billingString);
-//                    if(match.find()) {
-//                        match.appendReplacement(uiOutput,
-//                                String.format(replacementFormat, match.group(0), match.group(0)));
-//                        match.appendTail(uiOutput);
-//                        uiOutput.append("<br>");
-//                    }
-//                }
-//                return uiOutput.toString();
-//            }
-//        });
-        billingSessionTerm.setPluginClass(ProductOrderBillingPlugin.class);
+        billingSessionTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+
+                return getBillingSessionDisplay((ProductOrder) entity);
+            }
+        });
+
+        billingSessionTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                List<String> displayOutput;
+                displayOutput = (ArrayList<String>) entity;
+                String replacementFormat = "<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?view=&sessionKey=%s\">%s</a>";
+                StringBuffer uiOutput = new StringBuffer();
+                Pattern pattern = Pattern.compile(BillingSession.ID_PREFIX + "[\\w]*");
+
+                for (String billingString : displayOutput) {
+                    Matcher match = pattern.matcher(billingString);
+                    if(match.find()) {
+                        match.appendReplacement(uiOutput,
+                                String.format(replacementFormat, match.group(0), match.group(0)));
+                        match.appendTail(uiOutput);
+                        uiOutput.append("<br>");
+                    }
+                }
+                return uiOutput.toString();
+            }
+        });
+//        billingSessionTerm.setPluginClass(ProductOrderBillingPlugin.class);
         searchTerms.add(billingSessionTerm);
+
+
+        SearchTerm quoteWorkTerm = new SearchTerm();
+        quoteWorkTerm.setName("Quote Work Item");
+        SearchTerm.CriteriaPath quoteWorkPath = new SearchTerm.CriteriaPath();
+        quoteWorkPath.setPropertyName("workItem");
+        quoteWorkPath.setCriteria(Arrays.asList("QuoteWork", "samples", "ledgerItems"));
+        quoteWorkTerm.setCriteriaPaths(Collections.singletonList(quoteWorkPath));
+        quoteWorkTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                ProductOrder order = (ProductOrder) entity;
+                Set<String> workItems = new HashSet<>();
+
+                for (ProductOrderSample productOrderSample : order.getSamples()) {
+                    for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
+                        Optional<String> workItem = Optional.ofNullable(ledgerEntry.getWorkItem());
+                        Optional<BillingSession> billingSession = Optional.ofNullable(ledgerEntry.getBillingSession());
+
+                        workItem.ifPresent(workItemParam -> {
+
+                                    StringBuffer workItemOutput = new StringBuffer();
+                                    billingSession.ifPresent(
+                                            billingSession1 -> workItemOutput.append(billingSession1.getBusinessKey())
+                                                    .append("-->"));
+                                    workItemOutput.append(workItemParam);
+                                    workItems.add(workItemOutput.toString());
+                                }
+                        );
+                    }
+
+                }
+                return workItems;
+            }
+        });
+
+
+
+
+
         return searchTerms;
     }
 

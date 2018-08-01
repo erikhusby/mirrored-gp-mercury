@@ -29,10 +29,10 @@
             });
 
             $j(window).load(function() {
-                var idToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
+                var workItemIdToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
                 // if the url contains a quote server work item, highlight the corresponding row
-                $j(idToHighlight).attr('class','highlighted');
-                $('html, body').scrollTop($(idToHighlight).offset().top);
+                $j(workItemIdToHighlight).attr('class','highlighted');
+                $('html, body').scrollTop($(workItemIdToHighlight).offset().top);
             });
 
         </script>
@@ -45,14 +45,14 @@
             <security:authorizeBlock roles="<%= roles(Developer, BillingManager) %>">
                 <c:if test="${actionBean.editSession.billedDate == null}">
                     <stripes:submit name="bill" value="Bill Work in Broad SAP/Quotes" class="btn"
-                                    style="margin-right:30px;" disabled="${actionBean.isBillingSessionLocked()}"/>
+                                    style="margin-right:30px;" disabled="${actionBean.billingSessionLocked()}"/>
                 </c:if>
 
                 <stripes:submit name="downloadQuoteItems" value="Download Quote Items" class="btn" style="margin-right:30px;"/>
 
                 <c:if test="${actionBean.editSession.billedDate == null}">
                     <stripes:submit name="endSession" value="End Billing Session" class="btn"
-                                    style="margin-right:15px;px;" disabled="${actionBean.isBillingSessionLocked()}"/>
+                                    style="margin-right:15px;px;" disabled="${actionBean.billingSessionLocked()}"/>
                 </c:if>
             </security:authorizeBlock>
 
