@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ProductOrderBillingPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -61,6 +62,8 @@ public class ProductOrderSearchDefinition {
 
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("SAPOrders",
                 "productOrderId", "sapReferenceOrders", ProductOrder.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("BatchVessels",
+                "productOrderId", "samples", ProductOrder.class));
 
         return new ConfigurableSearchDefinition(ColumnEntity.PRODUCT_ORDER, criteriaProjections, mapGroupSearchTerms);
     }
@@ -91,7 +94,7 @@ public class ProductOrderSearchDefinition {
                 displayOutput = (ArrayList<String>) entity;
                 String replacementFormat = "<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?view=&sessionKey=%s\">%s</a>";
                 StringBuffer uiOutput = new StringBuffer();
-                Pattern pattern = Pattern.compile("BILL\\-[\\w]*");
+                Pattern pattern = Pattern.compile(BillingSession.ID_PREFIX + "[\\w]*");
 
                 for (String billingString : displayOutput) {
                     Matcher match = pattern.matcher(billingString);
@@ -105,6 +108,7 @@ public class ProductOrderSearchDefinition {
                 return uiOutput.toString();
             }
         });
+//        billingSessionTerm.setPluginClass(ProductOrderBillingPlugin.class);
         searchTerms.add(billingSessionTerm);
         return searchTerms;
     }
@@ -117,19 +121,19 @@ public class ProductOrderSearchDefinition {
     @NotNull
     private List<String> getBillingSessionDisplay(ProductOrder order) {
         List<String> billingSessionResults = new ArrayList<>();
-        final Multimap<String, String> samplesByBillingSession = LinkedListMultimap.create();
+        final Multimap<BillingSession, String> samplesByBillingSession = LinkedListMultimap.create();
 
         for (ProductOrderSample productOrderSample : order.getSamples()) {
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
                 if(ledgerEntry.getBillingSession() != null) {
-                    samplesByBillingSession.put(BillingSession.ID_PREFIX + ledgerEntry.getBillingSession(),
+                    samplesByBillingSession.put(ledgerEntry.getBillingSession(),
                             productOrderSample.getName());
                 }
             }
         }
 
-        for (String billingSession : samplesByBillingSession.keys()) {
-            billingSessionResults.add(billingSession + "-->("
+        for (BillingSession billingSession : samplesByBillingSession.keys()) {
+            billingSessionResults.add(billingSession.getBusinessKey() + "-->("
                                       + StringUtils.join(samplesByBillingSession.get(billingSession), ",") + ")");
         }
         return billingSessionResults;
@@ -252,7 +256,7 @@ public class ProductOrderSearchDefinition {
                 ProductOrder order = (ProductOrder) entity;
                 Set<String> results = new HashSet<>();
                 for (ProductOrderSample productOrderSample : order.getSamples()) {
-                    final Optional<MercurySample> mercurySample = Optional.of(productOrderSample.getMercurySample());
+                    final Optional<MercurySample> mercurySample = Optional.ofNullable(productOrderSample.getMercurySample());
                     mercurySample.ifPresent(mercurySample1 -> {
                         for (LabVessel labVessel : mercurySample1.getLabVessel()) {
                             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
@@ -311,7 +315,7 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
-                return ((ProductOrder) entity).getBusinessKey() + " -- " +  order.getName();
+                return ((ProductOrder) entity).getBusinessKey();// + " -- " +  order.getName();
             }
         });
         pdoJiraTicketTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
@@ -327,7 +331,7 @@ public class ProductOrderSearchDefinition {
 
 
         SearchTerm sampleTerm = new SearchTerm();
-        sampleTerm.setName("Product Order Sample Id");
+        sampleTerm.setName("Product Order Sample");
         SearchTerm.CriteriaPath sampleCriteriaPath = new SearchTerm.CriteriaPath();
         sampleCriteriaPath.setPropertyName("sampleName");
         sampleCriteriaPath.setCriteria(Arrays.asList("PDOSamples", "samples"));
@@ -362,7 +366,7 @@ public class ProductOrderSearchDefinition {
                 boolean first = true;
                 String currentSapOrderNumber = order.getSapOrderNumber();
                 if(StringUtils.isNotBlank(currentSapOrderNumber)) {
-                    sapIdResults.add("Current Sap order " + currentSapOrderNumber);
+                    sapIdResults.add("Active order -->" + currentSapOrderNumber);
                 }
 
                 if(order.getSapReferenceOrders().size() >1) {
