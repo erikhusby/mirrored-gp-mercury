@@ -47,7 +47,7 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         SetMultimap<String, BillingSession> billingSessionsByProductOrder = HashMultimap.create();
 
         for (ProductOrder productOrder : billedOrderList) {
-            ConfigurableList.Row row = new ConfigurableList.Row(productOrder.getBusinessKey());
+            ConfigurableList.Row row = new ConfigurableList.Row(productOrder.getProductOrderId().toString());
             SetMultimap<String, String> workItemsByBillingSession = HashMultimap.create();
             SetMultimap<String, String> sapOrdersByBillingSession = HashMultimap.create();
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
