@@ -473,6 +473,16 @@ public abstract class LabVessel implements Serializable {
         return null;
     }
 
+    public LabMetric getMostRecentConcentration() {
+        Set<LabMetric> concentrationMetrics = getConcentrationMetrics();
+        if (concentrationMetrics == null || concentrationMetrics.isEmpty()) {
+            return null;
+        }
+        List<LabMetric> metricList = new ArrayList<>(concentrationMetrics);
+        metricList.sort(Collections.reverseOrder());
+        return metricList.get(0);
+    }
+
     public StorageLocation getStorageLocation() {
         return storageLocation;
     }

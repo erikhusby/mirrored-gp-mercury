@@ -30,6 +30,9 @@ public class LabMetricDecision {
         PASS(false),
         RUN_FAILED(false),
         REPEAT(true),
+        BAD_TRIP(true),
+        OVER_THE_CURVE(true),
+        TEN_PERCENT_DIFF_REPEAT(true),
         FAIL(true),
         RISK(true);
 
