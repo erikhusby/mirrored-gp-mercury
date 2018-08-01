@@ -116,6 +116,18 @@
                 );
             }
         }
+
+        function validateNumberOfLanes() {
+            var numberOfLanes = $j("#numberOfLanes");
+            var productOrderKey = $j("input[name='productOrder']");
+
+            if (numberOfLanes.length && productOrderKey.val().includes("Draft")) {
+                return confirm(numberOfLanes.val() + " for the total number of lanes on the order\n\n" +
+                    "By Clicking 'OK' you are declaring that you wish to accept the entered number of lanes for the entire order.  Do you wish to continue?")
+            }
+            
+            return true;
+        }
         $j(document).ready(
 
                 function () {
@@ -1668,7 +1680,8 @@
                     <div class="controls actionButtons">
                         <stripes:submit name="save" value="${actionBean.saveButtonText}"
                                         disabled="${!actionBean.canSave}"
-                                        style="margin-right: 10px;" class="btn btn-primary"/>
+                                        style="margin-right: 10px;" class="btn btn-primary"
+                                        onclick="return validateNumberOfLanes();"/>
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
