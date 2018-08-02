@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ProductOrderBillingPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -58,10 +59,11 @@ public class ProductOrderSearchDefinition {
                 "productOrderId", "product", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOSamples",
                 "productOrderId", "samples", ProductOrder.class));
-
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("SAPOrders",
                 "productOrderId", "sapReferenceOrders", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("BatchVessels",
+                "productOrderId", "samples", ProductOrder.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("QuoteWOrk",
                 "productOrderId", "samples", ProductOrder.class));
 
         return new ConfigurableSearchDefinition(ColumnEntity.PRODUCT_ORDER, criteriaProjections, mapGroupSearchTerms);
@@ -78,36 +80,8 @@ public class ProductOrderSearchDefinition {
         billingSessionPath.setPropertyName("billingSessionId");
         billingSessionPath.setCriteria(Arrays.asList("BillingSessions", "samples", "ledgerItems", "billingSession"));
         billingSessionTerm.setCriteriaPaths(Collections.singletonList(billingSessionPath));
-        billingSessionTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-
-                return getBillingSessionDisplay((ProductOrder) entity);
-            }
-        });
-
-        billingSessionTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
-            @Override
-            public String evaluate(Object entity, SearchContext context) {
-                List<String> displayOutput;
-                displayOutput = (ArrayList<String>) entity;
-                String replacementFormat = "<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?view=&sessionKey=%s\">%s</a>";
-                StringBuffer uiOutput = new StringBuffer();
-                Pattern pattern = Pattern.compile(BillingSession.ID_PREFIX + "[\\w]*");
-
-                for (String billingString : displayOutput) {
-                    Matcher match = pattern.matcher(billingString);
-                    if(match.find()) {
-                        match.appendReplacement(uiOutput,
-                                String.format(replacementFormat, match.group(0), match.group(0)));
-                        match.appendTail(uiOutput);
-                        uiOutput.append("<br>");
-                    }
-                }
-                return uiOutput.toString();
-            }
-        });
-//        billingSessionTerm.setPluginClass(ProductOrderBillingPlugin.class);
+        billingSessionTerm.setIsNestedParent(Boolean.TRUE);
+        billingSessionTerm.setPluginClass(ProductOrderBillingPlugin.class);
         searchTerms.add(billingSessionTerm);
 
 
@@ -144,11 +118,6 @@ public class ProductOrderSearchDefinition {
                 return workItems;
             }
         });
-
-
-
-
-
         return searchTerms;
     }
 
