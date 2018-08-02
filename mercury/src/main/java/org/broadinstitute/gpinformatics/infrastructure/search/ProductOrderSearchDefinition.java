@@ -80,10 +80,14 @@ public class ProductOrderSearchDefinition {
         billingSessionPath.setPropertyName("billingSessionId");
         billingSessionPath.setCriteria(Arrays.asList("BillingSessions", "samples", "ledgerItems", "billingSession"));
         billingSessionTerm.setCriteriaPaths(Collections.singletonList(billingSessionPath));
-        billingSessionTerm.setIsNestedParent(Boolean.TRUE);
-        billingSessionTerm.setPluginClass(ProductOrderBillingPlugin.class);
         searchTerms.add(billingSessionTerm);
 
+        SearchTerm billingDisplayTerm = new SearchTerm();
+        billingDisplayTerm.setName("Billing Related Info");
+        billingDisplayTerm.setIsNestedParent(Boolean.TRUE);
+        billingDisplayTerm.setPluginClass(ProductOrderBillingPlugin.class);
+        searchTerms.add(billingDisplayTerm);
+        
 
         SearchTerm quoteWorkTerm = new SearchTerm();
         quoteWorkTerm.setName("Quote Work Item");
@@ -91,33 +95,10 @@ public class ProductOrderSearchDefinition {
         quoteWorkPath.setPropertyName("workItem");
         quoteWorkPath.setCriteria(Arrays.asList("QuoteWork", "samples", "ledgerItems"));
         quoteWorkTerm.setCriteriaPaths(Collections.singletonList(quoteWorkPath));
-        quoteWorkTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                ProductOrder order = (ProductOrder) entity;
-                Set<String> workItems = new HashSet<>();
+        searchTerms.add(quoteWorkTerm);
 
-                for (ProductOrderSample productOrderSample : order.getSamples()) {
-                    for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
-                        Optional<String> workItem = Optional.ofNullable(ledgerEntry.getWorkItem());
-                        Optional<BillingSession> billingSession = Optional.ofNullable(ledgerEntry.getBillingSession());
+        SearchTerm sapOrderTerm = new SearchTerm();
 
-                        workItem.ifPresent(workItemParam -> {
-
-                                    StringBuffer workItemOutput = new StringBuffer();
-                                    billingSession.ifPresent(
-                                            billingSession1 -> workItemOutput.append(billingSession1.getBusinessKey())
-                                                    .append("-->"));
-                                    workItemOutput.append(workItemParam);
-                                    workItems.add(workItemOutput.toString());
-                                }
-                        );
-                    }
-
-                }
-                return workItems;
-            }
-        });
         return searchTerms;
     }
 
@@ -190,19 +171,24 @@ public class ProductOrderSearchDefinition {
         SearchTerm.CriteriaPath userIDCriteriaPath = new SearchTerm.CriteriaPath();
         userIDCriteriaPath.setPropertyName("createdBy");
         userIDTerm.setCriteriaPaths(Collections.singletonList(userIDCriteriaPath));
-        userIDTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+        searchTerms.add(userIDTerm);
+
+
+        SearchTerm userIdDisplayTerm = new SearchTerm();
+        userIdDisplayTerm.setName("Product Order Submitter");
+        userIdDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
                 Optional<BspUser> bspDisplayUser = Optional.of(context.getBspUserList().getById(order.getCreatedBy()));
                 StringBuilder userDisplayName = new StringBuilder();
-                
+
                 bspDisplayUser.ifPresent(bspUser -> userDisplayName.append(bspUser.getFullName()));
 
                 return userDisplayName.toString();
             }
         });
-        searchTerms.add(userIDTerm);
+
 
         SearchTerm pdoStatusTerm = new SearchTerm();
         pdoStatusTerm.setName("Order Status");
@@ -216,7 +202,7 @@ public class ProductOrderSearchDefinition {
         searchTerms.add(pdoStatusTerm);
 
         SearchTerm rpSearchTerm = new SearchTerm();
-        rpSearchTerm.setName("Research Project ID");
+        rpSearchTerm.setName("Research Project");
         SearchTerm.CriteriaPath rpCriteriaPath = new SearchTerm.CriteriaPath();
         rpCriteriaPath.setPropertyName("jiraTicketKey");
         rpCriteriaPath.setCriteria(Arrays.asList("ResearchProject", "researchProject"));
@@ -239,7 +225,7 @@ public class ProductOrderSearchDefinition {
         searchTerms.add(rpSearchTerm);
 
         SearchTerm lcsetTerm = new SearchTerm();
-        lcsetTerm.setName("LCSET");
+        lcsetTerm.setName("LCSET(s)");
         lcsetTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
         List<SearchTerm.CriteriaPath> lcsetPathList = new ArrayList<>();
 
@@ -339,7 +325,7 @@ public class ProductOrderSearchDefinition {
 
 
         SearchTerm sampleTerm = new SearchTerm();
-        sampleTerm.setName("Product Order Sample");
+        sampleTerm.setName("Product Order Sample(s)");
         SearchTerm.CriteriaPath sampleCriteriaPath = new SearchTerm.CriteriaPath();
         sampleCriteriaPath.setPropertyName("sampleName");
         sampleCriteriaPath.setCriteria(Arrays.asList("PDOSamples", "samples"));
