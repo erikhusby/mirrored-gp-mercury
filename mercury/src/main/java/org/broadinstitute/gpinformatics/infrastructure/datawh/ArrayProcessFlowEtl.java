@@ -71,7 +71,7 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
     @Override
-    Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
+    public Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
 
         ArrayDto arrayFlowDto = null;
 

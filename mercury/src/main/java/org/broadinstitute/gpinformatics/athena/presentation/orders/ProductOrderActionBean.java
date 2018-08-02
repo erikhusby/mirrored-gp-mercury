@@ -3622,7 +3622,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private Map<String, AttributeDefinition> getPdoAttributeDefinitions() {
         if (pdoSpecificDefinitions == null) {
-            pdoSpecificDefinitions = attributeArchetypeDao.findAttributeGroupByTypeAndName(
+            pdoSpecificDefinitions = attributeArchetypeDao.findAttributeNamesByTypeAndGroup(
                     AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
                     GenotypingProductOrderMapping.ATTRIBUTES_GROUP);
         }
