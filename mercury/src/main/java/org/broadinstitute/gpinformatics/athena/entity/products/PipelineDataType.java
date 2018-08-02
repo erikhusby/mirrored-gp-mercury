@@ -79,7 +79,6 @@ public class PipelineDataType  {
         PipelineDataType that = OrmUtil.proxySafeCast(o, PipelineDataType.class);
 
         return new EqualsBuilder()
-            .append(pipelineDataTypeId, that.pipelineDataTypeId)
             .append(isActive(), that.isActive())
             .append(getName(), that.getName())
             .isEquals();
@@ -88,7 +87,6 @@ public class PipelineDataType  {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-            .append(pipelineDataTypeId)
             .append(getName())
             .append(isActive())
             .toHashCode();
