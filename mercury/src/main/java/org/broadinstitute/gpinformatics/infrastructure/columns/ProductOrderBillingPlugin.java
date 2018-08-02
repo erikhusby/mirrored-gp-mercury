@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -21,7 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Plugin defined to assist in the display of billing session related data
  */
 public class ProductOrderBillingPlugin implements ListPlugin  {
     private static final String billingSessionHeaderKey = "billingSession";
@@ -43,12 +44,12 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                                               @Nonnull SearchContext context) {
 
         throw new UnsupportedOperationException("Method getData not implemented in ProductOrderBillingPlugin");
-
     }
 
     /**
-     * 
-     * @param entity  The entity for which to return any nested table data
+     * Defines the logic for extracting the billing session and ledger information and preparing them for display as
+     * a nested table
+     * @param entity  The entity, a product order in this case, for which to return any nested table data
      * @param columnTabulation Column definition for the nested table
      * @param context Any required helper objects passed in from callers (e.g. ConfigurableListFactory)
      * @return
@@ -91,14 +92,24 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
             Optional<String> sapDocumentIds =
                     Optional.ofNullable(stringPairEntry.getValue().getRight());
 
-            final List<String> cellList =
-                    new ArrayList(Arrays.asList(stringPairEntry.getKey(), workItemId.orElse(""), sapDocumentIds.orElse("")));
-            ConfigurableList.ResultRow row = new ConfigurableList.ResultRow(null,
-                    cellList,
-                    String.valueOf(count));
-            billingRows.add(row);
-            count++;
+            if(StringUtils.isNotBlank(stringPairEntry.getKey()) ||
+                    StringUtils.isNotBlank(workItemId.orElse("")) ||
+                    StringUtils.isNotBlank(sapDocumentIds.orElse(""))) {
+                final List<String> cellList =
+                        new ArrayList(Arrays.asList(stringPairEntry.getKey(), workItemId.orElse(""),
+                                sapDocumentIds.orElse("")));
+                ConfigurableList.ResultRow row = new ConfigurableList.ResultRow(null,
+                        cellList,
+                        String.valueOf(count));
+                billingRows.add(row);
+                count++;
+            }
         }
-        return new ConfigurableList.ResultList(billingRows, headers, 0, "ASC");
+        ConfigurableList.ResultList resultList = null;
+        if(CollectionUtils.isNotEmpty(billingRows)) {
+            resultList = new ConfigurableList.ResultList(billingRows, headers, 0, "ASC");
+        }
+
+        return resultList;
     }
 }
