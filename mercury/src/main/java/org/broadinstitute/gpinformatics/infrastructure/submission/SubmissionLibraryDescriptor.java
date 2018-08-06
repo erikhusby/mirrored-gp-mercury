@@ -98,15 +98,18 @@ public class SubmissionLibraryDescriptor implements Serializable {
             switch (dataType) {
             case "Exome":
             case "Whole Exome":
+            case "Whole Exome Sequencing":
                 descriptor = WHOLE_EXOME;
                 break;
             case "WGS":
             case "Genome":
             case "Whole Genome":
+            case "Human Whole Genome":
                 descriptor = WHOLE_GENOME;
                 break;
             case "RNA":
             case "RNA Seq":
+            case "RNA Sequencing":
                 descriptor = RNA_SEQ;
                 break;
             default:
