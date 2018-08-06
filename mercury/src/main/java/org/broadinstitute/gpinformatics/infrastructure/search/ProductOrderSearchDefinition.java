@@ -63,8 +63,14 @@ public class ProductOrderSearchDefinition {
                 "productOrderId", "sapReferenceOrders", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("BatchVessels",
                 "productOrderId", "samples", ProductOrder.class));
-        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("QuoteWOrk",
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("QuoteWork",
                 "productOrderId", "samples", ProductOrder.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("DeliveryDocs",
+                "productOrderId", "samples", ProductOrder.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("BilledQuote",
+                "productOrderId", "samples", ProductOrder.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("ResearchProject",
+                "productOrderId", "researchProject", ProductOrder.class));
 
         return new ConfigurableSearchDefinition(ColumnEntity.PRODUCT_ORDER, criteriaProjections, mapGroupSearchTerms);
     }
@@ -186,15 +192,19 @@ public class ProductOrderSearchDefinition {
         });
         searchTerms.add(userIdDisplayTerm);
 
+
         SearchTerm pdoStatusTerm = new SearchTerm();
         pdoStatusTerm.setName("Order Status");
         pdoStatusTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, SearchContext context) {
                 ProductOrder orderData = (ProductOrder)entity;
-                return orderData.getOrderStatus().getDisplayName();
+                return orderData.getOrderStatus();
             }
         });
+        SearchTerm.CriteriaPath orderStatusPath = new SearchTerm.CriteriaPath();
+        orderStatusPath.setPropertyName("orderStatus");
+        pdoStatusTerm.setCriteriaPaths(Collections.singletonList(orderStatusPath));
         searchTerms.add(pdoStatusTerm);
 
         SearchTerm rpSearchTerm = new SearchTerm();
@@ -266,7 +276,7 @@ public class ProductOrderSearchDefinition {
 
                 Set<String> batchNames = (HashSet<String>) entity;
                 StringBuffer uiOutput = new StringBuffer();
-                Pattern batchPattern = Pattern.compile("([LCSET]|[FCT])[-\\\\w]*");
+                Pattern batchPattern = Pattern.compile("([LCSET]|[FCT])[-\\w]*");
                 final String jiraBatchLinkFormat = "<a class=\"external\" target=\"JIRA\" href=\"" +
                         context.getJiraConfig().getUrlBase() + JiraLink.BROWSE + "%s\">%s</a>";
 
@@ -285,12 +295,6 @@ public class ProductOrderSearchDefinition {
         searchTerms.add(lcsetTerm);
 
 
-        SearchTerm orderStatusTerm = new SearchTerm();
-        orderStatusTerm.setName("Order Status");
-        SearchTerm.CriteriaPath orderStatusPath = new SearchTerm.CriteriaPath();
-        orderStatusPath.setPropertyName("orderStatus");
-        orderStatusTerm.setCriteriaPaths(Collections.singletonList(orderStatusPath));
-        searchTerms.add(orderStatusTerm);
 
         return searchTerms;
     }
@@ -313,16 +317,33 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
-                return ((ProductOrder) entity).getBusinessKey();// + " -- " +  order.getName();
+                return ((ProductOrder) entity).getBusinessKey() + " -- " +  order.getName();
             }
         });
         pdoJiraTicketTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
 
+                Pattern pdoPattern = Pattern.compile("PDO-\\w*");
+
                 String pdoOutput = (String) entity;
-                return "<a class=\"external\" target=\"new\" href=\"/Mercury/orders/order.action?view=&productOrder="
-                       + pdoOutput +"\">"+ pdoOutput +"</a>";
+                StringBuffer pdoLinkOutput = new StringBuffer();
+
+                Matcher pdoMatch = pdoPattern.matcher(pdoOutput);
+                final boolean matchIsFound = pdoMatch.find();
+                final String matchGroup;
+                if(matchIsFound) {
+                    matchGroup = pdoMatch.group();
+                    pdoLinkOutput
+                            .append("<a class=\"external\" target=\"new\" href=\"/Mercury/orders/order.action?view=&productOrder=")
+                            .append(matchGroup).append("\">");
+                }
+                pdoLinkOutput.append(pdoOutput);
+                if(matchIsFound) {
+                    pdoLinkOutput.append("</a>");
+                }
+
+                return pdoLinkOutput.toString();
             }
         });
         searchTerms.add(pdoJiraTicketTerm);

@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -58,11 +59,12 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
     public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation,
                                                           @Nonnull SearchContext context) {
         ProductOrder productOrder = (ProductOrder) entity;
+
         List<ConfigurableList.ResultRow> billingRows = new ArrayList<>();
 
         List<ConfigurableList.Header> headers = new ArrayList<>();
 
-        headers.add(new ConfigurableList.Header("", null, null));
+//        headers.add(new ConfigurableList.Header("", null, null));
         headers.add(mapTypeToHeader.get(billingSessionHeaderKey));
         headers.add(mapTypeToHeader.get(quoteWorkIdentifierHeader));
         headers.add(mapTypeToHeader.get(sapDeliveryDocumentHeader));
@@ -96,7 +98,8 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                     StringUtils.isNotBlank(workItemId.orElse("")) ||
                     StringUtils.isNotBlank(sapDocumentIds.orElse(""))) {
                 final List<String> cellList =
-                        new ArrayList(Arrays.asList(stringPairEntry.getKey(), workItemId.orElse(""),
+                        new ArrayList(Arrays.asList(getBillingSessionLink(stringPairEntry.getKey(),workItemId.orElse("")),
+                                getWorkItemLink(workItemId.orElse("")),
                                 sapDocumentIds.orElse("")));
                 ConfigurableList.ResultRow row = new ConfigurableList.ResultRow(null,
                         cellList,
@@ -111,5 +114,19 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         }
 
         return resultList;
+    }
+
+    @NotNull
+    public String getWorkItemLink(String workItemId) {
+        return workItemId;
+    }
+
+    public String getBillingSessionLink(String billingSession, String workItem) {
+        final StringBuffer replacementFormat = new StringBuffer("<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?billingSession=%s");
+        replacementFormat.append("&workId=%s");
+        replacementFormat.append("\">%s</a>");
+
+
+        return String.format(replacementFormat.toString(), billingSession, workItem, billingSession);
     }
 }
