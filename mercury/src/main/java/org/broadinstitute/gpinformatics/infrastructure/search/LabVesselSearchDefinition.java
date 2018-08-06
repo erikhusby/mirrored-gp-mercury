@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInstanceNameCache;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -355,10 +355,11 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 VolumeHistoryAddRowsListener volumeHistoryAddRowsListener = (VolumeHistoryAddRowsListener)
                         context.getRowsListener( VolumeHistoryAddRowsListener.class.getSimpleName() );
-                Pair<Date, BigDecimal> initialVolumeData = volumeHistoryAddRowsListener.getInitialVolumeData(labVessel.getLabel());
+                Triple<Date, BigDecimal, String> initialVolumeData = volumeHistoryAddRowsListener.getInitialVolumeData(labVessel.getLabel());
                 if( initialVolumeData != null ) {
-                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(initialVolumeData.getRight(), "")
-                     + " - " + ColumnValueType.DATE_TIME.format(initialVolumeData.getLeft(), "");
+                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(initialVolumeData.getMiddle(), "")
+                            + " - " + ColumnValueType.DATE.format(initialVolumeData.getLeft(), "")
+                            + " - " + initialVolumeData.getRight() ;
                 }
                 return value;
             }
@@ -375,13 +376,15 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 VolumeHistoryAddRowsListener volumeHistoryAddRowsListener = (VolumeHistoryAddRowsListener)
                         context.getRowsListener( VolumeHistoryAddRowsListener.class.getSimpleName() );
-                Collection<Pair<Date, BigDecimal>> volumeHistoryData = volumeHistoryAddRowsListener.getVolumeHistoryData(labVessel.getLabel());
+                Collection<Triple<Date, BigDecimal, String>> volumeHistoryData = volumeHistoryAddRowsListener.getVolumeHistoryData(labVessel.getLabel());
                 if( volumeHistoryData != null && volumeHistoryData.size() > 0 ) {
                     StringBuilder valueBuilder = new StringBuilder();
-                    for( Pair<Date, BigDecimal> initialVolumeData : volumeHistoryData ) {
-                        valueBuilder.append(ColumnValueType.TWO_PLACE_DECIMAL.format(initialVolumeData.getRight() , ""))
+                    for( Triple<Date, BigDecimal, String> initialVolumeData : volumeHistoryData ) {
+                        valueBuilder.append(ColumnValueType.TWO_PLACE_DECIMAL.format(initialVolumeData.getMiddle() , ""))
                                 .append(" - ")
                                 .append(  ColumnValueType.DATE_TIME.format(initialVolumeData.getLeft(), "") )
+                                .append(" - ")
+                                .append(initialVolumeData.getRight())
                         .append(", ");
                     }
                     value = valueBuilder.substring(0, valueBuilder.length() - 2);

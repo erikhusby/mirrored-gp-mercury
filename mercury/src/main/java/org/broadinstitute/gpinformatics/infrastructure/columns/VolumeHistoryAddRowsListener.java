@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -33,18 +33,18 @@ public class VolumeHistoryAddRowsListener implements ConfigurableList.AddRowsLis
      * No permission to create a type in DB, and JPA/Hibernate far too isolated from ability to use Oracle functionality
      */
     private final String auditQueryTemplate =
-            "select label, min( rev_date ) as rev_date, volume "
-          + "  from ( select a.label, r.rev_date, trunc(a.volume, 2) as volume "
+            "select label, min( rev_date ) as rev_date, volume, username "
+          + "  from ( select a.label, r.rev_date, trunc(a.volume, 2) as volume, r.username "
           + "           from lab_vessel_aud a "
           + "              , rev_info r "
           + "          where lab_vessel_id in ( :ids ) "
           + "            and a.rev = r.rev_info_id "
           + "            and a.volume is not null ) "
-          + "group by label, volume "
+          + "group by label, volume, username "
           + "order by label, rev_date ";
 
-    private Map<String, Pair<Date, BigDecimal>> mapIdToInitialVolumeData = new HashMap<>();
-    private MultiValuedMap<String, Pair<Date, BigDecimal>> mapIdToVolumeHistoryData = new ArrayListValuedHashMap();
+    private Map<String, Triple<Date, BigDecimal, String>> mapIdToInitialVolumeData = new HashMap<>();
+    private MultiValuedMap<String, Triple<Date, BigDecimal, String>> mapIdToVolumeHistoryData = new ArrayListValuedHashMap();
 
     public VolumeHistoryAddRowsListener() {
     }
@@ -85,12 +85,13 @@ public class VolumeHistoryAddRowsListener implements ConfigurableList.AddRowsLis
             String label = (String) cols[0];
             Date date = (Date) cols[1];
             BigDecimal volume = (BigDecimal) cols[2];
+            String username = (String) cols[3];
             // First row with new label is the initial volume
             if( !prevLabel.equals(label) ) {
-                mapIdToInitialVolumeData.put(label, Pair.of(date, volume));
+                mapIdToInitialVolumeData.put(label, Triple.of(date, volume, username));
                 prevLabel = label;
             }
-            mapIdToVolumeHistoryData.put(label, Pair.of(date, volume));
+            mapIdToVolumeHistoryData.put(label, Triple.of(date, volume, username));
         }
     }
 
@@ -99,11 +100,21 @@ public class VolumeHistoryAddRowsListener implements ConfigurableList.AddRowsLis
         mapIdToInitialVolumeData.clear();
     }
 
-    public Pair<Date, BigDecimal> getInitialVolumeData(String barcode) {
+    /**
+     * Earliest recorded row vessel volume
+     * @return Three values, left value is date volume was recorded, middle value is the recorded volume
+     *      , and right value is the person who recorded the measurement
+     */
+    public Triple<Date, BigDecimal, String> getInitialVolumeData(String barcode) {
         return mapIdToInitialVolumeData.get(barcode);
     }
 
-    public Collection<Pair<Date, BigDecimal>> getVolumeHistoryData(String barcode) {
+    /**
+     * A collection (list) of recorded row vessel volume changes
+     * @return Ascending list by date of three values, left value is date volume was recorded, middle value is the recorded volume
+     *      , and right value is the person who recorded the measurement
+     */
+    public Collection<Triple<Date, BigDecimal, String>> getVolumeHistoryData(String barcode) {
         return mapIdToVolumeHistoryData.get(barcode);
     }
 

@@ -50,14 +50,14 @@ public class VesselByEventTypeTraversalEvaluator extends CustomTraversalEvaluato
         boolean isTargetVesselSelected = "target".equals( resultParamValues.getSingleValue( ParamConfiguration.DataField.SRC_OR_TARGET.getFormFieldId() ) );
         boolean isStopAtFirstFind = "captureNearest".equals( resultParamValues.getSingleValue( ParamConfiguration.DataField.NEAREST.getFormFieldId() ) );
 
-        TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
-                = new TransferTraverserCriteria.VesselForEventTypeCriteria(eventTypes, isTargetVesselSelected, isStopAtFirstFind);
-
         PaginationUtil.Pagination pagination = searchInstance.getEvalContext().getPagination();
 
         for( LabVessel startingVessel : (List<LabVessel>) rootEntities ) {
 
-            // Starting vessel = starting vessel
+            TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
+                    = new TransferTraverserCriteria.VesselForEventTypeCriteria(eventTypes, isTargetVesselSelected, isStopAtFirstFind);
+
+            // Initialize with starting vessel = starting vessel
             pagination.addExtraIdInfo( startingVessel.getLabel(), startingVessel.getLabel() );
 
             VesselContainer<?> vesselContainer = startingVessel.getContainerRole();
