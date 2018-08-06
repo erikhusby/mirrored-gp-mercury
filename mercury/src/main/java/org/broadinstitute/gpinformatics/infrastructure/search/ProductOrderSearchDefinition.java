@@ -80,6 +80,7 @@ public class ProductOrderSearchDefinition {
         billingSessionPath.setPropertyName("billingSessionId");
         billingSessionPath.setCriteria(Arrays.asList("BillingSessions", "samples", "ledgerItems", "billingSession"));
         billingSessionTerm.setCriteriaPaths(Collections.singletonList(billingSessionPath));
+        billingSessionTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(billingSessionTerm);
 
         SearchTerm billingDisplayTerm = new SearchTerm();
@@ -95,40 +96,34 @@ public class ProductOrderSearchDefinition {
         quoteWorkPath.setPropertyName("workItem");
         quoteWorkPath.setCriteria(Arrays.asList("QuoteWork", "samples", "ledgerItems"));
         quoteWorkTerm.setCriteriaPaths(Collections.singletonList(quoteWorkPath));
+        quoteWorkTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(quoteWorkTerm);
 
-        SearchTerm sapOrderTerm = new SearchTerm();
 
+        SearchTerm sapDeliveryDocTerm = new SearchTerm();
+        sapDeliveryDocTerm.setName("SAP Delivery Document Id");
+        sapDeliveryDocTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        SearchTerm.CriteriaPath deliveryDocPath = new SearchTerm.CriteriaPath();
+        deliveryDocPath.setPropertyName("sapDeliveryDocumentId");
+        deliveryDocPath.setCriteria(Arrays.asList("DeliveryDocs", "samples", "ledgerItems"));
+        sapDeliveryDocTerm.setCriteriaPaths(Collections.singletonList(deliveryDocPath));
+        searchTerms.add(sapDeliveryDocTerm);
+
+
+        SearchTerm billedQuoteTerm = new SearchTerm();
+        billedQuoteTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        billedQuoteTerm.setName("Billed Quote");
+        SearchTerm.CriteriaPath billedQuotePath = new SearchTerm.CriteriaPath();
+        billedQuotePath.setPropertyName("quoteId");
+        billedQuotePath.setCriteria(Arrays.asList("BilledQuote", "samples", "ledgerItems"));
+        billedQuoteTerm.setCriteriaPaths(Collections.singletonList(billedQuotePath));
+        searchTerms.add(billedQuoteTerm);
+
+        
         return searchTerms;
     }
 
-    /**
-     * Encapsulates the logic to collect and aggregate Billing sessions with
-     * @param order
-     * @return
-     */
-    @NotNull
-    private List<String> getBillingSessionDisplay(ProductOrder order) {
-        List<String> billingSessionResults = new ArrayList<>();
-        final Multimap<BillingSession, String> samplesByBillingSession = LinkedListMultimap.create();
 
-        for (ProductOrderSample productOrderSample : order.getSamples()) {
-            for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
-                if(ledgerEntry.getBillingSession() != null) {
-                    samplesByBillingSession.put(ledgerEntry.getBillingSession(),
-                            productOrderSample.getName());
-                }
-            }
-        }
-
-        for (BillingSession billingSession : samplesByBillingSession.keys()) {
-            billingSessionResults.add(billingSession.getBusinessKey() + "-->("
-                                      + StringUtils.join(samplesByBillingSession.get(billingSession), ",") + ")");
-        }
-        return billingSessionResults;
-    }
-
-    @NotNull
     private ArrayList<SearchTerm> buildPDOSearchTerms() {
 
         ArrayList<SearchTerm> searchTerms = new ArrayList<>();
@@ -171,6 +166,7 @@ public class ProductOrderSearchDefinition {
         SearchTerm.CriteriaPath userIDCriteriaPath = new SearchTerm.CriteriaPath();
         userIDCriteriaPath.setPropertyName("createdBy");
         userIDTerm.setCriteriaPaths(Collections.singletonList(userIDCriteriaPath));
+        userIDTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(userIDTerm);
 
 
@@ -188,7 +184,7 @@ public class ProductOrderSearchDefinition {
                 return userDisplayName.toString();
             }
         });
-
+        searchTerms.add(userIdDisplayTerm);
 
         SearchTerm pdoStatusTerm = new SearchTerm();
         pdoStatusTerm.setName("Order Status");
@@ -287,6 +283,14 @@ public class ProductOrderSearchDefinition {
             }
         });
         searchTerms.add(lcsetTerm);
+
+
+        SearchTerm orderStatusTerm = new SearchTerm();
+        orderStatusTerm.setName("Order Status");
+        SearchTerm.CriteriaPath orderStatusPath = new SearchTerm.CriteriaPath();
+        orderStatusPath.setPropertyName("orderStatus");
+        orderStatusTerm.setCriteriaPaths(Collections.singletonList(orderStatusPath));
+        searchTerms.add(orderStatusTerm);
 
         return searchTerms;
     }
