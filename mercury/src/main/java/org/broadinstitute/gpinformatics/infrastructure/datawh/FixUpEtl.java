@@ -57,6 +57,7 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
     // Fixup events are layered on top of existing lab event output
     public final String ancestorFileName = "library_ancestry";
     public final String seqSampleFactFileName = "sequencing_sample_fact";
+    public final String arrayProcessFileName = "array_process";
 
 
     @Inject
@@ -64,6 +65,9 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
 
     @Inject
     SequencingSampleFactEtl sequencingSampleFactEtl;
+
+    @Inject
+    ArrayProcessFlowEtl arrayProcessFlowEtl;
 
     @Override
     Long entityId(FixupCommentary entity) {
@@ -103,6 +107,7 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
         DataFile eventDataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
         DataFile ancestryDataFile = new DataFile(dataFilename(etlDateStr, ancestorFileName));
         DataFile seqSampleDataFile = new DataFile(dataFilename(etlDateStr, seqSampleFactFileName));
+        DataFile arrayProcessDataFile = new DataFile(dataFilename(etlDateStr, arrayProcessFileName));
         int count = 0;
 
         try {
@@ -111,7 +116,7 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
 
                 try {
                     for (String record : dataRecords(etlDateStr, false, entity)) {
-                        // Split file writes between events and ancestry ...
+                        // Split file writes: E = event_fact, A = library_ancestry, S = sequencing_sample_fact, I = array_process
                         if( record.endsWith("E") ) {
                             eventDataFile.write(record);
                             count++;
@@ -120,6 +125,9 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
                             count++;
                         } else if ( record.endsWith("S") ) {
                             seqSampleDataFile.write(record);
+                            count++;
+                        } else if ( record.endsWith("I") ) {
+                            arrayProcessDataFile.write(record);
                             count++;
                         }
                     }
@@ -140,6 +148,7 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
             eventDataFile.close();
             ancestryDataFile.close();
             seqSampleDataFile.close();
+            arrayProcessDataFile.close();
         }
         return count;
     }
@@ -173,10 +182,13 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
 
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, FixupCommentary fixupCommentary) {
+
         Collection<String> records = new ArrayList<>();
         if (fixupCommentary == null) {
             return records;
         }
+
+        boolean coreEntitiesAreDetached = false;
 
         // Revision number of oldest (create) fixup is all we're interested in (otherwise we're handling a fixup of a fixup)
         Long fixupId = fixupCommentary.getFixupCommentaryId();
@@ -238,11 +250,25 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
                 }
             }
 
+            // Split the above into batches or this process will hoover up all the server memory on large fixups
+            //   , especially on events early in workflows
+            int count = 0;
+            for( Map.Entry<RevisionType,List<Object>> mapEntry : fixupObjects.entrySet() ) {
+                count += mapEntry.getValue().size();
+            }
+            if( count > ( JPA_CLEAR_THRESHOLD ) ) {
+                coreEntitiesAreDetached = true;
+                dao.clear();
+            }
+
             // Using base events, traverse target vessel descendant events and refresh all
-            Collection<LabEvent> eventsToRefresh = getEventsRelatedToAuditEvents( coreAuditEvents );
+            Collection<LabEvent> eventsToRefresh = getEventsRelatedToAuditEvents( coreAuditEvents, coreEntitiesAreDetached );
             Set<SequencingRun> sequencingRunsToRefresh = new HashSet<>();
             for( LabEvent evt : eventsToRefresh ) {
                 records.addAll( labEventEtl.dataRecords(etlDateStr, isDelete, evt) );
+                for( String arrayRecord : arrayProcessFlowEtl.dataRecords(etlDateStr, isDelete, evt) ) {
+                    records.add(arrayRecord + ",I");
+                }
 
                 // Capture sequencing runs in order to refresh sequencing sample fact data
                 LabVessel flowcell = null;
@@ -396,10 +422,19 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
     /**
      * Given a list of events pulled from audit trail, return production events which require ETL refresh
      */
-    private Collection<LabEvent> getEventsRelatedToAuditEvents(Set<LabEvent> auditEvents ){
+    private Collection<LabEvent> getEventsRelatedToAuditEvents(Set<LabEvent> auditEvents, boolean coreEntitiesAreDetached ){
         TransferTraverserCriteria.LabEventDescendantCriteria eventCriteria = new TransferTraverserCriteria.LabEventDescendantCriteria();
+        int count = 0;
 
         for( LabEvent evt : auditEvents ) {
+            count++;
+            if( coreEntitiesAreDetached && count % JPA_CLEAR_THRESHOLD == 0 ) {
+                dao.clear();
+            }
+
+            if( coreEntitiesAreDetached ) {
+                evt = dao.findById( LabEvent.class, evt.getLabEventId() );
+            }
 
             // Here is where we have to divert from envers.
             // We need to capture events/vessels created AFTER the fixup revision point in time)

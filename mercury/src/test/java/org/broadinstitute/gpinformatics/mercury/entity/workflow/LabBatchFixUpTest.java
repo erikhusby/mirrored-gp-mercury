@@ -1615,7 +1615,7 @@ public class LabBatchFixUpTest extends Arquillian {
      * <pre>
           SELECT 'EX-' || to_char(se.job_id) AS EXPORT_BATCH,
               'SM-' || se.sample_id AS sample_id,
-              to_char( se.export_date, 'mm/dd/yyyy hh24:mi' ) as export_date,
+              to_char( se.export_date, 'mm/dd/yyyy hh24:mi:ss' ) as export_date,
               se.exported_by,
               'CO-' || r.receptacle_group_id as rack,
               CHR( ASCII('A') + r.receptacle_row ) || substr( to_char( r.receptacle_column + 101 ), 2) as position,
@@ -1641,14 +1641,14 @@ public class LabBatchFixUpTest extends Arquillian {
         userTransaction.begin();
 
         // The data file to read (mercury\src\test\resources\testdata\2018_bsp_exports.txt)
-        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("2018_bsp_exports.txt"));
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("2017_Q1_Q2_bsp.txt"));
 
         // Tack on a dummy line to handle edge case of last batch in file
         lines.add("EX-EXPORTFAKE\tSM-FAKE\t01/01/1970 00:00\tjsacco\tCO-DUMMY\tA01\tBARCODE\t0");
 
         // We want a detailed log of all the activity
         String logDirName = System.getProperty("jboss.server.log.dir");
-        Writer processLogWriter = new FileWriter(logDirName + File.separator + "gplim5380_fixup.log", true);
+        Writer processLogWriter = new FileWriter(logDirName + File.separator + "gplim5380_2017_Q1_Q2_fixup.log", true);
         ToStringBuilder.setDefaultStyle(ToStringStyle.SHORT_PREFIX_STYLE);
         processLogWriter.write("======== STARTING GPLIM-5380 FIXUP =============\n");
         processLogWriter.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
@@ -1692,17 +1692,26 @@ public class LabBatchFixUpTest extends Arquillian {
                 // Persist data for previous batch
                 if( mapPositionToTube != null && !mapPositionToTube.isEmpty() ) {
                     processLogWriter.write("Verifying batch " + currentBatchName + "\n");
-                    TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
-                    LabVessel labVessel = labVesselDao.findByIdentifier(tubeFormation.getLabel());
+                    TubeFormation persistTubeFormation;
+                    TubeFormation dummyTubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+                    LabVessel labVessel = labVesselDao.findByIdentifier(dummyTubeFormation.getLabel());
                     if( labVessel != null ) {
                         processLogWriter.write(".. Tube formation exists in mercury\n");
-                        tubeFormation = OrmUtil.proxySafeCast(labVessel, TubeFormation.class);
+                        persistTubeFormation = OrmUtil.proxySafeCast(labVessel, TubeFormation.class);
                     } else {
                         processLogWriter.write(".. Tube formation DOES NOT exist in mercury\n");
+                        // Build it using attached tubes
+                        for(Map.Entry<VesselPosition,BarcodedTube> entry : mapPositionToTube.entrySet()) {
+                            LabVessel tube = labVesselDao.findByIdentifier(entry.getValue().getLabel());
+                            if( tube != null ) {
+                                entry.setValue(OrmUtil.proxySafeCast(tube, BarcodedTube.class));
+                            }
+                        }
+                        persistTubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
                     }
 
                     boolean foundImport = false;
-                    for( LabEvent labEvent : tubeFormation.getInPlaceLabEvents() ) {
+                    for( LabEvent labEvent : persistTubeFormation.getInPlaceLabEvents() ) {
                         if( labEvent.getLabEventType() == LabEventType.SAMPLE_IMPORT ) {
                             processLogWriter.write(".. Found in place SampleImport event for tube formation\n");
                             foundImport = true;
@@ -1710,11 +1719,12 @@ public class LabBatchFixUpTest extends Arquillian {
                         }
                     }
                     if( !foundImport ) {
-                        labVesselDao.persist(tubeFormation);
+                        labVesselDao.persist(persistTubeFormation);
 
                         LabVessel labVesselRack = labVesselDao.findByIdentifier(rackLabel);
                         if( labVesselRack == null ) {
                             rackOfTubes = new RackOfTubes(rackLabel, RackOfTubes.RackType.Matrix96);
+                            labVesselDao.persist(rackOfTubes);
                         } else if( OrmUtil.proxySafeIsInstance(labVesselRack, RackOfTubes.class)) {
                             rackOfTubes = OrmUtil.proxySafeCast(labVesselRack, RackOfTubes.class);
                         } else {
@@ -1722,12 +1732,12 @@ public class LabBatchFixUpTest extends Arquillian {
                         }
 
                         if( rackOfTubes != null ) {
-                            labVesselDao.persist(rackOfTubes);
-                            tubeFormation.addRackOfTubes(rackOfTubes);
+                            persistTubeFormation.addRackOfTubes(rackOfTubes);
                         }
-                        processLogWriter.write(".. Persisting in place SampleImport event for tube formation " + tubeFormation.getLabel() + ", rack " + rackOfTubes.getLabel() + "\n");
-                        tubeFormation.addInPlaceEvent( new LabEvent(LabEventType.SAMPLE_IMPORT, exportDate, "BSP", 1L + mapPositionToTube.size(), userId,
-                                "BSP"));
+                        processLogWriter.write(".. Persisting in place SampleImport event for tube formation " + dummyTubeFormation.getLabel() + ", rack " + rackOfTubes.getLabel() + "\n");
+                        persistTubeFormation.addInPlaceEvent( new LabEvent(LabEventType.SAMPLE_IMPORT, exportDate, "BSP", 1L, userId,
+                            "BSP"));
+                        labVesselDao.flush();
                     }
                 }
 
@@ -1744,19 +1754,28 @@ public class LabBatchFixUpTest extends Arquillian {
 
             // All is persisted at new batch - get data for current line and build out tube formation
             exportDate  = dateFormat.parse(tokens[2]);
+            // Bump up a second, clashing on disambiguator uniqueness
+            exportDate  = new Date(exportDate.getTime() + 1000L );
             userLogin = tokens[3];
             userId = bspUserList.getByUsername(userLogin).getUserId();
             rackLabel = tokens[4];
-            position = VesselPosition.getByName(tokens[5]);
+            if( tokens[5].isEmpty() ) {
+                position = null;
+            } else {
+                position = VesselPosition.getByName(tokens[5]);
+            }
             tubeLabel = tokens[6];
             vesselCount = Integer.parseInt(tokens[7]);
 
             if( labBatch.getLabBatchStartingVessels().size() != vesselCount ) {
                 // Mercury does not match BSP?
-                processLogWriter.write("BSP tube count (" + vesselCount + ") does not match mercury batch starting vessel count (" + labBatch.getLabBatchStartingVessels().size() + ")\n");
+                processLogWriter.write(labBatch.getBatchName() + " BSP tube count (" + vesselCount + ") does not match mercury batch starting vessel count (" + labBatch.getLabBatchStartingVessels().size() + ")\n");
             }
 
-            mapPositionToTube.put(position, new BarcodedTube(tubeLabel));
+            // Strange cases from BSP - no barcode, barcode = "null", no position,  from BSP  !tubeLabel.isEmpty() &&
+            if( !tubeLabel.isEmpty() && !"null".equals(tubeLabel) && position != null && rackLabel.length() > 9 ) {
+                mapPositionToTube.put(position, new BarcodedTube(tubeLabel));
+            }
 
         }
 
@@ -1766,7 +1785,6 @@ public class LabBatchFixUpTest extends Arquillian {
 
         processLogWriter.write("======== FINISHED GPLIM-5380 FIXUP =============\n");
         processLogWriter.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
-        processLogWriter.flush();
         processLogWriter.close();
     }
 

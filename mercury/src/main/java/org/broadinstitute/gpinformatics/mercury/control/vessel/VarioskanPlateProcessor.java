@@ -44,10 +44,18 @@ public class VarioskanPlateProcessor extends TableProcessor {
     private List<String> headers;
     private List<PlateWellResult> plateWellResults = new ArrayList<>();
     private LabMetric.MetricType metricType;
+    private final boolean extrapolateIfNaN;
+    private final VarioskanPlateProcessorTwoCurve.PicoCurve curve;
 
     public VarioskanPlateProcessor(String sheetName, LabMetric.MetricType metricType) {
+        this(sheetName, metricType, true, VarioskanPlateProcessorTwoCurve.PicoCurve.BROAD_RANGE);
+    }
+
+    public VarioskanPlateProcessor(String sheetName, LabMetric.MetricType metricType, boolean extrapolateIfNaN, VarioskanPlateProcessorTwoCurve.PicoCurve curve) {
         super(sheetName);
         this.metricType = metricType;
+        this.extrapolateIfNaN = extrapolateIfNaN;
+        this.curve = curve;
     }
 
     @Override
@@ -69,12 +77,25 @@ public class VarioskanPlateProcessor extends TableProcessor {
         private String plateBarcode;
         private VesselPosition vesselPosition;
         private BigDecimal result;
+        private boolean naN;
+        private VarioskanPlateProcessorTwoCurve.PicoCurve curve;
+        private BigDecimal value;
+        private boolean overTheCurve = false;
 
         public PlateWellResult(String plateBarcode,
-                VesselPosition vesselPosition, BigDecimal result) {
+                               VesselPosition vesselPosition, BigDecimal result) {
+            this(plateBarcode, vesselPosition, result, false, VarioskanPlateProcessorTwoCurve.PicoCurve.BROAD_RANGE,
+                    null);
+        }
+
+        public PlateWellResult(String plateBarcode, VesselPosition vesselPosition, BigDecimal result, boolean naN,
+                               VarioskanPlateProcessorTwoCurve.PicoCurve curve, BigDecimal value) {
             this.plateBarcode = plateBarcode;
             this.vesselPosition = vesselPosition;
             this.result = result;
+            this.naN = naN;
+            this.curve = curve;
+            this.value = value;
         }
 
         public String getPlateBarcode() {
@@ -87,6 +108,26 @@ public class VarioskanPlateProcessor extends TableProcessor {
 
         public BigDecimal getResult() {
             return result;
+        }
+
+        public boolean isNaN() {
+            return naN;
+        }
+
+        public void setResult(BigDecimal result) {
+            this.result = result;
+        }
+
+        public BigDecimal getValue() {
+            return value;
+        }
+
+        public void setOverTheCurve(boolean overTheCurve) {
+            this.overTheCurve = overTheCurve;
+        }
+
+        public boolean isOverTheCurve() {
+            return overTheCurve;
         }
     }
 
@@ -111,17 +152,22 @@ public class VarioskanPlateProcessor extends TableProcessor {
                     try {
                         BigDecimal bigDecimal;
                         if (result.equals("NaN")) {
-                            if (metricType == LabMetric.MetricType.PLATING_RIBO) {
-                                throw new RuntimeException("NaN not currently supported for RIBO");
+                            if (extrapolateIfNaN) {
+                                if (metricType == LabMetric.MetricType.PLATING_RIBO) {
+                                    throw new RuntimeException("NaN not currently supported for RIBO");
+                                }
+                                // result = 0.73 * value + 0.69
+                                bigDecimal =
+                                        new BigDecimal(value).multiply(new BigDecimal("0.73"))
+                                                .add(new BigDecimal("0.69"));
+                            } else {
+                                bigDecimal = null;
                             }
-                            // result = 0.73 * value + 0.69
-                            bigDecimal =
-                                    new BigDecimal(value).multiply(new BigDecimal("0.73")).add(new BigDecimal("0.69"));
                         } else {
                             bigDecimal = new BigDecimal(result);
                         }
                         bigDecimal = MathUtils.scaleTwoDecimalPlaces(bigDecimal);
-                        plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal));
+                        plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal, bigDecimal == null, curve, new BigDecimal(value)));
                     } catch (NumberFormatException e) {
                         addDataMessage("Failed to parse number " + result, dataRowIndex);
                     }
