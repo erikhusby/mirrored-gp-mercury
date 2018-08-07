@@ -386,13 +386,6 @@ public class ProductOrderEjb {
                         final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange,allProductsOrdered,
                                 effectivePricesForProducts, messageCollection, priceChangeForNewOrder, true);
 
-                        // Create orders for any Child orders that does not share
-                        for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
-                            if(!ProductOrder.sharesSAPOrderWithParent(childOrder, newSapOrderNumber)) {
-                                createOrderInSAP(childOrder, quoteIdChange, allProductsOrdered, effectivePricesForProducts,
-                                        messageCollection, priceChangeForNewOrder, true);
-                            }
-                        }
 
                 } else if(orderToPublish.isSavedInSAP()){
 
@@ -506,13 +499,7 @@ public class ProductOrderEjb {
             String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
                           " is being associated with a new quote by "+
                           userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
-            for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
-                if(ProductOrder.sharesSAPOrderWithParent(childOrder, oldNumber)) {
-                    childOrder.addSapOrderDetail(orderToPublish.latestSapOrderDetail());
-                }
-            }
-
-//            sendSapOrderShortCloseRequest(body);
+            sendSapOrderShortCloseRequest(body);
         }
         orderToPublish.setPriorToSAP1_5(false);
         messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
@@ -1374,7 +1361,7 @@ public class ProductOrderEjb {
 
     private void conditionallyShortCloseOrder(ProductOrder productOrder) throws SAPInterfaceException {
 
-        ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(productOrder);
+        ProductOrder targetSapPdo = productOrder;
 
         if(targetSapPdo.isSavedInSAP() &&
            ((targetSapPdo.allOrdersAreComplete() &&
@@ -1423,29 +1410,39 @@ public class ProductOrderEjb {
      * @param jiraTicketKey the order's JIRA key
      * @param sampleIds     the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
-     * @param reporter
+     * @param messageCollection
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> sampleIds,
-                                 @Nonnull String comment, @Nonnull MessageCollection reporter)
+                                 @Nonnull String comment, @Nonnull MessageCollection messageCollection)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException, SAPInterfaceException {
 
         List<ProductOrderSample> samples = productOrderSampleDao.findListByList(ProductOrderSample.class,
                 ProductOrderSample_.productOrderSampleId, sampleIds);
 
-        if (!StringUtils.isBlank(comment)) {
-            for (ProductOrderSample sample : samples) {
-                if (sample.getDeliveryStatus() == DeliveryStatus.ABANDONED) {
-                    sample.setSampleComment(comment);
+            Iterator<ProductOrderSample> unAbandonedSamples = samples.iterator();
+
+            while(unAbandonedSamples.hasNext()) {
+                ProductOrderSample sample = unAbandonedSamples.next();
+
+                if(sample.getDeliveryStatus() != DeliveryStatus.ABANDONED) {
+                    unAbandonedSamples.remove();
+                } else {
+                    if(StringUtils.isNotBlank(comment)) {
+                        sample.setSampleComment(comment);
+                    }
                 }
             }
+
+        if(CollectionUtils.isNotEmpty(samples)) {
+            transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
+                    DeliveryStatus.NOT_STARTED, samples, comment, messageCollection);
+            messageCollection.addInfo("Un-Abandoned samples: " +
+                                      StringUtils.join(ProductOrderSample.getSampleNames(samples), ", ") +".");
+        } else {
+            messageCollection.addError("You cannot un-abandon samples since you have not selected any samples that are Abandoned");
         }
 
-        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
-                DeliveryStatus.NOT_STARTED, samples, comment, reporter);
-
-        reporter.addInfo("Un-Abandoned samples: {0}.",
-                StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
     }
 
     /**
