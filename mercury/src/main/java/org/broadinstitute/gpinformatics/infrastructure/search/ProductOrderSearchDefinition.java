@@ -1,11 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
@@ -71,6 +67,10 @@ public class ProductOrderSearchDefinition {
                 "productOrderId", "samples", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("ResearchProject",
                 "productOrderId", "researchProject", ProductOrder.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOKey",
+                "productOrderId", "jiraTicketKey", ProductOrder.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("OrderQuote",
+                "productOrderId", "productOrderId", ProductOrder.class));
 
         return new ConfigurableSearchDefinition(ColumnEntity.PRODUCT_ORDER, criteriaProjections, mapGroupSearchTerms);
     }
@@ -154,6 +154,7 @@ public class ProductOrderSearchDefinition {
         quoteTerm.setName("Quote Identifier");
         SearchTerm.CriteriaPath quoteCriteraPath = new SearchTerm.CriteriaPath();
         quoteCriteraPath.setPropertyName("quoteId");
+        quoteCriteraPath.setCriteria(Arrays.asList("OrderQuote"));
         quoteTerm.setCriteriaPaths(Collections.singletonList(quoteCriteraPath));
         quoteTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -202,10 +203,20 @@ public class ProductOrderSearchDefinition {
                 return orderData.getOrderStatus();
             }
         });
+        pdoStatusTerm.setSearchValueConversionExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public ProductOrder.OrderStatus evaluate(Object entity, SearchContext context) {
+
+                String statusSearchValue = context.getSearchValueString();
+
+                return ProductOrder.OrderStatus.valueOf(statusSearchValue);
+            }
+        });
         SearchTerm.CriteriaPath orderStatusPath = new SearchTerm.CriteriaPath();
         orderStatusPath.setPropertyName("orderStatus");
         pdoStatusTerm.setCriteriaPaths(Collections.singletonList(orderStatusPath));
         searchTerms.add(pdoStatusTerm);
+
 
         SearchTerm rpSearchTerm = new SearchTerm();
         rpSearchTerm.setName("Research Project");
@@ -312,6 +323,7 @@ public class ProductOrderSearchDefinition {
         pdoJiraTicketTerm.setDbSortPath("jiraTicketKey");
         SearchTerm.CriteriaPath pdoTicketCriteriaPath = new SearchTerm.CriteriaPath();
         pdoTicketCriteriaPath.setPropertyName("jiraTicketKey");
+        pdoTicketCriteriaPath.setCriteria(Arrays.asList("PDOKey"));
         pdoJiraTicketTerm.setCriteriaPaths(Collections.singletonList(pdoTicketCriteriaPath));
         pdoJiraTicketTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -375,7 +387,8 @@ public class ProductOrderSearchDefinition {
         sapOrderTerm.setName("SAP Order Id");
         SearchTerm.CriteriaPath sapCriteriaPath = new SearchTerm.CriteriaPath();
         sapCriteriaPath.setPropertyName("sapOrderNumber");
-        sapCriteriaPath.setCriteria(Arrays.asList("SAPOrders", "sapReferenceOrders"));
+//        sapCriteriaPath.setCriteria(Arrays.asList("SAPOrders", "sapReferenceOrders"));
+        sapCriteriaPath.setCriteria(Arrays.asList("SAPOrders"));
         sapOrderTerm.setCriteriaPaths(Collections.singletonList(sapCriteriaPath));
         sapOrderTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
