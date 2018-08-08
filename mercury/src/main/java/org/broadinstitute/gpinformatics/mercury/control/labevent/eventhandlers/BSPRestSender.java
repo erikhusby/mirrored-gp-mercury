@@ -179,10 +179,6 @@ public class BSPRestSender implements Serializable {
                             receptacleType.getMetadata().add(metadataType);
                         }
                     }
-
-                    // Check to see whether the event expects to handle sources in a unique way.
-                    addSourceHandlingException(targetEvent.getLabEventType(), plateCherryPickEvent.getSourcePlate(),
-                            plateCherryPickEvent.getSourcePositionMap());
                 } else {
                     // Queue up tubes to remove from position maps
                     ReceptacleType sourceReceptacleType = mapSourcePosToReceptacle.get(sourceVesselPosition);
@@ -316,6 +312,14 @@ public class BSPRestSender implements Serializable {
         for (PlateTransferEventType plateTransferEventType : message.getPlateTransferEvent()) {
             LabEventType labEventType = LabEventType.getByName(plateTransferEventType.getEventType());
             if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP) {
+                // If there is a sourcePositionMap create a list to handle.
+                List<PositionMapType> sourcePositionMapList = plateTransferEventType.getSourcePositionMap() != null ?
+                        Collections.singletonList(plateTransferEventType.getSourcePositionMap()) : null;
+
+                List<PlateType> sourcePlateType = plateTransferEventType.getSourcePlate() != null ?
+                        Collections.singletonList(plateTransferEventType.getSourcePlate()) : null;
+                addSourceHandlingException(labEventType, sourcePlateType, sourcePositionMapList);
+
                 if (labEventType.getTranslateBspMessage() == LabEventType.TranslateBspMessage.SECTION_TO_CHERRY) {
                     PlateCherryPickEvent plateCherryPickEvent = plateTransferToCherryPick(plateTransferEventType,
                             labEvents);
@@ -324,13 +328,6 @@ public class BSPRestSender implements Serializable {
                         atLeastOneEvent = true;
                     }
                 } else {
-                    // If there is a sourcePositionMap create a list to handle.
-                    List<PositionMapType> sourcePositionMapList = plateTransferEventType.getSourcePositionMap() != null ?
-                            Collections.singletonList(plateTransferEventType.getSourcePositionMap()) : null;
-
-                    List<PlateType> sourcePlateType = plateTransferEventType.getSourcePlate() != null ?
-                            Collections.singletonList(plateTransferEventType.getSourcePlate()) : null;
-                    addSourceHandlingException(labEventType, sourcePlateType, sourcePositionMapList);
                     copy.getPlateTransferEvent().add(plateTransferEventType);
                     atLeastOneEvent = true;
                 }
