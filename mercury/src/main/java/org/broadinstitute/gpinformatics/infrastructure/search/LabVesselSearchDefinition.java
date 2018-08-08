@@ -2493,7 +2493,7 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Latest Container and Position");
+        searchTerm.setName("Most Recent Rack and Event");
         searchTerm.setPluginClass(LabVesselLatestPositionPlugin.class);
         searchTerms.add(searchTerm);
 

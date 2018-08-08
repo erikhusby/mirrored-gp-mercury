@@ -412,7 +412,7 @@ public class ConfigurableSearchTest extends Arquillian {
         searchValue.setValues(Arrays.asList("0157493754","0175362315"));
 
         searchInstance.getPredefinedViewColumns().add("Barcode");
-        searchInstance.getPredefinedViewColumns().add("Latest Container and Position");
+        searchInstance.getPredefinedViewColumns().add("Most Recent Rack and Event");
 
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                 searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);
@@ -421,8 +421,10 @@ public class ConfigurableSearchTest extends Arquillian {
         Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "0157493754");
         Assert.assertEquals(resultRows.get(0).getRenderableCells().get(1), "000006677301");
         Assert.assertEquals(resultRows.get(0).getRenderableCells().get(2), "A06");
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(3), "Hybridization, 03/03/2014, Cassie Crawford");
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "0175362315");
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000003038103");
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(2), "E09");
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(3), "FingerprintingPlateSetup, 10/29/2014, Michael Wilson");
     }
 }

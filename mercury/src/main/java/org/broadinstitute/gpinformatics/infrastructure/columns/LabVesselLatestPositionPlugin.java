@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -13,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -33,7 +33,8 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
 
     private enum PluginColumn implements Displayable {
         RACK_BARCODE("Latest Rack"),
-        POSITION("Latest Rack Position");
+        POSITION("Latest Rack Position"),
+        EVENT("Latest Event on Tube or Rack");
 
         private String displayName;
         private ConfigurableList.Header header;
@@ -55,9 +56,9 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
     }
 
     /**
-     * Gathers newest rack and position (if applicable) and associates with LabVessel row in search results.
+     * Gathers newest rack, position, and event (if applicable) and associates with LabVessel row in search results.
      *
-     * @param entityList  List of LabVessel entities for which to return rack and position data
+     * @param entityList  List of LabVessel entities for which to return rack, position, and event data
      * @param headerGroup List of headers associated with columns selected by user.
      * @param context     SearchContext - Nothing required within, not used
      *
@@ -74,26 +75,31 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
             headerGroup.addHeader(column.getHeader());
         }
 
-        // Populate row plugin columns with any available rack and position data.
+        // Populate row plugin columns with any available rack, position, and event data.
         for (LabVessel labVessel : labVesselList) {
             ConfigurableList.Row row = new ConfigurableList.Row(labVessel.getLabel());
 
-            Pair<RackOfTubes, VesselPosition> rackAndPosition = findRackAndPositionFromTube( labVessel );
+            Triple<RackOfTubes, VesselContainer<BarcodedTube>, LabEvent> rackAndTubesData = findRackAndTubesData( labVessel );
 
-            if (rackAndPosition == null) {
+            if (rackAndTubesData == null) {
                 // Empty cells
                 for (PluginColumn column : PluginColumn.values()) {
                     row.addCell(new ConfigurableList.Cell(column.getHeader(), "", ""));
                 }
             } else {
                 // Rack
-                String cellValue = rackAndPosition.getLeft().getLabel();
+                String cellValue = rackAndTubesData.getLeft().getLabel();
                 row.addCell(new ConfigurableList.Cell(PluginColumn.RACK_BARCODE.getHeader(), cellValue, cellValue));
 
                 // Position
-                cellValue = rackAndPosition.getRight().toString();
+                cellValue = rackAndTubesData.getMiddle().getPositionOfVessel(labVessel).toString();
                 row.addCell(
                         new ConfigurableList.Cell(PluginColumn.POSITION.getHeader(), cellValue, cellValue));
+
+                // Event
+                cellValue = getEventDisplay( rackAndTubesData.getRight(), context );
+                row.addCell(
+                        new ConfigurableList.Cell(PluginColumn.EVENT.getHeader(), cellValue, cellValue));
             }
             eventRows.add(row);
         }
@@ -109,13 +115,13 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
     }
 
     /**
-     * Try to find rack and position associated with a tube
-     * Initially use the newest event associated with the containers (tube formations) a tube is in
-     * Fallback to newest rack created for newest tube formation a tube is in
+     * Try to find rack, tube formation, and newest event associated with a tube
+     * Initially use the newest event associated with the tube containers (tube formations)
+     * Fallback to newest rack created for tube's newest tube formation
      */
-    private Pair<RackOfTubes, VesselPosition> findRackAndPositionFromTube( LabVessel labVessel ) {
+    private Triple<RackOfTubes, VesselContainer<BarcodedTube>, LabEvent> findRackAndTubesData(LabVessel labVessel ) {
         BarcodedTube tube;
-        Pair<RackOfTubes, VesselPosition> rackAndPosition = null;
+        Triple<RackOfTubes, VesselContainer<BarcodedTube>, LabEvent> rackAndTubesData = null;
         boolean useTarget;
 
         // This works on tubes only, ignore all else
@@ -125,46 +131,70 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
             tube = OrmUtil.proxySafeCast( labVessel, BarcodedTube.class );
         }
 
-        LabEvent latestEvent;
+        LabEvent latestInPlaceEvent = null;
+        LabEvent latestXferEvent = null;
+        boolean latestIsInPlaceEvent = false;
 
         // Tube containers(embedder) are always TubeFormations
         Set<VesselContainer<?>> containers = tube.getVesselContainers();
         TreeSet<LabEvent> events = new TreeSet<>(LabEvent.BY_EVENT_DATE);
 
+        // Try transfers from first, should always be latest transfer event
+        // In place events will always be before a transfer from so ignore
         for (VesselContainer<?> vesselContainer : containers ) {
             events.addAll(vesselContainer.getTransfersFrom());
         }
 
         if( !events.isEmpty() ) {
-            latestEvent = events.last();
+            latestXferEvent = events.last();
             useTarget = false;
         } else {
+
+            // Transfers to may also have later in place events
+            events.addAll( tube.getInPlaceEventsWithContainers() );
+            if( !events.isEmpty() ) {
+                latestInPlaceEvent = events.last();
+                events.clear();
+            }
+
             // Try tranfers to
             for (VesselContainer<?> vesselContainer : containers ) {
                 events.addAll(vesselContainer.getTransfersToWithRearrays());
             }
 
-            // Give up and die here
+            // Give up and die here if no transfers to, tubes are empty so irrelevant
             if( events.isEmpty() ) {
                 return null;
             } else {
-                latestEvent = events.last();
+                latestXferEvent = events.last();
                 useTarget = true;
+                if( latestInPlaceEvent != null && latestInPlaceEvent.getEventDate().compareTo(latestXferEvent.getEventDate()) > 0 ) {
+                    latestIsInPlaceEvent = true;
+                }
             }
         }
 
         // Still here so now we need the rack barcode of the tube formation and the tube's position
-        rackAndPosition = getRackAndPosition( latestEvent, tube, useTarget );
+        if( !latestIsInPlaceEvent ) {
+            rackAndTubesData = getRackAndPosition(latestXferEvent, tube, useTarget);
+        }
 
         // Possibly null due to ancillary vessel logic being added around Aug 2014.
         //  Handle any earlier cases? tube --> containers --> getRacksOfTubes().size() == 1
         //          return tube.getRacksOfTubes().iterator().next().getLabel();
-        if( rackAndPosition == null ) {
-            rackAndPosition = tryLegacyGetRackAndPosition(tube);
+        if( rackAndTubesData != null && rackAndTubesData.getLeft() == null ) {
+            RackOfTubes rack = tryLegacyGetRackAndPosition(rackAndTubesData.getMiddle().getEmbedder());
+            if( rack != null ) {
+                rackAndTubesData = Triple.of(rack, rackAndTubesData.getMiddle(), rackAndTubesData.getRight() );
+            }
+        }
+
+        if ( rackAndTubesData != null && latestIsInPlaceEvent ) {
+            rackAndTubesData = Triple.of( rackAndTubesData.getLeft(), rackAndTubesData.getMiddle(), latestInPlaceEvent );
         }
 
         // Possibly null
-        return rackAndPosition;
+        return rackAndTubesData;
     }
 
 
@@ -172,7 +202,7 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
      * Logic for events targeting tube formations
      * Similar to LabEventSearchDefinition.getLabelFromTubeFormation()
      */
-    private Pair<RackOfTubes, VesselPosition> getRackAndPosition( LabEvent labEvent, BarcodedTube tube, boolean useTarget ){
+    private Triple<RackOfTubes, VesselContainer<BarcodedTube>, LabEvent> getRackAndPosition( LabEvent labEvent, BarcodedTube tube, boolean useTarget ){
         LabVessel rack = null;
         VesselContainer vesselContainer = null;
 
@@ -183,10 +213,10 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
                 vesselContainer = rack==null?null:xfer.getTargetVesselContainer();
             } else {
                 rack = xfer.getAncillarySourceVessel();
-                vesselContainer = rack==null?null:xfer.getSourceVesselContainer();
+                vesselContainer = xfer.getSourceVesselContainer();
             }
             if( vesselContainer != null ) {
-                return Pair.of( OrmUtil.proxySafeCast( rack, RackOfTubes.class ), vesselContainer.getPositionOfVessel(tube) );
+                return Triple.of( OrmUtil.proxySafeCast( rack, RackOfTubes.class ), vesselContainer, labEvent );
             }
         }
 
@@ -194,13 +224,13 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
         for (CherryPickTransfer xfer : labEvent.getCherryPickTransfers() ) {
             if( useTarget ) {
                 rack = xfer.getAncillaryTargetVessel();
-                vesselContainer = rack==null?null:xfer.getTargetVesselContainer();
+                vesselContainer = xfer.getTargetVesselContainer();
             } else {
                 rack = xfer.getAncillarySourceVessel();
-                vesselContainer = rack==null?null:xfer.getSourceVesselContainer();
+                vesselContainer = xfer.getSourceVesselContainer();
             }
             if( vesselContainer != null ) {
-                return Pair.of( OrmUtil.proxySafeCast( rack, RackOfTubes.class ), vesselContainer.getPositionOfVessel(tube) );
+                return Triple.of( OrmUtil.proxySafeCast( rack, RackOfTubes.class ), vesselContainer, labEvent );
             }
         }
 
@@ -208,10 +238,10 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
         if( useTarget ) {
             for(VesselToSectionTransfer xfer : labEvent.getVesselToSectionTransfers() ) {
                 rack = xfer.getAncillaryTargetVessel();
-                vesselContainer = rack==null?null:xfer.getTargetVesselContainer();
+                vesselContainer = xfer.getTargetVesselContainer();
             }
             if( vesselContainer != null ) {
-                return Pair.of( OrmUtil.proxySafeCast( rack, RackOfTubes.class ), vesselContainer.getPositionOfVessel(tube) );
+                return Triple.of( OrmUtil.proxySafeCast( rack, RackOfTubes.class ), vesselContainer, labEvent );
             }
         }
 
@@ -226,20 +256,13 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
      *  simply finding the tube formation with the latest creation date and getting its
      *  rack reference with the latest creation date.
      */
-    private Pair<RackOfTubes, VesselPosition> tryLegacyGetRackAndPosition(BarcodedTube tube) {
-        TubeFormation latestTubeFormation = null;
+    private RackOfTubes tryLegacyGetRackAndPosition(LabVessel latestTubeFormation) {
         RackOfTubes latestRack = null;
         Date previousCreatedOn = new Date(0L );
-        for( LabVessel vesselContainer : tube.getContainers() ) {
-            if( vesselContainer.getCreatedOn().compareTo(previousCreatedOn) > 0 ) {
-                latestTubeFormation = OrmUtil.proxySafeCast(vesselContainer, TubeFormation.class);
-                previousCreatedOn = vesselContainer.getCreatedOn();
-            }
-        }
+
 
         if( latestTubeFormation != null ) {
-            previousCreatedOn = new Date(0L );
-            for( RackOfTubes rack : latestTubeFormation.getRacksOfTubes()) {
+            for( RackOfTubes rack : OrmUtil.proxySafeCast( latestTubeFormation, TubeFormation.class ).getRacksOfTubes()) {
                 if( rack.getCreatedOn().compareTo(previousCreatedOn) > 0 ) {
                     latestRack = OrmUtil.proxySafeCast(rack, RackOfTubes.class);
                     previousCreatedOn = rack.getCreatedOn();
@@ -248,9 +271,31 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
         }
 
         if( latestRack != null ) {
-            return Pair.of( latestRack, latestTubeFormation.getContainerRole().getPositionOfVessel(tube) );
+            return latestRack;
         } else {
             return null;
+        }
+    }
+
+    /**
+     * Formats event data for single column output
+     * @return Space delimited event type, date, and user
+     */
+    private String getEventDisplay( LabEvent event, SearchContext context ) {
+        if( event == null ) {
+            return "";
+        }
+
+        Long userId = event.getEventOperator();
+        BspUser user = context.getBspUserList().getById(userId);
+
+        if( user != null ) {
+            return event.getLabEventType().getName()
+                   + ", " + ColumnValueType.DATE.format( event.getEventDate(), "" )
+                   + ", " + user.getFullName();
+        } else {
+            return event.getLabEventType().getName()
+                   + ", " + ColumnValueType.DATE.format(event.getEventDate(), "" );
         }
     }
 
