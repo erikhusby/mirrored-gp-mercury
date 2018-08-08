@@ -564,7 +564,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public int getLaneCount() {
-        return (isChildOrder())?parentOrder.getLaneCount():laneCount;
+        return laneCount;
     }
 
     public void setLaneCount(int laneCount) {
@@ -694,7 +694,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public List<ProductOrderAddOn> getAddOns() {
-        return isChildOrder()?parentOrder.getAddOns():ImmutableList.copyOf(addOns);
+        return ImmutableList.copyOf(addOns);
     }
 
     public void updateAddOnProducts(List<Product> addOnList) {
@@ -735,7 +735,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public ResearchProject getResearchProject() {
-        return isChildOrder()?parentOrder.getResearchProject():researchProject;
+        return researchProject;
     }
 
     public void setResearchProject(ResearchProject researchProject) {
@@ -749,7 +749,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public Product getProduct() {
-        return isChildOrder()?parentOrder.getProduct():product;
+        return product;
     }
 
     public void setProduct(Product product) throws InvalidProductException {
@@ -762,7 +762,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getQuoteId() {
-        return isChildOrder()?parentOrder.getQuoteId():quoteId;
+        return quoteId;
     }
 
     public void setQuoteId(String quoteId) {
@@ -1170,7 +1170,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
 
     public Collection<RegulatoryInfo> getRegulatoryInfos() {
-        return isChildOrder()?parentOrder.getRegulatoryInfos():regulatoryInfos;
+        return regulatoryInfos;
     }
 
     /**
@@ -1239,7 +1239,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getSkipQuoteReason() {
-        return isChildOrder()?parentOrder.getSkipQuoteReason():skipQuoteReason;
+        return skipQuoteReason;
     }
 
     public void setSkipQuoteReason(String skipQuoteReason) {
@@ -1247,7 +1247,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getSkipRegulatoryReason() {
-        return isChildOrder()?parentOrder.getSkipRegulatoryReason():skipRegulatoryReason;
+        return skipRegulatoryReason;
     }
 
     public void setSkipRegulatoryReason(String skipRegulatoryReason) {
@@ -1929,7 +1929,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
 
     public Boolean isAttestationConfirmed() {
-        return isChildOrder()?parentOrder.getAttestationConfirmed():getAttestationConfirmed();
+        return getAttestationConfirmed();
     }
 
     public Boolean getAttestationConfirmed() {
@@ -2186,13 +2186,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public OrderAccessType getOrderType() {
-        return isChildOrder() ? getParentOrder().orderType: orderType;
+        return orderType;
     }
 
     public void setOrderType(OrderAccessType orderType) {
-        if (!isChildOrder()) {
             this.orderType = orderType;
-        }
     }
 
     public String getOrderTypeDisplay() {
@@ -2207,7 +2205,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public Boolean isClinicalAttestationConfirmed() {
-        return isChildOrder() ? parentOrder.getClinicalAttestationConfirmed() : getClinicalAttestationConfirmed();
+        return getClinicalAttestationConfirmed();
     }
 
     public Boolean getClinicalAttestationConfirmed() {
@@ -2263,9 +2261,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public boolean allOrdersAreComplete() {
 
         boolean completeFlag = false;
-        if (isChildOrder() && StringUtils.equals(getParentOrder().getSapOrderNumber(), getSapOrderNumber())) {
-            completeFlag = getParentOrder().allOrdersAreComplete();
-        } else {
             completeFlag = getOrderStatus() == OrderStatus.Completed;
 
             for (ProductOrder childProductOrder : getChildOrders()) {
@@ -2277,7 +2272,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     }
                 }
             }
-        }
         return completeFlag;
     }
 
@@ -2291,16 +2285,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public static ProductOrder getTargetSAPProductOrder(ProductOrder productOrder) {
         ProductOrder returnOrder;
-        if(productOrder.isChildOrder()) {
-            final ProductOrder parentOrder = productOrder.getParentOrder();
-
-            final String sapOrderNumber = parentOrder.getSapOrderNumber();
-
-            boolean sameSAPOrderAsParent = sharesSAPOrderWithParent(productOrder, sapOrderNumber);
-            returnOrder = sameSAPOrderAsParent ? parentOrder : productOrder;
-        } else {
             returnOrder = productOrder;
-        }
         return returnOrder;
     }
 
@@ -2371,19 +2356,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
         }
     }
-
-    /**
-     * Encapsulates the conditional logic to determine if a given product order not only has a parent order but also if
-     * that parent order shares an sap order with the given product order
-     * @param childOrder            target order to determine if its parent shares the same sap number
-     * @param parentSAPOrderNumber  SAP number to compare between PDOs
-     * @return
-     */
-    public static boolean sharesSAPOrderWithParent(ProductOrder childOrder, String parentSAPOrderNumber) {
-        return childOrder.isChildOrder() && StringUtils
-                .equals(childOrder.getSapOrderNumber(), parentSAPOrderNumber);
-    }
-
 
     public void updateSapDetails(int sampleCount, String productListHash, String pricesForProducts) {
         final SapOrderDetail sapOrderDetail = latestSapOrderDetail();

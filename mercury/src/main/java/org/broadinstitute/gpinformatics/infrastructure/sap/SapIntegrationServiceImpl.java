@@ -93,18 +93,14 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         case PROD:
             environment = SapIntegrationClientImpl.SAPEnvironment.PRODUCTION;
             break;
-        case DEV:
-            environment = SapIntegrationClientImpl.SAPEnvironment.DEV;
-            break;
         case TEST:
-            environment = SapIntegrationClientImpl.SAPEnvironment.DEV_400;
-            break;
         case RC:
-            environment = SapIntegrationClientImpl.SAPEnvironment.QA_400;
-            break;
         case QA:
+        case DEV:
+            environment = SapIntegrationClientImpl.SAPEnvironment.QA2_400;
+            break;
         default:
-            environment = SapIntegrationClientImpl.SAPEnvironment.QA;
+            environment = SapIntegrationClientImpl.SAPEnvironment.QA_400;
             break;
         }
 
@@ -159,7 +155,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      */
     protected SAPOrder initializeSAPOrder(ProductOrder placedOrder, boolean creatingOrder, boolean closingOrder) throws SAPIntegrationException {
 
-        ProductOrder orderToUpdate = (placedOrder.isChildOrder() && placedOrder.getParentOrder().getSapOrderNumber().equals(placedOrder.getSapOrderNumber()))?placedOrder.getParentOrder():placedOrder;
+        ProductOrder orderToUpdate = placedOrder;
 
         Quote foundQuote = null;
         try {
@@ -354,7 +350,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         } else  if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
             sampleCount += (adjustmentQuantity != null) ?adjustmentQuantity :placedOrder.getLaneCount();
         } else {
-            ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(placedOrder);
+            ProductOrder targetSapPdo = placedOrder;
             sampleCount += (adjustmentQuantity != null)?adjustmentQuantity:targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) + additionalSampleCount;
         }
         return BigDecimal.valueOf(sampleCount-previousBilledCount);

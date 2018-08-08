@@ -24,6 +24,9 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Represents the association between a submitted sample and its' submission identifier.  This will aid the system
@@ -96,6 +99,14 @@ public class SubmissionTracker implements ISubmissionTuple {
 
     public SubmissionTracker(String project, String submittedSampleName, String version, FileType fileType, String processingLocation, String dataType) {
         this(null, project, submittedSampleName, version, fileType, processingLocation, dataType);
+    }
+
+    public static Map<String, SubmissionTracker> uuidMap(List<SubmissionTracker> submissionTrackers) {
+        Map<String, SubmissionTracker> uuidMap = new HashMap<>(submissionTrackers.size());
+        for (SubmissionTracker submissionTracker : submissionTrackers) {
+            uuidMap.put(submissionTracker.createSubmissionIdentifier(), submissionTracker);
+        }
+        return uuidMap;
     }
 
     /**
@@ -178,6 +189,14 @@ public class SubmissionTracker implements ISubmissionTuple {
         return requestDate;
     }
 
+    public void setProcessingLocation(String processingLocation) {
+        this.processingLocation = processingLocation;
+    }
+
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
+    }
+
     @Override
     public String getDataType() {
         return dataType;
@@ -186,7 +205,7 @@ public class SubmissionTracker implements ISubmissionTuple {
     @Override
     @Transient
     public SubmissionTuple getSubmissionTuple() {
-        return new SubmissionTuple(project, submittedSampleName, version, processingLocation, dataType);
+        return new SubmissionTuple(project, researchProject.getJiraTicketKey(), submittedSampleName, version, processingLocation, dataType);
     }
 
     @Override
@@ -206,29 +225,17 @@ public class SubmissionTracker implements ISubmissionTuple {
 
         SubmissionTracker that = OrmUtil.proxySafeCast(o, SubmissionTracker.class);
 
-        return new EqualsBuilder()
-            .append(getProject(), that.getProject())
-            .append(getSubmittedSampleName(), that.getSubmittedSampleName())
-            .append(getFileType(), that.getFileType())
-            .append(getVersion(), that.getVersion())
-            .append(getProcessingLocation(), that.getProcessingLocation())
-            .append(getDataType(), that.getDataType())
-            .append(getResearchProject(), that.getResearchProject())
-            .append(getRequestDate(), that.getRequestDate())
-            .isEquals();
+        EqualsBuilder equalsBuilder = new EqualsBuilder()
+            .append(getSubmissionTuple(), that.getSubmissionTuple())
+            .append(getRequestDate(), that.getRequestDate());
+        return equalsBuilder.isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-            .append(getProject())
-            .append(getSubmittedSampleName())
-            .append(getFileType())
-            .append(getVersion())
-            .append(getProcessingLocation())
-            .append(getDataType())
-            .append(getResearchProject())
-            .append(getRequestDate())
-            .toHashCode();
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder(17, 37)
+            .append(getSubmissionTuple())
+            .append(getRequestDate());
+        return hashCodeBuilder.toHashCode();
     }
 }

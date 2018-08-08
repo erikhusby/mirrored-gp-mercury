@@ -452,6 +452,12 @@ public class ProductOrderEjbTest {
         conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID+"3");
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
+        Mockito.verify(mockEmailSender, Mockito.times(2)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+                Mockito.anyString(),
+                Mockito.<String>anyList(),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.anyBoolean());
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 3);
 
         testSingleSourceQuote3.setExpired(true);
@@ -464,12 +470,18 @@ public class ProductOrderEjbTest {
         ProductOrderTest.billSampleOut(conversionPdo, conversionPdo.getSamples().iterator().next(), conversionPdo.getSamples().size());
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
+        Mockito.verify(mockEmailSender, Mockito.times(2)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+                Mockito.anyString(),
+                Mockito.<String>anyList(),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.anyBoolean());
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 3);
 
 
         productOrderEjb.abandon(jiraTicketKey, "testing");
 
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(3)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
@@ -563,13 +575,19 @@ public class ProductOrderEjbTest {
         //Trick the order into thinking the price has changed so that it will think it should send a new SAP Order
         conversionPdo.latestSapOrderDetail().setOrderPricesHash("Reset");
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
+        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+                Mockito.anyString(),
+                Mockito.<String>anyList(),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.anyBoolean());
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 2);
 
         Assert.assertFalse(conversionPdo.getPriorToSAP1_5());
 
         productOrderEjb.abandon(jiraTicketKey, "testing");
 
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+        Mockito.verify(mockEmailSender, Mockito.times(2)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
@@ -999,7 +1017,7 @@ public class ProductOrderEjbTest {
                 Mockito.anyBoolean());
 
         // called once for conversionPdo and once for childPdoTwo
-        Mockito.verify(mockQuoteService, Mockito.times(2)).getQuoteByAlphaId(Mockito.anyString());
+        Mockito.verify(mockQuoteService, Mockito.times(3)).getQuoteByAlphaId(Mockito.anyString());
     }
 
     public void testTransitionOrderToClosedWithLateBlockedProduct() throws Exception {
@@ -1079,42 +1097,7 @@ public class ProductOrderEjbTest {
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(control);
 
 
-        ProductOrder childPdoOne = ProductOrder.cloneProductOrder(conversionPdo, true);
-        childPdoOne.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        childPdoOne.setSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-3URTST"));
-        childPdoOne.setJiraTicketKey(childOneJiraTicketKey);
-        productOrderEjb.publishProductOrderToSAP(childPdoOne, messageCollection, true);
-
-        ProductOrder childPdoTwo = ProductOrder.cloneProductOrder(conversionPdo, false);
-
-        Mockito.when(mockSapService.createOrder(Mockito.any(ProductOrder.class))).thenReturn("Child_sap_test");
-        childPdoTwo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        childPdoTwo.setSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-3BRTST"));
-        childPdoTwo.setJiraTicketKey(childtwoJiraTicketKey);
-        productOrderEjb.publishProductOrderToSAP(childPdoTwo, messageCollection, true);
-
-
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
-        Mockito.when(productOrderDaoMock.findByBusinessKey(childOneJiraTicketKey)).thenReturn(childPdoOne);
-        Mockito.when(productOrderDaoMock.findByBusinessKey(childtwoJiraTicketKey)).thenReturn(childPdoTwo);
-
-        assertThat(childPdoOne.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Submitted));
-        for (ProductOrderSample childOneSample : childPdoOne.getSamples()) {
-            ProductOrderSampleTestFactory.markAsBilled(childOneSample);
-        }
-        productOrderEjb.updateOrderStatus(childPdoOne.getBusinessKey(), MessageReporter.UNUSED);
-        assertThat(childPdoOne.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Completed));
-
-
-        for (ProductOrderSample child2Sample : childPdoTwo.getSamples()) {
-            ProductOrderSampleTestFactory.markAsBilled(child2Sample);
-        }
-
-        assertThat(childPdoTwo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Submitted));
-        productOrderEjb.updateOrderStatus(childPdoTwo.getBusinessKey(), MessageReporter.UNUSED);
-        assertThat(childPdoTwo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Completed));
-
-
         assertThat(conversionPdo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Submitted));
 
         int abandonSampleCount = 1;

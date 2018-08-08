@@ -88,9 +88,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -861,7 +861,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, (editOrder.isChildOrder())?editOrder.getParentOrder():editOrder);
+        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
         double valueOfCurrentOrder = 0;
 
         if (fundsRemaining <= 0d ||
@@ -940,19 +940,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         Set<ProductOrder> justParents = new HashSet<>();
         for (ProductOrder order : ordersWithCommonQuote) {
-            if(order.isChildOrder()) {
-                if((order.getParentOrder().isSavedInSAP() && exclusionSapOrders.contains(order.getParentOrder().getSapOrderNumber())) ||
-                   (order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber()))) {
-                    continue;
-                }
-                justParents.add(order.getParentOrder());
-
-            } else {
-                if(order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber())) {
-                    continue;
-                }
-                justParents.add(order);
+            if(order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber())) {
+                continue;
             }
+            justParents.add(order);
         }
 
         for (ProductOrder testOrder : justParents) {
@@ -2061,7 +2052,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray jsonResults = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
-        if (!getSampleList().isEmpty() && !editOrder.isChildOrder()) {
+        if (!getSampleList().isEmpty()) {
             List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
             // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
             ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
@@ -2630,6 +2621,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
 
             addMessages(abandonSamplesMessageCollection);
+        } else {
+            addMessage("You cannot abandon samples since have not selected any samples that are eligible to abandon");
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
@@ -3631,7 +3624,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private Map<String, AttributeDefinition> getPdoAttributeDefinitions() {
         if (pdoSpecificDefinitions == null) {
-            pdoSpecificDefinitions = attributeArchetypeDao.findAttributeGroupByTypeAndName(
+            pdoSpecificDefinitions = attributeArchetypeDao.findAttributeNamesByTypeAndGroup(
                     AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
                     GenotypingProductOrderMapping.ATTRIBUTES_GROUP);
         }
