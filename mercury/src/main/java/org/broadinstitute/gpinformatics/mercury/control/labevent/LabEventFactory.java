@@ -1520,7 +1520,8 @@ public class LabEventFactory implements Serializable {
      */
     public Collection<LabEvent> buildFromBatchRequests(@Nonnull Collection<BucketEntry> entryCollection,
                                                        String operator, LabBatch batchIn, @Nonnull String eventLocation,
-                                                       @Nonnull String programName, @Nonnull LabEventType eventType) {
+                                                       @Nonnull String programName, @Nonnull LabEventType eventType,
+                                                       Date date) {
 
         long workCounter = 1L;
 
@@ -1531,7 +1532,7 @@ public class LabEventFactory implements Serializable {
         for (BucketEntry mapEntry : entryCollection) {
             List<LabEvent> events = new LinkedList<>();
             LabEvent currEvent = createFromBatchItems(mapEntry.getProductOrder().getBusinessKey(), mapEntry.getLabVessel(),
-                    workCounter++, operator, eventType, eventLocation, programName);
+                    workCounter++, operator, eventType, eventLocation, programName, date);
             if (null != batchIn) {
                 currEvent.setLabBatch(batchIn);
             }
@@ -1550,12 +1551,13 @@ public class LabEventFactory implements Serializable {
      */
     private LabEvent createFromBatchItems(@Nonnull String pdoKey, @Nonnull LabVessel batchItem,
                                          @Nonnull Long disambiguator, String operator, @Nonnull LabEventType eventType,
-                                         @Nonnull String eventLocation, @Nonnull String programName) {
+                                         @Nonnull String eventLocation, @Nonnull String programName,
+                                          @Nonnull Date date) {
 
         Long operatorInfo = labEventRefDataFetcher.getOperator(operator).getUserId();
 
         LabEvent bucketMoveEvent =
-                new LabEvent(eventType, new Date(), eventLocation, disambiguator, operatorInfo, programName);
+                new LabEvent(eventType, date, eventLocation, disambiguator, operatorInfo, programName);
 
         //TODO add to container.
         batchItem.addInPlaceEvent(bucketMoveEvent);

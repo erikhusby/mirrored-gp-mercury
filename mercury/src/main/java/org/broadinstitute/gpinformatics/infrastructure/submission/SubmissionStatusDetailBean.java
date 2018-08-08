@@ -163,6 +163,12 @@ public class SubmissionStatusDetailBean implements Serializable {
         this.bioproject = bioproject;
     }
 
+    @JsonIgnore
+    public boolean submissionServiceHasRequest() {
+        return getUuid() != null && getStatus() != null && getBioproject() != null && getLastStatusUpdate() != null
+               && getSite() != null && getSubmissionDatatype() != null;
+    }
+
     /**
      * TODO scottmat fill in javadoc!!!
      */

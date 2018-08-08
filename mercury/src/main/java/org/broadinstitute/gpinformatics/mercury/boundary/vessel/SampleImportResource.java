@@ -127,7 +127,7 @@ public class SampleImportResource {
 
         String batchName = sampleImportBean.getSourceSystemExportId();
         labBatchDao.persist(new LabBatch(batchName, new HashSet<>(labVessels.getLeft()),
-                LabBatch.LabBatchType.SAMPLES_IMPORT));
+                LabBatch.LabBatchType.SAMPLES_IMPORT, sampleImportBean.getExportDate()));
         return "Samples imported: " + batchName;
     }
 
