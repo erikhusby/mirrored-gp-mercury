@@ -3374,8 +3374,8 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>SingleCellPolyASelection</name>
-                <labEventTypes>SINGLE_CELL_POLY_A_SELECTION</labEventTypes>
+                <name>SingleCellPolyA</name>
+                <labEventTypes>SINGLE_CELL_POLY_A</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -3961,6 +3961,8 @@
         <name>Single Cell SmartSeq</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2018-04-02T12:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>Single Cell SmartSeq</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
@@ -3979,6 +3981,8 @@
         <name>Single Cell 10X</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2018-04-02T12:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>Single Cell 10X</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>

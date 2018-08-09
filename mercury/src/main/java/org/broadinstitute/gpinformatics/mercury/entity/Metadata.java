@@ -303,11 +303,9 @@ public class Metadata {
         BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
         DEPLETE_WELL(Category.SAMPLE, DataType.STRING, "Deplete Well", Visibility.USER),
         CELL_TYPE(Category.SAMPLE, DataType.STRING, "Cell Type", Visibility.USER),
-        CELLS_PER_WELL(Category.SAMPLE, DataType.NUMBER, "Cell Per Well", Visibility.USER),
-        COLLABORATOR_SAMPLE_ID(Category.SAMPLE, DataType.STRING, "Collaborator Sample ID", Visibility.USER),
+        CELLS_PER_WELL(Category.SAMPLE, DataType.NUMBER, "Cells Per Well", Visibility.USER),
         POSITIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Positive Control", Visibility.USER),
-        NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER),
-        COLLABORATOR_PARTICIPANT_ID(Category.SAMPLE, DataType.STRING, "Collaborator Participant ID", Visibility.USER);
+        NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;

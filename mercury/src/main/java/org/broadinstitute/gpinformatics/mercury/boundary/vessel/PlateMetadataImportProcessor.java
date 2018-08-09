@@ -1,15 +1,21 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 public class PlateMetadataImportProcessor extends TableProcessor {
@@ -19,15 +25,18 @@ public class PlateMetadataImportProcessor extends TableProcessor {
     static final String DUPLICATE_HEADER_FORMAT = "Duplicate header found: %s";
     static final String NO_HEADER_FOUND_FOR_COLUMN = "Duplicate header found: %s";
     static final String NO_DATA_ERROR = "The uploaded metadata has no records.";
+    static final String NON_UNIQUE_BARCODES = "More than one plate barcode found in file";
     static final String EMPTY_FILE_ERROR = "The file uploaded was empty.";
+    static final String BAD_CONTROL_ERROR = "Expect only 'Positive Control' or 'Negative Control' in Control column";
+    static final SimpleDateFormat collectionDateFormat = new SimpleDateFormat("dd-MMM-yyyy"); //10-May-2010
 
-    protected PlateMetadataImportProcessor() {
-        super(null);
+    public PlateMetadataImportProcessor() {
+        super(null, IgnoreTrailingBlankLines.YES);
     }
 
     @Override
     public List<String> getHeaderNames() {
-        return Headers.headerNames();
+        return Headers.headerNames(columnHeaders);
     }
 
     @Override
@@ -54,22 +63,47 @@ public class PlateMetadataImportProcessor extends TableProcessor {
 
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
-        validateRow(dataRow, dataRowIndex);
-        RowMetadata manifestRecord = Headers.toMetadata(dataRow);
-        rowMetadataRecords.add(manifestRecord);
+        MessageCollection messageCollection = new MessageCollection();
+        if (validateRow(dataRow, dataRowIndex)) {
+            RowMetadata manifestRecord = Headers.toMetadata(dataRow, messageCollection);
+            if (messageCollection.hasErrors()) {
+                for (String error : messageCollection.getErrors()) {
+                    addDataMessage(error, dataRowIndex);
+                }
+            }
+            rowMetadataRecords.add(manifestRecord);
+        }
     }
 
-    private void validateRow(Map<String, String> dataRow, int dataRowIndex) {
+    private boolean validateRow(Map<String, String> dataRow, int dataRowIndex) {
+        boolean valid = true;
         for(Map.Entry<String, String> rowEntry: dataRow.entrySet()) {
             Headers header = Headers.fromColumnName(rowEntry.getKey());
-//            if (header.getMetadataKey().getDataType() == DataType.BOOLEAN) {
-//                String val = rowEntry.getValue();
-//                if (!val.equalsIgnoreCase("Yes") && !val.equalsIgnoreCase("No") &&
-//                    !val.equalsIgnoreCase("Unknown")) {
-//                    addDataMessage("Invalid format for column: " + header.getText() + " Expect Yes, No, Or Unknown", dataRowIndex);
-//                }
-//            }
+            String val = rowEntry.getValue();
+            if (rowEntry.getKey().equalsIgnoreCase(Headers.CONTROL.header)) {
+                if (StringUtils.isNotBlank(val)) {
+                    if (!val.equalsIgnoreCase("Positive Control") &&
+                        !val.equalsIgnoreCase("Negative Control")) {
+                        addDataMessage("Invalid format for column: " + header.getText() + " Expect Positive Control, Negative Control, Or the empty string",
+                                dataRowIndex);
+                        valid = false;
+                    }
+                }
+            }
+            if (header.getMetadataKey() == Metadata.Key.CELLS_PER_WELL && !StringUtils.isNumeric(val)) {
+                addDataMessage("Invalid format for column: " + header.getText() + " must be a number.", dataRowIndex);
+                valid = false;
+            }
+            if (header.getMetadataKey() == Metadata.Key.COLLECTION_DATE) {
+                try {
+                    collectionDateFormat.parse(val);
+                } catch (ParseException e) {
+                    addDataMessage("Invalid format for column: " + header.getText() + " must be a date of format: dd-MMM-yyyy e.g 10-May-2017.", dataRowIndex);
+                    valid = false;
+                }
+            }
         }
+        return valid;
     }
 
     @Override
@@ -88,9 +122,18 @@ public class PlateMetadataImportProcessor extends TableProcessor {
         } else if (rowMetadataRecords.isEmpty()) {
             getMessages().add(NO_DATA_ERROR);
         }
+
+        Set<String> plateBarcodes = rowMetadataRecords.stream()
+                .map(RowMetadata::getPlateBarcode)
+                .collect(Collectors.toSet());
+        if (plateBarcodes.size() != 1) {
+            getMessages().add(NON_UNIQUE_BARCODES);
+        }
+
         if (!getMessages().isEmpty()) {
             throw new ValidationException("There was an error importing the plate metadata.", getMessages());
         }
+
         return rowMetadataRecords;
     }
 
@@ -98,11 +141,11 @@ public class PlateMetadataImportProcessor extends TableProcessor {
         PLATE("Plate Barcode", null),
         WELL("Well", null),
         CONTROL("Control", null),
-        SAMPLE("Sample ID", Metadata.Key.SAMPLE_ID),
+        VOLUME("Volume", null),
         CELL_TYPE("Types Of Cell", Metadata.Key.CELL_TYPE),
         SPECIES("Species", Metadata.Key.SPECIES),
-        COLLABORATOR_PARTICIPANT_ID("Collaborator Participant ID", Metadata.Key.COLLABORATOR_PARTICIPANT_ID),
-        COLLABORATOR_SAMPLE_ID("Collaborator Sample ID", Metadata.Key.COLLABORATOR_SAMPLE_ID),
+        COLLABORATOR_PARTICIPANT_ID("Collaborator Participant ID", Metadata.Key.PATIENT_ID),
+        COLLABORATOR_SAMPLE_ID("Collaborator Sample ID", Metadata.Key.SAMPLE_ID),
         COLLECTION_DATE("Collection Date", Metadata.Key.COLLECTION_DATE),
         CELLS_PER_WELL("Cells Per Well", Metadata.Key.CELLS_PER_WELL);
 
@@ -129,7 +172,7 @@ public class PlateMetadataImportProcessor extends TableProcessor {
 
         @Override
         public boolean isRequiredHeader() {
-            return metadataKey != null;
+            return true;
         }
 
         @Override
@@ -139,12 +182,12 @@ public class PlateMetadataImportProcessor extends TableProcessor {
 
         @Override
         public boolean isDateColumn() {
-            return metadataKey.getDataType() == Metadata.DataType.DATE;
+            return metadataKey != null && metadataKey.getDataType() == Metadata.DataType.DATE;
         }
 
         @Override
         public boolean isStringColumn() {
-            return metadataKey.getDataType() == Metadata.DataType.STRING;
+            return metadataKey == null || metadataKey.getDataType() == Metadata.DataType.STRING;
         }
 
         public Metadata.Key getMetadataKey() {
@@ -176,16 +219,32 @@ public class PlateMetadataImportProcessor extends TableProcessor {
             throw new IllegalArgumentException(NO_HEADER_FOUND_FOR_COLUMN + columnHeader);
         }
 
-        public static RowMetadata toMetadata(Map<String, String> dataRow) {
+        public static RowMetadata toMetadata(Map<String, String> dataRow, MessageCollection messageCollection) {
             List<Metadata> metadataList = new ArrayList<>(dataRow.size());
             String plateBarcode = null;
             String well = null;
+            BigDecimal volume = null;
+            Boolean positiveControl = null;
+            Boolean negativeControl = null;
             for (Map.Entry<String, String> columnEntry : dataRow.entrySet()) {
                 Headers header = Headers.fromColumnName(columnEntry.getKey());
                 if (header == Headers.PLATE) {
                     plateBarcode = columnEntry.getValue();
+                    plateBarcode = StringUtils.leftPad(plateBarcode, 12, '0');
                 } else  if (header == Headers.WELL) {
                     well = columnEntry.getValue();
+                } else if (header == Headers.VOLUME) {
+                    volume = new BigDecimal(columnEntry.getValue());
+                } else if (header == Headers.CONTROL) {
+                    if (StringUtils.isNotBlank(columnEntry.getValue())) {
+                        if (columnEntry.getValue().trim().equalsIgnoreCase("Positive Control")) {
+                            positiveControl = true;
+                        } else if (columnEntry.getValue().trim().equalsIgnoreCase("Negative Control")) {
+                            negativeControl = true;
+                        } else {
+                            messageCollection.addError(BAD_CONTROL_ERROR + columnEntry.getValue());
+                        }
+                    }
                 } else {
                     Metadata metadata = null;
                     switch (header.getMetadataKey().getDataType()) {
@@ -202,31 +261,7 @@ public class PlateMetadataImportProcessor extends TableProcessor {
                 }
             }
 
-            return new RowMetadata(plateBarcode, well, metadataList);
-        }
-    }
-
-    public static class RowMetadata {
-        private final String well;
-        private String plateBarcode;
-        private List<Metadata> metadata;
-
-        public RowMetadata(String plateBarcode, String well, List<Metadata> metadata) {
-            this.plateBarcode = plateBarcode;
-            this.well = well;
-            this.metadata = metadata;
-        }
-
-        public String getPlateBarcode() {
-            return plateBarcode;
-        }
-
-        public String getWell() {
-            return well;
-        }
-
-        public List<Metadata> getMetadata() {
-            return metadata;
+            return new RowMetadata(plateBarcode, well, volume, positiveControl, negativeControl, metadataList);
         }
     }
 }

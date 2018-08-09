@@ -90,9 +90,9 @@ public class SingleCellSmartSeqEntityBuilder {
                     jaxbBuilder.getSingleCellSpriAdditions().get(i), sourcePlate);
             labEventHandler.processEvent(spriAddition);
 
-            LabEventTest.validateWorkflow("SingleCellPolyASelection", sourcePlate);
+            LabEventTest.validateWorkflow("SingleCellPolyA", sourcePlate);
             LabEvent polyASelection = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                    jaxbBuilder.getSingleCellPolyASelections().get(i), sourcePlate);
+                    jaxbBuilder.getSingleCellPolyAs().get(i), sourcePlate);
             labEventHandler.processEvent(polyASelection);
 
             LabEventTest.validateWorkflow("SingleCellRT", sourcePlate);

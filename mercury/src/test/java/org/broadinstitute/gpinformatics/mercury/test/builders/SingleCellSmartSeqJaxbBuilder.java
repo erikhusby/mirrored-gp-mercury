@@ -57,7 +57,7 @@ public class SingleCellSmartSeqJaxbBuilder {
             singleCellSpriAdditions.add(singleCellSpriAddition);
 
             PlateEventType singleCellPolyASelection = bettaLimsMessageTestFactory.buildPlateEvent(
-                    "SingleCellPolyASelection", sourcePlate);
+                    "SingleCellPolyA", sourcePlate);
             bettaLimsMessageTestFactory.addMessage(messageList, singleCellPolyASelection);
             singleCellPolyASelections.add(singleCellPolyASelection);
 
@@ -175,7 +175,7 @@ public class SingleCellSmartSeqJaxbBuilder {
         return singleCellSpriAdditions;
     }
 
-    public List<PlateEventType> getSingleCellPolyASelections() {
+    public List<PlateEventType> getSingleCellPolyAs() {
         return singleCellPolyASelections;
     }
 
