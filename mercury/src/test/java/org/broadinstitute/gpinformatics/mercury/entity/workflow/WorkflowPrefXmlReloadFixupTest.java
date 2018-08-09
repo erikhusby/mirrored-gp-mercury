@@ -48,13 +48,13 @@ public class WorkflowPrefXmlReloadFixupTest extends Arquillian {
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "qa");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     /**
      * Used to (initially) load workflow configuration from a file to a global preference
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3557LoadWorkflowConfigPrefsFromFile() throws Exception {
 
         userBean.loginOSUser();
