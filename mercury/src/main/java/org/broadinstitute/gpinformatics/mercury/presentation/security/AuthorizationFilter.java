@@ -104,12 +104,12 @@ public class AuthorizationFilter implements Filter {
                         if (p == -1) {
                             unauthorized(response, "Invalid authentication token");
                         } else {
-                                String username = credentials.substring(0, p).trim();
-                                String password = credentials.substring(p + 1).trim();
-                                if (request.getRemoteUser() == null || !request.getRemoteUser().equals(username)) {
-                                    request.login(username, password);
-                                }
-                                filterChain.doFilter(servletRequest, servletResponse);
+                            String username = credentials.substring(0, p).trim();
+                            String password = credentials.substring(p + 1).trim();
+                            if (request.getRemoteUser() == null || !request.getRemoteUser().equals(username)) {
+                                request.login(username, password);
+                            }
+                            filterChain.doFilter(servletRequest, servletResponse);
                         }
                     } catch (ServletException ignored) {
                         unauthorized(response, "Bad credentials");
