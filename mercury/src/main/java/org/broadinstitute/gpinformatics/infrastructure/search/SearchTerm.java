@@ -31,284 +31,120 @@ import java.util.Set;
 public class SearchTerm implements Serializable, ColumnTabulation {
 
     private static final long serialVersionUID = -7452519036319121392L;
-
-     /**
-     * Attached to various search term expressions to dynamically generate required properties.
-     * @param <T>
-     */
-     public abstract static class Evaluator <T> {
-
-         public abstract T evaluate(Object entity, SearchContext context);
-
-
-     }
-
-    /**
-     * Defines Hibernate path from search result entity to the property being searched.
-     * Allows one term to search multiple properties, e.g. All Aliases
-     */
-    public static class CriteriaPath implements Serializable {
-
-        private static final long serialVersionUID = -6543579712758279966L;
-
-        /**
-         * List of criteria that defines Hibernate path to property
-         */
-        private List<String> criteria;
-
-        /**
-         * True if Hibernate should join fetch the criteria; this improves performance,
-         * but should be done only with associations mapped as Sets, not Lists
-         */
-        private Boolean joinFetch;
-
-        /**
-         * Property in class at end of criteria list
-         */
-        private String propertyName;
-
-        private Evaluator<String> propertyNameExpression;
-
-        /**
-         * Optional nested subquery criteria definition
-         * Note:  Nested criteria path and child search terms are mutually exclusive
-         */
-        private CriteriaPath nestedCriteriaPath;
-
-        /**
-         * Optional non user-editable criteria to be used as a global filter for user entered search term criteria
-         */
-        private List<ImmutableTermFilter> immutableTermFilters;
-
-        public List<String> getCriteria() {
-            return criteria;
-        }
-
-        public void setCriteria(List<String> criteria) {
-            this.criteria = criteria;
-        }
-
-        public Boolean isJoinFetch() {
-            return joinFetch;
-        }
-
-        public void setJoinFetch(Boolean joinFetch) {
-            this.joinFetch = joinFetch;
-        }
-
-        public String getPropertyName() {
-            return propertyName;
-        }
-
-        public void setPropertyName(String propertyName) {
-            this.propertyName = propertyName;
-        }
-
-        public Evaluator<String> getPropertyNameExpression() {
-            return propertyNameExpression;
-        }
-
-        public void setPropertyNameExpression(Evaluator<String> propertyNameExpression) {
-            this.propertyNameExpression = propertyNameExpression;
-        }
-
-        public CriteriaPath getNestedCriteriaPath(){
-            return nestedCriteriaPath;
-        }
-
-        public void setNestedCriteriaPath( CriteriaPath nestedCriteriaPath ) {
-            this.nestedCriteriaPath = nestedCriteriaPath;
-        }
-
-        @Nullable
-        public List<ImmutableTermFilter> getImmutableTermFilters(){
-            return immutableTermFilters;
-        }
-
-        public void addImmutableTermFilter(ImmutableTermFilter immutableTermFilter){
-            if( immutableTermFilters == null ) {
-                immutableTermFilters = new ArrayList<>();
-            }
-            immutableTermFilters.add(immutableTermFilter);
-        }
-    }
-
-    /**
-     * Allow the case where one or more additional filters can be attached to a search term.
-     * Filters are not user editable so values must be type safe with entity values
-     */
-    public static class ImmutableTermFilter {
-        private String propertyName;
-        private SearchInstance.Operator operator;
-        private Object[] values;
-
-        /**
-         * Constructor for when one value is required to support operator
-         * @param propertyName A property of the search term entity to base the filter on
-         * @param operator Filter restriction operator
-         * @param values Filter values, 2 required for between operator, 1 or more for list operators
-         */
-        public ImmutableTermFilter(
-                String propertyName, SearchInstance.Operator operator, Object ... values ){
-            this.propertyName = propertyName;
-            this.operator     = operator;
-            this.values = values;
-        }
-
-        public String getPropertyName(){
-            return propertyName;
-        }
-
-        public SearchInstance.Operator getOperator(){
-            return operator;
-        }
-
-        public Object[] getValues() {
-            return values;
-        }
-
-    }
-
     /**
      * Name displayed in the user interface
      */
     private String name;
-
     /**
      * HTML to display in UI to assist user (optional)
      * (If none, no UI help is configured)
      */
     private String helpText;
-
     /**
      * True if this term is required in every SearchInstance
      */
     private Boolean required;
-
     /**
      * Provides sorting in criteria API if value is not null
      * (Works only on simple entity properties on multi page results)
      */
     private String dbSortPath;
-
     /**
      * Provides access the parent entity's collection of child entities
      *     to include in a nested table presentation
      */
     private List<ColumnTabulation> nestedEntityColumns;
-
     /**
      * Plugins programmatically expand the list of search columns returned for a single search term
      */
     private Class pluginClass;
-
     /**
      * True if this term requires a new detached criteria (because it has the same
      * association path as another term in the same hierarchy, e.g. two individual traits)
      */
     private Boolean newDetachedCriteria;
-
     /**
      * Hibernate criteria path from entity to property; usually only one, but if there are
      * multiple (e.g. All Aliases) then they are ORed together
      */
     private List<CriteriaPath> criteriaPaths;
-
     /**
      * Expression that fetches list of constrained values
      */
     private Evaluator<List<ConstrainedValue>> constrainedValuesExpression;
-
     /**
      * Expression that provides list of constrained result column values
      * TODO JMS This might be better off as part of a list plugin as parameter configurations get more complicated
      */
     private Evaluator<ResultParamConfiguration> resultParamConfigurationExpression;
-
     /**
      * Dynamic value type expression.
      * Required to handle String, Data, Number metadata
      */
     private Evaluator<ColumnValueType> valueTypeExpression;
-
     /**
      * Constant value type, superceded by valueTypeExpression if exists
     */
     private ColumnValueType valueType = ColumnValueType.STRING;
-
     /**
      * Value that isn't supplied by the user, referenced by dependent search terms.
      * Null if user supplies value
      */
     private String constantValue;
-
     /**
      * Expression to navigate to the property to generate value for display and sorting
      */
     private Evaluator<Object> displayValueExpression;
-
     /**
      * Expression from enum (can be shared across entities)
      */
     private DisplayExpression displayExpression;
-
     /**
      * Optional expression to enhance UI presentation of result column value
      */
     private Evaluator<String> uiDisplayOutputExpression;
-
     /**
      * Header text (or expression to derive it) for displaying search results.
      * Null if same as name.
      */
     private Evaluator<Object> viewHeaderExpression;
-
     /**
      * First header text (or expression to derive it) for downloading search results.
      * Null if same as viewHeaderExpression
      */
     private String downloadFirstHeader;
-
     /**
      * Second header text (or expression to derive it) for downloading search results,
      * e.g. First header is trait name, second header is metadata name. Null if none.
      */
     private String downloadSecondHeader;
-
     /**
      * SearchTerms that depend on the value of this term
      */
     private List<SearchTerm> dependentSearchTerms;
-
     /**
      * Expression applied to results of traversal, to determine whether they should be included.  Allows a dependent
      * search term (e.g lab event type) to be combined with a primary term (e.g. LCSET) and traversal results
      * (e.g. descendants).
      */
     private Evaluator<Boolean> traversalFilterExpression;
-
     /**
      * Expression to convert HTML form input value from String to property data type
      */
     private Evaluator<Object> searchValueConversionExpression;
-
     /**
      * Hibernate SQL restriction (currently constant, i.e. doesn't reference values)
      */
     private String sqlRestriction;
-
-    // TODO jmt allow multiple metadata in user interface
     /**
      * Has meaning only for dependent search terms, true if there can be multiple
      * children, e.g. a trait can have multiple metadata
      */
     private Boolean multipleForParent;
-
     /**
      * True if dependent search terms should be expanded and added to the list of criteria and result columns.
      */
     private Boolean addDependentTermsToSearchTermList = Boolean.FALSE;
-
     /**
      * The maximum number of values that will be returned by the constrained values
      * expression; if the number is less than this, display the list, otherwise display a
@@ -319,6 +155,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     private Evaluator<Integer> constrainedValuesSizeLimitExpression;
 
+    // TODO jmt allow multiple metadata in user interface
     /**
      * The name of the AddRowsListener implementation.
      * Ideally, need an abstract way to include reference to BSPSampleSearchColumn, so the set of columns can be gathered in one request.
@@ -326,34 +163,27 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Could add an evaluator called by the listener
      */
     private Evaluator<Object> addRowsListenerHelper;
-
     /**
      * Flag this term as a parent to a nested table
      */
     private Boolean isNestedParent = Boolean.FALSE;
-
     /**
      * Flag this for search criteria only, do not display as column option.
      * (Don't want parent term to show up in columns list)
      */
     private Boolean isExcludedFromResultColumns = Boolean.FALSE;
-
     /**
      * Flag this as an exclusive search term because it cannot logically be combined with others.
      * If any other terms are included with an exclusive term,
      *   the search should be rejected and a warning presented to the user.
      */
     private Boolean isExclusive = Boolean.FALSE;
-
     /**
      * Should term be added to result column as a default if user forgets to select any results
      * (isExcludedFromResultColumns value conflict takes precedence)
      */
     private Boolean isDefaultResultColumn = Boolean.FALSE;
-
-
     private ConfigurableSearchDefinition alternateSearchDefinition;
-
     private Boolean rackScanSupported = Boolean.FALSE;
 
     /**
@@ -385,18 +215,15 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     /**
      * A pseudo unique identifier to allow UI functionality to be tied to the display of this term (e.g. help text)
      */
     public String getUiId(){
         return "srchTrm_" + String.valueOf(this.hashCode());
-    }
-
-    /**
-     * Display this text in UI if not null or empty string.
-     */
-    public void setHelpText( String helpText ) {
-        this.helpText = helpText;
     }
 
     /**
@@ -407,8 +234,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return helpText;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    /**
+     * Display this text in UI if not null or empty string.
+     */
+    public void setHelpText( String helpText ) {
+        this.helpText = helpText;
     }
 
     public Boolean getRequired() {
@@ -477,6 +307,16 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return displayValueExpression;
     }
 
+    /**
+     * Sets the expression implementation to extract value(s) from base entity object
+     * to use as the source of the result column value presented in UI or download.
+     *
+     * @param displayValueExpression The expression implementation to extract the value(s) from base entity
+     */
+    public void setDisplayValueExpression(Evaluator<Object> displayValueExpression) {
+        this.displayValueExpression = displayValueExpression;
+    }
+
     public DisplayExpression getDisplayExpression() {
         return displayExpression;
     }
@@ -490,16 +330,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     public void setDisplayExpression(DisplayExpression displayExpression) {
         this.displayExpression = displayExpression;
-    }
-
-    /**
-     * Sets the expression implementation to extract value(s) from base entity object
-     * to use as the source of the result column value presented in UI or download.
-     *
-     * @param displayValueExpression The expression implementation to extract the value(s) from base entity
-     */
-    public void setDisplayValueExpression(Evaluator<Object> displayValueExpression) {
-        this.displayValueExpression = displayValueExpression;
     }
 
     /**
@@ -625,12 +455,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         this.dependentSearchTerms = dependentSearchTerms;
     }
 
-    public void setTraversalFilterExpression(Evaluator<Boolean> traversalFilterExpression) {
-        this.traversalFilterExpression = traversalFilterExpression;
-    }
-
     public Evaluator<Boolean> getTraversalFilterExpression() {
         return traversalFilterExpression;
+    }
+
+    public void setTraversalFilterExpression(Evaluator<Boolean> traversalFilterExpression) {
+        this.traversalFilterExpression = traversalFilterExpression;
     }
 
     public String getSqlRestriction() {
@@ -669,13 +499,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         this.criteriaPaths = criteriaPaths;
     }
 
+    public Evaluator<Integer> getConstrainedValuesSizeLimitExpression() {
+        return constrainedValuesSizeLimitExpression;
+    }
+
     public void setConstrainedValuesSizeLimitExpression(
             Evaluator<Integer> constrainedValuesSizeLimitExpression) {
         this.constrainedValuesSizeLimitExpression = constrainedValuesSizeLimitExpression;
-    }
-
-    public Evaluator<Integer> getConstrainedValuesSizeLimitExpression() {
-        return constrainedValuesSizeLimitExpression;
     }
 
     public Evaluator<Object> getAddRowsListenerHelper() {
@@ -813,6 +643,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     public Class getPluginClass() {
         return pluginClass;
     }
+
     @Override
     public void setPluginClass(Class pluginClass) {
         this.pluginClass = pluginClass;
@@ -839,5 +670,150 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         // May require this SearchTerm to extract metadata key from column name
         context.setSearchTerm(this);
         return context;
+    }
+
+     /**
+     * Attached to various search term expressions to dynamically generate required properties.
+     * @param <T>
+     */
+     public abstract static class Evaluator <T> {
+
+         public abstract T evaluate(Object entity, SearchContext context);
+
+
+     }
+
+    /**
+     * Defines Hibernate path from search result entity to the property being searched.
+     * Allows one term to search multiple properties, e.g. All Aliases
+     */
+    public static class CriteriaPath implements Serializable {
+
+        private static final long serialVersionUID = -6543579712758279966L;
+
+        /**
+         * List of criteria that defines Hibernate path to property
+         */
+        private List<String> criteria;
+
+        /**
+         * True if Hibernate should join fetch the criteria; this improves performance,
+         * but should be done only with associations mapped as Sets, not Lists
+         */
+        private Boolean joinFetch;
+
+        /**
+         * Property in class at end of criteria list
+         */
+        private String propertyName;
+
+        private Evaluator<String> propertyNameExpression;
+
+        /**
+         * Optional nested subquery criteria definition
+         * Note:  Nested criteria path and child search terms are mutually exclusive
+         */
+        private CriteriaPath nestedCriteriaPath;
+
+        /**
+         * Optional non user-editable criteria to be used as a global filter for user entered search term criteria
+         */
+        private List<ImmutableTermFilter> immutableTermFilters;
+
+        public List<String> getCriteria() {
+            return criteria;
+        }
+
+        /**
+         * Set the criteria path which defines how to navigate to the entity for which this search term is defined.
+         *
+         * @param criteria Ordered list of strings that together makes a path which defines how to navigate from the
+         *                 entity with which the criteria is associated to the target entity for which the criteria is
+         *                 defined.  First String element in the list should be a Label to which the defined search
+         *                 criteria will be associated
+         */
+        public void setCriteria(List<String> criteria) {
+            this.criteria = criteria;
+        }
+
+        public Boolean isJoinFetch() {
+            return joinFetch;
+        }
+
+        public void setJoinFetch(Boolean joinFetch) {
+            this.joinFetch = joinFetch;
+        }
+
+        public String getPropertyName() {
+            return propertyName;
+        }
+
+        public void setPropertyName(String propertyName) {
+            this.propertyName = propertyName;
+        }
+
+        public Evaluator<String> getPropertyNameExpression() {
+            return propertyNameExpression;
+        }
+
+        public void setPropertyNameExpression(Evaluator<String> propertyNameExpression) {
+            this.propertyNameExpression = propertyNameExpression;
+        }
+
+        public CriteriaPath getNestedCriteriaPath(){
+            return nestedCriteriaPath;
+        }
+
+        public void setNestedCriteriaPath( CriteriaPath nestedCriteriaPath ) {
+            this.nestedCriteriaPath = nestedCriteriaPath;
+        }
+
+        @Nullable
+        public List<ImmutableTermFilter> getImmutableTermFilters(){
+            return immutableTermFilters;
+        }
+
+        public void addImmutableTermFilter(ImmutableTermFilter immutableTermFilter){
+            if( immutableTermFilters == null ) {
+                immutableTermFilters = new ArrayList<>();
+            }
+            immutableTermFilters.add(immutableTermFilter);
+        }
+    }
+
+    /**
+     * Allow the case where one or more additional filters can be attached to a search term.
+     * Filters are not user editable so values must be type safe with entity values
+     */
+    public static class ImmutableTermFilter {
+        private String propertyName;
+        private SearchInstance.Operator operator;
+        private Object[] values;
+
+        /**
+         * Constructor for when one value is required to support operator
+         * @param propertyName A property of the search term entity to base the filter on
+         * @param operator Filter restriction operator
+         * @param values Filter values, 2 required for between operator, 1 or more for list operators
+         */
+        public ImmutableTermFilter(
+                String propertyName, SearchInstance.Operator operator, Object ... values ){
+            this.propertyName = propertyName;
+            this.operator     = operator;
+            this.values = values;
+        }
+
+        public String getPropertyName(){
+            return propertyName;
+        }
+
+        public SearchInstance.Operator getOperator(){
+            return operator;
+        }
+
+        public Object[] getValues() {
+            return values;
+        }
+
     }
 }
