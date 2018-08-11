@@ -51,7 +51,7 @@ public class ProductOrderSearchDefinition {
 
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("BillingSessions",
                 "productOrderId", "samples", ProductOrder.class));
-        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("Products",
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOProduct",
                 "productOrderId", "product", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOSamples",
                 "productOrderId", "samples", ProductOrder.class));
@@ -65,7 +65,7 @@ public class ProductOrderSearchDefinition {
                 "productOrderId", "samples", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("BilledQuote",
                 "productOrderId", "samples", ProductOrder.class));
-        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("ResearchProject",
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDORP",
                 "productOrderId", "researchProject", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOKey",
                 "productOrderId", "jiraTicketKey", ProductOrder.class));
@@ -138,7 +138,7 @@ public class ProductOrderSearchDefinition {
         productTerm.setName("Primary Product Part Number");
         SearchTerm.CriteriaPath productCriteriaPath = new SearchTerm.CriteriaPath();
         productCriteriaPath.setPropertyName("partNumber");
-        productCriteriaPath.setCriteria(Arrays.asList("Products", "product"));
+        productCriteriaPath.setCriteria(Arrays.asList("PDOProduct", "product"));
         productTerm.setCriteriaPaths(Collections.singletonList(productCriteriaPath));
         productTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -222,7 +222,7 @@ public class ProductOrderSearchDefinition {
         rpSearchTerm.setName("Research Project");
         SearchTerm.CriteriaPath rpCriteriaPath = new SearchTerm.CriteriaPath();
         rpCriteriaPath.setPropertyName("jiraTicketKey");
-        rpCriteriaPath.setCriteria(Arrays.asList("ResearchProject", "researchProject"));
+        rpCriteriaPath.setCriteria(Arrays.asList("PDORP", "researchProject"));
         rpSearchTerm.setCriteriaPaths(Collections.singletonList(rpCriteriaPath));
         rpSearchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
