@@ -1,43 +1,82 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.SetMultimap;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.time.FastDateFormat;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Plugin defined to assist in the display of billing session related data
  */
 public class ProductOrderBillingPlugin implements ListPlugin  {
-    private static final String billingSessionHeaderKey = "billingSession";
-    private static final String quoteWorkIdentifierHeader = "workId";
-    private static final String sapDeliveryDocumentHeader = "sapDeliveryDocument";
+    private static final String BILLING_SESSION_HEADER_KEY = "billingSession";
+    private static final String QUOTE_WORK_IDENTIFIER_HEADER = "workId";
+    private static final String SAP_DELIVERY_DOCUMENT_HEADER = "sapDeliveryDocument";
+    private static final String QUANTITY_HEADER = "quantity";
+    private static final String PRODUCT_HEADER = "product";
 
     private static final Map<String, ConfigurableList.Header> mapTypeToHeader = new HashMap<>();
+
+    private static final String COMPLETE_DATE_HEADER = "completeDate";
+
+    private static final String COMPLETED_HEADER = "completed";
+
+    private static final String BILLED_QUOTE = "billedQuote";
+
+    private static final String BILLED_DATE_HEADER = "billedDate";
+
     static {
-        mapTypeToHeader.put(billingSessionHeaderKey,
-                new ConfigurableList.Header("Billing Session", "Billing Session", ""));
-        mapTypeToHeader.put(quoteWorkIdentifierHeader,
-                new ConfigurableList.Header("Quote Work ID(s)", "Quote Work ID(s)", ""));
-        mapTypeToHeader.put(sapDeliveryDocumentHeader,
-                new ConfigurableList.Header("SAP Delivery Document ID(s)", "SAP Delivery Document ID(s)", ""));
+        mapTypeToHeader.put(BILLED_QUOTE,
+                new ConfigurableList.Header("Billed Quote",
+                        "Billed Quote", ""));
+        mapTypeToHeader.put(BILLING_SESSION_HEADER_KEY,
+                new ConfigurableList.Header("Billing Session",
+                        "Billing Session",
+                        ""));
+        mapTypeToHeader.put(QUOTE_WORK_IDENTIFIER_HEADER,
+                new ConfigurableList.Header("Quote Work ID",
+                        "Quote Work ID",
+                        ""));
+        mapTypeToHeader.put(SAP_DELIVERY_DOCUMENT_HEADER,
+                new ConfigurableList.Header("SAP Delivery Document ID",
+                        "SAP Delivery Document ID",
+                        ""));
+        mapTypeToHeader.put(QUANTITY_HEADER,
+                new ConfigurableList.Header("Billed Quantity",
+                        "Billed Quantity",
+                        ""));
+        mapTypeToHeader.put(PRODUCT_HEADER,
+                new ConfigurableList.Header("Billed Product",
+                        "Billed Product",
+                        ""));
+        mapTypeToHeader.put(COMPLETE_DATE_HEADER,
+                new ConfigurableList.Header("Completed Date",
+                        "Completed Date",
+                        ""));
+        mapTypeToHeader.put(COMPLETED_HEADER,
+                new ConfigurableList.Header("Work Completed",
+                        "Work Completed",
+                        ""));
+        mapTypeToHeader.put(BILLED_DATE_HEADER,
+                new ConfigurableList.Header("Date Billed",
+                        "Date Billed", ""));
     }
 
     @Override
@@ -63,51 +102,68 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         List<ConfigurableList.ResultRow> billingRows = new ArrayList<>();
 
         List<ConfigurableList.Header> headers = new ArrayList<>();
+        final Format dateFormatter = FastDateFormat.getInstance(CoreActionBean.DATE_PATTERN);
 
-//        headers.add(new ConfigurableList.Header("", null, null));
-        headers.add(mapTypeToHeader.get(billingSessionHeaderKey));
-        headers.add(mapTypeToHeader.get(quoteWorkIdentifierHeader));
-        headers.add(mapTypeToHeader.get(sapDeliveryDocumentHeader));
+        headers.add(mapTypeToHeader.get(BILLING_SESSION_HEADER_KEY));
+        headers.add(mapTypeToHeader.get(BILLED_DATE_HEADER));
+        headers.add(mapTypeToHeader.get(BILLED_QUOTE));
+        headers.add(mapTypeToHeader.get(QUOTE_WORK_IDENTIFIER_HEADER));
+        headers.add(mapTypeToHeader.get(SAP_DELIVERY_DOCUMENT_HEADER));
+        headers.add(mapTypeToHeader.get(PRODUCT_HEADER));
+        headers.add(mapTypeToHeader.get(QUANTITY_HEADER));
+        headers.add(mapTypeToHeader.get(COMPLETED_HEADER));
+        headers.add(mapTypeToHeader.get(COMPLETE_DATE_HEADER));
 
 
-        SetMultimap<String, Pair<String, String>> workAndDeliveryByBIlling = HashMultimap.create();
+        Map<BillingSession, QuoteImportInfo> billingAggregator = new HashMap<>();
+
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
                 Optional<BillingSession> billingSession = Optional.of(ledgerEntry.getBillingSession());
-                Optional<String> workItem = Optional.ofNullable(ledgerEntry.getWorkItem());
-                Optional<String> sapDeliveryId = Optional.ofNullable(ledgerEntry.getSapDeliveryDocumentId());
 
                 billingSession.ifPresent(billingSession1 ->
                 {
-                    Pair<String, String> billingInfo = Pair.of(workItem.orElse(""), sapDeliveryId.orElse(""));
-                    workAndDeliveryByBIlling.put(billingSession1.getBusinessKey(), billingInfo);
+                    if(!billingAggregator.containsKey(billingSession1)) {
+
+                        billingAggregator.put(billingSession1, new QuoteImportInfo());
+                    }
+                    billingAggregator.get(billingSession1).addQuantity(ledgerEntry);
+
                 });
             }
         }
 
         int count = 0;
 
-        for (Map.Entry<String, Pair<String, String>> stringPairEntry : workAndDeliveryByBIlling.entries()) {
+        for (Map.Entry<BillingSession, QuoteImportInfo> stringQuoteImportInfoEntry : billingAggregator.entrySet()) {
+            BillingSession billingKey = stringQuoteImportInfoEntry.getKey();
+            QuoteImportInfo sessionItems = stringQuoteImportInfoEntry.getValue();
 
-            Optional<String> workItemId =
-                    Optional.ofNullable(stringPairEntry.getValue().getLeft());
-            Optional<String> sapDocumentIds =
-                    Optional.ofNullable(stringPairEntry.getValue().getRight());
+            try {
 
-            if(StringUtils.isNotBlank(stringPairEntry.getKey()) ||
-                    StringUtils.isNotBlank(workItemId.orElse("")) ||
-                    StringUtils.isNotBlank(sapDocumentIds.orElse(""))) {
-                final List<String> cellList =
-                        new ArrayList(Arrays.asList(getBillingSessionLink(stringPairEntry.getKey(),workItemId.orElse("")),
-                                getWorkItemLink(workItemId.orElse("")),
-                                sapDocumentIds.orElse("")));
-                ConfigurableList.ResultRow row = new ConfigurableList.ResultRow(null,
-                        cellList,
-                        String.valueOf(count));
-                billingRows.add(row);
-                count++;
+                final List<QuoteImportItem> quoteImportItems =
+                        sessionItems.getQuoteImportItems(context.getPriceListCache());
+
+                for (QuoteImportItem quoteImportItem : quoteImportItems) {
+                    final List<String> cellList =
+                            new ArrayList(Arrays.asList(getBillingSessionLink(billingKey.getBusinessKey(), quoteImportItem.getSingleWorkItem()),
+                                    dateFormatter.format(billingKey.getBilledDate()),
+                                    getQuoteLink(quoteImportItem.getQuoteId(), context),
+                                    getWorkItemLink(quoteImportItem.getSingleWorkItem(), quoteImportItem.getQuoteId(), context),
+                                    quoteImportItem.getSapItems(),
+                                    quoteImportItem.getProduct().getDisplayName(),
+                                    quoteImportItem.getRoundedQuantity(), quoteImportItem.getNumSamples(),
+                                    dateFormatter.format(quoteImportItem.getWorkCompleteDate())));
+                    ConfigurableList.ResultRow row =
+                            new ConfigurableList.ResultRow(null, cellList, String.valueOf(count));
+                    billingRows.add(row);
+                    count++;
+                }
+            } catch (QuoteServerException e) {
+                e.printStackTrace();
             }
         }
+
         ConfigurableList.ResultList resultList = null;
         if(CollectionUtils.isNotEmpty(billingRows)) {
             resultList = new ConfigurableList.ResultList(billingRows, headers, 0, "ASC");
@@ -116,17 +172,27 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         return resultList;
     }
 
+    private String getQuoteLink(String quoteId, SearchContext context) {
+        StringBuffer quoteLink = new StringBuffer("<a class=\"external\" target=\"QUOTE\" href=\"");
+        quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
+        quoteLink.append("\">").append(quoteId).append("</a>");
+        return quoteLink.toString();
+    }
+
     @NotNull
-    public String getWorkItemLink(String workItemId) {
-        return workItemId;
+    public String getWorkItemLink(String workItemId, String quoteId, SearchContext context) {
+        StringBuffer workLink = new StringBuffer("<a class=\"external\" target=\"QUOTE\" href=\"");
+        workLink.append(context.getQuoteLink().workUrl(quoteId, workItemId));
+        workLink.append("\">").append(workItemId).append("</a>");
+
+        return workLink.toString();
     }
 
     public String getBillingSessionLink(String billingSession, String workItem) {
-        final StringBuffer replacementFormat = new StringBuffer("<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?billingSession=%s");
-        replacementFormat.append("&workId=%s");
-        replacementFormat.append("\">%s</a>");
+        final StringBuffer billingSessionFormat = new StringBuffer("<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?billingSession=%s");
+        billingSessionFormat.append("&workId=%s");
+        billingSessionFormat.append("\">%s</a>");
 
-
-        return String.format(replacementFormat.toString(), billingSession, workItem, billingSession);
+        return String.format(billingSessionFormat.toString(), billingSession, workItem, billingSession);
     }
 }

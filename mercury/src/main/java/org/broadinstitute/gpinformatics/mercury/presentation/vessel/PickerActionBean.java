@@ -9,12 +9,14 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.PickerVesselPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -42,49 +44,27 @@ import java.util.logging.Logger;
 public class PickerActionBean extends CoreActionBean {
 
     public static final String ENTITY_NAME = "labVessel";
-
-    public enum SearchType {
-        LAB_BATCH("Lab Batch"),
-        LAB_VESSEL_BARCODE("Lab Vessel Barcodes");
-        private String displayName;
-
-        SearchType(String displayName) {
-
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
-
-    private static final Logger logger = Logger.getLogger(PickerActionBean.class.getName());
-
     public static final String ACTION_BEAN_URL = "/vessel/picker.action";
+    private static final Logger logger = Logger.getLogger(PickerActionBean.class.getName());
     private static final String VIEW_PAGE = "/vessel/create_picker_csv.jsp";
     private static final String SEARCH_ACTION = "search";
-
     @Inject
     private LabBatchDao labBatchDao;
-
     @Inject
     private LabVesselDao labVesselDao;
-
     @Inject
     private BSPUserList bspUserList;
-
     @Inject
     private JiraConfig jiraConfig;
-
+    @Inject
+    private PriceListCache priceListCache;
+    @Inject
+    private QuoteLink quoteLink;
     @Validate(required = true, on = {SEARCH_ACTION})
     private String barcodes;
-
     private ConfigurableList.ResultList resultList;
-
     private SearchType searchType;
-
     private Set<String> storageLocations;
-
     private Set<String> unpickableBarcodes;
 
     @DefaultHandler
@@ -165,6 +145,8 @@ public class PickerActionBean extends CoreActionBean {
         searchContext.setBspUserList(bspUserList);
         searchContext.setUserBean(userBean);
         searchContext.setJiraConfig(jiraConfig);
+        searchContext.setPriceListCache(priceListCache);
+        searchContext.setQuoteLink(quoteLink);
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("XL20 Picker");
         searchTerm.setPluginClass(PickerVesselPlugin.class);
@@ -267,5 +249,20 @@ public class PickerActionBean extends CoreActionBean {
 
     public void setBspUserList(BSPUserList bspUserList) {
         this.bspUserList = bspUserList;
+    }
+
+    public enum SearchType {
+        LAB_BATCH("Lab Batch"),
+        LAB_VESSEL_BARCODE("Lab Vessel Barcodes");
+        private String displayName;
+
+        SearchType(String displayName) {
+
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 }

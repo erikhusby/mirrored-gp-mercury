@@ -15,12 +15,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
@@ -63,28 +65,10 @@ import java.util.stream.Collectors;
 public class UploadQuantsActionBean extends CoreActionBean {
 
     public static final String ENTITY_NAME = "LabMetric";
-
-    public enum QuantFormat {
-        VARIOSKAN("Varioskan"),
-        WALLAC("Wallac"),
-        CALIPER("Caliper"),
-        GENERIC("Generic");
-
-        private String displayName;
-
-        QuantFormat(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
-
-    private static final String VIEW_PAGE = "/vessel/upload_quants.jsp";
     public static final String UPLOAD_QUANT = "uploadQuant";
     public static final String SAVE_METRICS = "saveMetrics";
-
+    private static final String VIEW_PAGE = "/vessel/upload_quants.jsp";
+    private static final int STRING_LIMIT = 255;
     @Inject
     private QuantificationEJB quantEJB;
     @Inject
@@ -103,6 +87,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private TubeFormationDao tubeFormationDao;
     @Inject
     private JiraConfig jiraConfig;
+    @Inject
+    private PriceListCache priceListCache;
+    @Inject
+    private QuoteLink quoteLink;
 
     @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
@@ -118,8 +106,6 @@ public class UploadQuantsActionBean extends CoreActionBean {
     /** acceptRePico indicates the user wishes to process the new pico regardless of existing quants. */
     private boolean acceptRePico;
     private ConfigurableList.ResultList resultList;
-
-    private static final int STRING_LIMIT = 255;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -346,6 +332,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
         searchContext.setBspUserList(bspUserList);
         searchContext.setUserBean(userBean);
         searchContext.setJiraConfig(jiraConfig);
+        searchContext.setPriceListCache(priceListCache);
+        searchContext.setQuoteLink(quoteLink);
         ConfigurableList configurableList = configurableListFactory.create(labMetricList, "Default",
                 ColumnEntity.LAB_METRIC, searchContext,
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_METRIC.getEntityName()));
@@ -469,6 +457,23 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     public String getDownloadColumnSets() {
         return null;
+    }
+
+    public enum QuantFormat {
+        VARIOSKAN("Varioskan"),
+        WALLAC("Wallac"),
+        CALIPER("Caliper"),
+        GENERIC("Generic");
+
+        private String displayName;
+
+        QuantFormat(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
 }

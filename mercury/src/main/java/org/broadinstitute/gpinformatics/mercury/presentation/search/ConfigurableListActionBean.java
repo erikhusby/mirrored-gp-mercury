@@ -7,6 +7,7 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.SimpleError;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -15,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
@@ -62,6 +64,33 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
     @Inject
     private JiraConfig jiraConfig;
+
+    @Inject
+    private PriceListCache priceListCache;
+
+    @Inject
+    private QuoteLink quoteLink;
+
+    /**
+     * Convert a resultList to a spreadsheet, and stream it to the browser
+     *
+     * @param resultList result columns the user requested
+     * @return streamed Excel spreadsheet
+     */
+    private static Resolution streamResultList(ConfigurableList.ResultList resultList) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            SpreadsheetCreator.createSpreadsheet("Sample Info", resultList.getAsArray(), out);
+        } catch (IOException ioEx) {
+            log.error("Failed to create spreadsheet");
+            throw new RuntimeException(ioEx);
+        }
+
+        StreamingResolution stream = new StreamingResolution(StreamCreatedSpreadsheetUtil.XLS_MIME_TYPE,
+                new ByteArrayInputStream(out.toByteArray()));
+        stream.setFilename(SPREADSHEET_FILENAME);
+        return stream;
+    }
 
     /**
      * Stream an Excel spreadsheet, from a list of IDs
@@ -139,6 +168,8 @@ public class ConfigurableListActionBean extends CoreActionBean {
         evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
         evalContext.setUserBean(userBean);
         evalContext.setJiraConfig(jiraConfig);
+        evalContext.setPriceListCache(priceListCache);
+        evalContext.setQuoteLink(quoteLink);
         return evalContext;
     }
 
@@ -170,28 +201,6 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
         Object[][] data = configurableListUtils.getResultList(false).getAsArray();
         return StreamCreatedSpreadsheetUtil.streamSpreadsheet(data, SPREADSHEET_FILENAME);
-    }
-
-
-    /**
-     * Convert a resultList to a spreadsheet, and stream it to the browser
-     *
-     * @param resultList result columns the user requested
-     * @return streamed Excel spreadsheet
-     */
-    private static Resolution streamResultList(ConfigurableList.ResultList resultList) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            SpreadsheetCreator.createSpreadsheet("Sample Info", resultList.getAsArray(), out);
-        } catch (IOException ioEx) {
-            log.error("Failed to create spreadsheet");
-            throw new RuntimeException(ioEx);
-        }
-
-        StreamingResolution stream = new StreamingResolution(StreamCreatedSpreadsheetUtil.XLS_MIME_TYPE,
-                new ByteArrayInputStream(out.toByteArray()));
-        stream.setFilename(SPREADSHEET_FILENAME);
-        return stream;
     }
 
     public String getDownloadColumnSetName() {

@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,12 +20,6 @@ import java.util.Map;
  * Replaces a non type-safe Map<String,Object> implementation for which the list of names grew to be unwieldy.
  */
 public class SearchContext {
-
-    // Need to know what to put in cells at rendering stage at ColumnTabulation#evalFormattedExpression(...)
-    public enum ResultCellTargetPlatform {
-        WEB,  // Apply optional UI output formatting expression
-        TEXT  // Raw text (default)
-    }
 
     private BSPUserList bspUserList;
     // Not used:  columnSetType
@@ -42,7 +38,8 @@ public class SearchContext {
     private PaginationUtil.Pagination pagination;
     private ResultParamValues columnParams;
     private JiraConfig jiraConfig;
-
+    private PriceListCache priceListCache;
+    private QuoteLink quoteLink;
     private UserBean userBean;
 
     /**
@@ -227,17 +224,17 @@ public class SearchContext {
     }
 
     /**
-     * Sets a copy of result column parameter values for use in generating output header and value
-     */
-    public void setColumnParams( ResultParamValues columnParams ) {
-        this.columnParams = columnParams;
-    }
-
-    /**
      * Gets a copy of result column parameter values for use in generating output header and value
      */
     public ResultParamValues getColumnParams(){
         return columnParams;
+    }
+
+    /**
+     * Sets a copy of result column parameter values for use in generating output header and value
+     */
+    public void setColumnParams( ResultParamValues columnParams ) {
+        this.columnParams = columnParams;
     }
 
     public UserBean getUserBean() {
@@ -254,5 +251,27 @@ public class SearchContext {
 
     public void setJiraConfig(JiraConfig jiraConfig) {
         this.jiraConfig = jiraConfig;
+    }
+
+    public PriceListCache getPriceListCache() {
+        return priceListCache;
+    }
+
+    public void setPriceListCache(PriceListCache priceListCache) {
+        this.priceListCache = priceListCache;
+    }
+
+    public QuoteLink getQuoteLink() {
+        return quoteLink;
+    }
+
+    public void setQuoteLink(QuoteLink quoteLink) {
+        this.quoteLink = quoteLink;
+    }
+
+    // Need to know what to put in cells at rendering stage at ColumnTabulation#evalFormattedExpression(...)
+    public enum ResultCellTargetPlatform {
+        WEB,  // Apply optional UI output formatting expression
+        TEXT  // Raw text (default)
     }
 }
