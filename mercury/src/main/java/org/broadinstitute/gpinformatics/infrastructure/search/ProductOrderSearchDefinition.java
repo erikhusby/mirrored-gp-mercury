@@ -68,7 +68,7 @@ public class ProductOrderSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDORP",
                 "productOrderId", "researchProject", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOKey",
-                "productOrderId", "jiraTicketKey", ProductOrder.class));
+                "productOrderId", "productOrderId", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("OrderQuote",
                 "productOrderId", "productOrderId", ProductOrder.class));
 
@@ -140,14 +140,21 @@ public class ProductOrderSearchDefinition {
         productCriteriaPath.setPropertyName("partNumber");
         productCriteriaPath.setCriteria(Arrays.asList("PDOProduct", "product"));
         productTerm.setCriteriaPaths(Collections.singletonList(productCriteriaPath));
-        productTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+        productTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        searchTerms.add(productTerm);
+
+
+        SearchTerm productDisplayTerm = new SearchTerm();
+        productDisplayTerm.setName("Primary Product");
+        productDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, SearchContext context) {
                 ProductOrder orderData = (ProductOrder) entity;
                 return orderData.getProduct().getDisplayName();
             }
         });
-        searchTerms.add(productTerm);
+        searchTerms.add(productDisplayTerm);
+
 
         //For searching by quotes, and displaying quotes
         SearchTerm quoteTerm = new SearchTerm();
@@ -219,19 +226,25 @@ public class ProductOrderSearchDefinition {
 
 
         SearchTerm rpSearchTerm = new SearchTerm();
-        rpSearchTerm.setName("Research Project");
+        rpSearchTerm.setName("Research Project JIRA ID");
         SearchTerm.CriteriaPath rpCriteriaPath = new SearchTerm.CriteriaPath();
         rpCriteriaPath.setPropertyName("jiraTicketKey");
         rpCriteriaPath.setCriteria(Arrays.asList("PDORP", "researchProject"));
         rpSearchTerm.setCriteriaPaths(Collections.singletonList(rpCriteriaPath));
-        rpSearchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+        rpSearchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        searchTerms.add(rpSearchTerm);
+
+
+        SearchTerm researchProjectDisplayTerm = new SearchTerm();
+        researchProjectDisplayTerm.setName("Research Project");
+        researchProjectDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
                 return order.getResearchProject().getJiraTicketKey();
             }
         });
-        rpSearchTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+        researchProjectDisplayTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 String output = (String) entity;
@@ -239,7 +252,7 @@ public class ProductOrderSearchDefinition {
                        + output +"\">"+ output +"</a>";
             }
         });
-        searchTerms.add(rpSearchTerm);
+        searchTerms.add(researchProjectDisplayTerm);
 
         SearchTerm lcsetTerm = new SearchTerm();
         lcsetTerm.setName("LCSET(s)");
@@ -329,7 +342,15 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
-                return ((ProductOrder) entity).getBusinessKey() + " -- " +  order.getName();
+                StringBuffer productOrderDisplay = new StringBuffer();
+                if(!order.isDraft()) {
+                    productOrderDisplay.append(order.getBusinessKey()).append(" -- ");
+                } else {
+                    productOrderDisplay.append("(Draft) ");
+                }
+                productOrderDisplay.append(order.getName());
+
+                return productOrderDisplay.toString();
             }
         });
         pdoJiraTicketTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
@@ -398,7 +419,7 @@ public class ProductOrderSearchDefinition {
                 boolean first = true;
                 String currentSapOrderNumber = order.getSapOrderNumber();
                 if(StringUtils.isNotBlank(currentSapOrderNumber)) {
-                    sapIdResults.add("Active order -->" + currentSapOrderNumber);
+                    sapIdResults.add("Active order --> " + currentSapOrderNumber);
                 }
 
                 if(order.getSapReferenceOrders().size() >1) {
