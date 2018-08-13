@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.util.ArrayList;
@@ -38,6 +37,8 @@ public class SingleCellSmartSeqJaxbBuilder {
     private String bulkSpriRackBarcode;
     private String bulkSpriTubeBarcode;
     private PlateTransferEventType bulkSpriTransferJaxb;
+    private String pondPico1;
+    private String pondPico2;
 
     public SingleCellSmartSeqJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
                                          List<String> sourcePlates, List<String> indexPlateBarcodes) {
@@ -86,14 +87,14 @@ public class SingleCellSmartSeqJaxbBuilder {
             elutionPlateBarcodes.add(elutionPlateBarcode);
 
             // Pond Pico
-            String pondPico1 = "scPondPico1_" + sourcePlateCounter + "_" + testPrefix;
+            pondPico1 = "scPondPico1_" + sourcePlateCounter + "_" + testPrefix;
             PlateTransferEventType singleCellPondPico1Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PondPico",
                     elutionPlateBarcode,
                     pondPico1);
             bettaLimsMessageTestFactory.addMessage(messageList, singleCellPondPico1Jaxb);
             singleCellPondPicos.add(singleCellPondPico1Jaxb);
 
-            String pondPico2 = "scPondPico2_" + sourcePlateCounter + "_" + testPrefix;
+            pondPico2 = "scPondPico2_" + sourcePlateCounter + "_" + testPrefix;
             PlateTransferEventType singleCellPondPico2Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PondPico",
                     elutionPlateBarcode,
                     pondPico2);
@@ -109,18 +110,18 @@ public class SingleCellSmartSeqJaxbBuilder {
             sourcePlateCounter++;
         }
 
-        List<SBSSection> quadrantSections = Arrays.asList(SBSSection.P384_96TIP_1INTERVAL_A1, SBSSection.P384_96TIP_1INTERVAL_A2,
-                SBSSection.P384_96TIP_1INTERVAL_B1, SBSSection.P384_96TIP_1INTERVAL_B2);
+        List<String> quadrantSections = Arrays.asList("P384_96TIP_1INTERVAL_A1", "P384_96TIP_1INTERVAL_A2",
+                "P384_96TIP_1INTERVAL_B1", "P384_96TIP_1INTERVAL_B2");
 
         //Tagmentation: 4 96well plates to 384
         String tagmentationPlate = "scTagmentation" + testPrefix;
         for (int i = 0; i < elutionPlateBarcodes.size(); i++) {
             String elutionPlateBarcode = elutionPlateBarcodes.get(i);
-            SBSSection section = quadrantSections.get(i);
+            String section = quadrantSections.get(i);
             PlateTransferEventType tagmentation = bettaLimsMessageTestFactory.buildPlateToPlate("SingleCellTagmentation",
                     elutionPlateBarcode,
                     tagmentationPlate);
-            tagmentation.getPlate().setSection(section.name());
+            tagmentation.getPlate().setSection(section);
             tagmentation.getPlate().setPhysType("Eppendorf384");
             bettaLimsMessageTestFactory.addMessage(messageList, tagmentation);
             singleCellTagmentations.add(tagmentation);
@@ -137,8 +138,8 @@ public class SingleCellSmartSeqJaxbBuilder {
             PlateTransferEventType adapterLigation = bettaLimsMessageTestFactory.buildPlateToPlate("SingleCellIndexAdapterLigation",
                     indexPlateBarcode,
                     elutionPlateBarcode);
-            SBSSection section = quadrantSections.get(i);
-            adapterLigation.getPlate().setSection(section.name());
+            String section = quadrantSections.get(i);
+            adapterLigation.getPlate().setSection(section);
             adapterLigation.getPlate().setPhysType("Eppendorf384");
             bettaLimsMessageTestFactory.addMessage(messageList, adapterLigation);
             singleCellIndexAdapterLigations.add(adapterLigation);
@@ -149,9 +150,13 @@ public class SingleCellSmartSeqJaxbBuilder {
         poolTubeBarcode = testPrefix + "SC_PoolTube";
         List<String> poolTubes = Arrays.asList(poolTubeBarcode);
         List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
-        for (VesselPosition sourceWell: SBSSection.ALL384.getWells()) {
-            cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(tagmentationPlate, sourceWell.name(),
-                    poolRackBarcode, "A01"));
+        for (char row = 'A'; row <= 'P'; row++) {
+            for (int col = 1; col <= 24; col++) {
+                String colStr = (col < 10) ? "0" + col : "" + col;
+                String well = row + colStr;
+                cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(tagmentationPlate, well,
+                        poolRackBarcode, "A01"));
+            }
         }
 
         poolingTransferJaxb = bettaLimsMessageTestFactory.buildPlateToRackCherryPick("SingleCellPooling",
@@ -225,5 +230,25 @@ public class SingleCellSmartSeqJaxbBuilder {
 
     public PlateTransferEventType getBulkSpriTransferJaxb() {
         return bulkSpriTransferJaxb;
+    }
+
+    public String getBulkSpriRackBarcode() {
+        return bulkSpriRackBarcode;
+    }
+
+    public String getBulkSpriTubeBarcode() {
+        return bulkSpriTubeBarcode;
+    }
+
+    public String getPondPico1() {
+        return pondPico1;
+    }
+
+    public String getPondPico2() {
+        return pondPico2;
+    }
+
+    public List<BettaLIMSMessage> getMessageList() {
+        return messageList;
     }
 }
