@@ -549,7 +549,9 @@
         <div id="tabs" class="simpletab extraSpace">
             <ul>
                 <li><a href="#ordersTab" title="View Product Orders">Orders</a></li>
-                <li><a href="#submissionsTab" title="${actionBean.submissionTabHelpText}">Submission Requests</a></li>
+                <c:if test="${not actionBean.userBean.viewer}">
+                    <li><a href="#submissionsTab" title="${actionBean.submissionTabHelpText}">Submission Requests</a></li>
+                </c:if>
             </ul>
 
             <div id="ordersTab">
@@ -616,6 +618,8 @@
             </tbody>
         </table>
             </div>
+            <c:if test="${not actionBean.userBean.viewer}">
+
             <div id="submissionsTab">
                 <a name="#submissionsTab"></a>
                 <input type="hidden" name="_sourcePage" value="<%request.getServletPath();%>"/>
@@ -624,6 +628,7 @@
                                        submissionsTabSelector="a[href = '#submissionsTab']"
                                        researchProject="${actionBean.editResearchProject.businessKey}"/>
             </div>
+            </c:if>
         </div>
 
 
