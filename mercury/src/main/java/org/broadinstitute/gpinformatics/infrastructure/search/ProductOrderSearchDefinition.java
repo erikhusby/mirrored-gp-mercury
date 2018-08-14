@@ -74,7 +74,8 @@ public class ProductOrderSearchDefinition {
 
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOProduct",
                 "pdoProduct.productOrderId", "productOrders","pdoProduct", Product.class));
-
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("AddOns",
+        "productOrderId", "addOns", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOKey",
                 "productOrderId", "productOrderId", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("OrderQuote",
@@ -153,7 +154,12 @@ public class ProductOrderSearchDefinition {
         productCriteriaPath.setPropertyName("partNumber");
         productCriteriaPath.setCriteria(Arrays.asList("productOrderId"));
         productCriteriaPath.setNestedCriteriaPath(nestedProductPath);
-        productTerm.setCriteriaPaths(Collections.singletonList(productCriteriaPath));
+
+        SearchTerm.CriteriaPath addonPath = new SearchTerm.CriteriaPath();
+        addonPath.setPropertyName("partNumber");
+        addonPath.setCriteria(Arrays.asList("AddOns", "addOns", "addOn"));
+
+        productTerm.setCriteriaPaths(Arrays.asList(productCriteriaPath, addonPath));
         productTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(productTerm);
 
@@ -301,7 +307,7 @@ public class ProductOrderSearchDefinition {
         SearchTerm lcsetTerm = new SearchTerm();
         lcsetTerm.setName("LCSET(s)");
         lcsetTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
-        List<SearchTerm.CriteriaPath> lcsetPathList = new ArrayList<>();
+//        List<SearchTerm.CriteriaPath> lcsetPathList = new ArrayList<>();
 
         SearchTerm.CriteriaPath lcsetVesselPath = new SearchTerm.CriteriaPath();
         SearchTerm.CriteriaPath lcsetReworkPath = new SearchTerm.CriteriaPath();
@@ -316,8 +322,8 @@ public class ProductOrderSearchDefinition {
         lcsetReworkPath.setPropertyName("batchName");
         lcsetReworkPath.addImmutableTermFilter(workflowOnlyFilter);
         lcsetReworkPath.setCriteria(Arrays.asList("BatchVessels", "samples", "mercurySample", "labVessel", "reworkLabBatches"));
-        lcsetPathList.addAll(Arrays.asList(lcsetReworkPath, lcsetVesselPath));
-        lcsetTerm.setCriteriaPaths(lcsetPathList);
+//        lcsetPathList.addAll(Arrays.asList(lcsetReworkPath, lcsetVesselPath));
+        lcsetTerm.setCriteriaPaths(Arrays.asList(lcsetReworkPath, lcsetVesselPath));
         lcsetTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
