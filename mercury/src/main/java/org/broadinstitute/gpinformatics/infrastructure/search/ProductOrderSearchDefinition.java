@@ -3,8 +3,11 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ProductOrderBillingPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
@@ -51,8 +54,6 @@ public class ProductOrderSearchDefinition {
 
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("BillingSessions",
                 "productOrderId", "samples", ProductOrder.class));
-        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOProduct",
-                "productOrderId", "product", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOSamples",
                 "productOrderId", "samples", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("SAPOrders",
@@ -65,8 +66,15 @@ public class ProductOrderSearchDefinition {
                 "productOrderId", "samples", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("BilledQuote",
                 "productOrderId", "samples", ProductOrder.class));
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("productOrderId",
+                "productOrderId", "productOrderId", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDORP",
-                "productOrderId", "researchProject", ProductOrder.class));
+                "pdo.productOrderId", "productOrders","pdo", ResearchProject.class));
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOProduct",
+                "pdoProduct.productOrderId", "productOrders","pdoProduct", Product.class));
+
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOKey",
                 "productOrderId", "productOrderId", ProductOrder.class));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("OrderQuote",
@@ -135,22 +143,48 @@ public class ProductOrderSearchDefinition {
         ArrayList<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm productTerm = new SearchTerm();
-        productTerm.setName("Primary Product Part Number");
+        productTerm.setName("Product Part Number");
+
         SearchTerm.CriteriaPath productCriteriaPath = new SearchTerm.CriteriaPath();
+
+        SearchTerm.CriteriaPath nestedProductPath = new SearchTerm.CriteriaPath();
+        nestedProductPath.setCriteria(Collections.singletonList("PDOProduct"));
+
         productCriteriaPath.setPropertyName("partNumber");
-        productCriteriaPath.setCriteria(Arrays.asList("PDOProduct", "product"));
+        productCriteriaPath.setCriteria(Arrays.asList("productOrderId"));
+        productCriteriaPath.setNestedCriteriaPath(nestedProductPath);
         productTerm.setCriteriaPaths(Collections.singletonList(productCriteriaPath));
         productTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(productTerm);
 
 
         SearchTerm productDisplayTerm = new SearchTerm();
-        productDisplayTerm.setName("Primary Product");
+        productDisplayTerm.setName("Product(s)");
         productDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, SearchContext context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 ProductOrder orderData = (ProductOrder) entity;
-                return orderData.getProduct().getDisplayName();
+                List<String> productList = new ArrayList<>();
+
+                Optional<Product> primaryProduct = Optional.ofNullable(((ProductOrder) entity).getProduct());
+                primaryProduct.ifPresent(product -> productList.add("Primary Product: " + product.getDisplayName()));
+
+                Optional<List<ProductOrderAddOn>> optionalAddons = Optional.ofNullable(orderData.getAddOns());
+                optionalAddons.ifPresent(productOrderAddOns -> {
+                    productOrderAddOns.forEach(productOrderAddOn -> {
+                        productList.add("Add On: " + productOrderAddOn.getAddOn().getDisplayName());
+                    });
+                });
+
+                return productList;
+            }
+        });
+        productDisplayTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                List<String> productDisplays = (List<String>) entity;
+
+                return StringUtils.join(productDisplays, "<br>");
             }
         });
         searchTerms.add(productDisplayTerm);
@@ -225,11 +259,21 @@ public class ProductOrderSearchDefinition {
         searchTerms.add(pdoStatusTerm);
 
 
+
+        // In order for Research project search to work, the inclusion of a nested query was ncessary.
+        // This is due to the fact that Product Orders are technically Child elements of a Research Projects and
+        // Products.  The standard setup for
+
         SearchTerm rpSearchTerm = new SearchTerm();
         rpSearchTerm.setName("Research Project JIRA ID");
         SearchTerm.CriteriaPath rpCriteriaPath = new SearchTerm.CriteriaPath();
+
+        SearchTerm.CriteriaPath nestedRPCriteriaPath = new SearchTerm.CriteriaPath();
+        nestedRPCriteriaPath.setCriteria(Collections.singletonList("PDORP"));
+
         rpCriteriaPath.setPropertyName("jiraTicketKey");
-        rpCriteriaPath.setCriteria(Arrays.asList("PDORP", "researchProject"));
+        rpCriteriaPath.setCriteria(Arrays.asList("productOrderId"));
+        rpCriteriaPath.setNestedCriteriaPath(nestedRPCriteriaPath);
         rpSearchTerm.setCriteriaPaths(Collections.singletonList(rpCriteriaPath));
         rpSearchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(rpSearchTerm);
@@ -402,6 +446,14 @@ public class ProductOrderSearchDefinition {
                 return sampleNames;
             }
         });
+        sampleTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                Set<String> sampleSet = (Set<String>) entity;
+
+                return StringUtils.join(sampleSet, ", ");
+            }
+        });
         searchTerms.add(sampleTerm);
 
         SearchTerm sapOrderTerm = new SearchTerm();
@@ -420,6 +472,8 @@ public class ProductOrderSearchDefinition {
                 String currentSapOrderNumber = order.getSapOrderNumber();
                 if(StringUtils.isNotBlank(currentSapOrderNumber)) {
                     sapIdResults.add("Active order --> " + currentSapOrderNumber);
+                } else {
+                    sapIdResults.add("Inactive order --> " + currentSapOrderNumber);
                 }
 
                 if(order.getSapReferenceOrders().size() >1) {

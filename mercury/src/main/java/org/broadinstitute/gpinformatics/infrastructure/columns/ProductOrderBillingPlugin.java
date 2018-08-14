@@ -17,6 +17,7 @@ import javax.annotation.Nonnull;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,15 +146,19 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                         sessionItems.getQuoteImportItems(context.getPriceListCache());
 
                 for (QuoteImportItem quoteImportItem : quoteImportItems) {
+                    final Optional<Date> billedDate = Optional.ofNullable(billingKey.getBilledDate());
+                    final Optional<Date> workCompleteDate = Optional.ofNullable(quoteImportItem.getWorkCompleteDate());
+                    final Optional<String> sapItems = Optional.ofNullable(quoteImportItem.getSapItems());
+                    final Optional<String> singleWorkItem = Optional.ofNullable(quoteImportItem.getSingleWorkItem());
                     final List<String> cellList =
-                            new ArrayList(Arrays.asList(getBillingSessionLink(billingKey.getBusinessKey(), quoteImportItem.getSingleWorkItem()),
-                                    dateFormatter.format(billingKey.getBilledDate()),
+                            new ArrayList(Arrays.asList(getBillingSessionLink(billingKey.getBusinessKey(), singleWorkItem.isPresent()?singleWorkItem.get():""),
+                                    billedDate.isPresent()?dateFormatter.format(billedDate.get()):"",
                                     getQuoteLink(quoteImportItem.getQuoteId(), context),
-                                    getWorkItemLink(quoteImportItem.getSingleWorkItem(), quoteImportItem.getQuoteId(), context),
-                                    quoteImportItem.getSapItems(),
+                                    getWorkItemLink(singleWorkItem.isPresent()?singleWorkItem.get():"", quoteImportItem.getQuoteId(), context),
+                                    sapItems.isPresent()?sapItems.get():"",
                                     quoteImportItem.getProduct().getDisplayName(),
                                     quoteImportItem.getRoundedQuantity(), quoteImportItem.getNumSamples(),
-                                    dateFormatter.format(quoteImportItem.getWorkCompleteDate())));
+                                    workCompleteDate.isPresent()?dateFormatter.format(workCompleteDate.get()):""));
                     ConfigurableList.ResultRow row =
                             new ConfigurableList.ResultRow(null, cellList, String.valueOf(count));
                     billingRows.add(row);
