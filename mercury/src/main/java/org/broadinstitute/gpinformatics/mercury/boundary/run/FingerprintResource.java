@@ -174,6 +174,9 @@ public class FingerprintResource {
             Collection<MercurySample> mercurySamples = mapLsidToFpSamples.get(lsid);
             boolean foundAtLeastOne = false;
             for (MercurySample mercurySample : mercurySamples) {
+                if (mercurySample == null) {
+                    continue;
+                }
                 if (mercurySample.getFingerprints().isEmpty()) {
                     // todo jmt re-enable after Fluidigm moves to Mercury
 //                traverseMercuryTransfers(fingerprintEntities, stringMercurySampleEntry);
@@ -187,14 +190,20 @@ public class FingerprintResource {
                             }
                         }
 
-                        String abbreviation = fingerprint.getDisposition() == Fingerprint.Disposition.PASS ?
-                                fingerprint.getGender().getAbbreviation() : null;
+                        String gender = null;
+                        if (fingerprint.getDisposition() == Fingerprint.Disposition.PASS) {
+                            if (fingerprint.getGender() == null) {
+                                gender = Fingerprint.Gender.UNKNOWN.getAbbreviation();
+                            } else {
+                                gender = fingerprint.getGender().getAbbreviation();
+                            }
+                        }
                         fingerprints.add(new FingerprintBean(lsid,
                                 fingerprint.getDisposition().getAbbreviation(),
                                 mapSmidToLsid.get(fingerprint.getMercurySample().getSampleKey()),
                                 fingerprint.getPlatform().name(), fingerprint.getGenomeBuild().name(),
                                 fingerprint.getSnpList().getName(), fingerprint.getDateGenerated(),
-                                abbreviation, calls));
+                                gender, calls));
                         foundAtLeastOne = true;
                     }
                 }
