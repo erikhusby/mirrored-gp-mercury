@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -76,11 +77,13 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor.REQUIRED_VALUE_IS_MISSING;
 import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjbDbFreeTest.TestType.EZPASS;
 import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjbDbFreeTest.TestType.MULTIORGANISM;
 import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjbDbFreeTest.TestType.NONPOOLED;
@@ -179,50 +182,50 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(sampleKitRequest.getGenus(), "G");
             Assert.assertEquals(sampleKitRequest.getSpecies(), "S");
             Assert.assertNull(sampleKitRequest.getIrbApprovalRequired());
-            String mock = select(i, "MOCK.FSK1.A", "MOCK.FSK1.B", "MOCK.FSK1.C");
-            String libraryName = "Lib-" + mock;
+            String libraryName = select(i, "Lib-MOCK.FSK1.A", "Lib-MOCK.FSK1.B", "Lib-MOCK.FSK1.A2", "Lib-MOCK.FSK1.C");
             Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
 
             Assert.assertTrue(entity.getSequencerModel().getDisplayName().startsWith("NovaSeq"),
                     entity.getSequencerModel().getDisplayName());
 
             MercurySample mercurySample = entity.getMercurySample();
-            Assert.assertNotNull(mercurySample, libraryName);
-            Assert.assertEquals(mercurySample.getSampleKey(), libraryName);
+            Assert.assertEquals(mercurySample.getSampleKey(), select(i, "917994.0", "917994.1", "917994.0", "917994.2"));
 
             Assert.assertEquals(mercurySample.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
             Map<Metadata.Key, String> metadataMap = new HashMap<>();
             for (Metadata metadata : mercurySample.getMetadata()) {
                 metadataMap.put(metadata.getKey(), metadata.getStringValue());
             }
-            Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID), mock); // from Collaborator Sample Id
-            Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID), "MOCK1"); // from Individual Name
+            Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID),
+                    select(i, "MOCK.FSK1.A", "MOCK.FSK1.B", "MOCK.FSK1.A", "MOCK.FSK1.C")); // from Collaborator Sample Id
+            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID), select(i, "MOCK1", "MOCK2", "MOCK1", "MOCK1"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "G S");
+            Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "M", null, "M", null));
             if (i == 0) {
-                Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), "M");
                 Assert.assertEquals(entity.getMolecularIndexingScheme().getName(), "Illumina_P5-Bipof_P7-Dihib");
+            } else {
+                Assert.assertNull(entity.getMolecularIndexingScheme());
             }
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
-            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
-                    metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
+            Assert.assertTrue(StringUtils.isBlank(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID)));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
             LabVessel tube = entity.getLabVessel();
-            Assert.assertEquals(tube.getLabel(), i == 0 ? "E0098972718" : libraryName);
-            Assert.assertEquals(tube.getVolume(), new BigDecimal(select(i, "96.00", "97.00", "98.00")));
-            Assert.assertEquals(tube.getConcentration(), new BigDecimal(select(i, "7.40", "8.00", "9.00")));
+            Assert.assertEquals(tube.getLabel(), select(i, "E0098972718", "E0098972719", "E0098972720", "E0098972720"));
+            Assert.assertEquals(tube.getVolume(), new BigDecimal(select(i, "96.00", "97.00", "98.00", "98.00")));
+            Assert.assertEquals(tube.getConcentration(), new BigDecimal(select(i, "7.40", "8.00", "9.00", "9.00")));
             Assert.assertEquals(tube.getMetrics().size(), 1);
             LabMetric labMetric = tube.getMetrics().iterator().next();
             Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.FINAL_LIBRARY_SIZE);
             Assert.assertEquals(labMetric.getValue(), new BigDecimal("419.00"));
-            Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
+            Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), "index " + i);
 
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
-            Assert.assertEquals(entity.getAggregationParticle(), "Poon - LLDeep samples for Low-Input Metagenomic");
+            Assert.assertEquals(entity.getAggregationParticle(), select(i, "G96214", "G96214", "G96214", "G96215"));
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.AssemblyWithoutReference");
             Assert.assertEquals(entity.getNumberLanes(), 1);
-            Assert.assertEquals(entity.getComments(), "SSF-1344; Tiffany Poon");
-            Assert.assertTrue(entity.getPooled());
+            Assert.assertEquals(entity.getComments(), select(i, "", "sample info 1", "analysis info 1", "asi4; aaai4"));
+            Assert.assertEquals(entity.getPooled(), new Boolean(select(i, "false", "false", "true", "true")));
             Assert.assertEquals(entity.getReferenceSequence().getName().split("\\|")[0], "Homo_sapiens_RP11-78M2");
         }
     }
@@ -281,13 +284,11 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             }
             Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID), select(i,
                     "SampleColab20", "SampleColab21", "SampleColab22"));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID), select(i, "hh", "ii", "jj"));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES),
-                    "see Organism column for genus see Organism column for species");
+            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID), select(i, "hh", "ii", "jj"));
+            Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), select(i, "human", "humanoid", "sub-human"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "M", "F", "M"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
-            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
-                    metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
+            Assert.assertTrue(StringUtils.isBlank(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID)));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
             LabVessel tube = entity.getLabVessel();
@@ -361,13 +362,11 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 metadataMap.put(metadata.getKey(), metadata.getStringValue());
             }
             Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID), select(i, "DDDSS2244", "DDDSS2245"));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID),
-                    select(i, "Patient X", "Patient Y"));
+            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID), select(i, "Patient X", "Patient Y"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "Test Genus Test Species");
-            Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "F", null));
+            Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "F", ""));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
-            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
-                    metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
+            Assert.assertTrue(StringUtils.isBlank(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID)));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
             LabVessel tube = entity.getLabVessel();
@@ -441,13 +440,11 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 metadataMap.put(metadata.getKey(), metadata.getStringValue());
             }
             Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID), select(i, "DDDSS2244", "DDDSS2245"));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID),
-                    select(i, "Patient1", "Patient2"));
+            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID), select(i, "Patient1", "Patient2"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "GG SS");
             Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "M", "M"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
-            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
-                    metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
+            Assert.assertTrue(StringUtils.isBlank(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID)));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
             LabVessel tube = entity.getLabVessel();
@@ -467,7 +464,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getNumberLanes(), 4);
             Assert.assertEquals(entity.getComments(),
                     select(i, "mediocre sample; you, me, somebody", "great sample; you, me, somebody"));
-            Assert.assertNull(entity.getPooled());
+            Assert.assertFalse(entity.getPooled());
             Assert.assertEquals(entity.getReferenceSequence().getName(), "Homo_sapiens_assembly19");
 
             if (i == 0) {
@@ -550,8 +547,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertNull(entity.getAggregationParticle());
             Assert.assertNull(entity.getAnalysisType());
             Assert.assertEquals(entity.getNumberLanes(), 1);
-            Assert.assertNull(entity.getComments());
-            Assert.assertNull(entity.getPooled());
+            Assert.assertEquals(entity.getComments(), "");
+            Assert.assertFalse(entity.getPooled());
             Assert.assertNull(entity.getReferenceSequence());
 
             Assert.assertEquals(entity.getReagentDesign().getName(), "NewtonCheh_NatPepMDC_12genes3regions_Sep2011");
@@ -634,7 +631,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         for (SampleInstanceV2 sampleInstanceV2 : run.getSampleCartridge().getSampleInstancesV2()) {
             flowcellSamples.add(sampleInstanceV2.getNearestMercurySampleName());
         }
-        Assert.assertTrue(flowcellSamples.containsAll(processor.getBroadSampleId()));
+        Assert.assertTrue(flowcellSamples.containsAll(processor.getSampleNames()));
     }
 
     @Test
@@ -647,12 +644,16 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
                 new ExternalLibraryBarcodeUpdate(null), messageCollection);
 
-        // Should get two errors since the libraries are not in Mercury.
-        Assert.assertEquals(messageCollection.getErrors().size(), 2,
+        // Tests the expected errors.
+        Assert.assertEquals(messageCollection.getErrors().size(), 3,
                 StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getErrors().get(0).contains("does not exist in Mercury"),
+        Assert.assertTrue(messageCollection.getErrors().get(0).contains("Row #2 the value for Library Name") &&
+                messageCollection.getErrors().get(0).contains("does not exist in Mercury."),
                 StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getErrors().get(1).contains("does not exist in Mercury"),
+        Assert.assertTrue(messageCollection.getErrors().get(1).contains("Row #3 duplicate value for Library Name."),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertTrue(messageCollection.getErrors().get(2).contains("Row #3 the value for Library Name") &&
+                messageCollection.getErrors().get(2).contains("does not exist in Mercury."),
                 StringUtils.join(messageCollection.getErrors(), "; "));
 
         Assert.assertTrue(CollectionUtils.isEmpty(entities));
@@ -673,6 +674,112 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 StringUtils.join(messageCollection.getErrors(), "; "));
 
         Assert.assertTrue(CollectionUtils.isEmpty(entities));
+    }
+
+
+    @Test
+    public void testPooledTubeUploadFail() throws Exception {
+        final String filename = "PooledTube_Test-363_case3.xls";
+        SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.POOLED);
+        MessageCollection messageCollection = new MessageCollection();
+        VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor(null);
+        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
+                true, processor, messageCollection);
+
+        // Should be no sampleInstanceEntities.
+        Assert.assertEquals(entities.size(), 0);
+        // Checks the error messages for expected problems.
+        List<String> errors = new ArrayList<>(messageCollection.getErrors());
+        List<String> warnings = new ArrayList<>(messageCollection.getWarnings());
+
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 3,
+                VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), 2, "SM-748OO"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 3,
+                "Patient Id (Collaborator Participant ID)", 2, "SM-748OO"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 3,
+                "Sex", 2, "SM-748OO"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 3,
+                "Root Sample", 2, "SM-748OO"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.NONEXISTENT, 3,
+                "Root Sample", "SM-UNKNOWN", "Mercury"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE_IN_TUBE, 3,
+                VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "01509634244"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 3,
+                VesselPooledTubesProcessor.Headers.VOLUME.getText(), 2, "01509634244"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 3,
+                "Fragment Size", 2, "01509634244"));
+        errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 3,
+                "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
+
+        errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 4,
+                "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.NONNEGATIVE_INTEGER, 4,
+                VesselPooledTubesProcessor.Headers.READ_LENGTH.getText()));
+
+        errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
+        errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
+        errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                VesselPooledTubesProcessor.Headers.CONDITIONS.getText()));
+
+        errorIfMissing(errors, filename, "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 6, "Fragment Size"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 6, "Volume"));
+
+        errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
+        errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_HAVE_BOTH, 7,
+                VesselPooledTubesProcessor.Headers.BAIT.getText(), VesselPooledTubesProcessor.Headers.CAT.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 7, "DEV-6796"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 7,
+                "Fragment Size", 6, "01509634249"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 7,
+                VesselPooledTubesProcessor.Headers.VOLUME.getText(), 6, "01509634249"));
+
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 8,
+                VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE_IN_TUBE, 8,
+                VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "01509634249"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_HAVE_BOTH, 8,
+                VesselPooledTubesProcessor.Headers.BAIT.getText(), VesselPooledTubesProcessor.Headers.CAT.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 8, "DEV-6796"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 8,
+                VesselPooledTubesProcessor.Headers.LSID.getText(), 2, "SM-748OO"));
+        errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 8,
+                "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 8,
+                "Fragment Size", 6, "01509634249"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 8,
+                VesselPooledTubesProcessor.Headers.VOLUME.getText(), 6, "01509634249"));
+
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.NONNEGATIVE_INTEGER, 9,
+                VesselPooledTubesProcessor.Headers.READ_LENGTH.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.NONNEGATIVE_DECIMAL, 9,
+                VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.NONNEGATIVE_DECIMAL, 9,
+                VesselPooledTubesProcessor.Headers.VOLUME.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 9, "DEV-6796"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 9,
+                VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
+        Assert.assertTrue(errors.isEmpty(), "Found unexpected errors: " + StringUtils.join(errors, "; "));
+    }
+
+    private boolean errorIfMissing(List<String> errors, String filename, String expected) {
+        for (Iterator<String> iterator = errors.iterator(); iterator.hasNext(); ) {
+            String error = iterator.next();
+            if (error.startsWith(expected)) {
+                iterator.remove();
+                return true;
+            }
+        }
+        Assert.fail(filename + " error message \"" + expected + "\" is missing from the remaining errors: " +
+                StringUtils.join(errors, "; "));
+        return false;
     }
 
     private <VESSEL extends LabVessel> void assertSampleInstanceEntitiesPresent(Collection<VESSEL> labVessels,
@@ -730,7 +837,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 map.put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, select(bspIdx, "COLLAB-P-JT04121",
                         "COLLAB-P-JT04122", "COLLAB-P-JT04121", "COLLAB-P-JT04122"));
                 map.put(BSPSampleSearchColumn.PARTICIPANT_ID, select(bspIdx, "PT-JT1", "PT-JT2", "PT-JT1", "PT-JT2"));
-                map.put(BSPSampleSearchColumn.GENDER, "");
                 map.put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
                 map.put(BSPSampleSearchColumn.LSID, select(bspIdx, "broadinstitute.org:bsp.dev.sample:JT1",
                         "broadinstitute.org:bsp.dev.sample:JT2", "root1", "root2"));
@@ -741,7 +847,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 // non-BSP samples
                 Set<Metadata> metadata = new HashSet<>();
                 metadata.add(new Metadata(Metadata.Key.SAMPLE_ID, sampleName));
-                metadata.add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID, select(mercuryIdx,
+                metadata.add(new Metadata(Metadata.Key.PATIENT_ID, select(mercuryIdx,
                         "MOCK1", "", "", "Patient X", "Patient Y", "hh", "ii", "jj")));
                 metadata.add(new Metadata(Metadata.Key.SPECIES, "S"));
                 metadata.add(new Metadata(Metadata.Key.GENDER, select(mercuryIdx,
@@ -762,7 +868,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                                 map.put(name, new MercurySample(name, metadataMap.get(name)));
                             } else if (bspSampleData.containsKey(name)) {
                                 map.put(name, new MercurySample(name, bspSampleData.get(name)));
-                            } else {
+                            } else if (!name.contains("UNKNOWN")) {
                                 // Root samples will have no metadata.
                                 map.put(name, new MercurySample(name, BSPUtil.isInBspFormat(name) ?
                                         MercurySample.MetadataSource.BSP : MercurySample.MetadataSource.MERCURY));
@@ -823,12 +929,14 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                     public JiraIssue answer(InvocationOnMock invocation) throws Throwable {
                         String name = (String)invocation.getArguments()[0];
                         JiraIssue jiraIssue = null;
-                        if (StringUtils.isNotBlank(name)) {
+                        if ("DEV-7501".equals(name)) {
                             jiraIssue = new JiraIssue(name, jiraService);
-                            if (name.equals("DEV-7501")) {
-                                List<String> conditionKeys = Arrays.asList("DEV-7538", "DEV-7539");
-                                jiraIssue.setConditions(conditionKeys, conditionKeys);
-                            }
+                            List<String> conditionKeys = Arrays.asList("DEV-7538", "DEV-7539");
+                            jiraIssue.setConditions(conditionKeys, conditionKeys);
+                        } else if ("DEV-6796".equals(name)) {
+                            jiraIssue = new JiraIssue(name, jiraService);
+                            List<String> conditionKeys = Arrays.asList("DEV-6815", "DEV-6816");
+                            jiraIssue.setConditions(conditionKeys, conditionKeys);
                         }
                         return jiraIssue;
                     }
@@ -841,7 +949,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                     public MolecularIndexingScheme answer(InvocationOnMock invocation) throws Throwable {
                         String name = (String)invocation.getArguments()[0];
                         MolecularIndexingScheme molecularIndexingScheme = null;
-                        if (StringUtils.isNotBlank(name)) {
+                        if (StringUtils.isNotBlank(name) && name.startsWith("Illumina_")) {
                             molecularIndexingScheme = new MolecularIndexingScheme();
                             molecularIndexingScheme.setName(name);
                         }

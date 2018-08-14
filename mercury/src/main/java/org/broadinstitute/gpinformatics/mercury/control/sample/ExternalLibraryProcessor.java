@@ -1,14 +1,43 @@
 package org.broadinstitute.gpinformatics.mercury.control.sample;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
+import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRowTableProcessor;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import javax.annotation.Nullable;
+import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProcessor {
     final static Boolean REQUIRED = true;
@@ -17,36 +46,29 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     protected List<String> headerNames = new ArrayList<>();
     protected List<String> headerValueNames = new ArrayList<>();
+    // Maps tube barcode to the first dto that contains that barcode (and associated tube data).
+    protected Map<String, SampleInstanceEjb.RowDto> mapBarcodeToFirstRow = new HashMap<>();
+    // Maps sample name to the first dto that contains that sample name (and associated sample data).
+    protected Map<String, SampleInstanceEjb.RowDto> mapSampleNameToFirstRow = new HashMap<>();
+    // Maps sample name to MercurySample.
+    private Map<String, MercurySample> sampleMap = new HashMap<>();
+    // Maps barcode to LabVessel.
+    private Map<String, LabVessel> labVesselMap = new HashMap<>();
+    // Maps sample name to BSP or Mercury SampleData.
+    private Map<String, SampleData> fetchedData = new HashMap<>();
+    // Maps ticket name to Jira ticket.
+    private Map<String, JiraIssue> jiraIssueMap = new HashMap<>();
+    private Map<String, AnalysisType> analysisTypeMap = new HashMap<>();
+    private Map<String, MolecularIndexingScheme> molecularIndexingSchemeMap = new HashMap<>();
+    private Map<String, ReferenceSequence> referenceSequenceMap = new HashMap<>();
+    private Map<String, IlluminaFlowcell.FlowcellType> sequencerModelMap = new HashMap<>();
+    private Set<Object> entitiesToUpdate = new HashSet<>();
+    private Map<String, Boolean> sampleHasMercuryData = new HashMap<>();
 
     // Maps adjusted header name to actual header name.
     protected Map<String, String> adjustedNames = new HashMap<>();
 
-    protected List<String> additionalAssemblyInformation = new ArrayList<>();
-    protected List<String> additionalSampleInformation = new ArrayList<>();
-    protected List<String> barcodes = new ArrayList<>();
-    protected List<String> collaboratorSampleId = new ArrayList<>();
-    protected List<String> dataAnalysisType = new ArrayList<>();
-    protected List<String> dataSubmission = new ArrayList<>();
-    protected List<String> individualName = new ArrayList<>();
-    protected List<String> insertSize = new ArrayList<>();
-    protected List<String> irbNumber = new ArrayList<>();
-    protected List<String> librarySize = new ArrayList<>();
-    protected List<String> libraryType = new ArrayList<>();
-    protected List<String> molecularBarcodeName = new ArrayList<>();
-    protected List<String> numberOfLanes = new ArrayList<>();
-    protected List<String> organism = new ArrayList<>();
-    protected List<String> pooled = new ArrayList<>();
-    protected List<String> projectTitle = new ArrayList<>();
-    protected List<String> squidProject = new ArrayList<>();
-    protected List<String> readLength = new ArrayList<>();
-    protected List<String> referenceSequence = new ArrayList<>();
-    protected List<String> sequencingTechnology = new ArrayList<>();
-    protected List<String> sex = new ArrayList<>();
-    protected List<String> singleDoubleStranded = new ArrayList<>();
-    protected List<String> libraryName = new ArrayList<>();
-    protected List<String> concentration = new ArrayList<>();
-    protected List<String> volume = new ArrayList<>();
-
+    // These are the rows that consist of a header-value pair in two adjacent columns.
     public enum HeaderValueRows implements HeaderValueRow {
         EMAIL("Email:", REQUIRED),
         ORGANIZATION("Organization:", REQUIRED),
@@ -61,10 +83,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         COMMON_NAME("Common Name:", OPTIONAL),
         GENUS("Genus:", OPTIONAL),
         SPECIES("Species:", OPTIONAL),
-        IRB_REQUIRED("IRB approval required: (Y/N)", OPTIONAL),
-        ;
+        IRB_REQUIRED("IRB approval required: (Y/N)", OPTIONAL);
 
         private String text;
+
         private boolean requiredHeader;
         private boolean requiredValue;
 
@@ -98,6 +120,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         public boolean isStringColumn() {
             return true;
         }
+
     }
 
     public ExternalLibraryProcessor(String sheetName) {
@@ -113,13 +136,17 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return HeaderValueRows.values();
     }
 
-    /** Returns the canonical HeaderValueRow header names, not the ones that appeared in the spreadsheet. */
+    /**
+     * Returns the canonical HeaderValueRow header names, not the ones that appeared in the spreadsheet.
+     */
     @Override
     public List<String> getHeaderValueNames() {
         return headerValueNames;
     }
 
-    /** Returns the column header names that appeared in the spreadsheet, not the canonical ones. */
+    /**
+     * Returns the column header names that appeared in the spreadsheet, not the canonical ones.
+     */
     @Override
     public List<String> getHeaderNames() {
         return headerNames;
@@ -191,7 +218,9 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return builder.toString();
     }
 
-    /** Uses the first non-blank data value for the given headers. */
+    /**
+     * Uses the first non-blank data value for the given headers.
+     */
     protected String getFromRow(Map<String, String> dataRow, ColumnHeader... headers) {
         for (ColumnHeader header : headers) {
             String data = dataRow.get(getAdjustedNames().get(adjustHeaderName(header.getText())));
@@ -202,103 +231,474 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return "";
     }
 
-    /** Returns a mapping of adjusted header name to actual header name. */
+    /** Converts the 0-based index into the row number shown at the far left side in Excel. */
+    private int toRowNumber(int rowIndex) {
+        return rowIndex + getHeaderRowIndex() + 2;
+    }
+
+    /** Converts the dto rowNumber to 0-based index for the spreadsheet data lookups. */
+    private int toRowIndex(int rowNumber) {
+        return rowNumber - getHeaderRowIndex() - 2;
+    }
+
+    public List<SampleInstanceEjb.RowDto> parseUpload(InputStream inputStream, MessageCollection messages) {
+        List<SampleInstanceEjb.RowDto> dtos = new ArrayList<>();
+        for (int index = 0; index < Math.max(getLibraryNames().size(), getSampleNames().size()); ++index) {
+            SampleInstanceEjb.RowDto dto = new SampleInstanceEjb.RowDto(toRowNumber(index));
+            dtos.add(dto);
+            dto.setAdditionalAssemblyInformation(get(getAdditionalAssemblyInformations(), index));
+            dto.setAdditionalSampleInformation(get(getAdditionalSampleInformations(), index));
+            dto.setAnalysisTypeName(get(getDataAnalysisTypes(), index));
+            dto.setBait(get(getBaits(), index));
+            dto.setBarcode(get(getBarcodes(), index));
+            if (StringUtils.isNotBlank(dto.getBarcode()) && !mapBarcodeToFirstRow.containsKey(dto.getBarcode())) {
+                mapBarcodeToFirstRow.put(dto.getBarcode(), dto);
+            }
+            dto.setCat(get(getCats(), index));
+            dto.setCollaboratorParticipantId(get(getCollaboratorParticipantIds(), index));
+            dto.setCollaboratorSampleId(get(getCollaboratorSampleIds(), index));
+            dto.setConcentration(asNonNegativeBigDecimal(get(getConcentrations(), index), "Concentration",
+                    dto.getRowNumber(), messages));
+            dto.setConditions(get(getConditions(), index));
+            dto.setDataAnalysisType(get(getDataAnalysisTypes(), index));
+            dto.setExperiment(get(getExperiments(), index));
+            BigDecimal fragmentSize = asNonNegativeBigDecimal(get(getFragmentSizes(), index), "Fragment Size",
+                    dto.getRowNumber(), messages);
+            BigDecimal librarySize = asNonNegativeBigDecimal(get(getLibrarySizes(), index), "Library Size",
+                    dto.getRowNumber(), messages);
+            dto.setFragmentSize(fragmentSize != null ? fragmentSize : librarySize);
+            dto.setInsertSize(asNonNegativeInteger(get(getInsertSizes(), index), "Insert Size",
+                    dto.getRowNumber(), messages));
+            dto.setIrbNumber(get(getIrbNumbers(), index));
+            dto.setLibraryName(get(getLibraryNames(), index));
+            dto.setLibraryType(get(getLibraryTypes(), index));
+            dto.setLsid(get(getLsids(), index));
+            dto.setMisName(get(getMolecularBarcodeNames(), index));
+            dto.setNumberOfLanes(asNonNegativeInteger(get(getNumbersOfLanes(), index), "Number of Lanes",
+                    dto.getRowNumber(), messages));
+            dto.setOrganism(get(getOrganisms(), index));
+            dto.setParticipantId(get(getBroadParticipantIds(), index));
+            dto.setPooled(isTrue(get(getPooleds(), index)));
+            dto.setAggregationParticle(get(getAggregationParticles(), index));
+            dto.setReadLength(asNonNegativeInteger(get(getReadLengths(), index), "Read Length",
+                    dto.getRowNumber(), messages));
+            dto.setReferenceSequence(get(getReferenceSequences(), index));
+            dto.setReferenceSequenceName(get(getReferenceSequences(), index));
+            dto.setRootSampleName(get(getRootSampleNames(), index));
+            dto.setSampleName(get(getSampleNames(), index));
+            if (StringUtils.isNotBlank(dto.getSampleName()) &&
+                    !mapSampleNameToFirstRow.containsKey(dto.getSampleName())) {
+                mapSampleNameToFirstRow.put(dto.getSampleName(), dto);
+            }
+            dto.setSequencerModelName(get(getSequencingTechnologies(), index));
+            dto.setSequencingTechnology(get(getSequencingTechnologies(), index));
+            dto.setSex(get(getSexes(), index));
+            dto.setSingleDoubleStranded(get(getSingleDoubleStrandeds(), index));
+            dto.setVolume(asNonNegativeBigDecimal(get(getVolumes(), index), "Volume", dto.getRowNumber(), messages));
+        }
+        return dtos;
+    }
+
+    /**
+     * Compares the metadata and other sample-related data on the found dto to the expected dto and errors if
+     * values are inconsistent, i.e. values must match or be blank on the found dto.
+     */
+    protected void consistentSampleData(SampleInstanceEjb.RowDto expected, SampleInstanceEjb.RowDto found,
+            MessageCollection messages) {
+        Stream.of(
+                Triple.of(found.getRootSampleName(), expected.getRootSampleName(), "Root Sample"),
+                Triple.of(found.getSex(), expected.getSex(), "Sex"),
+                Triple.of(found.getOrganism(), expected.getOrganism(), "Organism"),
+                Triple.of(found.getLsid(), expected.getLsid(), "Lsid"),
+                Triple.of(found.getParticipantId(), expected.getParticipantId(), "Broad Participant Id"),
+                Triple.of(found.getCollaboratorParticipantId(), expected.getCollaboratorParticipantId(),
+                        "Patient Id (Collaborator Participant ID)"),
+                Triple.of(found.getCollaboratorSampleId(), expected.getCollaboratorSampleId(),
+                        "Collaborator Sample Id")
+        ).
+                filter(triple -> StringUtils.isNotBlank(triple.getLeft())).
+                filter(triple -> !Objects.equals(triple.getLeft(), triple.getMiddle())).
+                forEach(triple -> messages.addError(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA,
+                        found.getRowNumber(), triple.getRight(),
+                        mapSampleNameToFirstRow.get(found.getSampleName()).getRowNumber(), found.getSampleName()));
+    }
+
+    /**
+     * Compares the tube data on the found dto to the expected dto and errors if
+     * values are inconsistent, i.e. values must match or be blank on the found dto.
+     */
+    protected void consistentTubeData(SampleInstanceEjb.RowDto expected, SampleInstanceEjb.RowDto found,
+            MessageCollection messages) {
+
+        boolean volumeIsRequired = false;
+        boolean expectConc = false;
+        boolean concIsRequired = false;
+        boolean sizeIsRequired = false;
+        String sizeHeader = "";
+        for (ColumnHeader header : getColumnHeaders()) {
+            if (header.getText().toLowerCase().contains("volume")) {
+                volumeIsRequired = header.isRequiredValue();
+            }
+            if (header.getText().toLowerCase().contains("concentration")) {
+                expectConc = true;
+                concIsRequired = header.isRequiredValue();
+            }
+            if (header.getText().toLowerCase().contains("fragment size")) {
+                sizeHeader = "Fragment Size";
+                sizeIsRequired = header.isRequiredValue();
+            }
+            if (header.getText().toLowerCase().contains("library size")) {
+                sizeHeader = "Library Size";
+                sizeIsRequired = header.isRequiredValue();
+            }
+        }
+        if (expected.getRowNumber() == found.getRowNumber()) {
+            // If volume, conc, and fragment size are defined as OPTIONAL in the Header enum their absence
+            // is errored here. If the string value is present in the upload but can't be converted to the
+            // correct numeric data type an error is given elsewhere.
+            if (!volumeIsRequired && StringUtils.isBlank(get(getVolumes(), toRowIndex(found.getRowNumber())))) {
+                messages.addError(String.format(SampleInstanceEjb.MISSING, found.getRowNumber(), "Volume"));
+            }
+            if (!concIsRequired && expectConc &&
+                    StringUtils.isBlank(get(getConcentrations(), toRowIndex(found.getRowNumber())))) {
+                messages.addError(String.format(SampleInstanceEjb.MISSING, found.getRowNumber(), "Concentration"));
+            }
+            if (!sizeIsRequired && StringUtils.isBlank(get(getFragmentSizes(), toRowIndex(found.getRowNumber())))) {
+                messages.addError(String.format(SampleInstanceEjb.MISSING, found.getRowNumber(), sizeHeader));
+            }
+        } else {
+            if (found.getVolume() != null && !Objects.equals(found.getVolume(), expected.getVolume())) {
+                messages.addError(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        "Volume", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(), found.getBarcode()));
+            }
+            if (found.getConcentration() != null &&
+                    !Objects.equals(found.getConcentration(), expected.getConcentration())) {
+                messages.addError(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        "Concentration", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
+                        found.getBarcode()));
+            }
+            if (found.getFragmentSize() != null &&
+                    !Objects.equals(found.getFragmentSize(), expected.getFragmentSize())) {
+                messages.addError(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        sizeHeader, mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
+                        found.getBarcode()));
+            }
+        }
+    }
+
+    /**
+     * Checks the uploaded metadata against existing MercurySample metadata.
+     */
+    protected void errorBspMetadataChanges(SampleInstanceEjb.RowDto dto, boolean overwrite,
+            MessageCollection messages) {
+        MercurySample sample = getSampleMap().get(dto.getSampleName());
+        if (sample != null) {
+            SampleData sampleData = getFetchedData().get(dto.getSampleName());
+            if (sampleData != null) {
+                // Excludes Material Type since user cannot control it.
+                Set<Metadata> changes = makeSampleMetadata(dto).stream().
+                        filter(metadata -> metadata.getKey() != Metadata.Key.MATERIAL_TYPE).
+                        collect(Collectors.toSet());
+                // Metadata equality is based on both the key and the value.
+                changes.removeAll(makeSampleMetadata(sampleData));
+                // Makes a string of header names of the columns having changes.
+                String columnNames = changes.stream().
+                        map(metadata -> metadata.getKey().getDisplayName()).
+                        sorted().
+                        collect(Collectors.joining(", "));
+                // Checks BSP root sample name.
+                if (StringUtils.isNotBlank(dto.getRootSampleName()) &&
+                        sample.getMetadataSource() == MercurySample.MetadataSource.BSP &&
+                        !dto.getRootSampleName().equals(sampleData.getRootSample())) {
+                    columnNames = StringUtils.join(columnNames, " Root Sample", ',');
+                }
+                // If the upload has different metadata than the MercurySample, it's an error if the
+                // metadata source is BSP, or if the metadata source is Mercury and overwrite is not set.
+                if (StringUtils.isNotBlank(columnNames)) {
+                    if (sample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                        messages.addError(SampleInstanceEjb.BSP_METADATA, dto.getRowNumber(), columnNames,
+                                dto.getSampleName());
+                    } else if (!overwrite) {
+                        messages.addError(SampleInstanceEjb.PREXISTING_VALUES, dto.getRowNumber(), columnNames);
+                    }
+                }
+            }
+            // Issues a warning if the metadata source is Mercury and a root sample name was given.
+            if (StringUtils.isNotBlank(dto.getRootSampleName()) &&
+                    sample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                messages.addWarning(SampleInstanceEjb.IGNORING_ROOT, dto.getRowNumber());
+            }
+
+        }
+    }
+
+    /**
+     * Does self-consistency and other validation checks on the data.
+     * Entities fetched for the row data are accessed through maps referenced in the dtos.
+     */
+    abstract public void validateAllRows(List<SampleInstanceEjb.RowDto> dtos, boolean overwrite,
+            MessageCollection messageCollection);
+
+    /**
+     * Makes the Samples, LabVessels, and SampleInstanceEntities but does not persist them.
+     * New/modified entities are added to the dto shared collection getEntitiesToUpdate().
+     *
+     * @return the list of SampleInstanceEntity, for testing purposes.
+     */
+    abstract public List<SampleInstanceEntity> makeOrUpdateEntities(List<SampleInstanceEjb.RowDto> dtos);
+
+    /**
+     * Creates/updates tube and sample for each unique barcode and sample name.
+     */
+    protected void makeTubesAndSamples(List<SampleInstanceEjb.RowDto> dtos) {
+        // Creates/updates tubes. Sets tube volume and sets fragment size if it is missing.
+        dtos.stream().
+                map(dto -> dto.getBarcode()).
+                filter(s -> StringUtils.isNotBlank(s)).
+                distinct().
+                forEach(barcode ->
+                {
+                    LabVessel labVessel = getLabVesselMap().get(barcode);
+                    if (labVessel == null) {
+                        labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
+                        getLabVesselMap().put(barcode, labVessel);
+                    } else {
+                        // Tube is being re-uploaded, so clearing old samples is appropriate.
+                        labVessel.getMercurySamples().clear();
+                    }
+                    SampleInstanceEjb.RowDto firstRowHavingTube = mapBarcodeToFirstRow.get(barcode);
+                    labVessel.setVolume(firstRowHavingTube.getVolume());
+                    labVessel.setConcentration(firstRowHavingTube.getConcentration());
+                    SampleInstanceEjb.addLibrarySize(labVessel, firstRowHavingTube.getFragmentSize());
+                });
+
+        // Collects all of the root sample names.
+        Set<String> rootNames = dtos.stream().
+                map(SampleInstanceEjb.RowDto::getRootSampleName).
+                filter(rootName -> StringUtils.isNotBlank(rootName)).
+                collect(Collectors.toSet());
+        // Creates/updates samples, sorted so that any of the samples that are referenced as root samples in
+        // the upload are created first.
+        dtos.stream().
+                map(SampleInstanceEjb.RowDto::getSampleName).
+                filter(sampleName -> StringUtils.isNotBlank(sampleName)).
+                distinct().
+                sorted((String o1, String o2) -> (rootNames.contains(o1) ? 0 : 1) - (rootNames.contains(o2) ? 0 : 1)).
+                forEach(sampleName ->
+                {
+                    SampleInstanceEjb.RowDto dto = mapSampleNameToFirstRow.get(sampleName);
+
+                    MercurySample mercurySample = getSampleMap().get(sampleName);
+                    Set<Metadata> metadata = makeSampleMetadata(dto);
+                    if (mercurySample == null) {
+                        mercurySample = new MercurySample(sampleName, metadata);
+                        getSampleMap().put(sampleName, mercurySample);
+                    } else if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                        // Adds new values or replaces existing values only for Mercury samples.
+                        mercurySample.updateMetadata(metadata);
+                    }
+                });
+    }
+
+    /**
+     * Creates/updates tube and sample for each dto row.
+     */
+    protected List<SampleInstanceEntity> makeSampleInstanceEntities(List<SampleInstanceEjb.RowDto> rowDtos) {
+        List<SampleInstanceEntity> sampleInstanceEntities = new ArrayList<>();
+
+        if (supportsSampleKitRequest() && getSampleKitRequest() == null) {
+            setSampleKitRequest(makeSampleKitRequest());
+            getEntitiesToPersist().add(getSampleKitRequest());
+        }
+
+        for (SampleInstanceEjb.RowDto dto : rowDtos) {
+            LabVessel labVessel = getLabVesselMap().get(dto.getBarcode());
+            MercurySample mercurySample = getSampleMap().get(dto.getSampleName());
+            mercurySample.addLabVessel(labVessel);
+
+            SampleInstanceEntity sampleInstanceEntity = makeSampleInstanceEntity(dto, labVessel, mercurySample);
+            sampleInstanceEntity.setSampleKitRequest(getSampleKitRequest());
+
+            labVessel.getSampleInstanceEntities().add(sampleInstanceEntity);
+            dto.setSampleInstanceEntity(sampleInstanceEntity);
+            sampleInstanceEntities.add(sampleInstanceEntity);
+        }
+        return sampleInstanceEntities;
+    }
+
+    /**
+     * Captures the pre-row one-off spreadsheet data in a "kit request", i.e. the upload manifest.
+     */
+    protected SampleKitRequest makeSampleKitRequest() {
+        SampleKitRequest sampleKitRequest = new SampleKitRequest();
+        sampleKitRequest.setFirstName(getFirstName());
+        sampleKitRequest.setLastName(getLastName());
+        sampleKitRequest.setOrganization(getOrganization());
+        sampleKitRequest.setAddress(getAddress());
+        sampleKitRequest.setCity(getCity());
+        sampleKitRequest.setState(getState());
+        sampleKitRequest.setPostalCode(getZip());
+        sampleKitRequest.setCountry(getCountry());
+        sampleKitRequest.setPhone(getPhone());
+        sampleKitRequest.setEmail(getEmail());
+        sampleKitRequest.setCommonName(getCommonName());
+        sampleKitRequest.setGenus(getGenus());
+        sampleKitRequest.setSpecies(getSpecies());
+        sampleKitRequest.setIrbApprovalRequired(getIrbRequired());
+        return sampleKitRequest;
+    }
+
+    /**
+     * Makes Metadata from the spreadsheet row.
+     */
+    protected Set<Metadata> makeSampleMetadata(SampleInstanceEjb.RowDto dto) {
+        String organism = StringUtils.isNotBlank(dto.getOrganism()) ? dto.getOrganism() : getGenusAndSpecies();
+        // For each pair, if the data value is not blank, makes a new Metadata and puts it in a Set.
+        Set<Metadata> metadata = Stream.of(
+                Pair.of(dto.getCollaboratorSampleId(), Metadata.Key.SAMPLE_ID),
+                Pair.of(dto.getParticipantId(), Metadata.Key.BROAD_PARTICIPANT_ID),
+                Pair.of(dto.getCollaboratorParticipantId(), Metadata.Key.PATIENT_ID),
+                Pair.of(dto.getSex(), Metadata.Key.GENDER),
+                Pair.of(organism, Metadata.Key.SPECIES),
+                Pair.of(dto.getMaterialType(), Metadata.Key.MATERIAL_TYPE),
+                Pair.of(dto.getLsid(), Metadata.Key.LSID)).
+                filter(pair -> StringUtils.isNotBlank(pair.getLeft())).
+                map(pair -> new Metadata(pair.getRight(), pair.getLeft())).
+                collect(Collectors.toSet());
+        return metadata;
+    }
+
+    /**
+     * Makes Metadata from SampleData.
+     */
+    protected Set<Metadata> makeSampleMetadata(SampleData sampleData) {
+        // For each pair, if the data value is not blank, makes a new Metadata and puts it in a Set.
+        Set<Metadata> metadata = Stream.of(
+                Pair.of(sampleData.getCollaboratorsSampleName(), Metadata.Key.SAMPLE_ID),
+                Pair.of(sampleData.getPatientId(), Metadata.Key.BROAD_PARTICIPANT_ID),
+                Pair.of(sampleData.getCollaboratorParticipantId(), Metadata.Key.PATIENT_ID),
+                Pair.of(sampleData.getGender(), Metadata.Key.GENDER),
+                Pair.of(sampleData.getOrganism(), Metadata.Key.SPECIES),
+                Pair.of(sampleData.getMaterialType(), Metadata.Key.MATERIAL_TYPE),
+                Pair.of(sampleData.getSampleLsid(), Metadata.Key.LSID)).
+                filter(pair -> StringUtils.isNotBlank(pair.getLeft())).
+                map(pair -> new Metadata(pair.getRight(), pair.getLeft())).
+                collect(Collectors.toSet());
+        return metadata;
+    }
+
+    /**
+     * Makes a new SampleInstanceEntity from the row data.
+     */
+    protected SampleInstanceEntity makeSampleInstanceEntity(SampleInstanceEjb.RowDto dto, LabVessel labVessel,
+            MercurySample mercurySample) {
+
+        SampleInstanceEntity sampleInstanceEntity = dto.getSampleInstanceEntity();
+        if (sampleInstanceEntity == null) {
+            sampleInstanceEntity = new SampleInstanceEntity();
+            sampleInstanceEntity.setSampleLibraryName(dto.getLibraryName());
+        }
+        // An existing Sample Instance Entity gets rewritten.
+        sampleInstanceEntity.setAggregationParticle(dto.getAggregationParticle());
+        sampleInstanceEntity.setAnalysisType(getAnalysisTypeMap().get(dto.getAnalysisTypeName()));
+        sampleInstanceEntity.setComments(dto.getAdditionalSampleInformation() +
+                ((StringUtils.isNotBlank(dto.getAdditionalSampleInformation()) &&
+                        StringUtils.isNotBlank(dto.getAdditionalAssemblyInformation())) ? "; " : "") +
+                dto.getAdditionalAssemblyInformation());
+        sampleInstanceEntity.setExperiment(dto.getExperiment());
+        sampleInstanceEntity.setLabVessel(labVessel);
+        sampleInstanceEntity.setLibraryType(dto.getLibraryType());
+        sampleInstanceEntity.setMercurySample(mercurySample);
+        sampleInstanceEntity.setMolecularIndexingScheme(getMolecularIndexingSchemeMap().get(dto.getMisName()));
+        sampleInstanceEntity.setNumberLanes(dto.getNumberOfLanes());
+        sampleInstanceEntity.setPooled(dto.isPooled());
+        sampleInstanceEntity.setReadLength(dto.getReadLength());
+        sampleInstanceEntity.setReagentDesign(dto.getReagent());
+        sampleInstanceEntity.setReferenceSequence(getReferenceSequenceMap().get(dto.getReferenceSequenceName()));
+        sampleInstanceEntity.setRootSample(getSampleMap().get(dto.getRootSampleName()));
+        sampleInstanceEntity.setSampleKitRequest(getSampleKitRequest());
+        sampleInstanceEntity.setSequencerModel(getSequencerModelMap().get(dto.getSequencerModelName()));
+        sampleInstanceEntity.setUploadDate(new Date());
+        return sampleInstanceEntity;
+    }
+
+    /**
+     * Returns the list element or null if the list or element doesn't exist
+     */
+    private <T> T get(List<T> list, int index) {
+        return SampleInstanceEjb.get(list, index);
+    }
+
+    /**
+     * Converts to integer and returns 0 for a blank or non-numeric input.
+     */
+    public static Integer asInteger(String input) {
+        return StringUtils.isNumeric(StringUtils.trimToEmpty(input)) ? new Integer(input) : 0;
+    }
+
+    /**
+     * Converts to integer and returns null for a blank input. Issues error message for non-numeric input.
+     */
+    private static Integer asNonNegativeInteger(String value, String header, int rowNumber,
+            @Nullable MessageCollection messages) {
+
+        if (StringUtils.isNotBlank(value)) {
+            if (StringUtils.isNumeric(value) && Integer.parseInt(value) >= 0) {
+                return Integer.parseInt(value);
+            } else if (messages != null) {
+                messages.addError(String.format(SampleInstanceEjb.NONNEGATIVE_INTEGER, rowNumber, header));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Converts to BigDecimal and returns null for a blank input. Issues error message for non-numeric input.
+     */
+    public static BigDecimal asNonNegativeBigDecimal(String value, String header, int rowNumber,
+            @Nullable MessageCollection messages) {
+
+        if (StringUtils.isNotBlank(value)) {
+            if (NumberUtils.isNumber(value) && Float.parseFloat(value) >= 0) {
+                return MathUtils.scaleTwoDecimalPlaces(new BigDecimal(value));
+            } else if (messages != null) {
+                messages.addError(String.format(SampleInstanceEjb.NONNEGATIVE_DECIMAL, rowNumber, header));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns true if string indicates a true value, meaning it's "t", "true", "y", "yes",
+     * or "1" (or any non-zero integer value), ignoring case.
+     */
+    private static boolean isTrue(String value) {
+        return StringUtils.isNotBlank(value) && (isOneOf(value, "y", "yes", "t", "true") ||
+                (StringUtils.isNumeric(value) && Integer.parseInt(value) != 0));
+    }
+
+    /**
+     * Returns true if string is one of the given testString, ignoring case.
+     */
+    public static boolean isOneOf(String value, String... testStrings) {
+        for (String testString : testStrings) {
+            if (testString.equalsIgnoreCase(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns a mapping of adjusted header name to actual header name.
+     */
     public Map<String, String> getAdjustedNames() {
         return adjustedNames;
     }
 
-    public List<String> getAdditionalAssemblyInformation() {
-        return additionalAssemblyInformation;
-    }
-
-    public List<String> getAdditionalSampleInformation() {
-        return additionalSampleInformation;
-    }
-
-    public List<String> getBarcodes() {
-        return barcodes;
-    }
-
-    public List<String> getCollaboratorSampleId() {
-        return collaboratorSampleId;
-    }
-
-    public List<String> getNumberOfLanes() {
-        return numberOfLanes;
-    }
-
-    public List<String> getDataAnalysisType() {
-        return dataAnalysisType;
-    }
-
-    public List<String> getReadLength() {
-        return readLength;
-    }
-
-    public List<String> getIndividualName() {
-        return individualName;
-    }
-
-    public List<String> getInsertSize() {
-        return insertSize;
-    }
-
-    public List<String> getIrbNumber() {
-        return irbNumber;
-    }
-
-    public List<String> getLibrarySize() {
-        return librarySize;
-    }
-
-    public List<String> getLibraryType() {
-        return libraryType;
-    }
-
-    public List<String> getMolecularBarcodeName() {
-        return molecularBarcodeName;
-    }
-
-    public List<String> getOrganism() {
-        return organism;
-    }
-
-    public List<String> getPooled() {
-        return pooled;
-    }
-
-    public List<String> getProjectTitle() {
-        return projectTitle;
-    }
-
-    public List<String> getReferenceSequence() {
-        return referenceSequence;
-    }
-
-    public List<String> getSequencingTechnology() {
-        return sequencingTechnology;
-    }
-
-    public List<String> getSex() {
-        return sex;
-    }
-
-    public List<String> getLibraryName() {
-        return libraryName;
-    }
-
-    public List<String> getConcentration() {
-        return concentration;
-    }
-
-    public List<String> getVolume() {
-        return volume;
-    }
-
-    public List<String> getSquidProject() {
-        return squidProject;
-    }
-
+    /**
+     * Getters for the rows consisting of header-value pairs.
+     */
     public String getAddress() {
         return headerValueMap.get(HeaderValueRows.ADDRESS.getText());
     }
@@ -339,6 +739,11 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return headerValueMap.get(HeaderValueRows.ORGANIZATION.getText());
     }
 
+    // Combines genus and species to use if organism is not specifed on a row.
+    public String getGenusAndSpecies() {
+        return StringUtils.trim(StringUtils.trimToEmpty(getGenus()) + " " + StringUtils.trimToEmpty(getSpecies()));
+    }
+
     public String getPhone() {
         return headerValueMap.get(HeaderValueRows.PHONE.getText());
     }
@@ -357,5 +762,199 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     public Map<String, String> getHeaderValueMap() {
         return headerValueMap;
+    }
+
+    /**
+     * These are the spreadsheet data getters to be overridden, depending on the type of
+     * spreadsheet being processed, defaulting to no data.
+     */
+    public List<String> getAdditionalAssemblyInformations() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getAdditionalSampleInformations() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getBarcodes() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getCollaboratorSampleIds() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getNumbersOfLanes() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getDataAnalysisTypes() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getReadLengths() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getInsertSizes() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getIrbNumbers() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getLibrarySizes() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getLibraryTypes() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getMolecularBarcodeNames() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getOrganisms() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getPooleds() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getAggregationParticles() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getReferenceSequences() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getSequencingTechnologies() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getSexes() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getLibraryNames() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getConcentrations() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getVolumes() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getSampleNames() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getRootSampleNames() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getBaits() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getCats() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getExperiments() {
+        return Collections.emptyList();
+    }
+
+    public List<List<String>> getConditions() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getCollaboratorParticipantIds() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getBroadParticipantIds() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getLsids() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getFragmentSizes() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getSingleDoubleStrandeds() {
+        return Collections.emptyList();
+    }
+
+    public List<Boolean> getRequiredValuesPresent() {
+        return Collections.emptyList();
+    }
+
+    public SampleKitRequest getSampleKitRequest() {
+        return null;
+    }
+
+    public void setSampleKitRequest(SampleKitRequest sampleKitRequest) {
+    }
+
+    /**
+     * All subclasses must specify whether SampleKitRequest is supported or not.
+     */
+    abstract public boolean supportsSampleKitRequest();
+
+    /**
+     * Maps of upload value to the corresponding entity.
+     */
+    public Map<String, MercurySample> getSampleMap() {
+        return sampleMap;
+    }
+
+    public Map<String, LabVessel> getLabVesselMap() {
+        return labVesselMap;
+    }
+
+    public Map<String, SampleData> getFetchedData() {
+        return fetchedData;
+    }
+
+    public Map<String, JiraIssue> getJiraIssueMap() {
+        return jiraIssueMap;
+    }
+
+    public Map<String, AnalysisType> getAnalysisTypeMap() {
+        return analysisTypeMap;
+    }
+
+    public Map<String, MolecularIndexingScheme> getMolecularIndexingSchemeMap() {
+        return molecularIndexingSchemeMap;
+    }
+
+    public Map<String, ReferenceSequence> getReferenceSequenceMap() {
+        return referenceSequenceMap;
+    }
+
+    public Map<String, IlluminaFlowcell.FlowcellType> getSequencerModelMap() {
+        return sequencerModelMap;
+    }
+
+    public Map<String, Boolean> getSampleHasMercuryData() {
+        return sampleHasMercuryData;
+    }
+
+    /**
+     * The entities that need to be persisted.
+     */
+    public Set<Object> getEntitiesToPersist() {
+        return entitiesToUpdate;
     }
 }

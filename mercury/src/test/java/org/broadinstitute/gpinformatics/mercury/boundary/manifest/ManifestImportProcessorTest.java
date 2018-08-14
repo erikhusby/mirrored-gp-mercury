@@ -96,7 +96,7 @@ public class ManifestImportProcessorTest {
         boolean headersAreValid = processor.validateColumnHeaders(headers, 0);
         assertThat(headersAreValid, is(not(true)));
         assertThat(processor.getMessages(), contains(
-                TableProcessor.getPrefixedMessage("Unknown header(s) \"bad header 2\", \"bad header 1\".", null, 1)));
+                TableProcessor.getPrefixedMessage("Unknown header(s) \"bad header 1\", \"bad header 2\".", null, 1)));
         assertThat(processor.getWarnings(), hasSize(0));
     }
 

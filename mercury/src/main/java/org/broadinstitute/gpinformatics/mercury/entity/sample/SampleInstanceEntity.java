@@ -157,10 +157,6 @@ public class SampleInstanceEntity {
         this.reagentDesign = reagentDesign;
     }
 
-    public void setMolecularIndexScheme(MolecularIndexingScheme molecularIndexingScheme) {
-        this.molecularIndexingScheme = molecularIndexingScheme;
-    }
-
     public void setMercurySample(MercurySample mercurySample) {
         this.mercurySample = mercurySample;
     }
