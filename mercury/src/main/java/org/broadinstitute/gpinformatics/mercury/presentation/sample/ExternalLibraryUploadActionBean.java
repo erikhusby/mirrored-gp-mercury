@@ -294,8 +294,8 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     /** Sets the cell color depending on whether the value is required, optional, or ignored. */
     private void setBackground(HSSFWorkbook workbook, Cell cell, boolean isRequiredValue, boolean isIgnoredValue) {
         PoiSpreadsheetParser.setBackgroundColor(workbook, cell,
-                isRequiredValue ? HSSFColor.YELLOW.index :
-                        isIgnoredValue ? HSSFColor.GREY_25_PERCENT.index : HSSFColor.LAVENDER.index);
+                isRequiredValue ? HSSFColor.RED.index :
+                        isIgnoredValue ? HSSFColor.GREY_25_PERCENT.index : HSSFColor.WHITE.index);
     }
 
     public void setSamplesSpreadsheet(FileBean spreadsheet) {
