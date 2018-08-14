@@ -173,6 +173,8 @@ public class SingleCellSmartSeqJaxbBuilder {
                 "SingleCellBulkSPRICleanup", poolRackBarcode, poolTubes, bulkSpriRackBarcode,
                 Collections.singletonList(bulkSpriTubeBarcode));
 
+        bettaLimsMessageTestFactory.addMessage(messageList, bulkSpriTransferJaxb);
+
         return this;
     }
 
