@@ -206,20 +206,18 @@ public class SubmissionsServiceImpl implements SubmissionsService {
      * Queries the SubmissionService to determine if a UUID has been submitted.
      */
     @Override
-    public List<SubmissionTracker> findOrphans(Collection<SubmissionTracker> submissionTrackers) {
+    public List<SubmissionTracker> findOrphans(Map<String, SubmissionTracker> submissionTrackerMap) {
         List<SubmissionTracker> orphans = new ArrayList<>();
 
         // Since the SubmissionService does not return the submitted sample name in it's response it is necessary to
-        // look up the submission statuses individually to find if it exists on the Epsilon 9.
-        for (SubmissionTracker submissionTracker : submissionTrackers) {
-            Collection<SubmissionStatusDetailBean> submissionStatus =
-                getSubmissionStatus(submissionTracker.createSubmissionIdentifier());
+        // look up all the submission statuses to find if the submission exists on the Epsilon 9.
+        Collection<SubmissionStatusDetailBean> submissionStatus =
+            getSubmissionStatus(submissionTrackerMap.keySet().toArray(new String[0]));
             for (SubmissionStatusDetailBean status : submissionStatus) {
                 if (!status.submissionServiceHasRequest()) {
-                    orphans.add(submissionTracker);
+                    orphans.add(submissionTrackerMap.get(status.uuid));
                 }
             }
-        }
         return orphans;
     }
 

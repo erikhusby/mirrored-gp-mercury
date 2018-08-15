@@ -427,7 +427,7 @@ public class ResearchProjectEjb {
             }
         }
 
-        List<SubmissionTracker> orphanTrackers = submissionsService.findOrphans(submissionIdentifierToTracker.values());
+        List<SubmissionTracker> orphanTrackers = submissionsService.findOrphans(submissionIdentifierToTracker);
         removeTrackers.addAll(orphanTrackers);
         researchProject.getSubmissionTrackers().removeAll(removeTrackers);
         if (CollectionUtils.isNotEmpty(unmatchedSubmissionStatusDetailBeans)) {
