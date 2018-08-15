@@ -189,8 +189,19 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 List<String> productDisplays = (List<String>) entity;
+                StringBuffer displayOutput = new StringBuffer();
 
-                return StringUtils.join(productDisplays, "<br>");
+                Pattern productPattern = Pattern.compile("((Primary\\sProduct|Add\\sOn):)");
+
+                for (String productDisplay : productDisplays) {
+                    Matcher productMatch = productPattern.matcher(productDisplay);
+                    if (productMatch.find()) {
+                        productMatch.appendReplacement(displayOutput, "<b>" + productMatch.group() + "</b>");
+                        productMatch.appendTail(displayOutput);
+                        displayOutput.append("<BR>");
+                    }
+                }
+                return displayOutput.toString();
             }
         });
         searchTerms.add(productDisplayTerm);
@@ -209,6 +220,20 @@ public class ProductOrderSearchDefinition {
                 ProductOrder orderData = (ProductOrder) entity;
 
                 return orderData.getQuoteId();
+            }
+        });
+        quoteTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String quoteId = (String) entity;
+
+                StringBuffer quoteLink = new StringBuffer();
+                if(StringUtils.isNotBlank(quoteId)) {
+                    quoteLink .append("<a class=\"external\" target=\"QUOTE\" href=\"");
+                    quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
+                    quoteLink.append("\">").append(quoteId).append("</a>");
+                }
+                return quoteLink.toString();
             }
         });
         searchTerms.add(quoteTerm);
@@ -307,7 +332,6 @@ public class ProductOrderSearchDefinition {
         SearchTerm lcsetTerm = new SearchTerm();
         lcsetTerm.setName("LCSET(s)");
         lcsetTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
-//        List<SearchTerm.CriteriaPath> lcsetPathList = new ArrayList<>();
 
         SearchTerm.CriteriaPath lcsetVesselPath = new SearchTerm.CriteriaPath();
         SearchTerm.CriteriaPath lcsetReworkPath = new SearchTerm.CriteriaPath();
@@ -322,7 +346,6 @@ public class ProductOrderSearchDefinition {
         lcsetReworkPath.setPropertyName("batchName");
         lcsetReworkPath.addImmutableTermFilter(workflowOnlyFilter);
         lcsetReworkPath.setCriteria(Arrays.asList("BatchVessels", "samples", "mercurySample", "labVessel", "reworkLabBatches"));
-//        lcsetPathList.addAll(Arrays.asList(lcsetReworkPath, lcsetVesselPath));
         lcsetTerm.setCriteriaPaths(Arrays.asList(lcsetReworkPath, lcsetVesselPath));
         lcsetTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -367,9 +390,6 @@ public class ProductOrderSearchDefinition {
             }
         });
         searchTerms.add(lcsetTerm);
-
-
-
         return searchTerms;
     }
 
@@ -393,11 +413,7 @@ public class ProductOrderSearchDefinition {
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
                 StringBuffer productOrderDisplay = new StringBuffer();
-                if(!order.isDraft()) {
-                    productOrderDisplay.append(order.getBusinessKey()).append(" -- ");
-                } else {
-                    productOrderDisplay.append("(Draft) ");
-                }
+                productOrderDisplay.append(order.getBusinessKey()).append(" -- ");
                 productOrderDisplay.append(order.getName());
 
                 return productOrderDisplay.toString();
@@ -407,22 +423,28 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
 
-                Pattern pdoPattern = Pattern.compile("PDO-\\w*");
+                Pattern pdoPattern = Pattern.compile("(PDO|Draft)-\\w*");
 
                 String pdoOutput = (String) entity;
                 StringBuffer pdoLinkOutput = new StringBuffer();
+                String format =
+                        "<a class=\"external\" target=\"new\" href=\"/Mercury/orders/order.action?view=&productOrder=%s\">%s";
 
                 Matcher pdoMatch = pdoPattern.matcher(pdoOutput);
                 final boolean matchIsFound = pdoMatch.find();
-                final String matchGroup;
+                String matchGroup = "";
                 if(matchIsFound) {
+                    String linkText = "";
                     matchGroup = pdoMatch.group();
-                    pdoLinkOutput
-                            .append("<a class=\"external\" target=\"new\" href=\"/Mercury/orders/order.action?view=&productOrder=")
-                            .append(matchGroup).append("\">");
-                }
-                pdoLinkOutput.append(pdoOutput);
-                if(matchIsFound) {
+
+                    if(StringUtils.contains(matchGroup, "Draft")) {
+                        linkText ="(Draft) ";
+                    } else {
+                        linkText = matchGroup;
+                    }
+                    pdoMatch.appendReplacement(pdoLinkOutput, String.format(format, matchGroup, linkText));
+                    pdoMatch.appendTail(pdoLinkOutput);
+
                     pdoLinkOutput.append("</a>");
                 }
 
@@ -478,8 +500,6 @@ public class ProductOrderSearchDefinition {
                 String currentSapOrderNumber = order.getSapOrderNumber();
                 if(StringUtils.isNotBlank(currentSapOrderNumber)) {
                     sapIdResults.add("Active order --> " + currentSapOrderNumber);
-                } else {
-                    sapIdResults.add("Inactive order --> " + currentSapOrderNumber);
                 }
 
                 if(order.getSapReferenceOrders().size() >1) {

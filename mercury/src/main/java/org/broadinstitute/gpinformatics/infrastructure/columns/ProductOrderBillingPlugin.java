@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
@@ -186,9 +187,16 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
 
     @NotNull
     public String getWorkItemLink(String workItemId, String quoteId, SearchContext context) {
-        StringBuffer workLink = new StringBuffer("<a class=\"external\" target=\"QUOTE\" href=\"");
-        workLink.append(context.getQuoteLink().workUrl(quoteId, workItemId));
-        workLink.append("\">").append(workItemId).append("</a>");
+        StringBuffer workLink = new StringBuffer();
+        if(StringUtils.isNotBlank(workItemId)) {
+            workLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
+            workLink.append(context.getQuoteLink().workUrl(quoteId, workItemId));
+            workLink.append("\">");
+        }
+        workLink.append(workItemId);
+        if(StringUtils.isNotBlank(workItemId)) {
+            workLink.append("</a>");
+        }
 
         return workLink.toString();
     }
