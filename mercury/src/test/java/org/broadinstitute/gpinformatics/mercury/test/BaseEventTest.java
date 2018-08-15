@@ -90,6 +90,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcell
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
@@ -579,6 +580,20 @@ public class BaseEventTest {
         return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRacks,
                 barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96, IceJaxbBuilder.PrepType.HYPER_PREP_ICE).invoke();
     }
+
+    /**
+     * Creates an entity graph for Custom Selection.
+     *
+     * @param pondRegRacks        The pond registration racks coming out of the library construction process.
+     * @param barcodeSuffix       Makes unique the generated vessel barcodes. Don't use date if test quickly invoked twice.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public SelectionEntityBuilder runSelectionProcess(List<TubeFormation> pondRegRacks, String barcodeSuffix) {
+        return new SelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRacks,
+                barcodeSuffix).invoke();
+    }
+
 
     /**
      * This method runs the entities through the QTP process.

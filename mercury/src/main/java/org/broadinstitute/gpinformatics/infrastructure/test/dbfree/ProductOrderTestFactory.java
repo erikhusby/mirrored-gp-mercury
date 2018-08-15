@@ -162,6 +162,10 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_FREE_HYPER_PREP);
     }
 
+    public static ProductOrder builCustomSelectionProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.CUSTOM_SELECTION);
+    }
+
     public static ProductOrder buildCellFreeHyperPrepProductOrder(int maxSamples) {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.CELL_FREE_HYPER_PREP);
     }

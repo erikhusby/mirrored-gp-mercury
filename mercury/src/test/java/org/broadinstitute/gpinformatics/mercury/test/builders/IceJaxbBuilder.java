@@ -235,7 +235,7 @@ public class IceJaxbBuilder {
             // IceHyperPrep1stBaitPick (bait tubes to empty plate)
             String firstBaitPlateBarcode = "B1B" + testPrefix;
             ice1stBaitPick = makeBaitPick("B1R" + testPrefix, firstBaitPlateBarcode, "IceHyperPrep1stBaitPick",
-                    baitTube1Barcode);
+                    baitTube1Barcode, bettaLimsMessageTestFactory);
             bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitPick);
 
             // IceHyperPrep1stBaitAddition (bait plate to empty plate)
@@ -264,7 +264,7 @@ public class IceJaxbBuilder {
             } else {
                 // Ice1stBaitPick
                 ice1stBaitPick = makeBaitPick("B1R" + testPrefix, firstHybPlateBarcode, "Ice1stBaitPick",
-                        baitTube1Barcode);
+                        baitTube1Barcode, bettaLimsMessageTestFactory);
                 bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitPick);
 
                 //PostIce1stHybridizationThermoCyclerLoaded
@@ -295,7 +295,7 @@ public class IceJaxbBuilder {
             // IceHyperPrep2ndBaitPick (bait tubes to empty plate)
             String secondBaitPlateBarcode = "B2B" + testPrefix;
             ice2ndBaitPick = makeBaitPick("B2R" + testPrefix, secondBaitPlateBarcode, "IceHyperPrep2ndBaitPick",
-                    baitTube2Barcode);
+                    baitTube2Barcode, bettaLimsMessageTestFactory);
             bettaLimsMessageTestFactory.addMessage(messageList, ice2ndBaitPick);
 
             // Ice2ndHybridization in-place event
@@ -554,8 +554,8 @@ public class IceJaxbBuilder {
         return iceHyperPrep2ndBaitAddition;
     }
 
-    private PlateCherryPickEvent makeBaitPick(String baitRackBarcode, String targetPlateBarcode,
-            String eventName, String baitTubeBarcode) {
+    protected static PlateCherryPickEvent makeBaitPick(String baitRackBarcode, String targetPlateBarcode,
+            String eventName, String baitTubeBarcode, BettaLimsMessageTestFactory bettaLimsMessageTestFactory) {
         PlateCherryPickEvent pickEvent;
         List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
         for (int i = 0; i < 8; i++) {

@@ -99,6 +99,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcell
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
@@ -2176,6 +2177,43 @@ public class LabEventTest extends BaseEventTest {
 
     }
 
+    public void testCustomSelectionHyperPrep() {
+//        Controller.startCPURecording(true);
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildPcrFreeHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
+
+        String[] expectedEventNames = {
+                "PicoTransfer",
+                "PicoTransfer",
+                "FingerprintingAliquot",
+                "PicoTransfer",
+                "PicoTransfer",
+                "FingerprintingPlateSetup",
+                "ShearingAliquot",
+                "PicoTransfer",
+                "PicoTransfer",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "PCRPlusPondRegistration",
+                "SelectionPoolingTransfer",
+                "SelectionConcentrationTransfer",
+                "SelectionHybSetup",
+                "SelectionCatchRegistration",
+                "PoolingTransfer",
+                "EcoTransfer",
+                "NormalizationTransfer",
+                "DenatureTransfer",
+                "StripTubeBTransfer",
+                "FlowcellTransfer",
+        };
+        testGenomeWorkflow(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS_HYPER_PREP, expectedEventNames,
+                Workflow.CUSTOM_SELECTION);
+    }
+
     private void testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
                                     String[] expectedEventNames, Workflow workflow) {
         testGenomeWorkflow(productOrder, pondType, expectedEventNames, workflow, "1", false);
@@ -2190,6 +2228,8 @@ public class LabEventTest extends BaseEventTest {
         QtpEntityBuilder qtpEntityBuilder = pair.getRight();
         Map<String, BarcodedTube> mapBarcodeToTube = pair.getLeft();
         int numSeqReagents = 1;
+        if (workflow == Workflow.CUSTOM_SELECTION)
+            numSeqReagents = 2;
         if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP)
             numSeqReagents = 3;
         if (includeUMI)
@@ -2244,7 +2284,7 @@ public class LabEventTest extends BaseEventTest {
         String platingBarcode = null;
         Map<String, BarcodedTube> mapBarcodeToDaughterTube = null;
         Map<String, BarcodedTube> mapBarcodeToPlatingVessel = null;
-        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
+        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP || workflow == Workflow.CUSTOM_SELECTION) {
             CrspPicoEntityBuilder crspPicoEntityBuilder = new CrspPicoEntityBuilder(getBettaLimsMessageTestFactory(),
                     getLabEventFactory(), getLabEventHandler(), "", "CRSP", mapBarcodeToTube).invoke();
             platingTubeFormation = (TubeFormation) crspPicoEntityBuilder.getShearingAliquotEntity().
@@ -2321,6 +2361,13 @@ public class LabEventTest extends BaseEventTest {
             qtpEntityBuilder = runQtpProcess(iceEntityBuilder.getCatchEnrichRack(),
                     iceEntityBuilder.getCatchEnrichBarcodes(),
                     iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), barcodeSuffix);
+        } else if (workflow == Workflow.CUSTOM_SELECTION) {
+            SelectionEntityBuilder selectionEntityBuilder = runSelectionProcess(
+                    Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()),
+                    "1");
+            qtpEntityBuilder = runQtpProcess(selectionEntityBuilder.getCatchRack(),
+                    selectionEntityBuilder.getCatchTubeBarcodes(),
+                    selectionEntityBuilder.getMapBarcodeToCatchTubes(), barcodeSuffix);
         } else {
             qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),

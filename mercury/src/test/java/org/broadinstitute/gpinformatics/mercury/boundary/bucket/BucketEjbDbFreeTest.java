@@ -207,7 +207,7 @@ public class BucketEjbDbFreeTest {
             expect(labEventFactory
                     .buildFromBatchRequests(EasyMock.<List<BucketEntry>>anyObject(), EasyMock.<String>anyObject(),
                             EasyMock.<LabBatch>anyObject(), EasyMock.<String>anyObject(), EasyMock.<String>anyObject(),
-                            EasyMock.<LabEventType>anyObject()))
+                            EasyMock.<LabEventType>anyObject(), EasyMock.<Date>anyObject()))
                     .andReturn(Collections.<LabEvent>emptyList()).anyTimes();
 
             expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
@@ -273,7 +273,7 @@ public class BucketEjbDbFreeTest {
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever",
-                        ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Collection<BucketEntry> bucketEntries = workflowBucketEntriesPair.getRight();
         Assert.assertTrue(bucketEntries.isEmpty());
     }
@@ -296,12 +296,12 @@ public class BucketEjbDbFreeTest {
 
         Collection<BucketEntry> bucketEntries = bucketEjb
                 .add(newBucketEntry, BucketEntry.BucketEntryType.PDO_ENTRY, LabEvent.UI_PROGRAM_NAME, "seinfeld",
-                        LabEvent.UI_EVENT_LOCATION, pdo);
+                        LabEvent.UI_EVENT_LOCATION, pdo, new Date());
         Assert.assertEquals(bucketEntries.size(), 1);
 
         bucketEntries = bucketEjb
                 .add(newBucketEntry, BucketEntry.BucketEntryType.PDO_ENTRY, LabEvent.UI_PROGRAM_NAME, "seinfeld",
-                        LabEvent.UI_EVENT_LOCATION, pdo);
+                        LabEvent.UI_EVENT_LOCATION, pdo, new Date());
         Assert.assertTrue(bucketEntries.isEmpty());
     }
 

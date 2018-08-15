@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 
 import java.io.Serializable;
@@ -26,4 +27,6 @@ public interface SubmissionsService extends Serializable {
     SubmissionRepository findRepositoryByKey(String key);
 
     SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor);
+
+    List<SubmissionTracker> findOrphans(Collection<SubmissionTracker> submissionTrackers);
 }

@@ -116,7 +116,7 @@ public class LCSetJiraFieldFactoryTest {
             mercurySample.addProductOrderSample(currentProductOrderSample);
             mercurySample.addLabVessel(bspAliquot);
             bucket.addEntry(currentProductOrderSample.getProductOrder(), bspAliquot,
-                    BucketEntry.BucketEntryType.PDO_ENTRY, Workflow.AGILENT_EXOME_EXPRESS);
+                    BucketEntry.BucketEntryType.PDO_ENTRY, new Date());
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
@@ -258,8 +258,7 @@ public class LCSetJiraFieldFactoryTest {
         batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY,
                 1));
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
-
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
 
@@ -276,15 +275,12 @@ public class LCSetJiraFieldFactoryTest {
         batch.addBucketEntry(new BucketEntry(tube, testProductOrder, new Bucket("Test"),
                 BucketEntry.BucketEntryType.PDO_ENTRY, 1));
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
-
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(sampleKey.trim()));
     }
 
     @Test
     public void test_sample_field_text_with_reworks_and_multiple_samples_per_tube() {
-        String expectedText = "SM-1\nSM-3\nSM-2\nSM-4";
-
         Set<LabVessel> newTubes = new HashSet<>();
         Set<LabVessel> reworks = new HashSet<>();
         LabVessel tube1 = new BarcodedTube("000012");
@@ -296,6 +292,7 @@ public class LCSetJiraFieldFactoryTest {
                 new LabEvent(LabEventType.EXTRACT_CELL_SUSP_TO_MATRIX, new Date(),"test", 1L, 1L,"Test"));
         new VesselToVesselTransfer(sourceTube12, tube1,
                 new LabEvent(LabEventType.EXTRACT_CELL_SUSP_TO_MATRIX, new Date(),"test", 2L, 1L,"Test"));
+        tube1.addSample(new MercurySample("SM-5", MercurySample.MetadataSource.BSP));
 
         LabVessel tube2 = new BarcodedTube("000033");
         LabVessel sourceTube21 = new BarcodedTube("0000331");
@@ -318,9 +315,13 @@ public class LCSetJiraFieldFactoryTest {
         batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY,
                 1));
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
+        // Test nearest sample names.
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
+        assertThat(actualText, equalTo("SM-5\nSM-2\nSM-4\n"));
 
-        assertThat(actualText.trim(), equalTo(expectedText.trim()));
+        // Test earliest sample names.
+        assertThat(AbstractBatchJiraFieldFactory.buildSamplesListString(batch, false),
+                equalTo("SM-1\nSM-3\nSM-2\nSM-4\n"));
     }
 
     @Test
@@ -345,9 +346,7 @@ public class LCSetJiraFieldFactoryTest {
         batch.addBucketEntry(new BucketEntry(tube, testProductOrder, new Bucket("test"),
                 BucketEntry.BucketEntryType.PDO_ENTRY, 1));
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
-
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, true);
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
-
 }

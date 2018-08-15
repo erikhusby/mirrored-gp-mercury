@@ -232,7 +232,7 @@ public class BucketEjbTest extends StubbyContainerTest {
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Thread.sleep(2L); // Pause to prevent events with same location, date, and disambiguator rejected as duplicate by Oracle
         Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
         Assert.assertEquals(testEntries1.size(), 1);
@@ -243,7 +243,7 @@ public class BucketEjbTest extends StubbyContainerTest {
         
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair2 =
                 resource.applyBucketCriteria( Collections.<LabVessel>singletonList(bspAliquot2), productOrder2,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Thread.sleep(2L);
         Collection<BucketEntry> testEntries2 = workflowBucketEntriesPair2.getRight();
         Assert.assertEquals(testEntries2.size(), 1);
@@ -251,7 +251,7 @@ public class BucketEjbTest extends StubbyContainerTest {
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair3 =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot3), productOrder3,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Thread.sleep(2L);
         Collection<BucketEntry> testEntries3 = workflowBucketEntriesPair3.getRight();
         Assert.assertEquals(testEntries3.size(), 1);
@@ -259,7 +259,7 @@ public class BucketEjbTest extends StubbyContainerTest {
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair4 =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot4), productOrder3,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Thread.sleep(2L);
         Collection<BucketEntry> testEntries4 = workflowBucketEntriesPair4.getRight();
 
@@ -268,7 +268,7 @@ public class BucketEjbTest extends StubbyContainerTest {
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair5 =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Thread.sleep(2L);
         Collection<BucketEntry> duplicateEntry = workflowBucketEntriesPair5.getRight();
         Assert.assertTrue(duplicateEntry.isEmpty());
@@ -316,7 +316,7 @@ public class BucketEjbTest extends StubbyContainerTest {
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Thread.sleep(2L); // Pause to prevent events with same location, date, and disambiguator rejected as duplicate by Oracle
         Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
         Assert.assertEquals(testEntries1.size(), 1);
@@ -335,7 +335,7 @@ public class BucketEjbTest extends StubbyContainerTest {
                 bspAliquot3, bspAliquot4));
 
         resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest,
-                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Thread.sleep(2L);
 
         bucketDao.flush();
@@ -423,7 +423,7 @@ public class BucketEjbTest extends StubbyContainerTest {
         
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
-                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Thread.sleep(2L); // Pause to prevent events with same location, date, and disambiguator rejected as duplicate by Oracle
         Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
 
@@ -441,7 +441,7 @@ public class BucketEjbTest extends StubbyContainerTest {
 
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2, bspAliquot3, bspAliquot4));
         resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest,
-                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Thread.sleep(2L);
 
         bucketDao.flush();
