@@ -1899,7 +1899,6 @@
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
                     <buttonValue>Cross Check</buttonValue>
-                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1939,7 +1938,6 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
-                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2310,7 +2308,6 @@
                     <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
                     <targetSection>P96_ROWSAB</targetSection>
                     <targetExpectedToExist>true</targetExpectedToExist>
-                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2458,7 +2455,6 @@
                     <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
                     <targetSection>P96_ROWSAB</targetSection>
                     <targetExpectedToExist>true</targetExpectedToExist>
-                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -2532,7 +2528,6 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
-                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
