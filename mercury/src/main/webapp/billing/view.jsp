@@ -45,14 +45,14 @@
             <security:authorizeBlock roles="<%= roles(Developer, BillingManager) %>">
                 <c:if test="${actionBean.editSession.billedDate == null}">
                     <stripes:submit name="bill" value="Bill Work in Broad SAP/Quotes" class="btn"
-                                    style="margin-right:30px;" disabled="${actionBean.billingSessionLocked()}"/>
+                                    style="margin-right:30px;" disabled="${actionBean.isBillingSessionLocked()}"/>
                 </c:if>
 
                 <stripes:submit name="downloadQuoteItems" value="Download Quote Items" class="btn" style="margin-right:30px;"/>
 
                 <c:if test="${actionBean.editSession.billedDate == null}">
                     <stripes:submit name="endSession" value="End Billing Session" class="btn"
-                                    style="margin-right:15px;px;" disabled="${actionBean.billingSessionLocked()}"/>
+                                    style="margin-right:15px;px;" disabled="${actionBean.isBillingSessionLocked()}"/>
                 </c:if>
             </security:authorizeBlock>
 
