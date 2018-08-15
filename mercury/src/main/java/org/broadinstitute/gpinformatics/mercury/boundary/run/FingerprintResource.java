@@ -45,6 +45,8 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -118,6 +120,12 @@ public class FingerprintResource {
         if (!bspLsids.isEmpty()) {
             List<BSPGetExportedSamplesFromAliquots.ExportedSample> samplesExportedFromBsp =
                     bspGetExportedSamplesFromAliquots.getExportedSamplesFromAliquots(bspLsids, IsExported.ExternalSystem.GAP);
+            if (samplesExportedFromBsp.size() > 100) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "MM/dd/yyyy" );
+                samplesExportedFromBsp.sort((o1, o2) -> LocalDate.parse(o2.getExportDate(), formatter).
+                        compareTo(LocalDate.parse(o1.getExportDate(), formatter)));
+                samplesExportedFromBsp = samplesExportedFromBsp.subList(0, 100);
+            }
             Set<String> bspSampleIds = new HashSet<>();
             for (BSPGetExportedSamplesFromAliquots.ExportedSample exportedSample : samplesExportedFromBsp) {
                 mapLsidToExportedSample.put(exportedSample.getLsid(), exportedSample);
