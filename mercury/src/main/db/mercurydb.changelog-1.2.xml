@@ -1577,4 +1577,15 @@
                                  baseTableSchemaName="mercury" baseTableName="sample_instance_entity" baseColumnNames="analysis_type"
                                  referencedTableSchemaName="mercury" referencedTableName="analysis_type" referencedColumnNames="analysis_type_id"/>
     </changeSet>
+    <changeSet id="GPLIM-4712-210" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="insert_size" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4712-211" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="insert_size" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -92,6 +92,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private String sampleLibraryName;
     private Integer readLength;
     private String aggregationParticle;
+    private String expectedInsertSize;
 
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
@@ -536,6 +537,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
             aggregationParticle = sampleInstanceEntity.getAggregationParticle();
+            expectedInsertSize = sampleInstanceEntity.getInsertSize();
             mercurySamples.add(mercurySample);
         } else {
             mergeDevConditions(labVessel);
@@ -743,6 +745,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             }
         }
         return aggregationParticle;
+    }
+
+    public String getExpectedInsertSize() {
+        return expectedInsertSize;
     }
 
     /**

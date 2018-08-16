@@ -1,20 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CreationHelper;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -29,6 +20,8 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTe
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -38,13 +31,10 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -72,45 +62,37 @@ public class SampleInstanceEjbTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-
     @Test
     public void testPooledTubeUploadModified() throws Exception {
         final String filename = "PooledTubeReg.xlsx";
         final String base = String.format("%09d", random.nextInt(100000000));
 
         for (boolean overwrite : new boolean[]{false, true}) {
-            // Makes unique barcode, library, sample name, and root sample name.
-            // These are reused in the second upload.
-            List<Map<String, String>> alternativeData = new ArrayList<>();
-            for (int i = 0; i < 2; ++i) {
-                String id = base + i;
-                Map<String, String> row = new HashMap<>();
-                row.put(VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText(), "E" + id);
-                row.put(VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText(), "Library" + id);
-                row.put(VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText(), "SM-" + id);
-                row.put(VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "SM-" + base + "0");
-
-                if (overwrite) {
-                    // Metadata differences in the second upload should update sample data & root
-                    // on the same samples that were uploaded in the first test iteration.
-                    row.put(VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), "COLB-100" + i);
-                    row.put(VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(),
-                            "COLAB-P-100" + i);
-                    row.put(VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText(), "BP-ID-100" + i);
-                    if (i == 1) {
-                        row.put(VesselPooledTubesProcessor.Headers.GENDER.getText(), "M");
-                        row.put(VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "SM-" + id);
-                    }
-                    row.put(VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:100" + i);
-                }
-                alternativeData.add(row);
-            }
-            byte[] bytes = modifySpreadsheet(VarioskanParserTest.getSpreadsheet(filename), alternativeData);
-
             MessageCollection messageCollection = new MessageCollection();
             VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor(null);
-            List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(new ByteArrayInputStream(bytes),
-                    overwrite, processor, messageCollection);
+            List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                    VarioskanParserTest.getSpreadsheet(filename), overwrite, processor, messageCollection, () -> {
+                        // Modifies the spreadsheet data to make unique barcode, library, sample name, and root.
+                        int count = processor.getBarcodes().size();
+                        for (int i = 0; i < count; ++i) {
+                            processor.getBarcodes().set(i, "E" + base + i);
+                            processor.getLibraryNames().set(i, "Library" + base + i);
+                            processor.getSampleNames().set(i, "SM-" + base + i);
+                            processor.getRootSampleNames().set(i, "SM-" + base + "0");
+                            if (overwrite) {
+                                // To make metadata differences in the second upload, this updates
+                                // sample data & root on the samples from the first test iteration.
+                                processor.getCollaboratorSampleIds().set(i, "COLB-100" + i);
+                                processor.getCollaboratorParticipantIds().set(i, "COLAB-P-100" + i);
+                                processor.getBroadParticipantIds().set(i, "BP-ID-100" + i);
+                                if (i == 1) {
+                                    processor.getSexes().set(i, "M");
+                                    processor.getRootSampleNames().set(i, "SM-" + base + i);
+                                }
+                                processor.getLsids().set(i, "lsid:100" + i);
+                            }
+                        }
+                    });
 
             Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
                     StringUtils.join(messageCollection.getErrors(), "; "));
@@ -167,7 +149,7 @@ public class SampleInstanceEjbTest extends Arquillian {
             VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor(null);
             List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                     new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
-                    true, processor, messageCollection);
+                    true, processor, messageCollection, null);
             // Should be no errors.
             Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
                     StringUtils.join(messageCollection.getErrors(), "; "));
@@ -205,36 +187,29 @@ public class SampleInstanceEjbTest extends Arquillian {
                     Assert.assertTrue(uniqueKeyNames.add(metadata.getKey().name()),
                             "Duplicate MercurySample metadata key " + metadata.getKey().name());
                 }
-
             }
         }
     }
 
-
     @Test
     public void testTubeBarcodeUpdate() throws Exception {
         String base = String.format("%09d", random.nextInt(100000000));
-        String[] ids = {base + 0, base + 1};
 
-        // Uploads a pooled tube file.
+        // First uploads some pooled tubes.
         String filename1 = "PooledTubeReg.xlsx";
-        byte[] bytes1 = IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename1));
-
-        // Makes unique barcode, library, sample name, and root sample name.
-        List<Map<String, String>> alternativeData1 = new ArrayList<>();
-        for (int i = 0; i < ids.length; ++i) {
-            Map<String, String> row = new HashMap<>();
-            row.put(VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText(), "E" + ids[i]);
-            row.put(VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText(), "Library" + ids[i]);
-            row.put(VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText(), "SM-" + ids[i]);
-            row.put(VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "");
-            alternativeData1.add(row);
-        }
-        bytes1 = modifySpreadsheet(new ByteArrayInputStream(bytes1), alternativeData1);
         VesselPooledTubesProcessor processor1 = new VesselPooledTubesProcessor(null);
         MessageCollection messages1 = new MessageCollection();
-        sampleInstanceEjb.doExternalUpload(new ByteArrayInputStream(bytes1), !OVERWRITE, processor1, messages1);
-
+        sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(filename1), !OVERWRITE,
+                processor1, messages1, () -> {
+                    // Modifies the spreadsheet data to make unique barcode, library, sample name.
+                    int count = processor1.getBarcodes().size();
+                    for (int i = 0; i < count; ++i) {
+                        processor1.getBarcodes().set(i, "E" + base + i);
+                        processor1.getLibraryNames().set(i, "Library" + base + i);
+                        processor1.getSampleNames().set(i, "SM-" + base + i);
+                        processor1.getRootSampleNames().set(i, "");
+                    }
+                });
         Assert.assertTrue(messages1.getErrors().isEmpty(), "In " + filename1 + ": " +
                 StringUtils.join(messages1.getErrors(), "; "));
         // Should have persisted all rows.
@@ -243,29 +218,22 @@ public class SampleInstanceEjbTest extends Arquillian {
                     processor1.getBarcodes().get(i));
             String libraryName = processor1.getLibraryNames().get(i);
             Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName),
-                    filename1+ " " + libraryName);
+                    filename1 + " " + libraryName);
         }
 
-        // Updates the tube barcodes. Since it only relies on a SampleInstanceEntity the upload
-        // will work on both pooled tube uploads and external library uploads.
+        // Updates the tube barcodes.
         String filename2 = "ExternalLibrarySampleBarcodeUpdate.xlsx";
-        byte[] bytes2 = IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename2));
-
-        // Makes new barcode for the existing library names.
-        List<Map<String, String>> alternativeData2 = new ArrayList<>();
-        for (int i = 0; i < ids.length; ++i) {
-            Map<String, String> row = new HashMap<>();
-            // New tube barcodes start with F. The header names must match what's in the spreadsheet.
-            row.put("barcode", "F" + ids[i]);
-            row.put("library", "Library" + ids[i]);
-            alternativeData2.add(row);
-        }
-        bytes2 = modifySpreadsheet(new ByteArrayInputStream(bytes2), alternativeData2);
         MessageCollection messages2 = new MessageCollection();
         ExternalLibraryBarcodeUpdate processor2 = new ExternalLibraryBarcodeUpdate(null);
-
-        sampleInstanceEjb.doExternalUpload(new ByteArrayInputStream(bytes2), OVERWRITE, processor2, messages2);
-
+        sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(filename2), OVERWRITE,
+                processor2, messages2, () -> {
+                    // Makes new barcode for the existing library names.
+                    int count = processor2.getBarcodes().size();
+                    for (int i = 0; i < count; ++i) {
+                        processor2.getBarcodes().set(i, "F" + base + i);
+                        processor2.getLibraryNames().set(i, "Library" + base + i);
+                    }
+                });
         Assert.assertTrue(messages2.getErrors().isEmpty(), "In " + filename2 + ": " +
                 StringUtils.join(messages2.getErrors(), "; "));
         // Should have persisted all updates.
@@ -277,11 +245,9 @@ public class SampleInstanceEjbTest extends Arquillian {
                     barcode, filename2 + " " + libraryName);
         }
     }
-
     @Test
     public void testNewTechUploads() {
         for (Pair<String, ? extends ExternalLibraryProcessor> pair : Arrays.asList(
-                Pair.of("ExternalLibraryEZPassTest.xlsx", new ExternalLibraryProcessorEzPass(null)),
                 Pair.of("ExternalLibraryMultiOrganismTest.xlsx", new ExternalLibraryProcessorNewTech(null)),
                 Pair.of("ExternalLibraryNONPooledTest.xlsx", new ExternalLibraryProcessorNewTech(null)),
                 Pair.of("ExternalLibraryPooledTest.xlsx", new ExternalLibraryProcessorNewTech(null)))) {
@@ -289,107 +255,63 @@ public class SampleInstanceEjbTest extends Arquillian {
             String file = pair.getLeft();
             InputStream spreadsheet = VarioskanParserTest.getSpreadsheet(file);
             ExternalLibraryProcessor processor = pair.getRight();
-            sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages);
+            sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages, null);
 
             Assert.assertTrue(messages.getErrors().isEmpty(), "In " + file + " " + messages.getErrors());
             // Should have persisted all rows.
             for (String libraryName : processor.getLibraryNames()) {
                 Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName), "Library '" + libraryName + "'");
+
             }
         }
     }
 
-    private byte[] modifySpreadsheet(InputStream spreadsheet, List<Map<String, String>> alternativeData)
-            throws Exception {
-
-        // Reads the spreadsheet
-        final List<Map<String, String>> rows = new ArrayList<>();
-        ExternalLibraryProcessor processor = new ExternalLibraryProcessor("Sheet1") {
-            private List<String> headerNames;
-
-            @Override
-            public List<String> getHeaderNames() {
-                return headerNames;
-            }
-
-            @Override
-            public void processHeader(List<String> headers, int row) {
-                headerNames = headers;
-            }
-
-            @Override
-            public void processRowDetails(Map<String, String> dataRow, int rowIndex, boolean requiredValuesPresent) {
-                rows.add(dataRow);
-            }
-
-            @Override
-            protected ColumnHeader[] getColumnHeaders() {
-                return new ColumnHeader[0];
-            }
-
-            @Override
-            public void close() {
-            }
-
-            @Override
-            public List<SampleInstanceEjb.RowDto> parseUpload(InputStream inputStream, MessageCollection messages) {
-                return Collections.EMPTY_LIST;
-            }
-
-            @Override
-            public void validateAllRows(List<SampleInstanceEjb.RowDto> dtos, boolean overwrite,
-                    MessageCollection messageCollection) {
-            }
-
-            @Override
-            public List<SampleInstanceEntity> makeOrUpdateEntities(List<SampleInstanceEjb.RowDto> rowDtos) {
-                return Collections.EMPTY_LIST;
-            }
-
-            @Override
-            public boolean supportsSampleKitRequest() {
-                return false;
-            }
-        };
-        processor.setHeaderRowIndex(0);
-        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.singletonMap("Sheet1", processor));
-        parser.processUploadFile(spreadsheet);
-        Assert.assertTrue(CollectionUtils.isNotEmpty(processor.getHeaderNames()));
-
-        // Writes new spreadsheet using alternative data.
-        Workbook workbook = new HSSFWorkbook();
-        Sheet sheet = workbook.createSheet();
-        int currentSheetRow = 0;
-        Row currentRow = sheet.createRow(currentSheetRow++);
-        CreationHelper creationHelper = workbook.getCreationHelper();
-        int col = 0;
-        for (String header : processor.getHeaderNames()) {
-            currentRow.createCell(col++).setCellValue(creationHelper.createRichTextString(header));
-        }
-        for (Map<String, String> row : rows) {
-            int rowIndex = currentSheetRow - 1;
-            currentRow = sheet.createRow(currentSheetRow++);
-            col = 0;
-            for (String header : processor.getHeaderNames()) {
-                String cellValue = row.get(header);
-                // If alternative data exists, uses it instead. Does the lookup using adjusted header name.
-                if (alternativeData.size() > rowIndex) {
-                    header = processor.adjustHeaderName(header);
-                    for (String alternativeDataHeader : alternativeData.get(rowIndex).keySet()) {
-                        if (processor.adjustHeaderName(alternativeDataHeader).equals(header)) {
-                            cellValue = alternativeData.get(rowIndex).get(alternativeDataHeader);
-                        }
+    @Test
+    public void testEZPassUploads() throws Exception {
+        final String base = String.format("%09d", random.nextInt(100000000));
+        String file = "ExternalLibraryEZPassTest.xlsx";
+        final ExternalLibraryProcessor processor = new ExternalLibraryProcessorEzPass(null);
+        MessageCollection messages = new MessageCollection();
+        sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(file), !OVERWRITE, processor,
+                messages, () -> {
+                    // Makes unique barcode, library, sample name.
+                    int count = processor.getBarcodes().size();
+                    processor.getBarcodes().clear();
+                    processor.getLibraryNames().clear();
+                    processor.getSampleNames().clear();
+                    for (int i = 0; i < count; ++i) {
+                        processor.getBarcodes().add("E" + base + i);
+                        processor.getLibraryNames().add("Library" + base + i);
+                        processor.getSampleNames().add(base + "." + i);
                     }
-                }
-                currentRow.createCell(col++, Cell.CELL_TYPE_STRING).setCellValue(cellValue);
-            }
+                });
+        Assert.assertTrue(messages.getErrors().isEmpty(), "In " + file + " " + messages.getErrors());
+
+        // Checks data persisted to the database.
+        for (int i = 0; i < processor.getLibraryNames().size(); ++i) {
+
+            SampleInstanceEntity entity = sampleInstanceEntityDao.findByName("Library" + base + i);
+            Assert.assertNotNull(entity, "Library" + base + i);
+            Assert.assertEquals(entity.getInsertSize(),
+                    Arrays.asList("293-293", "250-325", "100-100", "100-100").get(i));
+            Assert.assertEquals(entity.getAggregationParticle(),
+                    Arrays.asList("G96213", "G96214", "G96227", "G96215").get(i));
+            Assert.assertEquals(entity.getAnalysisType().getBusinessKey(),
+                    Arrays.asList("WholeGenomeShotgun.AssemblyWithoutReference", "WholeGenomeShotgun.Resequencing",
+                            "cDNAShotgunReadTwoSense.AssemblyWithoutReference",
+                            "cDNAShotgunReadTwoSense.Resequencing").get(i));
+            Assert.assertEquals(SampleInstanceEjb.makeSequencerValue(entity.getSequencerModel()),
+                    Arrays.asList("MiSeq", "HiSeq X 10", "NovaSeq S4", "NextSeq").get(i));
+            LabVessel tube = entity.getLabVessel();
+            Assert.assertEquals(tube.getVolume(),
+                    MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(Arrays.asList(96, 97, 98, 98).get(i))));
+            Assert.assertEquals(tube.getConcentration(),
+                    MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(Arrays.asList(7.4, 8.0, 9.0, 10.67).get(i))));
+            List<LabMetric> librarySize = tube.getNearestMetricsOfType(LabMetric.MetricType.FINAL_LIBRARY_SIZE);
+            Assert.assertEquals(librarySize.size(), 1);
+            Assert.assertEquals(librarySize.get(0).getValue(),
+                    MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(Arrays.asList(419, 418, 417, 416).get(i))));
+
         }
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        workbook.write(outputStream);
-        byte[] bytes = outputStream.toByteArray();
-        IOUtils.closeQuietly(outputStream);
-        // Uncomment the next line to save a copy of the modified spreadsheet for debugging.
-        //org.apache.commons.io.FileUtils.writeByteArrayToFile(java.io.File.createTempFile("modified", ".xls"), bytes);
-        return bytes;
     }
 }

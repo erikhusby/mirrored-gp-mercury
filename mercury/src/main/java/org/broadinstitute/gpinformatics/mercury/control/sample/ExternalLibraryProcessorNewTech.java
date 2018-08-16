@@ -41,9 +41,8 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     private List<String> referenceSequences = new ArrayList<>();
     private List<Boolean> requiredValuesPresent = new ArrayList<>();
     private List<String> sampleNames = new ArrayList<>();
-    private List<String> sequencingTechnologies = new ArrayList<>();
+    private List<String> sequencerModeNames = new ArrayList<>();
     private List<String> sexes = new ArrayList<>();
-    private List<String> singleDoubleStrandeds = new ArrayList<>();
     private List<String> volumes = new ArrayList<>();
     private SampleKitRequest sampleKitRequest;
 
@@ -60,7 +59,7 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         COVERAGE("Coverage (lanes/sample)", REQUIRED),
         DATA_ANALYSIS_TYPE("Data Analysis Type", REQUIRED),
         INDIVIDUAL_NAME("Individual Name (Patient Id)", REQUIRED),
-        INSERT_SIZE_RANGE("Insert Size Range", IGNORED),
+        INSERT_SIZE_RANGE("Insert Size Range", OPTIONAL),
         LIBRARY_NAME("Library Name", REQUIRED),
         LIBRARY_SIZE("Library Size", REQUIRED),
         LIBRARY_TYPE("Library Type", OPTIONAL),
@@ -72,7 +71,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         REFERENCE_SEQUENCE("Reference Sequence", REQUIRED),
         SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
         SEX("Sex (M/F)", OPTIONAL),
-        SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", OPTIONAL),
         TUBE_BARCODE("Sample Tube Barcode", OPTIONAL),
         VOLUME("Volume (uL)", REQUIRED),
 
@@ -93,6 +91,7 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         REQUIRED_ACCESS("Require Controlled Access for Data", IGNORED),
         RESTRICTION_ENZYMES("Restriction Enzyme", IGNORED),
         SAMPLE_NUMBER("Sample Number", IGNORED),
+        SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", IGNORED),
         STRAIN("Strain", IGNORED),
         SUBMITTED_TO_GSSR("Submitted to Gssr", IGNORED),
         TISSUE_TYPE("Tissue Type", IGNORED),
@@ -161,9 +160,8 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         pooleds.add(getFromRow(dataRow, Headers.POOLED));
         readLengths.add(getFromRow(dataRow, Headers.READ_LENGTH));
         referenceSequences.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
-        sequencingTechnologies.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
+        sequencerModeNames.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
         sexes.add(getFromRow(dataRow, Headers.SEX));
-        singleDoubleStrandeds.add(getFromRow(dataRow, Headers.SINGLE_DOUBLE_STRANDED));
         volumes.add(getFromRow(dataRow, Headers.VOLUME));
 
         // Uses the library name for the tube barcode, unless its present in the spreadsheet.
@@ -381,8 +379,8 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     }
 
     @Override
-    public List<String> getSequencingTechnologies() {
-        return sequencingTechnologies;
+    public List<String> getSequencerModelNames() {
+        return sequencerModeNames;
     }
 
     @Override
@@ -418,11 +416,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     @Override
     public void setSampleKitRequest(SampleKitRequest sampleKitRequest) {
         this.sampleKitRequest = sampleKitRequest;
-    }
-
-    @Override
-    public List<String> getSingleDoubleStrandeds() {
-        return singleDoubleStrandeds;
     }
 
     @Override

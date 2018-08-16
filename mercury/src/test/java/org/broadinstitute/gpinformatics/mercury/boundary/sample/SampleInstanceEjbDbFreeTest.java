@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleKitRequ
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryBarcodeUpdate;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNewTech;
 import org.broadinstitute.gpinformatics.mercury.control.sample.VesselPooledTubesProcessor;
@@ -134,20 +135,17 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorEzPass(null), messageCollection);
+                new ExternalLibraryProcessorEzPass(null), messageCollection, null);
 
         Assert.assertTrue(CollectionUtils.isEmpty(entities));
-
-        int count = 0;
-        for (String msg : messageCollection.getErrors()) {
-            if (msg.startsWith(String.format(TableProcessor.DUPLICATE_HEADER, "Virtual GSSR ID")) ||
-                    msg.startsWith(String.format(TableProcessor.DUPLICATE_HEADER, "SQUID Project"))) {
-                ++count;
-            }
-        }
-        Assert.assertEquals(count, 2, StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertEquals(messageCollection.getErrors().size(), 2);
         Assert.assertEquals(messageCollection.getWarnings().size(), 0,
                 StringUtils.join(messageCollection.getWarnings(), "; "));
+
+        errorIfMissing(messageCollection.getErrors(), file, String.format(TableProcessor.DUPLICATE_HEADER,
+                "Virtual GSSR ID"));
+        errorIfMissing(messageCollection.getErrors(), file, String.format(TableProcessor.DUPLICATE_HEADER,
+                "SQUID Project"));
     }
 
     @Test
@@ -158,7 +156,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorEzPass(null), messageCollection);
+                new ExternalLibraryProcessorEzPass(null), messageCollection, null);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertEquals(messageCollection.getInfos().iterator().next(),
@@ -238,7 +236,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorNewTech(null), messageCollection);
+                new ExternalLibraryProcessorNewTech(null), messageCollection, null);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -327,7 +325,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorNewTech(null), messageCollection);
+                new ExternalLibraryProcessorNewTech(null), messageCollection, null);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -388,6 +386,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                     select(i, "Some info; Sarah Youngs group", "Sarah Youngs group"));
             Assert.assertTrue(entity.getPooled());
             Assert.assertEquals(entity.getReferenceSequence().getName(), "Plasmodium_falciparum_3D7");
+            Assert.assertEquals(entity.getInsertSize(), select(i, "225-300", "1000-1000"));
 
             if (i == 0) {
                 Assert.assertEquals(entity.getMolecularIndexingScheme().getName(), "Illumina_P5-Lanah_P7-Caber");
@@ -405,7 +404,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorNewTech(null), messageCollection);
+                new ExternalLibraryProcessorNewTech(null), messageCollection, null);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -484,7 +483,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor(null);
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
-                VarioskanParserTest.getSpreadsheet(file), OVERWRITE, processor, messageCollection);
+                VarioskanParserTest.getSpreadsheet(file), OVERWRITE, processor, messageCollection, null);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -642,7 +641,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryBarcodeUpdate(null), messageCollection);
+                new ExternalLibraryBarcodeUpdate(null), messageCollection, null);
 
         // Tests the expected errors.
         Assert.assertEquals(messageCollection.getErrors().size(), 3,
@@ -666,7 +665,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 new ByteArrayInputStream(new byte[]{0}),
-                OVERWRITE, new ExternalLibraryBarcodeUpdate(null), messageCollection);
+                OVERWRITE, new ExternalLibraryBarcodeUpdate(null), messageCollection, null);
 
         Assert.assertEquals(messageCollection.getErrors().size(), 1,
                 StringUtils.join(messageCollection.getErrors(), "; "));
@@ -685,7 +684,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor(null);
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
-                true, processor, messageCollection);
+                true, processor, messageCollection, null);
 
         // Should be no sampleInstanceEntities.
         Assert.assertEquals(entities.size(), 0);
@@ -766,7 +765,64 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 9, "DEV-6796"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 9,
                 VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
+
         Assert.assertTrue(errors.isEmpty(), "Found unexpected errors: " + StringUtils.join(errors, "; "));
+        Assert.assertTrue(errors.isEmpty(), "Found unexpected warnings: " + StringUtils.join(warnings, "; "));
+    }
+
+    @Test
+    public void testPooledTubeUploadFail2() throws Exception {
+        final String filename = "ExternalLibraryEZFailTest2.xlsx";
+        SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.EZPASS);
+        MessageCollection messages = new MessageCollection();
+        ExternalLibraryProcessor processor = new ExternalLibraryProcessorEzPass(null);
+        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
+                true, processor, messages, null);
+
+        // Should be no sampleInstanceEntities.
+        Assert.assertEquals(entities.size(), 0);
+        // Checks the error messages for expected problems.
+        List<String> errors = new ArrayList<>(messages.getErrors());
+        List<String> warnings = new ArrayList<>(messages.getWarnings());
+
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 31,
+                VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 32,
+                VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 33,
+                VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 34,
+                VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 35,
+                VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
+
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 30,
+                ExternalLibraryProcessorNewTech.Headers.SEQUENCING_TECHNOLOGY.getText(), "Mercury"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 31,
+                ExternalLibraryProcessorNewTech.Headers.SEQUENCING_TECHNOLOGY.getText(), "Mercury"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 32,
+                ExternalLibraryProcessorNewTech.Headers.SEQUENCING_TECHNOLOGY.getText(), "Mercury"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 33,
+                ExternalLibraryProcessorNewTech.Headers.SEQUENCING_TECHNOLOGY.getText(), "Mercury"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 34,
+                ExternalLibraryProcessorNewTech.Headers.SEQUENCING_TECHNOLOGY.getText(), "Mercury"));
+
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 31,
+                ExternalLibraryProcessorNewTech.Headers.DATA_ANALYSIS_TYPE.getText(), "Mercury"));
+
+        errorIfMissing(errors, filename, "Row #32 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                ExternalLibraryProcessorNewTech.Headers.DATA_ANALYSIS_TYPE.getText()));
+
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.BAD_RANGE, 33,
+                ExternalLibraryProcessorNewTech.Headers.INSERT_SIZE_RANGE.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.BAD_RANGE, 34,
+                ExternalLibraryProcessorNewTech.Headers.INSERT_SIZE_RANGE.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.BAD_RANGE, 35,
+                ExternalLibraryProcessorNewTech.Headers.INSERT_SIZE_RANGE.getText()));
+
+        Assert.assertTrue(errors.isEmpty(), "Found unexpected errors: " + StringUtils.join(errors, "; "));
+        Assert.assertTrue(errors.isEmpty(), "Found unexpected warnings: " + StringUtils.join(warnings, "; "));
     }
 
     private boolean errorIfMissing(List<String> errors, String filename, String expected) {
@@ -895,8 +951,9 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         Mockito.when(analysisTypeDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<AnalysisType>() {
             @Override
             public AnalysisType answer(InvocationOnMock invocation) throws Throwable {
-                String analysisTypeName = (String)invocation.getArguments()[0];
-                return new AnalysisType(analysisTypeName);
+                String name = (String)invocation.getArguments()[0];
+                return (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) ?
+                        null : new AnalysisType(name);
             }
         });
 
@@ -906,7 +963,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                     @Override
                     public ReferenceSequence answer(InvocationOnMock invocation) throws Throwable {
                         String name = (String)invocation.getArguments()[0];
-                        return StringUtils.isBlank(name) ? null : new ReferenceSequence(name, "");
+                        return (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) ?
+                                null : new ReferenceSequence(name, "");
                     }
                 });
 
@@ -963,10 +1021,11 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             public ReagentDesign answer(InvocationOnMock invocation) throws Throwable {
                 String name = (String)invocation.getArguments()[0];
                 ReagentDesign reagentDesign = null;
-                if (StringUtils.isNotBlank(name)) {
-                    reagentDesign = new ReagentDesign();
-                    reagentDesign.setDesignName(name);
+                if (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) {
+                    return null;
                 }
+                reagentDesign = new ReagentDesign();
+                reagentDesign.setDesignName(name);
                 return reagentDesign;
             }
         });

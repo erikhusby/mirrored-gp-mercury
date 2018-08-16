@@ -34,9 +34,8 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     private List<String> sampleNames = new ArrayList<>();
     private List<String> readLengths = new ArrayList<>();
     private List<String> referenceSequences = new ArrayList<>();
-    private List<String> sequencingTechnologies = new ArrayList<>();
+    private List<String> sequencerModelNames = new ArrayList<>();
     private List<String> sexes = new ArrayList<>();
-    private List<String> singleDoubleStrandeds = new ArrayList<>();
     private List<String> libraryNames = new ArrayList<>();
     private List<String> concentrations = new ArrayList<>();
     private List<String> volumes = new ArrayList<>();
@@ -69,7 +68,6 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         REFERENCE_SEQUENCE("Reference Sequence", REQUIRED),
         SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
         SEX("Sex (M/F)", OPTIONAL),
-        SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", OPTIONAL),
         SOURCE_SAMPLE_GSSR_ID("Source Sample Gssr Id", REQUIRED),
         SQUID_PROJECT("Squid Project (pipeline aggregation)", OPTIONAL),
         TUBE_BARCODE("Sample Tube Barcode", REQUIRED),
@@ -89,6 +87,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         REQUESTED_COMPLETION_DATE("Requested Completion Date", IGNORED),
         RESTRICTION_ENZYMES("Restriction Enzyme", IGNORED),
         SAMPLE_NUMBER("Sample Number", IGNORED),
+        SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", IGNORED),
         STRAIN("Strain", IGNORED),
         SUBMITTED_TO_GSSR("Submitted to Gssr", IGNORED),
         TISSUE_TYPE("Tissue Type", IGNORED),
@@ -161,9 +160,8 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         readLengths.add(getFromRow(dataRow, Headers.READ_LENGTH));
         referenceSequences.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
         sampleNames.add(getFromRow(dataRow, Headers.SOURCE_SAMPLE_GSSR_ID));
-        sequencingTechnologies.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
+        sequencerModelNames.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
         sexes.add(getFromRow(dataRow, Headers.SEX));
-        singleDoubleStrandeds.add(getFromRow(dataRow, Headers.SINGLE_DOUBLE_STRANDED));
         volumes.add(getFromRow(dataRow, Headers.VOLUME));
 
         this.requiredValuesPresent.add(requiredValuesPresent);
@@ -350,8 +348,8 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     }
 
     @Override
-    public List<String> getSequencingTechnologies() {
-        return sequencingTechnologies;
+    public List<String> getSequencerModelNames() {
+        return sequencerModelNames;
     }
 
     @Override

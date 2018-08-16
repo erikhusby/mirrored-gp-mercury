@@ -553,11 +553,14 @@ public class ZimsIlluminaRunFactory {
         boolean analyzeUmi = false;
         String aggregationParticle;
         if (productOrder != null) {
-            // Product stuff.
             Product product = productOrder.getProduct();
-            if (product.getInsertSize() != null) {
+            // Gets the insert size range from sample instance entity if it exists, otherwise a single size
+            // from the product. A range consists of two integers with a hyphen in between, e.g. "225-350".
+            expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
+            if (StringUtils.isBlank(expectedInsertSize) && product.getInsertSize() != null) {
                 expectedInsertSize = product.getInsertSize().toString();
             }
+
             analysisType = product.getAnalysisTypeKey();
 
             // If there was no bait on the actual samples, use the one defined on the product.

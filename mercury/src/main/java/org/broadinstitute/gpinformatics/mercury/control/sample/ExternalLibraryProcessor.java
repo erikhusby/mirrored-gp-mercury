@@ -240,7 +240,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return rowNumber - getHeaderRowIndex() - 2;
     }
 
-    public List<SampleInstanceEjb.RowDto> parseUpload(InputStream inputStream, MessageCollection messages) {
+    public List<SampleInstanceEjb.RowDto> makeDtos(InputStream inputStream, MessageCollection messages) {
         List<SampleInstanceEjb.RowDto> dtos = new ArrayList<>();
         for (int index = 0; index < Math.max(getLibraryNames().size(), getSampleNames().size()); ++index) {
             SampleInstanceEjb.RowDto dto = new SampleInstanceEjb.RowDto(toRowNumber(index));
@@ -256,31 +256,31 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             dto.setCat(get(getCats(), index));
             dto.setCollaboratorParticipantId(get(getCollaboratorParticipantIds(), index));
             dto.setCollaboratorSampleId(get(getCollaboratorSampleIds(), index));
-            dto.setConcentration(asNonNegativeBigDecimal(get(getConcentrations(), index), "Concentration",
-                    dto.getRowNumber(), messages));
+            dto.setConcentration(asNonNegativeBigDecimal(get(getConcentrations(), index),
+                    ExternalLibraryProcessorNewTech.Headers.CONCENTRATION.getText(), dto.getRowNumber(), messages));
             dto.setConditions(get(getConditions(), index));
             dto.setDataAnalysisType(get(getDataAnalysisTypes(), index));
             dto.setExperiment(get(getExperiments(), index));
-            BigDecimal fragmentSize = asNonNegativeBigDecimal(get(getFragmentSizes(), index), "Fragment Size",
-                    dto.getRowNumber(), messages);
-            BigDecimal librarySize = asNonNegativeBigDecimal(get(getLibrarySizes(), index), "Library Size",
-                    dto.getRowNumber(), messages);
+            BigDecimal fragmentSize = asNonNegativeBigDecimal(get(getFragmentSizes(), index),
+                    VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), dto.getRowNumber(), messages);
+            BigDecimal librarySize = asNonNegativeBigDecimal(get(getLibrarySizes(), index),
+                    ExternalLibraryProcessorNewTech.Headers.LIBRARY_SIZE.getText(), dto.getRowNumber(), messages);
             dto.setFragmentSize(fragmentSize != null ? fragmentSize : librarySize);
-            dto.setInsertSize(asNonNegativeInteger(get(getInsertSizes(), index), "Insert Size",
-                    dto.getRowNumber(), messages));
+            dto.setInsertSize(asIntegerRange(get(getInsertSizes(), index),
+                    ExternalLibraryProcessorNewTech.Headers.INSERT_SIZE_RANGE.getText(), dto.getRowNumber(), messages));
             dto.setIrbNumber(get(getIrbNumbers(), index));
             dto.setLibraryName(get(getLibraryNames(), index));
             dto.setLibraryType(get(getLibraryTypes(), index));
             dto.setLsid(get(getLsids(), index));
             dto.setMisName(get(getMolecularBarcodeNames(), index));
-            dto.setNumberOfLanes(asNonNegativeInteger(get(getNumbersOfLanes(), index), "Number of Lanes",
-                    dto.getRowNumber(), messages));
+            dto.setNumberOfLanes(asNonNegativeInteger(get(getNumbersOfLanes(), index),
+                    ExternalLibraryProcessorNewTech.Headers.COVERAGE.getText(), dto.getRowNumber(), messages));
             dto.setOrganism(get(getOrganisms(), index));
             dto.setParticipantId(get(getBroadParticipantIds(), index));
             dto.setPooled(isTrue(get(getPooleds(), index)));
             dto.setAggregationParticle(get(getAggregationParticles(), index));
-            dto.setReadLength(asNonNegativeInteger(get(getReadLengths(), index), "Read Length",
-                    dto.getRowNumber(), messages));
+            dto.setReadLength(asNonNegativeInteger(get(getReadLengths(), index),
+                    VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(), dto.getRowNumber(), messages));
             dto.setReferenceSequence(get(getReferenceSequences(), index));
             dto.setReferenceSequenceName(get(getReferenceSequences(), index));
             dto.setRootSampleName(get(getRootSampleNames(), index));
@@ -289,11 +289,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                     !mapSampleNameToFirstRow.containsKey(dto.getSampleName())) {
                 mapSampleNameToFirstRow.put(dto.getSampleName(), dto);
             }
-            dto.setSequencerModelName(get(getSequencingTechnologies(), index));
-            dto.setSequencingTechnology(get(getSequencingTechnologies(), index));
+            dto.setSequencerModelName(get(getSequencerModelNames(), index));
             dto.setSex(get(getSexes(), index));
-            dto.setSingleDoubleStranded(get(getSingleDoubleStrandeds(), index));
-            dto.setVolume(asNonNegativeBigDecimal(get(getVolumes(), index), "Volume", dto.getRowNumber(), messages));
+            dto.setVolume(asNonNegativeBigDecimal(get(getVolumes(), index),
+                    VesselPooledTubesProcessor.Headers.VOLUME.getText(), dto.getRowNumber(), messages));
         }
         return dtos;
     }
@@ -605,6 +604,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                         StringUtils.isNotBlank(dto.getAdditionalAssemblyInformation())) ? "; " : "") +
                 dto.getAdditionalAssemblyInformation());
         sampleInstanceEntity.setExperiment(dto.getExperiment());
+        sampleInstanceEntity.setInsertSize(dto.getInsertSize());
         sampleInstanceEntity.setLabVessel(labVessel);
         sampleInstanceEntity.setLibraryType(dto.getLibraryType());
         sampleInstanceEntity.setMercurySample(mercurySample);
@@ -686,6 +686,45 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             }
         }
         return false;
+    }
+
+    /**
+     * Returns an integer range (two integers delimited with a hyphen), and adds an error message if the input
+     * is not one or two integers delimited by space, comma, hyphen, underscore, pipe, slash, colon.
+     */
+    public static String asIntegerRange(String input, String header, int rowNumber, MessageCollection messages) {
+        if (StringUtils.isNotBlank(input)) {
+            Integer[] range = {null, null};
+            String[] tokens = input.split("[ ,\\-_|/:]");
+            for (String token : tokens) {
+                if (StringUtils.isNumeric(token)) {
+                    int value = Integer.parseInt(token);
+                    if (value >= 0) {
+                        // Accepts a single integer and turns it into a range.
+                        if (tokens.length == 1) {
+                            range[0] = value;
+                            range[1] = value;
+                        } else {
+                            if (range[1] != null) {
+                                // Too many integers.
+                                messages.addError(String.format(SampleInstanceEjb.BAD_RANGE, rowNumber, header));
+                                return null;
+                            }
+                            range[range[0] == null ? 0 : 1] = value;
+                        }
+                    }
+                } else if (StringUtils.isNotBlank(token)) {
+                    // Invalid character or word.
+                    messages.addError(String.format(SampleInstanceEjb.BAD_RANGE, rowNumber, header));
+                    return null;
+                }
+            }
+            if (range[0] != null && range[1] != null) {
+                return String.format("%d-%d", range[0], range[1]);
+            }
+            messages.addError(String.format(SampleInstanceEjb.BAD_RANGE, rowNumber, header));
+        }
+        return null;
     }
 
     /**
@@ -831,7 +870,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return Collections.emptyList();
     }
 
-    public List<String> getSequencingTechnologies() {
+    public List<String> getSequencerModelNames() {
         return Collections.emptyList();
     }
 
@@ -888,10 +927,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     public List<String> getFragmentSizes() {
-        return Collections.emptyList();
-    }
-
-    public List<String> getSingleDoubleStrandeds() {
         return Collections.emptyList();
     }
 

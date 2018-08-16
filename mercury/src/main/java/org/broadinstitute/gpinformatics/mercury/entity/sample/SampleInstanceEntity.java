@@ -99,6 +99,7 @@ public class SampleInstanceEntity {
     private String comments;
     private Integer numberLanes;
     private String aggregationParticle;
+    private String insertSize;
 
     @Enumerated(EnumType.STRING)
     private IlluminaFlowcell.FlowcellType sequencerModel;
@@ -295,5 +296,13 @@ public class SampleInstanceEntity {
 
     public void setAggregationParticle(String aggregationParticle) {
         this.aggregationParticle = aggregationParticle;
+    }
+
+    public String getInsertSize() {
+        return insertSize;
+    }
+
+    public void setInsertSize(String insertSize) {
+        this.insertSize = insertSize;
     }
 }

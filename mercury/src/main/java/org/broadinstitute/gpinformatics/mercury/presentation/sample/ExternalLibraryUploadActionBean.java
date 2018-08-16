@@ -37,10 +37,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleVesselActionBean.UPLOAD_SAMPLES;
 
@@ -119,7 +118,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         }
 
         MessageCollection messageCollection = new MessageCollection();
-        sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, processor, messageCollection);
+        sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, processor, messageCollection, null);
         addMessages(messageCollection);
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
@@ -181,25 +180,14 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     private ByteArrayOutputStream templateSpreadsheet(HeaderValueRow[] headerValues, ColumnHeader[] columnHeaders)
             throws IOException {
         // Makes lists of valid values to put in the templates.
-        List<String> validAnalysisTypes = new ArrayList<>();
-        for (AnalysisType type : analysisTypeDao.findAll()) {
-            validAnalysisTypes.add(type.getBusinessKey());
-        }
-        Collections.sort(validAnalysisTypes);
-
-        List<String> validSequencingTechnology = new ArrayList<>();
-        for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
-            if (flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.YES) {
-                validSequencingTechnology.add(SampleInstanceEjb.makeSequencerValue(flowcellType));
-            }
-        }
-        Collections.sort(validSequencingTechnology);
-
-        List<String> validReferenceSequence = new ArrayList<>();
-        for (ReferenceSequence referenceSequence : referenceSequenceDao.findAllCurrent()) {
-            validReferenceSequence.add(referenceSequence.getName());
-        }
-        Collections.sort(validSequencingTechnology);
+        List<String> validAnalysisTypes = analysisTypeDao.findAll().
+                stream().map(AnalysisType::getBusinessKey).sorted().collect(Collectors.toList());
+        List<String> validReferenceSequence = referenceSequenceDao.findAllCurrent().
+                stream().map(ReferenceSequence::getName).sorted().collect(Collectors.toList());
+        List<String> validSequencingTechnology = Arrays.asList(IlluminaFlowcell.FlowcellType.values()).stream().
+                filter(flowcellType -> flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.YES).
+                map(flowcellType -> SampleInstanceEjb.makeSequencerValue(flowcellType)).
+                sorted().collect(Collectors.toList());
 
         HSSFWorkbook workbook = new HSSFWorkbook();
         Sheet sheet = workbook.createSheet("Sheet1");

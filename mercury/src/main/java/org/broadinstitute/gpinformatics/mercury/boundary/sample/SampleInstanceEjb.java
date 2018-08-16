@@ -62,36 +62,37 @@ public class SampleInstanceEjb {
     public static final String RESTRICTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_";
     public static final String RESTRICTED_MESSAGE = "a-z, A-Z, 0-9, '.', '-', or '_'";
 
-    public static final String MISSING = "Row #%d is missing a value for %s.";
+    public static final String ALREADY_EXISTS = "Row #%d %s \"%s\" already exists in %s.";
+    public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
+    public static final String BSP_FORMAT = "Row #%d the new %s \"%s\" must not have a BSP sample name format.";
+    public static final String BSP_METADATA =
+            "Row #%d values for %s should be blank because BSP data for sample %s cannot be updated.";
+    public static final String CONFLICTING_SOURCE = "Row #%d sample \"%s\" has %s metadata source but is %s in BSP.";
+    public static final String DUPLICATE = "Row #%d duplicate value for %s.";
+    public static final String DUPLICATE_IN_TUBE = "Row #%d has a duplicate value for %s in tube %s.";
+    public static final String DUPLICATE_S_M =
+            "Row #%d repeats the combination of sample %s and index %s and indicates these tubes should not be pooled.";
+    public static final String IGNORING_ROOT =
+            "Row #%d sample has Mercury metadata source so the given root sample is ignored.";
     public static final String INCONSISTENT_SAMPLE_DATA =
             "Row #%d value for %s is not consistent with row #%d (Sample %s).";
     public static final String INCONSISTENT_TUBE =
             "Row #%d value for %s is not consistent with row #%d (Tube Barcode %s).";
     public static final String INVALID_CHARS = "Row #%d %s characters must only be " + RESTRICTED_CHARS;
-    public static final String MUST_NOT_HAVE_BOTH = "Row #%d must not have both %s and %s.";
-    public static final String ALREADY_EXISTS = "Row #%d %s \"%s\" already exists in %s.";
-    public static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
-    public static final String NONEXISTENT = "Row #%d the value for %s \"%s\" does not exist in %s.";
-    public static final String UNKNOWN_COND = "Row #%d each Condition must be a Jira ticket id for a sub-task of %s.";
-    public static final String DUPLICATE = "Row #%d duplicate value for %s.";
-    public static final String DUPLICATE_IN_TUBE = "Row #%d has a duplicate value for %s in tube %s.";
-    public static final String DUPLICATE_S_M =
-            "Row #%d repeats the combination of sample %s and index %s and indicates these tubes should not be pooled.";
-    public static final String BSP_FORMAT = "Row #%d the new %s \"%s\" must not have a BSP sample name format.";
+    public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
     public static final String MERCURY_FORMAT =
             "Row #%d the %s \"%s\" has the 10 digit format used for a Matrix tube manufacturer barcode.";
+    public static final String MISSING = "Row #%d is missing a value for %s.";
+    public static final String MUST_NOT_HAVE_BOTH = "Row #%d must not have both %s and %s.";
+    public static final String NONEXISTENT = "Row #%d the value for %s \"%s\" does not exist in %s.";
+    public static final String NONNEGATIVE_DECIMAL = "Row #%d %s must be a non-negative decimal number.";
+    public static final String NONNEGATIVE_INTEGER = "Row #%d %s must be a non-negative integer number.";
     public static final String PREXISTING =
             "Row #%d %s named \"%s\" already exists in Mercury; set the Overwrite checkbox to re-upload.";
     public static final String PREXISTING_VALUES =
             "Row #%d values for %s already exist in Mercury; set the Overwrite checkbox to re-upload.";
-    public static final String BSP_METADATA =
-            "Row #%d values for %s should be blank because BSP data for sample %s cannot be updated.";
-    public static final String CONFLICTING_SOURCE = "Row #%d sample \"%s\" has %s metadata source but is %s in BSP.";
-    public static final String IGNORING_ROOT =
-            "Row #%d sample has Mercury metadata source so the given root sample is ignored.";
-    public static final String NONNEGATIVE_INTEGER = "Row #%d %s must be a non-negative integer number.";
-    public static final String NONNEGATIVE_DECIMAL = "Row #%d %s must be a non-negative decimal number.";
-    public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
+    public static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
+    public static final String UNKNOWN_COND = "Row #%d each Condition must be a Jira ticket id for a sub-task of %s.";
     /**
      * A string of the available sequencer model names.
      */
@@ -184,9 +185,10 @@ public class SampleInstanceEjb {
      * @param overwrite   specifies if existing entities should be overwritten.
      * @param processor   the TableProcessor subclass that should parse the spreadsheet.
      * @param messages    the errors, warnings, and info to be passed back.
+     * @param afterParse  a callback that lets test code to change spreadsheet data after it's been parsed.
      */
     public List<SampleInstanceEntity> doExternalUpload(InputStream inputStream, boolean overwrite,
-            ExternalLibraryProcessor processor, MessageCollection messages) {
+            ExternalLibraryProcessor processor, MessageCollection messages, Runnable afterParse) {
 
         messages.clearAll();
         if (processor == null) {
@@ -194,9 +196,12 @@ public class SampleInstanceEjb {
         }
         try {
             PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
+            if (afterParse != null) {
+                afterParse.run();
+            }
             messages.addErrors(processor.getMessages());
             messages.addWarning(processor.getWarnings());
-            List<RowDto> rowDtos = processor.parseUpload(inputStream, messages);
+            List<RowDto> rowDtos = processor.makeDtos(inputStream, messages);
             if (rowDtos.isEmpty()) {
                 messages.addWarning("Spreadsheet contains no valid data.");
             } else {
@@ -221,7 +226,7 @@ public class SampleInstanceEjb {
                 messages.addUniqueError(messages, msg);
             }
             messages.addWarning(processor.getWarnings());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("Failed to process SampleInstanceEntity upload.", e);
             messages.addError("Cannot process spreadsheet: " + e);
         } finally {
@@ -280,17 +285,17 @@ public class SampleInstanceEjb {
                 }
             }
 
-            if (StringUtils.isNotBlank(dto.getAnalysisTypeName())) {
-                AnalysisType analysisType = analysisTypeDao.findByBusinessKey(dto.getAnalysisTypeName());
-                if (analysisType != null) {
-                    processor.getAnalysisTypeMap().put(dto.getAnalysisTypeName(), analysisType);
-                }
-            }
-
             if (StringUtils.isNotBlank(dto.getSequencerModelName())) {
                 IlluminaFlowcell.FlowcellType sequencerModel = findFlowcellType(dto.getSequencerModelName());
                 if (sequencerModel != null) {
                     processor.getSequencerModelMap().put(dto.getSequencerModelName(), sequencerModel);
+                }
+            }
+
+            if (StringUtils.isNotBlank(dto.getAnalysisTypeName())) {
+                AnalysisType analysisType = analysisTypeDao.findByBusinessKey(dto.getAnalysisTypeName());
+                if (analysisType != null) {
+                    processor.getAnalysisTypeMap().put(dto.getAnalysisTypeName(), analysisType);
                 }
             }
 
@@ -529,7 +534,6 @@ public class SampleInstanceEjb {
         }
     };
 
-
     private static IlluminaFlowcell.FlowcellType findFlowcellType(String sequencerModel) {
         return mapSequencerToFlowcellType.get(sequencerModel);
     }
@@ -568,6 +572,7 @@ public class SampleInstanceEjb {
     public static class RowDto {
         private String additionalAssemblyInformation;
         private String additionalSampleInformation;
+        private String aggregationParticle;
         private String analysisTypeName;
         private String bait;
         private String barcode;
@@ -579,7 +584,7 @@ public class SampleInstanceEjb {
         private String dataAnalysisType;
         private String experiment;
         private BigDecimal fragmentSize;
-        private Integer insertSize;
+        private String insertSize;
         private String irbNumber;
         private String libraryName;
         private String libraryType;
@@ -589,16 +594,13 @@ public class SampleInstanceEjb {
         private String organism;
         private String participantId;
         private boolean pooled;
-        private String aggregationParticle;
         private Integer readLength;
         private String referenceSequence;
         private String referenceSequenceName;
         private String rootSampleName;
         private String sampleName;
         private String sequencerModelName;
-        private String sequencingTechnology;
         private String sex;
-        private String singleDoubleStranded;
         private BigDecimal volume;
 
         private int rowNumber;
@@ -721,11 +723,11 @@ public class SampleInstanceEjb {
             this.fragmentSize = fragmentSize;
         }
 
-        public Integer getInsertSize() {
+        public String getInsertSize() {
             return insertSize;
         }
 
-        public void setInsertSize(Integer insertSize) {
+        public void setInsertSize(String insertSize) {
             this.insertSize = insertSize;
         }
 
@@ -849,28 +851,12 @@ public class SampleInstanceEjb {
             this.sequencerModelName = sequencerModelName;
         }
 
-        public String getSequencingTechnology() {
-            return sequencingTechnology;
-        }
-
-        public void setSequencingTechnology(String sequencingTechnology) {
-            this.sequencingTechnology = sequencingTechnology;
-        }
-
         public String getSex() {
             return sex;
         }
 
         public void setSex(String sex) {
             this.sex = sex;
-        }
-
-        public String getSingleDoubleStranded() {
-            return singleDoubleStranded;
-        }
-
-        public void setSingleDoubleStranded(String singleDoubleStranded) {
-            this.singleDoubleStranded = singleDoubleStranded;
         }
 
         public BigDecimal getVolume() {
