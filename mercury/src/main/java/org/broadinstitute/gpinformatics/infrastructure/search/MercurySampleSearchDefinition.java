@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -351,6 +353,67 @@ public class MercurySampleSearchDefinition {
         searchTerm.setName("All Sample Metadata");
         searchTerm.setPluginClass(SampleMetadataPlugin.class);
         searchTerms.add(searchTerm);
+
+        SearchTerm parentSearchTerm = new SearchTerm();
+        parentSearchTerm.setName("Fingerprints");
+        parentSearchTerm.setIsNestedParent(Boolean.TRUE);
+        parentSearchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                MercurySample mercurySample = (MercurySample) entity;
+                return mercurySample.getFingerprints();
+            }
+        });
+        searchTerms.add(parentSearchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Data Generated");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                Fingerprint fingerprint = (Fingerprint) entity;
+                return fingerprint.getDateGenerated();
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("FP Genotype");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                Fingerprint fingerprint = (Fingerprint) entity;
+                List<FpGenotype> fpGenotypesOrdered = fingerprint.getFpGenotypesOrdered();
+                StringBuilder genotype = new StringBuilder(fpGenotypesOrdered.size() * 2);
+                for (FpGenotype fpGenotype : fpGenotypesOrdered) {
+                    genotype.append(fpGenotype.getGenotype());
+                }
+                return genotype.toString();
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Pass / Fail");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                Fingerprint fingerprint = (Fingerprint) entity;
+                return fingerprint.getDisposition();
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Gender");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, SearchContext context) {
+                Fingerprint fingerprint = (Fingerprint) entity;
+                return fingerprint.getGender();
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
 
         return searchTerms;
     }
