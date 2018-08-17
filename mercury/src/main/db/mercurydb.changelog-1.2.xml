@@ -1420,5 +1420,15 @@
                                  baseTableName="snp_list_snps_aud" baseColumnNames="rev"
                                  referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
+    <changeSet id="GPLIM-5122-14" author="thompson">
+        <createIndex schemaName="MERCURY" tableName="FP_GENOTYPE" indexName="IX_FPG_FINGERPRINT">
+            <column name="FINGERPRINT"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-5122-15" author="thompson">
+        <createIndex schemaName="MERCURY" tableName="FINGERPRINT" indexName="IX_FP_MERCURY_SAMPLE">
+            <column name="MERCURY_SAMPLE"/>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>
