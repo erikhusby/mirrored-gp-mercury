@@ -488,8 +488,8 @@ public class ProductOrderSearchDefinition {
         sapOrderTerm.setName("SAP Order Id");
         SearchTerm.CriteriaPath sapCriteriaPath = new SearchTerm.CriteriaPath();
         sapCriteriaPath.setPropertyName("sapOrderNumber");
-//        sapCriteriaPath.setCriteria(Arrays.asList("SAPOrders", "sapReferenceOrders"));
-        sapCriteriaPath.setCriteria(Arrays.asList("SAPOrders"));
+        sapCriteriaPath.setCriteria(Arrays.asList("SAPOrders", "sapReferenceOrders"));
+//        sapCriteriaPath.setCriteria(Arrays.asList("SAPOrders"));
         sapOrderTerm.setCriteriaPaths(Collections.singletonList(sapCriteriaPath));
         sapOrderTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
