@@ -381,7 +381,7 @@ public class ProductOrderSearchDefinition {
 
                     Matcher batchMatch = batchPattern.matcher(batchName);
                     if(batchMatch.find()) {
-                        batchMatch.appendReplacement(uiOutput, String.format(jiraBatchLinkFormat,batchMatch.group()));
+                        batchMatch.appendReplacement(uiOutput, String.format(jiraBatchLinkFormat,batchMatch.group(), batchName));
                         batchMatch.appendTail(uiOutput);
                         uiOutput.append("<br>");
                     }
