@@ -39,13 +39,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -163,28 +163,32 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 String.format(SampleInstanceEjb.IS_SUCCESS, entities.size()),
                 StringUtils.join(messageCollection.getInfos(), "; "));
         Assert.assertFalse(entities.isEmpty());
+
+        SampleKitRequest sampleKitRequest = entities.get(0).getSampleKitRequest();
+        Assert.assertEquals(sampleKitRequest.getFirstName(), "David");
+        Assert.assertEquals(sampleKitRequest.getLastName(), "W");
+        Assert.assertEquals(sampleKitRequest.getOrganization(), "Broad");
+        Assert.assertEquals(sampleKitRequest.getAddress(), "Charles St, Room 2137B");
+        Assert.assertEquals(sampleKitRequest.getCity(), "Cambridge");
+        Assert.assertEquals(sampleKitRequest.getState(), "Ma");
+        Assert.assertEquals(sampleKitRequest.getPostalCode(), "2215");
+        Assert.assertEquals(sampleKitRequest.getCountry(), "USA");
+        Assert.assertEquals(sampleKitRequest.getPhone(), "718-234-5510");
+        Assert.assertEquals(sampleKitRequest.getEmail(), "test@test.com");
+        Assert.assertNull(sampleKitRequest.getCommonName());
+        Assert.assertEquals(sampleKitRequest.getGenus(), "G");
+        Assert.assertEquals(sampleKitRequest.getSpecies(), "S");
+        Assert.assertNull(sampleKitRequest.getIrbApprovalRequired());
+
         for (int i = 0; i < entities.size(); ++i) {
             SampleInstanceEntity entity = entities.get(i);
+            Assert.assertEquals(entity.getSampleKitRequest(), sampleKitRequest);
 
-            SampleKitRequest sampleKitRequest = entity.getSampleKitRequest();
-            Assert.assertEquals(sampleKitRequest.getCollaboratorName(), "David W");
-            Assert.assertEquals(sampleKitRequest.getOrganization(), "Broad");
-            Assert.assertEquals(sampleKitRequest.getAddress(), "Charles St");
-            Assert.assertEquals(sampleKitRequest.getCity(), "Cambridge");
-            Assert.assertEquals(sampleKitRequest.getState(), "Ma");
-            Assert.assertEquals(sampleKitRequest.getPostalCode(), "2215");
-            Assert.assertEquals(sampleKitRequest.getCountry(), "USA");
-            Assert.assertEquals(sampleKitRequest.getPhone(), "718-234-5510");
-            Assert.assertEquals(sampleKitRequest.getEmail(), "test@test.com");
-            Assert.assertNull(sampleKitRequest.getCommonName());
-            Assert.assertEquals(sampleKitRequest.getGenus(), "G");
-            Assert.assertEquals(sampleKitRequest.getSpecies(), "S");
-            Assert.assertNull(sampleKitRequest.getIrbApprovalRequired());
             String libraryName = select(i, "Lib-MOCK.FSK1.A", "Lib-MOCK.FSK1.B", "Lib-MOCK.FSK1.A2", "Lib-MOCK.FSK1.C");
             Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
 
-            Assert.assertTrue(entity.getSequencerModel().getDisplayName().startsWith("NovaSeq"),
-                    entity.getSequencerModel().getDisplayName());
+            Assert.assertEquals(entity.getSequencerModel().name(), select(i, "MiSeqFlowcell", "HiSeqX10Flowcell",
+                    "NovaSeqS4Flowcell", "NextSeqFlowcell"));
 
             MercurySample mercurySample = entity.getMercurySample();
             Assert.assertEquals(mercurySample.getSampleKey(), select(i, "917994.0", "917994.1", "917994.0", "917994.2"));
@@ -212,15 +216,9 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getLabel(), select(i, "E0098972718", "E0098972719", "E0098972720", "E0098972720"));
             Assert.assertEquals(tube.getVolume(), new BigDecimal(select(i, "96.00", "97.00", "98.00", "98.00")));
             Assert.assertEquals(tube.getConcentration(), new BigDecimal(select(i, "7.40", "8.00", "9.00", "9.00")));
-            Assert.assertEquals(tube.getMetrics().size(), 1);
-            LabMetric labMetric = tube.getMetrics().iterator().next();
-            Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.FINAL_LIBRARY_SIZE);
-            Assert.assertEquals(labMetric.getValue(), new BigDecimal("419.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), "index " + i);
-
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
-            Assert.assertEquals(entity.getAggregationParticle(), select(i, "G96214", "G96214", "G96214", "G96215"));
-            Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.AssemblyWithoutReference");
+            Assert.assertEquals(entity.getAggregationParticle(), select(i, "G96213", "G96214", "G96227", "G96215"));
             Assert.assertEquals(entity.getNumberLanes(), 1);
             Assert.assertEquals(entity.getComments(), select(i, "", "sample info 1", "analysis info 1", "asi4; aaai4"));
             Assert.assertEquals(entity.getPooled(), new Boolean(select(i, "false", "false", "true", "true")));
@@ -246,7 +244,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         Assert.assertEquals(entities.size(), 3);
 
         SampleKitRequest sampleKitRequest = entities.get(0).getSampleKitRequest();
-        Assert.assertEquals(sampleKitRequest.getCollaboratorName(), "Charlie Delta");
+        Assert.assertEquals(sampleKitRequest.getFirstName(), "Charlie");
+        Assert.assertEquals(sampleKitRequest.getLastName(), "Delta");
         Assert.assertEquals(sampleKitRequest.getOrganization(), "Epsilon");
         Assert.assertEquals(sampleKitRequest.getAddress(), "Fox Trot");
         Assert.assertEquals(sampleKitRequest.getCity(), "Cambridge");
@@ -293,10 +292,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getLabel(), libraryName);
             Assert.assertEquals(tube.getVolume(), new BigDecimal(select(i, "443.00", "444.00", "445.00")));
             Assert.assertEquals(tube.getConcentration(), new BigDecimal(select(i, "67.00", "68.00", "69.00")));
-            Assert.assertEquals(tube.getMetrics().size(), 1);
-            LabMetric labMetric = tube.getMetrics().iterator().next();
-            Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.FINAL_LIBRARY_SIZE);
-            Assert.assertEquals(labMetric.getValue(), new BigDecimal("626.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
             Assert.assertEquals(entity.getReadLength().intValue(), 76);
@@ -371,10 +366,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getLabel(), libraryName);
             Assert.assertEquals(tube.getVolume(), new BigDecimal("77.00"));
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("100.00"));
-            Assert.assertEquals(tube.getMetrics().size(), 1);
-            LabMetric labMetric = tube.getMetrics().iterator().next();
-            Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.FINAL_LIBRARY_SIZE);
-            Assert.assertEquals(labMetric.getValue(), new BigDecimal("76.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
             Assert.assertEquals(entity.getReadLength().intValue(), 151);
@@ -450,10 +441,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getLabel(), libraryName);
             Assert.assertEquals(tube.getVolume(), new BigDecimal("33.00"));
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("4444.00"));
-            Assert.assertEquals(tube.getMetrics().size(), 1);
-            LabMetric labMetric = tube.getMetrics().iterator().next();
-            Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.FINAL_LIBRARY_SIZE);
-            Assert.assertEquals(labMetric.getValue(), new BigDecimal("44.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
             Assert.assertEquals(entity.getReadLength().intValue(), 151);
@@ -532,10 +519,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             mapBarcodeToTube.put(tube.getLabel(), tube);
             Assert.assertEquals(tube.getLabel(), "JT041431");
             Assert.assertEquals(tube.getVolume(), new BigDecimal("0.60"));
-            Assert.assertEquals(tube.getMetrics().size(), 1);
-            LabMetric labMetric = tube.getMetrics().iterator().next();
-            Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.FINAL_LIBRARY_SIZE);
-            Assert.assertEquals(labMetric.getValue(), new BigDecimal("2.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
             Assert.assertEquals(entity.getExperiment(), "DEV-7501");
@@ -706,8 +689,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "01509634244"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 3,
                 VesselPooledTubesProcessor.Headers.VOLUME.getText(), 2, "01509634244"));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 3,
-                "Fragment Size", 2, "01509634244"));
         errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 3,
                 "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
 
@@ -725,7 +706,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         errorIfMissing(errors, filename, "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
                 VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 6, "Fragment Size"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 6, "Volume"));
 
         errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
@@ -735,8 +715,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_HAVE_BOTH, 7,
                 VesselPooledTubesProcessor.Headers.BAIT.getText(), VesselPooledTubesProcessor.Headers.CAT.getText()));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 7, "DEV-6796"));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 7,
-                "Fragment Size", 6, "01509634249"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 7,
                 VesselPooledTubesProcessor.Headers.VOLUME.getText(), 6, "01509634249"));
 
@@ -752,14 +730,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 8,
                 "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 8,
-                "Fragment Size", 6, "01509634249"));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 8,
                 VesselPooledTubesProcessor.Headers.VOLUME.getText(), 6, "01509634249"));
 
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.NONNEGATIVE_INTEGER, 9,
                 VesselPooledTubesProcessor.Headers.READ_LENGTH.getText()));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.NONNEGATIVE_DECIMAL, 9,
-                VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText()));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.NONNEGATIVE_DECIMAL, 9,
                 VesselPooledTubesProcessor.Headers.VOLUME.getText()));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 9, "DEV-6796"));

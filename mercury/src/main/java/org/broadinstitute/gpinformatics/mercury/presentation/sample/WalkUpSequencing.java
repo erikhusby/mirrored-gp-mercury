@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import java.io.Serializable;
@@ -8,7 +9,7 @@ import java.io.Serializable;
  * Represents the data from a walkup sequencing submission.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class WalkUpSequencing implements Serializable {
+public class WalkUpSequencing implements Serializable, SampleKitRequest.SampleKitRequestKey{
     private String emailAddress;
     private String submitDate;
     private String tubeBarcode;
@@ -197,5 +198,75 @@ public class WalkUpSequencing implements Serializable {
 
     public void setSubmitDate(String submitDate) {
         this.submitDate = submitDate;
+    }
+
+    @Override
+    public String getFirstName() {
+        return null;
+    }
+
+    @Override
+    public String getLastName() {
+        return null;
+    }
+
+    @Override
+    public String getOrganization() {
+        return null;
+    }
+
+    @Override
+    public String getAddress() {
+        return null;
+    }
+
+    @Override
+    public String getCity() {
+        return null;
+    }
+
+    @Override
+    public String getState() {
+        return null;
+    }
+
+    @Override
+    public String getPostalCode() {
+        return null;
+    }
+
+    @Override
+    public String getCountry() {
+        return null;
+    }
+
+    @Override
+    public String getPhone() {
+        return null;
+    }
+
+    @Override
+    public String getEmail() {
+        return null;
+    }
+
+    @Override
+    public String getCommonName() {
+        return null;
+    }
+
+    @Override
+    public String getGenus() {
+        return null;
+    }
+
+    @Override
+    public String getSpecies() {
+        return null;
+    }
+
+    @Override
+    public String getIrbApprovalRequired() {
+        return null;
     }
 }

@@ -39,8 +39,9 @@ public class EmailSender implements Serializable {
      * @param subject subject line
      * @param body HTML
      * @param overrideForTest
+     * @return null if not configured to send, false if there was a problem sending, or true if send succeeded.
      */
-    public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to,
+    public Boolean sendHtmlEmail(@Nonnull AppConfig appConfig, String to,
                               Collection<String> ccAddrdesses, String subject, String body, boolean overrideForTest) {
         if (appConfig.shouldSendEmail() || overrideForTest) {
             if (mailSession != null) {
@@ -48,17 +49,22 @@ public class EmailSender implements Serializable {
                     Message message = new MimeMessage(mailSession);
                     message.setFrom(new InternetAddress("gplims@broadinstitute.org"));
                     message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
-                        message.setRecipients(Message.RecipientType.CC, InternetAddress.parse(StringUtils.join(ccAddrdesses,",")));
+                    message.setRecipients(Message.RecipientType.CC,
+                            InternetAddress.parse(StringUtils.join(ccAddrdesses, ",")));
                     message.setSubject(subject);
                     message.setContent(body, "text/html; charset=utf-8");
                     message.setSentDate(new Date());
                     Transport.send(message);
+                    return true;
+
                 } catch (MessagingException e) {
                     LOG.error("Failed to send email", e);
                     // Don't rethrow, not fatal
                 }
             }
+            return false;
+        } else {
+            return null;
         }
     }
-
 }

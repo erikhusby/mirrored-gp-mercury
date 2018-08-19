@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
@@ -52,11 +53,11 @@ public class SampleKitRequest {
 
     private String irbApprovalRequired;
 
-    public Long getSampleKitRequest() {
+    public Long getSampleKitRequestId() {
         return sampleKitRequestId;
     }
 
-    public void setSampleKitRequest(Long sampleKitRequestId) {
+    public void setSampleKitRequestId(Long sampleKitRequestId) {
         this.sampleKitRequestId = sampleKitRequestId;
     }
 
@@ -164,15 +165,51 @@ public class SampleKitRequest {
         this.species = species;
     }
 
-    public String getCollaboratorName() {
-        return firstName + " " + lastName;
-    }
-
     public String getIrbApprovalRequired() {
         return irbApprovalRequired;
     }
 
     public void setIrbApprovalRequired(String irbApprovalRequired) {
         this.irbApprovalRequired = irbApprovalRequired;
+    }
+
+    public String toBody() {
+        return new StringBuilder(System.lineSeparator()).
+                append("Name: ").append(getFirstName()).append(" ").append(getLastName()).
+                append(System.lineSeparator()).
+                append("Organization: ").append(getOrganization()).
+                append(System.lineSeparator()).
+                append("Address: ").append(StringUtils.join(new String[] {getAddress(), getCity(), getState(),
+                        getPostalCode(), getCountry()}, ", ").replaceAll(" ,", "")).
+                append(System.lineSeparator()).
+                append("Phone: ").append(getPhone()).
+                append(System.lineSeparator()).
+                append("Email: ").append(getEmail()).
+                append(System.lineSeparator()).
+                append("Common Name: ").append(getCommonName()).
+                append(System.lineSeparator()).
+                append("Genus Species: ").append(getGenus()).append(" ").append(getSpecies()).
+                append(System.lineSeparator()).
+                append("Irb Approval Required: ").append(String.valueOf(getIrbApprovalRequired())).
+                append(System.lineSeparator()).
+                toString();
+    }
+
+    /** Lookup key of all relevant fields. */
+    public interface SampleKitRequestKey {
+        public String getFirstName();
+        public String getLastName();
+        public String getOrganization();
+        public String getAddress();
+        public String getCity();
+        public String getState();
+        public String getPostalCode();
+        public String getCountry();
+        public String getPhone();
+        public String getEmail();
+        public String getCommonName();
+        public String getGenus();
+        public String getSpecies();
+        public String getIrbApprovalRequired();
     }
 }

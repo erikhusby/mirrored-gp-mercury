@@ -2,15 +2,19 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
@@ -32,13 +36,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.WalkUpSequencing;
 import org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.File;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,6 +56,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This class handles the external library creation from walkup sequencing web serivce calls, pooled tube
@@ -97,7 +105,7 @@ public class SampleInstanceEjb {
      * A string of the available sequencer model names.
      */
     public static final String SEQUENCER_MODELS;
-
+    private static final String EMAIL_SUBJECT = "Sample Kit Request";
 
     private static final Map<String, IlluminaFlowcell.FlowcellType> mapSequencerToFlowcellType = new HashMap<>();
     private static final Log log = LogFactory.getLog(SampleInstanceEjb.class);
@@ -131,6 +139,15 @@ public class SampleInstanceEjb {
 
     @Inject
     private ReferenceSequenceDao referenceSequenceDao;
+
+    @Inject
+    private EmailSender emailSender;
+
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private Deployment deployment;
 
     static {
         for (IlluminaFlowcell.FlowcellType flowcellType : CreateFCTActionBean.FLOWCELL_TYPES) {
@@ -201,7 +218,7 @@ public class SampleInstanceEjb {
             }
             messages.addErrors(processor.getMessages());
             messages.addWarning(processor.getWarnings());
-            List<RowDto> rowDtos = processor.makeDtos(inputStream, messages);
+            List<RowDto> rowDtos = processor.makeDtos(messages);
             if (rowDtos.isEmpty()) {
                 messages.addWarning("Spreadsheet contains no valid data.");
             } else {
@@ -214,7 +231,31 @@ public class SampleInstanceEjb {
                     List<SampleInstanceEntity> instanceEntities = processor.makeOrUpdateEntities(rowDtos);
                     sampleInstanceEntityDao.persistAll(processor.getEntitiesToPersist());
                     sampleInstanceEntityDao.persistAll(instanceEntities);
-
+                    if (CollectionUtils.isNotEmpty(instanceEntities) && deployment != null) {
+                        String body = generateEmailBody(instanceEntities);
+                        // Sends a sample kit request email to the user.
+                        Boolean status = null;
+                        if (userBean != null && userBean.getBspUser() != null) {
+                            status = emailSender.sendHtmlEmail(new AppConfig(deployment),
+                                    userBean.getBspUser().getEmail(), Collections.emptyList(),
+                                    EMAIL_SUBJECT, body, false);
+                        }
+                        if (BooleanUtils.isNotTrue(status)) {
+                            if (BooleanUtils.isFalse(status)) {
+                                messages.addError("Failed to send email for Sample Kit Request.");
+                            }
+                            // If the email failed or wasn't attempted (e.g. a DEV deployment),
+                            // puts the email body in file and tells the user about it.
+                            File file = File.createTempFile("RequestKitEmail_", ".txt");
+                            PrintWriter writer = new PrintWriter(file);
+                            writer.println("Subject: " + EMAIL_SUBJECT);
+                            writer.println("Date: " + new Date().toString());
+                            writer.println(body);
+                            IOUtils.closeQuietly(writer);
+                            messages.addInfo("Sample Kit Request email is in file <a href='" +
+                                    file.toURI().toASCIIString() + "'>" + file.getName() + "</a>");
+                        }
+                    }
                     if (!messages.hasErrors()) {
                         messages.addInfo(String.format(IS_SUCCESS, rowDtos.size()));
                         return instanceEntities;
@@ -391,8 +432,7 @@ public class SampleInstanceEjb {
         }
 
         if (processor.supportsSampleKitRequest()) {
-            processor.setSampleKitRequest(sampleKitRequestDao.find(processor.getEmail(), processor.getOrganization(),
-                    processor.getLastName(), processor.getFirstName()));
+            processor.setSampleKitRequest(sampleKitRequestDao.find(processor));
         }
     }
 
@@ -487,8 +527,7 @@ public class SampleInstanceEjb {
         mercurySample.addLabVessel(labVessel);
         newEntities.add(mercurySample);
 
-        SampleKitRequest sampleKitRequest = sampleKitRequestDao.find(walkUpSequencing.getEmailAddress(),
-                walkUpSequencing.getLabName());
+        SampleKitRequest sampleKitRequest = sampleKitRequestDao.find(walkUpSequencing);
         if (sampleKitRequest == null) {
             sampleKitRequest = new SampleKitRequest();
             sampleKitRequest.setEmail(walkUpSequencing.getEmailAddress());
@@ -568,6 +607,32 @@ public class SampleInstanceEjb {
         return StringUtils.substringBeforeLast(flowcellType.getDisplayName(), "Flowcell").trim();
     }
 
+    /** Makes a SampleKitRequest email body. */
+    private String generateEmailBody(List<SampleInstanceEntity> entities) {
+        StringBuilder builder = new StringBuilder();
+        // There will be only one SampleKitRequest for all of the entitites.
+        SampleKitRequest kit = entities.get(0).getSampleKitRequest();
+        if (kit != null) {
+            // Adds the kit parameters.
+            builder.append(kit.toBody()).append(System.lineSeparator());
+            // Gets the unique tube barcodes.
+            List<String> barcodes = entities.stream().
+                    map(entity -> entity.getLabVessel().getLabel()).distinct().sorted().collect(Collectors.toList());
+            // Adds the number of unique barcodes.
+            int numberBarcodes = barcodes.size();
+            builder.append("Number of tubes: ").append(numberBarcodes).append(System.lineSeparator());
+            final int barcodesOnARow = 8;
+            for (int startIdx = 0; startIdx < numberBarcodes; ) {
+                int endIdxPlusOne = Math.min(startIdx + barcodesOnARow, numberBarcodes);
+                // Adds the sorted tube barcodes, limiting the number per row.
+                builder.append(StringUtils.join(barcodes.toArray(), ", ", startIdx, endIdxPlusOne)).
+                        append(System.lineSeparator());
+                startIdx = endIdxPlusOne;
+            }
+        }
+        return builder.toString();
+    }
+
     /** Dto containing data from a spreadsheet row. */
     public static class RowDto {
         private String additionalAssemblyInformation;
@@ -583,7 +648,6 @@ public class SampleInstanceEjb {
         private List<String> conditions;
         private String dataAnalysisType;
         private String experiment;
-        private BigDecimal fragmentSize;
         private String insertSize;
         private String irbNumber;
         private String libraryName;
@@ -713,14 +777,6 @@ public class SampleInstanceEjb {
 
         public void setExperiment(String experiment) {
             this.experiment = experiment;
-        }
-
-        public BigDecimal getFragmentSize() {
-            return fragmentSize;
-        }
-
-        public void setFragmentSize(BigDecimal fragmentSize) {
-            this.fragmentSize = fragmentSize;
         }
 
         public String getInsertSize() {

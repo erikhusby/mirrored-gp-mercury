@@ -215,6 +215,11 @@ public abstract class TableProcessor implements Serializable {
     }
 
     /** Allows a processor to modify the header cell (trim, lower case, etc.) before matching it with Header text. */
+    public String adjustHeaderName(String headerCell, int numberOfWords) {
+        return headerCell;
+    }
+
+    /** Allows a processor to modify the header cell (trim, lower case, etc.) before matching it with Header text. */
     public String adjustHeaderName(String headerCell) {
         return headerCell;
     }

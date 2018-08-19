@@ -1587,5 +1587,16 @@
             <column name="insert_size" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-4712-212" author="epolk">
+        <dropColumn schemaName="mercury" tableName="sample_kit_request" columnName="collaborator_name"/>
+    </changeSet>
+    <changeSet id="GPLIM-4712-213" author="epolk">
+        <dropColumn schemaName="mercury" tableName="sample_kit_request_aud" columnName="collaborator_name"/>
+    </changeSet>
+    <changeSet id="GPLIM-4712-214" author="epolk">
+        <createIndex schemaName="mercury" tableName="sample_kit_request" indexName="idx_sample_kit_req_email">
+            <column name="email"/>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>

@@ -31,7 +31,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     private List<String> insertSizes = new ArrayList<>();
     private List<String> irbNumbers = new ArrayList<>();
     private List<String> libraryNames = new ArrayList<>();
-    private List<String> librarySizes = new ArrayList<>();
     private List<String> libraryTypes = new ArrayList<>();
     private List<String> molecularBarcodeNames = new ArrayList<>();
     private List<String> numbersOfLanes = new ArrayList<>();
@@ -61,7 +60,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         INDIVIDUAL_NAME("Individual Name (Patient Id)", REQUIRED),
         INSERT_SIZE_RANGE("Insert Size Range", OPTIONAL),
         LIBRARY_NAME("Library Name", REQUIRED),
-        LIBRARY_SIZE("Library Size", REQUIRED),
         LIBRARY_TYPE("Library Type", OPTIONAL),
         MOLECULAR_BARCODE_NAME("Molecular Barcode Name", OPTIONAL),
         ORGANISM("Organism", OPTIONAL),
@@ -85,6 +83,7 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         IRB_NUMBER("IRB Number", IGNORED),
         ILLUMINA_KIT_USED("Illumina or 454 Kit", IGNORED),
         JUMP_SIZE("Jump Size", IGNORED),
+        LIBRARY_SIZE("Library Size", IGNORED),
         MEMBER_OF_POOL("Member of Pool", IGNORED),
         MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", IGNORED),
         REQUESTED_COMPLETION_DATE("Requested Completion Date", IGNORED),
@@ -152,7 +151,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         concentrations.add(getFromRow(dataRow, Headers.CONCENTRATION));
         dataAnalysisTypes.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
         insertSizes.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE));
-        librarySizes.add(getFromRow(dataRow, Headers.LIBRARY_SIZE));
         libraryTypes.add(getFromRow(dataRow, Headers.LIBRARY_TYPE));
         molecularBarcodeNames.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME));
         numbersOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
@@ -341,11 +339,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     @Override
     public List<String> getIrbNumbers() {
         return irbNumbers;
-    }
-
-    @Override
-    public List<String> getLibrarySizes() {
-        return librarySizes;
     }
 
     @Override

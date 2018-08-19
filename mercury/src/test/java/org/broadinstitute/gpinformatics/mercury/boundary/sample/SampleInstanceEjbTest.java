@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -20,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTe
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -274,13 +274,16 @@ public class SampleInstanceEjbTest extends Arquillian {
         MessageCollection messages = new MessageCollection();
         sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(file), !OVERWRITE, processor,
                 messages, () -> {
-                    // Makes unique barcode, library, sample name.
+                    // Makes unique SampleRequestKit
+                    processor.setEmail(base + "@none.com");
+                    processor.setOrganization(base + " Inc.");
+                    // Makes unique barcode, library, sample name. Barcode is shared for the last two rows.
                     int count = processor.getBarcodes().size();
                     processor.getBarcodes().clear();
                     processor.getLibraryNames().clear();
                     processor.getSampleNames().clear();
                     for (int i = 0; i < count; ++i) {
-                        processor.getBarcodes().add("E" + base + i);
+                        processor.getBarcodes().add("E" + base + "0122".charAt(i));
                         processor.getLibraryNames().add("Library" + base + i);
                         processor.getSampleNames().add(base + "." + i);
                     }
@@ -306,12 +309,9 @@ public class SampleInstanceEjbTest extends Arquillian {
             Assert.assertEquals(tube.getVolume(),
                     MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(Arrays.asList(96, 97, 98, 98).get(i))));
             Assert.assertEquals(tube.getConcentration(),
-                    MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(Arrays.asList(7.4, 8.0, 9.0, 10.67).get(i))));
-            List<LabMetric> librarySize = tube.getNearestMetricsOfType(LabMetric.MetricType.FINAL_LIBRARY_SIZE);
-            Assert.assertEquals(librarySize.size(), 1);
-            Assert.assertEquals(librarySize.get(0).getValue(),
-                    MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(Arrays.asList(419, 418, 417, 416).get(i))));
-
+                    MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(Arrays.asList(7.4, 8.0, 9.0, 9.0).get(i))));
+            Assert.assertEquals(entity.getSampleKitRequest().getEmail(), base + "@none.com");
+            Assert.assertEquals(entity.getSampleKitRequest().getOrganization(), base + " Inc.");
         }
     }
 }

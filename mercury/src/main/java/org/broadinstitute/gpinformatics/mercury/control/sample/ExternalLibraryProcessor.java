@@ -24,7 +24,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nullable;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,7 +37,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProcessor {
+public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProcessor
+        implements SampleKitRequest.SampleKitRequestKey {
     final static Boolean REQUIRED = true;
     final static Boolean OPTIONAL = false;
     final static Boolean IGNORED = null;
@@ -74,6 +74,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         FIRST_NAME("First Name:", OPTIONAL),
         LAST_NAME("Last Name:", OPTIONAL),
         ADDRESS("Address:", OPTIONAL),
+        ROOM_NUMBER("Room Number:", OPTIONAL),
         CITY("City:", OPTIONAL),
         STATE("State:", OPTIONAL),
         POSTAL_CODE("Postal Code:", OPTIONAL),
@@ -163,8 +164,14 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     public void close() {
     }
 
+    @Override
     public String adjustHeaderName(String headerCell) {
         return ExternalLibraryProcessor.fixupHeaderName(headerCell);
+    }
+
+    @Override
+    public String adjustHeaderName(String headerCell, int numberOfWords) {
+        return ExternalLibraryProcessor.fixupHeaderName(headerCell, numberOfWords);
     }
 
     /**
@@ -176,6 +183,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
      * - Substitutes some of the words.
      */
     public static String fixupHeaderName(String headerCell) {
+        return fixupHeaderName(headerCell, 4);
+    }
+
+    private static String fixupHeaderName(String headerCell, int numberOfWords) {
         final Map<String, String> substitutes = new HashMap<String, String>() {{
             put("molecule", "molecular");
             put("bp", "");
@@ -184,11 +195,13 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             put("for", "");
             put("requested", "");
             put("desired", "");
+            put("illumina", "");
             put("no", "");
             put("no.", "number");
             put("total", "");
             put("range", "");
             put("description", "");
+            put("*room", "room");
         }};
         StringBuilder builder = new StringBuilder();
         int count = 0;
@@ -200,10 +213,14 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                 replaceFirst("if applicable", "").
                 replaceFirst("single sample", "").
                 split(" ")) {
-            ++count;
-            if (count > 4 || word.startsWith("(")) {
+            if (++count > numberOfWords) {
                 break;
             }
+            if (word.startsWith("(")) {
+                break;
+            }
+            word = StringUtils.stripStart(word, "*");
+            word = StringUtils.stripEnd(word, ":");
             if (substitutes.containsKey(word)) {
                 word = substitutes.get(word);
             }
@@ -240,7 +257,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return rowNumber - getHeaderRowIndex() - 2;
     }
 
-    public List<SampleInstanceEjb.RowDto> makeDtos(InputStream inputStream, MessageCollection messages) {
+    public List<SampleInstanceEjb.RowDto> makeDtos(MessageCollection messages) {
         List<SampleInstanceEjb.RowDto> dtos = new ArrayList<>();
         for (int index = 0; index < Math.max(getLibraryNames().size(), getSampleNames().size()); ++index) {
             SampleInstanceEjb.RowDto dto = new SampleInstanceEjb.RowDto(toRowNumber(index));
@@ -261,11 +278,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             dto.setConditions(get(getConditions(), index));
             dto.setDataAnalysisType(get(getDataAnalysisTypes(), index));
             dto.setExperiment(get(getExperiments(), index));
-            BigDecimal fragmentSize = asNonNegativeBigDecimal(get(getFragmentSizes(), index),
-                    VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), dto.getRowNumber(), messages);
-            BigDecimal librarySize = asNonNegativeBigDecimal(get(getLibrarySizes(), index),
-                    ExternalLibraryProcessorNewTech.Headers.LIBRARY_SIZE.getText(), dto.getRowNumber(), messages);
-            dto.setFragmentSize(fragmentSize != null ? fragmentSize : librarySize);
             dto.setInsertSize(asIntegerRange(get(getInsertSizes(), index),
                     ExternalLibraryProcessorNewTech.Headers.INSERT_SIZE_RANGE.getText(), dto.getRowNumber(), messages));
             dto.setIrbNumber(get(getIrbNumbers(), index));
@@ -329,10 +341,8 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             MessageCollection messages) {
 
         boolean volumeIsRequired = false;
-        boolean expectConc = false;
         boolean concIsRequired = false;
-        boolean sizeIsRequired = false;
-        String sizeHeader = "";
+        boolean expectConc = false;
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.getText().toLowerCase().contains("volume")) {
                 volumeIsRequired = header.isRequiredValue();
@@ -341,28 +351,19 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                 expectConc = true;
                 concIsRequired = header.isRequiredValue();
             }
-            if (header.getText().toLowerCase().contains("fragment size")) {
-                sizeHeader = "Fragment Size";
-                sizeIsRequired = header.isRequiredValue();
-            }
-            if (header.getText().toLowerCase().contains("library size")) {
-                sizeHeader = "Library Size";
-                sizeIsRequired = header.isRequiredValue();
-            }
         }
         if (expected.getRowNumber() == found.getRowNumber()) {
-            // If volume, conc, and fragment size are defined as OPTIONAL in the Header enum their absence
-            // is errored here. If the string value is present in the upload but can't be converted to the
-            // correct numeric data type an error is given elsewhere.
+            // Volume and concentration (if this type of spreadsheet can provide it) are required for an
+            // uploaded tube. If the Header enum has them as OPTIONAL (so that pooled tubes across multiple
+            // rows need only provide the values in the first row for each tube) then a missing value is
+            // checked here. If the Header enum has them as REQUIRED then the missing value has already been
+            // checked for earlier in the code. Likewise if the string value can't be converted to a number.
             if (!volumeIsRequired && StringUtils.isBlank(get(getVolumes(), toRowIndex(found.getRowNumber())))) {
                 messages.addError(String.format(SampleInstanceEjb.MISSING, found.getRowNumber(), "Volume"));
             }
             if (!concIsRequired && expectConc &&
                     StringUtils.isBlank(get(getConcentrations(), toRowIndex(found.getRowNumber())))) {
                 messages.addError(String.format(SampleInstanceEjb.MISSING, found.getRowNumber(), "Concentration"));
-            }
-            if (!sizeIsRequired && StringUtils.isBlank(get(getFragmentSizes(), toRowIndex(found.getRowNumber())))) {
-                messages.addError(String.format(SampleInstanceEjb.MISSING, found.getRowNumber(), sizeHeader));
             }
         } else {
             if (found.getVolume() != null && !Objects.equals(found.getVolume(), expected.getVolume())) {
@@ -373,12 +374,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                     !Objects.equals(found.getConcentration(), expected.getConcentration())) {
                 messages.addError(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
                         "Concentration", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
-                        found.getBarcode()));
-            }
-            if (found.getFragmentSize() != null &&
-                    !Objects.equals(found.getFragmentSize(), expected.getFragmentSize())) {
-                messages.addError(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
-                        sizeHeader, mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
                         found.getBarcode()));
             }
         }
@@ -449,7 +444,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
      * Creates/updates tube and sample for each unique barcode and sample name.
      */
     protected void makeTubesAndSamples(List<SampleInstanceEjb.RowDto> dtos) {
-        // Creates/updates tubes. Sets tube volume and sets fragment size if it is missing.
+        // Creates/updates tubes. Sets tube volume and concentration.
         dtos.stream().
                 map(dto -> dto.getBarcode()).
                 filter(s -> StringUtils.isNotBlank(s)).
@@ -467,7 +462,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                     SampleInstanceEjb.RowDto firstRowHavingTube = mapBarcodeToFirstRow.get(barcode);
                     labVessel.setVolume(firstRowHavingTube.getVolume());
                     labVessel.setConcentration(firstRowHavingTube.getConcentration());
-                    SampleInstanceEjb.addLibrarySize(labVessel, firstRowHavingTube.getFragmentSize());
                 });
 
         // Collects all of the root sample names.
@@ -532,17 +526,21 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         sampleKitRequest.setFirstName(getFirstName());
         sampleKitRequest.setLastName(getLastName());
         sampleKitRequest.setOrganization(getOrganization());
-        sampleKitRequest.setAddress(getAddress());
+        String address = getAddress();
+        if (StringUtils.isNotBlank(getRoomNumber())) {
+            address += (StringUtils.isNotBlank(address) ? ", " : "") + "Room " + getRoomNumber();
+        }
+        sampleKitRequest.setAddress(address);
         sampleKitRequest.setCity(getCity());
         sampleKitRequest.setState(getState());
-        sampleKitRequest.setPostalCode(getZip());
+        sampleKitRequest.setPostalCode(getPostalCode());
         sampleKitRequest.setCountry(getCountry());
         sampleKitRequest.setPhone(getPhone());
         sampleKitRequest.setEmail(getEmail());
         sampleKitRequest.setCommonName(getCommonName());
         sampleKitRequest.setGenus(getGenus());
         sampleKitRequest.setSpecies(getSpecies());
-        sampleKitRequest.setIrbApprovalRequired(getIrbRequired());
+        sampleKitRequest.setIrbApprovalRequired(getIrbApprovalRequired());
         return sampleKitRequest;
     }
 
@@ -757,6 +755,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return headerValueMap.get(HeaderValueRows.EMAIL.getText());
     }
 
+    public void setEmail(String email) {
+        headerValueMap.put(HeaderValueRows.EMAIL.getText(), email);
+    }
+
     public String getFirstName() {
         return headerValueMap.get(HeaderValueRows.FIRST_NAME.getText());
     }
@@ -765,7 +767,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return headerValueMap.get(HeaderValueRows.GENUS.getText());
     }
 
-    public String getIrbRequired() {
+    public String getIrbApprovalRequired() {
         return headerValueMap.get(HeaderValueRows.IRB_REQUIRED.getText());
     }
 
@@ -777,6 +779,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return headerValueMap.get(HeaderValueRows.ORGANIZATION.getText());
     }
 
+    public void setOrganization(String organization) {
+        headerValueMap.put(HeaderValueRows.ORGANIZATION.getText(), organization);
+    }
+
     // Combines genus and species to use if organism is not specifed on a row.
     public String getGenusAndSpecies() {
         return StringUtils.trim(StringUtils.trimToEmpty(getGenus()) + " " + StringUtils.trimToEmpty(getSpecies()));
@@ -786,16 +792,20 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return headerValueMap.get(HeaderValueRows.PHONE.getText());
     }
 
+    public String getPostalCode() {
+        return headerValueMap.get(HeaderValueRows.POSTAL_CODE.getText());
+    }
+
+    public String getRoomNumber() {
+        return headerValueMap.get(HeaderValueRows.ROOM_NUMBER.getText());
+    }
+
     public String getSpecies() {
         return headerValueMap.get(HeaderValueRows.SPECIES.getText());
     }
 
     public String getState() {
         return headerValueMap.get(HeaderValueRows.STATE.getText());
-    }
-
-    public String getZip() {
-        return headerValueMap.get(HeaderValueRows.POSTAL_CODE.getText());
     }
 
     public Map<String, String> getHeaderValueMap() {
@@ -839,10 +849,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     public List<String> getIrbNumbers() {
-        return Collections.emptyList();
-    }
-
-    public List<String> getLibrarySizes() {
         return Collections.emptyList();
     }
 
@@ -923,10 +929,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     public List<String> getLsids() {
-        return Collections.emptyList();
-    }
-
-    public List<String> getFragmentSizes() {
         return Collections.emptyList();
     }
 

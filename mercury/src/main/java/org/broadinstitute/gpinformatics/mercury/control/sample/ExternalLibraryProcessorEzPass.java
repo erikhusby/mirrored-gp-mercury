@@ -25,7 +25,6 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     private List<String> dataSubmissions = new ArrayList<>();
     private List<String> insertSizes = new ArrayList<>();
     private List<String> irbNumbers = new ArrayList<>();
-    private List<String> librarySizes = new ArrayList<>();
     private List<String> libraryTypes = new ArrayList<>();
     private List<String> molecularBarcodeNames = new ArrayList<>();
     private List<String> numbersOfLanes = new ArrayList<>();
@@ -51,14 +50,13 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", OPTIONAL),
         ASSEMBLY_INFORMATION("Additional Assembly and Analysis Info", OPTIONAL),
         COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", REQUIRED),
-        CONCENTRATION("Concentration (ng/ul)", REQUIRED),
+        CONCENTRATION("Concentration (ng/ul)", OPTIONAL), // Required for the first row of each tube.
         COVERAGE("Coverage (lanes/sample)", REQUIRED),
         DATA_ANALYSIS_TYPE("Data Analysis Type", REQUIRED),
         DATA_SUBMISSION("Data Submission", OPTIONAL),
         INDIVIDUAL_NAME("Individual Name (Patient Id)", REQUIRED),
         INSERT_SIZE_RANGE("Insert Size Range", IGNORED),
         LIBRARY_NAME("Library Name", REQUIRED),
-        LIBRARY_SIZE("Library Size", REQUIRED),
         LIBRARY_TYPE("Library Type", OPTIONAL),
         MOLECULAR_BARCODE_NAME("Molecular Barcode Name", OPTIONAL),
         ORGANISM("Organism", OPTIONAL),
@@ -71,7 +69,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         SOURCE_SAMPLE_GSSR_ID("Source Sample Gssr Id", REQUIRED),
         SQUID_PROJECT("Squid Project (pipeline aggregation)", OPTIONAL),
         TUBE_BARCODE("Sample Tube Barcode", REQUIRED),
-        VOLUME("Volume (ul)", REQUIRED),
+        VOLUME("Volume (ul)", OPTIONAL),  // Required for the first row of each tube.
 
         // Ignored header and data is not saved.
         BLANK("", IGNORED),
@@ -81,6 +79,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         GSSR_OF_BAIT_POOL("GSSR # of Bait Pool", IGNORED),
         ILLUMINA_KIT_USED("Illumina or 454 Kit", IGNORED),
         JUMP_SIZE("Jump Size", IGNORED),
+        LIBRARY_SIZE("Library Size", IGNORED),
         MOLECULAR_BARCODE_PLATE_ID("Molecular Barcode Plate Id", IGNORED),
         MOLECULAR_BARCODE_PLATE_WELL_ID("Molecular Barcode Plate Well Id", IGNORED),
         MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", IGNORED),
@@ -151,7 +150,6 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         dataSubmissions.add(getFromRow(dataRow, Headers.DATA_SUBMISSION));
         insertSizes.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE));
         libraryNames.add(getFromRow(dataRow, Headers.LIBRARY_NAME));
-        librarySizes.add(getFromRow(dataRow, Headers.LIBRARY_SIZE));
         libraryTypes.add(getFromRow(dataRow, Headers.LIBRARY_TYPE));
         molecularBarcodeNames.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME));
         numbersOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
@@ -310,11 +308,6 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     @Override
     public List<String> getIrbNumbers() {
         return irbNumbers;
-    }
-
-    @Override
-    public List<String> getLibrarySizes() {
-        return librarySizes;
     }
 
     @Override

@@ -12,44 +12,54 @@ import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 @Stateful
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class SampleKitRequestDao  extends GenericDao {
-
-    /** Returns one record having the specified email and organization. Also uses lastName & firstName if non-null. */
-    public SampleKitRequest find(final String email, final String organization, final String lastName,
-            final String firstName) {
+    /**
+     * Finds one record matching the email and all non-blank values in the lookupKey.
+     * Blank values they are ignored and so they match any value.  If multiple matches
+     * are found the most recent one is returned. If no matches, null is returned.
+     */
+    public SampleKitRequest find(final SampleKitRequest.SampleKitRequestKey key) {
         final CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
         CriteriaQuery<SampleKitRequest> criteriaQuery = criteriaBuilder.createQuery(SampleKitRequest.class);
         final Root<SampleKitRequest> root = criteriaQuery.from(SampleKitRequest.class);
-        List<Predicate> predicates = new ArrayList<Predicate>() {{
-            add(criteriaBuilder.equal(root.get(SampleKitRequest_.email), email));
-            add(criteriaBuilder.equal(root.get(SampleKitRequest_.organization), organization));
-            if (StringUtils.isNotBlank(lastName)) {
-                add(criteriaBuilder.equal(root.get(SampleKitRequest_.lastName), lastName));
-            }
-            if (StringUtils.isNotBlank(firstName)) {
-                add(criteriaBuilder.equal(root.get(SampleKitRequest_.firstName), firstName));
-            }
-        }};
-        criteriaQuery.where(criteriaBuilder.and(predicates.toArray(new Predicate[0])));
-        // In case there are multiple matching records, returns the one having lowest entity id.
-        criteriaQuery.orderBy(criteriaBuilder.asc(root.get(SampleKitRequest_.sampleKitRequestId)));
+        // Query uses the index on email.
+        criteriaQuery.where(criteriaBuilder.and(criteriaBuilder.equal(root.get(SampleKitRequest_.email),
+                key.getEmail())));
         try {
-            return getEntityManager().createQuery(criteriaQuery).setFirstResult(0).setMaxResults(1).getSingleResult();
+            Optional<SampleKitRequest> result = getEntityManager().createQuery(criteriaQuery).getResultList().stream().
+                    filter(entity -> blankKeyOrMatch(key.getFirstName(), entity.getFirstName()) &&
+                            blankKeyOrMatch(key.getLastName(), entity.getLastName()) &&
+                            blankKeyOrMatch(key.getOrganization(), entity.getOrganization()) &&
+                            blankKeyOrMatch(key.getAddress(), entity.getAddress()) &&
+                            blankKeyOrMatch(key.getCity(), entity.getCity()) &&
+                            blankKeyOrMatch(key.getState(), entity.getState()) &&
+                            blankKeyOrMatch(key.getPostalCode(), entity.getPostalCode()) &&
+                            blankKeyOrMatch(key.getCountry(), entity.getCountry()) &&
+                            blankKeyOrMatch(key.getPhone(), entity.getPhone()) &&
+                            blankKeyOrMatch(key.getCommonName(), entity.getCommonName()) &&
+                            blankKeyOrMatch(key.getGenus(), entity.getGenus()) &&
+                            blankKeyOrMatch(key.getSpecies(), entity.getSpecies()) &&
+                            blankKeyOrMatch(key.getIrbApprovalRequired(), entity.getIrbApprovalRequired())).
+                    sorted((o1, o2) -> {
+                        // Sorted by descending entity id (most recent entity is first).
+                        return (int)(o2.getSampleKitRequestId() - o1.getSampleKitRequestId());
+                    }).
+                    findFirst();
+            return result.isPresent() ? result.get() : null;
         } catch (NoResultException ignored) {
-            return null;
+            // Swallows the exception.
         }
+        return null;
     }
 
-    /** Returns one record having the specified email and organization. */
-    public SampleKitRequest find(String email, String organization) {
-        return find(email, organization, null, null);
+    private boolean blankKeyOrMatch(String keyValue, String rowValue) {
+        return StringUtils.isBlank(keyValue) ||
+                StringUtils.trimToEmpty(keyValue).equals(StringUtils.trimToEmpty(rowValue));
     }
 }

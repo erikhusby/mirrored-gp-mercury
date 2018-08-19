@@ -338,11 +338,6 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     }
 
     @Override
-    public List<String> getFragmentSizes() {
-        return fragmentSizes;
-    }
-
-    @Override
     public List<String> getBarcodes() {
         return barcodes;
     }

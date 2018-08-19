@@ -1,11 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
+import com.google.common.collect.Streams;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -15,8 +14,11 @@ import java.util.Map;
  * of ExternalLibrary.xlsx
  */
 public abstract class HeaderValueRowTableProcessor extends TableProcessor {
+    // Maps the enum-defined header names to the corresponding data value.
     protected Map<String, String> headerValueMap = new HashMap<>();
+    // Maps the enum-defined header names to the row index.
     protected Map<String, Integer> headerRowIndexMap = new HashMap<>();
+    private static final int NUMBER_OF_WORDS_TO_COMPARE = 2;
 
     public HeaderValueRowTableProcessor(String sheetName) {
         super(sheetName, IgnoreTrailingBlankLines.YES);
@@ -24,23 +26,28 @@ public abstract class HeaderValueRowTableProcessor extends TableProcessor {
         setHeaderRowIndex(-1);
     }
 
-    /** Processes a spreadsheet row as a single row that consists of a header cell followed by value cell(s). */
+    /** Processes a spreadsheet row that consists of a header cell followed by a value cell. */
     public void processHeaderValueRow(Row row) {
-        for (Iterator<Cell> iterator = row.cellIterator(); iterator.hasNext(); ) {
-            String content = iterator.next().getStringCellValue().trim();
-            // The header is the first non-blank cell on the row, and the very next cell is the value.
-            if (StringUtils.isNotBlank(content)) {
-                for (String headerName : getHeaderValueNames()) {
-                    if (headerName.equals(content)) {
-                        String value =  iterator.hasNext() ? iterator.next().getStringCellValue().trim() : "";
-                        headerValueMap.put(content, value);
-                        headerRowIndexMap.put(content, row.getRowNum());
-                        break;
-                    }
-                }
-                break;
+        // Finds the first non-blank cell on the row, which is expected to be the header.
+        Streams.stream(row.cellIterator()).
+                filter(cell -> StringUtils.isNotBlank(cell.getStringCellValue())).
+                findFirst().ifPresent(headerCell -> {
+            // Allows the spreadsheet some latitude with the header names.
+            String actualHeaderName = headerCell.getStringCellValue().trim();
+            String adjustedHeader = adjustHeaderName(actualHeaderName, NUMBER_OF_WORDS_TO_COMPARE);
+            if (StringUtils.isNotBlank(adjustedHeader)) {
+                // Looks for a enum-defined header name that matches the adjusted actual header text.
+                getHeaderValueNames().stream().
+                        filter(name -> adjustedHeader.equals(adjustHeaderName(name, NUMBER_OF_WORDS_TO_COMPARE))).
+                        findFirst().ifPresent(enumHeaderName -> {
+                    // The next cell on the row is expected to be the value.
+                    String value = (headerCell.getColumnIndex() < row.getLastCellNum()) ?
+                            row.getCell(headerCell.getColumnIndex() + 1).getStringCellValue().trim() : "";
+                    headerValueMap.put(enumHeaderName, value);
+                    headerRowIndexMap.put(enumHeaderName, row.getRowNum());
+                });
             }
-        }
+        });
     }
 
     /**
@@ -49,16 +56,16 @@ public abstract class HeaderValueRowTableProcessor extends TableProcessor {
      */
     public void validateHeaderValueRows() {
         for (HeaderValueRow headerValueRow : getHeaderValueRows()) {
-            String headerName = headerValueRow.getText();
-            if (!headerValueMap.containsKey(headerName)) {
+            String enumHeaderName = headerValueRow.getText();
+            if (!headerValueMap.containsKey(enumHeaderName)) {
                 if (headerValueRow.isRequiredHeader()) {
-                    getMessages().add("Required row for \"" + headerName + "\" is missing (must appear above row " +
+                    getMessages().add("Required row for \"" + enumHeaderName + "\" is missing (must appear above row " +
                             (getHeaderRowIndex() + 1) + ").");
                 }
             } else {
-                if (headerValueRow.isRequiredValue() && StringUtils.isBlank(headerValueMap.get(headerName))) {
-                    getMessages().add("Required value for " + headerName + " is blank at row " +
-                            (headerRowIndexMap.get(headerName) + 1));
+                if (headerValueRow.isRequiredValue() && StringUtils.isBlank(headerValueMap.get(enumHeaderName))) {
+                    getMessages().add("Required value for " + enumHeaderName + " is blank at row " +
+                            (headerRowIndexMap.get(enumHeaderName) + 1));
                 }
             }
         }
