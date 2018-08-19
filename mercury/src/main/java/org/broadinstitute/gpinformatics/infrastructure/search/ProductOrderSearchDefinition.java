@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -43,11 +44,11 @@ public class ProductOrderSearchDefinition {
         List<SearchTerm> idSearchTerms = buildIDTerms();
         mapGroupSearchTerms.put("IDs", idSearchTerms);
 
-        List<SearchTerm> pdoSearchTerms = buildPDOSearchTerms();
-        mapGroupSearchTerms.put("PDO Terms", pdoSearchTerms);
-
         List<SearchTerm> billingSearchTerms = buildBillingSearchTerms();
         mapGroupSearchTerms.put("Billing IDs", billingSearchTerms);
+
+        List<SearchTerm> pdoSearchTerms = buildPDOSearchTerms();
+        mapGroupSearchTerms.put("PDO Terms", pdoSearchTerms);
 
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections =
                 new ArrayList<>();
@@ -81,7 +82,15 @@ public class ProductOrderSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("OrderQuote",
                 "productOrderId", "productOrderId", ProductOrder.class));
 
-        return new ConfigurableSearchDefinition(ColumnEntity.PRODUCT_ORDER, criteriaProjections, mapGroupSearchTerms);
+        final ConfigurableSearchDefinition configurableSearchDefinition =
+                new ConfigurableSearchDefinition(ColumnEntity.PRODUCT_ORDER, criteriaProjections, mapGroupSearchTerms);
+        configurableSearchDefinition.addColumnGroupHelpText(ImmutableMap.of("Billing Related Info",
+                "Selecting this \"column\" will actually result in a tabular display listed under its associated "
+                + "product order.  The content of the billing results table will include: Billing session, the quote "
+                + "that was billed, the billed product, the quote work item that tracks the charge, the SAP delivery "
+                + "document id (if any) that tracks the change, the quantity charged and the number of samples charged "
+                + "for the transaction"));
+        return configurableSearchDefinition;
     }
 
     /**
@@ -108,9 +117,16 @@ public class ProductOrderSearchDefinition {
         // ProductOrderBillingPlugin which will collect Billing sessions and display the associated information in
         // tabular form
         SearchTerm billingDisplayTerm = new SearchTerm();
+
         billingDisplayTerm.setName("Billing Related Info");
         billingDisplayTerm.setIsNestedParent(Boolean.TRUE);
         billingDisplayTerm.setPluginClass(ProductOrderBillingPlugin.class);
+        billingDisplayTerm.setHelpText("Selecting this \"column\" will actually result in a tabular display listed "
+                                       + "under its associated product order.  <BR/>The content of the billing results "
+                                       + "table will include: <ul><li>Billing session</li><li>The quote that was billed</li><li>The billed "
+                                       + "product</li><li>The quote work item that tracks the charge</li><li>The SAP delivery "
+                                       + "document id (if any) that tracks the change</li><li>The quantity charged and the "
+                                       + "number of samples charged for the transaction</li></ul>");
         searchTerms.add(billingDisplayTerm);
         
         // Defines the path to search for billed PDOs by the ID(s) of the Quote work items that are associated with
@@ -269,7 +285,7 @@ public class ProductOrderSearchDefinition {
 
         // Defines the search term for finding PDOs by the Broad user id of the PDOs owner
         SearchTerm userIDTerm = new SearchTerm();
-        userIDTerm.setName("Broad User ID");
+        userIDTerm.setName("Broad User ID of Order Submitter");
         userIDTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getUserIdConverter());
         SearchTerm.CriteriaPath userIDCriteriaPath = new SearchTerm.CriteriaPath();
         userIDCriteriaPath.setPropertyName("createdBy");
@@ -280,7 +296,7 @@ public class ProductOrderSearchDefinition {
         // Similar to the above search term, this one deals with the owner of the PDO.  This search term however
         // is defined to just display the column for the user
         SearchTerm userIdDisplayTerm = new SearchTerm();
-        userIdDisplayTerm.setName("Product Order Submitter");
+        userIdDisplayTerm.setName("Product Order Submitter Name");
         userIdDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {

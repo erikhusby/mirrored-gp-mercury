@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,14 +24,10 @@ import javax.servlet.http.HttpServletRequest;
  */
 @UrlBinding("/security/security.action")
 public class SecurityActionBean extends CoreActionBean {
-    private static final Log logger = LogFactory.getLog(SecurityActionBean.class);
-
     public static final String LOGIN_ACTION = "/security/security.action";
-
     public static final String HOME_PAGE = "/index.jsp";
-
     public static final String LOGIN_PAGE = "/security/login.jsp";
-
+    private static final Log logger = LogFactory.getLog(SecurityActionBean.class);
     @Validate(required = true, on = {"signIn"})
     private String username;
 
@@ -95,12 +95,12 @@ public class SecurityActionBean extends CoreActionBean {
             UserRole role = UserRole.fromUserBean(userBean);
             targetPage = role.landingPage;
 
-            if (!userBean.isValidBspUser()) {
+            if (!userBean.isValidBspUser() && !userBean.isViewer()) {
                 logger.error(userBean.getBspStatus() + ": " + username);
 
                 addGlobalValidationError(userBean.getBspMessage());
             }
-            if (!userBean.isValidJiraUser()) {
+            if (!userBean.isValidJiraUser() && !userBean.isViewer()) {
                 logger.error(userBean.getJiraStatus() + ": " + username);
                 addGlobalValidationError(userBean.getJiraMessage());
             }
@@ -144,6 +144,12 @@ public class SecurityActionBean extends CoreActionBean {
         OTHER("/index.jsp", null);
 
         private static final String APP_CONTEXT = "/Mercury"; // getContext().getRequest().getContextPath();
+        public final String landingPage;
+        public final Role role;
+        private UserRole(String landingPage, Role role) {
+            this.landingPage = landingPage;
+            this.role = role;
+        }
 
         public static UserRole fromUserBean(UserBean userBean) {
             for (UserRole userRole : values()) {
@@ -152,14 +158,6 @@ public class SecurityActionBean extends CoreActionBean {
                 }
             }
             return OTHER;
-        }
-
-        public final String landingPage;
-        public final Role role;
-
-        private UserRole(String landingPage, Role role) {
-            this.landingPage = landingPage;
-            this.role = role;
         }
 
         private String checkUrlForRoleRedirect(String targetPage) {
