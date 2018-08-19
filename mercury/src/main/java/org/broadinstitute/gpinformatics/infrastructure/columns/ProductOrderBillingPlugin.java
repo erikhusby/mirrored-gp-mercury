@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.text.Format;
@@ -116,9 +115,11 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         headers.add(mapTypeToHeader.get(COMPLETED_HEADER));
         headers.add(mapTypeToHeader.get(COMPLETE_DATE_HEADER));
 
-
         Map<BillingSession, QuoteImportInfo> billingAggregator = new HashMap<>();
 
+        // Using the same method of aggregating Billing ledgers as when creating a billing session, this following
+        // loops through all ledger entries of all samples and aggregates them by the billing session with which
+        // they are associated
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
                 Optional<BillingSession> billingSession = Optional.of(ledgerEntry.getBillingSession());
@@ -137,6 +138,7 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
 
         int count = 0;
 
+        // Takes the aggregated billing ledger info and displays them in a similar manner to the billing session  
         for (Map.Entry<BillingSession, QuoteImportInfo> stringQuoteImportInfoEntry : billingAggregator.entrySet()) {
             BillingSession billingKey = stringQuoteImportInfoEntry.getKey();
             QuoteImportInfo sessionItems = stringQuoteImportInfoEntry.getValue();
@@ -178,6 +180,13 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         return resultList;
     }
 
+    /**
+     * Creates a link to the definition of the quote on the quote server
+     * @param quoteId Unique identifier of the quote as it is found in the Quote server
+     * @param context Search context object which contains injectable services that typically cannot be injected
+     *                through the search process
+     * @return Anchor link to the quote definition on the quote server
+     */
     private String getQuoteLink(String quoteId, SearchContext context) {
         StringBuffer quoteLink = new StringBuffer("<a class=\"external\" target=\"QUOTE\" href=\"");
         quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
@@ -185,8 +194,15 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         return quoteLink.toString();
     }
 
-    @NotNull
-    public String getWorkItemLink(String workItemId, String quoteId, SearchContext context) {
+    /**
+     * Helper method to create a link to the specific quote server work item detail
+     * @param workItemId ID of the work item in question under the given quotes work tab
+     * @param quoteId Unique identifier of the quote as it is found in the Quote server
+     * @param context Search context object which contains injectable services that typically cannot be injected
+     *                through the search process
+     * @return
+     */
+    private String getWorkItemLink(String workItemId, String quoteId, SearchContext context) {
         StringBuffer workLink = new StringBuffer();
         if(StringUtils.isNotBlank(workItemId)) {
             workLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
@@ -201,11 +217,19 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         return workLink.toString();
     }
 
-    public String getBillingSessionLink(String billingSession, String workItem) {
-        final StringBuffer billingSessionFormat = new StringBuffer("<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?billingSession=%s");
-        billingSessionFormat.append("&workId=%s");
-        billingSessionFormat.append("\">%s</a>");
+    /**
+     * Helper method to create a link to the definition of the billing session in Mercury
+     * @param billingSession Unique business key for the billing session for which the generated link will be
+     *                     associated
+     * @param workItem Quote service work item with which the billing session aggregation is associated
+     * @return
+     */
+    private String getBillingSessionLink(String billingSession, String workItem) {
+        String billingSessionFormat =
+                "<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?billingSession=%s"
+                + "&workId=%s" +
+                "\">%s</a>";
 
-        return String.format(billingSessionFormat.toString(), billingSession, workItem, billingSession);
+        return String.format(billingSessionFormat, billingSession, workItem, billingSession);
     }
 }

@@ -84,10 +84,16 @@ public class ProductOrderSearchDefinition {
         return new ConfigurableSearchDefinition(ColumnEntity.PRODUCT_ORDER, criteriaProjections, mapGroupSearchTerms);
     }
 
+    /**
+     * Defines the search terms related to finding and displaying Billing related information on the Product Orders
+     *
+     * @return
+     */
     @NotNull
     private ArrayList<SearchTerm> buildBillingSearchTerms() {
         final ArrayList<SearchTerm> searchTerms = new ArrayList<>();
 
+        // Define the path to Search for PDOs associated with one or more given billing session ids.  Search only.
         SearchTerm billingSessionTerm = new SearchTerm();
         billingSessionTerm.setName("Billing Session Id");
         billingSessionTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBillingSessionConverter());
@@ -98,13 +104,17 @@ public class ProductOrderSearchDefinition {
         billingSessionTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(billingSessionTerm);
 
+        // Define how the billing related information will be displayed.  All logic is defined in the
+        // ProductOrderBillingPlugin which will collect Billing sessions and display the associated information in
+        // tabular form
         SearchTerm billingDisplayTerm = new SearchTerm();
         billingDisplayTerm.setName("Billing Related Info");
         billingDisplayTerm.setIsNestedParent(Boolean.TRUE);
         billingDisplayTerm.setPluginClass(ProductOrderBillingPlugin.class);
         searchTerms.add(billingDisplayTerm);
         
-
+        // Defines the path to search for billed PDOs by the ID(s) of the Quote work items that are associated with
+        // billing ledgers
         SearchTerm quoteWorkTerm = new SearchTerm();
         quoteWorkTerm.setName("Quote Work Item");
         SearchTerm.CriteriaPath quoteWorkPath = new SearchTerm.CriteriaPath();
@@ -114,7 +124,7 @@ public class ProductOrderSearchDefinition {
         quoteWorkTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(quoteWorkTerm);
 
-
+        // Defines the path to search for PDOs that are billed to SAP by the delivery document id(s)
         SearchTerm sapDeliveryDocTerm = new SearchTerm();
         sapDeliveryDocTerm.setName("SAP Delivery Document Id");
         sapDeliveryDocTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
@@ -124,7 +134,7 @@ public class ProductOrderSearchDefinition {
         sapDeliveryDocTerm.setCriteriaPaths(Collections.singletonList(deliveryDocPath));
         searchTerms.add(sapDeliveryDocTerm);
 
-
+        // Defines the path to search for PDOs by that have been billed by the quote(s) with which they were billed
         SearchTerm billedQuoteTerm = new SearchTerm();
         billedQuoteTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         billedQuoteTerm.setName("Billed Quote");
@@ -138,34 +148,49 @@ public class ProductOrderSearchDefinition {
         return searchTerms;
     }
 
-
+    /**
+     * Defines the Search terms that are associated with elements defined on a product order
+     * @return
+     */
     private ArrayList<SearchTerm> buildPDOSearchTerms() {
 
         ArrayList<SearchTerm> searchTerms = new ArrayList<>();
 
+        // Defines the search term used to find PDOs by the products (both primary and add on) with which they are
+        // associated
         SearchTerm productTerm = new SearchTerm();
         productTerm.setName("Product Part Number");
 
+        // Due to the fact that PDOs have a ManyToOne relationship with Products, the definition of how to search
+        // for products are a little different. The path to the Product field is a nested criteria search and while
+        // the top level criteria is defining how to relate the product order id to the nested search.  Similar to
+        //      Select * from Product Order pdo
+        //      where pdo.product_order_id in (
+        //          select product.product_order_id from Product product
+        //          where product.part_number = ::Passed_in_part_number
+        //      )
         SearchTerm.CriteriaPath productCriteriaPath = new SearchTerm.CriteriaPath();
-
         SearchTerm.CriteriaPath nestedProductPath = new SearchTerm.CriteriaPath();
         nestedProductPath.setCriteria(Collections.singletonList("PDOProduct"));
-
         productCriteriaPath.setPropertyName("partNumber");
         productCriteriaPath.setCriteria(Arrays.asList("productOrderId"));
         productCriteriaPath.setNestedCriteriaPath(nestedProductPath);
-
+        // defines the criteria path to find add ons
         SearchTerm.CriteriaPath addonPath = new SearchTerm.CriteriaPath();
         addonPath.setPropertyName("partNumber");
+        // Additional search path for the criteria to find add on products with which product orders are associated.
         addonPath.setCriteria(Arrays.asList("AddOns", "addOns", "addOn"));
 
         productTerm.setCriteriaPaths(Arrays.asList(productCriteriaPath, addonPath));
+        // Makes this search term only for search criteria
         productTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(productTerm);
 
-
+        // Defines the search term that will control the product result column for any found PDOs
         SearchTerm productDisplayTerm = new SearchTerm();
         productDisplayTerm.setName("Product(s)");
+        // Customize how the product info is displayed and return a list of the display info.  This method is used for
+        // both UI output and download
         productDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
@@ -185,6 +210,8 @@ public class ProductOrderSearchDefinition {
                 return productList;
             }
         });
+        // Takes the output of setDisplayValueExpression and adds any UI specific embelishments to it.  In the case
+        // of this method, it will bold the lead in
         productDisplayTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -207,7 +234,7 @@ public class ProductOrderSearchDefinition {
         searchTerms.add(productDisplayTerm);
 
 
-        //For searching by quotes, and displaying quotes
+        // For searching by quotes, and displaying quotes
         SearchTerm quoteTerm = new SearchTerm();
         quoteTerm.setName("Quote Identifier");
         SearchTerm.CriteriaPath quoteCriteraPath = new SearchTerm.CriteriaPath();
@@ -222,6 +249,8 @@ public class ProductOrderSearchDefinition {
                 return orderData.getQuoteId();
             }
         });
+        // Takes the output of setDisplayValueExpression and wraps the quote ID in an anchor tag to allow the user
+        // to go directly to the quote
         quoteTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -238,9 +267,9 @@ public class ProductOrderSearchDefinition {
         });
         searchTerms.add(quoteTerm);
 
-
+        // Defines the search term for finding PDOs by the Broad user id of the PDOs owner
         SearchTerm userIDTerm = new SearchTerm();
-        userIDTerm.setName("UserID");
+        userIDTerm.setName("Broad User ID");
         userIDTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getUserIdConverter());
         SearchTerm.CriteriaPath userIDCriteriaPath = new SearchTerm.CriteriaPath();
         userIDCriteriaPath.setPropertyName("createdBy");
@@ -248,7 +277,8 @@ public class ProductOrderSearchDefinition {
         userIDTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(userIDTerm);
 
-
+        // Similar to the above search term, this one deals with the owner of the PDO.  This search term however
+        // is defined to just display the column for the user
         SearchTerm userIdDisplayTerm = new SearchTerm();
         userIdDisplayTerm.setName("Product Order Submitter");
         userIdDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -265,7 +295,7 @@ public class ProductOrderSearchDefinition {
         });
         searchTerms.add(userIdDisplayTerm);
 
-
+        // Defines the search terms to find PDOs by the order status with which they are associated
         SearchTerm pdoStatusTerm = new SearchTerm();
         pdoStatusTerm.setName("Order Status");
         pdoStatusTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -289,19 +319,21 @@ public class ProductOrderSearchDefinition {
         pdoStatusTerm.setCriteriaPaths(Collections.singletonList(orderStatusPath));
         searchTerms.add(pdoStatusTerm);
 
-
-
+        // Search only definition
+        //
         // In order for Research project search to work, the inclusion of a nested query was ncessary.
         // This is due to the fact that Product Orders are technically Child elements of a Research Projects and
-        // Products.  The standard setup for
-
+        // Products.  The derived query would be similar to:
+        //      Select * from Product Order pdo
+        //      where pdo.product_order_id in (
+        //          select rp.product_order_id from Research_Project rp
+        //          where rp.jiraTicketKey = ::Passed_in_jira_ticket
+        //      )
         SearchTerm rpSearchTerm = new SearchTerm();
         rpSearchTerm.setName("Research Project JIRA ID");
         SearchTerm.CriteriaPath rpCriteriaPath = new SearchTerm.CriteriaPath();
-
         SearchTerm.CriteriaPath nestedRPCriteriaPath = new SearchTerm.CriteriaPath();
         nestedRPCriteriaPath.setCriteria(Collections.singletonList("PDORP"));
-
         rpCriteriaPath.setPropertyName("jiraTicketKey");
         rpCriteriaPath.setCriteria(Arrays.asList("productOrderId"));
         rpCriteriaPath.setNestedCriteriaPath(nestedRPCriteriaPath);
@@ -309,7 +341,7 @@ public class ProductOrderSearchDefinition {
         rpSearchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(rpSearchTerm);
 
-
+        // Display only search term for showing the research project with which the found product order is associated
         SearchTerm researchProjectDisplayTerm = new SearchTerm();
         researchProjectDisplayTerm.setName("Research Project");
         researchProjectDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -319,6 +351,8 @@ public class ProductOrderSearchDefinition {
                 return order.getResearchProject().getJiraTicketKey();
             }
         });
+        // Defines the UI enhanced display for the research projects to display.  Enhanced with a link to allow the
+        // user to be able to easily navigate to the research project definition
         researchProjectDisplayTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -329,6 +363,8 @@ public class ProductOrderSearchDefinition {
         });
         searchTerms.add(researchProjectDisplayTerm);
 
+        // Defines the search term to find product orders by a given set of LCSETs which were created with samples
+        // of which the product order is created
         SearchTerm lcsetTerm = new SearchTerm();
         lcsetTerm.setName("LCSET(s)");
         lcsetTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
@@ -347,6 +383,7 @@ public class ProductOrderSearchDefinition {
         lcsetReworkPath.addImmutableTermFilter(workflowOnlyFilter);
         lcsetReworkPath.setCriteria(Arrays.asList("BatchVessels", "samples", "mercurySample", "labVessel", "reworkLabBatches"));
         lcsetTerm.setCriteriaPaths(Arrays.asList(lcsetReworkPath, lcsetVesselPath));
+        // navigate through
         lcsetTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -367,6 +404,8 @@ public class ProductOrderSearchDefinition {
                 return results;
             }
         });
+        // Defines the UI enhanced display for the LCSET.  Will provide the user with a link to the JIRA ticket for
+        // easier review
         lcsetTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -393,11 +432,16 @@ public class ProductOrderSearchDefinition {
         return searchTerms;
     }
 
+    /**
+     * Defines all the terms that directly relate to the definition of a product order
+     * @return
+     */
     @NotNull
     private ArrayList<SearchTerm> buildIDTerms() {
 
         ArrayList<SearchTerm> searchTerms = new ArrayList<>();
 
+        // Defines the Search term to find and display the product order by a given set of product order JIRA tickets
         SearchTerm pdoJiraTicketTerm = new SearchTerm();
         pdoJiraTicketTerm.setName("PDO Ticket");
         //Necessary for displaying this field in the results
@@ -419,6 +463,8 @@ public class ProductOrderSearchDefinition {
                 return productOrderDisplay.toString();
             }
         });
+        // Defines the UI enhanced display of the found product order.  Using regular Expression, it will wrap the
+        // display value for the product order with an anchor tag pointing to the product order definition.
         pdoJiraTicketTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -453,13 +499,14 @@ public class ProductOrderSearchDefinition {
         });
         searchTerms.add(pdoJiraTicketTerm);
 
-
+        // Defines the search term to find product orders by the sample name of samples with which they are defined
         SearchTerm sampleTerm = new SearchTerm();
         sampleTerm.setName("Product Order Sample(s)");
         SearchTerm.CriteriaPath sampleCriteriaPath = new SearchTerm.CriteriaPath();
         sampleCriteriaPath.setPropertyName("sampleName");
         sampleCriteriaPath.setCriteria(Arrays.asList("PDOSamples", "samples"));
         sampleTerm.setCriteriaPaths(Collections.singletonList(sampleCriteriaPath));
+        // Extracts all sample names defined on the product order for display or download
         sampleTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -474,6 +521,7 @@ public class ProductOrderSearchDefinition {
                 return sampleNames;
             }
         });
+        // Altered UI display for sample names to simply separate the sample name with a comma
         sampleTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -484,13 +532,15 @@ public class ProductOrderSearchDefinition {
         });
         searchTerms.add(sampleTerm);
 
+        // Defines the search term for finding product orders by the SAP order with which they are associated.
         SearchTerm sapOrderTerm = new SearchTerm();
         sapOrderTerm.setName("SAP Order Id");
         SearchTerm.CriteriaPath sapCriteriaPath = new SearchTerm.CriteriaPath();
         sapCriteriaPath.setPropertyName("sapOrderNumber");
         sapCriteriaPath.setCriteria(Arrays.asList("SAPOrders", "sapReferenceOrders"));
-//        sapCriteriaPath.setCriteria(Arrays.asList("SAPOrders"));
         sapOrderTerm.setCriteriaPaths(Collections.singletonList(sapCriteriaPath));
+        // Since product orders can have multiple historic SAP orders associated with them, this following definition
+        // will assist in distinguishing which one is currently the active SAP order
         sapOrderTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
