@@ -122,15 +122,15 @@ public class LedgerEntry implements Serializable {
         this.autoLedgerTimestamp = autoLedgerTimestamp;
     }
 
+    public PriceItem getPriceItem() {
+        return priceItem;
+    }
+
     /**
      * Should only be used by test code
      */
     public void setPriceItem(PriceItem priceItem) {
         this.priceItem = priceItem;
-    }
-
-    public PriceItem getPriceItem() {
-        return priceItem;
     }
 
     public double getQuantity() {
@@ -278,15 +278,19 @@ public class LedgerEntry implements Serializable {
     }
 
     public Date getBucketDate() {
-        return billingSession.getBucketDate(workCompleteDate);
-    }
-
-    public void setSapOrderDetail(SapOrderDetail sapOrderDetail) {
-        this.sapOrderDetail = sapOrderDetail;
+        Date bucketDate = null;
+        if(billingSession != null) {
+            bucketDate = billingSession.getBucketDate(workCompleteDate);
+        }
+        return bucketDate;
     }
 
     public SapOrderDetail getSapOrderDetail() {
         return sapOrderDetail;
+    }
+
+    public void setSapOrderDetail(SapOrderDetail sapOrderDetail) {
+        this.sapOrderDetail = sapOrderDetail;
     }
 
     /**

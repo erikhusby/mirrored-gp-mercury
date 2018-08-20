@@ -115,32 +115,29 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         headers.add(mapTypeToHeader.get(COMPLETED_HEADER));
         headers.add(mapTypeToHeader.get(COMPLETE_DATE_HEADER));
 
-        Map<BillingSession, QuoteImportInfo> billingAggregator = new HashMap<>();
+        Map<Optional<BillingSession>, QuoteImportInfo> billingAggregator = new HashMap<>();
 
         // Using the same method of aggregating Billing ledgers as when creating a billing session, this following
         // loops through all ledger entries of all samples and aggregates them by the billing session with which
         // they are associated
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
-                Optional<BillingSession> billingSession = Optional.of(ledgerEntry.getBillingSession());
+                Optional<BillingSession> billingSession = Optional.ofNullable(ledgerEntry.getBillingSession());
 
-                billingSession.ifPresent(billingSession1 ->
-                {
-                    if(!billingAggregator.containsKey(billingSession1)) {
+                    if(!billingAggregator.containsKey(billingSession)) {
 
-                        billingAggregator.put(billingSession1, new QuoteImportInfo());
+                        billingAggregator.put(billingSession, new QuoteImportInfo());
                     }
-                    billingAggregator.get(billingSession1).addQuantity(ledgerEntry);
+                    billingAggregator.get(billingSession).addQuantity(ledgerEntry);
 
-                });
             }
         }
 
         int count = 0;
 
         // Takes the aggregated billing ledger info and displays them in a similar manner to the billing session  
-        for (Map.Entry<BillingSession, QuoteImportInfo> stringQuoteImportInfoEntry : billingAggregator.entrySet()) {
-            BillingSession billingKey = stringQuoteImportInfoEntry.getKey();
+        for (Map.Entry<Optional<BillingSession>, QuoteImportInfo> stringQuoteImportInfoEntry : billingAggregator.entrySet()) {
+            Optional<BillingSession> billingKey = stringQuoteImportInfoEntry.getKey();
             QuoteImportInfo sessionItems = stringQuoteImportInfoEntry.getValue();
 
             try {
@@ -149,12 +146,20 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                         sessionItems.getQuoteImportItems(context.getPriceListCache());
 
                 for (QuoteImportItem quoteImportItem : quoteImportItems) {
-                    final Optional<Date> billedDate = Optional.ofNullable(billingKey.getBilledDate());
+                    Optional<Date> billedDate = Optional.empty();
+                    if(billingKey.isPresent()) {
+                        billedDate = Optional.ofNullable(billingKey.get().getBilledDate());
+                    }
                     final Optional<Date> workCompleteDate = Optional.ofNullable(quoteImportItem.getWorkCompleteDate());
                     final Optional<String> sapItems = Optional.ofNullable(quoteImportItem.getSapItems());
                     final Optional<String> singleWorkItem = Optional.ofNullable(quoteImportItem.getSingleWorkItem());
+                    String businessKey = "";
+                    if(billingKey.isPresent()) {
+                        businessKey = billingKey.get().getBusinessKey();
+                    }
                     final List<String> cellList =
-                            new ArrayList(Arrays.asList(getBillingSessionLink(billingKey.getBusinessKey(), singleWorkItem.isPresent()?singleWorkItem.get():""),
+                            new ArrayList(Arrays.asList(getBillingSessionLink(
+                                    businessKey, singleWorkItem.isPresent()?singleWorkItem.get():""),
                                     billedDate.isPresent()?dateFormatter.format(billedDate.get()):"",
                                     getQuoteLink(quoteImportItem.getQuoteId(), context),
                                     getWorkItemLink(singleWorkItem.isPresent()?singleWorkItem.get():"", quoteImportItem.getQuoteId(), context),
@@ -230,6 +235,10 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                 + "&workId=%s" +
                 "\">%s</a>";
 
-        return String.format(billingSessionFormat, billingSession, workItem, billingSession);
+        String formattedOutput = "";
+        if(StringUtils.isNotBlank(billingSession)) {
+            formattedOutput = String.format(billingSessionFormat, billingSession, workItem, billingSession);
+        }
+        return formattedOutput;
     }
 }
