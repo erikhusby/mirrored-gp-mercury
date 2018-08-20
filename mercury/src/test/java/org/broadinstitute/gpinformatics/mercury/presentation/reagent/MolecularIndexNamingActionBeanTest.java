@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeFactory;
-import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeParser;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
@@ -30,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static edu.mit.broad.prodinfo.thrift.lims.IndexPosition.P7;
 
 /**
  * Tests MolecularIndexNamingActionBean.
@@ -120,9 +117,6 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
     private MolecularIndexDao molecularIndexDao;
 
     @Inject
-    private MolecularIndexingSchemeParser molecularIndexingSchemeParser;
-
-    @Inject
     private MolecularIndexingSchemeFactory molecularIndexingSchemeFactory;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
@@ -143,7 +137,6 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         actionBean = new MolecularIndexNamingActionBean();
         actionBean.setContext(new TestCoreActionBeanContext());
         actionBean.setMolecularIndexingSchemeFactory(molecularIndexingSchemeFactory);
-        actionBean.setMolecularIndexingSchemeParser(molecularIndexingSchemeParser);
 
         // Removes any test sequence if it already exists.
         utx.begin();

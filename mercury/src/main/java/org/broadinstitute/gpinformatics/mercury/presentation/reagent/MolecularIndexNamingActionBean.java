@@ -10,8 +10,6 @@ import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -20,7 +18,6 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeFactory;
-import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeParser;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -103,9 +100,6 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
 
     @Inject
     private MolecularIndexingSchemeFactory molecularIndexingSchemeFactory;
-
-    @Inject
-    private MolecularIndexingSchemeParser molecularIndexingSchemeParser;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -454,11 +448,6 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
     /** Setter for testing. */
     public void setMolecularIndexingSchemeFactory(MolecularIndexingSchemeFactory molecularIndexingSchemeFactory) {
         this.molecularIndexingSchemeFactory = molecularIndexingSchemeFactory;
-    }
-
-    /** Setter for testing. */
-    public void setMolecularIndexingSchemeParser(MolecularIndexingSchemeParser molecularIndexingSchemeParser) {
-        this.molecularIndexingSchemeParser = molecularIndexingSchemeParser;
     }
 
     public List<MolecularIndexingScheme.IndexPosition> getIndexPositions() {
