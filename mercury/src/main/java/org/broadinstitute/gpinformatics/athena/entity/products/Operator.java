@@ -15,7 +15,7 @@ public enum Operator {
     LESS_THAN("<", OperatorType.NUMERIC),
     LESS_THAN_OR_EQUAL_TO("<=", OperatorType.NUMERIC),
     EQUALS("=", OperatorType.NUMERIC),
-    EXACT_MATCH("=", OperatorType.STRING),
+    EXACT_MATCH("equals", OperatorType.STRING),
     IS_IN("is in", OperatorType.STRING),
     IS("is On Risk", OperatorType.BOOLEAN);
 

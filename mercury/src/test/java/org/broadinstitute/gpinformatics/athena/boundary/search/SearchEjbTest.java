@@ -6,13 +6,18 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
  * This class is for testing the {@link SearchEjb} class.
  */
 @Test(groups = TestGroups.STUBBY, enabled = true)
+@Dependent
 public class SearchEjbTest extends StubbyContainerTest {
+
+    public SearchEjbTest(){}
+
     @Inject
     SearchEjb searchEjb;
 

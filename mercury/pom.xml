@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.90-SNAPSHOT</version>
+    <version>1.96-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -402,7 +402,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>jaxb2-maven-plugin</artifactId>
-                        <version>1.4</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>LabEventSchemaGen</id>
@@ -762,7 +762,7 @@
                 <dependency>
                     <groupId>org.wildfly.arquillian</groupId>
                     <artifactId>wildfly-arquillian-container-managed</artifactId>
-                    <version>2.0.0.Final</version>
+                    <version>2.1.0.Final</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -867,7 +867,7 @@
                 <dependency>
                     <groupId>org.wildfly.arquillian</groupId>
                     <artifactId>wildfly-arquillian-container-remote</artifactId>
-                    <version>2.0.0.Final</version>
+                    <version>2.1.0.Final</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -1269,7 +1269,7 @@ nodePrinter.print(webapp)
             <dependency>
                 <groupId>org.jboss.arquillian</groupId>
                 <artifactId>arquillian-bom</artifactId>
-                <version>1.1.11.Final</version>
+                <version>1.4.0.Final</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -1277,7 +1277,7 @@ nodePrinter.print(webapp)
             <dependency>
                 <groupId>org.eu.ingwar.tools</groupId>
                 <artifactId>arquillian-suite-extension</artifactId>
-                <version>1.1.2</version>
+                <version>1.2.0</version>
                 <scope>test</scope>
             </dependency>
 
@@ -1301,14 +1301,29 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.10</version>
+            <version>6.14.3</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-netty</artifactId>
             <version>3.10.4</version>
+            <exclusions>
+                <exclusion>
+                    <!-- Version is too old -->
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
             <scope>test</scope>
+        </dependency>
+
+        <!-- App dependency plus org.eu.ingwar.tools.arquillian-suite-extension requires newer library than what's in org.mock-server -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>24.0-jre</version>
         </dependency>
 
         <!-- ***
@@ -1462,35 +1477,6 @@ nodePrinter.print(webapp)
         <!-- End of dependencies for Arquillian shrinkwrap war -->
 
         <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-api</artifactId>
-            <version>2.46.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>2.46.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-server</artifactId>
-            <version>2.46.0</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.mortbay.jetty</groupId>
-                    <artifactId>servlet-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.mortbay.jetty</groupId>
-                    <artifactId>servlet-api-2.5</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-exec</artifactId>
             <version>1.3</version>
@@ -1538,11 +1524,11 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
-        <!-- todo jmt fix -->
+        <!-- Match what's in WildFly 10 CDI patch -->
         <dependency>
-            <groupId>org.jboss.weld.servlet</groupId>
-            <artifactId>weld-servlet-core</artifactId>
-            <version>2.4.0.Final</version>
+            <groupId>org.jboss.weld</groupId>
+            <artifactId>weld-core-impl</artifactId>
+            <version>2.4.1.Final</version>
             <scope>provided</scope>
         </dependency>
 
@@ -1863,7 +1849,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.broadinstitute.sapservices</groupId>
             <artifactId>SAPServices</artifactId>
-            <version>1.7.2</version>
+            <version>1.9</version>
             <exclusions>
                 <exclusion>
                     <groupId>javax.servlet</groupId>
@@ -2138,6 +2124,22 @@ nodePrinter.print(webapp)
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>BarcodeDecoder</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                        <configuration>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>BarcodeDecoder.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.lims.barcode.generated</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.BarcodeDecoderXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -2402,7 +2404,7 @@ nodePrinter.print(webapp)
                     </execution>
                 </executions>
             </plugin>
-            
+
             <plugin>
                 <groupId>external.atlassian.jgitflow</groupId>
                 <artifactId>jgitflow-maven-plugin</artifactId>

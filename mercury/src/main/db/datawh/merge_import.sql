@@ -1546,7 +1546,7 @@ AS
 
       IF v_rowid_arr.count > 0 THEN
         -- Only one batch per run - all dates (should be) the same
-        SELECT ETL_DATE INTO v_etldate FROM event_fact WHERE ROWNUM < 2;
+        SELECT ETL_DATE INTO v_etldate FROM im_event_fact WHERE ROWNUM < 2;
 
         -- TODO Bulk collect errors in a single FORALL statement?
         FOR V_IDX IN v_rowid_arr.FIRST .. v_rowid_arr.LAST LOOP
@@ -1700,8 +1700,7 @@ AS
         lab_vessel_id, position,
         'N' as split_on_rehyb
       FROM im_array_process
-      WHERE lab_event_type = 'ArrayPlatingDilution'  -- Sanity - should only be this one type
-            AND is_delete = 'F'
+      WHERE is_delete = 'F'
       UNION ALL
       SELECT LINE_NUMBER, ETL_DATE,
         product_order_id, batch_name, lcset_sample_name, sample_name,

@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -32,6 +31,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -50,7 +50,10 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+@Dependent
 public class BillingEjbJiraDownTest extends Arquillian {
+
+    public BillingEjbJiraDownTest(){}
 
     @Inject
     private BillingSessionDao billingSessionDao;
@@ -85,7 +88,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryDeployment() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class, SapIntegrationServiceStub.class);
     }
 
     private String writeFixtureData() {

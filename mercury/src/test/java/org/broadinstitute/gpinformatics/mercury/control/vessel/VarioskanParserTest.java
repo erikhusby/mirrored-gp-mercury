@@ -29,7 +29,10 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import static org.mockito.Mockito.mock;
 
 /**
  * Test parsing of Varioskan file.
@@ -39,6 +42,7 @@ public class VarioskanParserTest {
 
     public static final String VARIOSKAN_OUTPUT = "VarioskanOutput.xls";
     public static final String VARIOSKAN_384_OUTPUT = "Varioskan384Output.xls";
+    public static final String VARIOSKAN_384_2CURVE_OUTPUT = "Varioskan384MultiCurveOutput.xls";
     public static final String VARIOSKAN_RIBO_OUTPUT = "VarioskanRiboOutput.xls";
     public static final int VARIOSKAN_SAMPLE_COUNT = 96;
     public static final int VARIOSKAN_384_SAMPLE_COUNT = 96;
@@ -49,6 +53,37 @@ public class VarioskanParserTest {
     public static final String PLATE2_BARCODE_IN_SS = "2345678";
     public static final String RIBO_PLATE_BARCODE = "000111222333";
     public static final String RIBO_PLATE_BARCODE_IN_SS = "111222333";
+
+    @Test
+    public void testMultipleCurves() {
+        InputStream testSpreadSheetInputStream = getSpreadsheet(VARIOSKAN_384_2CURVE_OUTPUT);
+        try {
+            int numSamples = 10;
+            Workbook workbook = WorkbookFactory.create(testSpreadSheetInputStream);
+            VarioskanPlateProcessorTwoCurve plateProcessorTwoCurve = new VarioskanPlateProcessorTwoCurve(workbook);
+            Map<String, StaticPlate.TubeFormationByWellCriteria.Result> mapBarcodeToResult = new HashMap<>();
+
+            Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
+            VarioskanParserTest.buildTriplicateTubesAndTransfers(mapBarcodeToPlate, "Dil1", "000002108020", "Abs");
+            VarioskanParserTest.buildTriplicateTubesAndTransfers(mapBarcodeToPlate, "Dil2", "000002107920", "Abs");
+            for (StaticPlate staticPlate: mapBarcodeToPlate.values()) {
+                mapBarcodeToResult.put(staticPlate.getLabel(), staticPlate.nearestFormationAndTubePositionByWell());
+            }
+
+            List<VarioskanPlateProcessor.PlateWellResult> plateWellResults =
+                    plateProcessorTwoCurve.processMultipleCurves(LabMetric.MetricType.INITIAL_PICO);
+
+            Assert.assertEquals(plateWellResults.size(), numSamples * 3);
+            Assert.assertEquals(plateProcessorTwoCurve.getMessages().size(), 0);
+        } catch (ValidationException | IOException | InvalidFormatException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                testSpreadSheetInputStream.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
 
     @Test
     public void testDuplicatePicoSpreadsheet() {
@@ -143,9 +178,14 @@ public class VarioskanParserTest {
             MessageCollection messageCollection = new MessageCollection();
             StaticPlate.TubeFormationByWellCriteria.Result result =
                     mapBarcodeToPlate.values().iterator().next().nearestFormationAndTubePositionByWell();
+            Map<String, StaticPlate.TubeFormationByWellCriteria.Result> mapBarcodeToResult = new HashMap<>();
+            for (Map.Entry<String, StaticPlate> entry: mapBarcodeToPlate.entrySet()) {
+                mapBarcodeToResult.put(entry.getValue().getLabel(), result);
+            }
+
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
-                    LabMetric.MetricType.INITIAL_PICO, varioskanPlateProcessor, mapBarcodeToPlate, 101L,
-                    messageCollection, result);
+                    LabMetric.MetricType.INITIAL_PICO, varioskanPlateProcessor.getPlateWellResults(), mapBarcodeToPlate,
+                    101L, messageCollection, mapBarcodeToResult);
             Assert.assertFalse(messageCollection.hasErrors());
             Assert.assertFalse(result.getWellToTubePosition().isEmpty());
             Assert.assertTrue(result.getLabEventMetadata().isEmpty());
@@ -218,9 +258,11 @@ public class VarioskanParserTest {
             MessageCollection messageCollection = new MessageCollection();
             StaticPlate.TubeFormationByWellCriteria.Result result =
                     mapBarcodeToPlate.values().iterator().next().nearestFormationAndTubePositionByWell();
+            Map<String, StaticPlate.TubeFormationByWellCriteria.Result> mapBarcodeToResult = new HashMap<>();
+            mapBarcodeToResult.put(mapBarcodeToPlate.values().iterator().next().getLabel(), result);
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
-                    LabMetric.MetricType.PLATING_RIBO, varioskanPlateProcessor, mapBarcodeToPlate, 101L,
-                    messageCollection, result);
+                    LabMetric.MetricType.PLATING_RIBO, varioskanPlateProcessor.getPlateWellResults(), mapBarcodeToPlate,
+                    101L, messageCollection, mapBarcodeToResult);
             Assert.assertFalse(messageCollection.hasErrors());
             Assert.assertFalse(result.getWellToTubePosition().isEmpty());
             Assert.assertTrue(result.getLabEventMetadata().isEmpty());

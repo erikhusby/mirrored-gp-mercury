@@ -18,6 +18,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -28,7 +29,10 @@ import java.util.List;
  * Tests Cadence Pico messaging, including persistence
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class CadencePicoDbTest extends StubbyContainerTest {
+
+    public CadencePicoDbTest(){}
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
 

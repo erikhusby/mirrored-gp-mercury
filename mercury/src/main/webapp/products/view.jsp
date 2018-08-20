@@ -356,6 +356,15 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Analyze UMIs</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.analyzeUmi ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
             </fieldset>
         </div>
 

@@ -19,6 +19,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
 
     private WorkflowBucketEntryEvaluator bucketEntryEvaluator;
     private Boolean autoBucketFromPdoSubmission;
+    private Boolean jiraSampleFromNearest;
 
     /** auto-drain rules - time / date based */
     private Double autoDrainDays;
@@ -90,5 +91,9 @@ public class WorkflowBucketDef extends WorkflowStepDef {
 
     public boolean isAutoBucketFromPdoSubmission() {
         return autoBucketFromPdoSubmission == null ? true : autoBucketFromPdoSubmission;
+    }
+
+    public boolean isJiraSampleFromNearest() {
+        return jiraSampleFromNearest == null ? true : jiraSampleFromNearest;
     }
 }

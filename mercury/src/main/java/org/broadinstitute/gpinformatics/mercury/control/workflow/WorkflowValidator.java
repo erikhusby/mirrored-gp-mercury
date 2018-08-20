@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
@@ -37,7 +36,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -324,7 +322,10 @@ public class WorkflowValidator {
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
         List<WorkflowValidationError> validationErrors = new ArrayList<>();
 
-        for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
+        for (LabVessel labVessel : labVessels) {
+            if (labVessel == null) {
+                continue;
+            }
             Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
             validationErrors.addAll(
                     validateSampleInstances(labVessel, sampleInstances, Collections.singleton(eventType)));

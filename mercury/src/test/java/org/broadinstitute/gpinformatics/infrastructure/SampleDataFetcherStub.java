@@ -25,6 +25,8 @@ public class SampleDataFetcherStub {
     @Dependent
     public static class EverythingYouAskForYouGetAndItsHuman extends SampleDataFetcher {
 
+        public EverythingYouAskForYouGetAndItsHuman(){}
+
         @Override
         public SampleData fetchSampleData(String sampleName) {
             SampleData sampleData = new BspSampleData(ImmutableMap.of(

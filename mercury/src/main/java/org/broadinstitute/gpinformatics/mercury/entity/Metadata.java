@@ -281,7 +281,8 @@ public class Metadata {
         LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
         NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
         FLOWRATE(Category.LIQUID_HANDLER_METRIC, DataType.NUMBER, "Flowrate", Visibility.USER),
-        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER);
+        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
+        DEPLETE_WELL(Category.SAMPLE, DataType.STRING, "Deplete Well", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;

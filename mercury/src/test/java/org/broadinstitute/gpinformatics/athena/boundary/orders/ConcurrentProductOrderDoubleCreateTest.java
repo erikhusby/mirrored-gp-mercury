@@ -25,7 +25,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Tra
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -40,6 +39,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import javax.persistence.OptimisticLockException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,7 +53,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
+
+    public ConcurrentProductOrderDoubleCreateTest(){}
 
     private static final Log logger = LogFactory.getLog(ConcurrentProductOrderDoubleCreateTest.class);
 
@@ -118,13 +121,13 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         int numErrors = 0;
         if (placePdoThread.getError() != null) {
             pdoJiraError = placePdoThread.getError();
-            assertThat(pdoJiraError, instanceOf(InformaticsServiceException.class));
+            assertThat(pdoJiraError.getCause(), instanceOf(OptimisticLockException.class));
             logger.info("Error found in Thread 1: " + pdoJiraError.getMessage());
             numErrors++;
         }
         if (placePdoThread2.getError() != null) {
             pdoJiraError = placePdoThread2.getError();
-            assertThat(pdoJiraError, instanceOf(InformaticsServiceException.class));
+            assertThat(pdoJiraError.getCause(), instanceOf(OptimisticLockException.class));
             logger.info("Error found in Thread 2: " + pdoJiraError.getMessage());
             numErrors++;
         }
@@ -133,12 +136,12 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
 
 
         Assert.assertEquals(numErrors, 1,
-                "At least one of the calls to place order called to Jira and created a new ticket when it wasn't expected");
+                "One of two concurrent calls to place an order should have been rejected.");
 
         productOrderDao.clear();
         ProductOrder alteredOrder = productOrderDao.findById(productOrderId);
         Assert.assertEquals(alteredOrder.getBusinessKey(), startingKey,
-                "The Product order key was reset by a Second thread after being submitted.");
+                "The Product order key should not have been reset by a second thread after being submitted.");
     }
 
     public class PlacePDOThread implements Runnable {

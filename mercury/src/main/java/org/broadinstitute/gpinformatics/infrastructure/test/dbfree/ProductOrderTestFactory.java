@@ -162,6 +162,10 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_FREE_HYPER_PREP);
     }
 
+    public static ProductOrder builCustomSelectionProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.CUSTOM_SELECTION);
+    }
+
     public static ProductOrder buildCellFreeHyperPrepProductOrder(int maxSamples) {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.CELL_FREE_HYPER_PREP);
     }
@@ -218,14 +222,15 @@ public class ProductOrderTestFactory {
         UUID uuid = UUID.randomUUID();
         ProductFamily productFamily = new ProductFamily("Product Family " + uuid);
         Product product =
-                new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-" + uuid,
+                new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-X" + uuid,
                         new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, Workflow.NONE,
                         false, "Aggregation Data Type");
 
 
         ResearchProject researchProject = new ResearchProject(-1L, "Research Project " + uuid, "Synopsis", false,
                                                               ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
-        researchProject.setJiraTicketKey("RP-" + uuid);
+        // X after dash, to prevent web page autocomplete randomly matching uuid
+        researchProject.setJiraTicketKey("RP-X" + uuid);
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         for (String sampleName : sampleNames) {
@@ -241,7 +246,7 @@ public class ProductOrderTestFactory {
         ProductOrder productOrder =
                 new ProductOrder(-1L, "PDO title " + uuid, productOrderSamples, "Quote-" + uuid, product,
                         researchProject);
-        productOrder.setJiraTicketKey("PDO-" + uuid);
+        productOrder.setJiraTicketKey("PDO-X" + uuid);
         productOrder.setModifiedBy(-1L);
         productOrder.setOrderStatus(Submitted);
         return productOrder;

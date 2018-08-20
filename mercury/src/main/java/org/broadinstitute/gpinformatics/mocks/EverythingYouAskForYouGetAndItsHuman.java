@@ -22,6 +22,9 @@ import java.util.Map;
 @Deprecated
 @Dependent
 public class EverythingYouAskForYouGetAndItsHuman implements BSPSampleSearchService {
+
+    public EverythingYouAskForYouGetAndItsHuman(){}
+
     @Override
     public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
 

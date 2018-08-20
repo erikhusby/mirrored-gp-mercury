@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
@@ -77,19 +78,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
     private LabBatchDao labBatchDao;
 
     @Inject
-    private BucketDao bucketDao;
-
-    @Inject
     private UserTransaction utx;
-
-    @Inject
-    private ProductDao productDao;
-
-    @Inject
-    private ResearchProjectDao researchProjectDao;
-
-    @Inject
-    private BarcodedTubeDao tubeDao;
 
     @Inject
     private JiraService jiraService;
@@ -99,6 +88,13 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
     @Inject
     private FlowcellDesignationEjb flowcellDesignationEjb;
+
+    /**
+     * Need this here because Arquillian CDI enricher does something strange with scopes <br/>
+     * See note in BatchToJiraTest
+     */
+    @Inject
+    private WorkflowConfig workflowConfig;
 
     private Bucket bucket;
     private boolean isClinical;
@@ -807,14 +803,14 @@ public class LabBatchEjbStandardTest extends Arquillian {
         messages.setLength(0);
         list = designationErrorHelper(messages, messageReporter,
                 Pair.of("CLIA PCR-Free Whole Genome", DesignationUtils.CLINICAL),
-                Pair.of("PCR-Free Human WGS - 30x v1.1", DesignationUtils.RESEARCH));
+                Pair.of("PCR-Free Human WGS - 30x v1", DesignationUtils.RESEARCH));
         Assert.assertEquals(list.size(), 1, messages.toString());
 
         // Validates a Genome mixed designation just fine.
         messages.setLength(0);
         list = designationErrorHelper(messages, messageReporter,
                 Pair.of("CLIA PCR-Free Whole Genome", DesignationUtils.MIXED),
-                Pair.of("PCR-Free Human WGS - 30x v1.1", DesignationUtils.MIXED));
+                Pair.of("PCR-Free Human WGS - 30x v1", DesignationUtils.MIXED));
         Assert.assertEquals(list.size(), 1, messages.toString());
         Assert.assertEquals(messages.length(), 0, messages.toString());
     }

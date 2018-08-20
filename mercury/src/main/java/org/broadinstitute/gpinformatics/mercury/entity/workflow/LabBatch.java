@@ -243,6 +243,12 @@ public class LabBatch {
         createdOn = new Date();
     }
 
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
+                    @Nonnull LabBatchType labBatchType, @Nonnull Date date) {
+        this(batchName, starterVessels, labBatchType);
+        createdOn = date;
+    }
+
     /** Specialized FCT or MISEQ constructor for test purposes. Puts the starter vessel on all flowcell lanes. */
     public LabBatch(@Nonnull String batchName, @Nonnull LabBatchType labBatchType,
                     IlluminaFlowcell.FlowcellType flowcellType, @Nonnull LabVessel starterVessel,
@@ -551,6 +557,11 @@ public class LabBatch {
 
         ISSUE_TYPE_MAP("Issue Type", false),
         ISSUE_TYPE_NAME("name", false),
+
+        // ARRAY tickets
+        NUMBER_OF_EMPTIES("Number of Empties", true),
+        NUMBER_OF_WELLS("Total Samples, Controls, and Empties", true),
+        CONTAINER_ID("Container ID", true),
         ;
 
 

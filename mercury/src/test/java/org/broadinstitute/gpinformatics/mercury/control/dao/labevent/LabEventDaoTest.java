@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.Calendar;
@@ -24,7 +25,10 @@ import java.util.Set;
  * Test persisting LabEvents, including reagents.
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class LabEventDaoTest extends StubbyContainerTest {
+
+    public LabEventDaoTest(){}
 
     @Inject
     private LabEventDao labEventDao;

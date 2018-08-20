@@ -9,28 +9,69 @@ $j.widget('mercury.hSpinner', {
         this._super(key, value);
 
         if (key == 'disabled') {
-            this.$decButton.attr('disabled', value);
-            this.$decButton.toggleClass('ui-state-disabled', value);
+            this.controlButtons.attr('disabled', value);
+            this.controlButtons.toggleClass('ui-state-disabled', value);
             this.element.attr('disabled', value);
-            this.$incButton.attr('disabled', value);
-            this.$incButton.toggleClass('ui-state-disabled', value);
         }
     },
+    hidden: function(isHidden) {
+        var hideValue = isHidden ? 'none' : '';
+        var length = this.controlButtons.length;
+        for (var i = 0; i < length; i++) {
+            this.controlButtons[i].style.display = hideValue;
+        }
+    },
+    _createButton: function (name) {
+            var button = document.createElement("button");
+            button.className = "btn btn-small " + name;
+            var icon = document.createElement("i");
+            if (name === 'decButton') {
+                icon.className = "icon-minus";
+            } else if (name === 'incButton') {
+                icon.className = "icon-plus";
+            }
+            button.appendChild(icon);
+            return button;
+        },
 
     _create: function () {
-        this.inputName = this.element.attr('name');
-        this.element.addClass('hSpinner');
+        elementJs = this.element.get(0);
+        var container = elementJs.parentNode;
+        var origContainer = container;
+        var parent = container.parentNode;
+        // this.element.remove();
+        // $originalElement = this.element.remove();
+        this.inputName = elementJs.name;
+        elementJs.className += ' hSpinner';
+
+        this.decButton = this._createButton("decButton");
+        this.incButton = this._createButton("incButton");
 
         // Browser suggestions can obscure the UI and are not very useful in this case.
-        this.element.attr('autocomplete', 'off');
-
+        elementJs.setAttribute('autocomplete', 'off');
         // Surround the input with decrement/increment buttons.
-        this.element.wrap('<div class="input-prepend input-append">');
-        var $container = this.element.parent();
-        this.$decButton = $j('<button class="decButton btn btn-small"><i class="icon-minus"></i></button>');
-        this.element.before(this.$decButton);
-        this.$incButton = $j('<button class="incButton btn btn-small"><i class="icon-plus"></i></button>');
-        $container.append(this.$incButton);
+        var outer = document.createElement("div");
+        outer.className ="input-prepend input-append";
+        outer.appendChild(this.decButton);
+        outer.appendChild(elementJs);
+        outer.appendChild(this.incButton);
+        container.appendChild(outer);
+
+        this.element = $j(elementJs);
+        // this.$decButton = $j(decButton);
+        // this.$incButton = $j(incButton);
+        // this.$decButton = $j('<button class="decButton btn btn-small"><i class="icon-minus"></i></button>');
+        // this.element.before(this.$decButton);
+        // this.$incButton = $j('<button class="incButton btn btn-small"><i class="icon-plus"></i></button>');
+
+        this.controlButtons = [this.incButton, this.decButton];
+
+        if (this.options.initialVisibility==='hidden'){
+            this.hidden(true)
+        }
+        parent.replaceChild(container, origContainer);
+        $container=$j(container);
+        // $container.append(this.$incButton);
 
         this._on($container, {
             'click .decButton': this._handleDecrement,
@@ -45,10 +86,11 @@ $j.widget('mercury.hSpinner', {
         if (isNaN(currentValue)) {
             currentValue = 0;
         }
+        this.additionalChangedSelector = this.options.additionalChangedSelector;
 
         // Capture the original value to enable applying a CSS class if the value is changed.
         if ($j.isFunction(this.options.originalValue)) {
-            this.originalValue = this.options.originalValue($container);
+            this.originalValue = this.options.originalValue(container);
         } else if (this.options.originalValue != null) {
             this.originalValue = this.options.originalValue;
         } else {
@@ -137,7 +179,14 @@ $j.widget('mercury.hSpinner', {
         var currentValue = this.element.val();
         var changed = parseFloat(currentValue) != this.originalValue;
         this.element.toggleClass('changed', changed);
-        this.$decButton.prop('disabled', currentValue == 0);
+        if (this.additionalChangedSelector) {
+            this.element.closest(this.additionalChangedSelector).toggleClass('changed', changed);
+        }
+        if (currentValue === '0') {
+            this.decButton.setAttribute('disabled',true);
+        }else {
+            this.decButton.removeAttribute('disabled');
+        }
     },
 
     /* ================================================================
@@ -181,5 +230,10 @@ $j.widget('mercury.hSpinner', {
     increment: function () {
         var oldValue = parseFloat(this.element.val());
         this.setValue((oldValue + 1.0).toString());
-    }
+    },
+    /**
+     * Apply additional additional 'changed' class to this selector.
+     */
+    additionalChangedSelector: "",
+    initialVisibility: "visible"
 });

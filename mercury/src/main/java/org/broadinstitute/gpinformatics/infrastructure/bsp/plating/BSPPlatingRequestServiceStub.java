@@ -12,6 +12,8 @@ import java.util.List;
 @Dependent
 public class BSPPlatingRequestServiceStub implements BSPPlatingRequestService {
 
+    public BSPPlatingRequestServiceStub(){}
+
     @Override
     public BSPPlatingRequestResult createPlatingRequest(BSPPlatingRequestOptions options, String login, String platingRequestName, List<SeqWorkRequestAliquot> aliquots, List<ControlWell> controlWells, String comments, String seqTechnology, String humanReadableBarcode) {
         BSPPlatingRequestResult result = new BSPPlatingRequestResult();

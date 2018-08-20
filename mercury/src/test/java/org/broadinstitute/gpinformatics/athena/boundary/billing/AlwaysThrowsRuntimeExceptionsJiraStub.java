@@ -29,6 +29,8 @@ import java.util.Map;
 @Dependent
 class AlwaysThrowsRuntimeExceptionsJiraStub implements JiraService {
 
+    public AlwaysThrowsRuntimeExceptionsJiraStub(){}
+
     /**
      * The invocation count variable feels like something that would normally be accomplished with a mock, but an
      * instance of this class needs to be injectable by CDI.  It would be nice to find a way to accomplish the

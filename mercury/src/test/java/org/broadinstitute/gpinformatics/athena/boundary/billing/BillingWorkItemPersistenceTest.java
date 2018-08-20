@@ -28,6 +28,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Date;
@@ -35,7 +36,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+@Dependent
 public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
+
+    public BillingWorkItemPersistenceTest(){}
 
     @Inject
     ProductOrderDao pdoDao;

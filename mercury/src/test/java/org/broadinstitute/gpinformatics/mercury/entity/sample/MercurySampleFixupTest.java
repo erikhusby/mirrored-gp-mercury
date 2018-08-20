@@ -24,12 +24,9 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -65,9 +62,6 @@ public class MercurySampleFixupTest extends Arquillian {
     @Inject
     private BSPUserList bspUserList;
 
-    @Inject
-    private UserTransaction utx;
-
     private static final String RECEIVED_DATE_UPDATE_FORMAT = "MM/dd/yyyy";
 
     @Deployment
@@ -78,23 +72,6 @@ public class MercurySampleFixupTest extends Arquillian {
          */
         return DeploymentBuilder.buildMercuryWar(
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "DEV");
-    }
-
-    @BeforeMethod(groups = TestGroups.FIXUP)
-    public void setUp() throws Exception {
-        if (userBean == null) {
-            return;
-        }
-        utx.begin();
-    }
-
-    @AfterMethod(groups = TestGroups.FIXUP)
-    public void tearDown() throws Exception {
-
-        if (userBean == null) {
-            return;
-        }
-        utx.commit();
     }
 
     @Test(groups = TestGroups.FIXUP, enabled = false)
@@ -532,5 +509,44 @@ public class MercurySampleFixupTest extends Arquillian {
 
         mercurySampleDao.persist(new FixupCommentary(sampleUpdateLines.get(0)));
         mercurySampleDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/AddSampleToVessel.txt,
+     * so it can be used for other similar fixups, without writing a new test.  It is used to add BSP samples to
+     * vessels that are the result of messages.  Example contents of the file are (first line is the fixup commentary,
+     * subsequent lines are whitespace separated vessel barcode and sample ID):
+     * SUPPORT-3907 reflect BSP daughter transfer
+     * SM-H5GZC SM-H5GZC
+     * SM-H5GZI SM-H5GZI
+     */
+    @Test(enabled = false)
+    public void fixupSupport3907() throws IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddSampleToVessel.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            String barcode = fields[0];
+            LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+            Assert.assertNotNull(labVessel, barcode + " not found");
+            String sampleKey = fields[1];
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleKey);
+            if (mercurySample == null) {
+                mercurySample = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
+            }
+            if (!mercurySample.getLabVessel().isEmpty()) {
+                throw new RuntimeException("Sample " + sampleKey + " is already associated with vessel " +
+                        mercurySample.getLabVessel().iterator().next().getLabel());
+            }
+            System.out.println("Adding " + mercurySample.getSampleKey() + " to " + labVessel.getLabel());
+            labVessel.addSample(mercurySample);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
     }
 }

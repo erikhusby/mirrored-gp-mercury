@@ -14,15 +14,17 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Arrays;
 import java.util.List;
 
 @Test(groups = TestGroups.STUBBY, singleThreaded = true)
-@RequestScoped
+@Dependent
 public class ProductOrderSampleStatusTest extends StubbyContainerTest {
+
+    public ProductOrderSampleStatusTest(){}
 
     @Inject
     ProductOrderEjb productOrderEjb;

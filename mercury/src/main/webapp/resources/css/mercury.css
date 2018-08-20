@@ -76,6 +76,37 @@ table.dataTable tr:hover td.subgroup, table.dataTable td.subgroup { background-c
 table.workflow td.latest { background-color: #b4ffcc }
 table.workflow td.current { background-color: #eecac6}
 
+tr .bad-price-div {
+    z-index: 10;
+    display:none;
+    padding: 14px 20px;
+    margin-top: -30px;
+    margin-left: 400px;
+    width: 300px;
+    line-height: 16px;
+}
+
+tr.bad-prices:hover .bad-price-div {
+    display:inline;
+    position: absolute;
+    color: #111;
+    border: 1px solid #DCA;
+    background: #FFFAF0;
+}.callout {
+     z-index:20;
+     position:absolute;
+     top: 30px; border:0;
+     left: -12px;
+ }
+
+table#productList tr.bad-prices.odd {
+     background-color: #b93d2e;
+ }
+
+table#productList tr.bad-prices.even {
+    background-color: #b94a48;
+}
+
 /* min width for columns excluding the checkbox column */
 table.compact th:nth-child(n+2) { width:auto; min-width: 5em; }
 table.compact td,span.title { white-space: nowrap; }

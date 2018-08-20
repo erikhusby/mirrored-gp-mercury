@@ -1555,7 +1555,7 @@ public class ManifestSessionEjbDBFreeTest {
         BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + SM_1, BarcodedTube.BarcodedTubeType.MatrixTube);
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
-        barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
+        barcodedTube.addInPlaceEvent(collaboratorTransferEvent);
         sample.addLabVessel(barcodedTube);
 
         Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))

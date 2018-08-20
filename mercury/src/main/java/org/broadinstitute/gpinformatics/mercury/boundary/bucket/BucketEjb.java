@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -37,7 +38,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -57,28 +57,26 @@ import java.util.Set;
 @Stateful
 @RequestScoped
 public class BucketEjb {
-    private final LabEventFactory labEventFactory;
-    private final JiraService jiraService;
-    private final BucketDao bucketDao;
-    private final LabVesselDao labVesselDao;
-    private final BucketEntryDao bucketEntryDao;
-    private final WorkflowConfig workflowConfig;;
-    private final BSPUserList bspUserList;
-    private final LabVesselFactory labVesselFactory;
-    private final MercurySampleDao mercurySampleDao;
+    private LabEventFactory labEventFactory;
+    private JiraService jiraService;
+    private BucketDao bucketDao;
+    private LabVesselDao labVesselDao;
+    private BucketEntryDao bucketEntryDao;
+    private WorkflowLoader workflowLoader;
+    private BSPUserList bspUserList;
+    private LabVesselFactory labVesselFactory;
+    private MercurySampleDao mercurySampleDao;
 
     /*
      * Uses BSPSampleDataFetcher (rather than SampleDataFetcher) to create LabVessels for samples that are in BSP but
      * are not yet known to Mercury.
      */
-    private final BSPSampleDataFetcher bspSampleDataFetcher;
-    private final ProductOrderDao productOrderDao;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private ProductOrderDao productOrderDao;
 
     private static final Log logger = LogFactory.getLog(BucketEjb.class);
 
-    public BucketEjb() {
-        this(null, null, null, null, null, null, null, null, null, null, null);
-    }
+    public BucketEjb() {}
 
     @Inject
     public BucketEjb(LabEventFactory labEventFactory,
@@ -89,7 +87,7 @@ public class BucketEjb {
                      LabVesselFactory labVesselFactory,
                      BSPSampleDataFetcher bspSampleDataFetcher,
                      BSPUserList bspUserList,
-                     WorkflowConfig workflowConfig, ProductOrderDao productOrderDao, MercurySampleDao mercurySampleDao) {
+                     WorkflowLoader workflowLoader, ProductOrderDao productOrderDao, MercurySampleDao mercurySampleDao) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
@@ -98,7 +96,7 @@ public class BucketEjb {
         this.labVesselFactory = labVesselFactory;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.bspUserList = bspUserList;
-        this.workflowConfig = workflowConfig;
+        this.workflowLoader = workflowLoader;
         this.productOrderDao = productOrderDao;
         this.mercurySampleDao = mercurySampleDao;
     }
@@ -116,7 +114,7 @@ public class BucketEjb {
     public Collection<BucketEntry> add(@Nonnull Map<WorkflowBucketDef, Collection<LabVessel>> entriesToAdd,
                                        @Nonnull BucketEntry.BucketEntryType entryType, @Nonnull String programName,
                                        @Nonnull String operator, @Nonnull String eventLocation,
-                                       @Nonnull ProductOrder pdo) {
+                                       @Nonnull ProductOrder pdo, @Nonnull Date date) {
         List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
         for (Map.Entry<WorkflowBucketDef, Collection<LabVessel>> bucketVesselsEntry : entriesToAdd.entrySet()) {
             Collection<LabVessel> bucketVessels = bucketVesselsEntry.getValue();
@@ -127,11 +125,11 @@ public class BucketEjb {
 
             for (LabVessel currVessel : bucketVessels) {
                 if (!currVessel.checkCurrentBucketStatus(pdo, bucketDef.getName(), BucketEntry.Status.Active)) {
-                    listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, workflow));
+                    listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, date));
                 }
             }
             labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, eventLocation, programName,
-                    bucketEventType);
+                    bucketEventType, date);
         }
 
         return listOfNewEntries;
@@ -404,7 +402,7 @@ public class BucketEjb {
         }
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair = applyBucketCriteria(
-                vessels, order, username, bucketingSource);
+                vessels, order, username, bucketingSource, new Date());
         Collection<BucketEntry> newBucketEntries = workflowBucketEntriesPair.getRight();
 
         Map<String, Collection<ProductOrderSample>> samplesAdded = new HashMap<>();
@@ -427,7 +425,7 @@ public class BucketEjb {
 
     public Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> applyBucketCriteria(
             List<LabVessel> vessels, ProductOrder productOrder, String username,
-            ProductWorkflowDefVersion.BucketingSource bucketingSource) {
+            ProductWorkflowDefVersion.BucketingSource bucketingSource, Date date) {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         List<Product> possibleProducts = new ArrayList<>();
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
@@ -437,19 +435,26 @@ public class BucketEjb {
         }
         possibleProducts.add(productOrder.getProduct());
         ProductWorkflowDefVersion workflowDefVersion = null;
+        int offset = 0;
         for (Product product : possibleProducts) {
+            Date localDate = date;
+            if (offset > 0) {
+                // Avoid unique constraint on bucket lab events
+                localDate = new Date(date.getTime() + offset);
+            }
             if (product.getWorkflow() != Workflow.NONE) {
-                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(product.getWorkflow());
+                ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflow(product.getWorkflow());
                 workflowDefVersion = productWorkflowDef.getEffectiveVersion();
                 Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
                         workflowDefVersion.getInitialBucket(productOrder, vessels, bucketingSource);
 
                 if (!initialBucket.isEmpty()) {
                     Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
-                            LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
+                            LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder, localDate);
                     bucketEntries.addAll(entries);
                 }
             }
+            offset++;
         }
         return new ImmutablePair<>(workflowDefVersion, bucketEntries);
     }

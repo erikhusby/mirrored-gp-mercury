@@ -63,15 +63,6 @@ public class ImportFromSquidTest extends Arquillian {
     private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
-    private ResearchProjectDao researchProjectDao;
-
-    @Inject
-    private ProductDao productDao;
-
-    @Inject
-    private ProductOrderDao productOrderDao;
-
-    @Inject
     private ReagentDesignDao reagentDesignDao;
 
     @Inject

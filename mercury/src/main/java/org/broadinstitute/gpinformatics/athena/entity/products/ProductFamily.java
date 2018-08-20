@@ -41,6 +41,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     /** Name of the Sequence Only Product Family.  Must be updated if the name is changed in the database! */
     private static final String SEQUENCE_ONLY_NAME = "Sequence Only";
     public static final String RNA_FAMILY_NAME = "RNA";
+    public static final String WHOLE_GENOME_GENOTYPING = "Whole Genome Genotyping";
     public static final String SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE_NAME = "Sample Initiation, Qualification & Cell Culture";
 
     public enum ProductFamilyInfo {

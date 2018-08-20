@@ -44,6 +44,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
@@ -64,7 +65,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEve
  *         Time: 11:10 PM
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class MercuryOrSquidRouterContainerTest extends StubbyContainerTest {
+
+    public MercuryOrSquidRouterContainerTest(){}
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject

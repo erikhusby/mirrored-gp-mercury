@@ -153,6 +153,12 @@ public class BucketEntry {
         setProductOrder(productOrder);
     }
 
+    public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
+                       @Nonnull BucketEntryType entryType, int productOrderRanking, @Nonnull Date date) {
+        this(vessel, productOrder, bucket, entryType, productOrderRanking);
+        createdDate = date;
+    }
+
     /**
      * This Constructor is used in a fix-up Test, therefore it can't be removed.
      */

@@ -44,12 +44,12 @@ public class SubmissionsServiceImplTest {
 
     private static int sequenceNumber = 1;
 
-    private static final String BIO_PROJECT_ACCESSION_ID = "PRJNA325068";
-    private static final String SAMPLE1_ID = "ALCH-ABN1-NB1-A-1-0-D-A488-36";
+    public static final String BIO_PROJECT_ACCESSION_ID = "PRJNA325068";
+    public static final String SAMPLE1_ID = "ALCH-ABN1-NB1-A-1-0-D-A488-36";
     private static final String SAMPLE2_ID = "ALCH-ABNA-TTP1-A-1-0-D-A488-36";
     private static final String SAMPLE3_ID = "ALCH-ABBH-NB1-A-1-0-D-A485-36";
-    private static final String broadProject= "RP-1145";
-    private static final String bamVersion ="4";
+    public static final String broadProject= "RP-1145";
+    public static final String bamVersion ="4";
 
     private SubmissionsService submissionsService;
 
@@ -153,6 +153,7 @@ public class SubmissionsServiceImplTest {
             assertThat(testUUIDs, hasItemInArray(submissionStatusDetailBean.getUuid()));
             assertThat(submissionStatusDetailBean.getStatusString(), nullValue());
             assertThat(submissionStatusDetailBean.getLastStatusUpdate(), nullValue());
+            assertThat(submissionStatusDetailBean.submissionServiceHasRequest(), is(false));
         }
     }
 
@@ -173,6 +174,7 @@ public class SubmissionsServiceImplTest {
                 is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
         assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                 notNullValue());
+        assertThat(submissionStatusDetailBean.submissionServiceHasRequest(), is(true));
 
         submissionResult = submissionsService.getSubmissionStatus(testUUID);
         assertThat(submissionResult.size(), is(1));
@@ -182,6 +184,7 @@ public class SubmissionsServiceImplTest {
                 is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
         assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                 notNullValue());
+        assertThat(submissionStatusDetailBean.submissionServiceHasRequest(), is(true));
     }
 
     private static synchronized String getTestUUID() {

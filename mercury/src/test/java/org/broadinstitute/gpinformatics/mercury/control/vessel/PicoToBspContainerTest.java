@@ -602,7 +602,7 @@ public class PicoToBspContainerTest extends Arquillian {
         private String dilutionPlateBarcode;
         private final StaticPlate.PlateType dilutionPlateType;
         private final StaticPlate.PlateType microfluorPlateType;
-        private Pair<LabMetricRun, String> runAndFormation;
+        private Pair<LabMetricRun, List<String>> runAndFormation;
         private final Map<String, Double> smIdQuant = new HashMap<>();
         private final int numberResearchTubes;
         private final int numberCrspTubes;
@@ -659,11 +659,11 @@ public class PicoToBspContainerTest extends Arquillian {
             return microfluorPlateType;
         }
 
-        public Pair<LabMetricRun, String> getRunAndFormation() {
+        public Pair<LabMetricRun, List<String>> getRunAndFormation() {
             return runAndFormation;
         }
 
-        public void setRunAndFormation(Pair<LabMetricRun, String> runAndFormation) {
+        public void setRunAndFormation(Pair<LabMetricRun, List<String>> runAndFormation) {
             this.runAndFormation = runAndFormation;
         }
 

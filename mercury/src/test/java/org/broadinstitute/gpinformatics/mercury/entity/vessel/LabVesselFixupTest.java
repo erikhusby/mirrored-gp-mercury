@@ -6,6 +6,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
@@ -13,21 +14,21 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.hibernate.SQLQuery;
-import org.hibernate.type.LongType;
-import org.hibernate.type.StringType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -35,12 +36,9 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
@@ -52,8 +50,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,6 +87,9 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -1647,6 +1648,96 @@ public class LabVesselFixupTest extends Arquillian {
         }
 
         labVesselDao.persist(new FixupCommentary(sampleUpdateLines.get(0)));
+        labVesselDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateVesselBarcode.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-4118 change vessel barcode
+     * 5600 FB04985689
+     */
+    @Test(enabled = false)
+    public void fixupSupport4118UpdateVesselBarcode() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateVesselBarcode.txt"));
+
+        Map<String, String> mapOldToNew = new LinkedHashMap<>();
+        for(int i = 1; i < lines.size(); i++) {
+            String[] fields = WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            mapOldToNew.put(fields[0], fields[1]);
+        }
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(mapOldToNew.keySet()));
+        for (Map.Entry<String, LabVessel> barcodeVesselEntry : mapBarcodeToVessel.entrySet()) {
+            LabVessel labVessel = barcodeVesselEntry.getValue();
+            String barcode = barcodeVesselEntry.getKey();
+            Assert.assertNotNull(labVessel, barcode + " not found");
+            String newBarcode = mapOldToNew.get(barcode);
+            System.out.println("Changing " + labVessel.getLabel() + " to " + newBarcode);
+            labVessel.setLabel(newBarcode);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/AddBaitToVessel.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-5657 add missing reagent design
+     * 5600 FB04985689
+     */
+    @Test(enabled = false)
+    public void fupxGplim5657AddBait() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddBaitToVessel.txt"));
+
+        Map<String, ReagentDesign> mapTubeToReagentDesign = new LinkedHashMap<>();
+        for(int i = 1; i < lines.size(); i++) {
+            String[] fields = WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            ReagentDesign reagent = reagentDesignDao.findByBusinessKey(fields[1]);
+            Assert.assertNotNull(reagent, fields[1] + " not found");
+            Assert.assertEquals(reagent.getReagentType(), ReagentDesign.ReagentType.BAIT, "Expect only bait designs");
+            mapTubeToReagentDesign.put(fields[0], reagent);
+        }
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(mapTubeToReagentDesign.keySet()));
+        for (Map.Entry<String, LabVessel> barcodeVesselEntry : mapBarcodeToVessel.entrySet()) {
+            LabVessel labVessel = barcodeVesselEntry.getValue();
+            String barcode = barcodeVesselEntry.getKey();
+            Assert.assertNotNull(labVessel, barcode + " not found");
+
+            // Ensure Bait isn't already associated to tube
+            for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
+                for (ReagentDesign reagentDesign : sampleInstanceV2.getReagentsDesigns()) {
+                    if (reagentDesign.getReagentType() == ReagentDesign.ReagentType.BAIT) {
+                        throw new RuntimeException("Tube already has bait associated: " + barcode);
+                    }
+                }
+                for (Reagent reagent : sampleInstanceV2.getReagents()) {
+                    if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                        DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
+                        ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
+                        if (reagentType == ReagentDesign.ReagentType.BAIT) {
+                            throw new RuntimeException("Tube already has bait associated: " + barcode);
+                        }
+                    }
+                }
+            }
+            ReagentDesign baitDesign = mapTubeToReagentDesign.get(barcode);
+            System.out.println("Adding " + baitDesign.getDesignName() + " to " + labVessel.getLabel());
+            DesignedReagent reagent = new DesignedReagent(baitDesign);
+            labVessel.addReagent(reagent);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
         labVesselDao.flush();
     }
 

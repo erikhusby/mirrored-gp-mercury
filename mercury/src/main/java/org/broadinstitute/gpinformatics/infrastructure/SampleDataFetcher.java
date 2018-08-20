@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Dependent
@@ -215,7 +216,7 @@ public class SampleDataFetcher implements Serializable {
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
 
         Set<String> bspSourceSampleNames = new HashSet<>(samples.size());
-        Map<String, ProductOrderSample> mapMercuryQuantIdToPdoSample = new HashMap<>();
+        Map<String, Optional<ProductOrderSample>> mapMercuryQuantIdToPdoSample = new HashMap<>();
         for (AbstractSample sample : samples) {
             if (sample.isHasBspSampleDataBeenInitialized()) {
                 sampleData.put(sample.getSampleKey(), sample.getSampleData());
@@ -248,7 +249,7 @@ public class SampleDataFetcher implements Serializable {
                 }
                 // To improve performance, check for Mercury quants only if the product indicates that they're there.
                 if (product != null && product.getExpectInitialQuantInMercury() && quantColumnRequested(bspSampleSearchColumns)) {
-                    mapMercuryQuantIdToPdoSample.put(sampleName, productOrderSample);
+                    mapMercuryQuantIdToPdoSample.put(sampleName, Optional.of(productOrderSample));
                 }
             }
         }
@@ -259,9 +260,12 @@ public class SampleDataFetcher implements Serializable {
             if (!sampleIdsWithBspSource.isEmpty()) {
                 Map<String, BspSampleData> bspSampleData =
                         bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource, bspSampleSearchColumns);
-                for (Map.Entry<String, ProductOrderSample> idPdoSampleEntry : mapMercuryQuantIdToPdoSample.entrySet()) {
-                    BspSampleData bspSampleData1 = bspSampleData.get(idPdoSampleEntry.getKey());
-                    bspSampleData1.overrideWithMercuryQuants(idPdoSampleEntry.getValue());
+                for (Map.Entry<String, Optional<ProductOrderSample>> idPdoSampleEntry : mapMercuryQuantIdToPdoSample.entrySet()) {
+
+                    if(idPdoSampleEntry.getValue().isPresent()) {
+                        BspSampleData bspSampleData1 = bspSampleData.get(idPdoSampleEntry.getKey());
+                        bspSampleData1.overrideWithMercuryQuants(idPdoSampleEntry.getValue().get());
+                    }
                 }
                 sampleData.putAll(bspSampleData);
             }

@@ -12,12 +12,16 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class TooManyBSPResultsPipelineAPITest extends Arquillian {
+
+    public TooManyBSPResultsPipelineAPITest(){}
 
     @Inject
     IlluminaRunResource runLaneResource;

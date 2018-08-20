@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
@@ -20,6 +21,9 @@ import java.util.Random;
 @Alternative
 @Dependent
 public class SubmissionsServiceStub implements SubmissionsService {
+
+    public SubmissionsServiceStub(){}
+
     public static final String TEST_PROJECT_NAME = "Primary submission";
     public static final String STUB_UPDATE_DATE = "Dec 17, 2001 9:30 AM";
     public static final SubmissionRepository ACTIVE_REPO = new SubmissionRepository("ACTIVE_REPO", "Active Repository", true);
@@ -120,5 +124,10 @@ public class SubmissionsServiceStub implements SubmissionsService {
     @Override
     public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String key) {
         return null;
+    }
+
+    @Override
+    public List<SubmissionTracker> findOrphans(Collection<SubmissionTracker> submissionTrackers) {
+        return Collections.emptyList();
     }
 }

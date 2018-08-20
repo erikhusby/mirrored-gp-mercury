@@ -285,6 +285,13 @@
                             Create New Container
                         </stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="pickFromStorage"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean"
+                                      event="view">
+                            Create Pick List From Storage
+                        </stripes:link>
+                    </li>
                 </ul>
             </li>
 

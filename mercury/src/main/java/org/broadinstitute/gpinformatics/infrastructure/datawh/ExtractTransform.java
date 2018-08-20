@@ -550,11 +550,12 @@ public class ExtractTransform implements Serializable {
 
                     LabVesselEtl labVesselEtl = (LabVesselEtl) getEtlInstance(LabVesselEtl.class.getCanonicalName());
                     LabEventEtl labEventEtl = (LabEventEtl) getEtlInstance(LabEventEtl.class.getCanonicalName());
+                    ArrayProcessFlowEtl arrayEventEtl = (ArrayProcessFlowEtl) getEtlInstance(ArrayProcessFlowEtl.class.getCanonicalName());
                     SequencingSampleFactEtl seqRunEtl = (SequencingSampleFactEtl) getEtlInstance(
                             SequencingSampleFactEtl.class.getCanonicalName());
 
                     MutableTriple<Integer, String, Exception> etlCountDateException =
-                            labVesselEtl.backfillEtlForVessel(barcode, etlDateStr, labEventEtl, seqRunEtl );
+                            labVesselEtl.backfillEtlForVessel(barcode, etlDateStr, labEventEtl, arrayEventEtl, seqRunEtl );
 
                     countDateException.setLeft(etlCountDateException.getLeft());
                     countDateException.setMiddle(etlCountDateException.getMiddle());

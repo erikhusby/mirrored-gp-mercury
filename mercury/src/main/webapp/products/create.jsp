@@ -15,11 +15,16 @@
 
             var booleanTypes = [];
             var defaultValues = [];
+            var suggestedValues = [];
 
             // The jsp loads the criteria types into an associative array by type and then operators
             var criteriaTypeToOperatorList = [];
             <c:forEach items="${actionBean.criteriaTypes}" var="criteriaType">
                 <c:if test="${criteriaType.getDisplayed(actionBean.editProduct)}">
+                    <c:if test="${not empty criteriaType.suggestedValues}">
+                        suggestedValues["${criteriaType.label}"] = [];
+                            suggestedValues["${criteriaType.label}"] = "Yes";
+                    </c:if>
                     <c:choose>
                         <c:when test="${criteriaType.operators[0].type == 'BOOLEAN'}">
                             defaultValues['${criteriaType.label}'] = 'true';
@@ -92,6 +97,33 @@
                         }
                     );
 
+                    $j("#suggestedValuesDialog").dialog({
+                        modal: true,
+                        autoOpen: false,
+                        buttons: [
+                            {
+                                id: "chooseSuggestion",
+                                text: "Assign the Chosen Suggestion(s)",
+                                click: function() {
+                                    var selectedValues = [];
+                                    $j("#suggestedValueList").find(":selected").each(function() {
+                                        selectedValues.push($(this).val());
+                                    });
+                                    var index = $j("#criteriaSuggestionIndex").val();
+                                    $j("#valueText-" + index ).val(selectedValues.join(', '));
+                                    $j(this).dialog("close");
+                                }
+                            },
+                            {
+                                id: "cancel",
+                                text: "Cancel",
+                                click: function () {
+                                    $j(this).dialog("close");
+                                }
+                            }
+                        ]
+                    });
+
                     $j("#availabilityDate").datepicker();
                     $j("#discontinuedDate").datepicker();
 
@@ -140,7 +172,7 @@
 
 
                 // the criteria list
-                newCriteria += '    <select id="criteriaSelect-' + criteriaCount + '" onchange="updateOperatorOptions(' + criteriaCount + ')" style="width:auto;" name="criteria">';
+                newCriteria += '    <select id="criteriaSelect-' + criteriaCount + '" onchange="criteriaSelectChange(' + criteriaCount + ')" style="width:auto;" name="criteria">';
 
                 var operatorsLabel;
 
@@ -164,6 +196,14 @@
 
                 newCriteria += '    <input style="display:none" id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
 
+                if(criteria in suggestedValues) {
+                    newCriteria += '    <div id="suggestionClick-' + criteriaCount + '">';
+                } else {
+                    newCriteria += '    <div id="suggestionClick-' + criteriaCount + '" style=display:none >';
+                }
+                newCriteria += '    <a onclick="viewSuggestionPopup('+criteriaCount+',\''+criteriaLabel+'\')" id="suggestionLink-' + criteriaCount + '">Click here</a> for suggested values';
+                newCriteria += '    </div>';
+
                 newCriteria += '</div>\n';
 
                 $j('#riskCriterion').append(newCriteria);
@@ -173,8 +213,46 @@
                 criteriaCount++;
             }
 
+            function criteriaSelectChange(indexedCriteria) {
+                updateOperatorOptions(indexedCriteria);
+                toggleSuggestionClick(indexedCriteria);
+            }
+
+            function toggleSuggestionClick(indexedCriteria) {
+                var selectedCriterion = $('#criteriaSelect-'+indexedCriteria).find(":selected").text();
+
+                if(selectedCriterion in suggestedValues) {
+                    $j("#suggestionClick-" + indexedCriteria).show();
+                } else {
+                    $j("#suggestionClick-" + indexedCriteria).hide();
+                }
+            }
+
+            function viewSuggestionPopup(criteriaIndex, criteriaLabel) {
+
+                $j("#criteriaSuggestionIndex").val(criteriaIndex);
+                $j("#suggestedValuesDialog").html('');
+
+                var criteriaOp = $j("#operatorSelect-"+criteriaIndex+" option:selected").val();
+                var currentCriteriaChoices = $j("#valueText-"+criteriaIndex).val();
+                $j.ajax({
+                    url: "${ctxpath}/products/product.action?openRiskSuggestedValues=",
+                    data: {
+                        'criteriaIndex': criteriaIndex,
+                        'criteriaLabel': criteriaLabel,
+                        'criteriaOp': criteriaOp,
+                        'currentCriteriaChoices': currentCriteriaChoices
+                    },
+                    datatype: 'html',
+                    success: function (html) {
+                        $j("#suggestedValuesDialog").html(html).dialog("open");
+                    }
+                });
+                return false;
+            }
+
             function updateOperatorOptions(criteriaCount) {
-                var criteriaLabel = $j('#criteriaSelect-' + criteriaCount + " option:selected").text();
+                var criteriaLabel = $j('#criteriaSelect-' + criteriaCount + ' option:selected').text();
 
                 $j('#operatorSelect-' + criteriaCount).html(operatorOptions(criteriaCount, criteriaLabel, criteriaLabel));
 
@@ -295,12 +373,17 @@
 
     <stripes:layout-component name="content">
 
+        <div id="suggestedValuesDialog"  title="Select from suggested values for risk criteria"  style="...">
+
+        </div>
+
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
             <stripes:hidden name="submitString"/>
 
             <div class="row">
                 <div class="form-horizontal span7" >
                 <stripes:hidden name="product"/>
+                    <stripes:hidden name="criteriaSuggestionIndex" id="criteriaSuggestionIndex" />
 
                     <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                         <div class="control-group">
@@ -650,6 +733,15 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="pairedEndRead" name="editProduct.pairedEndRead" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="analyzeUmi" class="control-label">
+                                Analyze UMIs
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:checkbox id="analyzeUmi" name="editProduct.analyzeUmi" style="margin-top: 10px;"/>
                             </div>
                         </div>
                     </fieldset>

@@ -3,6 +3,7 @@
  */
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,12 +22,23 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.FIXUP)
 public class BillingSessionFixupTest extends Arquillian {
@@ -174,5 +186,38 @@ public class BillingSessionFixupTest extends Arquillian {
                                                       + "ledger entries which successfully created Delivery documents "
                                                       + "in SAP but SAP incorrectly recorded a failure along with the "
                                                       + "success so the success was not captured"));
+    }
+
+    private Set<LedgerEntry> findNegativelyBilledEntriesByOrder(@Nonnull List<String> productOrderBusinessKeys) {
+        Set<LedgerEntry> orderList = ledgerEntryDao
+            .findByOrderList(productOrderBusinessKeys, LedgerEntryDao.BillingSessionInclusion.NO_SESSION_STARTED);
+        Set<LedgerEntry> negativeEntries = orderList.stream().filter(
+            ledgerEntry -> ledgerEntry.getQuantity() < 0 && !StringUtils
+                .equals(ledgerEntry.getBillingMessage(), BillingSession.SUCCESS)).collect(Collectors.toSet());
+        if (negativeEntries == null) {
+            negativeEntries = Collections.emptySet();
+        }
+        return negativeEntries;
+    }
+
+    @Test(enabled = false)
+    public void gplim5653UpdateLedgerItemsWithDeliveryDocument(){
+        userBean.loginOSUser();
+        String deliveryDocument = "0200003565";
+        String pdoKey = "PDO-14753";
+        String quoteServerWorkItem = "288337";
+
+        Set<LedgerEntry> negativelyBilledEntries = findNegativelyBilledEntriesByOrder(Collections.singletonList(pdoKey));
+
+        assertThat(negativelyBilledEntries.size(), equalTo(1));
+
+        LedgerEntry ledgerEntry = negativelyBilledEntries.iterator().next();
+
+        assertThat(ledgerEntry.getWorkItem(), equalTo(quoteServerWorkItem));
+        assertThat(ledgerEntry.getSapDeliveryDocumentId(), nullValue());
+        ledgerEntry.setSapDeliveryDocumentId(deliveryDocument);
+        ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+
+        ledgerEntryDao.persist(new FixupCommentary("GPLIM-5653: Associate SAP Delivery Document with negatively billed ledger entry."));
     }
 }

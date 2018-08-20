@@ -23,7 +23,9 @@ import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Datatabl
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.text.Format;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 
 public class ProductOrderSampleBean {
@@ -32,7 +34,7 @@ public class ProductOrderSampleBean {
     public static final String RECORDS_TOTAL = "recordsTotal";
     public static final String DATA_FIELD = "data";
     public static final String SAMPLE_DATA_ROW_COUNT = "rowsWithSampleData";
-    public static final String SAMPLES_NOT_RECEIVED = "rowsWithSampleData";
+    public static final String SAMPLES_NOT_RECEIVED = "numberSamplesNotReceived";
     public static final String UNIQUE_ROW_IDENTIFIER = "rowId";
     public static final String SAMPLE_ID = "ID";
     public static final String PRODUCT_ORDER_SAMPLE_ID = "PRODUCT_ORDER_SAMPLE_ID";
@@ -61,6 +63,10 @@ public class ProductOrderSampleBean {
     public static final String COMMENT = "Comment";
     public static final String ROW_ID_PREFIX = "sampleId-";
     public static final String POSITION = "#";
+
+    public static final List<String> SLOW_COLUMNS = Arrays
+        .asList(ProductOrderSampleBean.MATERIAL_TYPE, ProductOrderSampleBean.RECEIVED_DATE,
+            ProductOrderSampleBean.SHIPPED_DATE);
 
     @JsonProperty(COLLABORATOR_SAMPLE_ID)
     private String collaboratorSampleId = "";
@@ -118,13 +124,16 @@ public class ProductOrderSampleBean {
     private String onRiskDetails = "";
 
     private ProductOrderSample sample;
+    @JsonProperty("includeSampleData")
     private boolean includeSampleData;
+    private boolean initialLoad;
     private DatatablesStateSaver preferenceSaver;
     private SampleLink sampleLink;
 
     public ProductOrderSampleBean(ProductOrderSample sample, boolean includeSampleData,
-                                  DatatablesStateSaver preferenceSaver, SampleLink sampleLink) {
+                                  boolean initialLoad, DatatablesStateSaver preferenceSaver, SampleLink sampleLink) {
         this.sample = sample;
+        this.initialLoad = initialLoad;
         this.preferenceSaver = preferenceSaver;
         this.sampleLink = sampleLink;
         this.includeSampleData = includeSampleData;
@@ -149,13 +158,20 @@ public class ProductOrderSampleBean {
         if (preferenceSaver.showColumn(POSITION)) {
             position = sample.getSamplePosition() + 1;
         }
+        if (initialLoad) {
+            if (preferenceSaver.showColumn(BILLED)) {
+                completelyBilled = sample.isCompletelyBilled();
+            }
+            if (preferenceSaver.showColumn(ON_RISK)) {
+                onRisk = sample.isOnRisk();
+                riskString = onRisk ? buildRiskDiv(sample) : "";
+            }
+        }
+
         if (!includeSampleData) {
             return;
         }
 
-        if (preferenceSaver.showColumn(BILLED)) {
-            completelyBilled = sample.isCompletelyBilled();
-        }
         if (preferenceSaver.showColumn(COMMENT)) {
             comment = sample.getSampleComment();
         }
@@ -166,10 +182,6 @@ public class ProductOrderSampleBean {
         }
         if (preferenceSaver.showColumn(STATUS)) {
             status = sample.getDeliveryStatus().getDisplayName();
-        }
-        if (preferenceSaver.showColumn(ON_RISK)) {
-            onRisk = sample.isOnRisk();
-            riskString = onRisk ? buildRiskDiv(sample) : "";
         }
 
         if (preferenceSaver.showColumn(SHIPPED_DATE)) {
