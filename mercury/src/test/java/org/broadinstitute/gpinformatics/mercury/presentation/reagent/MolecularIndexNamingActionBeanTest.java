@@ -168,7 +168,7 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         actionBean.setTechnology(MolecularIndexingScheme.TECHNOLOGY_ILLUMINA);
         actionBean.setCreateMissingNames(false);
         actionBean.upload();
-        Assert.assertEquals(actionBean.getFormattedMessages().get(0), "Found 0 indexes in the upload.");
+        Assert.assertTrue(actionBean.getValidationErrors().values().isEmpty());
     }
 
     @Test
@@ -180,9 +180,8 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         actionBean.setCreateMissingNames(false);
         actionBean.upload();
 
-        // Should have an error about duplicate headers and no name spreadsheet.
-        Assert.assertEquals(actionBean.getFormattedErrors().get(0),
-                String.format(MolecularIndexNamingActionBean.DUPLICATE_HEADER, 2, "P5"));
+        // Should have an error about duplicate headers.
+        Assert.assertFalse(actionBean.getValidationErrors().values().isEmpty());
         Assert.assertEquals(actionBean.getMolecularIndexNames().size(), 0);
     }
 
@@ -195,9 +194,8 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         actionBean.setCreateMissingNames(false);
         actionBean.upload();
 
-        // Should have an error.
-        Assert.assertEquals(actionBean.getFormattedErrors().get(0),
-                String.format(MolecularIndexNamingActionBean.BLANK_ROW, 1));
+        // Should have an error about a blank row.
+        Assert.assertFalse(actionBean.getValidationErrors().values().isEmpty());
         Assert.assertEquals(actionBean.getMolecularIndexNames().size(), 0);
     }
 
@@ -210,9 +208,8 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         actionBean.setCreateMissingNames(false);
         actionBean.upload();
 
-        // Should have an error.
-        Assert.assertEquals(actionBean.getFormattedErrors().get(0),
-                String.format(MolecularIndexNamingActionBean.BLANK_HEADER, 2));
+        // Should have an error about a blank header.
+        Assert.assertFalse(actionBean.getValidationErrors().values().isEmpty());
         Assert.assertEquals(actionBean.getMolecularIndexNames().size(), 0);
     }
 
@@ -225,13 +222,8 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         actionBean.setCreateMissingNames(false);
         actionBean.upload();
 
-        // Should have 2 errors and no returned spreadsheet.
-        for (int i = 0; i < 2; ++i) {
-            Assert.assertEquals(actionBean.getFormattedErrors().get(i),
-                    String.format(MolecularIndexNamingActionBean.UNKNOWN_POSITION, i + 1,
-                            p7is1Upload.get(0).get(i), "A, B"),
-                    StringUtils.join(actionBean.getFormattedErrors(), "; "));
-        }
+        // Should have an error about unknown position, and no returned spreadsheet.
+        Assert.assertFalse(actionBean.getValidationErrors().values().isEmpty());
         Assert.assertEquals(actionBean.getMolecularIndexNames().size(), 0);
     }
 
@@ -335,8 +327,7 @@ public class MolecularIndexNamingActionBeanTest extends Arquillian {
         actionBean.upload();
 
         // Should have no errors.
-        Assert.assertTrue(actionBean.getFormattedErrors().isEmpty(),
-                StringUtils.join(actionBean.getFormattedErrors(), "; "));
+        Assert.assertTrue(actionBean.getValidationErrors().values().isEmpty());
         // Checks the spreadsheet data and names.
         byte[] bytes = actionBean.makeSpreadsheet(actionBean.getIndexPositions(), actionBean.getDataRows(),
                 actionBean.getMolecularIndexNames());
