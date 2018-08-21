@@ -17,6 +17,7 @@ public enum Role {
     PipelineManager("Mercury-PipelineAdmins"),
     GPProjectManager("Mercury-GPProjectManagers"),
     Viewer("Mercury-ViewOnly"),
+    FinanceViewer("Mercury-FinanceViewer"),
     All("All");
 
     public final String name;
