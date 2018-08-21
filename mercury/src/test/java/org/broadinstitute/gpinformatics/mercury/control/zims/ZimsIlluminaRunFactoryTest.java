@@ -174,6 +174,7 @@ public class ZimsIlluminaRunFactoryTest {
         testProduct.setPositiveControlResearchProject(positiveControlResearchProject);
         testProduct.setAnalysisTypeKey("HybridSelection.Resequencing");
         AttributeArchetypeDao attributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
+        crspPipelineUtils.setAttributeArchetypeDao(attributeArchetypeDao);
         Mockito.when(attributeArchetypeDao.findWorkflowMetadata(Mockito.anyString())).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {

@@ -1,0 +1,35 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:complexType name="decodedBarcode">
+        <xs:sequence>
+            <xs:element type="xs:int" name="left"/>
+            <xs:element type="xs:int" name="right"/>
+            <xs:element type="xs:int" name="top"/>
+            <xs:element type="xs:int" name="bottom"/>
+            <xs:element type="xs:string" name="label"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="transfer">
+        <xs:sequence>
+            <xs:element type="xs:string" name="sourceTubeBarcode"/>
+            <xs:element type="xs:string" name="destinationTubeBarcode"/>
+            <xs:element type="xs:string" name="sourceWell"/>
+            <xs:element type="xs:string" name="destinationWell"/>
+            <xs:element type="xs:int" name="index"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="DecodeResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element type="xs:int" name="count"/>
+                <xs:element type="xs:string" name="decodeBitmapBase64"/>
+                <xs:element type="xs:boolean" name="hasErrors"/>
+                <xs:element type="xs:string" name="errorMessage"/>
+                <xs:element name="decodedBarcodes" type="decodedBarcode" maxOccurs="unbounded" minOccurs="0"/>
+                <xs:element name="transfers" type="transfer" maxOccurs="unbounded" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

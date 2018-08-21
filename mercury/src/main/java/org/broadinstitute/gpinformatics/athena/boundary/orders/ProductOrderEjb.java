@@ -1420,19 +1420,29 @@ public class ProductOrderEjb {
         List<ProductOrderSample> samples = productOrderSampleDao.findListByList(ProductOrderSample.class,
                 ProductOrderSample_.productOrderSampleId, sampleIds);
 
-        if (!StringUtils.isBlank(comment)) {
-            for (ProductOrderSample sample : samples) {
-                if (sample.getDeliveryStatus() == DeliveryStatus.ABANDONED) {
-                    sample.setSampleComment(comment);
+            Iterator<ProductOrderSample> unAbandonedSamples = samples.iterator();
+
+            while(unAbandonedSamples.hasNext()) {
+                ProductOrderSample sample = unAbandonedSamples.next();
+
+                if(sample.getDeliveryStatus() != DeliveryStatus.ABANDONED) {
+                    unAbandonedSamples.remove();
+                } else {
+                    if(StringUtils.isNotBlank(comment)) {
+                        sample.setSampleComment(comment);
+                    }
                 }
             }
+
+        if(CollectionUtils.isNotEmpty(samples)) {
+            transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
+                    DeliveryStatus.NOT_STARTED, samples, comment, messageCollection);
+            messageCollection.addInfo("Un-Abandoned samples: " +
+                                      StringUtils.join(ProductOrderSample.getSampleNames(samples), ", ") +".");
+        } else {
+            messageCollection.addError("You cannot un-abandon samples since you have not selected any samples that are Abandoned");
         }
 
-        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
-                DeliveryStatus.NOT_STARTED, samples, comment, messageCollection);
-
-        messageCollection.addInfo("Un-Abandoned samples: " +
-                StringUtils.join(ProductOrderSample.getSampleNames(samples), ", ") +".");
     }
 
     /**

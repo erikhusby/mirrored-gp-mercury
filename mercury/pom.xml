@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.95-SNAPSHOT</version>
+    <version>1.96-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -1849,7 +1849,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.broadinstitute.sapservices</groupId>
             <artifactId>SAPServices</artifactId>
-            <version>1.8</version>
+            <version>1.9</version>
             <exclusions>
                 <exclusion>
                     <groupId>javax.servlet</groupId>
@@ -2120,6 +2120,22 @@ nodePrinter.print(webapp)
                             <packageName>org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.QiagenRackFileXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>BarcodeDecoder</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                        <configuration>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>BarcodeDecoder.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.lims.barcode.generated</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.BarcodeDecoderXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>

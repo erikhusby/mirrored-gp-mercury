@@ -189,6 +189,14 @@ public class SubmissionTracker implements ISubmissionTuple {
         return requestDate;
     }
 
+    public void setProcessingLocation(String processingLocation) {
+        this.processingLocation = processingLocation;
+    }
+
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
+    }
+
     @Override
     public String getDataType() {
         return dataType;

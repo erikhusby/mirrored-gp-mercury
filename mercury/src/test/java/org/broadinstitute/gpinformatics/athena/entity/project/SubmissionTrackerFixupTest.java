@@ -13,10 +13,15 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -32,6 +37,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -42,6 +48,9 @@ public class SubmissionTrackerFixupTest extends Arquillian {
 
     @Inject
     private SubmissionDtoFetcher submissionDtoFetcher;
+
+    @Inject
+    private SubmissionsService submissionService;
 
     @Inject
     private UserBean userBean;
@@ -91,6 +100,82 @@ public class SubmissionTrackerFixupTest extends Arquillian {
         }
 
         submissionTrackerDao.persist(new FixupCommentary("GPLIM-4086 removed duplicate submissions"));
+    }
+
+    @Test(enabled = false)
+    public void gplim5678BackfillLocationAndType() {
+        userBean.loginOSUser();
+
+        List<SubmissionTracker> allTrackers = submissionTrackerDao.findTrackersMissingDatatypeOrLocation();
+
+        Map<String, SubmissionTracker> submissionTrackersByUuid = new HashMap<>();
+        for (SubmissionTracker submissionTracker : allTrackers) {
+            submissionTrackersByUuid.put(submissionTracker.createSubmissionIdentifier(), submissionTracker);
+        }
+        int index = 1;
+        Set<String> keys = submissionTrackersByUuid.keySet();
+        int total = keys.size();
+        if (!keys.isEmpty()) {
+            Collection<SubmissionStatusDetailBean> submissionStatus =
+                submissionService.getSubmissionStatus(keys.toArray(new String[0]));
+
+            for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
+                SubmissionTracker submissionTracker =
+                    submissionTrackersByUuid.get(submissionStatusDetailBean.getUuid());
+                if (submissionTracker != null) {
+                    if (StringUtils.isBlank(submissionTracker.getDataType())) {
+                        String dataType = SubmissionLibraryDescriptor
+                            .getNormalizedLibraryName(submissionStatusDetailBean.getSubmissionDatatype());
+                        submissionTracker.setDataType(dataType);
+                    }
+                    if (StringUtils.isBlank(submissionTracker.getProcessingLocation())) {
+                        submissionTracker.setProcessingLocation(SubmissionBioSampleBean.ON_PREM);
+                    }
+                } else {
+                    log.info(
+                        String.format("SubmissionTracker not found for %s", submissionStatusDetailBean.getUuid()));
+                }
+                if (index++ % 500 == 0) {
+                    log.info(String.format("Processed %d of %d", index, total));
+                }
+            }
+            submissionTrackerDao.persist(new FixupCommentary("GPLIM-5678 Back-fill processingLocation and datatype"));
+        }
+    }
+
+    @Test(enabled = false)
+    public void gplim5408BackfillLocationAndType(){
+        userBean.loginOSUser();
+
+        List<SubmissionTracker> allTrackers = submissionTrackerDao.findTrackersMissingDatatypeAndLocation();
+
+        Map<String, SubmissionTracker> submissionTrackersByUuid = new HashMap<>();
+        for (SubmissionTracker submissionTracker : allTrackers) {
+            submissionTrackersByUuid.put(submissionTracker.createSubmissionIdentifier(), submissionTracker);
+        }
+        int index = 1;
+        Set<String> keys = submissionTrackersByUuid.keySet();
+        int total = keys.size();
+        if (!keys.isEmpty()) {
+            Collection<SubmissionStatusDetailBean> submissionStatus =
+                submissionService.getSubmissionStatus(keys.toArray(new String[0]));
+
+            for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
+                SubmissionTracker submissionTracker =
+                    submissionTrackersByUuid.get(submissionStatusDetailBean.getUuid());
+                if (submissionTracker != null) {
+                    submissionTracker.setDataType(submissionStatusDetailBean.getSubmissionDatatype());
+                    submissionTracker.setProcessingLocation(SubmissionBioSampleBean.ON_PREM);
+                } else {
+                    log.info(
+                        String.format("SubmissionTracker not found for %s", submissionStatusDetailBean.getUuid()));
+                }
+                if (index++ % 500 == 0) {
+                    log.info(String.format("Processed %d of %d", index, total));
+                }
+            }
+            submissionTrackerDao.persist(new FixupCommentary("GPLIM-5408 Back-fill processingLocation and datatype"));
+        }
     }
 
     @Test(enabled = false)
