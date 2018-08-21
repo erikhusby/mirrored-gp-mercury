@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.CaliperPlateProce
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessorTwoCurve;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlatingProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanRowParser;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.WallacPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.WallacRowParser;
@@ -48,6 +49,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.TubeFormationByWellCriteria.Result;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean;
@@ -75,6 +77,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -251,11 +255,18 @@ public class VesselEjb {
             VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
             Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
 
+            // Fetch the plates
+            Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
+            Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple = null;
+
             List<VarioskanPlateProcessor.PlateWellResult> plateWellResults;
+            boolean evalPercentDiff = false;
+            boolean duplicatePico = false;
             if (workbook.getSheet(VarioskanPlateProcessorTwoCurve.PicoCurve.HIGH_SENSE.getSheetname()) != null) {
                 VarioskanPlateProcessorTwoCurve varioskanPlateProcessorTwoCurve =
                         new VarioskanPlateProcessorTwoCurve(workbook);
                 plateWellResults = varioskanPlateProcessorTwoCurve.processMultipleCurves(metricType);
+                evalPercentDiff = true;
             } else {
                 VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
                         VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB, metricType);
@@ -263,11 +274,41 @@ public class VesselEjb {
                 parser.processRows(workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB),
                         varioskanPlateProcessor);
                 plateWellResults = varioskanPlateProcessor.getPlateWellResults();
+
+                // Done in duplicate if two plate barcodes map to same tube formation
+                Set<String> plateBarcodes = plateWellResults.stream()
+                        .map(VarioskanPlateProcessor.PlateWellResult::getPlateBarcode)
+                        .collect(Collectors.toSet());
+                Set<TubeFormation> tubeFormations = new HashSet<>();
+                if (plateBarcodes.size() == 2) {
+                    for (String plateBarcode: plateBarcodes) {
+                        StaticPlate staticPlate = mapBarcodeToPlate.get(plateBarcode);
+                        if (staticPlate == null) {
+                            staticPlate = staticPlateDao.findByBarcode(plateBarcode);
+                            if (staticPlate == null) {
+                                messageCollection.addError("Failed to find plate " + plateBarcode);
+                            } else {
+                                Result result = staticPlate.nearestFormationAndTubePositionByWell();
+                                tubeFormations.add(result.getTubeFormation());
+                            }
+                        }
+                    }
+                }
+
+                if (messageCollection.hasErrors()) {
+                    return triple;
+                } else if (tubeFormations.size() == 1) {
+                    duplicatePico = true;
+                }
+
+                if (!duplicatePico) {
+                    VarioskanPlatingProcessor platingProcessor = new VarioskanPlatingProcessor(workbook);
+                    plateWellResults = platingProcessor.process(metricType);
+                    evalPercentDiff = true;
+                }
             }
 
-            // Fetch the plates
-            Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
-            Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple = null;
+
 
             if (plateWellResults.isEmpty()) {
                 messageCollection.addError("Didn't find any plate barcodes in the spreadsheet.");
@@ -327,9 +368,17 @@ public class VesselEjb {
                             }
                         }
                         if (!messageCollection.hasErrors()) {
-                            LabMetricRun run = createVarioskanRunDaoFree(mapNameValueToValue, metricType,
-                                    plateWellResults, mapBarcodeToPlate, decidingUser, messageCollection,
-                                    mapBarcodeToTraverserResult);
+                            LabMetricRun run = null;
+                            if (evalPercentDiff) {
+                                float percentDiff = metricType == LabMetric.MetricType.INITIAL_PICO ? 0.1f : 0.3f;
+                                run = createVarioskanRunMultiCurveDaoFree(mapNameValueToValue, metricType,
+                                        plateWellResults, mapBarcodeToPlate, decidingUser, messageCollection,
+                                        mapBarcodeToTraverserResult, percentDiff);
+                            } else  {
+                                run = createVarioskanRunDaoFree(mapNameValueToValue, metricType,
+                                        plateWellResults, mapBarcodeToPlate, decidingUser, messageCollection,
+                                        mapBarcodeToTraverserResult);
+                            }
                             triple = Triple.of(run, traverserResults, microfluorPlates);
                             if (messageCollection.hasErrors()) {
                                 ejbContext.setRollbackOnly();
@@ -346,6 +395,203 @@ public class VesselEjb {
         } catch (IOException | InvalidFormatException | ValidationException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Needs to be able to ignore NaN plate Well results which show up as null in the results.
+     * If > two results are NaN, then its a fail for that tube and needs to be repeated. Also, checks against
+     * a supplied percent difference so that it can exclude reads that are outliers.
+     */
+    @DaoFree
+    public LabMetricRun createVarioskanRunMultiCurveDaoFree(
+            Map<VarioskanRowParser.NameValue, String> mapNameValueToValue, LabMetric.MetricType metricType,
+            List<VarioskanPlateProcessor.PlateWellResult> plateWellResults, Map<String, StaticPlate> mapBarcodeToPlate,
+            Long decidingUser, MessageCollection messageCollection, Map<String, Result> mapBarcodeToTraverser,
+            float maxPercentDiff) {
+        Date runStarted = parseRunDate(mapNameValueToValue);
+        LabMetricRun labMetricRun = new LabMetricRun(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME),
+                runStarted, metricType);
+
+        String r2 = mapNameValueToValue.get(VarioskanRowParser.NameValue.CORRELATION_COEFFICIENT_R2);
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.CORRELATION_COEFFICIENT_R2, r2));
+        boolean runFailed = false;
+        if (new BigDecimal(r2).compareTo(new BigDecimal("0.97")) == -1) {
+            runFailed = true;
+        }
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
+                mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_NAME)));
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_SERIAL_NUMBER,
+                mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_SERIAL_NUMBER)));
+
+
+        // Determines the sensitivity and dilution factors.
+        Float factor = extractFactor(
+                mapBarcodeToTraverser.values().iterator().next().getLabEventMetadata(), SensitivityFactor);
+        BigDecimal sensitivityFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
+        factor = extractFactor(
+                mapBarcodeToTraverser.values().iterator().next().getLabEventMetadata(), DilutionFactor);
+        BigDecimal dilutionFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
+
+        // Store the quants for each well of the 384 Plate analyzed
+        for (VarioskanPlateProcessor.PlateWellResult plateWellResult: plateWellResults) {
+            if (plateWellResult.getResult() != null) {
+                BigDecimal concValue = plateWellResult.getResult().
+                        multiply(dilutionFactor).divide(sensitivityFactor, HALF_EVEN);
+
+                LabMetric labMetric = new LabMetric(concValue, metricType, LabMetric.LabUnit.NG_PER_UL,
+                        plateWellResult.getVesselPosition().name(), runStarted);
+                labMetricRun.addMetric(labMetric);
+
+                StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
+                PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(
+                        plateWellResult.getVesselPosition());
+                if (plateWell == null) {
+                    plateWell = new PlateWell(staticPlate, plateWellResult.getVesselPosition());
+                    staticPlate.getContainerRole().addContainedVessel(plateWell, plateWellResult.getVesselPosition());
+                }
+                plateWell.addMetric(labMetric);
+            }
+        }
+
+        Map<String, List<VarioskanPlateProcessor.PlateWellResult>> mapBarcodeToResults = plateWellResults.stream()
+                .collect(Collectors.groupingBy(VarioskanPlateProcessor.PlateWellResult::getPlateBarcode));
+        for (Map.Entry<String, List<VarioskanPlateProcessor.PlateWellResult>> entry: mapBarcodeToResults.entrySet()) {
+            List<VarioskanPlateProcessor.PlateWellResult> valueList = entry.getValue();
+
+            Result result = mapBarcodeToTraverser.get(entry.getKey());
+            Map<VesselPosition, VesselPosition> wellToTubePosition = result.getWellToTubePosition();
+
+            // Group Plate Well Results by source tube position to check if triplicate is a bad read.
+            Map<VesselPosition, List<VarioskanPlateProcessor.PlateWellResult>> mapPosToPlateWells = valueList.stream()
+                    .collect(Collectors.groupingBy(p -> wellToTubePosition.get(p.getVesselPosition())));
+
+            for (Map.Entry<VesselPosition, List<VarioskanPlateProcessor.PlateWellResult>> posEntry: mapPosToPlateWells.entrySet()) {
+                List<VarioskanPlateProcessor.PlateWellResult> tubePlateWellResults = posEntry.getValue();
+                LabVessel tube = result.getTubeFormation().getContainerRole().getVesselAtPosition(posEntry.getKey());
+                if (tube == null) {
+                    messageCollection.addError(
+                            "Failed to find tube at position: " + posEntry.getKey() + " for plate " + entry.getValue());
+                    continue;
+                }
+
+                // Filter the number of non null results in list of plate well results.
+                List<VarioskanPlateProcessor.PlateWellResult> nonNullResults =
+                        tubePlateWellResults.stream().filter(p -> p.getResult() != null).collect(Collectors.toList());
+
+                // Only one or less quants in triplicate read. Fail and call a repeat.
+                if (nonNullResults.size() < 2) {
+                    LabMetric mostRecentConcentration = tube.getMostRecentConcentration();
+                    BigDecimal quant = mostRecentConcentration != null ? mostRecentConcentration.getValue() : BigDecimal.ZERO;
+                    LabMetric labMetric = new LabMetric(quant, metricType, LabMetric.LabUnit.NG_PER_UL,
+                            posEntry.getKey().name(), runStarted);
+                    LabMetricDecision decision = new LabMetricDecision(
+                            LabMetricDecision.Decision.REPEAT, new Date(), decidingUser, labMetric, "Not Enough Reads");
+                    labMetric.setLabMetricDecision(decision);
+                    tube.addMetric(labMetric);
+                    labMetricRun.addMetric(labMetric);
+                } else {
+                    List<BigDecimal> concList =
+                            nonNullResults.stream().map(VarioskanPlateProcessor.PlateWellResult::getResult)
+                                    .map(c -> c.multiply(dilutionFactor).divide(sensitivityFactor, HALF_EVEN))
+                                    .collect(Collectors.toList());
+
+                    double average = concList.stream().mapToDouble(BigDecimal::doubleValue).average().getAsDouble();
+                    BigDecimal quant = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(average));
+                    LabMetricDecision.Decision decisionType = LabMetricDecision.Decision.PASS;
+
+                    if (concList.size() == 2) {
+                        float resultA = concList.get(0).floatValue();
+                        float resultB = concList.get(1).floatValue();
+                        boolean tooFarApart = MathUtils.areTooFarApart(resultA, resultB, maxPercentDiff);
+                        if (tooFarApart) {
+                            decisionType = LabMetricDecision.Decision.BAD_TRIP;
+                        }
+                    } else if (concList.size() == 3){
+                        List<Float> reads = concList.stream().map(BigDecimal::floatValue)
+                                .collect(Collectors.toList());
+                        Pair<List<Float>, Optional<LabMetricDecision.Decision>>
+                                optReads = getReadsForDeterminingCurve(reads, maxPercentDiff);
+                        List<Float> readsForDeterminingCurve = optReads.getLeft();
+                        decisionType = optReads.getRight().orElse(null);
+                        if (readsForDeterminingCurve.isEmpty()) {
+                            decisionType = LabMetricDecision.Decision.BAD_TRIP;
+                        } else {
+                            OptionalDouble avgOptional = MathUtils.average(readsForDeterminingCurve);
+                            if (avgOptional.isPresent()) {
+                                quant = new BigDecimal(avgOptional.getAsDouble());
+                            } else {
+                                messageCollection.addError("Failed to average results for tube " + tube.getLabel());
+                            }
+                        }
+                    }
+
+                    LabMetric labMetric = new LabMetric(quant, metricType, LabMetric.LabUnit.NG_PER_UL,
+                            posEntry.getKey().name(), runStarted);
+                    LabMetricDecision decision = null;
+                    LabMetric.Decider decider = metricType.getDecider();
+                    if (runFailed) {
+                        decision = new LabMetricDecision(
+                                LabMetricDecision.Decision.RUN_FAILED, new Date(), decidingUser, labMetric);
+                    } else if (decisionType != null  && decisionType != LabMetricDecision.Decision.PASS) {
+                        decision = new LabMetricDecision(decisionType, new Date(), decidingUser, labMetric);
+                    } else if (decider != null) {
+                        decision = decider.makeDecision(tube, labMetric, decidingUser);
+                    }
+
+                    // Check over the curve
+                    List<VarioskanPlateProcessor.PlateWellResult> wellsOverTheCurve =
+                            posEntry.getValue().stream().filter(VarioskanPlateProcessor.PlateWellResult::isOverTheCurve)
+                                    .collect(Collectors.toList());
+                    if (wellsOverTheCurve.size() > 0) {
+                        decision = new LabMetricDecision(
+                                LabMetricDecision.Decision.OVER_THE_CURVE, new Date(), decidingUser, labMetric);
+                    }
+
+
+                    if (decision != null) {
+                        labMetric.setLabMetricDecision(decision);
+                    }
+
+                    tube.addMetric(labMetric);
+                    labMetricRun.addMetric(labMetric);
+                }
+            }
+        }
+
+        return labMetricRun;
+    }
+
+    /**
+     * Sort the list, and if two reads are within the allowed percent diff but the third isn't, drop the outlier.
+     *
+     * @param readsForDeterminingCurve  The reads
+     * @param maxPercentageBetweenReads The maximum allowed percent difference between two reads
+     */
+    private Pair<List<Float>, Optional<LabMetricDecision.Decision>> getReadsForDeterminingCurve(List<Float> readsForDeterminingCurve,
+                                                                                                float maxPercentageBetweenReads) {
+        Collections.sort(readsForDeterminingCurve);
+        int minIndex = 0;
+        int middleIndex = 1;
+        int maxIndex = 2;
+        Float minVal = readsForDeterminingCurve.get(minIndex);
+        Float midVal = readsForDeterminingCurve.get(middleIndex);
+        Float maxVal = readsForDeterminingCurve.get(maxIndex);
+        boolean minTooFar = MathUtils.areTooFarApart(minVal, midVal, maxPercentageBetweenReads);
+        boolean maxTooFar = MathUtils.areTooFarApart(midVal, maxVal, maxPercentageBetweenReads);
+        LabMetricDecision.Decision decision = null;
+        if (minTooFar && maxTooFar) {
+            decision = LabMetricDecision.Decision.BAD_TRIP;
+            if ((maxVal - midVal) > (midVal - minVal)) {
+                readsForDeterminingCurve.remove(maxIndex);
+            }
+        }
+        if (minTooFar && !maxTooFar) {
+            readsForDeterminingCurve.remove(minIndex);
+        } else if (maxTooFar && !minTooFar) {
+            readsForDeterminingCurve.remove(maxIndex);
+        }
+        List<Float> reads = new ArrayList<>(readsForDeterminingCurve);
+        return Pair.of(reads, Optional.ofNullable(decision));
     }
 
     /**

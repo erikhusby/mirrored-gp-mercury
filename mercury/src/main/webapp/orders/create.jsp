@@ -116,6 +116,20 @@
                 );
             }
         }
+
+        function validateNumberOfLanes() {
+            var numberOfLanes = $j("#numberOfLanes");
+            var lanesFieldDiv = $j("#numberOfLanesDiv");
+            var productOrderKey = $j("input[name='productOrder']");
+
+            if (lanesFieldDiv.css('display') !== 'none' && lanesFieldDiv.css("visibility") !== 'hidden' &&
+                lanesFieldDiv.css('opacity') !== 0 && numberOfLanes.length && productOrderKey.val().includes("Draft")) {
+                return confirm(numberOfLanes.val() + " for the total number of lanes on the order\n\n" +
+                    "By Clicking 'OK' you are declaring that you wish to accept the entered number of lanes for the entire order.  Do you wish to continue?")
+            }
+            
+            return true;
+        }
         $j(document).ready(
 
                 function () {
@@ -1584,7 +1598,7 @@
 
                 <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.requiresLaneCount() ? 'block' : 'none'};">
                     <stripes:label for="numberOfLanes" class="control-label">
-                        Number of Lanes Per Sample
+                        Number of Lanes For the Order
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
@@ -1668,7 +1682,8 @@
                     <div class="controls actionButtons">
                         <stripes:submit name="save" value="${actionBean.saveButtonText}"
                                         disabled="${!actionBean.canSave}"
-                                        style="margin-right: 10px;" class="btn btn-primary"/>
+                                        style="margin-right: 10px;" class="btn btn-primary"
+                                        onclick="return validateNumberOfLanes();"/>
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
