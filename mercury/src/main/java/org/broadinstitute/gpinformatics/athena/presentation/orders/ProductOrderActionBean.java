@@ -2619,6 +2619,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
 
             addMessages(abandonSamplesMessageCollection);
+        } else {
+            addMessage("You cannot abandon samples since have not selected any samples that are eligible to abandon");
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
@@ -3620,7 +3622,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private Map<String, AttributeDefinition> getPdoAttributeDefinitions() {
         if (pdoSpecificDefinitions == null) {
-            pdoSpecificDefinitions = attributeArchetypeDao.findAttributeGroupByTypeAndName(
+            pdoSpecificDefinitions = attributeArchetypeDao.findAttributeNamesByTypeAndGroup(
                     AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
                     GenotypingProductOrderMapping.ATTRIBUTES_GROUP);
         }

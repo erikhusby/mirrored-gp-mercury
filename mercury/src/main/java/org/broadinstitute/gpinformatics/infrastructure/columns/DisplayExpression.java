@@ -9,8 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -200,6 +200,17 @@ public enum DisplayExpression {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
             for (UMIReagent umiReagent: sampleInstanceV2.getUmiReagents()) {
                 results.add(umiReagent.getUniqueMolecularIdentifier().getDisplayName());
+            }
+            return results;
+        }
+    }),
+    BAIT_OR_CAT_NAME(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+        @Override
+        public List<String> evaluate(Object entity, SearchContext context) {
+            List<String> results = new ArrayList<>();
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            for (ReagentDesign reagentDesign: sampleInstanceV2.getReagentsDesigns()) {
+                results.add(reagentDesign.getName() + "(" + reagentDesign.getReagentType().toString() + ")");
             }
             return results;
         }

@@ -301,13 +301,9 @@ public class LabMetricSearchDefinition {
 
                 LabMetric labMetric = (LabMetric) entity;
 
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                labEventTypes.add(LabEventType.FLOWCELL_TRANSFER);
-                labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
-                labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
-
                 LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
-                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(labEventTypes );
+                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
+                                LabVesselSearchDefinition.FLOWCELL_LAB_EVENT_TYPES);
                 labMetric.getLabVessel().evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 Set<String> barcodes = null;

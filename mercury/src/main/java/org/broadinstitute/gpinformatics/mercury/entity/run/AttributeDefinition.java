@@ -27,7 +27,8 @@ public class AttributeDefinition {
         GENOTYPING_CHIP,
         GENOTYPING_CHIP_MAPPING,
         GENOTYPING_PRODUCT_ORDER,
-        WORKFLOW_METADATA
+        WORKFLOW_METADATA,
+        KEY_VALUE_MAPPING
     }
 
     @SequenceGenerator(name = "seq_attribute_definition", schema = "mercury", sequenceName = "seq_attribute_definition")

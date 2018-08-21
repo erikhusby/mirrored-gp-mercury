@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.Mockito.mock;
+
 /**
  * Test parsing of Varioskan file.
  */
@@ -59,6 +61,15 @@ public class VarioskanParserTest {
             int numSamples = 10;
             Workbook workbook = WorkbookFactory.create(testSpreadSheetInputStream);
             VarioskanPlateProcessorTwoCurve plateProcessorTwoCurve = new VarioskanPlateProcessorTwoCurve(workbook);
+            Map<String, StaticPlate.TubeFormationByWellCriteria.Result> mapBarcodeToResult = new HashMap<>();
+
+            Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
+            VarioskanParserTest.buildTriplicateTubesAndTransfers(mapBarcodeToPlate, "Dil1", "000002108020", "Abs");
+            VarioskanParserTest.buildTriplicateTubesAndTransfers(mapBarcodeToPlate, "Dil2", "000002107920", "Abs");
+            for (StaticPlate staticPlate: mapBarcodeToPlate.values()) {
+                mapBarcodeToResult.put(staticPlate.getLabel(), staticPlate.nearestFormationAndTubePositionByWell());
+            }
+
             List<VarioskanPlateProcessor.PlateWellResult> plateWellResults =
                     plateProcessorTwoCurve.processMultipleCurves(LabMetric.MetricType.INITIAL_PICO);
 

@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Passes info to BSP via a BSP REST service.
@@ -249,8 +250,28 @@ public class BSPRestSender implements Serializable {
                         atLeastOneEvent = true;
                     }
                 } else {
-                    copy.getPlateTransferEvent().add(plateTransferEventType);
-                    atLeastOneEvent = true;
+                    List<LabEvent> labEventList = labEvents.stream().
+                            filter(le -> Objects.equals(le.getStationEventType(), plateTransferEventType)).
+                            collect(Collectors.toList());
+                    boolean mercury = false;
+                    for (LabEvent labEvent : labEventList) {
+                        for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
+                            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                                if (sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource() ==
+                                        MercurySample.MetadataSource.MERCURY) {
+                                    // Don't support mixed MERCURY and BSP (engineer must change to
+                                    // TranslateBspMessage.SECTION_TO_CHERRY if necessary).
+                                    mercury = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!mercury) {
+                        copy.getPlateTransferEvent().add(plateTransferEventType);
+                        atLeastOneEvent = true;
+                    }
                 }
             }
         }

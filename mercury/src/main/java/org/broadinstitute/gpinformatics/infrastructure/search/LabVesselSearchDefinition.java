@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselArrayMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestPositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
@@ -81,11 +82,12 @@ public class LabVesselSearchDefinition {
     public static final List<LabEventType> CHIP_EVENT_TYPES = Collections.singletonList(
             LabEventType.INFINIUM_HYBRIDIZATION);
 
-    private static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
+    public static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
     static {
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.FLOWCELL_TRANSFER);
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
         FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+        FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER);
     }
 
     // These search term and/or result column names need to be referenced multiple places during processing.
@@ -1493,6 +1495,11 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Bait/CAT Name");
+        searchTerm.setDisplayExpression(DisplayExpression.BAIT_OR_CAT_NAME);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample Tube Barcode");
         // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -2488,6 +2495,11 @@ public class LabVesselSearchDefinition {
         // todo jmt rename to Latest Descendant Event
         searchTerm.setName("Vessel Latest Event");
         searchTerm.setPluginClass(LabVesselLatestEventPlugin.class);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Most Recent Rack and Event");
+        searchTerm.setPluginClass(LabVesselLatestPositionPlugin.class);
         searchTerms.add(searchTerm);
 
         return searchTerms;

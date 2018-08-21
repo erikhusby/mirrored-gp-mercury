@@ -4,6 +4,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMap
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition_;
@@ -170,7 +172,7 @@ public class AttributeArchetypeDao extends GenericDao {
         return findSingle(WorkflowMetadata.class, WorkflowMetadata_.archetypeName, workflowName);
     }
 
-    public Map<String, AttributeDefinition> findAttributeGroupByTypeAndName(
+    public Map<String, AttributeDefinition> findAttributeNamesByTypeAndGroup(
             AttributeDefinition.DefinitionType definitionType, String group) {
         Map<String, AttributeDefinition> map = new HashMap<>();
         for (AttributeDefinition def : findAttributeDefinitions(definitionType)) {
@@ -180,4 +182,29 @@ public class AttributeArchetypeDao extends GenericDao {
         }
         return map;
     }
+
+    /** Returns all key-value mapping entities for the given mapping name. */
+    public List<KeyValueMapping> findKeyValueMappings(String mappingName) {
+        return findList(KeyValueMapping.class, KeyValueMapping_.group, mappingName);
+    }
+
+    /** Returns one key-value mapping entities for the key and mapping name, or null if none found. */
+    public KeyValueMapping findKeyValueByKeyAndMappingName(String key, String mappingName) {
+        for (KeyValueMapping keyValueMapping : findKeyValueMappings(mappingName)) {
+            if (keyValueMapping.getArchetypeName().equals(key)) {
+                return keyValueMapping;
+            }
+        }
+        return null;
+    }
+
+    /** Returns a Map for the given mapping name. */
+    public Map<String, String> findKeyValueMap(String mappingName) {
+        Map<String, String> map = new HashMap<>();
+        for (KeyValueMapping keyValueMapping : findKeyValueMappings(mappingName)) {
+            map.put(keyValueMapping.getKey(), keyValueMapping.getValue());
+        }
+        return map;
+    }
+
 }
