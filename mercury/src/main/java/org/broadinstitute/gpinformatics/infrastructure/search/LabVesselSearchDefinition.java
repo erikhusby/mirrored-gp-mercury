@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselArrayMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestPositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
@@ -2489,6 +2490,11 @@ public class LabVesselSearchDefinition {
         // todo jmt rename to Latest Descendant Event
         searchTerm.setName("Vessel Latest Event");
         searchTerm.setPluginClass(LabVesselLatestEventPlugin.class);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Most Recent Rack and Event");
+        searchTerm.setPluginClass(LabVesselLatestPositionPlugin.class);
         searchTerms.add(searchTerm);
 
         return searchTerms;
