@@ -225,8 +225,6 @@ public class FingerprintResource {
         return new FingerprintsBean(fingerprints);
     }
 
-    // todo jmt is this a waste of time?  Will BSP continue to be the source of truth for fingerprinting transfers
-    // for the foreseeable future?
     private void traverseMercuryTransfers(List<Pair<String, Fingerprint>> fingerprintEntities,
             Map.Entry<String, MercurySample> stringMercurySampleEntry) {
         // Traverse to (new) root
@@ -245,7 +243,6 @@ public class FingerprintResource {
                 for (Fingerprint fingerprint : fpCriteria.getFingerprints()) {
                     fingerprintEntities.add(new ImmutablePair<>(stringMercurySampleEntry.getKey(), fingerprint));
                 }
-                // todo jmt call BSP
             } else {
                 throw new ResourceException("Expected 1 root sample for " + stringMercurySampleEntry.getKey() +
                         ", found " + rootSample.getRootSamples().size(), Response.Status.BAD_REQUEST);
@@ -285,9 +282,18 @@ public class FingerprintResource {
                     Fingerprint.Platform.valueOf(fingerprintBean.getPlatform()),
                     Fingerprint.GenomeBuild.valueOf(fingerprintBean.getGenomeBuild()),
                     fingerprintBean.getDateGenerated(),
-                    snpList, Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()),
+                    snpList,
+                    Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()),
                     true);
 
+        } else {
+            fingerprint.setDisposition(Fingerprint.Disposition.byAbbreviation(fingerprintBean.getDisposition()));
+            fingerprint.setPlatform(Fingerprint.Platform.valueOf(fingerprintBean.getPlatform()));
+            fingerprint.setGenomeBuild(Fingerprint.GenomeBuild.valueOf(fingerprintBean.getGenomeBuild()));
+            fingerprint.setGender(Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()));
+            fingerprint.getFpGenotypes().clear();
+        }
+        if (fingerprintBean.getCalls() != null) {
             for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
                 Snp snp = snpList.getMapRsIdToSnp().get(fingerprintCallsBean.getRsid());
                 if (snp == null) {
@@ -297,8 +303,6 @@ public class FingerprintResource {
                 fingerprint.addFpGenotype(new FpGenotype(fingerprint, snp, fingerprintCallsBean.getGenotype(),
                         new BigDecimal(fingerprintCallsBean.getCallConfidence())));
             }
-        } else {
-            // todo jmt delete and insert, or update?
         }
 
         // todo jmt check concordance
@@ -338,61 +342,4 @@ public class FingerprintResource {
         return "Stored fingerprint";
     }
 
-/*
-    private void x(String sample, HaplotypeMap haplotypes) {
-        final SortedSet<picard.fingerprint.Snp> snps = new TreeSet<>(haplotypes.getAllSnps());
-        for (final picard.fingerprint.Snp snp : snps) {
-
-            final HaplotypeBlock h = haplotypes.getHaplotype(ctx.getContig(), ctx.getStart());
-            final picard.fingerprint.Snp snp = haplotypes.getSnp(ctx.getContig(), ctx.getStart());
-            if (h == null) return;
-
-            final VariantContext usableSnp = AlleleSubsettingUtils.subsetVCToMatchSnp(ctx, snp);
-            if (usableSnp == null) {
-                return;
-            }
-            //PLs are preferred over GTs
-            //TODO: this code is replicated in various places (ReconstructTriosFromVCF for example). Needs refactoring.
-            //TODO: add a way to force using GTs when both are available (why?)
-
-            // Get the genotype for the sample and check that it is useful
-            final Genotype genotype = usableSnp.getGenotype(sample);
-            if (genotype == null) {
-                throw new IllegalArgumentException("Cannot find sample " + sample + " in provided file. ");
-            }
-            if (genotype.hasPL()) {
-
-                final HaplotypeProbabilitiesFromGenotypeLikelihoods hFp = new HaplotypeProbabilitiesFromGenotypeLikelihoods(h);
-                //do not modify the PL array directly fragile!!!!!
-                final int[] pls = genotype.getPL();
-                final int[] newPLs = new int[pls.length];
-                for (int i = 0; i < pls.length; i++) {
-                    newPLs[i] = Math.min(maximalPLDifference, pls[i]);
-                }
-                hFp.addToLogLikelihoods(snp, usableSnp.getAlleles(), GenotypeLikelihoods.fromPLs(newPLs).getAsVector());
-                fp.add(hFp);
-            } else {
-
-                if (genotype.isNoCall()) continue;
-
-                // TODO: when multiple genotypes are available for a Haplotype check that they
-                // TODO: agree. Not urgent since DownloadGenotypes already does this.
-                if (fp.containsKey(h)) continue;
-
-                final boolean hom = genotype.isHom();
-                final byte allele = StringUtil.toUpperCase(genotype.getAllele(0).getBases()[0]);
-
-                final double halfError = this.genotypingErrorRate / 2;
-                final double accuracy = 1 - this.genotypingErrorRate;
-                final double[] probs = new double[]{
-                        (hom && allele == snp.getAllele1()) ? accuracy : halfError,
-                        (!hom) ? accuracy : halfError,
-                        (hom && allele == snp.getAllele2()) ? accuracy : halfError
-                };
-
-                fp.add(new HaplotypeProbabilitiesFromGenotype(snp, h, probs[0], probs[1], probs[2]));
-            }
-        }
-    }
-*/
 }

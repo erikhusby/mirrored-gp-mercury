@@ -177,10 +177,13 @@ public class Fingerprint {
         return fpGenotypesOrdered;
     }
 
+    public Set<FpGenotype> getFpGenotypes() {
+        return fpGenotypes;
+    }
+
     public void addFpGenotype(FpGenotype fpGenotype) {
         fpGenotypes.add(fpGenotype);
     }
-
 
     public MercurySample getMercurySample() {
         return mercurySample;
@@ -190,12 +193,24 @@ public class Fingerprint {
         return disposition;
     }
 
+    public void setDisposition(Disposition disposition) {
+        this.disposition = disposition;
+    }
+
     public Platform getPlatform() {
         return platform;
     }
 
+    public void setPlatform(Platform platform) {
+        this.platform = platform;
+    }
+
     public GenomeBuild getGenomeBuild() {
         return genomeBuild;
+    }
+
+    public void setGenomeBuild(GenomeBuild genomeBuild) {
+        this.genomeBuild = genomeBuild;
     }
 
     public Date getDateGenerated() {
@@ -208,6 +223,10 @@ public class Fingerprint {
 
     public Gender getGender() {
         return gender;
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = gender;
     }
 
     public Boolean getMatch() {
