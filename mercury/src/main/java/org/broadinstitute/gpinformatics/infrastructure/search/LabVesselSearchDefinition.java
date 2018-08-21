@@ -1495,6 +1495,11 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Bait/CAT Name");
+        searchTerm.setDisplayExpression(DisplayExpression.BAIT_OR_CAT_NAME);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample Tube Barcode");
         // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
