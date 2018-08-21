@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -108,6 +109,7 @@ public class ContainerActionBean extends RackScanActionBean {
     private RackOfTubes.RackType rackType;
     private RackOfTubes rackOfTubes;
     private Map<VesselPosition, LabVessel> mapPositionToVessel;
+    private Map<VesselPosition, String> mapPositionToSampleId;
     private boolean editLayout = false;
     private List<ReceptacleType> receptacleTypes;
     private StorageLocation storageLocation;
@@ -188,6 +190,7 @@ public class ContainerActionBean extends RackScanActionBean {
             SAVE_LOCATION_ACTION, CANCEL_SAVE_ACTION, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_SEARCH_ACTION})
     public void buildPositionMapping() {
         mapPositionToVessel = new HashMap<>();
+        mapPositionToSampleId = new HashMap<>();
         if (rackOfTubes == null && staticPlate == null) {
             return;
         }
@@ -275,6 +278,19 @@ public class ContainerActionBean extends RackScanActionBean {
                         LabEvent barcodesLatestEvent = barcodedTube.getLatestStorageEvent();
                         if (barcodesLatestEvent != null && barcodesLatestEvent.equals(latestEvent)) {
                             mapPositionToVessel.put(vesselPosition, barcodedTube);
+                            Set<MercurySample> samples = barcodedTube.getMercurySamples();
+                            String display = "";
+                            if( samples.size() == 1 ) {
+                                display = samples.iterator().next().getSampleKey();
+                            } else if( samples.size() > 1 ) {
+                                // Not sure if this should ever happen - but code for it
+                                StringBuilder b = new StringBuilder();
+                                for( MercurySample sample : samples ) {
+                                    b.append(sample.getSampleKey()).append(" ");
+                                }
+                                display = b.toString().trim();
+                            }
+                            mapPositionToSampleId.put( vesselPosition, display );
                         }
                     }
                 }
@@ -682,6 +698,10 @@ public class ContainerActionBean extends RackScanActionBean {
 
     public Map<VesselPosition, ?> getMapPositionToVessel() {
         return mapPositionToVessel;
+    }
+
+    public Map<VesselPosition, String> getMapPositionToSampleId() {
+        return mapPositionToSampleId;
     }
 
     public boolean isEditLayout() {
