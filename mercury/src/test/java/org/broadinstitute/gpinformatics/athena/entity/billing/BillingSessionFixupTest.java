@@ -11,6 +11,8 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -233,8 +235,17 @@ public class BillingSessionFixupTest extends Arquillian {
             if(StringUtils.equals(negativelyBilledEntry.getWorkItem(), quoteServerWorkItem)) {
                 assertThat(negativelyBilledEntry.getSapDeliveryDocumentId(), nullValue());
                 negativelyBilledEntry.setSapDeliveryDocumentId(deliveryDocument);
-                negativelyBilledEntry.getProductOrderSample().getProductOrder().latestSapOrderDetail().addLedgerEntry(negativelyBilledEntry);
+                final ProductOrderSample productOrderSample = negativelyBilledEntry.getProductOrderSample();
+                final SapOrderDetail sapOrderDetail = productOrderSample.getProductOrder().latestSapOrderDetail();
+                sapOrderDetail.addLedgerEntry(negativelyBilledEntry);
                 negativelyBilledEntry.setBillingMessage(BillingSession.SUCCESS);
+                System.out.println("Updated the delivery document id on the billing ledger record for negatively billed sample " +
+                                   productOrderSample.getBusinessKey() +
+                                   " on PDO " + productOrderSample.getProductOrder().getBusinessKey() +
+                                   " where the quote work item is " + quoteServerWorkItem + " to be set to " +
+                                   deliveryDocument + ".  Also set the billing message to 'Billed Successfully' and "
+                                   + "associated the billing ledger with the SAP order " +
+                                   sapOrderDetail.getSapOrderNumber());
             }
         }
     }
