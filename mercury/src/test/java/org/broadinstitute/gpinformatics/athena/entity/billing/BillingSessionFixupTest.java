@@ -30,6 +30,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -219,5 +220,38 @@ public class BillingSessionFixupTest extends Arquillian {
         ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
 
         ledgerEntryDao.persist(new FixupCommentary("GPLIM-5653: Associate SAP Delivery Document with negatively billed ledger entry."));
+    }
+
+
+    private void updateNegativeLedgerItemsWithDeliveryDocument(String deliveryDocument, String pdoKey,
+                                                              String quoteServerWorkItem) {
+        Set<LedgerEntry> negativelyBilledEntries = findNegativelyBilledEntriesByOrder(Collections.singletonList(pdoKey));
+
+        assertThat(negativelyBilledEntries.size(), equalTo(1));
+
+        LedgerEntry ledgerEntry = negativelyBilledEntries.iterator().next();
+
+        assertThat(ledgerEntry.getWorkItem(), equalTo(quoteServerWorkItem));
+        assertThat(ledgerEntry.getSapDeliveryDocumentId(), nullValue());
+        ledgerEntry.setSapDeliveryDocumentId(deliveryDocument);
+        ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+    }
+
+    @Test(enabled = false)
+    public void gplim5729UpdateDeliveryDocuments() throws Exception {
+
+        userBean.loginOSUser();
+
+        String pdoKey = "PDO-15708";
+
+        Set<Pair<String, String>> deliveriesAndWorkItem = new HashSet<>();
+        deliveriesAndWorkItem.add(Pair.of("0200003890", "291070"));
+        deliveriesAndWorkItem.add(Pair.of("0200003889", "291069"));
+
+        for (Pair<String, String> stringStringPair : deliveriesAndWorkItem) {
+            updateNegativeLedgerItemsWithDeliveryDocument(stringStringPair.getLeft(), pdoKey, stringStringPair.getRight());
+        }
+
+         ledgerEntryDao.persist(new FixupCommentary("GPLIM-5729: Associate SAP Delivery Document with negatively billed ledger entries for PDO-15708"));
     }
 }
