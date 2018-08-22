@@ -30,7 +30,6 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +38,7 @@ import java.util.stream.Collectors;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.FIXUP)
@@ -227,14 +227,16 @@ public class BillingSessionFixupTest extends Arquillian {
                                                               String quoteServerWorkItem) {
         Set<LedgerEntry> negativelyBilledEntries = findNegativelyBilledEntriesByOrder(Collections.singletonList(pdoKey));
 
-        assertThat(negativelyBilledEntries.size(), equalTo(1));
+        assertThat(negativelyBilledEntries.size(), greaterThan(0));
 
-        LedgerEntry ledgerEntry = negativelyBilledEntries.iterator().next();
-
-        assertThat(ledgerEntry.getWorkItem(), equalTo(quoteServerWorkItem));
-        assertThat(ledgerEntry.getSapDeliveryDocumentId(), nullValue());
-        ledgerEntry.setSapDeliveryDocumentId(deliveryDocument);
-        ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+        for (LedgerEntry negativelyBilledEntry : negativelyBilledEntries) {
+            if(StringUtils.equals(negativelyBilledEntry.getWorkItem(), quoteServerWorkItem)) {
+                assertThat(negativelyBilledEntry.getSapDeliveryDocumentId(), nullValue());
+                negativelyBilledEntry.setSapDeliveryDocumentId(deliveryDocument);
+                negativelyBilledEntry.getProductOrderSample().getProductOrder().latestSapOrderDetail().addLedgerEntry(negativelyBilledEntry);
+                negativelyBilledEntry.setBillingMessage(BillingSession.SUCCESS);
+            }
+        }
     }
 
     @Test(enabled = false)
@@ -244,12 +246,12 @@ public class BillingSessionFixupTest extends Arquillian {
 
         String pdoKey = "PDO-15708";
 
-        Set<Pair<String, String>> deliveriesAndWorkItem = new HashSet<>();
-        deliveriesAndWorkItem.add(Pair.of("0200003890", "291070"));
-        deliveriesAndWorkItem.add(Pair.of("0200003889", "291069"));
+        Map<String, String> deliveriesAndWorkItem = new HashMap<>();
+        deliveriesAndWorkItem.put("291070", "0200003890");
+        deliveriesAndWorkItem.put("291069", "0200003889");
 
-        for (Pair<String, String> stringStringPair : deliveriesAndWorkItem) {
-            updateNegativeLedgerItemsWithDeliveryDocument(stringStringPair.getLeft(), pdoKey, stringStringPair.getRight());
+        for (Map.Entry<String, String> stringStringPair : deliveriesAndWorkItem.entrySet()) {
+            updateNegativeLedgerItemsWithDeliveryDocument(stringStringPair.getValue(), pdoKey, stringStringPair.getKey());
         }
 
          ledgerEntryDao.persist(new FixupCommentary("GPLIM-5729: Associate SAP Delivery Document with negatively billed ledger entries for PDO-15708"));
