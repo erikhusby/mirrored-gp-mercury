@@ -274,4 +274,5 @@ public class SearchContext {
         WEB,  // Apply optional UI output formatting expression
         TEXT  // Raw text (default)
     }
+
 }
