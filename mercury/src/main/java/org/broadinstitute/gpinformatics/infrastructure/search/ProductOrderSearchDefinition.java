@@ -36,6 +36,17 @@ import java.util.stream.Collectors;
  */
 public class ProductOrderSearchDefinition {
 
+    public static final String BILLING_RELATED_INFO_COLUMN = "Billing Related Info";
+    public static final String PRODUCTS_COLUMN_HEADER = "Product(s)";
+    public static final String QUOTE_IDENTIFIER_COLUMN_HEADER = "Quote Identifier";
+    public static final String SUBMITTER_NAME_COLUMN_HEADER = "Product Order Submitter Name";
+    public static final String ORDER_STATUS_COLUMN_HEADER = "Order Status";
+    public static final String RESEARCH_PROJECT_COLUMN_HEADER = "Research Project";
+    public static final String LCSETS_COLUMN_HEADER = "LCSET(s)";
+    public static final String PDO_TICKET_COLUMN_HEADER = "PDO Ticket";
+    public static final String PRODUCT_ORDER_SAMPLES_COLUMN_HEADER = "Product Order Sample(s)";
+    public static final String SAP_ORDER_ID_COLUMN_HEADER = "SAP Order Id";
+
     public ConfigurableSearchDefinition buildSearchDefinition() {
         ProductOrderSearchDefinition searchDefinition = new ProductOrderSearchDefinition();
         Map<String, List<SearchTerm>>
@@ -118,7 +129,7 @@ public class ProductOrderSearchDefinition {
         // tabular form
         SearchTerm billingDisplayTerm = new SearchTerm();
 
-        billingDisplayTerm.setName("Billing Related Info");
+        billingDisplayTerm.setName(BILLING_RELATED_INFO_COLUMN);
         billingDisplayTerm.setIsNestedParent(Boolean.TRUE);
         billingDisplayTerm.setPluginClass(ProductOrderBillingPlugin.class);
         billingDisplayTerm.setHelpText("Selecting this \"column\" will actually result in a tabular display listed "
@@ -204,7 +215,7 @@ public class ProductOrderSearchDefinition {
 
         // Defines the search term that will control the product result column for any found PDOs
         SearchTerm productDisplayTerm = new SearchTerm();
-        productDisplayTerm.setName("Product(s)");
+        productDisplayTerm.setName(PRODUCTS_COLUMN_HEADER);
         // Customize how the product info is displayed and return a list of the display info.  This method is used for
         // both UI output and download
         productDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -252,7 +263,7 @@ public class ProductOrderSearchDefinition {
 
         // For searching by quotes, and displaying quotes
         SearchTerm quoteTerm = new SearchTerm();
-        quoteTerm.setName("Quote Identifier");
+        quoteTerm.setName(QUOTE_IDENTIFIER_COLUMN_HEADER);
         SearchTerm.CriteriaPath quoteCriteraPath = new SearchTerm.CriteriaPath();
         quoteCriteraPath.setPropertyName("quoteId");
         quoteCriteraPath.setCriteria(Arrays.asList("OrderQuote"));
@@ -296,7 +307,7 @@ public class ProductOrderSearchDefinition {
         // Similar to the above search term, this one deals with the owner of the PDO.  This search term however
         // is defined to just display the column for the user
         SearchTerm userIdDisplayTerm = new SearchTerm();
-        userIdDisplayTerm.setName("Product Order Submitter Name");
+        userIdDisplayTerm.setName(SUBMITTER_NAME_COLUMN_HEADER);
         userIdDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -313,7 +324,7 @@ public class ProductOrderSearchDefinition {
 
         // Defines the search terms to find PDOs by the order status with which they are associated
         SearchTerm pdoStatusTerm = new SearchTerm();
-        pdoStatusTerm.setName("Order Status");
+        pdoStatusTerm.setName(ORDER_STATUS_COLUMN_HEADER);
         pdoStatusTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, SearchContext context) {
@@ -359,7 +370,7 @@ public class ProductOrderSearchDefinition {
 
         // Display only search term for showing the research project with which the found product order is associated
         SearchTerm researchProjectDisplayTerm = new SearchTerm();
-        researchProjectDisplayTerm.setName("Research Project");
+        researchProjectDisplayTerm.setName(RESEARCH_PROJECT_COLUMN_HEADER);
         researchProjectDisplayTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -382,7 +393,7 @@ public class ProductOrderSearchDefinition {
         // Defines the search term to find product orders by a given set of LCSETs which were created with samples
         // of which the product order is created
         SearchTerm lcsetTerm = new SearchTerm();
-        lcsetTerm.setName("LCSET(s)");
+        lcsetTerm.setName(LCSETS_COLUMN_HEADER);
         lcsetTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
 
         SearchTerm.CriteriaPath lcsetVesselPath = new SearchTerm.CriteriaPath();
@@ -459,7 +470,7 @@ public class ProductOrderSearchDefinition {
 
         // Defines the Search term to find and display the product order by a given set of product order JIRA tickets
         SearchTerm pdoJiraTicketTerm = new SearchTerm();
-        pdoJiraTicketTerm.setName("PDO Ticket");
+        pdoJiraTicketTerm.setName(PDO_TICKET_COLUMN_HEADER);
         //Necessary for displaying this field in the results
         pdoJiraTicketTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         pdoJiraTicketTerm.setIsDefaultResultColumn(Boolean.TRUE);
@@ -517,7 +528,7 @@ public class ProductOrderSearchDefinition {
 
         // Defines the search term to find product orders by the sample name of samples with which they are defined
         SearchTerm sampleTerm = new SearchTerm();
-        sampleTerm.setName("Product Order Sample(s)");
+        sampleTerm.setName(PRODUCT_ORDER_SAMPLES_COLUMN_HEADER);
         SearchTerm.CriteriaPath sampleCriteriaPath = new SearchTerm.CriteriaPath();
         sampleCriteriaPath.setPropertyName("sampleName");
         sampleCriteriaPath.setCriteria(Arrays.asList("PDOSamples", "samples"));
@@ -550,7 +561,7 @@ public class ProductOrderSearchDefinition {
 
         // Defines the search term for finding product orders by the SAP order with which they are associated.
         SearchTerm sapOrderTerm = new SearchTerm();
-        sapOrderTerm.setName("SAP Order Id");
+        sapOrderTerm.setName(SAP_ORDER_ID_COLUMN_HEADER);
         SearchTerm.CriteriaPath sapCriteriaPath = new SearchTerm.CriteriaPath();
         sapCriteriaPath.setPropertyName("sapOrderNumber");
         sapCriteriaPath.setCriteria(Arrays.asList("SAPOrders", "sapReferenceOrders"));
