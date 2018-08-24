@@ -724,14 +724,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             return criteria;
         }
 
-        /**
-         * Set the criteria path which defines how to navigate to the entity for which this search term is defined.
-         *
-         * @param criteria Ordered list of strings that together makes a path which defines how to navigate from the
-         *                 entity with which the criteria is associated to the target entity for which the criteria is
-         *                 defined.  First String element in the list should be a Label to which the defined search
-         *                 criteria will be associated
-         */
         public void setCriteria(List<String> criteria) {
             this.criteria = criteria;
         }
