@@ -81,13 +81,12 @@ public class FingerprintResource {
     @Inject
     private UserBean userBean;
 
-    /*
-    The lsids from the pipeline are sequencing aliquots, so we need to find the associated fingerprinting aliquot(s).
-    Prior to this code being deployed to production, all Fluidigm fingerprints are backfilled to their associated
-    MercurySamples.  However, the BSP transfers that made these plates are not in Mercury, so we have to call
-    getExportedSamplesFromAliquots.
+    /**
+     * The lsids from the pipeline are sequencing aliquots, so we need to find the associated fingerprinting aliquot(s).
+     * Prior to this code being deployed to production, all Fluidigm fingerprints are backfilled to their associated
+     * MercurySamples.  However, the BSP transfers that made these plates are not in Mercury, so we have to call
+     * getExportedSamplesFromAliquots.
      */
-
     @GET
     @Path("/query")
     @Produces(MediaType.APPLICATION_JSON)
@@ -307,7 +306,7 @@ public class FingerprintResource {
             }
         }
 
-        // todo jmt check concordance
+        // todo jmt check concordance - comment out to avoid dependency on picard-private?
         if (false) {
             List<DownloadGenotypes.GapGetGenotypesResult> gapResults = new ArrayList<>();
             for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
