@@ -295,13 +295,15 @@ public class FingerprintResource {
         }
         if (fingerprintBean.getCalls() != null) {
             for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
-                Snp snp = snpList.getMapRsIdToSnp().get(fingerprintCallsBean.getRsid());
-                if (snp == null) {
-                    throw new ResourceException("Snp not found: " + fingerprintCallsBean.getRsid(),
-                            Response.Status.BAD_REQUEST);
+                if (fingerprintCallsBean != null) {
+                    Snp snp = snpList.getMapRsIdToSnp().get(fingerprintCallsBean.getRsid());
+                    if (snp == null) {
+                        throw new ResourceException("Snp not found: " + fingerprintCallsBean.getRsid(),
+                                Response.Status.BAD_REQUEST);
+                    }
+                    fingerprint.addFpGenotype(new FpGenotype(fingerprint, snp, fingerprintCallsBean.getGenotype(),
+                            new BigDecimal(fingerprintCallsBean.getCallConfidence())));
                 }
-                fingerprint.addFpGenotype(new FpGenotype(fingerprint, snp, fingerprintCallsBean.getGenotype(),
-                        new BigDecimal(fingerprintCallsBean.getCallConfidence())));
             }
         }
 

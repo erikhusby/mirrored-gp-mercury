@@ -17,12 +17,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Builds ConfigurableSearchDefinition for mercury sample user defined search logic
@@ -361,13 +363,14 @@ public class MercurySampleSearchDefinition {
             @Override
             public Object evaluate(Object entity, SearchContext context) {
                 MercurySample mercurySample = (MercurySample) entity;
-                return mercurySample.getFingerprints();
+                return mercurySample.getFingerprints().stream().sorted(
+                        Comparator.comparing(Fingerprint::getDateGenerated)).collect(Collectors.toList());
             }
         });
         searchTerms.add(parentSearchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Data Generated");
+        searchTerm.setName("Date Generated");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, SearchContext context) {
@@ -386,7 +389,9 @@ public class MercurySampleSearchDefinition {
                 List<FpGenotype> fpGenotypesOrdered = fingerprint.getFpGenotypesOrdered();
                 StringBuilder genotype = new StringBuilder(fpGenotypesOrdered.size() * 2);
                 for (FpGenotype fpGenotype : fpGenotypesOrdered) {
-                    genotype.append(fpGenotype.getGenotype());
+                    if (fpGenotype != null) {
+                        genotype.append(fpGenotype.getGenotype());
+                    }
                 }
                 return genotype.toString();
             }
