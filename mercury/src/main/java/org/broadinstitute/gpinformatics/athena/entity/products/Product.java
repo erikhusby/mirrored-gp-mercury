@@ -60,60 +60,50 @@ import java.util.Set;
         uniqueConstraints = @UniqueConstraint(columnNames = "PART_NUMBER"))
 public class Product implements BusinessObject, Serializable, Comparable<Product> {
 
+    private static final long serialVersionUID = 4859861191078406439L;
+
+    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
+
     public static final boolean TOP_LEVEL_PRODUCT = true;
+
     public static final String SUPPORTS_SKIPPING_QUOTE = "supportsSkippingQuote";
+
     /** The part number for the sample initiation product. */
     public static final String SAMPLE_INITIATION_PART_NUMBER = "P-ESH-0001";
     public static final String EXOME_EXPRESS_V2_PART_NUMBER = "P-EX-0007";
     public static final String EXOME_EXPRESS = "Exome Express";
     public static final String EXOME = "Exome";
     public static final String INFINIUM = "Infinium";
-    public static final String DEFAULT_WORKFLOW_NAME = "";
-    public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
-    private static final long serialVersionUID = 4859861191078406439L;
-    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
-    @Transient
-    public static Comparator<Product> BY_PRODUCT_NAME = new Comparator<Product>() {
-        @Override
-        public int compare(Product product, Product anotherProduct) {
-            return product.getName().compareTo(anotherProduct.getName());
-        }
-    };
-    @Transient
-    public static Comparator<Product> BY_FAMILY_THEN_PRODUCT_NAME = new Comparator<Product>() {
-        @Override
-        public int compare(Product product, Product anotherProduct) {
-            int compare = product.getProductFamily().getName().compareTo(anotherProduct.getProductFamily().getName());
-            if (compare!=0){
-                return compare;
-            }
-            return BY_PRODUCT_NAME.compare(product, anotherProduct);
-        }
-    };
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "athena", name = "PRODUCT_ADD_ONS"
-            , joinColumns = {@JoinColumn(name = "PRODUCT")}
-            , inverseJoinColumns = {@JoinColumn(name = "ADD_ONS")})
-    private final Set<Product> addOns = new HashSet<>();
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT")
     private Long productId;
+
     @Column(name = "PRODUCT_NAME", length = 255)
     private String productName;
+
     @Column(name = "ALTERNATE_EXTERNAL_NAME", length = 255)
     private String alternateExternalName;
+
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
     @JoinColumn(name="PRODUCT_FAMILY")
     private ProductFamily productFamily;
+
     @Column(name = "DESCRIPTION", length = 2000)
     private String description;
+
     @Column(name = "AGGREGATION_DATA_TYPE", length = 200)
     private String aggregationDataType;
+
+
     @Column(name = "ANALYSIS_TYPE_KEY", nullable = true, length = 200)
     private String analysisTypeKey;
+
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
+
+
     @Column(name = "PART_NUMBER")
     private String partNumber;
     private Date availabilityDate;
@@ -122,45 +112,73 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private Integer guaranteedCycleTimeSeconds;
     private Integer samplesPerWeek;
     private Integer minimumOrderSize;
+
     @Column(length = 2000)
     private String inputRequirements;
+
     @Column(length = 2000)
     private String deliverables;
+
     private Integer readLength;
     private Integer insertSize;
     private BigDecimal loadingConcentration;
     private Boolean pairedEndRead;
+
     /**
      * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
      * performance hit of looking for Mercury quants in Products that don't have them.
      */
     @Column(name = "EXPECT_INIT_QUANT_IN_MERCURY")
     private Boolean expectInitialQuantInMercury = false;
+
     /**
      * Whether this Product should show as a top-level product in the Product list or for Product Order creation/edit.
      **/
     private boolean topLevelProduct;
+
     /**
      * Primary price item for the product.
      */
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     @JoinColumn(name="PRIMARY_PRICE_ITEM")
     private PriceItem primaryPriceItem;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     @JoinColumn(name = "EXTERNAL_PRICE_ITEM")
     private PriceItem externalPriceItem;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinTable(schema = "athena", name = "PRODUCT_ADD_ONS"
+            , joinColumns = {@JoinColumn(name = "PRODUCT")}
+            , inverseJoinColumns = {@JoinColumn(name = "ADD_ONS")})
+    private final Set<Product> addOns = new HashSet<>();
+
     // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.
     private String workflowName;
+
     private boolean pdmOrderableOnly;
+
     // This is used for edit to keep track of changes to the object.
     // TODO MLC We should review whether this is still needed in Stripes, it was added to deal with JSF lifecycle issues.
     @Transient
     private String originalPartNumber;
+
+    public static final String DEFAULT_WORKFLOW_NAME = "";
+    public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
+
     @Transient
     private SAPMaterial sapMaterial;
+
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalPartNumber = partNumber;
+    }
+
     // True if this product/add-on supports automated billing.
     @Column(name = "USE_AUTOMATED_BILLING", nullable = false)
     private boolean useAutomatedBilling;
+
     /** To determine if this product can be billed, the following criteria must be true. */
     // Note that for now, there will only be one requirement. We use OneToMany to allow for lazy loading of the
     // requirement.
@@ -168,68 +186,32 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinColumn(name = "product", nullable = false)
     @AuditJoinTable(name = "product_requirement_join_aud")
     private List<BillingRequirement> requirements;
+
     // The onRisk criteria that are associated with the Product. When creating new, default to empty list.
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "product", nullable = true)
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
     private List<RiskCriterion> riskCriteria = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
     @JoinColumn(name = "POSITIVE_CONTROL_RP_ID")
     private ResearchProject positiveControlResearchProject;
+
     @Column(name ="EXTERNAL_ONLY_PRODUCT")
     private Boolean externalOnlyProduct = false;
+
     @Column(name = "SAVED_IN_SAP")
     private Boolean savedInSAP = false;
+
     @Column(name="CLINICAL_ONLY_PRODUCT")
     private Boolean clinicalProduct = false;
+
     @Column(name = "ANALYZE_UMI")
     private Boolean analyzeUmi = false;
+
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @BatchSize(size = 20)
     private List<ProductOrder> productOrders = new ArrayList<>();
-
-    /**
-     * Default no-arg constructor, also used when creating a new Product.
-     */
-    public Product() {}
-
-    public Product(boolean topLevelProduct) {
-        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, Workflow.NONE, false, null);
-    }
-
-    public Product(String productName,
-                   ProductFamily productFamily,
-                   String description,
-                   String partNumber,
-                   Date availabilityDate,
-                   Date discontinuedDate,
-                   Integer expectedCycleTimeSeconds,
-                   Integer guaranteedCycleTimeSeconds,
-                   Integer samplesPerWeek,
-                   Integer minimumOrderSize,
-                   String inputRequirements,
-                   String deliverables,
-                   boolean topLevelProduct,
-                   @Nonnull Workflow workflow,
-                   boolean pdmOrderableOnly,
-                   String aggregationDataType) {
-        this.productName = productName;
-        this.productFamily = productFamily;
-        this.description = description;
-        this.partNumber = partNumber;
-        this.availabilityDate = availabilityDate;
-        this.discontinuedDate = discontinuedDate;
-        this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
-        this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
-        this.samplesPerWeek = samplesPerWeek;
-        this.minimumOrderSize = minimumOrderSize;
-        this.inputRequirements = inputRequirements;
-        this.deliverables = deliverables;
-        this.topLevelProduct = topLevelProduct;
-        workflowName = workflow.getWorkflowName();
-        this.pdmOrderableOnly = pdmOrderableOnly;
-        this.aggregationDataType = aggregationDataType;
-    }
 
     /**
      * Helper method to allow the quick creation of a new Product based on the contents of an existing product
@@ -281,33 +263,46 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     /**
-     * Converts cycle times from days to seconds.
-     *
-     * @return the number of seconds.
+     * Default no-arg constructor, also used when creating a new Product.
      */
-    public static int convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
-        return (cycleTimeDays == null) ? 0 : cycleTimeDays * ONE_DAY_IN_SECONDS;
+    public Product() {}
+
+    public Product(boolean topLevelProduct) {
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, Workflow.NONE, false, null);
     }
 
-    /**
-     * Converts cycle times from seconds to days. This method rounds down to the nearest day.
-     *
-     * @param cycleTimeSeconds The cycle time in seconds/
-     *
-     * @return the number of days.
-     */
-    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
-        Integer cycleTimeDays = null;
-        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
-            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
-        }
-        return cycleTimeDays;
-    }
-
-    // Initialize our transient data after the object has been loaded from the database.
-    @PostLoad
-    private void initialize() {
-        originalPartNumber = partNumber;
+    public Product(String productName,
+                   ProductFamily productFamily,
+                   String description,
+                   String partNumber,
+                   Date availabilityDate,
+                   Date discontinuedDate,
+                   Integer expectedCycleTimeSeconds,
+                   Integer guaranteedCycleTimeSeconds,
+                   Integer samplesPerWeek,
+                   Integer minimumOrderSize,
+                   String inputRequirements,
+                   String deliverables,
+                   boolean topLevelProduct,
+                   @Nonnull Workflow workflow,
+                   boolean pdmOrderableOnly,
+                   String aggregationDataType) {
+        this.productName = productName;
+        this.productFamily = productFamily;
+        this.description = description;
+        this.partNumber = partNumber;
+        this.availabilityDate = availabilityDate;
+        this.discontinuedDate = discontinuedDate;
+        this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
+        this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
+        this.samplesPerWeek = samplesPerWeek;
+        this.minimumOrderSize = minimumOrderSize;
+        this.inputRequirements = inputRequirements;
+        this.deliverables = deliverables;
+        this.topLevelProduct = topLevelProduct;
+        workflowName = workflow.getWorkflowName();
+        this.pdmOrderableOnly = pdmOrderableOnly;
+        this.aggregationDataType = aggregationDataType;
     }
 
     public Long getProductId() {
@@ -316,10 +311,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public String getProductName() {
         return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
     }
 
     @Override
@@ -331,16 +322,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return productFamily;
     }
 
-    public void setProductFamily(ProductFamily productFamily) {
-        this.productFamily = productFamily;
-    }
-
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public String getPartNumber() {
@@ -355,56 +338,28 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return availabilityDate;
     }
 
-    public void setAvailabilityDate(Date availabilityDate) {
-        this.availabilityDate = availabilityDate;
-    }
-
     public Date getDiscontinuedDate() {
         return discontinuedDate;
-    }
-
-    public void setDiscontinuedDate(Date discontinuedDate) {
-        this.discontinuedDate = discontinuedDate;
     }
 
     public Integer getExpectedCycleTimeSeconds() {
         return expectedCycleTimeSeconds;
     }
 
-    public void setExpectedCycleTimeSeconds(Integer expectedCycleTimeSeconds) {
-        this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
-    }
-
     public Integer getGuaranteedCycleTimeSeconds() {
         return guaranteedCycleTimeSeconds;
-    }
-
-    public void setGuaranteedCycleTimeSeconds(Integer guaranteedCycleTimeSeconds) {
-        this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
     }
 
     public Integer getSamplesPerWeek() {
         return samplesPerWeek;
     }
 
-    public void setSamplesPerWeek(Integer samplesPerWeek) {
-        this.samplesPerWeek = samplesPerWeek;
-    }
-
     public String getInputRequirements() {
         return inputRequirements;
     }
 
-    public void setInputRequirements(String inputRequirements) {
-        this.inputRequirements = inputRequirements;
-    }
-
     public String getDeliverables() {
         return deliverables;
-    }
-
-    public void setDeliverables(String deliverables) {
-        this.deliverables = deliverables;
     }
 
     @Nullable
@@ -452,10 +407,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return topLevelProduct;
     }
 
-    public void setTopLevelProduct(boolean topLevelProduct) {
-        this.topLevelProduct = topLevelProduct;
-    }
-
     public PriceItem getPrimaryPriceItem() {
         return primaryPriceItem;
     }
@@ -464,12 +415,60 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.primaryPriceItem = primaryPriceItem;
     }
 
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public void setProductFamily(ProductFamily productFamily) {
+        this.productFamily = productFamily;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setAvailabilityDate(Date availabilityDate) {
+        this.availabilityDate = availabilityDate;
+    }
+
+    public void setDiscontinuedDate(Date discontinuedDate) {
+        this.discontinuedDate = discontinuedDate;
+    }
+
+    public void setExpectedCycleTimeSeconds(Integer expectedCycleTimeSeconds) {
+        this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
+    }
+
+    public void setGuaranteedCycleTimeSeconds(Integer guaranteedCycleTimeSeconds) {
+        this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
+    }
+
+    public void setSamplesPerWeek(Integer samplesPerWeek) {
+        this.samplesPerWeek = samplesPerWeek;
+    }
+
     public Integer getMinimumOrderSize() {
         return minimumOrderSize;
     }
 
     public void setMinimumOrderSize(Integer minimumOrderSize) {
         this.minimumOrderSize = minimumOrderSize;
+    }
+
+    public void setInputRequirements(String inputRequirements) {
+        this.inputRequirements = inputRequirements;
+    }
+
+    public void setDeliverables(String deliverables) {
+        this.deliverables = deliverables;
+    }
+
+    public void setTopLevelProduct(boolean topLevelProduct) {
+        this.topLevelProduct = topLevelProduct;
+    }
+
+    public void setWorkflow(@Nonnull Workflow workflow) {
+        workflowName = workflow.getWorkflowName();
     }
 
     public Set<Product> getAddOns() {
@@ -501,10 +500,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Nonnull
     public Workflow getWorkflow() {
         return Workflow.findByName(workflowName);
-    }
-
-    public void setWorkflow(@Nonnull Workflow workflow) {
-        workflowName = workflow.getWorkflowName();
     }
 
     public String getAnalysisTypeKey() {
@@ -652,7 +647,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public Integer getExpectedCycleTimeDays() {
         return convertCycleTimeSecondsToDays(getExpectedCycleTimeSeconds()) ;
     }
-
     public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
         setExpectedCycleTimeSeconds(convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
@@ -660,9 +654,32 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public Integer getGuaranteedCycleTimeDays() {
         return convertCycleTimeSecondsToDays(getGuaranteedCycleTimeSeconds()) ;
     }
-
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
         setGuaranteedCycleTimeSeconds(convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+    }
+
+    /**
+     * Converts cycle times from days to seconds.
+     *
+     * @return the number of seconds.
+     */
+    public static int convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
+        return (cycleTimeDays == null) ? 0 : cycleTimeDays * ONE_DAY_IN_SECONDS;
+    }
+
+    /**
+     * Converts cycle times from seconds to days. This method rounds down to the nearest day.
+     *
+     * @param cycleTimeSeconds The cycle time in seconds/
+     *
+     * @return the number of days.
+     */
+    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
+        Integer cycleTimeDays = null;
+        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
+            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
+        }
+        return cycleTimeDays;
     }
 
     public String getProductLabel() {
@@ -685,6 +702,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public String getOriginalPartNumber() {
         return originalPartNumber;
     }
+
 
     public String getDisplayName() {
         return productName + " - " + partNumber;
@@ -814,6 +832,25 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return getPartNumber().startsWith("XT");
     }
 
+    @Transient
+    public static Comparator<Product> BY_PRODUCT_NAME = new Comparator<Product>() {
+        @Override
+        public int compare(Product product, Product anotherProduct) {
+            return product.getName().compareTo(anotherProduct.getName());
+        }
+    };
+    @Transient
+    public static Comparator<Product> BY_FAMILY_THEN_PRODUCT_NAME = new Comparator<Product>() {
+        @Override
+        public int compare(Product product, Product anotherProduct) {
+            int compare = product.getProductFamily().getName().compareTo(anotherProduct.getProductFamily().getName());
+            if (compare!=0){
+                return compare;
+            }
+            return BY_PRODUCT_NAME.compare(product, anotherProduct);
+        }
+    };
+
     /**
      * @return Whether this is an exome express product or not.
      */
@@ -866,12 +903,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.externalPriceItem = externalPriceItem;
     }
 
-    public boolean isClinicalProduct() {
-        return clinicalProduct;
-    }
-
     public void setClinicalProduct(boolean clinicalProduct) {
         this.clinicalProduct = clinicalProduct;
+    }
+
+    public boolean isClinicalProduct() {
+        return clinicalProduct;
     }
 
     public Boolean getAnalyzeUmi() {
@@ -892,12 +929,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return configuration;
     }
 
-    public SAPMaterial getSapMaterial() {
-        return sapMaterial;
-    }
-
     public void setSapMaterial(SAPMaterial sapMaterial) {
         this.sapMaterial = sapMaterial;
+    }
+
+    public SAPMaterial getSapMaterial() {
+        return sapMaterial;
     }
 
     public String getSapClinicalCharge() {
