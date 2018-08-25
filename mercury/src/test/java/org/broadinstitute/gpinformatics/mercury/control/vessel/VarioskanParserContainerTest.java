@@ -245,7 +245,7 @@ public class VarioskanParserContainerTest extends Arquillian {
                 .join(messageCollection.getWarnings(), ","));
         Assert.assertNotNull(triple.getLeft());
         // For each sample, expects one metric for each microflour well plus a metric for the average.
-        int metricCount = numSamples * 4;
+        int metricCount = 35; //5 NaNs in HS should be skipped so not the full 40
         Set<LabMetric> labMetrics = triple.getLeft().getLabMetrics();
         Assert.assertEquals(triple.getLeft().getLabMetrics().size(), metricCount);
     }

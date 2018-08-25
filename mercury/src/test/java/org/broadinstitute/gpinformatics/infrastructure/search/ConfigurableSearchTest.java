@@ -397,6 +397,39 @@ public class ConfigurableSearchTest extends Arquillian {
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000016825709");
     }
 
+    /**
+     * Tests LabVesselLatestPositionPlugin using one tube prior to implementation of event transfer ancillary vessels,
+     *   and the other after implementation.
+     * Hopefully both old enough and/or discarded so they're never used again in newer workflows.
+     */
+    @Test
+    public void testVesselPositionPlugin(){
+        SearchInstance searchInstance = new SearchInstance();
+        String entity = ColumnEntity.LAB_VESSEL.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
+
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Barcode", configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.IN);
+
+        searchValue.setValues(Arrays.asList("0157493754","0175362315"));
+
+        searchInstance.getPredefinedViewColumns().add("Barcode");
+        searchInstance.getPredefinedViewColumns().add("Most Recent Rack and Event");
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);
+        List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
+        Assert.assertEquals(resultRows.size(), 2);
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "0157493754");
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(1), "000006677301");
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(2), "A06");
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(3), "Hybridization, 03/03/2014, Cassie Crawford");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "0175362315");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000003038103");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(2), "E09");
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(3), "FingerprintingPlateSetup, 10/29/2014, Michael Wilson");
+    }
+
     @Test
     public void testViewOnlyProductOrderType() throws Exception {
 
@@ -499,7 +532,7 @@ public class ConfigurableSearchTest extends Arquillian {
     }
 
     private void testSearch(SearchInstance searchInstance, String productOrderEntityName,
-                           ConfigurableSearchDefinition configurableSearchDefinition) {
+                            ConfigurableSearchDefinition configurableSearchDefinition) {
         ConfigurableListFactory.FirstPageResults pageResults =
                 configurableListFactory.getFirstResultsPage(searchInstance, configurableSearchDefinition,
                         null, 1, null, "ASC",

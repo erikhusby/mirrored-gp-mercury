@@ -17,6 +17,7 @@ import javax.enterprise.inject.Alternative;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BioProjectServiceDownTest {
@@ -77,7 +78,7 @@ public class BioProjectServiceDownTest {
         }
 
         @Override
-        public List<SubmissionTracker> findOrphans(Collection<SubmissionTracker> submissionTrackers) {
+        public List<SubmissionTracker> findOrphans(Map<String, SubmissionTracker> submissionTrackerMap) {
             return Collections.emptyList();
         }
     }
