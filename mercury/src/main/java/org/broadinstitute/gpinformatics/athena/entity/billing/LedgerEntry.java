@@ -24,6 +24,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Optional;
 
 /**
  * This handles the billing ledger items for product order samples
@@ -122,15 +123,15 @@ public class LedgerEntry implements Serializable {
         this.autoLedgerTimestamp = autoLedgerTimestamp;
     }
 
-    public PriceItem getPriceItem() {
-        return priceItem;
-    }
-
     /**
      * Should only be used by test code
      */
     public void setPriceItem(PriceItem priceItem) {
         this.priceItem = priceItem;
+    }
+
+    public PriceItem getPriceItem() {
+        return priceItem;
     }
 
     public double getQuantity() {
@@ -278,19 +279,17 @@ public class LedgerEntry implements Serializable {
     }
 
     public Date getBucketDate() {
-        Date bucketDate = null;
-        if(billingSession != null) {
-            bucketDate = billingSession.getBucketDate(workCompleteDate);
-        }
-        return bucketDate;
-    }
+        Optional<Date> bucketDate = Optional.ofNullable(billingSession.getBucketDate(workCompleteDate));
 
-    public SapOrderDetail getSapOrderDetail() {
-        return sapOrderDetail;
+        return bucketDate.orElse(null);
     }
 
     public void setSapOrderDetail(SapOrderDetail sapOrderDetail) {
         this.sapOrderDetail = sapOrderDetail;
+    }
+
+    public SapOrderDetail getSapOrderDetail() {
+        return sapOrderDetail;
     }
 
     /**
