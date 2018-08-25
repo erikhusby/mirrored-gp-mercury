@@ -157,6 +157,33 @@ public class ConfigurableListFactory {
         }
     }
 
+    // todo jmt merge with ColumnSetsPreference?
+    public static class ColumnSet {
+        private final PreferenceType.PreferenceScope level;
+
+        private final String name;
+
+        private final List<String> columns;
+
+        ColumnSet(PreferenceType.PreferenceScope level, String name, List<String> columns) {
+            this.level = level;
+            this.name = name;
+            this.columns = columns;
+        }
+
+        public PreferenceType.PreferenceScope getLevel() {
+            return level;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public List<String> getColumns() {
+            return columns;
+        }
+    }
+
     /**
      * Gets a list of all column sets that apply to the current user, project and group,
      * including the global sets.
@@ -201,6 +228,69 @@ public class ConfigurableListFactory {
         }
 */
         return columnSets;
+    }
+
+    /**
+     * Pick the column sets that are visible to the user.
+     *
+     * @param columnSetType     view or download
+     * @param visibleColumnSets this method adds visible column sets to this list
+     * @param preference        all column sets
+     * @param domain            preference level
+     * @param bspDomainUser     used to evaluate visibility expression
+     * @param group             used to evaluate visibility expression
+     */
+/*
+    private static void evalVisibilityExpression(ColumnSetType columnSetType, List<ColumnSet> visibleColumnSets,
+            Preference preference, PreferenceDomain.domain domain,
+            BspDomainUser bspDomainUser, Group group) {
+        PreferenceDefinitionListNameListString listNameListString;
+        if (preference != null) {
+            listNameListString = (PreferenceDefinitionListNameListString) preference.getPreferenceDefinition();
+            if (listNameListString != null) {
+                Map<String, Object> context = new HashMap<>();
+                context.put(SearchDefinitionFactory.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
+                context.put("bspDomainUser", bspDomainUser);
+                context.put("group", group);
+                for (PreferenceDefinitionNameListString nameListString : listNameListString.getListNamedList()) {
+                    List<String> columns = nameListString.getList();
+                    Boolean useSet = false;
+                    try {
+                        useSet = (Boolean) MVEL.eval(columns.get(0), context);
+                    } catch (Exception e) {
+                        log.error(String.format("Evaluating expression %s : %s", columns.get(0), e));
+                    }
+                    if (useSet) {
+                        // remove visibility expression.
+                        visibleColumnSets.add(new ColumnSet(domain, nameListString.getName(), columns.subList(1,
+                                columns.size())));
+                    }
+                }
+            }
+        }
+    }
+*/
+
+    /**
+     * Allows multiple returns from method.
+     */
+    public static class FirstPageResults {
+        private ConfigurableList.ResultList resultList;
+        private PaginationUtil.Pagination pagination;
+
+        public FirstPageResults(ConfigurableList.ResultList resultList,
+                PaginationUtil.Pagination pagination) {
+            this.resultList = resultList;
+            this.pagination = pagination;
+        }
+
+        public ConfigurableList.ResultList getResultList() {
+            return resultList;
+        }
+
+        public PaginationUtil.Pagination getPagination() {
+            return pagination;
+        }
     }
 
     /**
@@ -287,47 +377,6 @@ public class ConfigurableListFactory {
 
         return new FirstPageResults(resultList, pagination);
     }
-
-    /**
-     * Pick the column sets that are visible to the user.
-     *
-     * @param columnSetType     view or download
-     * @param visibleColumnSets this method adds visible column sets to this list
-     * @param preference        all column sets
-     * @param domain            preference level
-     * @param bspDomainUser     used to evaluate visibility expression
-     * @param group             used to evaluate visibility expression
-     */
-/*
-    private static void evalVisibilityExpression(ColumnSetType columnSetType, List<ColumnSet> visibleColumnSets,
-            Preference preference, PreferenceDomain.domain domain,
-            BspDomainUser bspDomainUser, Group group) {
-        PreferenceDefinitionListNameListString listNameListString;
-        if (preference != null) {
-            listNameListString = (PreferenceDefinitionListNameListString) preference.getPreferenceDefinition();
-            if (listNameListString != null) {
-                Map<String, Object> context = new HashMap<>();
-                context.put(SearchDefinitionFactory.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
-                context.put("bspDomainUser", bspDomainUser);
-                context.put("group", group);
-                for (PreferenceDefinitionNameListString nameListString : listNameListString.getListNamedList()) {
-                    List<String> columns = nameListString.getList();
-                    Boolean useSet = false;
-                    try {
-                        useSet = (Boolean) MVEL.eval(columns.get(0), context);
-                    } catch (Exception e) {
-                        log.error(String.format("Evaluating expression %s : %s", columns.get(0), e));
-                    }
-                    if (useSet) {
-                        // remove visibility expression.
-                        visibleColumnSets.add(new ColumnSet(domain, nameListString.getName(), columns.subList(1,
-                                columns.size())));
-                    }
-                }
-            }
-        }
-    }
-*/
 
     @Nonnull
     public PaginationUtil.Pagination getPagination(SearchInstance searchInstance,
@@ -435,54 +484,5 @@ public class ConfigurableListFactory {
         evalContext.setPriceListCache(priceListCache);
         evalContext.setQuoteLink(quoteLink);
         return evalContext;
-    }
-
-    // todo jmt merge with ColumnSetsPreference?
-    public static class ColumnSet {
-        private final PreferenceType.PreferenceScope level;
-
-        private final String name;
-
-        private final List<String> columns;
-
-        ColumnSet(PreferenceType.PreferenceScope level, String name, List<String> columns) {
-            this.level = level;
-            this.name = name;
-            this.columns = columns;
-        }
-
-        public PreferenceType.PreferenceScope getLevel() {
-            return level;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public List<String> getColumns() {
-            return columns;
-        }
-    }
-
-    /**
-     * Allows multiple returns from method.
-     */
-    public static class FirstPageResults {
-        private ConfigurableList.ResultList resultList;
-        private PaginationUtil.Pagination pagination;
-
-        public FirstPageResults(ConfigurableList.ResultList resultList,
-                PaginationUtil.Pagination pagination) {
-            this.resultList = resultList;
-            this.pagination = pagination;
-        }
-
-        public ConfigurableList.ResultList getResultList() {
-            return resultList;
-        }
-
-        public PaginationUtil.Pagination getPagination() {
-            return pagination;
-        }
     }
 }

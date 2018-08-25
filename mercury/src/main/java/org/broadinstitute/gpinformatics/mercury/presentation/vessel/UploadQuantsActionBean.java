@@ -65,10 +65,28 @@ import java.util.stream.Collectors;
 public class UploadQuantsActionBean extends CoreActionBean {
 
     public static final String ENTITY_NAME = "LabMetric";
+
+    public enum QuantFormat {
+        VARIOSKAN("Varioskan"),
+        WALLAC("Wallac"),
+        CALIPER("Caliper"),
+        GENERIC("Generic");
+
+        private String displayName;
+
+        QuantFormat(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    private static final String VIEW_PAGE = "/vessel/upload_quants.jsp";
     public static final String UPLOAD_QUANT = "uploadQuant";
     public static final String SAVE_METRICS = "saveMetrics";
-    private static final String VIEW_PAGE = "/vessel/upload_quants.jsp";
-    private static final int STRING_LIMIT = 255;
+
     @Inject
     private QuantificationEJB quantEJB;
     @Inject
@@ -106,6 +124,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
     /** acceptRePico indicates the user wishes to process the new pico regardless of existing quants. */
     private boolean acceptRePico;
     private ConfigurableList.ResultList resultList;
+
+    private static final int STRING_LIMIT = 255;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -457,23 +477,6 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     public String getDownloadColumnSets() {
         return null;
-    }
-
-    public enum QuantFormat {
-        VARIOSKAN("Varioskan"),
-        WALLAC("Wallac"),
-        CALIPER("Caliper"),
-        GENERIC("Generic");
-
-        private String displayName;
-
-        QuantFormat(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
     }
 
 }

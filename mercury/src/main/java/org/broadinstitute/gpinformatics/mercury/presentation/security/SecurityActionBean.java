@@ -24,10 +24,14 @@ import javax.servlet.http.HttpServletRequest;
  */
 @UrlBinding("/security/security.action")
 public class SecurityActionBean extends CoreActionBean {
-    public static final String LOGIN_ACTION = "/security/security.action";
-    public static final String HOME_PAGE = "/index.jsp";
-    public static final String LOGIN_PAGE = "/security/login.jsp";
     private static final Log logger = LogFactory.getLog(SecurityActionBean.class);
+
+    public static final String LOGIN_ACTION = "/security/security.action";
+
+    public static final String HOME_PAGE = "/index.jsp";
+
+    public static final String LOGIN_PAGE = "/security/login.jsp";
+
     @Validate(required = true, on = {"signIn"})
     private String username;
 
@@ -144,12 +148,6 @@ public class SecurityActionBean extends CoreActionBean {
         OTHER("/index.jsp", null);
 
         private static final String APP_CONTEXT = "/Mercury"; // getContext().getRequest().getContextPath();
-        public final String landingPage;
-        public final Role role;
-        private UserRole(String landingPage, Role role) {
-            this.landingPage = landingPage;
-            this.role = role;
-        }
 
         public static UserRole fromUserBean(UserBean userBean) {
             for (UserRole userRole : values()) {
@@ -158,6 +156,14 @@ public class SecurityActionBean extends CoreActionBean {
                 }
             }
             return OTHER;
+        }
+
+        public final String landingPage;
+        public final Role role;
+
+        private UserRole(String landingPage, Role role) {
+            this.landingPage = landingPage;
+            this.role = role;
         }
 
         private String checkUrlForRoleRedirect(String targetPage) {

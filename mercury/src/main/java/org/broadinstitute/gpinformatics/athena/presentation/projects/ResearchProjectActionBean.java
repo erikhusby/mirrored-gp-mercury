@@ -93,71 +93,93 @@ import java.util.Set;
 @SuppressWarnings("unused")
 @UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean implements ValidationErrorHandler {
+    private static final Log log = LogFactory.getLog(ResearchProjectActionBean.class);
+
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
     public static final String RESEARCH_PROJECT_TAB_PARAMETER = "rpSelectedTab";
+    private static final String LIBRARY_DESCRIPTOR_PARAMETER = "selectedSubmissionLibraryDescriptor";
+    private static final String REPOSITORY_PARAMETER = "selectedSubmissionRepository";
     public static final String SUBMISSION_TUPLES_PARAMETER = "selectedSubmissionTuples";
     public static final String RESEARCH_PROJECT_ORDERS_TAB = "ordersTab";
     public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "submissionsTab";
+
+    private static final String PROJECT = "Research Project";
+    public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
+    public static final String EDIT_PROJECT = CoreActionBean.EDIT + PROJECT;
+
     public static final String REMOVE_REGULATORY_INFO_ACTION = "removeRegulatoryInfo";
     public static final String VIEW_SUBMISSIONS_ACTION = "viewSubmissions";
     public static final String POST_SUBMISSIONS_ACTION = "postSubmissions";
     public static final String GET_SUBMISSION_STATUSES_ACTION = "getSubmissionStatuses";
+
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
     public static final String PROJECT_SUBMISSIONS_PAGE = "/projects/submissions.jsp";
     public static final String BIOPROJECT_PARAMETER = "bioProjectTokenInput.listOfKeys";
+    static final String SUBMISSIONS_UNAVAILABLE = "Submissions are temporarily unavailable.";
+    public boolean supressValidationErrors;
+    private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
+
+    private static final String RESEND_INVITATION_ACTION = "resendInvitation";
+
+    // Reference sequence that will be used for Exome projects.
+    private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
     public static final String SESSION_SAMPLES_KEY = "SUBMISSIONS";
     public static final String STRIPES_WARNING = "warning";
     public static final String STRIPES_ERRORS = "error";
     public static final String STRIPES_MESSAGES_KEY = "stripesMessages";
     public static final String STRIPES_MESSAGE_TYPE = "messageType";
-    public static final TypeReference<List<SubmissionDto>> SUBMISSION_SAMPLES_TYPE_REFERENCE =
-            new TypeReference<List<SubmissionDto>>() {
-            };
-    static final String SUBMISSIONS_UNAVAILABLE = "Submissions are temporarily unavailable.";
-    private static final Log log = LogFactory.getLog(ResearchProjectActionBean.class);
-    private static final String LIBRARY_DESCRIPTOR_PARAMETER = "selectedSubmissionLibraryDescriptor";
-    private static final String REPOSITORY_PARAMETER = "selectedSubmissionRepository";
-    private static final String PROJECT = "Research Project";
-    public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
-    public static final String EDIT_PROJECT = CoreActionBean.EDIT + PROJECT;
-    private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
-    private static final String RESEND_INVITATION_ACTION = "resendInvitation";
-    // Reference sequence that will be used for Exome projects.
-    private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
-    public boolean supressValidationErrors;
+
     private ResearchProjectDao researchProjectDao;
+
     private BSPUserList bspUserList;
+
     private BSPCohortList cohortList;
+
     private ProjectTokenInput projectTokenInput;
+
     private BioProjectTokenInput bioProjectTokenInput;
+
     private SubmissionsService submissionsService;
+
     private List<SubmissionRepository> submissionRepositories=new ArrayList<>();
+
     private List<SubmissionLibraryDescriptor> submissionLibraryDescriptors=new ArrayList<>();
+
     private SubmissionLibraryDescriptor submissionLibraryDescriptor;
+
     private SubmissionRepository submissionRepository;
+
     private String selectedSubmissionLibraryDescriptor;
     private String selectedSubmissionRepository;
+
     private RegulatoryInfoEjb regulatoryInfoEjb;
+
     private SubmissionDtoFetcher submissionDtoFetcher;
+
     private OrspProjectDao orspProjectDao;
+
     /**
      * The research project business key
      */
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, BEGIN_COLLABORATION_ACTION})
     private String researchProject;
+
     private Long selectedCollaborator;
     private String specifiedCollaborator;
     private String collaborationMessage;
+
     @Validate(required = true, on = {BEGIN_COLLABORATION_ACTION})
     private String collaborationQuoteId;
+
     /**
      * This defines where kits will be sent for orders placed from the collaboration portal.
      */
     @Validate(required = true, on = BEGIN_COLLABORATION_ACTION)
     private SampleKitRecipient sampleKitRecipient = SampleKitRecipient.COLLABORATOR;
+
     @ValidateNestedProperties({
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
             @Validate(field = "synopsis", label = "Synopsis", required = true, maxlength = 4000, on = {SAVE_ACTION}),
@@ -166,66 +188,37 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             @Validate(field = "regulatoryDesignation", label = "Regulatory Designation", required = true, on = {SAVE_ACTION})
     })
     private ResearchProject editResearchProject;
+
     private List<SubmissionDto> submissionSamples = new ArrayList<>();
     /*
      * The search query.
      */
     private String q;
+
     private Long regulatoryInfoId;
+
     /**
      * All research projects, fetched once and stored per-request (as a result of this bean being @RequestScoped).
      */
     private List<ResearchProject> allResearchProjects;
+
     /**
      * On demand counts of orders on the project. Map of business key to count value.
      */
     private Map<String, Long> projectOrderCounts;
+
     @Validate(converter = SubmissionTupleTypeConverter.class)
     private List<SubmissionTuple> selectedSubmissionTuples=new ArrayList<>();
+
     private AlignerDao alignerDao;
+
     private SessionCache<List<SubmissionDto>> sessionCache;
+    public static final TypeReference<List<SubmissionDto>> SUBMISSION_SAMPLES_TYPE_REFERENCE =
+            new TypeReference<List<SubmissionDto>>() {
+            };
     private Boolean submissionsServiceAvailable=null;
 
     private QuoteService quoteService;
-    private Map<String, String> bioSamples=new HashMap<>();
-    @ValidateNestedProperties(
-            @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
-    )
-
-    private UserTokenInput projectManagerList;
-    private UserTokenInput scientistList;
-    private UserTokenInput externalCollaboratorList;
-    private UserTokenInput broadPiList;
-    private UserTokenInput otherUserList;
-    private FundingTokenInput fundingSourceList;
-    private CohortTokenInput cohortsList;
-    private ProductOrderDao productOrderDao;
-    private ResearchProjectEjb researchProjectEjb;
-    private CollaborationService collaborationService;
-    private ReferenceSequenceDao referenceSequenceDao;
-    private String irbList;
-    private CompletionStatusFetcher progressFetcher;
-    private CollaborationData collaborationData;
-    private boolean validCollaborationPortal;
-    private String rpSelectedTab = RESEARCH_PROJECT_ORDERS_TAB;
-    private BioProjectList bioProjectList;
-
-    public ResearchProjectActionBean() {
-        super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
-    }
-
-    public static String getAutoCompleteJsonString(Collection<ResearchProject> projects) throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (ResearchProject project : projects) {
-            itemList.put(TokenInput.getJSONObject(project.getBusinessKey(), project.getTitle()));
-        }
-
-        return itemList.toString();
-    }
-
-    public static boolean isEditAllowed(UserBean userBean) {
-        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser() || userBean.isGPPMUser();
-    }
 
     public Map<String, String> getBioSamples() {
         return bioSamples;
@@ -233,6 +226,50 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     public void setBioSamples(Map<String, String> bioSamples) {
         this.bioSamples = bioSamples;
+    }
+
+    private Map<String, String> bioSamples=new HashMap<>();
+
+    @ValidateNestedProperties(
+            @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
+    )
+
+    private UserTokenInput projectManagerList;
+
+    private UserTokenInput scientistList;
+
+    private UserTokenInput externalCollaboratorList;
+
+    private UserTokenInput broadPiList;
+
+    private UserTokenInput otherUserList;
+
+    private FundingTokenInput fundingSourceList;
+
+    private CohortTokenInput cohortsList;
+
+    private ProductOrderDao productOrderDao;
+
+    private ResearchProjectEjb researchProjectEjb;
+
+    private CollaborationService collaborationService;
+
+    private ReferenceSequenceDao referenceSequenceDao;
+
+    private String irbList;
+
+    private CompletionStatusFetcher progressFetcher;
+
+    private CollaborationData collaborationData;
+
+    private boolean validCollaborationPortal;
+
+    private String rpSelectedTab = RESEARCH_PROJECT_ORDERS_TAB;
+
+    private BioProjectList bioProjectList;
+
+    public ResearchProjectActionBean() {
+        super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
     }
 
     /**
@@ -611,10 +648,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return editResearchProject;
     }
 
-    void setEditResearchProject(ResearchProject editResearchProject) {
-        this.editResearchProject = editResearchProject;
-    }
-
     public String getCohortsListString() {
         return cohortList.getCohortListString(editResearchProject.getCohortIds());
     }
@@ -626,6 +659,15 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
 
         return StringUtils.join(fundingIds, ", ");
+    }
+
+    public static String getAutoCompleteJsonString(Collection<ResearchProject> projects) throws JSONException {
+        JSONArray itemList = new JSONArray();
+        for (ResearchProject project : projects) {
+            itemList.put(TokenInput.getJSONObject(project.getBusinessKey(), project.getTitle()));
+        }
+
+        return itemList.toString();
     }
 
     // Autocomplete events for streaming in the appropriate data. Using project manager list (token input) but can use any one for this
@@ -879,7 +921,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         sessionCache.put(researchProject, submissionSamples);
     }
 
-    // Complete Data getters are for the prepopulates on the create.jsp
 
     /**
      * Handles a users request to submit samples to the submissions serverice
@@ -989,6 +1030,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
         sessionCache.put(researchProject, submissionSamples);
     }
+
+    // Complete Data getters are for the prepopulates on the create.jsp
 
     public String getIrbsCompleteData() throws Exception {
         return IrbConverter.getIrbCompleteData(editResearchProject.getIrbNumbers());
@@ -1105,11 +1148,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return projectTokenInput;
     }
 
-    @Inject
-    public void setProjectTokenInput(ProjectTokenInput projectTokenInput) {
-        this.projectTokenInput = projectTokenInput;
-    }
-
     /**
      * Get the list of available sequence aligners.
      *
@@ -1165,6 +1203,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public boolean isEditAllowed() {
         UserBean userBean = getUserBean();
         return isEditAllowed(userBean);
+    }
+
+    public static boolean isEditAllowed(UserBean userBean) {
+        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser() || userBean.isGPPMUser();
     }
 
     public CollaborationData getCollaborationData() {
@@ -1318,6 +1360,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         this.selectedSubmissionRepository = selectedSubmissionRepository;
     }
 
+
     public Collection<SubmissionRepository> getActiveRepositories() {
         return Collections2.filter(getSubmissionRepositories(), SubmissionRepository.activeRepositoryPredicate);
     }
@@ -1347,6 +1390,11 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         } else {
             return StringUtils.join(getFormattedErrors(), "<br/>");
         }
+    }
+
+    @Inject
+    public void setProjectTokenInput(ProjectTokenInput projectTokenInput) {
+        this.projectTokenInput = projectTokenInput;
     }
 
     @Inject
@@ -1392,6 +1440,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     @Inject
     public void setCollaborationService(CollaborationService collaborationService) {
         this.collaborationService = collaborationService;
+    }
+
+    void setEditResearchProject(ResearchProject editResearchProject) {
+        this.editResearchProject = editResearchProject;
     }
 
     @Inject

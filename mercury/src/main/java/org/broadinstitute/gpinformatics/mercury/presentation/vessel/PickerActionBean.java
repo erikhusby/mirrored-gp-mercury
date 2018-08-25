@@ -44,14 +44,34 @@ import java.util.logging.Logger;
 public class PickerActionBean extends CoreActionBean {
 
     public static final String ENTITY_NAME = "labVessel";
-    public static final String ACTION_BEAN_URL = "/vessel/picker.action";
+
+    public enum SearchType {
+        LAB_BATCH("Lab Batch"),
+        LAB_VESSEL_BARCODE("Lab Vessel Barcodes");
+        private String displayName;
+
+        SearchType(String displayName) {
+
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
     private static final Logger logger = Logger.getLogger(PickerActionBean.class.getName());
+
+    public static final String ACTION_BEAN_URL = "/vessel/picker.action";
     private static final String VIEW_PAGE = "/vessel/create_picker_csv.jsp";
     private static final String SEARCH_ACTION = "search";
+
     @Inject
     private LabBatchDao labBatchDao;
+
     @Inject
     private LabVesselDao labVesselDao;
+
     @Inject
     private BSPUserList bspUserList;
     @Inject
@@ -62,9 +82,13 @@ public class PickerActionBean extends CoreActionBean {
     private QuoteLink quoteLink;
     @Validate(required = true, on = {SEARCH_ACTION})
     private String barcodes;
+
     private ConfigurableList.ResultList resultList;
+
     private SearchType searchType;
+
     private Set<String> storageLocations;
+
     private Set<String> unpickableBarcodes;
 
     @DefaultHandler
@@ -249,20 +273,5 @@ public class PickerActionBean extends CoreActionBean {
 
     public void setBspUserList(BSPUserList bspUserList) {
         this.bspUserList = bspUserList;
-    }
-
-    public enum SearchType {
-        LAB_BATCH("Lab Batch"),
-        LAB_VESSEL_BARCODE("Lab Vessel Barcodes");
-        private String displayName;
-
-        SearchType(String displayName) {
-
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
     }
 }

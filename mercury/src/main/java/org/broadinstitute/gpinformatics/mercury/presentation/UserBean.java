@@ -26,36 +26,39 @@ import java.util.EnumSet;
 // FIXME: properly support serialization; need to add readResolve() method that calls ensureUserValid().
 @SessionScoped
 public class UserBean implements Serializable {
-    public static final String LOGIN_WARNING = "Your account needs to connect to JIRA and BSP before you can {0}.  " +
-                                               "The application is currently having problems reaching at least one " +
-                                               "of them, please try again later.";
-    public static final BspUser UNKNOWN = new BspUser() {{
-        setUserId(-1L);
-        setUsername("");
-    }};
     private static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
     private static final Log log = LogFactory.getLog(UserBean.class);
+
     /**
      * Prefix for CRSP roles. This is added to regular mercury roles; you can map from one to the other by adding
      * or removing it.
      */
     private static final String CRSP_ROLE_PREFIX = "CRSP-";
+
+    public static final String LOGIN_WARNING = "Your account needs to connect to JIRA and BSP before you can {0}.  " +
+                                               "The application is currently having problems reaching at least one " +
+                                               "of them, please try again later.";
     private static final String PRODINFO_USER = "prodinfo";
-    private final EnumSet<Role> roles = EnumSet.noneOf(Role.class);
+
+    private BspUser bspUser;
+
     @Inject
     BSPConfig bspConfig;
+
     @Inject
     JiraConfig jiraConfig;
-    private BspUser bspUser;
+
     @Inject
     private BSPUserList bspUserList;
+
     @Inject
     private JiraService jiraService;
+
+    public static final BspUser UNKNOWN = new BspUser() {{
+        setUserId(-1L);
+        setUsername("");
+    }};
     private boolean GPPMUser;
-    private ServerStatus bspStatus = ServerStatus.notLoggedIn;
-    private ServerStatus jiraStatus = ServerStatus.notLoggedIn;
-    private String jiraUsername;
-    private String loginUserName;
 
     private boolean isTestUser() {
         return bspUserList.isTestUser(bspUser);
@@ -75,6 +78,55 @@ public class UserBean implements Serializable {
         }
         return false;
     }
+
+    public enum ServerStatus {
+        down("text-error", "Cannot connect to {0} Server: ''{1}''"),
+        loggedIn("text-success", "Logged into {0} as ''{2}''"),
+        notLoggedIn("text-warning", "Not a {0} User",
+                "You do not have an account on the {0} server, which is needed to use this application. "
+                + "Please contact {3} to fix this problem.");
+
+        /** The CSS class used to display the status text. */
+        private final String cssClass;
+
+        /** A short message used to show the status of this server in a tooltip. */
+        private final String statusFormat;
+
+        /** A longer message used to show the status of this server. */
+        private final String messageFormat;
+
+        private String formatStatus(String serviceName, String host, String username) {
+            return MessageFormat.format(statusFormat, serviceName, host, username, "");
+        }
+
+        private String formatMessage(String serviceName, String host, String username) {
+            return MessageFormat.format(messageFormat, serviceName, host, username, SUPPORT_EMAIL);
+        }
+
+        ServerStatus(String cssClass, String statusFormat) {
+            this(cssClass, statusFormat, statusFormat);
+        }
+
+
+        ServerStatus(String cssClass, String statusFormat, String messageFormat) {
+            this.cssClass = cssClass;
+            this.statusFormat = statusFormat;
+            this.messageFormat = messageFormat;
+        }
+
+        public boolean isValid() {
+            return this == loggedIn;
+        }
+    }
+
+    private ServerStatus bspStatus = ServerStatus.notLoggedIn;
+    private ServerStatus jiraStatus = ServerStatus.notLoggedIn;
+
+    private String jiraUsername;
+
+    private final EnumSet<Role> roles = EnumSet.noneOf(Role.class);
+
+    private String loginUserName;
 
     public Collection<Role> getRoles() {
         return ImmutableSet.copyOf(roles);
@@ -280,45 +332,6 @@ public class UserBean implements Serializable {
             return "No Roles";
         }
         return "Roles: " + StringUtils.join(roles, ", ");
-    }
-
-    public enum ServerStatus {
-        down("text-error", "Cannot connect to {0} Server: ''{1}''"),
-        loggedIn("text-success", "Logged into {0} as ''{2}''"),
-        notLoggedIn("text-warning", "Not a {0} User",
-                "You do not have an account on the {0} server, which is needed to use this application. "
-                + "Please contact {3} to fix this problem.");
-
-        /** The CSS class used to display the status text. */
-        private final String cssClass;
-
-        /** A short message used to show the status of this server in a tooltip. */
-        private final String statusFormat;
-
-        /** A longer message used to show the status of this server. */
-        private final String messageFormat;
-
-        ServerStatus(String cssClass, String statusFormat) {
-            this(cssClass, statusFormat, statusFormat);
-        }
-
-        ServerStatus(String cssClass, String statusFormat, String messageFormat) {
-            this.cssClass = cssClass;
-            this.statusFormat = statusFormat;
-            this.messageFormat = messageFormat;
-        }
-
-        private String formatStatus(String serviceName, String host, String username) {
-            return MessageFormat.format(statusFormat, serviceName, host, username, "");
-        }
-
-        private String formatMessage(String serviceName, String host, String username) {
-            return MessageFormat.format(messageFormat, serviceName, host, username, SUPPORT_EMAIL);
-        }
-
-        public boolean isValid() {
-            return this == loggedIn;
-        }
     }
 }
 
