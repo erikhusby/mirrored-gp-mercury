@@ -70,28 +70,6 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
     @Inject
     private QuoteLink quoteLink;
-
-    /**
-     * Convert a resultList to a spreadsheet, and stream it to the browser
-     *
-     * @param resultList result columns the user requested
-     * @return streamed Excel spreadsheet
-     */
-    private static Resolution streamResultList(ConfigurableList.ResultList resultList) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            SpreadsheetCreator.createSpreadsheet("Sample Info", resultList.getAsArray(), out);
-        } catch (IOException ioEx) {
-            log.error("Failed to create spreadsheet");
-            throw new RuntimeException(ioEx);
-        }
-
-        StreamingResolution stream = new StreamingResolution(StreamCreatedSpreadsheetUtil.XLS_MIME_TYPE,
-                new ByteArrayInputStream(out.toByteArray()));
-        stream.setFilename(SPREADSHEET_FILENAME);
-        return stream;
-    }
-
     /**
      * Stream an Excel spreadsheet, from a list of IDs
      *
@@ -201,6 +179,28 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
         Object[][] data = configurableListUtils.getResultList(false).getAsArray();
         return StreamCreatedSpreadsheetUtil.streamSpreadsheet(data, SPREADSHEET_FILENAME);
+    }
+
+
+    /**
+     * Convert a resultList to a spreadsheet, and stream it to the browser
+     *
+     * @param resultList result columns the user requested
+     * @return streamed Excel spreadsheet
+     */
+    private static Resolution streamResultList(ConfigurableList.ResultList resultList) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            SpreadsheetCreator.createSpreadsheet("Sample Info", resultList.getAsArray(), out);
+        } catch (IOException ioEx) {
+            log.error("Failed to create spreadsheet");
+            throw new RuntimeException(ioEx);
+        }
+
+        StreamingResolution stream = new StreamingResolution(StreamCreatedSpreadsheetUtil.XLS_MIME_TYPE,
+                new ByteArrayInputStream(out.toByteArray()));
+        stream.setFilename(SPREADSHEET_FILENAME);
+        return stream;
     }
 
     public String getDownloadColumnSetName() {

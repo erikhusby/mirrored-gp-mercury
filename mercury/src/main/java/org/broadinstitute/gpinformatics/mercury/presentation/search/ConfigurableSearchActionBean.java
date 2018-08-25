@@ -63,17 +63,21 @@ import java.util.Random;
 @UrlBinding("/search/ConfigurableSearch.action")
 public class ConfigurableSearchActionBean extends CoreActionBean {
 
+    private static final Log log = LogFactory.getLog(ConfigurableSearchActionBean.class);
+
     /**
      * Prefix for search instance session key
      */
     public static final String SEARCH_INSTANCE_PREFIX = "searchInstance_";
+
     /**
      * Prefix for pagination session key
      */
     public static final String PAGINATION_PREFIX = "pagination_";
+
     public static final String RACK_SCAN_PAGE_TITLE = "Rack Scan Barcodes";
     public static final String DRILL_DOWN_EVENT = "drillDown";
-    private static final Log log = LogFactory.getLog(ConfigurableSearchActionBean.class);
+
     /**
      * The definition from which the user will create the search
      */

@@ -21,6 +21,12 @@ import java.util.Map;
  */
 public class SearchContext {
 
+    // Need to know what to put in cells at rendering stage at ColumnTabulation#evalFormattedExpression(...)
+    public enum ResultCellTargetPlatform {
+        WEB,  // Apply optional UI output formatting expression
+        TEXT  // Raw text (default)
+    }
+
     private BSPUserList bspUserList;
     // Not used:  columnSetType
     private SearchInstance.SearchValue searchValue;
@@ -224,17 +230,17 @@ public class SearchContext {
     }
 
     /**
-     * Gets a copy of result column parameter values for use in generating output header and value
-     */
-    public ResultParamValues getColumnParams(){
-        return columnParams;
-    }
-
-    /**
      * Sets a copy of result column parameter values for use in generating output header and value
      */
     public void setColumnParams( ResultParamValues columnParams ) {
         this.columnParams = columnParams;
+    }
+
+    /**
+     * Gets a copy of result column parameter values for use in generating output header and value
+     */
+    public ResultParamValues getColumnParams(){
+        return columnParams;
     }
 
     public UserBean getUserBean() {
@@ -268,11 +274,4 @@ public class SearchContext {
     public void setQuoteLink(QuoteLink quoteLink) {
         this.quoteLink = quoteLink;
     }
-
-    // Need to know what to put in cells at rendering stage at ColumnTabulation#evalFormattedExpression(...)
-    public enum ResultCellTargetPlatform {
-        WEB,  // Apply optional UI output formatting expression
-        TEXT  // Raw text (default)
-    }
-
 }
