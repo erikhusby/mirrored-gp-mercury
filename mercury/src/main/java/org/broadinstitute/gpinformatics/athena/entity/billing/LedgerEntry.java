@@ -24,7 +24,6 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Optional;
 
 /**
  * This handles the billing ledger items for product order samples
@@ -279,10 +278,11 @@ public class LedgerEntry implements Serializable {
     }
 
     public Date getBucketDate() {
-        Optional<Date> bucketDate = Optional.ofNullable(billingSession.getBucketDate(workCompleteDate));
-
-        return bucketDate.orElse(null);
-    }
+        Date bucketDate = null;
+        if(billingSession != null) {
+            bucketDate = billingSession.getBucketDate(workCompleteDate);
+        }
+        return bucketDate;    }
 
     public void setSapOrderDetail(SapOrderDetail sapOrderDetail) {
         this.sapOrderDetail = sapOrderDetail;
