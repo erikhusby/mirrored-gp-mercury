@@ -195,7 +195,6 @@ public class UserBean implements Serializable {
     public void loginFinanceUser() {
         loginVisitor("QAFinance", Role.FinanceViewer);
     }
-    private final EnumSet<Role> roles = EnumSet.noneOf(Role.class);
 
     /**
      * Logs in as the current OS user.
