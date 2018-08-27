@@ -14,10 +14,12 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 import com.rits.cloning.Cloner;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleInfo;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
@@ -38,6 +40,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -58,6 +61,8 @@ import java.util.stream.Collectors;
 @Dependent
 public class BSPRestSender implements Serializable {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
+    public static final String BSP_CREATE_DISSASSOC_PLATE_URL = "plate/createDisassociatedPlate";
+    public static final String BSP_CONTAINER_URL = "container/getSampleInfo";
     public static final String BSP_UPLOAD_QUANT_URL = "quant/upload";
     public static final String BSP_KIT_REST_URL = "kit";
     public static final String BSP_CONTAINER_UPDATE_LAYOUT = "container/updateLayout";
@@ -301,6 +306,43 @@ public class BSPRestSender implements Serializable {
             String msg = "POST to " + urlString + " returned: " + response.getEntity(String.class);
             logger.error(msg);
             throw new RuntimeException(msg);
+        }
+    }
+
+    /**
+     * Register a new Plate in BSP
+     * @param receptacleType - Receptacle type to create
+     * @param wellType - Types off wells to be created for plate
+     * @return - Container ID of the newly created plate
+     */
+    public String createDisassociatedPlate(String receptacleType, String wellType) {
+        String urlString = bspRestClient.getUrl(BSP_CREATE_DISSASSOC_PLATE_URL);
+        WebResource webResource = bspRestClient.getWebResource(urlString);
+
+        MultivaluedMap formData = new MultivaluedMapImpl();
+        formData.add("receptacleType", receptacleType);
+        formData.add("wellType", wellType);
+
+        // Posts message to BSP using the specified REST url.
+        ClientResponse response = webResource.type(MediaType.APPLICATION_FORM_URLENCODED).post(ClientResponse.class, formData);
+
+        // This is called in context of bettalims message handling which handles errors via RuntimeException.
+        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
+        } else {
+            return response.getEntity(String.class);
+        }
+    }
+
+    public GetSampleInfo.SampleInfos  getSampleInfo(String containerBarcode) {
+        String urlString = bspRestClient.getUrl(BSP_CONTAINER_URL);
+        WebResource webResource = bspRestClient.getWebResource(urlString).queryParam("containerBarcode", containerBarcode);
+        ClientResponse response = webResource.get(ClientResponse.class);
+        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            logger.warn("Failed to find container info for " + containerBarcode);
+            return null;
+        } else {
+            return response.getEntity(GetSampleInfo.SampleInfos.class);
         }
     }
 
