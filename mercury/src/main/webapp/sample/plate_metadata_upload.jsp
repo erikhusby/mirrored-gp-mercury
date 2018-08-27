@@ -9,7 +9,15 @@
         <script type="text/javascript">
             $j(document).ready(function () {
                 $j("#accordion").accordion({  collapsible:true, active:false, heightStyle:"content", autoHeight:false});
+
                 $j("#accordion").show();
+
+                $j('.delete_btn').click(function() {
+                    var rowIdx = this.id.split('-')[1];
+                    $j('#vesselList-' + rowIdx).remove();
+                    $j('#headerGroup-' + rowIdx).remove();
+                    $j("#accordion").accordion("refresh");
+                });
             });
         </script>
     </stripes:layout-component>
@@ -44,14 +52,15 @@
                                     <c:forEach items="${actionBean.uploadedPlates}" var="entry" varStatus="status">
                                         <c:set var="barcode" value="${entry.key}"/>
                                         <c:set var="metadata" value="${entry.value}"/>
-                                        <div style="padding-left: 30px;padding-bottom: 2px">
+                                        <div style="padding-left: 30px;padding-bottom: 2px" id="headerGroup-${status.index}">
                                             <div id="headerId" class="fourcolumn" style="padding: 0">
                                                 <div>Plate Label: ${barcode}</div>
                                                 <div>Num. Wells: ${metadata.size()}</div>
+                                                <input class="delete_btn" id="remove-${status.index}" type="button" value="remove" />
                                             </div>
                                         </div>
 
-                                        <div id="vesselList-${barcode}">
+                                        <div id="vesselList-${status.index}">
                                             <div>
                                                 <stripes:layout-render name="/sample/plate_metadata_info_list.jsp" plateWells="${metadata}"
                                                                        barcode="${barcode}" index="${status.index}" bean="${actionBean}"/>
