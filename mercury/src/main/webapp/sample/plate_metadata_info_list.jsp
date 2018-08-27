@@ -37,6 +37,8 @@
             <c:set var="cellPerWellValueIndex" value="${row.findByKeyName('Cells Per Well')}"/>
             <c:set var="collectionDateValueIndex" value="${row.findByKeyName('Collection Date')}"/>
             <c:set var="speciesValueIndex" value="${row.findByKeyName('Species')}"/>
+            <c:set var="positiveControlValueIndex" value="${row.findByKeyName('Positive Control')}"/>
+            <c:set var="negativeControlValueIndex" value="${row.findByKeyName('Negative Control')}"/>
             <tr>
                 <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].metadataBeans[${speciesValueIndex.left}].value"
                                 value="${speciesValueIndex.right.value}"/>
@@ -88,16 +90,19 @@
                                     value="${collectionDateValueIndex.right.key.displayName}"/>
                     ${collectionDateValueIndex.right.value}
                 </td>
+                <td>
+                    <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].metadataBeans[${positiveControlValueIndex.left}].value"
+                                    value="${positiveControlValueIndex.right.value}"/>
+                    <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].metadataBeans[${positiveControlValueIndex.left}].name"
+                                    value="${positiveControlValueIndex.right.key.displayName}"/>
+                        ${positiveControlValueIndex.right.value}
                 </td>
                 <td>
-                    <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].positiveControl"
-                                    value="${row.positiveControl}"/>
-                    ${row.positiveControl}
-                </td>
-                <td>
-                    <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].negativeControl"
-                                    value="${row.negativeControl}"/>
-                        ${row.negativeControl}
+                    <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].metadataBeans[${negativeControlValueIndex.left}].value"
+                                    value="${negativeControlValueIndex.right.value}"/>
+                    <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].metadataBeans[${negativeControlValueIndex.left}].name"
+                                    value="${negativeControlValueIndex.right.key.displayName}"/>
+                        ${negativeControlValueIndex.right.value}
                 </td>
             </tr>
         </c:forEach>

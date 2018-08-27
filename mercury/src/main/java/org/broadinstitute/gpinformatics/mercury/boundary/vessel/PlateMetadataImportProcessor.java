@@ -239,8 +239,10 @@ public class PlateMetadataImportProcessor extends TableProcessor {
                     if (StringUtils.isNotBlank(columnEntry.getValue())) {
                         if (columnEntry.getValue().trim().equalsIgnoreCase("Positive Control")) {
                             positiveControl = true;
+                            metadataList.add(new Metadata(Metadata.Key.POSITIVE_CONTROL, columnEntry.getValue()));
                         } else if (columnEntry.getValue().trim().equalsIgnoreCase("Negative Control")) {
                             negativeControl = true;
+                            metadataList.add(new Metadata(Metadata.Key.NEGATIVE_CONTROL, columnEntry.getValue()));
                         } else {
                             messageCollection.addError(BAD_CONTROL_ERROR + columnEntry.getValue());
                         }
