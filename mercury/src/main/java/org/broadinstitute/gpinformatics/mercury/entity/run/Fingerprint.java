@@ -154,8 +154,7 @@ public class Fingerprint {
     }
 
     @Transient
-    private
-    Map<String, FpGenotype> mapRsIdToFpGenotype;
+    private Map<String, FpGenotype> mapRsIdToFpGenotype;
 
     private Map<String, FpGenotype> getMapRsIdToFpGenotype() {
         if (mapRsIdToFpGenotype == null) {
