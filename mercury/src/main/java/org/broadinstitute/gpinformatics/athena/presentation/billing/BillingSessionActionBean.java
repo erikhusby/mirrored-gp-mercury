@@ -342,7 +342,7 @@ public class BillingSessionActionBean extends CoreActionBean {
             Optional<String> workIdFromURL = Optional.ofNullable(context.getRequest().getParameter(WORK_ITEM_FROM_URL_PARAMETER));
             Optional<String> sapDeliveryId = Optional.ofNullable(context.getRequest().getParameter(SAP_DELIVERY_DOCUMENT_ID_URL_PARAMETER));
             QuoteServerParameters params = null;
-            if (billingSessionFromUrl != null) {
+            if (billingSessionFromUrl.isPresent()) {
                 params = new QuoteServerParameters(billingSessionFromUrl.orElse("")
                         ,workIdFromURL.orElse(""), sapDeliveryId.orElse(""));
             }

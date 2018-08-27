@@ -985,13 +985,4 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         }
         return fee;
     }
-
-    public List<ProductOrder> getProductOrders() {
-        return productOrders;
-    }
-
-    public void setProductOrders(
-            List<ProductOrder> productOrders) {
-        this.productOrders = productOrders;
-    }
 }
