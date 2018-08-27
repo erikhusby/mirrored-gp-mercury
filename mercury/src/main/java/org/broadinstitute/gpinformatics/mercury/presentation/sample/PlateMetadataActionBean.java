@@ -133,7 +133,7 @@ public class PlateMetadataActionBean extends CoreActionBean {
                 Set<ProductOrder> foundProductOrders = new HashSet<>();
                 String barcode = entry.getKey();
                 if (entry.getValue().isEmpty()) {
-                    messageCollection.addError("Failed to find PDO for: {2}", entry.getKey());
+                    messageCollection.addError("Failed to find PDO for: " + entry.getKey());
                 } else {
                     for (ProductOrderSample productOrderSample : entry.getValue()) {
                         foundProductOrders.add(productOrderSample.getProductOrder());
@@ -150,6 +150,11 @@ public class PlateMetadataActionBean extends CoreActionBean {
                         mapPdoToSamples.put(productOrder, entry.getValue());
                     }
                 }
+            }
+
+            if (messageCollection.hasErrors()) {
+                addMessages(messageCollection);
+                return new ForwardResolution(VIEW_PAGE);
             }
 
             Map<ProductOrder, Set<ProductOrderSample>> mapProductOrderToSamplesToRemove = new HashMap<>();
