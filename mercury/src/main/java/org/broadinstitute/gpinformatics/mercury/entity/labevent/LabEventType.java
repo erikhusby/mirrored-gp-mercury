@@ -2145,8 +2145,10 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24).
-                    reagentNames(new String[]{"LX1", "LX2", "EML", "SML", "ATM", "RA1", "XC3", "XC4", "PB1"}).
-                    reagentFieldCounts(new int[]{6, 6, 6, 6, 6, 1, 1, 1, 2}).expirationDateIncluded(false).numEvents(24).
+                    reagentNames(new String[]{"LX1", "LX2", "EML", "SML", "ATM", "RA1", "XC3", "XC4", "PB1", "PB2", "FORM20EDTA25", "ETOH"}).
+                    reagentFieldCounts(new int[]{6, 6, 6, 6, 6, 1, 1, 1, 2, 1, 1, 1}).expirationDateIncluded(false).
+                    reagentFieldExpirationRequired(new String[]{"FORM20EDTA25", "ETOH"})
+                    .expirationDateIncluded(false).numEvents(24).
                     machineNames(new String[]{"Rose", "Lily", "Scrappy"}).build(), LibraryType.NONE_ASSIGNED),
     INFINIUM_AUTOCALL_SOME_STARTED("InfiniumAutocallSomeStarted",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -2606,8 +2608,13 @@ public enum LabEventType {
         /** How many reagent fields for each entry in reagentNames. */
         private int[] reagentFieldCounts;
     
-        /** Map from entries in reagentNames to corresponding entiry in reagentFieldCounts. */
+        /** Map from entries in reagentNames to corresponding entry in reagentFieldCounts. */
         private Map<String, Integer> mapReagentNameToCount;
+
+        /** Entry in reagentNames that require expiration date. */
+        private String[] reagentFieldExpirationRequired = {};
+
+        private Map<String, String> mapReagentNameToExpireDate;
     
         /** Whether to include reagent expiration date fields. */
         private boolean expirationDateIncluded = true;
@@ -2697,6 +2704,7 @@ public enum LabEventType {
             requireSingleParticipant = builder.requireSingleParticipant;
             useWebCam = builder.useWebCam;
             targetWellTypeGeometry = builder.targetWellTypeGeometry;
+            reagentFieldExpirationRequired = builder.reagentFieldExpirationRequired;
         }
 
         public static class Builder {
@@ -2709,6 +2717,7 @@ public enum LabEventType {
             private SBSSection targetSection;
             private String[] reagentNames = {};
             private int[] reagentFieldCounts;
+            private String[] reagentFieldExpirationRequired;
             private boolean expirationDateIncluded = true;
             private int numEvents = 1;
             private String[] machineNames = {};
@@ -2755,6 +2764,11 @@ public enum LabEventType {
 
             public Builder reagentFieldCounts(int[] reagentFieldCounts) {
                 this.reagentFieldCounts = reagentFieldCounts;
+                return this;
+            }
+
+            public Builder reagentFieldExpirationRequired(String[] reagentFieldExpirationRequired) {
+                this. reagentFieldExpirationRequired = reagentFieldExpirationRequired;
                 return this;
             }
 
@@ -3020,6 +3034,23 @@ public enum LabEventType {
 
         public boolean isExpirationDateIncluded() {
             return expirationDateIncluded;
+        }
+
+        public String[] getReagentFieldExpirationRequired() {
+            if (reagentFieldExpirationRequired == null) {
+                reagentFieldExpirationRequired = new String[0];
+            }
+            return reagentFieldExpirationRequired;
+        }
+
+        public Map<String, String> getMapReagentNameToExpireDate() {
+            if (mapReagentNameToExpireDate == null) {
+                mapReagentNameToExpireDate = new HashMap<>();
+                for (int i = 0; i < reagentFieldExpirationRequired.length; i++) {
+                    mapReagentNameToExpireDate.put(reagentFieldExpirationRequired[i], getReagentFieldExpirationRequired()[i]);
+                }
+            }
+            return mapReagentNameToExpireDate;
         }
 
         public LabEventType getSecondaryEvent() {
