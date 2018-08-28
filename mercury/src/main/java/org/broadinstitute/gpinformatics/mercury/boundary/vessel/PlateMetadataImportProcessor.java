@@ -119,14 +119,14 @@ public class PlateMetadataImportProcessor extends TableProcessor {
     public List<RowMetadata> getRowMetadataRecords() throws ValidationException {
         if (columnHeaders == null && rowMetadataRecords.isEmpty()) {
             getMessages().add(EMPTY_FILE_ERROR);
-        } else if (rowMetadataRecords.isEmpty()) {
+        } else if (getMessages().isEmpty() && rowMetadataRecords.isEmpty()) {
             getMessages().add(NO_DATA_ERROR);
         }
 
         Set<String> plateBarcodes = rowMetadataRecords.stream()
                 .map(RowMetadata::getPlateBarcode)
                 .collect(Collectors.toSet());
-        if (plateBarcodes.size() != 1) {
+        if (plateBarcodes.size() > 1) {
             getMessages().add(NON_UNIQUE_BARCODES);
         }
 
