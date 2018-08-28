@@ -1,11 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.TreeMultimap;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
@@ -16,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -29,17 +27,14 @@ import org.testng.annotations.Test;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Test(groups = TestGroups.FIXUP)
 @Dependent
@@ -223,5 +218,17 @@ public class BucketEntryFixupTest extends Arquillian {
                 }
             }
         }
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim5745() throws IOException {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteBucketEntries.txt"));
+        for(int i = 1; i < lines.size(); i++) {
+            BucketEntry bucketEntry = bucketEntryDao.findById(BucketEntry.class, Long.valueOf(lines.get(i)));
+            System.out.println("Deleting bucket entry " + bucketEntry.getBucketEntryId());
+            bucketEntryDao.remove(bucketEntry);
+        }
+        bucketEntryDao.persist(new FixupCommentary(lines.get(0)));
     }
 }
