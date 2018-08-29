@@ -820,7 +820,7 @@
 <%-- ================ Product Order Information ================ --%>
     <div class="row-fluid">
 
-        <div class="span12 page-header">
+        <div class="span12 title-header">
             <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" event="view" class="pull-right">
                 <stripes:param name="productOrder" value="${actionBean.orderId}" />
                 << Return to Product Order
