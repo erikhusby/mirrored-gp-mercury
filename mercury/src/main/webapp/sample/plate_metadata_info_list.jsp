@@ -22,6 +22,7 @@
             <th>Collaborator Participant ID</th>
             <th>Cell Type</th>
             <th>Cells Per Well</th>
+            <th>Species</th>
             <th>Volume</th>
             <th>Collection Date</th>
             <th>Positive Control?</th>
@@ -40,11 +41,6 @@
             <c:set var="positiveControlValueIndex" value="${row.findByKeyName('Positive Control')}"/>
             <c:set var="negativeControlValueIndex" value="${row.findByKeyName('Negative Control')}"/>
             <tr>
-                <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].metadataBeans[${speciesValueIndex.left}].value"
-                                value="${speciesValueIndex.right.value}"/>
-                <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].metadataBeans[${speciesValueIndex.left}].name"
-                                value="${speciesValueIndex.right.key.displayName}"/>
-
                 <td>
                     <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].well" value="${row.well}"/>
                     ${row.well}
@@ -79,8 +75,15 @@
                     ${cellPerWellValueIndex.right.value}
                 </td>
                 <td>
+                    <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].metadataBeans[${speciesValueIndex.left}].value"
+                                    value="${speciesValueIndex.right.value}"/>
+                    <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].metadataBeans[${speciesValueIndex.left}].name"
+                                    value="${speciesValueIndex.right.key.displayName}"/>
+                        ${speciesValueIndex.right.value}
+                </td>
+                <td>
                     <stripes:hidden name="uploadedPlates[${barcode}][${rowStatus.index}].volume"
-                                    value="${cellPerWellValueIndex.right.value}"/>
+                                    value="${row.volume}"/>
                     ${row.volume}
                 </td>
                 <td>
