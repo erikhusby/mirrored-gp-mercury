@@ -29,7 +29,7 @@
     <c:set var="columnHeaderPicoRunDate" value="<%= ProductOrderSampleBean.PICO_RUN_DATE %>"/>
     <c:set var="columnHeaderConcentration" value="<%= ProductOrderSampleBean.CONCENTRATION %>"/>
     <c:set var="columnHeaderMaterialType" value="<%= ProductOrderSampleBean.MATERIAL_TYPE %>"/>
-    <c:set var="columnHeaderRackscanMismatch" value="<%= ProductOrderSampleBean.RACKSCAN_MISMATCH %>"/>
+    <c:set var="columnHeaderRackscanMismatch" value="<%= ProductOrderSampleBean.RACKSCAN_MISMATCH_DETAILS %>"/>
     <c:set var="columnHeaderOnRisk" value="<%= ProductOrderSampleBean.ON_RISK %>"/>
     <c:set var="columnHeaderYieldAmount" value="<%= ProductOrderSampleBean.YIELD_AMOUNT %>"/>
     <c:set var="columnHeaderRin" value="<%= ProductOrderSampleBean.RIN %>"/>
@@ -39,7 +39,7 @@
     <c:set var="columnHeaderOnRiskString" value="<%= ProductOrderSampleBean.RISK_STRING %>"/>
     <c:set var="columnHeaderProceedOutOfSpec" value="<%= ProductOrderSampleBean.PROCEED_OOS %>"/>
     <c:set var="columnHeaderStatus" value="<%= ProductOrderSampleBean.STATUS %>"/>
-    <c:set var="columnHeaderCompletelyBilled" value="<%= ProductOrderSampleBean.BILLED %>"/>
+    <c:set var="columnHeaderCompletelyBilled" value="<%= ProductOrderSampleBean.BILLED_DETAILS %>"/>
     <c:set var="columnHeaderComment" value="<%= ProductOrderSampleBean.COMMENT %>"/>
 
 
@@ -267,11 +267,11 @@ $j(document).ready(function () {
                 },
                 </c:if>
                 {"data": "${columnHeaderYieldAmount}", "title": "${columnHeaderYieldAmount}"},
-                {"data": "${columnHeaderRackscanMismatch}", "title": "${columnHeaderRackscanMismatch}",render:renderRackscanMismatch},
+                {"data": "${columnHeaderRackscanMismatch}", "title": "${columnHeaderRackscanMismatch}"},
                 {"data": "${columnHeaderOnRiskString}", "title": "${columnHeaderOnRisk}"},
                 {"data": "${columnHeaderProceedOutOfSpec}", "title": "${columnHeaderProceedOutOfSpec}"},
                 {"data": "${columnHeaderStatus}", "title": "${columnHeaderStatus}"},
-                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "boolean", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
+                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}"}
             ],
             "stateSaveCallback": function (settings, data) {
                 var api = new $j.fn.dataTable.Api(settings);
