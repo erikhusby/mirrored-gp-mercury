@@ -313,28 +313,28 @@ sap:
     DEV:
       login:      GPCOMU
       password:   SAPERD300!
-      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
-      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
     TEST:
       login:      GPCOMU
       password:   temp1!
-      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
-      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
-      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
-      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
     RC:
       login:      GPCOMU
       password:   temp1!
-      sapShortCloseRecipientEmail: Mercury-QA-Notifications@broadinstitute.org
-      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
     PROD:
       login:      GPCOMU
       password:   SAPERP300!
-      sapShortCloseRecipientEmail: BUSSYS@broadinstitute.org
-      sapShortCloseEmailSubject: "SAP Order: Short Close Request"
+      sapSupportEmail: BUSSYS@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "SAP Order"
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
