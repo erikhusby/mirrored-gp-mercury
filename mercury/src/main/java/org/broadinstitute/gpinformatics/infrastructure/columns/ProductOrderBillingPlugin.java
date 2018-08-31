@@ -42,6 +42,7 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
     private static final String BILLED_QUOTE = "billedQuote";
 
     private static final String BILLED_DATE_HEADER = "billedDate";
+    private static final String BILLING_MESSAGE_HEADER = "billingMsg";
 
     static {
         mapTypeToHeader.put(BILLED_QUOTE,
@@ -78,6 +79,10 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         mapTypeToHeader.put(BILLED_DATE_HEADER,
                 new ConfigurableList.Header("Date Billed",
                         "Date Billed", ""));
+        mapTypeToHeader.put(BILLING_MESSAGE_HEADER,
+                new ConfigurableList.Header("Billing Message",
+                        "Billing Message",
+                        ""));
     }
 
     @Override
@@ -114,6 +119,7 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
         headers.add(mapTypeToHeader.get(QUANTITY_HEADER));
         headers.add(mapTypeToHeader.get(COMPLETED_HEADER));
         headers.add(mapTypeToHeader.get(COMPLETE_DATE_HEADER));
+        headers.add(mapTypeToHeader.get(BILLING_MESSAGE_HEADER));
 
         Map<Optional<BillingSession>, QuoteImportInfo> billingAggregator = new HashMap<>();
 
@@ -166,7 +172,8 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                                     sapItems.isPresent()?sapItems.get():"",
                                     quoteImportItem.getProduct().getDisplayName(),
                                     quoteImportItem.getRoundedQuantity(), quoteImportItem.getNumSamples(),
-                                    workCompleteDate.isPresent()?dateFormatter.format(workCompleteDate.get()):""));
+                                    workCompleteDate.isPresent()?dateFormatter.format(workCompleteDate.get()):"",
+                                    quoteImportItem.getBillingMessage()));
                     ConfigurableList.ResultRow row =
                             new ConfigurableList.ResultRow(null, cellList, String.valueOf(count));
                     billingRows.add(row);
