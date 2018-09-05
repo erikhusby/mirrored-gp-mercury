@@ -232,4 +232,8 @@ public abstract class TableProcessor implements Serializable {
     public boolean shouldIgnoreTrailingBlankLines() {
         return ignoreTrailingBlankLines == IgnoreTrailingBlankLines.YES;
     }
+
+    public boolean quitOnMatch(Collection<String> dataByHeader) {
+        return false;
+    }
 }

@@ -65,6 +65,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     public enum QuantFormat {
         VARIOSKAN("Varioskan"),
+        GEMINI("Gemini"),
         WALLAC("Wallac"),
         CALIPER("Caliper"),
         GENERIC("Generic");
@@ -137,6 +138,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
             break;
         case CALIPER:
             break;
+        case GEMINI:
+            break;
         case GENERIC:
             MessageCollection messageCollection = new MessageCollection();
             quantEJB.storeQuants(labMetrics, quantType, messageCollection);
@@ -189,6 +192,20 @@ public class UploadQuantsActionBean extends CoreActionBean {
                     labMetricRun = pair.getLeft();
                     tubeFormationLabels = Collections.singletonList(pair.getRight());
                 }
+                addMessages(messageCollection);
+                break;
+            }
+            case GEMINI: {
+                MessageCollection messageCollection = new MessageCollection();
+                Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple = vesselEjb.createGeminiRun(
+                        quantStream, quantSpreadsheet.getFileName(), getQuantType(), userBean.getBspUser().getUserId(),
+                        messageCollection, acceptRePico);
+                if (triple != null) {
+                    labMetricRun = triple.getLeft();
+                    tubeFormationLabels = triple.getMiddle().stream()
+                            .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
+                }
+
                 addMessages(messageCollection);
                 break;
             }

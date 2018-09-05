@@ -90,6 +90,10 @@ public final class PoiSpreadsheetParser {
                         extractCellContent(row, headerName, i, processor.isDateColumn(i), processor.isStringColumn(i)));
             }
 
+            if (processor.quitOnMatch(dataByHeader.values())) {
+                break;
+            }
+
             boolean isBlankLine = false;
             if (shouldIgnoreTrailingBlankLines) {
                 isBlankLine = representsBlankLine(dataByHeader.values());

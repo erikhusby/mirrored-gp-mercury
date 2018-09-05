@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -26,6 +27,8 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -158,7 +161,7 @@ public class VarioskanParserTest {
     }
 
     @Test
-    public void testCreatePicoRun() {
+    public void testCreatePicoRun() throws ParseException {
         try {
             VesselEjb vesselEjb = new VesselEjb();
             VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
@@ -183,9 +186,25 @@ public class VarioskanParserTest {
                 mapBarcodeToResult.put(entry.getValue().getLabel(), result);
             }
 
-            LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
+            SimpleDateFormat simpleDateFormat =
+                    new SimpleDateFormat(VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat());
+            Date runStarted = simpleDateFormat.parse(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_STARTED));
+            LabMetricRun run = new LabMetricRun(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME),
+                    runStarted, LabMetric.MetricType.INITIAL_PICO);
+            String r2 = mapNameValueToValue.get(VarioskanRowParser.NameValue.CORRELATION_COEFFICIENT_R2);
+            run.getMetadata().add(new Metadata(Metadata.Key.CORRELATION_COEFFICIENT_R2, r2));
+            boolean runFailed = false;
+            if (new BigDecimal(r2).compareTo(new BigDecimal("0.97")) == -1) {
+                runFailed = true;
+            }
+            run.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
+                    mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_NAME)));
+            run.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_SERIAL_NUMBER,
+                    mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_SERIAL_NUMBER)));
+
+            LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(run, runStarted,
                     LabMetric.MetricType.INITIAL_PICO, varioskanPlateProcessor.getPlateWellResults(), mapBarcodeToPlate,
-                    101L, messageCollection, mapBarcodeToResult);
+                    101L, messageCollection, mapBarcodeToResult, runFailed);
             Assert.assertFalse(messageCollection.hasErrors());
             Assert.assertFalse(result.getWellToTubePosition().isEmpty());
             Assert.assertTrue(result.getLabEventMetadata().isEmpty());
@@ -239,7 +258,7 @@ public class VarioskanParserTest {
     }
 
     @Test
-    public void testCreateRiboRun() {
+    public void testCreateRiboRun() throws ParseException {
         try {
             VesselEjb vesselEjb = new VesselEjb();
             VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
@@ -260,9 +279,25 @@ public class VarioskanParserTest {
                     mapBarcodeToPlate.values().iterator().next().nearestFormationAndTubePositionByWell();
             Map<String, StaticPlate.TubeFormationByWellCriteria.Result> mapBarcodeToResult = new HashMap<>();
             mapBarcodeToResult.put(mapBarcodeToPlate.values().iterator().next().getLabel(), result);
-            LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
+
+            SimpleDateFormat simpleDateFormat =
+                    new SimpleDateFormat(VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat());
+            Date runStarted = simpleDateFormat.parse(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_STARTED));
+            LabMetricRun run = new LabMetricRun(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME),
+                    runStarted, LabMetric.MetricType.INITIAL_PICO);
+            String r2 = mapNameValueToValue.get(VarioskanRowParser.NameValue.CORRELATION_COEFFICIENT_R2);
+            run.getMetadata().add(new Metadata(Metadata.Key.CORRELATION_COEFFICIENT_R2, r2));
+            run.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
+                    mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_NAME)));
+            run.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_SERIAL_NUMBER,
+                    mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_SERIAL_NUMBER)));
+            boolean runFailed = false;
+            if (new BigDecimal(r2).compareTo(new BigDecimal("0.97")) == -1) {
+                runFailed = true;
+            }
+            LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(run, runStarted,
                     LabMetric.MetricType.PLATING_RIBO, varioskanPlateProcessor.getPlateWellResults(), mapBarcodeToPlate,
-                    101L, messageCollection, mapBarcodeToResult);
+                    101L, messageCollection, mapBarcodeToResult, runFailed);
             Assert.assertFalse(messageCollection.hasErrors());
             Assert.assertFalse(result.getWellToTubePosition().isEmpty());
             Assert.assertTrue(result.getLabEventMetadata().isEmpty());
