@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.sun.jersey.api.client.ClientResponse;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -207,17 +206,17 @@ public class SubmissionsServiceImpl implements SubmissionsService {
      * Queries the SubmissionService to determine if a UUID has been submitted.
      */
     @Override
-    public List<SubmissionTracker> findOrphans(Map<String, SubmissionTracker> submissionTrackerMap) {
+    public List<SubmissionTracker> findOrphans(Collection<SubmissionTracker> submissionTrackers) {
         List<SubmissionTracker> orphans = new ArrayList<>();
 
         // Since the SubmissionService does not return the submitted sample name in it's response it is necessary to
-        // look up all the submission statuses to find if the submission exists on the Epsilon 9.
-        if (CollectionUtils.isNotEmpty(submissionTrackerMap.keySet())) {
+        // look up the submission statuses individually to find if it exists on the Epsilon 9.
+        for (SubmissionTracker submissionTracker : submissionTrackers) {
             Collection<SubmissionStatusDetailBean> submissionStatus =
-                getSubmissionStatus(submissionTrackerMap.keySet().toArray(new String[0]));
+                getSubmissionStatus(submissionTracker.createSubmissionIdentifier());
             for (SubmissionStatusDetailBean status : submissionStatus) {
                 if (!status.submissionServiceHasRequest()) {
-                    orphans.add(submissionTrackerMap.get(status.uuid));
+                    orphans.add(submissionTracker);
                 }
             }
         }
