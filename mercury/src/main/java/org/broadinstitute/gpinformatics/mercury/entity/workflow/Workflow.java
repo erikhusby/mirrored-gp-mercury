@@ -41,6 +41,8 @@ public enum Workflow {
     MALARIA("Malaria"),
     LASSO("Lasso"),
     DNA_RNA_EXTRACTION_STOOL("DNA and RNA from Stool"),
+    SINGLE_CELL_SMART_SEQ("Single Cell SmartSeq"),
+    SINGLE_CELL_10X("Single Cell 10X"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
@@ -76,7 +78,7 @@ public enum Workflow {
                     PCR_FREE_HYPER_PREP, PCR_PLUS_HYPER_PREP, CELL_FREE_HYPER_PREP, ICE_EXOME_EXPRESS_HYPER_PREP,
                     TEN_X, INFINIUM, INFINIUM_METHYLATION, MALARIA, CELL_FREE_HYPER_PREP_UMIS,
                     ICE_EXOME_EXPRESS_HYPER_PREP_UMIS, DNA_RNA_EXTRACTION_STOOL, CUSTOM_SELECTION,
-                    DNA_RNA_EXTRACTION_CELL_PELLETS_BSP, LASSO
+                    DNA_RNA_EXTRACTION_CELL_PELLETS_BSP, LASSO, SINGLE_CELL_SMART_SEQ, SINGLE_CELL_10X
             );
 
     public boolean isWorkflowSupportedByMercury() {
