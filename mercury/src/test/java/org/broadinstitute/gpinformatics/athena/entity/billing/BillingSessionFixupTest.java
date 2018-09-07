@@ -11,6 +11,8 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -28,6 +30,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -62,6 +65,9 @@ public class BillingSessionFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -266,5 +272,23 @@ public class BillingSessionFixupTest extends Arquillian {
         }
 
          ledgerEntryDao.persist(new FixupCommentary("GPLIM-5729: Associate SAP Delivery Document with negatively billed ledger entries for PDO-15708"));
+    }
+
+    @Test(enabled = false)
+    public void gplim5767BlockSAPBillingOnly() throws Exception {
+
+        userBean.loginOSUser();
+        String pdoKey = "PDO-15708";
+        List<String> sampleKeyList = Arrays.asList("SM-HCBHD", "SM-HCBHQ");
+
+        ProductOrder orderToUpdate = productOrderDao.findByBusinessKey(pdoKey);
+
+
+        orderToUpdate.getSamples().stream()
+                .filter(productOrderSample -> sampleKeyList.contains(productOrderSample.getSampleKey())).collect(
+                        Collectors.toSet());
+
+
+
     }
 }
