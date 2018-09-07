@@ -16,6 +16,7 @@ import java.io.Serializable;
 public class SapConfig extends AbstractConfig implements LoginAndPassword, Serializable {
     private static final String SHORT_CLOSE_REQUEST = "Short Close Request";
     private static final String REVERSE_BILLING_REQUEST = "Reverse Billing Request";
+    public static final String BILLING_REVERSAL_TEMPLATE = "BillingReversalRequest.ftl";
 
     private String login;
     private String password;

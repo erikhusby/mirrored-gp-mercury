@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
@@ -38,10 +39,10 @@ public class EmailSender implements Serializable {
      * @param ccAddrdesses collection of email addresses which should also be CC'ed when the email is sent out.
      * @param subject subject line
      * @param body HTML
-     * @param overrideForTest
      */
     public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to,
-                              Collection<String> ccAddrdesses, String subject, String body, boolean overrideForTest) {
+                              Collection<String> ccAddrdesses, String subject, String body, boolean overrideForTest,
+                              boolean ignoreExceptions) {
         if (appConfig.shouldSendEmail() || overrideForTest) {
             if (mailSession != null) {
                 try {
@@ -55,7 +56,13 @@ public class EmailSender implements Serializable {
                     Transport.send(message);
                 } catch (MessagingException e) {
                     LOG.error("Failed to send email", e);
-                    // Don't rethrow, not fatal
+                    //noinspection StatementWithEmptyBody
+                    if (ignoreExceptions) {
+
+                        // Don't rethrow, not fatal
+                    } else {
+                        throw new InformaticsServiceException("Error sending email", e);
+                    }
                 }
             }
         }

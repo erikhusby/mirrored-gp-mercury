@@ -11,7 +11,6 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
@@ -50,6 +49,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The Billing Adaptor was derived to provide the ability to provide singular interface calls related to billingEJB
@@ -66,8 +66,6 @@ public class BillingAdaptor implements Serializable {
     public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
 
     private BillingEjb billingEjb;
-
-    private BillingSessionDao billingSessionDao;
 
     private PriceListCache priceListCache;
 
@@ -86,20 +84,23 @@ public class BillingAdaptor implements Serializable {
 
     private SAPAccessControlEjb sapAccessControlEjb;
 
+    private BillingEmailService billingEmailService;
+
     @Inject
-    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
+    public BillingAdaptor(BillingEjb billingEjb, PriceListCache priceListCache,
                           QuoteService quoteService, BillingSessionAccessEjb billingSessionAccessEjb,
                           SapIntegrationService sapService,
                           SAPProductPriceCache productPriceCache,
-                          SAPAccessControlEjb sapAccessControlEjb) {
+                          SAPAccessControlEjb sapAccessControlEjb,
+                          BillingEmailService billingEmailService) {
         this.billingEjb = billingEjb;
-        this.billingSessionDao = billingSessionDao;
         this.priceListCache = priceListCache;
         this.quoteService = quoteService;
         this.billingSessionAccessEjb = billingSessionAccessEjb;
         this.sapService = sapService;
         this.productPriceCache = productPriceCache;
         this.sapAccessControlEjb = sapAccessControlEjb;
+        this.billingEmailService = billingEmailService;
     }
 
     public BillingAdaptor() {
@@ -285,13 +286,14 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     BigDecimal replacementMultiplier = null;
+                    double quantityForSAP = item.getQuantityForSAP();
                     if(primaryPriceItemIfReplacementForSAP != null) {
                         BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
                         BigDecimal replacementPrice  = new BigDecimal(price);
 
-                        if(item.getProductOrder().isPriorToSAP1_5()) {
+                        if(item.getProductOrder().isPriorToSAP1_5() && quantityForSAP > 0) {
                             replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN))
-                                    .multiply(BigDecimal.valueOf(item.getQuantityForSAP()))
+                                    .multiply(BigDecimal.valueOf(quantityForSAP))
                                     .setScale(3, BigDecimal.ROUND_DOWN);
                         }
                     }
@@ -372,18 +374,29 @@ public class BillingAdaptor implements Serializable {
 
 
                     if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName())))
-                        && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(), item.getWorkCompleteDate() )
-                        && !item.getProductOrder().getOrderStatus().canPlace()
-                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                        && StringUtils.isBlank(item.getSapItems()))
-                    {
+                       && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(), item.getWorkCompleteDate() )
+                       && !item.getProductOrder().getOrderStatus().canPlace()
+                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                       && StringUtils.isBlank(item.getSapItems())) {
 
-                        if(item.getQuantityForSAP() != 0) {
+                        if (quantityForSAP > 0) {
                             sapBillingId = sapService.billOrder(item, replacementMultiplier, new Date());
+                            result.setSAPBillingId(sapBillingId);
+                            billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
+                                    BillingSession.BILLED_FOR_SAP + " " + BillingSession.BILLED_FOR_QUOTES);
                         }
-                        result.setSAPBillingId(sapBillingId);
-                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
-                                BillingSession.BILLED_FOR_SAP + BillingSession.BILLED_FOR_QUOTES);
+                        if (quantityForSAP < 0) {
+                            Set<LedgerEntry> priorBillings = new HashSet<>();
+                            item.getBillingReversals().forEach(ledgerEntry -> ledgerEntry.getPreviouslyBilled().stream()
+                                    .collect(Collectors.toCollection(() -> priorBillings))
+                            );
+                            if (CollectionUtils.isNotEmpty(priorBillings)) {
+                                billingEmailService.sendReverseBillingEmail(item, priorBillings);
+                                item.setBillingMessages(BillingSession.BILLING_CREDIT);
+                            }
+                            billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
+                                BillingSession.BILLING_CREDIT);
+                        }
                         item.getProductOrder().latestSapOrderDetail().addLedgerEntries(item.getLedgerItems());
                     }
 

@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A flattened structure of information needed to import an item into the quote server.
@@ -72,6 +73,10 @@ public class QuoteImportItem {
 
     public Collection<String> getWorkItems() {
         return Collections.unmodifiableCollection(workItems);
+    }
+
+    public Collection<LedgerEntry> getBillingReversals(){
+        return ledgerItems.stream().filter(ledgerEntry -> ledgerEntry.getQuantity() < 0).collect(Collectors.toSet());
     }
 
     public String getSapItems() {

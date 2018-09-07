@@ -94,7 +94,7 @@ public class WorkflowContainerTest extends Arquillian {
 
         workflowValidator.validateWorkflow(bettaLIMSMessage);
         verify(emailSender, times(0)).
-                sendHtmlEmail(any(AppConfig.class), anyString(), anyCollection(), anyString(), anyString(), anyBoolean());
+                sendHtmlEmail(any(AppConfig.class), anyString(), anyCollection(), anyString(), anyString(), anyBoolean(), true);
 
         //Send again with some event that should fail
         PlateEventType endRepair =
@@ -103,7 +103,7 @@ public class WorkflowContainerTest extends Arquillian {
         bettaLIMSMessage.getPlateEvent().add(endRepair);
         workflowValidator.validateWorkflow(bettaLIMSMessage);
         verify(emailSender, times(1)).
-                sendHtmlEmail(any(AppConfig.class), anyString(), anyCollection(), anyString(), anyString(), anyBoolean());
+                sendHtmlEmail(any(AppConfig.class), anyString(), anyCollection(), anyString(), anyString(), anyBoolean(), true);
 
     }
 }

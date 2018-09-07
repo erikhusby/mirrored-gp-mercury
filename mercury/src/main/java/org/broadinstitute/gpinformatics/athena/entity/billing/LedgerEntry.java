@@ -24,6 +24,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This handles the billing ledger items for product order samples
@@ -287,6 +289,11 @@ public class LedgerEntry implements Serializable {
 
     public SapOrderDetail getSapOrderDetail() {
         return sapOrderDetail;
+    }
+
+    public Set<LedgerEntry> getPreviouslyBilled() {
+        return productOrderSample.getLedgerItems().stream().filter(LedgerEntry::isSuccessfullyBilled)
+            .collect(Collectors.toSet());
     }
 
     /**
