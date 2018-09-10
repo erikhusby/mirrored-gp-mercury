@@ -44,6 +44,8 @@ public class StorageLocation {
         CABINET("Cabinet", ExpectParentLocation.FALSE),
         SECTION("Section", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE),
         SHELF("Shelf", ExpectParentLocation.TRUE, CanRename.TRUE),
+        DRAWER("Drawer", ExpectParentLocation.TRUE),
+        RACK("Rack", ExpectParentLocation.TRUE),
         GAUGERACK("Gauge Rack", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE, CanRename.TRUE),
         BOX("Box", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE, CanRename.TRUE),
         SLOT("Slot", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE);

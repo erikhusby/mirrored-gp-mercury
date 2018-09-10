@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.Well;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
@@ -101,48 +102,54 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     }
 
     public enum PlateType implements VesselTypeGeometry {
-        CovarisRack("CovarisRack", VesselGeometry.G12x8),
-        Eco48("Eco48", VesselGeometry.G8x6),
-        Eppendorf96("Eppendorf96", VesselGeometry.G12x8),
-        Eppendorf384("Eppendorf384", VesselGeometry.G24x16),
-        FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
-        Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
-        UniqueMolecularIdentifierPlate96("UniqueMolecularIdentifierPlate96", VesselGeometry.G12x8),
-        IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
-        IndexedAdapterPlate384("IndexedAdapterPlate384", VesselGeometry.G24x16),
-        Matrix96("Matrix96", VesselGeometry.G12x8),
-        MiSeqReagentKit("MiseqReagentKit", VesselGeometry.MISEQ_REAGENT_KIT),
-        MicrofluorPlate96Well("MicrofluorPlate96Well", VesselGeometry.G12x8),
-        NinetySixDeepWell("96DeepWell", VesselGeometry.G12x8),
-        Plate384WellBlack50("Plate384WellBlack50", VesselGeometry.G24x16),
-        Plate384WellClear50("Plate384WellClear50", VesselGeometry.G24x16),
-        Plate384WellEppendorfTwintec40("Plate384WellEppendorfTwintec40", VesselGeometry.G24x16),
-        Plate4x6Well5000("Plate4x6Well5000", VesselGeometry.G4x6_NUM),
-        Plate96Microtube1200("Plate96Microtube1200", VesselGeometry.G12x8),
-        Plate96Microtube2000("Plate96Microtube2000", VesselGeometry.G12x8),
-        Plate96RNEasyWell1000("Plate96RNEasyWell1000", VesselGeometry.G12x8),
-        Plate96RoundWellBlock2000("Plate96RoundWellBlock2000", VesselGeometry.G12x8),
-        Plate96SchredderSpinColumn1000("Plate96SchredderSpinColumn1000", VesselGeometry.G12x8),
-        Plate96Well200("Plate96Well200", VesselGeometry.G12x8),
-        Plate96Well200PCR("Plate96Well200PCR", VesselGeometry.G12x8),
-        Plate96Well200PCR_Expression("Plate96Well200PCR_Expression", VesselGeometry.G12x8),
-        Plate96Well800("Plate96Well800", VesselGeometry.G12x8),
-        Plate96Well1200("Plate96Well1200", VesselGeometry.G12x8),
-        Plate96WellCollectionTube2000("Plate96WellCollectionTube2000", VesselGeometry.G12x8),
-        Plate96WellRNA("Plate96WellRNA", VesselGeometry.G12x8),
-        Plate96WellPowerBead("Plate96WellPowerBead", VesselGeometry.G12x8),
-        SageCassette("SageCassette", VesselGeometry.SAGE_CASSETTE),
-        SpinColumn96SlotRack("SpinColumn96SlotRack", VesselGeometry.G12x8),
-        InfiniumChip24("InfiniumChip24", VesselGeometry.INFINIUM_24_CHIP),
-        InfiniumChip12("InfiniumChip12", VesselGeometry.INFINIUM_12_CHIP),
-        InfiniumChip8("InfiniumChip8", VesselGeometry.INFINIUM_8_CHIP),
-        TenXChip("10XChip", VesselGeometry.TEN_X_CHIP);
+        CovarisRack("CovarisRack", "Covaris Rack", VesselGeometry.G12x8),
+        Eco48("Eco48", "Eco 48", VesselGeometry.G8x6),
+        Eppendorf96("Eppendorf96", "Eppendorf 96 Well", VesselGeometry.G12x8),
+        Eppendorf384("Eppendorf384", "Eppendorf 384 Well", VesselGeometry.G24x16),
+        FilterPlate96("FilterPlate96", "Filter Plate 96", VesselGeometry.G12x8),
+        Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", "Fluidigm 48.48 Access Array IFC", VesselGeometry.FLUIDIGM_48_48),
+        UniqueMolecularIdentifierPlate96("UniqueMolecularIdentifierPlate96", "96 Well UMI Plate", VesselGeometry.G12x8),
+        IndexedAdapterPlate96("IndexedAdapterPlate96", "Indexed Adapter Plate 96 Well", VesselGeometry.G12x8),
+        IndexedAdapterPlate384("IndexedAdapterPlate384", "Indexed Adapter Plate 384 Well", VesselGeometry.G24x16),
+        Matrix96("Matrix96", "Matrix 95 Well Plate", VesselGeometry.G12x8),
+        MiSeqReagentKit("MiseqReagentKit", "Mi Seq Reagent Kit", VesselGeometry.MISEQ_REAGENT_KIT),
+        MicrofluorPlate96Well("MicrofluorPlate96Well", "Microfluor Plate 96 Well (Black)", VesselGeometry.G12x8),
+        NinetySixDeepWell("96DeepWell", "Plate 96 Deep Well [1200ul]", VesselGeometry.G12x8),
+        Plate384WellBlack50("Plate384WellBlack50", "Plate 384 Well Black", VesselGeometry.G24x16),
+        Plate384WellClear50("Plate384WellClear50", "Plate 384 Well Clear", VesselGeometry.G24x16),
+        Plate384WellEppendorfTwintec40("Plate384WellEppendorfTwintec40", "Plate 384 Well twin.tec", VesselGeometry.G24x16),
+        Plate4x6Well5000("Plate4x6Well5000", "Plate 4x6 Well [5000ul]", VesselGeometry.G4x6_NUM),
+        Plate96Microtube1200("Plate96Microtube1200", "Plate 96 Well Microtube [1200ul]", VesselGeometry.G12x8),
+        Plate96Microtube2000("Plate96Microtube2000", "Plate 96 Well Microtube [2000ul]", VesselGeometry.G12x8),
+        Plate96RNEasyWell1000("Plate96RNEasyWell1000", "Plate 96 Well RNEasy [1000ul]", VesselGeometry.G12x8),
+        Plate96RoundWellBlock2000("Plate96RoundWellBlock2000", "Plate 96 Round Well Block [2000ul]", VesselGeometry.G12x8),
+        Plate96SchredderSpinColumn1000("Plate96SchredderSpinColumn1000", "Plate 96 Well Paxgene Shredder Spin Column [1000ul]", VesselGeometry.G12x8),
+        Plate96Well200("Plate96Well200", "Plate 96 Well V-bottom [200ul]", VesselGeometry.G12x8),
+        Plate96Well200PCR("Plate96Well200PCR", "Plate 96 Well PCR [200ul]", VesselGeometry.G12x8),
+        Plate96Well200PCR_Expression("Plate96Well200PCR_Expression", "Plate 96 Well PCR Expression [200ul]", VesselGeometry.G12x8),
+        Plate96Well800("Plate96Well800", "Plate 96 Midi-Deep Well [800uL]", VesselGeometry.G12x8),
+        Plate96Well1200("Plate96Well1200", "Plate 96 Well RNA [1200ul]", VesselGeometry.G12x8),
+        Plate96WellCollectionTube2000("Plate96WellCollectionTube2000", "Plate 96 Well Collection Tube [2000ul]", VesselGeometry.G12x8),
+        Plate96WellRNA("Plate96WellRNA", "Plate 96 Well RNA [1000ul]", VesselGeometry.G12x8),
+        Plate96WellPowerBead("Plate96WellPowerBead", "Power Bead Well 8x12", VesselGeometry.G12x8),
+        SageCassette("SageCassette", "Sage Cassette", VesselGeometry.SAGE_CASSETTE),
+        SpinColumn96SlotRack("SpinColumn96SlotRack", "Spin Column 96 Slot Rack", VesselGeometry.G12x8),
+        InfiniumChip24("InfiniumChip24", "Infinium Chip 24", VesselGeometry.INFINIUM_24_CHIP),
+        InfiniumChip12("InfiniumChip12", "Infinium Chip 12", VesselGeometry.INFINIUM_12_CHIP),
+        InfiniumChip8("InfiniumChip8", "Infinium Chip 8", VesselGeometry.INFINIUM_8_CHIP),
+        TenXChip("10XChip", "10X Chip", VesselGeometry.TEN_X_CHIP),
+        TissueCulture6Well("TissueCulture6Well", "TC Plate, 6 Well", VesselGeometry.G3x2),
+        TissueCulture12Well("TissueCulture12Well", "TC Plate, 12 Well", VesselGeometry.G4x3),
+        TissueCulture24Well("TissueCulture24Well", "TC Plate, 24 Well", VesselGeometry.G6x4),
+        TissueCulture48Well("TissueCulture48Well", "TC Plate, 48 Well", VesselGeometry.G8x6),
+        TissueCulture96Well("TissueCulture96Well", "TC Plate, 96 Well", VesselGeometry.G12x8),
+        TissueCulture384Well("TissueCulture384Well", "TC Plate, 384 Well", VesselGeometry.G24x16);
 
         /**
          * The name that will be supplied by automation scripts.
          */
         private String automationName;
-
+        private String displayName;
         private VesselGeometry vesselGeometry;
 
         /**
@@ -151,9 +158,10 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
          * @param automationName    the name that will be supplied by automation scripts
          * @param vesselGeometry    the vessel geometry
          */
-        PlateType(String automationName, VesselGeometry vesselGeometry) {
+        PlateType(String automationName, String displayName, VesselGeometry vesselGeometry) {
             this.automationName = automationName;
             this.vesselGeometry = vesselGeometry;
+            this.displayName = displayName;
         }
 
         /**
@@ -164,10 +172,12 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         }
 
         private static Map<String, PlateType> mapAutomationNameToType = new HashMap<>();
+        private static Map<String, PlateType> mapDisplayNameToType = new HashMap<>();
 
         static {
             for (PlateType plateType : PlateType.values()) {
                 mapAutomationNameToType.put(plateType.getAutomationName(), plateType);
+                mapDisplayNameToType.put(plateType.getDisplayName(), plateType);
             }
         }
 
@@ -181,10 +191,18 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
             return mapAutomationNameToType.get(automationName);
         }
 
+        public static PlateType getByDisplayName(String displayName) {
+            PlateType type = mapDisplayNameToType.get(displayName);
+            if( type == null ) {
+                type = getByAutomationName(displayName);
+            }
+            return type;
+        }
+
 
         @Override
         public String getDisplayName() {
-            return automationName;
+            return displayName;
         }
 
         @Override
