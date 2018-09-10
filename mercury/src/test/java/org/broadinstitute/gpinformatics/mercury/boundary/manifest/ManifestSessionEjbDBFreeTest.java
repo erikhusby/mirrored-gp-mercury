@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -63,6 +64,7 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.FormatStringMatcher.matchesFormatString;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -72,7 +74,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.collection.IsEmptyCollection.emptyCollectionOf;
@@ -425,7 +426,22 @@ public class ManifestSessionEjbDBFreeTest {
             uploadManifest(pathToManifestFile);
             Assert.fail(description);
         } catch (Exception e) {
-            Assert.assertEquals(e.getMessage(), errorMessage);
+            final String splitOnThis = "Unknown header(s) ";
+            if (e.getMessage().contains(splitOnThis)) {
+                // Checks the part before the header list
+                Assert.assertEquals(StringUtils.substringBefore(e.getMessage(), splitOnThis),
+                        StringUtils.substringBefore(errorMessage, splitOnThis));
+                // Checks the header list, allowing for the headers to be returned in a different order.
+                String[] rawActualHeaders = StringUtils.substringAfter(e.getMessage(), splitOnThis).split(",");
+                String[] rawExpectedHeaders = StringUtils.substringAfter(errorMessage, splitOnThis).split(",");
+                List<String> actualHeaders = Arrays.asList(StringUtils.stripAll(rawActualHeaders, "[\\. ]"));
+                List<String> expectedHeaders = Arrays.asList(StringUtils.stripAll(rawExpectedHeaders, "[\\. ]"));
+                Collections.sort(actualHeaders);
+                Collections.sort(expectedHeaders);
+                Assert.assertEquals(actualHeaders, expectedHeaders);
+            } else {
+                Assert.assertEquals(e.getMessage(), errorMessage);
+            }
         }
     }
 
