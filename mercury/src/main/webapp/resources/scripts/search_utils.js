@@ -4,7 +4,6 @@ $j( document ).ready( function() {
     $(document).keypress(disableReturnKey);
 
     syncChosenAvailable();
-    flagResultColsWithParams();
     initResultParamOverlay();
 
     var selectedOption = $j("#customTraversalOptionConfig > option:selected");
@@ -411,6 +410,20 @@ editColumnParams = function (evt) {
     showColumnOptions(option);
 };
 
+toggleParamListShowAll = function( srcSpan, targetId ) {
+    var targetJq = $j("#" + targetId );
+    srcSpan = $j(srcSpan);
+    if( srcSpan.data("showAll") ) {
+        srcSpan.data("showAll", false );
+        srcSpan.css("background-position", "-32px -128px");
+        targetJq.find(":not(:selected)").css("display","none");
+    } else {
+        srcSpan.data("showAll", true );
+        srcSpan.css("background-position", "-64px -128px");
+        targetJq.find("option").css("display","block");
+    }
+};
+
 /**
  * Remove column from chosen, and make it visible in available
  * @param chosen multi-select of chosen columns
@@ -506,24 +519,6 @@ syncChosenAvailable = function () {
                     chosen.options[chosen.options.length] = newOption;
                     available.options[j].style.display = 'none';
                 }
-            }
-        }
-    }
-};
-
-flagResultColsWithParams = function(){
-    if( columnsWithParams.length === 0 ) {
-        return;
-    }
-    var colSelect = $j('#sourceColumnDefNames')[0];
-    for (var i = 0; i < colSelect.options.length; i++) {
-        var option = $j(colSelect.options[i]);
-        option.data("hasParams", false);
-        for( j = 0; j < columnsWithParams.length; j++ ) {
-            if( option.val() === columnsWithParams[j] ) {
-                option.data("hasParams", true);
-                option.data("elementName", option.val());
-                break;
             }
         }
     }
@@ -752,22 +747,22 @@ showCustomTraverserOptions = function(evt) {
 };
 
 initResultParamOverlay = function(){ //<%-- Dialog div element at bottom of configurable_search.jsp --%>
-    var dialog = $j( "#resultParamsOverlay" ).dialog({
+    var paramDialog = $j( "#resultParamsOverlay" ).dialog({
         title: "Select Parameters",
         paramType:"",
         entityName:"",
         elementName:"",
         resultParams:{},
         autoOpen: false,
-        height: 500,
+        height: 540,
         width: 320,
         modal: true,
         open: function(){
-            var paramType = dialog.dialog("option","paramType");
-            var entityName = dialog.dialog("option","entityName");
-            var elementName = dialog.dialog("option","elementName");
-            var resultParams = dialog.dialog("option","resultParams");
-            dialog.dialog("option", "reset")();
+            var paramType = paramDialog.dialog("option","paramType");
+            var entityName = paramDialog.dialog("option","entityName");
+            var elementName = paramDialog.dialog("option","elementName");
+            var resultParams = paramDialog.dialog("option","resultParams");
+            paramDialog.dialog("option", "reset")();
             $j.ajax({
                 url: '/Mercury/search/ResultParams.action',
                 data: { "paramsFetch":""
@@ -796,26 +791,45 @@ initResultParamOverlay = function(){ //<%-- Dialog div element at bottom of conf
         },
         error: function(msg){
             $j("#resultParamsError").text(msg).css('display','block');
+        },
+        validate: function(){
+            var isValid = true;
+            $j("#resultParamsOverlay form").find(":input").each(
+                function( index, element ) {
+                    element = $j(element);
+                    if( element.attr("type") === "text" && element.attr("id") !== "dlg_filterColumns" && element.val() == "" ) {
+                        element.css("border-color","#FF0000");
+                        $j("#resultParamsError").text("Values are required").css('display','block');
+                        isValid = false;
+                    } else if( element.find("option").length > 0 && element.find("option:selected").length === 0 ) {
+                        element.css("border-color","#FF0000");
+                        $j("#resultParamsError").text("Values are required").css('display','block');
+                        isValid = false;
+                    } else {
+                        element.css("border-color","rgb(204, 204, 204)");
+                    }
+                }
+            );
+            return isValid;
         }
     });
-    dialog.find( "form" ).on( "submit", function( event ) {
+    paramDialog.find( "form" ).on( "submit", function( event ) {
         event.preventDefault();
-        dialog.dialog("option", "reset")();
+        paramDialog.dialog("option", "reset")();
+        if( !paramDialog.dialog("option", "validate")() ) {
+            return;
+        }
 
+        var userColumnName = $( this ).find( "#userColumnName" ).val();
         var rsltParamVal = {paramType:null,entityName:null,elementName:null,paramValues:[]};
-        rsltParamVal.paramType = dialog.dialog("option", "paramType");
-        rsltParamVal.entityName = dialog.dialog("option", "entityName");
-        rsltParamVal.elementName = dialog.dialog("option", "elementName");
+        rsltParamVal.paramType = paramDialog.dialog("option", "paramType");
+        rsltParamVal.entityName = paramDialog.dialog("option", "entityName");
+        rsltParamVal.elementName = paramDialog.dialog("option", "elementName");
         var params = $( this ).serializeArray();
         rsltParamVal.paramValues = params;
 
         if( rsltParamVal.paramType == "SEARCH_TERM") {
-            var userColumnName = $( this ).find( "#userColumnName" ).val();
-            // TODO: Dynamic validation
-            if( userColumnName && userColumnName.trim().length == 0 ) {
-                dialog.dialog("option", "error")("User column name is required.");
-                return;
-            }
+
             var resultColumnSelect = $j('#selectedColumnDefNames')[0];
             // Overwrite if already created
             var newOption;
@@ -835,10 +849,10 @@ initResultParamOverlay = function(){ //<%-- Dialog div element at bottom of conf
             var traverserSelect = $j("#customTraversalOptionConfig").find("option:selected");
             traverserSelect.val(JSON.stringify(rsltParamVal));
         }
-        dialog.dialog("close");
+        paramDialog.dialog("close");
     });
-    dialog.find( "#resultParamsCancelBtn" ).on( "click", function(event){
-        dialog.dialog("close");
+    paramDialog.find( "#resultParamsCancelBtn" ).on( "click", function(event){
+        paramDialog.dialog("close");
     });
 };
 
