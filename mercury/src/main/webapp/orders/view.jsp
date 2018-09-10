@@ -1677,6 +1677,16 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         </div>
     </div>
 </div>
+<c:if test="${not empty actionBean.editOrder.product and not actionBean.editOrder.product.baitLocked and not empty actionBean.editOrder.reagentDesignKey}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Bait Design</label>
+        <div class="controls">
+            <div class="form-value">
+                    ${actionBean.editOrder.reagentDesignKey}
+            </div>
+        </div>
+    </div>
+</c:if>
 <div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 

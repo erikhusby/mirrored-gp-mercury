@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.zims;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -256,9 +257,14 @@ public class ZimsIlluminaRunFactoryTest {
         setupPositiveControlMap();
     }
 
-    /** Creates multiple dtos, one for each combination of testSampleId and testLabBatchType. */
     private List<ZimsIlluminaRunFactory.SampleInstanceDto> createSampleInstanceDto(
             boolean areCrspSamples, LabBatch.LabBatchType... testLabBatchTypes) {
+        return createSampleInstanceDto(areCrspSamples, true, testLabBatchTypes);
+    }
+
+    /** Creates multiple dtos, one for each combination of testSampleId and testLabBatchType. */
+    private List<ZimsIlluminaRunFactory.SampleInstanceDto> createSampleInstanceDto(
+            boolean areCrspSamples, boolean addBait, LabBatch.LabBatchType... testLabBatchTypes) {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> sampleInstanceDtoList = new ArrayList<>();
         String metadataSourceForPipeline = MercurySample.BSP_METADATA_SOURCE;
         if (areCrspSamples) {
@@ -291,7 +297,9 @@ public class ZimsIlluminaRunFactoryTest {
 
                     SampleInstanceV2 instance = new SampleInstanceV2(testTube);
                     instance.addReagent(reagents.get(sampleIdx));
-                    instance.addReagent(designedReagent);
+                    if (addBait) {
+                        instance.addReagent(designedReagent);
+                    }
 
                     if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
                         JiraTicket lcSetTicket = new JiraTicket(mockJiraService, batchName);
@@ -308,7 +316,9 @@ public class ZimsIlluminaRunFactoryTest {
             else {
                 SampleInstanceV2 instance = new SampleInstanceV2(testTube);
                 instance.addReagent(reagents.get(sampleIdx));
-                instance.addReagent(designedReagent);
+                if (addBait) {
+                    instance.addReagent(designedReagent);
+                }
                 sampleInstanceDtoList.add(new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance,
                         sampleId, getPdoKeyForSample(sampleId), null, null, mercurySample.getSampleKey(),
                         areCrspSamples,metadataSourceForPipeline));
@@ -786,6 +796,36 @@ public class ZimsIlluminaRunFactoryTest {
         Assert.assertEquals(mapSubmissionResultsToValue.get("library_preparation_kit_name"), "KAPA");
         Assert.assertEquals(mapSubmissionResultsToValue.get("target_capture_kit_vendor"), "Illumina");
 
+    }
+
+    public void testGrabReagentFromProduct() {
+        testProduct.setBaitLocked(true);
+        testProduct.setReagentDesignKey("BaitOnTheProductNotOnThePDO");
+        testProductOrder.setReagentDesignKey("IwontBeGrabbedbecauseBaitLocked");
+        List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
+                createSampleInstanceDto(true, false, LabBatch.LabBatchType.WORKFLOW);
+        List<LibraryBean> libraryBeans = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, controlMap, mapWorkflowToMetadata);
+        for (LibraryBean libraryBean: libraryBeans) {
+            if (!BooleanUtils.isTrue(libraryBean.isPositiveControl()) && !BooleanUtils.isTrue(libraryBean.isNegativeControl())) {
+                Assert.assertEquals(libraryBean.getBaitSetName(), "BaitOnTheProductNotOnThePDO");
+            }
+        }
+    }
+
+    public void testGrabReagentFromProductOrder() {
+        testProduct.setBaitLocked(false);
+        testProduct.setReagentDesignKey("BaitOnTheProductNotOnThePDO");
+        testProductOrder.setReagentDesignKey("PdoShouldBeGrabbedIfUnlocked");
+        List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
+                createSampleInstanceDto(true, false, LabBatch.LabBatchType.WORKFLOW);
+        List<LibraryBean> libraryBeans = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, controlMap, mapWorkflowToMetadata);
+        for (LibraryBean libraryBean: libraryBeans) {
+            if (!BooleanUtils.isTrue(libraryBean.isPositiveControl()) && !BooleanUtils.isTrue(libraryBean.isNegativeControl())) {
+                Assert.assertEquals(libraryBean.getBaitSetName(), "PdoShouldBeGrabbedIfUnlocked");
+            }
+        }
     }
 
     /** Creates some reagents having molecular barcodes for test purposes. */
