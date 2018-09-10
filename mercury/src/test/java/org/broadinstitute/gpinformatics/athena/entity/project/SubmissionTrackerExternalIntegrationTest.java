@@ -22,9 +22,8 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -43,9 +42,7 @@ public class SubmissionTrackerExternalIntegrationTest {
             new SubmissionTracker(12345l, "PRJNA420786FOO", "aSample", "1", FileType.BAM,
                 SubmissionBioSampleBean.ON_PREM, Aggregation.DATA_TYPE_EXOME);
 
-        Map<String, SubmissionTracker> trackerMap = new HashMap<>();
-        trackerMap.put(submissionTracker.createSubmissionIdentifier(), submissionTracker);
-        List<SubmissionTracker> orphans = submissionsService.findOrphans(trackerMap);
+        List<SubmissionTracker> orphans = submissionsService.findOrphans(Collections.singleton(submissionTracker));
 
         assertThat(orphans, contains(submissionTracker));
     }
