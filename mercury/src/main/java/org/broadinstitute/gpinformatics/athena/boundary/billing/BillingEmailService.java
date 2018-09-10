@@ -61,12 +61,17 @@ public class BillingEmailService {
         rootMap.put("sapDeliveryDocuments", sapDocuments);
         rootMap.put("quantity", quoteImportItem.getQuantity());
 
-        String body = processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, rootMap);
-            emailSender.sendHtmlEmail(appConfig, sapConfig.getSapSupportEmail(), Collections.emptyList(),
+        String body;
+        try {
+            body = processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, rootMap);
+        } catch (RuntimeException e) {
+            throw new InformaticsServiceException("Invalid reference in map", e);
+        }
+        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapSupportEmail(), Collections.emptyList(),
                 sapConfig.getSapReverseBillingSubject(), body, true, false);
     }
 
-    private String processTemplate(String template, Map<String, Object> objectMap) {
+    protected String processTemplate(String template, Map<String, Object> objectMap) {
         StringWriter stringWriter = new StringWriter();
         templateEngine.processTemplate(template, objectMap, stringWriter);
         return stringWriter.toString();
