@@ -193,6 +193,11 @@ public class ProductOrderTestFactory {
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-FPtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
+    public static ProductOrder buildSingleCellProductOrder(int maxSamples) {
+        return createDummyProductOrder(maxSamples, "PDO-1SC", Workflow.NONE, 101,
+                "Test Single Cell", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-SCtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+    }
+
     public static ProductOrder buildArrayPlatingProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PDO-1ARR", Workflow.NONE, 101,
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-ARRtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");

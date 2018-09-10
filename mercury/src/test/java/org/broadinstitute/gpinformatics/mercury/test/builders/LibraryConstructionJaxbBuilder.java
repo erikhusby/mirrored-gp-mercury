@@ -20,6 +20,7 @@ import java.util.List;
 public class LibraryConstructionJaxbBuilder {
     public static final String P_7_INDEX_PLATE_BARCODE = "000002715223";
     public static final String P_5_INDEX_PLATE_BARCODE = "000002655323";
+    public static final String DUAL_INDEX_PLATE_BARCODE = "000003175623";
 
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;

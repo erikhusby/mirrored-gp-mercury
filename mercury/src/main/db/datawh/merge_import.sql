@@ -1990,7 +1990,7 @@ AS
 
 
   /*
-   * Links flowcell ticket batch vessels to flowcell barcodes
+   * Picks up flowcell ticket batch vessel changes for flowcell designation tickets
    * See RPT-3539/GPLIM-4136 Make Designation from Mercury available for reporting
    */
   PROCEDURE MERGE_FCT_BATCH_CRUD
@@ -1999,15 +1999,16 @@ AS
     V_UPD_COUNT PLS_INTEGER;
     V_LATEST_ETL_DATE DATE;
 
-    -- This loop populates the initial batch starting vessel modifications
     BEGIN
       V_INS_COUNT := 0;
       V_UPD_COUNT := 0;
-      FOR new IN ( SELECT line_number, designation_id,
+      FOR new IN ( SELECT line_number, batch_starting_vessel_id,
+                     designation_id,
                      fct_id, fct_name, fct_type,
-                     designation_library, creation_date,
+                     designation_library, loading_vessel, creation_date,
                      flowcell_type, lane,
-                     concentration, is_pool_test, etl_date
+                     concentration, is_pool_test,
+                     etl_date
                    FROM im_fct_create
                    WHERE is_delete = 'F' )
       LOOP
@@ -2015,38 +2016,41 @@ AS
           SELECT MAX(ETL_DATE)
           INTO V_LATEST_ETL_DATE
           FROM flowcell_designation
-          WHERE designation_id = new.designation_id;
+          WHERE batch_starting_vessel_id = new.batch_starting_vessel_id;
 
           -- Do an update only if this ETL date greater than what's in DB already
           IF new.etl_date > V_LATEST_ETL_DATE THEN
             -- Update/Insert
             UPDATE flowcell_designation
-            SET fct_id              = new.fct_id,
+            SET designation_id    = new.designation_id,
+              fct_id              = new.fct_id,
               fct_name            = new.fct_name,
               fct_type            = new.fct_type,
               designation_library = new.designation_library,
+              loading_vessel      = new.loading_vessel,
               creation_date       = new.creation_date,
               flowcell_type       = new.flowcell_type,
               lane                = new.lane,
               concentration       = new.concentration,
               is_pool_test        = new.is_pool_test,
               etl_date            = new.etl_date
-            WHERE designation_id      = new.designation_id;
+            WHERE batch_starting_vessel_id = new.batch_starting_vessel_id;
 
             V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
           ELSIF V_LATEST_ETL_DATE IS NULL THEN
             INSERT INTO flowcell_designation (
-              designation_id, fct_id,
+              batch_starting_vessel_id, designation_id, fct_id,
               fct_name, fct_type,
-              designation_library, creation_date,
+              designation_library, loading_vessel, creation_date,
               flowcell_type, lane, concentration,
-              is_pool_test, etl_date, fcload_etl_date )
+              is_pool_test, etl_date  )
             VALUES(
+              new.batch_starting_vessel_id,
               new.designation_id, new.fct_id,
                                   new.fct_name, new.fct_type,
-                                  new.designation_library, new.creation_date,
+                                  new.designation_library, new.loading_vessel, new.creation_date,
                                   new.flowcell_type, new.lane, new.concentration,
-                                  new.is_pool_test, new.etl_date, new.etl_date
+                                  new.is_pool_test, new.etl_date
             );
             V_INS_COUNT := V_INS_COUNT  + SQL%ROWCOUNT;
             -- ELSE ignore older ETL extract
@@ -2066,32 +2070,29 @@ AS
   PROCEDURE MERGE_FCT_LOAD
   IS
     V_UPD_COUNT PLS_INTEGER;
-    V_LATEST_ETL_DATE DATE;
     V_COUNT NUMBER;
     -- This loop populates flowcell barcode from flowcell loading event
     BEGIN
       V_UPD_COUNT := 0;
-      FOR new IN ( SELECT line_number, designation_id, flowcell_barcode, etl_date
+      FOR new IN ( SELECT line_number, batch_starting_vessel_id, flowcell_barcode, etl_date
                    FROM im_fct_load
                    WHERE is_delete = 'F' )
       LOOP
         BEGIN
-          SELECT MAX(NVL( fcload_etl_date, '01-JAN-1970') )
-            , COUNT(*)
-          INTO V_LATEST_ETL_DATE, V_COUNT
+          SELECT COUNT(*)
+          INTO V_COUNT
           FROM flowcell_designation
-          WHERE designation_id = new.designation_id;
+          WHERE batch_starting_vessel_id = new.batch_starting_vessel_id;
 
           IF V_COUNT = 0 THEN
             DBMS_OUTPUT.PUT_LINE( TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_fct_load.dat (FCT load event ETL) line '
-                                  || new.line_number || ' - No vessel ID to update: ' || new.designation_id);
+                                  || new.line_number || ' - No vessel ID to update: ' || new.batch_starting_vessel_id);
             CONTINUE;
-          ELSIF V_LATEST_ETL_DATE <= new.etl_date THEN
+          ELSE
             -- Update only
             UPDATE flowcell_designation
-            SET flowcell_barcode = new.flowcell_barcode,
-              fcload_etl_date  = new.etl_date
-            WHERE designation_id   = new.designation_id;
+            SET flowcell_barcode = new.flowcell_barcode
+            WHERE batch_starting_vessel_id   = new.batch_starting_vessel_id;
             V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
           END IF;
 
