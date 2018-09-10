@@ -2164,8 +2164,10 @@ public class LabVesselSearchDefinition {
                 Set<String> result = null;
                 LabVessel vessel = (LabVessel)entity;
 
-                // Plate well will only show latest chip in the case of a re-hyb
-                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                if( SearchDefinitionFactory.findVesselType(vessel).startsWith("Infinium") ) {
+                    (result == null?result = new HashSet<>():result).add(vessel.getLabel());
+                } else if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    // Plate well will only show latest chip in the case of a re-hyb
                     for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                             : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
                         (result == null?result = new HashSet<>():result).add(labVesselAndPositions.getKey().getLabel());
@@ -2257,7 +2259,10 @@ public class LabVesselSearchDefinition {
 
                 Map<LabVessel, Collection<VesselPosition>> vesselCollectionMap;
 
-                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                if( SearchDefinitionFactory.findVesselType(vessel).startsWith("Infinium") ) {
+                    vesselCollectionMap = new HashMap<>();
+                    vesselCollectionMap.put(vessel,Collections.EMPTY_LIST);
+                } else if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
                     vesselCollectionMap = InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap();
                 } else {
                     vesselCollectionMap = InfiniumVesselTraversalEvaluator.getChipDetailsForDnaPlate(vessel, CHIP_EVENT_TYPES, context ).asMap();
