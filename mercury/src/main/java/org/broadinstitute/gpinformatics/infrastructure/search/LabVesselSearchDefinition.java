@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInstanceNameCache;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPl
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselLayoutPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.VolumeHistoryAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -96,7 +97,9 @@ public class LabVesselSearchDefinition {
     public enum MultiRefTerm {
         INFINIUM_DNA_PLATE("DNA Array Plate Barcode"),
         INFINIUM_AMP_PLATE("Amp Plate Barcode"),
-        INFINIUM_CHIP("Infinium Chip Barcode");
+        INFINIUM_CHIP("Infinium Chip Barcode"),
+        INITIAL_VOLUME("Initial Volume"),
+        VOLUME_HISTORY("Volume History");
 
         MultiRefTerm(String termRefName ) {
             this.termRefName = termRefName;
@@ -246,6 +249,7 @@ public class LabVesselSearchDefinition {
         configurableSearchDefinition.addCustomTraversalOption( InfiniumVesselTraversalEvaluator.DNA_PLATE_INSTANCE );
         configurableSearchDefinition.addCustomTraversalOption( InfiniumVesselTraversalEvaluator.DNA_PLATEWELL_INSTANCE );
         configurableSearchDefinition.addCustomTraversalOption( new TubeStripTubeFlowcellTraversalEvaluator() );
+        configurableSearchDefinition.addCustomTraversalOption( new VesselByEventTypeTraversalEvaluator() );
 
         configurableSearchDefinition.setAddRowsListenerFactory(
                 new ConfigurableSearchDefinition.AddRowsListenerFactory() {
@@ -253,6 +257,7 @@ public class LabVesselSearchDefinition {
                     public Map<String, ConfigurableList.AddRowsListener> getAddRowsListeners() {
                         Map<String, ConfigurableList.AddRowsListener> listeners = new HashMap<>();
                         listeners.put(SampleDataFetcherAddRowsListener.class.getSimpleName(), new SampleDataFetcherAddRowsListener());
+                        listeners.put(VolumeHistoryAddRowsListener.class.getSimpleName(), new VolumeHistoryAddRowsListener());
                         return listeners;
                     }
                 });
@@ -343,6 +348,56 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName(MultiRefTerm.INITIAL_VOLUME.getTermRefName());
+        searchTerm.setValueType(ColumnValueType.STRING);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String value = "";
+                LabVessel labVessel = (LabVessel) entity;
+                VolumeHistoryAddRowsListener volumeHistoryAddRowsListener = (VolumeHistoryAddRowsListener)
+                        context.getRowsListener( VolumeHistoryAddRowsListener.class.getSimpleName() );
+                Triple<Date, BigDecimal, String> initialVolumeData = volumeHistoryAddRowsListener.getInitialVolumeData(labVessel.getLabel());
+                if( initialVolumeData != null ) {
+                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(initialVolumeData.getMiddle(), "")
+                            + " - " + ColumnValueType.DATE.format(initialVolumeData.getLeft(), "")
+                            + " - " + initialVolumeData.getRight() ;
+                }
+                return value;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName(MultiRefTerm.VOLUME_HISTORY.getTermRefName());
+        searchTerm.setValueType(ColumnValueType.STRING);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String value = "";
+                LabVessel labVessel = (LabVessel) entity;
+                VolumeHistoryAddRowsListener volumeHistoryAddRowsListener = (VolumeHistoryAddRowsListener)
+                        context.getRowsListener( VolumeHistoryAddRowsListener.class.getSimpleName() );
+                Collection<Triple<Date, BigDecimal, String>> volumeHistoryData = volumeHistoryAddRowsListener.getVolumeHistoryData(labVessel.getLabel());
+                if( volumeHistoryData != null && volumeHistoryData.size() > 0 ) {
+                    StringBuilder valueBuilder = new StringBuilder();
+                    for( Triple<Date, BigDecimal, String> initialVolumeData : volumeHistoryData ) {
+                        valueBuilder.append(ColumnValueType.TWO_PLACE_DECIMAL.format(initialVolumeData.getMiddle() , ""))
+                                .append(" - ")
+                                .append(  ColumnValueType.DATE_TIME.format(initialVolumeData.getLeft(), "") )
+                                .append(" - ")
+                                .append(initialVolumeData.getRight())
+                        .append(", ");
+                    }
+                    value = valueBuilder.substring(0, valueBuilder.length() - 2);
+                }
+                return value;
+
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Starting Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -366,9 +421,9 @@ public class LabVesselSearchDefinition {
                 }
 
                 String drillDownString = null;
-                for(Pair<String,String> value : columnParams.getParamValues() ) {
-                    if (value.getLeft().equals("drillDown")) {
-                        drillDownString = value.getRight();
+                for(ResultParamValues.ParamValue value : columnParams.getParamValues() ) {
+                    if (value.getName().equals("drillDown")) {
+                        drillDownString = value.getValue();
                         break;
                     }
                 }
