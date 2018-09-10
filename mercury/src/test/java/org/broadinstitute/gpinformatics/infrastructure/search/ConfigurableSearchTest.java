@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
@@ -51,6 +52,9 @@ public class ConfigurableSearchTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     @Inject
     private LabEventDao labEventDao;
@@ -403,6 +407,9 @@ public class ConfigurableSearchTest extends Arquillian {
     @Test
     public void testVesselPositionPlugin(){
         SearchInstance searchInstance = new SearchInstance();
+
+        searchInstance.getEvalContext().setBspUserList(bspUserList);
+
         String entity = ColumnEntity.LAB_VESSEL.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
 
@@ -425,6 +432,6 @@ public class ConfigurableSearchTest extends Arquillian {
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "0175362315");
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000003038103");
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(2), "E09");
-        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(3), "FingerprintingPlateSetup, 10/29/2014, Michael Wilson");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(3), "FingerprintingPlateSetup, 10/29/2014, Michael Wilson");
     }
 }
