@@ -13,6 +13,8 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -60,6 +62,7 @@ import java.util.stream.Collectors;
 @UrlBinding(value = "/view/uploadQuants.action")
 @Dependent // To support injection into PicoToBspContainerTest
 public class UploadQuantsActionBean extends CoreActionBean {
+    private static final Log logger = LogFactory.getLog(UploadQuantsActionBean.class);
 
     public static final String ENTITY_NAME = "LabMetric";
 
@@ -202,8 +205,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
                         messageCollection, acceptRePico);
                 if (triple != null) {
                     labMetricRun = triple.getLeft();
-                    tubeFormationLabels = triple.getMiddle().stream()
-                            .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
+                    if (triple.getMiddle() != null) {
+                        tubeFormationLabels = triple.getMiddle().stream()
+                                .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
+                    }
                 }
 
                 addMessages(messageCollection);
@@ -229,6 +234,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
             errors.add("quantSpreadsheet", new SimpleError(errorBuilder.toString()));
         } catch (Exception e) {
             errors.add("quantSpreadsheet", new SimpleError("Exception while parsing upload. " + e.getMessage()));
+            logger.error("Exception while parsing upload", e);
         } finally {
             IOUtils.closeQuietly(quantStream);
             try {

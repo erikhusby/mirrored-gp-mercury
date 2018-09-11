@@ -16,6 +16,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -29,6 +31,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -255,6 +258,59 @@ public class VarioskanParserTest {
         labEvent2.getSectionTransfers().add(new SectionTransfer(tubeFormation.getContainerRole(), SBSSection.ALL96,
                 null, staticPlate2.getContainerRole(), SBSSection.ALL96, null, labEvent2));
         return mapPositionToTube;
+    }
+
+    public static StaticPlate createSourcePlate(Map<VesselPosition, LabVessel> mapPositionToTube, int numSamples,
+                                                String suffix) {
+        StaticPlate sourcePlate = new StaticPlate("Source" + suffix, StaticPlate.PlateType.Eppendorf96);
+        int counter = 0;
+        for (VesselPosition vesselPosition : StaticPlate.PlateType.Eppendorf96.getVesselGeometry().getVesselPositions()) {
+            PlateWell plateWell = new PlateWell(sourcePlate, vesselPosition);
+            plateWell.setVolume(new BigDecimal("75"));
+            sourcePlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+            mapPositionToTube.put(vesselPosition, plateWell);
+            counter++;
+            if (counter >= numSamples)
+                break;
+        }
+        return sourcePlate;
+    }
+
+    public static List<Map<VesselPosition, LabVessel>> buildPicoPlateWellsAndTransfers(int numSamples,
+                                                                                       Map<String, StaticPlate> mapBarcodeToPlate,
+                                                                                       String plate1Barcode,
+                                                                                       String suffix) {
+        Map<VesselPosition, LabVessel> mapPositionToTube1 = new HashMap<>();
+        Map<VesselPosition, LabVessel> mapPositionToTube2 = new HashMap<>();
+
+        StaticPlate sourcePlate = createSourcePlate(mapPositionToTube1, numSamples, suffix + "_1_");
+        StaticPlate sourcePlate2 = createSourcePlate(mapPositionToTube2, numSamples, suffix + "_2_");
+        mapBarcodeToPlate.put(sourcePlate.getLabel(), sourcePlate);
+        mapBarcodeToPlate.put(sourcePlate2.getLabel(), sourcePlate2);
+
+        StaticPlate picoPlate1 = new StaticPlate(plate1Barcode, StaticPlate.PlateType.Eppendorf384);
+        mapBarcodeToPlate.put(picoPlate1.getLabel(), picoPlate1);
+
+        LabEvent labEvent1 = new LabEvent(LabEventType.NEXOME_POND_PICO, new Date(), "BATMAN", 1L, 101L,
+                "Bravo");
+        labEvent1.getSectionTransfers().add(new SectionTransfer(sourcePlate.getContainerRole(), SBSSection.ALL96,
+                null, picoPlate1.getContainerRole(), SBSSection.P384_96TIP_1INTERVAL_A1, null, labEvent1));
+
+        LabEvent labEvent2 = new LabEvent(LabEventType.NEXOME_POND_PICO, new Date(), "BATMAN", 2L, 101L,
+                "Bravo");
+        labEvent2.getSectionTransfers().add(new SectionTransfer(sourcePlate.getContainerRole(), SBSSection.ALL96,
+                null, picoPlate1.getContainerRole(), SBSSection.P384_96TIP_1INTERVAL_A2, null, labEvent2));
+
+        LabEvent labEvent3 = new LabEvent(LabEventType.NEXOME_POND_PICO, new Date(), "BATMAN", 3L, 101L,
+                "Bravo");
+        labEvent3.getSectionTransfers().add(new SectionTransfer(sourcePlate2.getContainerRole(), SBSSection.ALL96,
+                null, picoPlate1.getContainerRole(), SBSSection.P384_96TIP_1INTERVAL_B1, null, labEvent3));
+
+        LabEvent labEvent4 = new LabEvent(LabEventType.NEXOME_POND_PICO, new Date(), "BATMAN", 4L, 101L,
+                "Bravo");
+        labEvent4.getSectionTransfers().add(new SectionTransfer(sourcePlate2.getContainerRole(), SBSSection.ALL96,
+                null, picoPlate1.getContainerRole(), SBSSection.P384_96TIP_1INTERVAL_B2, null, labEvent4));
+        return Arrays.asList(mapPositionToTube1, mapPositionToTube2);
     }
 
     @Test

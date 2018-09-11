@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -25,21 +26,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class GeminiPlateProcessor extends TableProcessor {
 
-    private static final Pattern BARCODE_PATTERN = Pattern.compile("Group: (\\d+)");
-    private static final Pattern RUN_START_PATTERN = Pattern.compile("Original Filename: .*; Date Last Saved: (.*)");
+    private static final String GROUP_PREFIX = "Group: ";
+    private static final Pattern BARCODE_PATTERN = Pattern.compile(GROUP_PREFIX + "([0-9,]+)");
+    public static final String DATE_PREFIX = "Original Filename: .*; Date Last Saved: ";
+    public static final String DATE_REGEX = DATE_PREFIX + "(.*)";
+    private static final Pattern RUN_START_PATTERN = Pattern.compile(DATE_REGEX);
+
 
     private List<String> headers;
-    private final String barcode;
+    private final List<String> barcodes;
     private final int headerRowIndex;
     private List<VarioskanPlateProcessor.PlateWellResult> plateWellResults = new ArrayList<>();
     private boolean twoCurve;
 
-    public GeminiPlateProcessor(Sheet sheet, String barcode, int headerRowIndex) {
+    public GeminiPlateProcessor(Sheet sheet, List<String> barcodes, int headerRowIndex) {
         super(sheet.getSheetName());
-        this.barcode = barcode;
+        this.barcodes = barcodes;
         this.headerRowIndex = headerRowIndex;
     }
 
@@ -78,10 +84,17 @@ public class GeminiPlateProcessor extends TableProcessor {
                 Matcher barcodeMatcher = BARCODE_PATTERN.matcher(cell.getStringCellValue());
                 if (barcodeMatcher.matches()) {
                     row = rowIterator.next();
-                    String picoPlateBarcode = barcodeMatcher.group(1);
-                    picoPlateBarcode = StringUtils.leftPad(picoPlateBarcode, 12, '0');
+
+                    // Duplicate Pico Stores Barcode in same row with a comma
+                    List<String> plateBarcodes = Arrays.asList(barcodeMatcher.group(1).split(","));
+
+                    // Pad Each Barcode to 12 digits
+                    plateBarcodes = plateBarcodes.stream()
+                            .map(b -> StringUtils.leftPad(b, 12, '0'))
+                            .collect(Collectors.toList());
+
                     GeminiPlateProcessor plateProcessor =
-                            fetchPlateWellResultsForPlate(picoPlateBarcode, sheet, row.getRowNum());
+                            fetchPlateWellResultsForPlate(plateBarcodes, sheet, row.getRowNum());
                     results.add(plateProcessor);
                 }
             }
@@ -90,7 +103,7 @@ public class GeminiPlateProcessor extends TableProcessor {
         return Pair.of(runInfo, results);
     }
 
-    private static GeminiPlateProcessor fetchPlateWellResultsForPlate(String barcode,
+    private static GeminiPlateProcessor fetchPlateWellResultsForPlate(List<String> barcode,
                                                                       Sheet sheet, int headerRowIndex)
             throws ValidationException {
         GeminiPlateProcessor geminiPlateProcessor = new GeminiPlateProcessor(sheet, barcode, headerRowIndex);
@@ -135,12 +148,35 @@ public class GeminiPlateProcessor extends TableProcessor {
 
             BigDecimal concentration = fetchConcentration(dataRow);
 
+            String barcode = fetchBarcode(dataRow);
+            if (barcode == null) {
+                addDataMessage("Failed to parse barcode.", dataRowIndex);
+                return;
+            }
+
             VarioskanPlateProcessor.PlateWellResult plateWellResult = new VarioskanPlateProcessor.PlateWellResult(
                     barcode, vesselPosition, concentration);
             plateWellResults.add(plateWellResult);
         } catch (NumberFormatException nfe) {
             addDataMessage("Failed to parse concentration", dataRowIndex);
         }
+    }
+
+    /**
+     * Barcodes stored in duplicate on table or one per read.
+     */
+    private String fetchBarcode(Map<String, String> dataRow) {
+        if (barcodes.size() == 1) {
+            return barcodes.get(0);
+        }
+        if (barcodes.size() == 2) {
+            if (!StringUtils.isBlank(dataRow.get(Headers.SAMPLE.getText()))) {
+                return barcodes.get(0);
+            } else {
+                return barcodes.get(1);
+            }
+        }
+        return null;
     }
 
     private BigDecimal fetchConcentration(Map<String, String> dataRow) {
@@ -184,6 +220,7 @@ public class GeminiPlateProcessor extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
+        SAMPLE("Sample"),
         WELL("Wells"),
         CONCENTRATION("Concentration"),
         MEAN_CONC("MeanConc"),
