@@ -384,7 +384,7 @@ public class ConfigurableSearchTest extends Arquillian {
 
         searchInstance.getPredefinedViewColumns().add("Infinium DNA Plate Drill Down");
         searchInstance.getPredefinedViewColumns().add("Infinium Amp Plate Drill Down");
-        searchInstance.setCustomTraversalOptionName(InfiniumVesselTraversalEvaluator.DNA_PLATE_INSTANCE.getUiName());
+        searchInstance.setCustomTraversalOptionConfig(InfiniumVesselTraversalEvaluator.DNA_PLATE_INSTANCE.getUiName());
         searchInstance.setExcludeInitialEntitiesFromResults(true);
         searchInstance.getTraversalEvaluatorValues().put(LabEventSearchDefinition.TraversalEvaluatorName.DESCENDANTS.getId(), Boolean.TRUE);
         searchInstance.getTraversalEvaluatorValues().put(LabEventSearchDefinition.TraversalEvaluatorName.ANCESTORS.getId(), Boolean.FALSE);

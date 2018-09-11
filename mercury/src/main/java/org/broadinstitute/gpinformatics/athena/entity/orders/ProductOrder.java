@@ -278,6 +278,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "ANALYZE_UMI_OVERRIDE")
     private Boolean analyzeUmiOverride;
 
+    @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
+    private String reagentDesignKey;
+
     @Transient
     private Quote cachedQuote;
 
@@ -2228,6 +2231,25 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setAnalyzeUmiOverride(boolean analyzeUmiOverride) {
         this.analyzeUmiOverride = analyzeUmiOverride;
+    }
+
+    /**
+     * @return - Reagent Design set on Product if its 'Bait Locked', otherwise check the PDO for override else default
+     * back to whatever the product says.
+     */
+    public String getReagentDesignKey() {
+        if (product != null) {
+            if (product.getBaitLocked()) {
+                return product.getReagentDesignKey();
+            } else {
+                return reagentDesignKey != null ? reagentDesignKey : product.getReagentDesignKey();
+            }
+        }
+        return reagentDesignKey;
+    }
+
+    public void setReagentDesignKey(String reagentDesignKey) {
+        this.reagentDesignKey = reagentDesignKey;
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
