@@ -1552,7 +1552,7 @@ public class ProductOrderFixupTest extends Arquillian {
      * SUPPORT-4488
      * PDO-5818 P-EX-0008 P-EX-0016
      * ...
-     * The first line is the fixup commentary.  The second and subsequent lines are: the PDO-ID
+     * The first line is the fixup commentary.  The second and subsequent lines are: the PDO-ID,
      * the old product part number, the new product part number.
      */
     @Test(enabled = false)
