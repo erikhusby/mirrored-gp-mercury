@@ -3,6 +3,7 @@
  */
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -29,22 +30,12 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 @Test(groups = TestGroups.FIXUP)
 public class BillingSessionFixupTest extends Arquillian {
@@ -284,11 +275,21 @@ public class BillingSessionFixupTest extends Arquillian {
         ProductOrder orderToUpdate = productOrderDao.findByBusinessKey(pdoKey);
 
 
-        orderToUpdate.getSamples().stream()
+        Set<ProductOrderSample> targettedSamples = orderToUpdate.getSamples().stream()
                 .filter(productOrderSample -> sampleKeyList.contains(productOrderSample.getSampleKey())).collect(
                         Collectors.toSet());
 
+        Assert.assertTrue(CollectionUtils.isNotEmpty(targettedSamples),"Unable to find the samples that are targetted");
 
+        Set<LedgerEntry> entriesToCorrect = new HashSet<>();
 
+        for (ProductOrderSample targettedSample : targettedSamples) {
+            targettedSample.getLedgerItems().stream()
+                    .filter(ledgerEntry -> StringUtils.isBlank(ledgerEntry.getBillingMessage())
+                            && ledgerEntry.getBillingSession() == null)
+                    .forEach(entriesToCorrect::add);
+        }
+
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entriesToCorrect), "Unable to find LedgerItems to correct");
     }
 }
