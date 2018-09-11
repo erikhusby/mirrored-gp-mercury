@@ -279,7 +279,7 @@ public class BillingSessionFixupTest extends Arquillian {
                 .filter(productOrderSample -> sampleKeyList.contains(productOrderSample.getSampleKey())).collect(
                         Collectors.toSet());
 
-        Assert.assertTrue(CollectionUtils.isNotEmpty(targettedSamples),"Unable to find the samples that are targetted");
+        Assert.assertTrue(CollectionUtils.isNotEmpty(targettedSamples),"Unable to find the samples that are targetted.");
 
         Set<LedgerEntry> entriesToCorrect = new HashSet<>();
 
@@ -290,6 +290,20 @@ public class BillingSessionFixupTest extends Arquillian {
                     .forEach(entriesToCorrect::add);
         }
 
-        Assert.assertTrue(CollectionUtils.isNotEmpty(entriesToCorrect), "Unable to find LedgerItems to correct");
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entriesToCorrect), "Unable to find LedgerItems to correct.");
+        Assert.assertTrue(entriesToCorrect.size() == 2, "There should only be 2 ledger entries found.");
+
+        for (LedgerEntry ledgerEntry : entriesToCorrect) {
+
+
+            ledgerEntry.setSapDeliveryDocumentId("Blocking SAP to balance out prior negatives");
+            System.out.println("For " + ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey() +
+                    " sample " + ledgerEntry.getProductOrderSample().getBusinessKey() +
+                    " Setting the ledger entry with quantity of " + ledgerEntry.getQuantity() +
+                    " to skip SAP by setting the delivery document id to " +
+                    ledgerEntry.getSapDeliveryDocumentId());
+        }
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-5767: blocking SAP for ledger entry Billing to balance the SAP entries"));
     }
 }
