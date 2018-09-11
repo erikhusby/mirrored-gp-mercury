@@ -1545,4 +1545,31 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary(fixupReason));
         commitTransaction();
     }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ChangePdoProduct.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-4488
+     * PDO-5818 P-EX-0008 P-EX-0016
+     * ...
+     * The first line is the fixup commentary.  The second and subsequent lines are: the PDO-ID
+     * the old product part number, the new product part number.
+     */
+    @Test(enabled = false)
+    public void fixupSupport4488() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangePdoProduct.txt"));
+
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+            String[] split = line.split("\\s");
+            ProductOrder productOrder = productOrderDao.findByBusinessKey(split[0]);
+            Assert.assertEquals(productOrder.getProduct().getPartNumber(), split[1]);
+            Product product = productDao.findByPartNumber(split[2]);
+            System.out.println("Changing " + productOrder.getBusinessKey() + " to " + product.getPartNumber());
+            productOrder.setProduct(product);
+        }
+
+        productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
+    }
 }
