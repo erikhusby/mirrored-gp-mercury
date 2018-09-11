@@ -114,6 +114,7 @@ table.compact td,span.title { white-space: nowrap; }
 table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: none; }
 
 .page-header { color: #644436; border-bottom: 1px solid #EEEEEE; margin: 0 0 15px 0; padding-bottom: 3px; font-size: x-large; font-weight: bold; line-height: 1; }
+.title-header { color: #644436; margin: 0 0 15px 0; padding-bottom: 3px; font-size: x-large; font-weight: bold; line-height: 1; }
 
 .twocolumn {-moz-column-count:2;-webkit-column-count:2;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 .threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
