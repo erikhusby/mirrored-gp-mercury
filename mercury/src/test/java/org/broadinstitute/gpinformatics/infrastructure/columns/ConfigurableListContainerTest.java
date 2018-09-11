@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabEventSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.ResultParamValues;
@@ -54,6 +55,9 @@ public class ConfigurableListContainerTest extends Arquillian {
 
     @Inject
     private ConfigurableListFactory configurableListFactory;
+
+    @Inject
+    private ConstrainedValueDao constrainedValueDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -297,6 +301,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         SearchContext evalContext = new SearchContext();
         evalContext.setBspUserList( bspUserList );
         evalContext.setPagination(new PaginationUtil.Pagination(80));
+        evalContext.setOptionValueDao(constrainedValueDao);
 
         return evalContext;
     }
