@@ -39,7 +39,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
@@ -135,7 +134,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorEzPass(null), messageCollection, null);
+                new ExternalLibraryProcessorEzPass(), messageCollection, null, false);
 
         Assert.assertTrue(CollectionUtils.isEmpty(entities));
         Assert.assertEquals(messageCollection.getErrors().size(), 2);
@@ -156,7 +155,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorEzPass(null), messageCollection, null);
+                new ExternalLibraryProcessorEzPass(), messageCollection, null, false);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertEquals(messageCollection.getInfos().iterator().next(),
@@ -234,7 +233,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorNewTech(null), messageCollection, null);
+                new ExternalLibraryProcessorNewTech(), messageCollection, null, false);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -320,7 +319,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorNewTech(null), messageCollection, null);
+                new ExternalLibraryProcessorNewTech(), messageCollection, null, false);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -395,7 +394,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorNewTech(null), messageCollection, null);
+                new ExternalLibraryProcessorNewTech(), messageCollection, null, false);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -467,10 +466,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         String file = "testdata/PooledTubesTest.xlsx";
         SampleInstanceEjb sampleInstanceEjb = setMocks(POOLEDTUBE);
         MessageCollection messageCollection = new MessageCollection();
-        VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor(null);
+        VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor();
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
-                VarioskanParserTest.getSpreadsheet(file), OVERWRITE, processor, messageCollection, null);
+                VarioskanParserTest.getSpreadsheet(file), OVERWRITE, processor, messageCollection, null, false);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -624,7 +623,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryBarcodeUpdate(null), messageCollection, null);
+                new ExternalLibraryBarcodeUpdate(), messageCollection, null, false);
 
         // Tests the expected errors.
         Assert.assertEquals(messageCollection.getErrors().size(), 3,
@@ -648,7 +647,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 new ByteArrayInputStream(new byte[]{0}),
-                OVERWRITE, new ExternalLibraryBarcodeUpdate(null), messageCollection, null);
+                OVERWRITE, new ExternalLibraryBarcodeUpdate(), messageCollection, null, false);
 
         Assert.assertEquals(messageCollection.getErrors().size(), 1,
                 StringUtils.join(messageCollection.getErrors(), "; "));
@@ -664,10 +663,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         final String filename = "PooledTube_Test-363_case3.xls";
         SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.POOLED);
         MessageCollection messageCollection = new MessageCollection();
-        VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor(null);
+        VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor();
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
-                true, processor, messageCollection, null);
+                true, processor, messageCollection, null, false);
 
         // Should be no sampleInstanceEntities.
         Assert.assertEquals(entities.size(), 0);
@@ -749,10 +748,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         final String filename = "ExternalLibraryEZFailTest2.xlsx";
         SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.EZPASS);
         MessageCollection messages = new MessageCollection();
-        ExternalLibraryProcessor processor = new ExternalLibraryProcessorEzPass(null);
+        ExternalLibraryProcessor processor = new ExternalLibraryProcessorEzPass();
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
-                true, processor, messages, null);
+                true, processor, messages, null, false);
 
         // Should be no sampleInstanceEntities.
         Assert.assertEquals(entities.size(), 0);

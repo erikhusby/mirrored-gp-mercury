@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -69,7 +68,7 @@ public class SampleInstanceEjbTest extends Arquillian {
 
         for (boolean overwrite : new boolean[]{false, true}) {
             MessageCollection messageCollection = new MessageCollection();
-            VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor(null);
+            VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor();
             List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                     VarioskanParserTest.getSpreadsheet(filename), overwrite, processor, messageCollection, () -> {
                         // Modifies the spreadsheet data to make unique barcode, library, sample name, and root.
@@ -92,7 +91,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                                 processor.getLsids().set(i, "lsid:100" + i);
                             }
                         }
-                    });
+                    }, false);
 
             Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
                     StringUtils.join(messageCollection.getErrors(), "; "));
@@ -146,10 +145,10 @@ public class SampleInstanceEjbTest extends Arquillian {
                 "PooledTube_Test-363_case2.xls",
                 "PooledTube_Test-363_case4.xls")) {
             MessageCollection messageCollection = new MessageCollection();
-            VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor(null);
+            VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor();
             List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                     new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
-                    true, processor, messageCollection, null);
+                    true, processor, messageCollection, null, false);
             // Should be no errors.
             Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
                     StringUtils.join(messageCollection.getErrors(), "; "));
@@ -197,7 +196,7 @@ public class SampleInstanceEjbTest extends Arquillian {
 
         // First uploads some pooled tubes.
         String filename1 = "PooledTubeReg.xlsx";
-        VesselPooledTubesProcessor processor1 = new VesselPooledTubesProcessor(null);
+        VesselPooledTubesProcessor processor1 = new VesselPooledTubesProcessor();
         MessageCollection messages1 = new MessageCollection();
         sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(filename1), !OVERWRITE,
                 processor1, messages1, () -> {
@@ -209,7 +208,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                         processor1.getSampleNames().set(i, "SM-" + base + i);
                         processor1.getRootSampleNames().set(i, "");
                     }
-                });
+                }, false);
         Assert.assertTrue(messages1.getErrors().isEmpty(), "In " + filename1 + ": " +
                 StringUtils.join(messages1.getErrors(), "; "));
         // Should have persisted all rows.
@@ -224,7 +223,7 @@ public class SampleInstanceEjbTest extends Arquillian {
         // Updates the tube barcodes.
         String filename2 = "ExternalLibrarySampleBarcodeUpdate.xlsx";
         MessageCollection messages2 = new MessageCollection();
-        ExternalLibraryBarcodeUpdate processor2 = new ExternalLibraryBarcodeUpdate(null);
+        ExternalLibraryBarcodeUpdate processor2 = new ExternalLibraryBarcodeUpdate();
         sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(filename2), OVERWRITE,
                 processor2, messages2, () -> {
                     // Makes new barcode for the existing library names.
@@ -233,7 +232,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                         processor2.getBarcodes().set(i, "F" + base + i);
                         processor2.getLibraryNames().set(i, "Library" + base + i);
                     }
-                });
+                }, false);
         Assert.assertTrue(messages2.getErrors().isEmpty(), "In " + filename2 + ": " +
                 StringUtils.join(messages2.getErrors(), "; "));
         // Should have persisted all updates.
@@ -248,14 +247,14 @@ public class SampleInstanceEjbTest extends Arquillian {
     @Test
     public void testNewTechUploads() {
         for (Pair<String, ? extends ExternalLibraryProcessor> pair : Arrays.asList(
-                Pair.of("ExternalLibraryMultiOrganismTest.xlsx", new ExternalLibraryProcessorNewTech(null)),
-                Pair.of("ExternalLibraryNONPooledTest.xlsx", new ExternalLibraryProcessorNewTech(null)),
-                Pair.of("ExternalLibraryPooledTest.xlsx", new ExternalLibraryProcessorNewTech(null)))) {
+                Pair.of("ExternalLibraryMultiOrganismTest.xlsx", new ExternalLibraryProcessorNewTech()),
+                Pair.of("ExternalLibraryNONPooledTest.xlsx", new ExternalLibraryProcessorNewTech()),
+                Pair.of("ExternalLibraryPooledTest.xlsx", new ExternalLibraryProcessorNewTech()))) {
             MessageCollection messages = new MessageCollection();
             String file = pair.getLeft();
             InputStream spreadsheet = VarioskanParserTest.getSpreadsheet(file);
             ExternalLibraryProcessor processor = pair.getRight();
-            sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages, null);
+            sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages, null, false);
 
             Assert.assertTrue(messages.getErrors().isEmpty(), "In " + file + " " + messages.getErrors());
             // Should have persisted all rows.
@@ -270,7 +269,7 @@ public class SampleInstanceEjbTest extends Arquillian {
     public void testEZPassUploads() throws Exception {
         final String base = String.format("%09d", random.nextInt(100000000));
         String file = "ExternalLibraryEZPassTest.xlsx";
-        final ExternalLibraryProcessor processor = new ExternalLibraryProcessorEzPass(null);
+        final ExternalLibraryProcessor processor = new ExternalLibraryProcessorEzPass();
         MessageCollection messages = new MessageCollection();
         sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(file), !OVERWRITE, processor,
                 messages, () -> {
@@ -287,7 +286,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                         processor.getLibraryNames().add("Library" + base + i);
                         processor.getSampleNames().add(base + "." + i);
                     }
-                });
+                }, false);
         Assert.assertTrue(messages.getErrors().isEmpty(), "In " + file + " " + messages.getErrors());
 
         // Checks data persisted to the database.

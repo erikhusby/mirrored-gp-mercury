@@ -18,12 +18,12 @@ public class ExternalLibraryBarcodeUpdate extends ExternalLibraryProcessor {
     private List<String> libraryNames = new ArrayList<>();
     private List<String> barcodes = new ArrayList<>();
 
-    public ExternalLibraryBarcodeUpdate(String sheetName) {
-        super(sheetName);
+    public ExternalLibraryBarcodeUpdate() {
+        super(null);
         headerValueNames.clear();
     }
 
-    public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
+    public enum Headers implements ColumnHeader {
         LIBRARY_NAME("Library Name", REQUIRED),
         TUBE_BARCODE("Tube Barcode", REQUIRED),
         ;
@@ -51,11 +51,6 @@ public class ExternalLibraryBarcodeUpdate extends ExternalLibraryProcessor {
         @Override
         public boolean isRequiredValue() {
             return required;
-        }
-
-        @Override
-        public boolean isIgnoredValue() {
-            return false;
         }
 
         @Override

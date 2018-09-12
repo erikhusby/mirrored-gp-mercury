@@ -46,32 +46,33 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     private List<String> sexes = new ArrayList<>();
     private List<String> volumes = new ArrayList<>();
 
-    public VesselPooledTubesProcessor(String sheetName) {
-        super(sheetName);
+    public VesselPooledTubesProcessor() {
+        super(null);
         headerValueNames.clear();
     }
 
     // Only the first four words of header text are used and the rest are ignored.
+    // Orderining of headers is only important for generating template spreadsheets in the ActionBean.
     public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
-        BAIT("Bait", OPTIONAL, true),
-        BROAD_PARTICIPANT_ID("Broad Participant Id", OPTIONAL, true),
-        BROAD_SAMPLE_ID("Broad Sample Id", REQUIRED, true),
-        CAT("CAT", OPTIONAL, true),
-        COLLABORATOR_PARTICIPANT_ID("Collaborator Participant Id", OPTIONAL, true),
-        COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", OPTIONAL, true),
-        CONDITIONS("Conditions", REQUIRED, true),
-        EXPERIMENT("Experiment", REQUIRED, true),
-        FRAGMENT_SIZE("Fragment Size", OPTIONAL, true), // Required on the first row for a tube.
-        GENDER("Gender", OPTIONAL, true),
-        LIBRARY_NAME("Library Name", REQUIRED, true),
-        LSID("Lsid", OPTIONAL, true),
-        MOLECULAR_INDEXING_SCHEME("Molecular Indexing Scheme", REQUIRED, true),
-        READ_LENGTH("Read Length", OPTIONAL, true),
-        ROOT_SAMPLE_ID("Root Sample Id", OPTIONAL, true),
-        SPECIES("Species", OPTIONAL, true),
         TUBE_BARCODE("Tube Barcode", REQUIRED, true),
-        VOLUME("Volume", OPTIONAL, true),; // Required on the first row for a tube.
-
+        LIBRARY_NAME("Library Name", REQUIRED, true),
+        BROAD_SAMPLE_ID("Broad Sample Id", REQUIRED, true),
+        ROOT_SAMPLE_ID("Root Sample Id", OPTIONAL, true),
+        MOLECULAR_INDEXING_SCHEME("Molecular Indexing Scheme", REQUIRED, true),
+        BAIT("Bait", OPTIONAL, true),
+        CAT("CAT", OPTIONAL, true),
+        EXPERIMENT("Experiment", REQUIRED, true),
+        CONDITIONS("Conditions", REQUIRED, true),
+        COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", OPTIONAL, true),
+        COLLABORATOR_PARTICIPANT_ID("Collaborator Participant Id", OPTIONAL, true),
+        BROAD_PARTICIPANT_ID("Broad Participant Id", OPTIONAL, true),
+        GENDER("Gender", OPTIONAL, true),
+        SPECIES("Species", OPTIONAL, true),
+        VOLUME("Volume", OPTIONAL, true), // Required on the first row for a tube.
+        FRAGMENT_SIZE("Fragment Size", OPTIONAL, true), // Required on the first row for a tube.
+        READ_LENGTH("Read Length", OPTIONAL, true),
+        LSID("Lsid", OPTIONAL, true),
+        ;
         private final String text;
         private boolean isRequired;
         private boolean isString;
@@ -100,6 +101,11 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         @Override
         public boolean isIgnoredValue() {
             return false;
+        }
+
+        @Override
+        public boolean isOnlyOncePerEntity() {
+            return this == VOLUME || this == FRAGMENT_SIZE;
         }
 
         @Override

@@ -45,55 +45,55 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     private List<String> volumes = new ArrayList<>();
     private SampleKitRequest sampleKitRequest;
 
-    public ExternalLibraryProcessorNewTech(String sheetName) {
-        super(sheetName);
+    public ExternalLibraryProcessorNewTech() {
+        super(null);
     }
 
     // Only the first four words of header text are used and the rest are ignored.
+    // Ordering of headers is only important for generating template spreadsheets in the ActionBean.
+    // "Ignored" means value not saved.
     public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
-        ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", OPTIONAL),
-        ASSEMBLY_INFORMATION("Additional Assembly and Analysis Info", OPTIONAL),
+        SAMPLE_NUMBER("Sample Number", IGNORED),
+        SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
+        IRB_NUMBER("IRB Number", IGNORED),
+        STRAIN("Strain", IGNORED),
+        SEX("Sex (M/F)", OPTIONAL),
+        CELL_LINE("Cell Line", IGNORED),
+        TISSUE_TYPE("Tissue Type", IGNORED),
         COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", REQUIRED),
-        CONCENTRATION("Concentration (ng/uL)", REQUIRED),
-        COVERAGE("Coverage (lanes/sample)", REQUIRED),
-        DATA_ANALYSIS_TYPE("Data Analysis Type", REQUIRED),
         INDIVIDUAL_NAME("Individual Name (Patient Id)", REQUIRED),
-        INSERT_SIZE_RANGE("Insert Size Range", OPTIONAL),
         LIBRARY_NAME("Library Name", REQUIRED),
         LIBRARY_TYPE("Library Type", OPTIONAL),
         MOLECULAR_BARCODE_NAME("Molecular Barcode Name", OPTIONAL),
-        ORGANISM("Organism", OPTIONAL),
-        POOLED("Pooled (Y/N)", OPTIONAL),
-        PROJECT_TITLE("Project Title (pipeline aggregator)", REQUIRED),
-        READ_LENGTH("Desired Read Length", OPTIONAL),
-        REFERENCE_SEQUENCE("Reference Sequence", REQUIRED),
-        SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
-        SEX("Sex (M/F)", OPTIONAL),
-        TUBE_BARCODE("Sample Tube Barcode", OPTIONAL),
-        VOLUME("Volume (uL)", REQUIRED),
-
-        // Ignored header and data is not saved.
-        BLANK("", IGNORED),
-        APPROVED_BY("Approved By", IGNORED),
-        CELL_LINE("Cell Line", IGNORED),
-        ACCESS_LIST("Data Access List", IGNORED),
-        DATA_SUBMISSION("Data Submission", IGNORED),
-        DERIVED_FROM("Derived From", IGNORED),
-        FUNDING_SOURCE("Funding Source", IGNORED),
-        IRB_NUMBER("IRB Number", IGNORED),
-        ILLUMINA_KIT_USED("Illumina or 454 Kit", IGNORED),
-        JUMP_SIZE("Jump Size", IGNORED),
-        LIBRARY_SIZE("Library Size", IGNORED),
-        MEMBER_OF_POOL("Member of Pool", IGNORED),
         MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", IGNORED),
-        REQUESTED_COMPLETION_DATE("Requested Completion Date", IGNORED),
-        REQUIRED_ACCESS("Require Controlled Access for Data", IGNORED),
-        RESTRICTION_ENZYMES("Restriction Enzyme", IGNORED),
-        SAMPLE_NUMBER("Sample Number", IGNORED),
-        SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", IGNORED),
-        STRAIN("Strain", IGNORED),
+        POOLED("Pooled (Y/N)", OPTIONAL),
+        MEMBER_OF_POOL("Member of Pool", IGNORED),
         SUBMITTED_TO_GSSR("Submitted to Gssr", IGNORED),
-        TISSUE_TYPE("Tissue Type", IGNORED),
+        DERIVED_FROM("Derived From", IGNORED),
+        INSERT_SIZE_RANGE("Insert Size Range", OPTIONAL),
+        LIBRARY_SIZE("Library Size", IGNORED),
+        JUMP_SIZE("Jump Size", IGNORED),
+        ILLUMINA_KIT_USED("Illumina or 454 Kit", IGNORED),
+        RESTRICTION_ENZYMES("Restriction Enzyme", IGNORED),
+        VOLUME("Volume (uL)", REQUIRED),
+        CONCENTRATION("Concentration (ng/uL)", REQUIRED),
+        ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", OPTIONAL),
+        ORGANISM("Organism", OPTIONAL),
+        SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", IGNORED),
+        READ_LENGTH("Desired Read Length", OPTIONAL),
+        PROJECT_TITLE("Project Title (pipeline aggregator)", REQUIRED),
+        FUNDING_SOURCE("Funding Source", IGNORED),
+        COVERAGE("Coverage (lanes/sample)", REQUIRED),
+        APPROVED_BY("Approved By", IGNORED),
+        REFERENCE_SEQUENCE("Reference Sequence", REQUIRED),
+        REQUESTED_COMPLETION_DATE("Requested Completion Date", IGNORED),
+        DATA_SUBMISSION("Data Submission", IGNORED),
+        REQUIRED_ACCESS("Require Controlled Access for Data", IGNORED),
+        ACCESS_LIST("Data Access List", IGNORED),
+        ASSEMBLY_INFORMATION("Additional Assembly and Analysis Info", OPTIONAL),
+        DATA_ANALYSIS_TYPE("Data Analysis Type", REQUIRED),
+        TUBE_BARCODE("Sample Tube Barcode", OPTIONAL),
+        BLANK("", IGNORED),
         ;
 
         private final String text;
@@ -138,6 +138,11 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         @Override
         public boolean isStringColumn() {
             return isString;
+        }
+
+        @Override
+        public boolean isOnlyOncePerEntity() {
+            return this == CONCENTRATION || this == VOLUME;
         }
     }
 

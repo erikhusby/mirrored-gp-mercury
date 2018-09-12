@@ -183,7 +183,8 @@ public class SampleInstanceEjb {
 
     /**
      * Parses the uploaded spreadsheet, checks for correct headers and missing/incorrect data,
-     * and if it's all ok then persists the SampleInstanceEntity and associated entities.
+     * and if it's all ok then, depending on the kitOnly flag, either persists the SampleKitRequest or
+     * persists the SampleInstanceEntities and associated Sample, LabVessel, and other entities.
      * <p>
      * Uploads are either library uploads or tube uploads.
      * Tube uploads give the tube barcode and sample name, which may or may not be known to Mercury and BSP.
@@ -197,15 +198,16 @@ public class SampleInstanceEjb {
      * If it is given it must not already exist in Mercury (unless a previous upload is being
      * overwritten). If tube barcode is not given then the library name is used as the barcode.
      * The lab user can later do an ExternalLibraryBarcodeUpdate upload to reassign the tube barcode.
-     *
      * @param inputStream the spreadsheet inputStream.
      * @param overwrite   specifies if existing entities should be overwritten.
      * @param processor   the TableProcessor subclass that should parse the spreadsheet.
      * @param messages    the errors, warnings, and info to be passed back.
      * @param afterParse  a callback that lets test code to change spreadsheet data after it's been parsed.
+     * @param kitOnly     Set true to cause a kit request to be made, and no sample accession. Set false for
+     *                    sample accessioning with no kit request.
      */
     public List<SampleInstanceEntity> doExternalUpload(InputStream inputStream, boolean overwrite,
-            ExternalLibraryProcessor processor, MessageCollection messages, Runnable afterParse) {
+            ExternalLibraryProcessor processor, MessageCollection messages, Runnable afterParse, boolean kitOnly) {
 
         messages.clearAll();
         if (processor == null) {
@@ -229,32 +231,41 @@ public class SampleInstanceEjb {
                 if (!messages.hasErrors()) {
                     // Creates or updates the SampleInstanceEntities, MercurySamples, LabVessels.
                     List<SampleInstanceEntity> instanceEntities = processor.makeOrUpdateEntities(rowDtos);
-                    sampleInstanceEntityDao.persistAll(processor.getEntitiesToPersist());
-                    sampleInstanceEntityDao.persistAll(instanceEntities);
-                    if (CollectionUtils.isNotEmpty(instanceEntities) && deployment != null) {
-                        String body = generateEmailBody(instanceEntities);
-                        // Sends a sample kit request email to the user.
-                        Boolean status = null;
-                        if (userBean != null && userBean.getBspUser() != null) {
-                            status = emailSender.sendHtmlEmail(new AppConfig(deployment),
-                                    userBean.getBspUser().getEmail(), Collections.emptyList(),
-                                    EMAIL_SUBJECT, body, false);
-                        }
-                        if (BooleanUtils.isNotTrue(status)) {
-                            if (BooleanUtils.isFalse(status)) {
-                                messages.addError("Failed to send email for Sample Kit Request.");
+                    if (kitOnly) {
+                        // Skips making the kit in Arquillian tests.
+                        if (CollectionUtils.isNotEmpty(instanceEntities) && deployment != null) {
+                            processor.makeSampleKitRequest();
+                            if (processor.getSampleKitRequest() != null) {
+                                sampleInstanceEntityDao.persist(processor.getSampleKitRequest());
+
+                                String body = generateEmailBody(instanceEntities, processor.getSampleKitRequest());
+                                // Sends a sample kit request email to the user.
+                                Boolean status = null;
+                                if (userBean != null && userBean.getBspUser() != null) {
+                                    status = emailSender.sendHtmlEmail(new AppConfig(deployment),
+                                            userBean.getBspUser().getEmail(), Collections.emptyList(),
+                                            EMAIL_SUBJECT, body, false);
+                                }
+                                if (BooleanUtils.isNotTrue(status)) {
+                                    if (BooleanUtils.isFalse(status)) {
+                                        messages.addError("Failed to send email for Sample Kit Request.");
+                                    }
+                                    // If the email failed or wasn't attempted (e.g. a DEV deployment),
+                                    // puts the email body in file and tells the user about it.
+                                    File file = File.createTempFile("RequestKitEmail_", ".txt");
+                                    PrintWriter writer = new PrintWriter(file);
+                                    writer.println("Subject: " + EMAIL_SUBJECT);
+                                    writer.println("Date: " + new Date().toString());
+                                    writer.println(body);
+                                    IOUtils.closeQuietly(writer);
+                                    messages.addInfo("Sample Kit Request email is in file <a href='" +
+                                            file.toURI().toASCIIString() + "'>" + file.getName() + "</a>");
+                                }
                             }
-                            // If the email failed or wasn't attempted (e.g. a DEV deployment),
-                            // puts the email body in file and tells the user about it.
-                            File file = File.createTempFile("RequestKitEmail_", ".txt");
-                            PrintWriter writer = new PrintWriter(file);
-                            writer.println("Subject: " + EMAIL_SUBJECT);
-                            writer.println("Date: " + new Date().toString());
-                            writer.println(body);
-                            IOUtils.closeQuietly(writer);
-                            messages.addInfo("Sample Kit Request email is in file <a href='" +
-                                    file.toURI().toASCIIString() + "'>" + file.getName() + "</a>");
                         }
+                    } else {
+                        sampleInstanceEntityDao.persistAll(processor.getEntitiesToPersist());
+                        sampleInstanceEntityDao.persistAll(instanceEntities);
                     }
                     if (!messages.hasErrors()) {
                         messages.addInfo(String.format(IS_SUCCESS, rowDtos.size()));
@@ -608,24 +619,24 @@ public class SampleInstanceEjb {
     }
 
     /** Makes a SampleKitRequest email body. */
-    private String generateEmailBody(List<SampleInstanceEntity> entities) {
+    private String generateEmailBody(List<SampleInstanceEntity> entities, SampleKitRequest kit) {
         StringBuilder builder = new StringBuilder();
-        // There will be only one SampleKitRequest for all of the entitites.
-        SampleKitRequest kit = entities.get(0).getSampleKitRequest();
         if (kit != null) {
             // Adds the kit parameters.
             builder.append(kit.toBody()).append(System.lineSeparator());
-            // Gets the unique tube barcodes.
-            List<String> barcodes = entities.stream().
-                    map(entity -> entity.getLabVessel().getLabel()).distinct().sorted().collect(Collectors.toList());
-            // Adds the number of unique barcodes.
-            int numberBarcodes = barcodes.size();
-            builder.append("Number of tubes: ").append(numberBarcodes).append(System.lineSeparator());
-            final int barcodesOnARow = 8;
-            for (int startIdx = 0; startIdx < numberBarcodes; ) {
-                int endIdxPlusOne = Math.min(startIdx + barcodesOnARow, numberBarcodes);
-                // Adds the sorted tube barcodes, limiting the number per row.
-                builder.append(StringUtils.join(barcodes.toArray(), ", ", startIdx, endIdxPlusOne)).
+            // Gets the unique libraries.
+            List<String> libraries = entities.stream().
+                    map(entity -> entity.getSampleLibraryName()).distinct().sorted().collect(Collectors.toList());
+            // Adds their number.
+            int count = libraries.size();
+            builder.append("Number of tubes: ").append(System.lineSeparator());
+            builder.append(count).append(System.lineSeparator()).append(System.lineSeparator());
+            final int perRow = 8;
+            builder.append("Libary names: ").append(System.lineSeparator());
+            for (int startIdx = 0; startIdx < count; ) {
+                int endIdxPlusOne = Math.min(startIdx + perRow, count);
+                // Adds the sorted library names, limiting the number per row.
+                builder.append(StringUtils.join(libraries.toArray(), ", ", startIdx, endIdxPlusOne)).
                         append(System.lineSeparator());
                 startIdx = endIdxPlusOne;
             }

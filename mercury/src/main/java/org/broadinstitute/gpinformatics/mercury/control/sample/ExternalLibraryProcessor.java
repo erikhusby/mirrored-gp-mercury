@@ -497,12 +497,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
      */
     protected List<SampleInstanceEntity> makeSampleInstanceEntities(List<SampleInstanceEjb.RowDto> rowDtos) {
         List<SampleInstanceEntity> sampleInstanceEntities = new ArrayList<>();
-
-        if (supportsSampleKitRequest() && getSampleKitRequest() == null) {
-            setSampleKitRequest(makeSampleKitRequest());
-            getEntitiesToPersist().add(getSampleKitRequest());
-        }
-
         for (SampleInstanceEjb.RowDto dto : rowDtos) {
             LabVessel labVessel = getLabVesselMap().get(dto.getBarcode());
             MercurySample mercurySample = getSampleMap().get(dto.getSampleName());
@@ -521,27 +515,29 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     /**
      * Captures the pre-row one-off spreadsheet data in a "kit request", i.e. the upload manifest.
      */
-    protected SampleKitRequest makeSampleKitRequest() {
-        SampleKitRequest sampleKitRequest = new SampleKitRequest();
-        sampleKitRequest.setFirstName(getFirstName());
-        sampleKitRequest.setLastName(getLastName());
-        sampleKitRequest.setOrganization(getOrganization());
-        String address = getAddress();
-        if (StringUtils.isNotBlank(getRoomNumber())) {
-            address += (StringUtils.isNotBlank(address) ? ", " : "") + "Room " + getRoomNumber();
+    public void makeSampleKitRequest() {
+        if (supportsSampleKitRequest() && getSampleKitRequest() == null) {
+            SampleKitRequest sampleKitRequest = new SampleKitRequest();
+            sampleKitRequest.setFirstName(getFirstName());
+            sampleKitRequest.setLastName(getLastName());
+            sampleKitRequest.setOrganization(getOrganization());
+            String address = getAddress();
+            if (StringUtils.isNotBlank(getRoomNumber())) {
+                address += (StringUtils.isNotBlank(address) ? ", " : "") + "Room " + getRoomNumber();
+            }
+            sampleKitRequest.setAddress(address);
+            sampleKitRequest.setCity(getCity());
+            sampleKitRequest.setState(getState());
+            sampleKitRequest.setPostalCode(getPostalCode());
+            sampleKitRequest.setCountry(getCountry());
+            sampleKitRequest.setPhone(getPhone());
+            sampleKitRequest.setEmail(getEmail());
+            sampleKitRequest.setCommonName(getCommonName());
+            sampleKitRequest.setGenus(getGenus());
+            sampleKitRequest.setSpecies(getSpecies());
+            sampleKitRequest.setIrbApprovalRequired(getIrbApprovalRequired());
+            setSampleKitRequest(sampleKitRequest);
         }
-        sampleKitRequest.setAddress(address);
-        sampleKitRequest.setCity(getCity());
-        sampleKitRequest.setState(getState());
-        sampleKitRequest.setPostalCode(getPostalCode());
-        sampleKitRequest.setCountry(getCountry());
-        sampleKitRequest.setPhone(getPhone());
-        sampleKitRequest.setEmail(getEmail());
-        sampleKitRequest.setCommonName(getCommonName());
-        sampleKitRequest.setGenus(getGenus());
-        sampleKitRequest.setSpecies(getSpecies());
-        sampleKitRequest.setIrbApprovalRequired(getIrbApprovalRequired());
-        return sampleKitRequest;
     }
 
     /**

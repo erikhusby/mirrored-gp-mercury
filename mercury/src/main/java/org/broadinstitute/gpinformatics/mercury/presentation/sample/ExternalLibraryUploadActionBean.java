@@ -41,12 +41,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleVesselActionBean.UPLOAD_SAMPLES;
-
 @UrlBinding(value = "/sample/ExternalLibraryUpload.action")
 public class ExternalLibraryUploadActionBean extends CoreActionBean {
     private static final String SESSION_LIST_PAGE = "/sample/externalLibraryUpload.jsp";
     private static final String DOWNLOAD_TEMPLATE = "downloadTemplate";
+    public static final String ACCESSION = "accession";
+    public static final String MAKE_KIT = "makeKit";
     private boolean overWriteFlag;
 
     @Inject
@@ -78,7 +78,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         }
     }
 
-    @Validate(required = true, on = {UPLOAD_SAMPLES, DOWNLOAD_TEMPLATE})
+    @Validate(required = true, on = {ACCESSION, MAKE_KIT, DOWNLOAD_TEMPLATE})
     private SpreadsheetType spreadsheetType;
 
     @Inject
@@ -87,7 +87,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     @Inject
     private SampleInstanceEjb sampleInstanceEjb;
 
-    @Validate(required = true, on = UPLOAD_SAMPLES)
+    @Validate(required = true, on = {ACCESSION, MAKE_KIT})
     private FileBean samplesSpreadsheet;
 
     @DefaultHandler
@@ -96,11 +96,22 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    /**
-     * Entry point for initial upload of spreadsheet.
-     */
-    @HandlesEvent(UPLOAD_SAMPLES)
-    public Resolution uploadTubes() {
+    @HandlesEvent(MAKE_KIT)
+    public Resolution makeKit() {
+        if (spreadsheetType != SpreadsheetType.PooledMultiOrganismLibraries) {
+            addMessage("A kit is not required for this type of spreadsheet.");
+            return view();
+        } else {
+            return uploadSpreadsheet(true);
+        }
+    }
+
+    @HandlesEvent(ACCESSION)
+    public Resolution accession() {
+        return uploadSpreadsheet(false);
+    }
+
+    public Resolution uploadSpreadsheet(boolean kitOnly) {
         InputStream inputStream = null;
         try {
             inputStream = samplesSpreadsheet.getInputStream();
@@ -111,14 +122,13 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         Class processorClass = spreadsheetType.getProcessor();
         ExternalLibraryProcessor processor;
         try {
-            processor =
-                    (ExternalLibraryProcessor) processorClass.getConstructor(String.class).newInstance((String) null);
+            processor = (ExternalLibraryProcessor) processorClass.getConstructor().newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Cannot instantiate " + processorClass.getCanonicalName() + ": " + e);
         }
 
         MessageCollection messageCollection = new MessageCollection();
-        sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, processor, messageCollection, null);
+        sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, processor, messageCollection, null, kitOnly);
         addMessages(messageCollection);
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
@@ -193,17 +203,28 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         Sheet sheet = workbook.createSheet("Sheet1");
         int rowIndex = 0;
 
-        sheet.createRow(rowIndex++).createCell(0).setCellValue("Color indicates whether data value is");
+        // The first row shows the cell color code.
         Row colorRow = sheet.createRow(rowIndex++);
-        for (int i = 0; i < (columnHeaders[0] instanceof ColumnHeader.Ignorable ? 3 : 2); ++i) {
-            String type = Arrays.asList("Required", "Optional", "Ignored").get(i);
-            boolean required = (i == 0);
-            boolean ignored = (i == 2);
-            Cell cell = colorRow.createCell(i);
-            cell.setCellValue(type);
-            setBackground(workbook, cell, required, ignored);
-        }
-        sheet.createRow(rowIndex++).createCell(0).setCellValue(""); //a blank row
+        int colIndex = 0;
+        colorRow.createCell(colIndex++).setCellValue("Cell color indicates data presence is: ");
+        Cell colorCell = colorRow.createCell(colIndex++);
+        colorCell.setCellValue(" Required ");
+        setBackground(workbook, colorCell, true, false, false);
+
+        colorCell = colorRow.createCell(colIndex++);
+        colorCell.setCellValue(" Required Once per Tube, Sample, Library, etc. ");
+        setBackground(workbook, colorCell, false, false, true);
+
+        colorCell = colorRow.createCell(colIndex++);
+        colorCell.setCellValue(" Optional ");
+        setBackground(workbook, colorCell, false, false, false);
+
+        colorCell = colorRow.createCell(colIndex++);
+        colorCell.setCellValue(" Ignored ");
+        setBackground(workbook, colorCell, false, true, false);
+
+        // Adds a blank row.
+        sheet.createRow(rowIndex++).createCell(0).setCellValue("");
 
         // Writes the headerValue rows, if any, with name in column 0 and value in column 1.
         if (headerValues != null) {
@@ -211,10 +232,10 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 Row row = sheet.createRow(rowIndex++);
                 Cell col0 = row.createCell(0);
                 col0.setCellValue(headerValue.getText());
-                setBackground(workbook, col0, headerValue.isRequiredValue(), false);
+                setBackground(workbook, col0, headerValue.isRequiredValue(), false, false);
                 Cell col1 = row.createCell(1);
                 col1.setCellValue("(value" + (headerValue.isRequiredValue() ? ")" : " or blank)"));
-                setBackground(workbook, col1, headerValue.isRequiredValue(), false);
+                setBackground(workbook, col1, headerValue.isRequiredValue(), false, false);
             }
             sheet.createRow(rowIndex++).createCell(0).setCellValue(""); //a blank row
         }
@@ -276,14 +297,18 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     private void setBackground(HSSFWorkbook workbook, Cell cell, ColumnHeader columnHeader) {
         boolean ignored = (columnHeader instanceof ColumnHeader.Ignorable) ?
                 ((ColumnHeader.Ignorable) columnHeader).isIgnoredValue() : false;
-        setBackground(workbook, cell, columnHeader.isRequiredValue(), ignored);
+        boolean isOnlyOnce = (columnHeader instanceof ColumnHeader.Ignorable) ?
+                ((ColumnHeader.Ignorable) columnHeader).isOnlyOncePerEntity() : false;
+        setBackground(workbook, cell, columnHeader.isRequiredValue(), ignored, isOnlyOnce);
     }
 
     /** Sets the cell color depending on whether the value is required, optional, or ignored. */
-    private void setBackground(HSSFWorkbook workbook, Cell cell, boolean isRequiredValue, boolean isIgnoredValue) {
+    private void setBackground(HSSFWorkbook workbook, Cell cell, boolean isRequiredValue, boolean isIgnoredValue,
+            boolean isOnlyOncePerEntity) {
         PoiSpreadsheetParser.setBackgroundColor(workbook, cell,
                 isRequiredValue ? HSSFColor.RED.index :
-                        isIgnoredValue ? HSSFColor.GREY_25_PERCENT.index : HSSFColor.WHITE.index);
+                        isOnlyOncePerEntity ? HSSFColor.LAVENDER.index :
+                                isIgnoredValue ? HSSFColor.GREY_25_PERCENT.index : HSSFColor.WHITE.index);
     }
 
     public void setSamplesSpreadsheet(FileBean spreadsheet) {

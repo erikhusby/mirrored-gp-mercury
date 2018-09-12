@@ -41,57 +41,61 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     private List<Boolean> requiredValuesPresent = new ArrayList<>();
     private SampleKitRequest sampleKitRequest;
 
-    public ExternalLibraryProcessorEzPass(String sheetName) {
-        super(sheetName);
+    public ExternalLibraryProcessorEzPass() {
+        super(null);
     }
 
     // Only the first four words of header text are used and the rest are ignored.
+    // Orderining of headers is only important for generating template spreadsheets in the ActionBean.
     public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
-        ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", OPTIONAL),
-        ASSEMBLY_INFORMATION("Additional Assembly and Analysis Info", OPTIONAL),
+        SAMPLE_NUMBER("Sample Number", IGNORED),
+        TUBE_BARCODE("Sample Tube Barcode", REQUIRED),
+        SOURCE_SAMPLE_GSSR_ID("Source Sample Gssr Id", REQUIRED),
+        SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
+        STRAIN("Strain", IGNORED),
+        SEX("Sex (M/F)", OPTIONAL),
+        CELL_LINE("Cell Line", IGNORED),
+        TISSUE_TYPE("Tissue Type", IGNORED),
         COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", REQUIRED),
-        CONCENTRATION("Concentration (ng/ul)", OPTIONAL), // Required for the first row of each tube.
-        COVERAGE("Coverage (lanes/sample)", REQUIRED),
-        DATA_ANALYSIS_TYPE("Data Analysis Type", REQUIRED),
-        DATA_SUBMISSION("Data Submission", OPTIONAL),
         INDIVIDUAL_NAME("Individual Name (Patient Id)", REQUIRED),
-        INSERT_SIZE_RANGE("Insert Size Range", IGNORED),
         LIBRARY_NAME("Library Name", REQUIRED),
         LIBRARY_TYPE("Library Type", OPTIONAL),
-        MOLECULAR_BARCODE_NAME("Molecular Barcode Name", OPTIONAL),
-        ORGANISM("Organism", OPTIONAL),
-        POOLED("Pooled (Y/N)", OPTIONAL),
-        PROJECT_TITLE("Project Title", OPTIONAL),
-        READ_LENGTH("Desired Read Length", OPTIONAL),
+        DATA_ANALYSIS_TYPE("Data Analysis Type", REQUIRED),
         REFERENCE_SEQUENCE("Reference Sequence", REQUIRED),
-        SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
-        SEX("Sex (M/F)", OPTIONAL),
-        SOURCE_SAMPLE_GSSR_ID("Source Sample Gssr Id", REQUIRED),
-        SQUID_PROJECT("Squid Project (pipeline aggregation)", OPTIONAL),
-        TUBE_BARCODE("Sample Tube Barcode", REQUIRED),
-        VOLUME("Volume (ul)", OPTIONAL),  // Required for the first row of each tube.
-
-        // Ignored header and data is not saved.
-        BLANK("", IGNORED),
-        APPROVED_BY("Approved By", IGNORED),
-        CELL_LINE("Cell Line", IGNORED),
-        FUNDING_SOURCE("Funding Source", IGNORED),
         GSSR_OF_BAIT_POOL("GSSR # of Bait Pool", IGNORED),
-        ILLUMINA_KIT_USED("Illumina or 454 Kit", IGNORED),
-        JUMP_SIZE("Jump Size", IGNORED),
+        INSERT_SIZE_RANGE("Insert Size Range", OPTIONAL),
         LIBRARY_SIZE("Library Size", IGNORED),
+        JUMP_SIZE("Jump Size", IGNORED),
+        ILLUMINA_KIT_USED("Illumina or 454 Kit", IGNORED),
+        RESTRICTION_ENZYMES("Restriction Enzyme", IGNORED),
         MOLECULAR_BARCODE_PLATE_ID("Molecular Barcode Plate Id", IGNORED),
         MOLECULAR_BARCODE_PLATE_WELL_ID("Molecular Barcode Plate Well Id", IGNORED),
         MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", IGNORED),
-        REQUESTED_COMPLETION_DATE("Requested Completion Date", IGNORED),
-        RESTRICTION_ENZYMES("Restriction Enzyme", IGNORED),
-        SAMPLE_NUMBER("Sample Number", IGNORED),
+        MOLECULAR_BARCODE_NAME("Molecular Barcode Name", OPTIONAL),
+        VOLUME("Volume (ul)", OPTIONAL),  // Required for the first row of each tube.
+        CONCENTRATION("Concentration (ng/uL)", OPTIONAL), // Required for the first row of each tube.
         SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", IGNORED),
-        STRAIN("Strain", IGNORED),
-        SUBMITTED_TO_GSSR("Submitted to Gssr", IGNORED),
-        TISSUE_TYPE("Tissue Type", IGNORED),
-        VIRTUAL_GSSR_ID("Virtual Gssr Id", IGNORED),;
+        ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", OPTIONAL),
+        PROJECT_TITLE("Project Title", OPTIONAL),
+        FUNDING_SOURCE("Funding Source", IGNORED),
+        COVERAGE("Coverage (lanes/sample)", REQUIRED),
+        APPROVED_BY("Approved By", IGNORED),
+        REQUESTED_COMPLETION_DATE("Requested Completion Date", IGNORED),
+        DATA_SUBMISSION("Data Submission", IGNORED),
+        ASSEMBLY_INFORMATION("Additional Assembly and Analysis Info", OPTIONAL),
+        POOLED("Pooled (Y/N)", OPTIONAL),
+        VIRTUAL_GSSR_ID("Virtual Gssr Id", IGNORED),
+        SQUID_PROJECT("Squid Project (pipeline aggregation)", OPTIONAL),
 
+        REQUIRED_ACCESS("Require Controlled Access for Data", IGNORED),
+        ACCESS_LIST("Data Access List", IGNORED),
+        READ_LENGTH("Desired Read Length", OPTIONAL),
+        ORGANISM("Organism", OPTIONAL),
+        MEMBER_OF_POOL("Member of Pool", IGNORED),
+        DERIVED_FROM("Derived From", IGNORED),
+        BLANK("", IGNORED),
+        SUBMITTED_TO_GSSR("Submitted to Gssr", IGNORED),
+        ;
         private final String text;
         private boolean requiredHeader;
         private boolean requiredValue;
@@ -134,6 +138,11 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         @Override
         public boolean isStringColumn() {
             return isString;
+        }
+
+        @Override
+        public boolean isOnlyOncePerEntity() {
+            return this == VOLUME;
         }
     }
 
