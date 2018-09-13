@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJ
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
@@ -16,8 +15,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -191,25 +188,6 @@ public class CreateFields extends UpdateFields {
             return jiraName;
         }
 
-        /** Contains the IssueType to use for a given workflow. */
-        public static final Map<String, IssueType> MAP_WORKFLOW_TO_ISSUE_TYPE = new HashMap<String, IssueType>() {{
-            put(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
-            put(Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
-            put(Workflow.ICE_CRSP.getWorkflowName(), EXOME_EXPRESS);
-            put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
-        }};
-
-        public static IssueType fromJiraName(String jiraName) {
-            IssueType foundValue = null;
-            for (IssueType issuetype : values()) {
-                if (issuetype.getJiraName().equals(jiraName)) {
-                    foundValue = issuetype;
-                    break;
-                }
-            }
-
-            return foundValue;
-        }
     }
 
 
