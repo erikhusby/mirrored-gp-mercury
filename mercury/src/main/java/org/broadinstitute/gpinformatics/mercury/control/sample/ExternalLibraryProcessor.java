@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexing
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -37,11 +36,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProcessor
-        implements SampleKitRequest.SampleKitRequestKey {
-    final static Boolean REQUIRED = true;
-    final static Boolean OPTIONAL = false;
-    final static Boolean IGNORED = null;
+public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProcessor {
+    public enum DataPresence {REQUIRED, ONCE_PER_TUBE, OPTIONAL, IGNORED};
 
     protected List<String> headerNames = new ArrayList<>();
     protected List<String> headerValueNames = new ArrayList<>();
@@ -68,32 +64,29 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     protected Map<String, String> adjustedNames = new HashMap<>();
 
     // These are the rows that consist of a header-value pair in two adjacent columns.
-    public enum HeaderValueRows implements HeaderValueRow {
-        EMAIL("Email:", REQUIRED),
-        ORGANIZATION("Organization:", REQUIRED),
-        FIRST_NAME("First Name:", OPTIONAL),
-        LAST_NAME("Last Name:", OPTIONAL),
-        ADDRESS("Address:", OPTIONAL),
-        ROOM_NUMBER("Room Number:", OPTIONAL),
-        CITY("City:", OPTIONAL),
-        STATE("State:", OPTIONAL),
-        POSTAL_CODE("Postal Code:", OPTIONAL),
-        COUNTRY("Country:", OPTIONAL),
-        PHONE("Phone:", OPTIONAL),
-        COMMON_NAME("Common Name:", OPTIONAL),
-        GENUS("Genus:", OPTIONAL),
-        SPECIES("Species:", OPTIONAL),
-        IRB_REQUIRED("IRB approval required: (Y/N)", OPTIONAL);
+    public enum HeaderValueRows implements HeaderValueRow, ColumnHeader.Ignorable {
+        EMAIL("Email:", DataPresence.IGNORED),
+        ORGANIZATION("Organization:", DataPresence.IGNORED),
+        FIRST_NAME("First Name:", DataPresence.IGNORED),
+        LAST_NAME("Last Name:", DataPresence.IGNORED),
+        ADDRESS("Address:", DataPresence.IGNORED),
+        ROOM_NUMBER("Room Number:", DataPresence.IGNORED),
+        CITY("City:", DataPresence.IGNORED),
+        STATE("State:", DataPresence.IGNORED),
+        POSTAL_CODE("Postal Code:", DataPresence.IGNORED),
+        COUNTRY("Country:", DataPresence.IGNORED),
+        PHONE("Phone:", DataPresence.IGNORED),
+        COMMON_NAME("Common Name:", DataPresence.IGNORED),
+        GENUS("Genus:", DataPresence.IGNORED),
+        SPECIES("Species:", DataPresence.IGNORED),
+        IRB_REQUIRED("IRB approval required: (Y/N)", DataPresence.IGNORED);
 
         private String text;
+        private DataPresence dataPresence;
 
-        private boolean requiredHeader;
-        private boolean requiredValue;
-
-        private HeaderValueRows(String text, boolean required) {
+        private HeaderValueRows(String text, DataPresence dataPresence) {
             this.text = text;
-            this.requiredHeader = required;
-            this.requiredValue = required;
+            this.dataPresence = dataPresence;
         }
 
         @Override
@@ -103,12 +96,12 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
         @Override
         public boolean isRequiredHeader() {
-            return requiredHeader;
+            return dataPresence == DataPresence.REQUIRED;
         }
 
         @Override
         public boolean isRequiredValue() {
-            return requiredValue;
+            return dataPresence == DataPresence.REQUIRED;
         }
 
         @Override
@@ -121,6 +114,15 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             return true;
         }
 
+        @Override
+        public boolean isIgnoredValue() {
+            return dataPresence == DataPresence.IGNORED;
+        }
+
+        @Override
+        public boolean isOncePerTube() {
+            return dataPresence == DataPresence.ONCE_PER_TUBE;
+        }
     }
 
     public ExternalLibraryProcessor(String sheetName) {
@@ -503,41 +505,12 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             mercurySample.addLabVessel(labVessel);
 
             SampleInstanceEntity sampleInstanceEntity = makeSampleInstanceEntity(dto, labVessel, mercurySample);
-            sampleInstanceEntity.setSampleKitRequest(getSampleKitRequest());
 
             labVessel.getSampleInstanceEntities().add(sampleInstanceEntity);
             dto.setSampleInstanceEntity(sampleInstanceEntity);
             sampleInstanceEntities.add(sampleInstanceEntity);
         }
         return sampleInstanceEntities;
-    }
-
-    /**
-     * Captures the pre-row one-off spreadsheet data in a "kit request", i.e. the upload manifest.
-     */
-    public void makeSampleKitRequest() {
-        if (supportsSampleKitRequest() && getSampleKitRequest() == null) {
-            SampleKitRequest sampleKitRequest = new SampleKitRequest();
-            sampleKitRequest.setFirstName(getFirstName());
-            sampleKitRequest.setLastName(getLastName());
-            sampleKitRequest.setOrganization(getOrganization());
-            String address = getAddress();
-            if (StringUtils.isNotBlank(getRoomNumber())) {
-                address += (StringUtils.isNotBlank(address) ? ", " : "") + "Room " + getRoomNumber();
-            }
-            sampleKitRequest.setAddress(address);
-            sampleKitRequest.setCity(getCity());
-            sampleKitRequest.setState(getState());
-            sampleKitRequest.setPostalCode(getPostalCode());
-            sampleKitRequest.setCountry(getCountry());
-            sampleKitRequest.setPhone(getPhone());
-            sampleKitRequest.setEmail(getEmail());
-            sampleKitRequest.setCommonName(getCommonName());
-            sampleKitRequest.setGenus(getGenus());
-            sampleKitRequest.setSpecies(getSpecies());
-            sampleKitRequest.setIrbApprovalRequired(getIrbApprovalRequired());
-            setSampleKitRequest(sampleKitRequest);
-        }
     }
 
     /**
@@ -609,7 +582,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         sampleInstanceEntity.setReagentDesign(dto.getReagent());
         sampleInstanceEntity.setReferenceSequence(getReferenceSequenceMap().get(dto.getReferenceSequenceName()));
         sampleInstanceEntity.setRootSample(getSampleMap().get(dto.getRootSampleName()));
-        sampleInstanceEntity.setSampleKitRequest(getSampleKitRequest());
         sampleInstanceEntity.setSequencerModel(getSequencerModelMap().get(dto.getSequencerModelName()));
         sampleInstanceEntity.setUploadDate(new Date());
         return sampleInstanceEntity;
@@ -836,6 +808,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return Collections.emptyList();
     }
 
+    public List<String> getUmiPresences() {
+        return Collections.emptyList();
+    }
+
     public List<String> getReadLengths() {
         return Collections.emptyList();
     }
@@ -861,6 +837,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     public List<String> getPooleds() {
+        return Collections.emptyList();
+    }
+
+    public List<String> getMembersOfPool() {
         return Collections.emptyList();
     }
 
@@ -931,18 +911,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     public List<Boolean> getRequiredValuesPresent() {
         return Collections.emptyList();
     }
-
-    public SampleKitRequest getSampleKitRequest() {
-        return null;
-    }
-
-    public void setSampleKitRequest(SampleKitRequest sampleKitRequest) {
-    }
-
-    /**
-     * All subclasses must specify whether SampleKitRequest is supported or not.
-     */
-    abstract public boolean supportsSampleKitRequest();
 
     /**
      * Maps of upload value to the corresponding entity.

@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryBarcodeUpdate;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNewTech;
@@ -91,7 +90,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                                 processor.getLsids().set(i, "lsid:100" + i);
                             }
                         }
-                    }, false);
+                    });
 
             Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
                     StringUtils.join(messageCollection.getErrors(), "; "));
@@ -148,7 +147,7 @@ public class SampleInstanceEjbTest extends Arquillian {
             VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor();
             List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                     new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
-                    true, processor, messageCollection, null, false);
+                    true, processor, messageCollection, null);
             // Should be no errors.
             Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
                     StringUtils.join(messageCollection.getErrors(), "; "));
@@ -208,7 +207,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                         processor1.getSampleNames().set(i, "SM-" + base + i);
                         processor1.getRootSampleNames().set(i, "");
                     }
-                }, false);
+                });
         Assert.assertTrue(messages1.getErrors().isEmpty(), "In " + filename1 + ": " +
                 StringUtils.join(messages1.getErrors(), "; "));
         // Should have persisted all rows.
@@ -219,31 +218,8 @@ public class SampleInstanceEjbTest extends Arquillian {
             Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName),
                     filename1 + " " + libraryName);
         }
-
-        // Updates the tube barcodes.
-        String filename2 = "ExternalLibrarySampleBarcodeUpdate.xlsx";
-        MessageCollection messages2 = new MessageCollection();
-        ExternalLibraryBarcodeUpdate processor2 = new ExternalLibraryBarcodeUpdate();
-        sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(filename2), OVERWRITE,
-                processor2, messages2, () -> {
-                    // Makes new barcode for the existing library names.
-                    int count = processor2.getBarcodes().size();
-                    for (int i = 0; i < count; ++i) {
-                        processor2.getBarcodes().set(i, "F" + base + i);
-                        processor2.getLibraryNames().set(i, "Library" + base + i);
-                    }
-                }, false);
-        Assert.assertTrue(messages2.getErrors().isEmpty(), "In " + filename2 + ": " +
-                StringUtils.join(messages2.getErrors(), "; "));
-        // Should have persisted all updates.
-        for (int i = 0; i < processor2.getBarcodes().size(); ++i) {
-            String barcode = processor2.getBarcodes().get(i);
-            String libraryName = processor2.getLibraryNames().get(i);
-            Assert.assertTrue(barcode.startsWith("F"));
-            Assert.assertEquals(sampleInstanceEntityDao.findByName(libraryName).getLabVessel().getLabel(),
-                    barcode, filename2 + " " + libraryName);
-        }
     }
+
     @Test
     public void testNewTechUploads() {
         for (Pair<String, ? extends ExternalLibraryProcessor> pair : Arrays.asList(
@@ -254,7 +230,7 @@ public class SampleInstanceEjbTest extends Arquillian {
             String file = pair.getLeft();
             InputStream spreadsheet = VarioskanParserTest.getSpreadsheet(file);
             ExternalLibraryProcessor processor = pair.getRight();
-            sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages, null, false);
+            sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages, null);
 
             Assert.assertTrue(messages.getErrors().isEmpty(), "In " + file + " " + messages.getErrors());
             // Should have persisted all rows.
@@ -273,9 +249,6 @@ public class SampleInstanceEjbTest extends Arquillian {
         MessageCollection messages = new MessageCollection();
         sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(file), !OVERWRITE, processor,
                 messages, () -> {
-                    // Makes unique SampleRequestKit
-                    processor.setEmail(base + "@none.com");
-                    processor.setOrganization(base + " Inc.");
                     // Makes unique barcode, library, sample name. Barcode is shared for the last two rows.
                     int count = processor.getBarcodes().size();
                     processor.getBarcodes().clear();
@@ -286,7 +259,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                         processor.getLibraryNames().add("Library" + base + i);
                         processor.getSampleNames().add(base + "." + i);
                     }
-                }, false);
+                });
         Assert.assertTrue(messages.getErrors().isEmpty(), "In " + file + " " + messages.getErrors());
 
         // Checks data persisted to the database.
@@ -309,8 +282,6 @@ public class SampleInstanceEjbTest extends Arquillian {
                     MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(Arrays.asList(96, 97, 98, 98).get(i))));
             Assert.assertEquals(tube.getConcentration(),
                     MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(Arrays.asList(7.4, 8.0, 9.0, 9.0).get(i))));
-            Assert.assertEquals(entity.getSampleKitRequest().getEmail(), base + "@none.com");
-            Assert.assertEquals(entity.getSampleKitRequest().getOrganization(), base + " Inc.");
         }
     }
 }

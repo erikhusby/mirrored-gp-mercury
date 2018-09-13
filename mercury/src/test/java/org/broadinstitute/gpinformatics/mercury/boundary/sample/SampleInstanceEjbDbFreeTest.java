@@ -24,10 +24,8 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularInd
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleKitRequestDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryBarcodeUpdate;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNewTech;
@@ -43,7 +41,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
@@ -103,7 +100,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     private SampleDataFetcher sampleDataFetcher = Mockito.mock(SampleDataFetcher.class);
     private JiraService jiraService = Mockito.mock(JiraService.class);
     private ReferenceSequenceDao referenceSequenceDao = Mockito.mock(ReferenceSequenceDao.class);
-    private SampleKitRequestDao sampleKitRequestDao = Mockito.mock(SampleKitRequestDao.class);
     private AnalysisTypeDao analysisTypeDao = Mockito.mock(AnalysisTypeDao.class);
 
     enum TestType {EZPASS, NONPOOLED, POOLED, MULTIORGANISM, POOLEDTUBE, WALKUP};
@@ -134,7 +130,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorEzPass(), messageCollection, null, false);
+                new ExternalLibraryProcessorEzPass(), messageCollection, null);
 
         Assert.assertTrue(CollectionUtils.isEmpty(entities));
         Assert.assertEquals(messageCollection.getErrors().size(), 2);
@@ -155,7 +151,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorEzPass(), messageCollection, null, false);
+                new ExternalLibraryProcessorEzPass(), messageCollection, null);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertEquals(messageCollection.getInfos().iterator().next(),
@@ -163,25 +159,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 StringUtils.join(messageCollection.getInfos(), "; "));
         Assert.assertFalse(entities.isEmpty());
 
-        SampleKitRequest sampleKitRequest = entities.get(0).getSampleKitRequest();
-        Assert.assertEquals(sampleKitRequest.getFirstName(), "David");
-        Assert.assertEquals(sampleKitRequest.getLastName(), "W");
-        Assert.assertEquals(sampleKitRequest.getOrganization(), "Broad");
-        Assert.assertEquals(sampleKitRequest.getAddress(), "Charles St, Room 2137B");
-        Assert.assertEquals(sampleKitRequest.getCity(), "Cambridge");
-        Assert.assertEquals(sampleKitRequest.getState(), "Ma");
-        Assert.assertEquals(sampleKitRequest.getPostalCode(), "2215");
-        Assert.assertEquals(sampleKitRequest.getCountry(), "USA");
-        Assert.assertEquals(sampleKitRequest.getPhone(), "718-234-5510");
-        Assert.assertEquals(sampleKitRequest.getEmail(), "test@test.com");
-        Assert.assertNull(sampleKitRequest.getCommonName());
-        Assert.assertEquals(sampleKitRequest.getGenus(), "G");
-        Assert.assertEquals(sampleKitRequest.getSpecies(), "S");
-        Assert.assertNull(sampleKitRequest.getIrbApprovalRequired());
-
         for (int i = 0; i < entities.size(); ++i) {
             SampleInstanceEntity entity = entities.get(i);
-            Assert.assertEquals(entity.getSampleKitRequest(), sampleKitRequest);
 
             String libraryName = select(i, "Lib-MOCK.FSK1.A", "Lib-MOCK.FSK1.B", "Lib-MOCK.FSK1.A2", "Lib-MOCK.FSK1.C");
             Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
@@ -233,7 +212,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorNewTech(), messageCollection, null, false);
+                new ExternalLibraryProcessorNewTech(), messageCollection, null);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -242,26 +221,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         Assert.assertEquals(entities.size(), 3);
 
-        SampleKitRequest sampleKitRequest = entities.get(0).getSampleKitRequest();
-        Assert.assertEquals(sampleKitRequest.getFirstName(), "Charlie");
-        Assert.assertEquals(sampleKitRequest.getLastName(), "Delta");
-        Assert.assertEquals(sampleKitRequest.getOrganization(), "Epsilon");
-        Assert.assertEquals(sampleKitRequest.getAddress(), "Fox Trot");
-        Assert.assertEquals(sampleKitRequest.getCity(), "Cambridge");
-        Assert.assertEquals(sampleKitRequest.getState(), "MA");
-        Assert.assertEquals(sampleKitRequest.getPostalCode(), "02142");
-        Assert.assertEquals(sampleKitRequest.getCountry(), "USA");
-        Assert.assertEquals(sampleKitRequest.getPhone(), "617-423-1234");
-        Assert.assertEquals(sampleKitRequest.getEmail(), "none@none.com");
-        Assert.assertEquals(sampleKitRequest.getCommonName(), "(leave blank for multi-organism submission)");
-        Assert.assertEquals(sampleKitRequest.getGenus(), "see Organism column for genus");
-        Assert.assertEquals(sampleKitRequest.getSpecies(), "see Organism column for species");
-        Assert.assertEquals(sampleKitRequest.getIrbApprovalRequired(), "Y");
-
         for (int i = 0; i < entities.size(); ++i) {
             SampleInstanceEntity entity = entities.get(i);
-
-            Assert.assertEquals(entity.getSampleKitRequest(), sampleKitRequest);
 
             String libraryName = select(i, "4076255991TEST", "4076255992TEST", "4076255993TEST");
             Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
@@ -319,7 +280,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorNewTech(), messageCollection, null, false);
+                new ExternalLibraryProcessorNewTech(), messageCollection, null);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -328,15 +289,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         Assert.assertEquals(entities.size(), 2);
 
-        SampleKitRequest sampleKitRequest = entities.get(0).getSampleKitRequest();
-        // The other header value row fields have already been tested since it's shared code
-        // in HeaderValueRowTableProcessor and ExternalLibraryProcessor.
-        Assert.assertEquals(sampleKitRequest.getIrbApprovalRequired(), "N");
-
         for (int i = 0; i < entities.size(); ++i) {
             SampleInstanceEntity entity = entities.get(i);
-
-            Assert.assertEquals(entity.getSampleKitRequest(), sampleKitRequest);
 
             String libraryName = select(i, "4442SFP6", "4442SFP7");
             Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
@@ -394,7 +348,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryProcessorNewTech(), messageCollection, null, false);
+                new ExternalLibraryProcessorNewTech(), messageCollection, null);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -403,15 +357,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         Assert.assertEquals(entities.size(), 2);
 
-        SampleKitRequest sampleKitRequest = entities.get(0).getSampleKitRequest();
-        // The other header value row fields have already been tested since it's shared code
-        // in HeaderValueRowTableProcessor and ExternalLibraryProcessor.
-        Assert.assertEquals(sampleKitRequest.getIrbApprovalRequired(), "Y");
-
         for (int i = 0; i < entities.size(); ++i) {
             SampleInstanceEntity entity = entities.get(i);
-
-            Assert.assertEquals(entity.getSampleKitRequest(), sampleKitRequest);
 
             String libraryName = select(i, "4442SFF6", "4442SFF7");
             Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
@@ -469,7 +416,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor();
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
-                VarioskanParserTest.getSpreadsheet(file), OVERWRITE, processor, messageCollection, null, false);
+                VarioskanParserTest.getSpreadsheet(file), OVERWRITE, processor, messageCollection, null);
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
@@ -486,8 +433,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int i = 0; i < entities.size(); ++i) {
             SampleInstanceEntity entity = entities.get(i);
-
-            Assert.assertNull(entity.getSampleKitRequest());
 
             String libraryName = select(i, "Jon Test 3a", "Jon Test 4b");
             Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
@@ -616,38 +561,13 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     }
 
     @Test
-    public void testExternalLibraryBarcodeUpdateHeaders() throws Exception {
-        String file = "ExternalLibrarySampleBarcodeUpdate.xlsx";
-        SampleInstanceEjb sampleInstanceEjb = setMocks(EZPASS);
-        MessageCollection messageCollection = new MessageCollection();
-
-        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
-                VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
-                new ExternalLibraryBarcodeUpdate(), messageCollection, null, false);
-
-        // Tests the expected errors.
-        Assert.assertEquals(messageCollection.getErrors().size(), 3,
-                StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getErrors().get(0).contains("Row #2 the value for Library Name") &&
-                messageCollection.getErrors().get(0).contains("does not exist in Mercury."),
-                StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getErrors().get(1).contains("Row #3 duplicate value for Library Name."),
-                StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getErrors().get(2).contains("Row #3 the value for Library Name") &&
-                messageCollection.getErrors().get(2).contains("does not exist in Mercury."),
-                StringUtils.join(messageCollection.getErrors(), "; "));
-
-        Assert.assertTrue(CollectionUtils.isEmpty(entities));
-    }
-
-    @Test
     public void testNullSpreadsheet() throws Exception {
         SampleInstanceEjb sampleInstanceEjb = setMocks(EZPASS);
         MessageCollection messageCollection = new MessageCollection();
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 new ByteArrayInputStream(new byte[]{0}),
-                OVERWRITE, new ExternalLibraryBarcodeUpdate(), messageCollection, null, false);
+                OVERWRITE, new ExternalLibraryProcessorEzPass(), messageCollection, null);
 
         Assert.assertEquals(messageCollection.getErrors().size(), 1,
                 StringUtils.join(messageCollection.getErrors(), "; "));
@@ -666,7 +586,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor();
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
-                true, processor, messageCollection, null, false);
+                true, processor, messageCollection, null);
 
         // Should be no sampleInstanceEntities.
         Assert.assertEquals(entities.size(), 0);
@@ -751,7 +671,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         ExternalLibraryProcessor processor = new ExternalLibraryProcessorEzPass();
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
                 new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
-                true, processor, messages, null, false);
+                true, processor, messages, null);
 
         // Should be no sampleInstanceEntities.
         Assert.assertEquals(entities.size(), 0);
@@ -1008,7 +928,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         return new SampleInstanceEjb(molecularIndexingSchemeDao, jiraService,
                 reagentDesignDao, labVesselDao, mercurySampleDao, sampleInstanceEntityDao,
-                analysisTypeDao, sampleKitRequestDao, sampleDataFetcher, referenceSequenceDao);
+                analysisTypeDao, sampleDataFetcher, referenceSequenceDao);
     }
 
 }

@@ -48,14 +48,7 @@
                 </div>
                 <div class="control-group">
                     <div class="controls">
-                        <stripes:submit name="makeKit" value="Request Kit" class="btn btn-primary"
-                                        title="Click if a tube kit needs to be sent. No other spreadsheet info is saved."/>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <div class="controls">
-                        <stripes:submit name="accession" value="Accession Libraries, Samples, Tubes" class="btn btn-primary"
-                                        title="Click to save the libraries, samples, and tube present in the spreadsheet."/>
+                        <stripes:submit name="accession" value="Accession Libraries" class="btn btn-primary"/>
                     </div>
                 </div>
             </div>

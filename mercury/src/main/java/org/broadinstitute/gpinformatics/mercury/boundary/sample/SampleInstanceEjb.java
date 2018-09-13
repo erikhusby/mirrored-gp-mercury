@@ -2,14 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -21,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularInd
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleKitRequestDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -31,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -43,9 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTA
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.io.File;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,7 +50,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * This class handles the external library creation from walkup sequencing web serivce calls, pooled tube
@@ -105,7 +98,6 @@ public class SampleInstanceEjb {
      * A string of the available sequencer model names.
      */
     public static final String SEQUENCER_MODELS;
-    private static final String EMAIL_SUBJECT = "Sample Kit Request";
 
     private static final Map<String, IlluminaFlowcell.FlowcellType> mapSequencerToFlowcellType = new HashMap<>();
     private static final Log log = LogFactory.getLog(SampleInstanceEjb.class);
@@ -130,9 +122,6 @@ public class SampleInstanceEjb {
 
     @Inject
     private AnalysisTypeDao analysisTypeDao;
-
-    @Inject
-    private SampleKitRequestDao sampleKitRequestDao;
 
     @Inject
     private SampleDataFetcher sampleDataFetcher;
@@ -166,7 +155,7 @@ public class SampleInstanceEjb {
     public SampleInstanceEjb(MolecularIndexingSchemeDao molecularIndexingSchemeDao, JiraService jiraService,
             ReagentDesignDao reagentDesignDao, LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao,
             SampleInstanceEntityDao sampleInstanceEntityDao, AnalysisTypeDao analysisTypeDao,
-            SampleKitRequestDao sampleKitRequestDao, SampleDataFetcher sampleDataFetcher,
+            SampleDataFetcher sampleDataFetcher,
             ReferenceSequenceDao referenceSequenceDao) {
         this.molecularIndexingSchemeDao = molecularIndexingSchemeDao;
         this.jiraService = jiraService;
@@ -175,16 +164,14 @@ public class SampleInstanceEjb {
         this.mercurySampleDao = mercurySampleDao;
         this.sampleInstanceEntityDao = sampleInstanceEntityDao;
         this.analysisTypeDao = analysisTypeDao;
-        this.sampleKitRequestDao = sampleKitRequestDao;
         this.sampleDataFetcher = sampleDataFetcher;
         this.reagentDesignDao = reagentDesignDao;
         this.referenceSequenceDao = referenceSequenceDao;
     }
 
     /**
-     * Parses the uploaded spreadsheet, checks for correct headers and missing/incorrect data,
-     * and if it's all ok then, depending on the kitOnly flag, either persists the SampleKitRequest or
-     * persists the SampleInstanceEntities and associated Sample, LabVessel, and other entities.
+     * Parses the uploaded spreadsheet, checks for correct headers and missing/incorrect data, and if it's
+     * all ok then persists the SampleInstanceEntities and associated Sample, LabVessel, and other entities.
      * <p>
      * Uploads are either library uploads or tube uploads.
      * Tube uploads give the tube barcode and sample name, which may or may not be known to Mercury and BSP.
@@ -203,11 +190,9 @@ public class SampleInstanceEjb {
      * @param processor   the TableProcessor subclass that should parse the spreadsheet.
      * @param messages    the errors, warnings, and info to be passed back.
      * @param afterParse  a callback that lets test code to change spreadsheet data after it's been parsed.
-     * @param kitOnly     Set true to cause a kit request to be made, and no sample accession. Set false for
-     *                    sample accessioning with no kit request.
      */
     public List<SampleInstanceEntity> doExternalUpload(InputStream inputStream, boolean overwrite,
-            ExternalLibraryProcessor processor, MessageCollection messages, Runnable afterParse, boolean kitOnly) {
+            ExternalLibraryProcessor processor, MessageCollection messages, Runnable afterParse) {
 
         messages.clearAll();
         if (processor == null) {
@@ -231,42 +216,8 @@ public class SampleInstanceEjb {
                 if (!messages.hasErrors()) {
                     // Creates or updates the SampleInstanceEntities, MercurySamples, LabVessels.
                     List<SampleInstanceEntity> instanceEntities = processor.makeOrUpdateEntities(rowDtos);
-                    if (kitOnly) {
-                        // Skips making the kit in Arquillian tests.
-                        if (CollectionUtils.isNotEmpty(instanceEntities) && deployment != null) {
-                            processor.makeSampleKitRequest();
-                            if (processor.getSampleKitRequest() != null) {
-                                sampleInstanceEntityDao.persist(processor.getSampleKitRequest());
-
-                                String body = generateEmailBody(instanceEntities, processor.getSampleKitRequest());
-                                // Sends a sample kit request email to the user.
-                                Boolean status = null;
-                                if (userBean != null && userBean.getBspUser() != null) {
-                                    status = emailSender.sendHtmlEmail(new AppConfig(deployment),
-                                            userBean.getBspUser().getEmail(), Collections.emptyList(),
-                                            EMAIL_SUBJECT, body, false);
-                                }
-                                if (BooleanUtils.isNotTrue(status)) {
-                                    if (BooleanUtils.isFalse(status)) {
-                                        messages.addError("Failed to send email for Sample Kit Request.");
-                                    }
-                                    // If the email failed or wasn't attempted (e.g. a DEV deployment),
-                                    // puts the email body in file and tells the user about it.
-                                    File file = File.createTempFile("RequestKitEmail_", ".txt");
-                                    PrintWriter writer = new PrintWriter(file);
-                                    writer.println("Subject: " + EMAIL_SUBJECT);
-                                    writer.println("Date: " + new Date().toString());
-                                    writer.println(body);
-                                    IOUtils.closeQuietly(writer);
-                                    messages.addInfo("Sample Kit Request email is in file <a href='" +
-                                            file.toURI().toASCIIString() + "'>" + file.getName() + "</a>");
-                                }
-                            }
-                        }
-                    } else {
-                        sampleInstanceEntityDao.persistAll(processor.getEntitiesToPersist());
-                        sampleInstanceEntityDao.persistAll(instanceEntities);
-                    }
+                    sampleInstanceEntityDao.persistAll(processor.getEntitiesToPersist());
+                    sampleInstanceEntityDao.persistAll(instanceEntities);
                     if (!messages.hasErrors()) {
                         messages.addInfo(String.format(IS_SUCCESS, rowDtos.size()));
                         return instanceEntities;
@@ -442,9 +393,6 @@ public class SampleInstanceEjb {
             }
         }
 
-        if (processor.supportsSampleKitRequest()) {
-            processor.setSampleKitRequest(sampleKitRequestDao.find(processor));
-        }
     }
 
     /**
@@ -538,20 +486,11 @@ public class SampleInstanceEjb {
         mercurySample.addLabVessel(labVessel);
         newEntities.add(mercurySample);
 
-        SampleKitRequest sampleKitRequest = sampleKitRequestDao.find(walkUpSequencing);
-        if (sampleKitRequest == null) {
-            sampleKitRequest = new SampleKitRequest();
-            sampleKitRequest.setEmail(walkUpSequencing.getEmailAddress());
-            sampleKitRequest.setOrganization(walkUpSequencing.getLabName());
-            newEntities.add(sampleKitRequest);
-        }
-
         SampleInstanceEntity sampleInstanceEntity =
                 sampleInstanceEntityDao.findByName(walkUpSequencing.getLibraryName());
         if (sampleInstanceEntity == null) {
             sampleInstanceEntity = new SampleInstanceEntity();
             sampleInstanceEntity.setSampleLibraryName(walkUpSequencing.getLibraryName());
-            sampleInstanceEntity.setSampleKitRequest(sampleKitRequest);
             newEntities.add(sampleInstanceEntity);
         }
         sampleInstanceEntity.setPairedEndRead(StringUtils.startsWithIgnoreCase(walkUpSequencing.getReadType(), "p"));
@@ -616,32 +555,6 @@ public class SampleInstanceEjb {
     /** Returns a string that can be used as a sequencer value in the spreadsheet. */
     public static String makeSequencerValue(IlluminaFlowcell.FlowcellType flowcellType) {
         return StringUtils.substringBeforeLast(flowcellType.getDisplayName(), "Flowcell").trim();
-    }
-
-    /** Makes a SampleKitRequest email body. */
-    private String generateEmailBody(List<SampleInstanceEntity> entities, SampleKitRequest kit) {
-        StringBuilder builder = new StringBuilder();
-        if (kit != null) {
-            // Adds the kit parameters.
-            builder.append(kit.toBody()).append(System.lineSeparator());
-            // Gets the unique libraries.
-            List<String> libraries = entities.stream().
-                    map(entity -> entity.getSampleLibraryName()).distinct().sorted().collect(Collectors.toList());
-            // Adds their number.
-            int count = libraries.size();
-            builder.append("Number of tubes: ").append(System.lineSeparator());
-            builder.append(count).append(System.lineSeparator()).append(System.lineSeparator());
-            final int perRow = 8;
-            builder.append("Libary names: ").append(System.lineSeparator());
-            for (int startIdx = 0; startIdx < count; ) {
-                int endIdxPlusOne = Math.min(startIdx + perRow, count);
-                // Adds the sorted library names, limiting the number per row.
-                builder.append(StringUtils.join(libraries.toArray(), ", ", startIdx, endIdxPlusOne)).
-                        append(System.lineSeparator());
-                startIdx = endIdxPlusOne;
-            }
-        }
-        return builder.toString();
     }
 
     /** Dto containing data from a spreadsheet row. */

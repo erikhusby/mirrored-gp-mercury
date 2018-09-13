@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,6 +35,7 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     private List<String> numbersOfLanes = new ArrayList<>();
     private List<String> organisms = new ArrayList<>();
     private List<String> pooleds = new ArrayList<>();
+    private List<String> membersOfPool = new ArrayList<>();
     private List<String> readLengths = new ArrayList<>();
     private List<String> referenceSequences = new ArrayList<>();
     private List<Boolean> requiredValuesPresent = new ArrayList<>();
@@ -43,71 +43,65 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     private List<String> sequencerModeNames = new ArrayList<>();
     private List<String> sexes = new ArrayList<>();
     private List<String> volumes = new ArrayList<>();
-    private SampleKitRequest sampleKitRequest;
 
     public ExternalLibraryProcessorNewTech() {
         super(null);
     }
 
-    // Only the first four words of header text are used and the rest are ignored.
+    // Only the first four words of header text are used and the rest are DataPresence.IGNORED.
     // Ordering of headers is only important for generating template spreadsheets in the ActionBean.
-    // "Ignored" means value not saved.
+    // "DataPresence.IGNORED" means value not saved.
     public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
-        SAMPLE_NUMBER("Sample Number", IGNORED),
-        SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
-        IRB_NUMBER("IRB Number", IGNORED),
-        STRAIN("Strain", IGNORED),
-        SEX("Sex (M/F)", OPTIONAL),
-        CELL_LINE("Cell Line", IGNORED),
-        TISSUE_TYPE("Tissue Type", IGNORED),
-        COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", REQUIRED),
-        INDIVIDUAL_NAME("Individual Name (Patient Id)", REQUIRED),
-        LIBRARY_NAME("Library Name", REQUIRED),
-        LIBRARY_TYPE("Library Type", OPTIONAL),
-        MOLECULAR_BARCODE_NAME("Molecular Barcode Name", OPTIONAL),
-        MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", IGNORED),
-        POOLED("Pooled (Y/N)", OPTIONAL),
-        MEMBER_OF_POOL("Member of Pool", IGNORED),
-        SUBMITTED_TO_GSSR("Submitted to Gssr", IGNORED),
-        DERIVED_FROM("Derived From", IGNORED),
-        INSERT_SIZE_RANGE("Insert Size Range", OPTIONAL),
-        LIBRARY_SIZE("Library Size", IGNORED),
-        JUMP_SIZE("Jump Size", IGNORED),
-        ILLUMINA_KIT_USED("Illumina or 454 Kit", IGNORED),
-        RESTRICTION_ENZYMES("Restriction Enzyme", IGNORED),
-        VOLUME("Volume (uL)", REQUIRED),
-        CONCENTRATION("Concentration (ng/uL)", REQUIRED),
-        ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", OPTIONAL),
-        ORGANISM("Organism", OPTIONAL),
-        SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", IGNORED),
-        READ_LENGTH("Desired Read Length", OPTIONAL),
-        PROJECT_TITLE("Project Title (pipeline aggregator)", REQUIRED),
-        FUNDING_SOURCE("Funding Source", IGNORED),
-        COVERAGE("Coverage (lanes/sample)", REQUIRED),
-        APPROVED_BY("Approved By", IGNORED),
-        REFERENCE_SEQUENCE("Reference Sequence", REQUIRED),
-        REQUESTED_COMPLETION_DATE("Requested Completion Date", IGNORED),
-        DATA_SUBMISSION("Data Submission", IGNORED),
-        REQUIRED_ACCESS("Require Controlled Access for Data", IGNORED),
-        ACCESS_LIST("Data Access List", IGNORED),
-        ASSEMBLY_INFORMATION("Additional Assembly and Analysis Info", OPTIONAL),
-        DATA_ANALYSIS_TYPE("Data Analysis Type", REQUIRED),
-        TUBE_BARCODE("Sample Tube Barcode", OPTIONAL),
-        BLANK("", IGNORED),
+        SAMPLE_NUMBER("Sample Number", DataPresence.IGNORED),
+        TUBE_BARCODE("Sample Tube Barcode", DataPresence.ONCE_PER_TUBE),
+        SEQUENCING_TECHNOLOGY("Sequencing Technology", DataPresence.REQUIRED),
+        IRB_NUMBER("IRB Number", DataPresence.IGNORED),
+        STRAIN("Strain", DataPresence.IGNORED),
+        SEX("Sex (M/F)", DataPresence.OPTIONAL),
+        CELL_LINE("Cell Line", DataPresence.IGNORED),
+        TISSUE_TYPE("Tissue Type", DataPresence.IGNORED),
+        COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", DataPresence.REQUIRED),
+        INDIVIDUAL_NAME("Individual Name (Patient Id)", DataPresence.REQUIRED),
+        LIBRARY_NAME("Library Name", DataPresence.REQUIRED),
+        LIBRARY_TYPE("Library Type", DataPresence.OPTIONAL),
+        MOLECULAR_BARCODE_NAME("Molecular Barcode Name", DataPresence.OPTIONAL),
+        MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", DataPresence.IGNORED),
+        POOLED("Pooled (Y/N)", DataPresence.OPTIONAL), // Blank is the same as N
+        // If Pooled=Y then Member of Pool must be a Library Name of another row that has Pooled=N.
+        MEMBER_OF_POOL("Member of Pool", DataPresence.OPTIONAL),
+        SUBMITTED_TO_GSSR("Submitted to Gssr", DataPresence.IGNORED),
+        DERIVED_FROM("Derived From", DataPresence.IGNORED),
+        INSERT_SIZE_RANGE("Insert Size Range", DataPresence.OPTIONAL),
+        LIBRARY_SIZE("Library Size", DataPresence.IGNORED),
+        JUMP_SIZE("Jump Size", DataPresence.IGNORED),
+        ILLUMINA_KIT_USED("Illumina or 454 Kit", DataPresence.IGNORED),
+        RESTRICTION_ENZYMES("Restriction Enzyme", DataPresence.IGNORED),
+        VOLUME("Volume (uL)", DataPresence.ONCE_PER_TUBE),
+        CONCENTRATION("Concentration (ng/uL)", DataPresence.ONCE_PER_TUBE),
+        ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", DataPresence.OPTIONAL),
+        ORGANISM("Organism", DataPresence.OPTIONAL),
+        SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", DataPresence.IGNORED),
+        READ_LENGTH("Desired Read Length", DataPresence.OPTIONAL),
+        PROJECT_TITLE("Project Title (pipeline aggregator)", DataPresence.REQUIRED),
+        FUNDING_SOURCE("Funding Source", DataPresence.IGNORED),
+        COVERAGE("Coverage (lanes/sample)", DataPresence.REQUIRED),
+        APPROVED_BY("Approved By", DataPresence.IGNORED),
+        REFERENCE_SEQUENCE("Reference Sequence", DataPresence.REQUIRED),
+        REQUESTED_COMPLETION_DATE("Requested Completion Date", DataPresence.IGNORED),
+        DATA_SUBMISSION("Data Submission", DataPresence.IGNORED),
+        REQUIRED_ACCESS("Require Controlled Access for Data", DataPresence.IGNORED),
+        ACCESS_LIST("Data Access List", DataPresence.IGNORED),
+        ASSEMBLY_INFORMATION("Additional Assembly and Analysis Info", DataPresence.OPTIONAL),
+        DATA_ANALYSIS_TYPE("Data Analysis Type", DataPresence.REQUIRED),
+        BLANK("", DataPresence.IGNORED),
         ;
 
         private final String text;
-        private boolean requiredHeader;
-        private boolean requiredValue;
-        private boolean ignoredValue;
-        private boolean isString = true;
-        private boolean isDate = false;
-
-        Headers(String text, Boolean isRequired) {
+        private final DataPresence dataPresence;
+        
+        Headers(String text, DataPresence dataPresence) {
             this.text = text;
-            this.requiredHeader = Boolean.TRUE.equals(isRequired);
-            this.requiredValue = Boolean.TRUE.equals(isRequired);
-            this.ignoredValue = (isRequired == IGNORED);
+            this.dataPresence = dataPresence;
         }
 
         @Override
@@ -117,32 +111,32 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
 
         @Override
         public boolean isRequiredHeader() {
-            return requiredHeader;
+            return dataPresence == DataPresence.REQUIRED;
         }
 
         @Override
         public boolean isRequiredValue() {
-            return requiredValue;
-        }
-
-        @Override
-        public boolean isIgnoredValue() {
-            return ignoredValue;
+            return dataPresence == DataPresence.REQUIRED;
         }
 
         @Override
         public boolean isDateColumn() {
-            return isDate;
+            return false;
         }
 
         @Override
         public boolean isStringColumn() {
-            return isString;
+            return true;
         }
 
         @Override
-        public boolean isOnlyOncePerEntity() {
-            return this == CONCENTRATION || this == VOLUME;
+        public boolean isIgnoredValue() {
+            return dataPresence == DataPresence.IGNORED;
+        }
+
+        @Override
+        public boolean isOncePerTube() {
+            return dataPresence == DataPresence.ONCE_PER_TUBE;
         }
     }
 
@@ -230,6 +224,12 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
                 }
             }
 
+            if (!dto.isPooled() && StringUtils.isBlank(dto.getBarcode())) {
+                messages.addError(String.format(SampleInstanceEjb.MISSING, dto.getRowNumber(),
+                        ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText()));
+            }
+            // xxx if isPooled, member of pool must be non-blank
+
             // Tube barcode must be unique in the spreadsheet.
             if (!uniqueBarcodes.add(dto.getBarcode())) {
                 messages.addError(String.format(SampleInstanceEjb.DUPLICATE, dto.getRowNumber(),
@@ -243,12 +243,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
                 if (!StringUtils.containsOnly(dto.getBarcode(), SampleInstanceEjb.RESTRICTED_CHARS)) {
                     messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
                             "Tube barcode"));
-                }
-                // A new tube should not have a barcode that may collide with Matrix tubes.
-                if (dto.getBarcode().length() == 10 && dto.getBarcode().matches("[0-9]+")) {
-                    messages.addWarning(String.format(SampleInstanceEjb.MERCURY_FORMAT, dto.getRowNumber(),
-                            (dto.getLibraryName().equals(dto.getBarcode()) ? "Library Name" : "Tube Barcode"),
-                            dto.getBarcode()));
                 }
             }
             if (StringUtils.isNotBlank(dto.getBarcode())) {
@@ -404,20 +398,5 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     @Override
     public List<Boolean> getRequiredValuesPresent() {
         return requiredValuesPresent;
-    }
-
-    @Override
-    public SampleKitRequest getSampleKitRequest() {
-        return sampleKitRequest;
-    }
-
-    @Override
-    public void setSampleKitRequest(SampleKitRequest sampleKitRequest) {
-        this.sampleKitRequest = sampleKitRequest;
-    }
-
-    @Override
-    public boolean supportsSampleKitRequest() {
-        return true;
     }
 }

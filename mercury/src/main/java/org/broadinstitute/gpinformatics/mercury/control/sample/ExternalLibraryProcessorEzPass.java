@@ -5,7 +5,6 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,6 +29,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     private List<String> numbersOfLanes = new ArrayList<>();
     private List<String> organisms = new ArrayList<>();
     private List<String> pooleds = new ArrayList<>();
+    private List<String> membersOfPool = new ArrayList<>();
     private List<String> sampleNames = new ArrayList<>();
     private List<String> readLengths = new ArrayList<>();
     private List<String> referenceSequences = new ArrayList<>();
@@ -39,7 +39,6 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     private List<String> concentrations = new ArrayList<>();
     private List<String> volumes = new ArrayList<>();
     private List<Boolean> requiredValuesPresent = new ArrayList<>();
-    private SampleKitRequest sampleKitRequest;
 
     public ExternalLibraryProcessorEzPass() {
         super(null);
@@ -48,66 +47,62 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     // Only the first four words of header text are used and the rest are ignored.
     // Orderining of headers is only important for generating template spreadsheets in the ActionBean.
     public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
-        SAMPLE_NUMBER("Sample Number", IGNORED),
-        TUBE_BARCODE("Sample Tube Barcode", REQUIRED),
-        SOURCE_SAMPLE_GSSR_ID("Source Sample Gssr Id", REQUIRED),
-        SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
-        STRAIN("Strain", IGNORED),
-        SEX("Sex (M/F)", OPTIONAL),
-        CELL_LINE("Cell Line", IGNORED),
-        TISSUE_TYPE("Tissue Type", IGNORED),
-        COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", REQUIRED),
-        INDIVIDUAL_NAME("Individual Name (Patient Id)", REQUIRED),
-        LIBRARY_NAME("Library Name", REQUIRED),
-        LIBRARY_TYPE("Library Type", OPTIONAL),
-        DATA_ANALYSIS_TYPE("Data Analysis Type", REQUIRED),
-        REFERENCE_SEQUENCE("Reference Sequence", REQUIRED),
-        GSSR_OF_BAIT_POOL("GSSR # of Bait Pool", IGNORED),
-        INSERT_SIZE_RANGE("Insert Size Range", OPTIONAL),
-        LIBRARY_SIZE("Library Size", IGNORED),
-        JUMP_SIZE("Jump Size", IGNORED),
-        ILLUMINA_KIT_USED("Illumina or 454 Kit", IGNORED),
-        RESTRICTION_ENZYMES("Restriction Enzyme", IGNORED),
-        MOLECULAR_BARCODE_PLATE_ID("Molecular Barcode Plate Id", IGNORED),
-        MOLECULAR_BARCODE_PLATE_WELL_ID("Molecular Barcode Plate Well Id", IGNORED),
-        MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", IGNORED),
-        MOLECULAR_BARCODE_NAME("Molecular Barcode Name", OPTIONAL),
-        VOLUME("Volume (ul)", OPTIONAL),  // Required for the first row of each tube.
-        CONCENTRATION("Concentration (ng/uL)", OPTIONAL), // Required for the first row of each tube.
-        SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", IGNORED),
-        ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", OPTIONAL),
-        PROJECT_TITLE("Project Title", OPTIONAL),
-        FUNDING_SOURCE("Funding Source", IGNORED),
-        COVERAGE("Coverage (lanes/sample)", REQUIRED),
-        APPROVED_BY("Approved By", IGNORED),
-        REQUESTED_COMPLETION_DATE("Requested Completion Date", IGNORED),
-        DATA_SUBMISSION("Data Submission", IGNORED),
-        ASSEMBLY_INFORMATION("Additional Assembly and Analysis Info", OPTIONAL),
-        POOLED("Pooled (Y/N)", OPTIONAL),
-        VIRTUAL_GSSR_ID("Virtual Gssr Id", IGNORED),
-        SQUID_PROJECT("Squid Project (pipeline aggregation)", OPTIONAL),
+        SAMPLE_NUMBER("Sample Number", DataPresence.IGNORED),
+        TUBE_BARCODE("Sample Tube Barcode", DataPresence.REQUIRED),
+        SOURCE_SAMPLE_GSSR_ID("Source Sample Gssr Id", DataPresence.REQUIRED),
+        SEQUENCING_TECHNOLOGY("Sequencing Technology", DataPresence.REQUIRED),
+        STRAIN("Strain", DataPresence.IGNORED),
+        SEX("Sex (M/F)", DataPresence.OPTIONAL),
+        CELL_LINE("Cell Line", DataPresence.IGNORED),
+        TISSUE_TYPE("Tissue Type", DataPresence.IGNORED),
+        COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", DataPresence.REQUIRED),
+        INDIVIDUAL_NAME("Individual Name (Patient Id)", DataPresence.REQUIRED),
+        LIBRARY_NAME("Library Name", DataPresence.REQUIRED),
+        LIBRARY_TYPE("Library Type", DataPresence.OPTIONAL),
+        DATA_ANALYSIS_TYPE("Data Analysis Type", DataPresence.REQUIRED),
+        REFERENCE_SEQUENCE("Reference Sequence", DataPresence.REQUIRED),
+        GSSR_OF_BAIT_POOL("GSSR # of Bait Pool", DataPresence.IGNORED),
+        INSERT_SIZE_RANGE("Insert Size Range", DataPresence.OPTIONAL),
+        LIBRARY_SIZE("Library Size", DataPresence.IGNORED),
+        JUMP_SIZE("Jump Size", DataPresence.IGNORED),
+        ILLUMINA_KIT_USED("Illumina or 454 Kit", DataPresence.IGNORED),
+        RESTRICTION_ENZYMES("Restriction Enzyme", DataPresence.IGNORED),
+        MOLECULAR_BARCODE_PLATE_ID("Molecular Barcode Plate Id", DataPresence.IGNORED),
+        MOLECULAR_BARCODE_PLATE_WELL_ID("Molecular Barcode Plate Well Id", DataPresence.IGNORED),
+        MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", DataPresence.IGNORED),
+        MOLECULAR_BARCODE_NAME("Molecular Barcode Name", DataPresence.OPTIONAL),
+        VOLUME("Volume (ul)", DataPresence.ONCE_PER_TUBE),
+        CONCENTRATION("Concentration (ng/uL)", DataPresence.ONCE_PER_TUBE),
+        SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", DataPresence.IGNORED),
+        ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", DataPresence.OPTIONAL),
+        PROJECT_TITLE("Project Title", DataPresence.OPTIONAL),
+        FUNDING_SOURCE("Funding Source", DataPresence.IGNORED),
+        COVERAGE("Coverage (lanes/sample)", DataPresence.REQUIRED),
+        APPROVED_BY("Approved By", DataPresence.IGNORED),
+        REQUESTED_COMPLETION_DATE("Requested Completion Date", DataPresence.IGNORED),
+        DATA_SUBMISSION("Data Submission", DataPresence.IGNORED),
+        ASSEMBLY_INFORMATION("Additional Assembly and Analysis Info", DataPresence.OPTIONAL),
+        POOLED("Pooled (Y/N)", DataPresence.OPTIONAL), // Blank is the same as N
+        // If Pooled=Y then Member of Pool must be a Library Name of another row that has Pooled=N.
+        MEMBER_OF_POOL("Member of Pool", DataPresence.OPTIONAL),
+        VIRTUAL_GSSR_ID("Virtual Gssr Id", DataPresence.IGNORED),
+        SQUID_PROJECT("Squid Project (pipeline aggregation)", DataPresence.OPTIONAL),
 
-        REQUIRED_ACCESS("Require Controlled Access for Data", IGNORED),
-        ACCESS_LIST("Data Access List", IGNORED),
-        READ_LENGTH("Desired Read Length", OPTIONAL),
-        ORGANISM("Organism", OPTIONAL),
-        MEMBER_OF_POOL("Member of Pool", IGNORED),
-        DERIVED_FROM("Derived From", IGNORED),
-        BLANK("", IGNORED),
-        SUBMITTED_TO_GSSR("Submitted to Gssr", IGNORED),
+        REQUIRED_ACCESS("Require Controlled Access for Data", DataPresence.IGNORED),
+        ACCESS_LIST("Data Access List", DataPresence.IGNORED),
+        READ_LENGTH("Desired Read Length", DataPresence.OPTIONAL),
+        ORGANISM("Organism", DataPresence.OPTIONAL),
+        DERIVED_FROM("Derived From", DataPresence.IGNORED),
+        BLANK("", DataPresence.IGNORED),
+        SUBMITTED_TO_GSSR("Submitted to Gssr", DataPresence.IGNORED),
         ;
-        private final String text;
-        private boolean requiredHeader;
-        private boolean requiredValue;
-        private boolean ignoredValue;
-        private boolean isString = true;
-        private boolean isDate = false;
 
-        Headers(String text, Boolean isRequired) {
+        private final String text;
+        private final DataPresence dataPresence;
+
+        Headers(String text, DataPresence dataPresence) {
             this.text = text;
-            this.requiredHeader = Boolean.TRUE.equals(isRequired);
-            this.requiredValue = Boolean.TRUE.equals(isRequired);
-            this.ignoredValue = (isRequired == IGNORED);
+            this.dataPresence = dataPresence;
         }
 
         @Override
@@ -117,32 +112,32 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
 
         @Override
         public boolean isRequiredHeader() {
-            return requiredHeader;
+            return dataPresence == DataPresence.REQUIRED;
         }
 
         @Override
         public boolean isRequiredValue() {
-            return requiredValue;
-        }
-
-        @Override
-        public boolean isIgnoredValue() {
-            return ignoredValue;
+            return dataPresence == DataPresence.REQUIRED;
         }
 
         @Override
         public boolean isDateColumn() {
-            return isDate;
+            return false;
         }
 
         @Override
         public boolean isStringColumn() {
-            return isString;
+            return true;
         }
 
         @Override
-        public boolean isOnlyOncePerEntity() {
-            return this == VOLUME;
+        public boolean isIgnoredValue() {
+            return dataPresence == DataPresence.IGNORED;
+        }
+
+        @Override
+        public boolean isOncePerTube() {
+            return dataPresence == DataPresence.ONCE_PER_TUBE;
         }
     }
 
@@ -164,6 +159,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         numbersOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
         organisms.add(getFromRow(dataRow, Headers.ORGANISM));
         pooleds.add(getFromRow(dataRow, Headers.POOLED));
+        membersOfPool.add(getFromRow(dataRow, Headers.MEMBER_OF_POOL));
         readLengths.add(getFromRow(dataRow, Headers.READ_LENGTH));
         referenceSequences.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
         sampleNames.add(getFromRow(dataRow, Headers.SOURCE_SAMPLE_GSSR_ID));
@@ -382,20 +378,5 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     @Override
     public List<Boolean> getRequiredValuesPresent() {
         return requiredValuesPresent;
-    }
-
-    @Override
-    public SampleKitRequest getSampleKitRequest() {
-        return sampleKitRequest;
-    }
-
-    @Override
-    public void setSampleKitRequest(SampleKitRequest sampleKitRequest) {
-        this.sampleKitRequest = sampleKitRequest;
-    }
-
-    @Override
-    public boolean supportsSampleKitRequest() {
-        return true;
     }
 }

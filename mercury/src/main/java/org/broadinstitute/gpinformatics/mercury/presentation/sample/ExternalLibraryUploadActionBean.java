@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryBarcodeUpdate;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNewTech;
@@ -46,7 +45,6 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     private static final String SESSION_LIST_PAGE = "/sample/externalLibraryUpload.jsp";
     private static final String DOWNLOAD_TEMPLATE = "downloadTemplate";
     public static final String ACCESSION = "accession";
-    public static final String MAKE_KIT = "makeKit";
     private boolean overWriteFlag;
 
     @Inject
@@ -56,10 +54,9 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
      * The types of spreadsheet that can be uploaded.
      */
     public enum SpreadsheetType {
-        PooledTubes("Pooled Tubes", VesselPooledTubesProcessor.class),
-        EzPassLibraries("EZ Pass Libraries", ExternalLibraryProcessorEzPass.class),
         PooledMultiOrganismLibraries("New Tech Libraries", ExternalLibraryProcessorNewTech.class),
-        BarcodeUpdates("Tube Barcode Updates", ExternalLibraryBarcodeUpdate.class);
+        EzPassLibraries("EZ Pass Libraries", ExternalLibraryProcessorEzPass.class),
+        PooledTubes("Pooled Dev Tubes", VesselPooledTubesProcessor.class);
 
         private String displayName;
         private Class processor;
@@ -78,7 +75,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         }
     }
 
-    @Validate(required = true, on = {ACCESSION, MAKE_KIT, DOWNLOAD_TEMPLATE})
+    @Validate(required = true, on = {ACCESSION, DOWNLOAD_TEMPLATE})
     private SpreadsheetType spreadsheetType;
 
     @Inject
@@ -87,7 +84,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     @Inject
     private SampleInstanceEjb sampleInstanceEjb;
 
-    @Validate(required = true, on = {ACCESSION, MAKE_KIT})
+    @Validate(required = true, on = {ACCESSION})
     private FileBean samplesSpreadsheet;
 
     @DefaultHandler
@@ -96,22 +93,8 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    @HandlesEvent(MAKE_KIT)
-    public Resolution makeKit() {
-        if (spreadsheetType != SpreadsheetType.PooledMultiOrganismLibraries) {
-            addMessage("A kit is not required for this type of spreadsheet.");
-            return view();
-        } else {
-            return uploadSpreadsheet(true);
-        }
-    }
-
     @HandlesEvent(ACCESSION)
     public Resolution accession() {
-        return uploadSpreadsheet(false);
-    }
-
-    public Resolution uploadSpreadsheet(boolean kitOnly) {
         InputStream inputStream = null;
         try {
             inputStream = samplesSpreadsheet.getInputStream();
@@ -128,7 +111,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         }
 
         MessageCollection messageCollection = new MessageCollection();
-        sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, processor, messageCollection, null, kitOnly);
+        sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, processor, messageCollection, null);
         addMessages(messageCollection);
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
@@ -136,7 +119,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     @HandlesEvent(DOWNLOAD_TEMPLATE)
     public Resolution template() {
         HeaderValueRow[] headerValueRows = null;
-        ColumnHeader[] columnHeaders = null;
+        ColumnHeader[] columnHeaders;
         if (spreadsheetType.getProcessor().equals(VesselPooledTubesProcessor.class)) {
             columnHeaders = VesselPooledTubesProcessor.Headers.values();
         } else if (spreadsheetType.getProcessor().equals(ExternalLibraryProcessorEzPass.class)) {
@@ -145,8 +128,6 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         } else if (spreadsheetType.getProcessor().equals(ExternalLibraryProcessorNewTech.class)) {
             headerValueRows = ExternalLibraryProcessorNewTech.HeaderValueRows.values();
             columnHeaders = ExternalLibraryProcessorNewTech.Headers.values();
-        } else if (spreadsheetType.getProcessor().equals(ExternalLibraryBarcodeUpdate.class)) {
-            columnHeaders = ExternalLibraryBarcodeUpdate.Headers.values();
         } else {
             throw new RuntimeException("Unsupported processor type: " +
                     spreadsheetType.getProcessor().getCanonicalName());
@@ -212,7 +193,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         setBackground(workbook, colorCell, true, false, false);
 
         colorCell = colorRow.createCell(colIndex++);
-        colorCell.setCellValue(" Required Once per Tube, Sample, Library, etc. ");
+        colorCell.setCellValue(" Required Once per Tube ");
         setBackground(workbook, colorCell, false, false, true);
 
         colorCell = colorRow.createCell(colIndex++);
@@ -298,7 +279,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         boolean ignored = (columnHeader instanceof ColumnHeader.Ignorable) ?
                 ((ColumnHeader.Ignorable) columnHeader).isIgnoredValue() : false;
         boolean isOnlyOnce = (columnHeader instanceof ColumnHeader.Ignorable) ?
-                ((ColumnHeader.Ignorable) columnHeader).isOnlyOncePerEntity() : false;
+                ((ColumnHeader.Ignorable) columnHeader).isOncePerTube() : false;
         setBackground(workbook, cell, columnHeader.isRequiredValue(), ignored, isOnlyOnce);
     }
 

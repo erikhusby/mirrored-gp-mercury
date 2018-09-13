@@ -54,33 +54,34 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     // Only the first four words of header text are used and the rest are ignored.
     // Orderining of headers is only important for generating template spreadsheets in the ActionBean.
     public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
-        TUBE_BARCODE("Tube Barcode", REQUIRED, true),
-        LIBRARY_NAME("Library Name", REQUIRED, true),
-        BROAD_SAMPLE_ID("Broad Sample Id", REQUIRED, true),
-        ROOT_SAMPLE_ID("Root Sample Id", OPTIONAL, true),
-        MOLECULAR_INDEXING_SCHEME("Molecular Indexing Scheme", REQUIRED, true),
-        BAIT("Bait", OPTIONAL, true),
-        CAT("CAT", OPTIONAL, true),
-        EXPERIMENT("Experiment", REQUIRED, true),
-        CONDITIONS("Conditions", REQUIRED, true),
-        COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", OPTIONAL, true),
-        COLLABORATOR_PARTICIPANT_ID("Collaborator Participant Id", OPTIONAL, true),
-        BROAD_PARTICIPANT_ID("Broad Participant Id", OPTIONAL, true),
-        GENDER("Gender", OPTIONAL, true),
-        SPECIES("Species", OPTIONAL, true),
-        VOLUME("Volume", OPTIONAL, true), // Required on the first row for a tube.
-        FRAGMENT_SIZE("Fragment Size", OPTIONAL, true), // Required on the first row for a tube.
-        READ_LENGTH("Read Length", OPTIONAL, true),
-        LSID("Lsid", OPTIONAL, true),
+        TUBE_BARCODE("Tube Barcode", DataPresence.REQUIRED),
+        LIBRARY_NAME("Library Name", DataPresence.REQUIRED),
+        BROAD_SAMPLE_ID("Broad Sample Id", DataPresence.REQUIRED),
+        ROOT_SAMPLE_ID("Root Sample Id", DataPresence.OPTIONAL),
+        MOLECULAR_INDEXING_SCHEME("Molecular Indexing Scheme", DataPresence.REQUIRED),
+        BAIT("Bait", DataPresence.OPTIONAL),
+        CAT("CAT", DataPresence.OPTIONAL),
+        EXPERIMENT("Experiment", DataPresence.REQUIRED),
+        CONDITIONS("Conditions", DataPresence.REQUIRED),
+        COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", DataPresence.OPTIONAL),
+        COLLABORATOR_PARTICIPANT_ID("Collaborator Participant Id", DataPresence.OPTIONAL),
+        BROAD_PARTICIPANT_ID("Broad Participant Id", DataPresence.OPTIONAL),
+        GENDER("Gender", DataPresence.OPTIONAL),
+        SPECIES("Species", DataPresence.OPTIONAL),
+        VOLUME("Volume", DataPresence.ONCE_PER_TUBE),
+        FRAGMENT_SIZE("Fragment Size", DataPresence.ONCE_PER_TUBE),
+        READ_LENGTH("Read Length", DataPresence.OPTIONAL),
+        LSID("Lsid", DataPresence.OPTIONAL),
+        ANALYSIS_TYPE("Analysis Type", DataPresence.OPTIONAL),
+        UMIS_PRESENT("UMIs Present (Y/N)", DataPresence.OPTIONAL),
         ;
-        private final String text;
-        private boolean isRequired;
-        private boolean isString;
 
-        Headers(String text, boolean isRequired, boolean isString) {
+        private final String text;
+        private final DataPresence dataPresence;
+
+        Headers(String text, DataPresence dataPresence) {
             this.text = text;
-            this.isRequired = isRequired;
-            this.isString = isString;
+            this.dataPresence = dataPresence;
         }
 
         @Override
@@ -90,22 +91,12 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
 
         @Override
         public boolean isRequiredHeader() {
-            return isRequired;
+            return dataPresence == DataPresence.REQUIRED;
         }
 
         @Override
         public boolean isRequiredValue() {
-            return isRequired;
-        }
-
-        @Override
-        public boolean isIgnoredValue() {
-            return false;
-        }
-
-        @Override
-        public boolean isOnlyOncePerEntity() {
-            return this == VOLUME || this == FRAGMENT_SIZE;
+            return dataPresence == DataPresence.REQUIRED;
         }
 
         @Override
@@ -115,7 +106,17 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
 
         @Override
         public boolean isStringColumn() {
-            return isString;
+            return true;
+        }
+
+        @Override
+        public boolean isIgnoredValue() {
+            return dataPresence == DataPresence.IGNORED;
+        }
+
+        @Override
+        public boolean isOncePerTube() {
+            return dataPresence == DataPresence.ONCE_PER_TUBE;
         }
     }
 
@@ -387,10 +388,4 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     public List<String> getSexes() {
         return sexes;
     }
-
-    @Override
-    public boolean supportsSampleKitRequest() {
-        return false;
-    }
-
 }

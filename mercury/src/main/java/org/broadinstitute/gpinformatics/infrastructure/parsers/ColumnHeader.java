@@ -29,6 +29,6 @@ public interface ColumnHeader {
     /** Interface that extends the data presence indicators. */
     interface Ignorable {
         boolean isIgnoredValue();
-        boolean isOnlyOncePerEntity();
+        boolean isOncePerTube();
     }
 }
