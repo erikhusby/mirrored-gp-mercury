@@ -737,8 +737,8 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public List<String> bucketWorkflowNames(BucketEntry bucketEntry) {
         List<String> workflowNames = new ArrayList<>();
-        for (Workflow workflow : bucketEntry.getWorkflows(workflowConfig)) {
-            workflowNames.add(workflow.getWorkflowName());
+        for (String workflow : bucketEntry.getWorkflows(workflowConfig)) {
+            workflowNames.add(workflow);
         }
         return workflowNames;
     }

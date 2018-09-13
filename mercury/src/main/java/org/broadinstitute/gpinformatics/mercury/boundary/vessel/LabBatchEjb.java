@@ -823,7 +823,7 @@ public class LabBatchEjb {
                 if (!found) {
                     for (BucketEntry bucketEntry : sampleInstance.getPendingBucketEntries()) {
                         bucketEntries.add(bucketEntry);
-                        if (bucketEntry.getProductOrder().getProduct().getWorkflow() == Workflow.DNA_RNA_EXTRACTION_STOOL) {
+                        if (bucketEntry.getProductOrder().getProduct().getWorkflowName() == Workflow.DNA_RNA_EXTRACTION_STOOL) {
                             addAndRemoveSamples = true;
                         }
                         break;

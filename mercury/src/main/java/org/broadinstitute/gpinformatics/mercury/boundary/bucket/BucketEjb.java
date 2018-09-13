@@ -120,7 +120,6 @@ public class BucketEjb {
             Collection<LabVessel> bucketVessels = bucketVesselsEntry.getValue();
             WorkflowBucketDef bucketDef = bucketVesselsEntry.getKey();
             Bucket bucket = findOrCreateBucket(bucketDef.getName());
-            Workflow workflow = bucketVesselsEntry.getKey().getWorkflowForProductOrder(pdo);
             LabEventType bucketEventType = bucketDef.getBucketEventType();
 
             for (LabVessel currVessel : bucketVessels) {
@@ -429,7 +428,7 @@ public class BucketEjb {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         List<Product> possibleProducts = new ArrayList<>();
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            if (productOrderAddOn.getAddOn().getWorkflow() != Workflow.NONE) {
+            if (productOrderAddOn.getAddOn().getWorkflowName() != null) {
                 possibleProducts.add(productOrderAddOn.getAddOn());
             }
         }
@@ -442,8 +441,8 @@ public class BucketEjb {
                 // Avoid unique constraint on bucket lab events
                 localDate = new Date(date.getTime() + offset);
             }
-            if (product.getWorkflow() != Workflow.NONE) {
-                ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflow(product.getWorkflow());
+            if (product.getWorkflowName() != null) {
+                ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflowByName(product.getWorkflowName());
                 workflowDefVersion = productWorkflowDef.getEffectiveVersion();
                 Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
                         workflowDefVersion.getInitialBucket(productOrder, vessels, bucketingSource);

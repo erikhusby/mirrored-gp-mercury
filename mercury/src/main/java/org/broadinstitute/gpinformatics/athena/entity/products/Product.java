@@ -154,7 +154,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             , inverseJoinColumns = {@JoinColumn(name = "ADD_ONS")})
     private final Set<Product> addOns = new HashSet<>();
 
-    // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.
     private String workflowName;
 
     private boolean pdmOrderableOnly;
@@ -233,7 +232,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                 productToClone.getExpectedCycleTimeSeconds(), productToClone.getGuaranteedCycleTimeSeconds(),
                 productToClone.getSamplesPerWeek(),productToClone.getMinimumOrderSize(),
                 productToClone.getInputRequirements(), productToClone.getDeliverables(),
-                productToClone.isTopLevelProduct(), productToClone.getWorkflow(),
+                productToClone.isTopLevelProduct(), productToClone.getWorkflowName(),
                 productToClone.isPdmOrderableOnly(),productToClone.getAggregationDataType());
 
         clonedProduct.setExternalOnlyProduct(productToClone.isExternalOnlyProduct());
@@ -269,7 +268,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public Product() {}
 
     public Product(boolean topLevelProduct) {
-        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, Workflow.NONE, false, null);
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false, null);
     }
 
     public Product(String productName,
@@ -285,7 +284,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
-                   @Nonnull Workflow workflow,
+                   String workflowName,
                    boolean pdmOrderableOnly,
                    String aggregationDataType) {
         this.productName = productName;
@@ -301,7 +300,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.inputRequirements = inputRequirements;
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
-        workflowName = workflow.getWorkflowName();
+        this.workflowName = workflowName;
         this.pdmOrderableOnly = pdmOrderableOnly;
         this.aggregationDataType = aggregationDataType;
     }
@@ -468,8 +467,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.topLevelProduct = topLevelProduct;
     }
 
-    public void setWorkflow(@Nonnull Workflow workflow) {
-        workflowName = workflow.getWorkflowName();
+    public void setWorkflowName(@Nonnull String workflowName) {
+        this.workflowName = workflowName;
     }
 
     public Set<Product> getAddOns() {
@@ -498,9 +497,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         addOns.add(addOn);
     }
 
-    @Nonnull
-    public Workflow getWorkflow() {
-        return Workflow.findByName(workflowName);
+    public String getWorkflowName() {
+        return workflowName;
     }
 
     public String getAnalysisTypeKey() {

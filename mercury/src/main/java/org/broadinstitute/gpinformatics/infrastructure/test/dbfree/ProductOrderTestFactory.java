@@ -228,7 +228,7 @@ public class ProductOrderTestFactory {
         ProductFamily productFamily = new ProductFamily("Product Family " + uuid);
         Product product =
                 new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-X" + uuid,
-                        new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, Workflow.NONE,
+                        new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, null,
                         false, "Aggregation Data Type");
 
 
