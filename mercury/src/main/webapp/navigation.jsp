@@ -210,6 +210,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.TagVesselActionBean"
                                           event="view">Add Dev Condition To Vessel</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="singleCellMetadataUpload"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PlateMetadataActionBean"
+                                          event="view">Single Cell Metadata Upload</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

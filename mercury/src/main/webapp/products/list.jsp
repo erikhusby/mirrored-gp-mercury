@@ -15,10 +15,13 @@
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[0,'asc']],
                     "aoColumns": [
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
                         {"bSortable": false},                           // checkbox
+                        </security:authorizeBlock>
                         {"bSortable": true, "sType": "title-string"},   // Part Number
                         {"bSortable": true},                            // Product Name
                         {"bSortable": true},                            // Product Family
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
                         {"bSortable": true, "sType": "title-string"},   // Units
                         {"bSortable": true, "sType": "title-string"},   // Price item Display Name
                         {"bSortable": true, "sType": "title-string"},   // Price Item Platform
@@ -27,6 +30,7 @@
                         {"bSortable": true, "sType": "numeric"},        // SAP Clinical Charge
                         {"bSortable": true, "sType": "numeric"},        // SAP Commerical Charge
                         {"bSortable": true, "sType": "numeric"},        // SAP SSF Intercompany Charge
+                        </security:authorizeBlock>
                         {"bSortable": true, "sType" : "title-string"},  // Commercial Indicator
                         {"bSortable": true, "sType" : "title-string"},  // Clinical Indicator
                         {"bSortable": true, "sType" : "title-string"},  // PDM Orderable Indicator
@@ -53,16 +57,20 @@
                                name="availability"/> All Products
                 <stripes:radio onchange="changeAvailability()" value="<%= ProductDao.Availability.CURRENT%>"
                                name="availability"/> Available Products Only
-
-            <stripes:submit name="publishProductsToSap" value="Publish Selected Product(s) to SAP" class="btn padright" title="Click to publish products to SAP" />
+            <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
+                <stripes:submit name="publishProductsToSap" value="Publish Selected Product(s) to SAP"
+                                class="btn padright" title="Click to publish products to SAP"/>
+            </security:authorizeBlock>
         </div>
 
         <table id="productList" class="table simple">
             <thead>
             <tr>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
                 <th width="40">
                     <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
                 </th>
+                </security:authorizeBlock>
                 <th>Part Number</th>
                 <th>Product Name</th>
                 <th>Product Family</th>
@@ -78,7 +86,6 @@
                 </security:authorizeBlock>
                 <th>Commercial?</th>
                 <th>Clinical?</th>
-
                 <th>PDM Orderable</th>
                 <th>Available</th>
             </tr>
@@ -97,10 +104,12 @@
                     <td>
                         <span class="bad-price-div">The prices for this product information differ between the quote server and SAP.  Please correct this before any orders can be placed or updated
                         </span>
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
                         <c:if test="${!inSAP}">
                             <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}"
                                               class="shiftCheckbox"/>
                         </c:if>
+                        </security:authorizeBlock>
                     </td>
                     <td>
                     <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">

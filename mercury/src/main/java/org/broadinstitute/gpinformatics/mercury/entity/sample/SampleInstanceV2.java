@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -87,10 +88,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private Set<MercurySample> rootMercurySamples = new HashSet<>();
     private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
-    private List<ReagentDesign> reagentsDesigns = new ArrayList<>();
     private boolean isPooledTube;
     private String sampleLibraryName;
     private Integer readLength;
+    private String aggregationParticle;
 
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
@@ -194,7 +195,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         sampleInstanceEntity = other.getSampleInstanceEntity();
         tzDevExperimentData = other.getTzDevExperimentData();
         devConditions = other.getDevConditions();
-        reagentsDesigns = other.getReagentsDesigns();
         isPooledTube = other.getIsPooledTube();
         sampleLibraryName = other.getSampleLibraryName();
         readLength = other.getReadLength();
@@ -521,7 +521,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
         currentLabVessel = labVessel;
 
-        //Merge in sample instance pooled tubes upload.
+        // Merge in sample instance pooled tubes upload.
         if (sampleInstanceEntity != null) {
             setIsPooledTube(true);
             MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
@@ -531,6 +531,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeRootSamples(sampleInstanceEntity.getRootSample());
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
+//            aggregationParticle = sampleInstanceEntity.getAggregationParticle();
             mercurySamples.add(mercurySample);
         } else {
             mergeDevConditions(labVessel);
@@ -688,15 +689,29 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         this.sampleLibraryName = sampleLibraryName;
     }
 
-    private void mergeReagents(ReagentDesign reagentDesign)
-    {
+    /**
+     * Merges DesignedReagent into Reagents
+     *   - as of July 2018 only to support DEV Tagged pooled tubes upload
+     */
+    private void mergeReagents(ReagentDesign reagentDesign) {
         if (reagentDesign != null) {
-            this.reagentsDesigns.add(reagentDesign);
+            this.reagents.addAll(reagentDesign.getDesignedReagents());
         }
     }
 
-    public List<ReagentDesign> getReagentsDesigns() {
-        return reagentsDesigns;
+    /**
+     * Gets any ReagentDesign entities out of any DesignedReagent subclasses of Reagent on demand
+     * to avoid the overhead of digesting Reagent into separate variables at SampleInstanceV2 creation
+     * just to support a few use-cases
+     */
+    public Set<ReagentDesign> getReagentsDesigns() {
+        Set<ReagentDesign> reagentDesigns = new HashSet<>();
+        for( Reagent reagent : getReagents() ) {
+            if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                reagentDesigns.add( OrmUtil.proxySafeCast(reagent, DesignedReagent.class).getReagentDesign() );
+            }
+        }
+        return reagentDesigns;
     }
 
     private void mergePooledTubeDevConditions(String experimentName, List<String> subTasks)
@@ -728,6 +743,16 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     public TZDevExperimentData getTzDevExperimentData() {
         return this.tzDevExperimentData;
+    }
+
+    public String getAggregationParticle() {
+        ProductOrderSample productOrderSample = getProductOrderSampleForSingleBucket();
+        if (productOrderSample != null) {
+            if (productOrderSample.getAggregationParticle() != null) {
+                return productOrderSample.getAggregationParticle();
+            }
+        }
+        return aggregationParticle;
     }
 
     /**

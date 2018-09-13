@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -15,14 +14,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
@@ -131,7 +127,7 @@ public class PickerActionBeanTest extends BaseEventTest {
         LabEvent labEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, new Date(),
                 "UnitTest", 1L, 1L, "UnitTest");
         labEvent.setInPlaceLabVessel(denatureTube2500.getContainers().iterator().next());
-        denatureTube2500.getContainers().iterator().next().getInPlaceLabEvents().add(labEvent);
+        denatureTube2500.getContainers().iterator().next().addInPlaceEvent(labEvent);
     }
 
     public void pickLabBatch() {

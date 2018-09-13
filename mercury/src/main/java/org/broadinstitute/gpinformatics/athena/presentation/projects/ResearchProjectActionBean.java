@@ -47,8 +47,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
@@ -967,16 +967,17 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
 
             for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject, this)) {
-                Set<SubmissionLibraryDescriptor> libraryTypes = submissionDto.getAggregation().getLibraryTypes();
                 if (tupleToSampleMap.containsKey(submissionDto.getSubmissionTuple())) {
                     // All required data are in the submissionDto
                     selectedSubmissions.add(submissionDto);
-                    for (SubmissionLibraryDescriptor libraryType : libraryTypes) {
-                        if (!libraryType.getName().equals(selectedSubmissionLibraryDescriptor)) {
-                            addGlobalValidationError("Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
-                                submissionDto.getSampleName(), libraryType.getName(), selectedSubmissionLibraryDescriptor);
-                            errors = true;
-                        }
+
+                    if (!Arrays.asList(selectedSubmissionLibraryDescriptor, "N/A")
+                        .contains(submissionDto.getDataType())) {
+                        addGlobalValidationError(
+                            "Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
+                            submissionDto.getSampleName(), submissionDto.getDataType(),
+                            selectedSubmissionLibraryDescriptor);
+                        errors = true;
                     }
                 }
             }

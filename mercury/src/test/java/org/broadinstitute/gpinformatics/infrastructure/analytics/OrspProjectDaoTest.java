@@ -1,10 +1,21 @@
-package org.broadinstitute.gpinformatics.infrastructure.cognos;
+/*
+ * The Broad Institute
+ * SOFTWARE COPYRIGHT NOTICE AGREEMENT
+ * This software and its documentation are copyright 2018 by the
+ * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+ *
+ * This software is supplied without any warranty or guaranteed support
+ * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+ * use, misuse, or functionality.
+ */
+
+package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.BaseMatcher;
@@ -15,7 +26,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

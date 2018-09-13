@@ -21,7 +21,6 @@ public class WorkflowConfigProducer {
     @Produces
     @Default
     public WorkflowConfig produce() {
-        System.out.println("WorkflowConfigProducer producer call");
         return loader.load();
     }
 }

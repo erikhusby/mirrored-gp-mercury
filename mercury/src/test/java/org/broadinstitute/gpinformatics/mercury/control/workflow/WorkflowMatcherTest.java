@@ -62,7 +62,7 @@ public class WorkflowMatcherTest {
         // Add transfer with reagents
         LabEvent bloodToMicro = new LabEvent(LabEventType.EXTRACT_BLOOD_TO_MICRO, gregorianCalendar.getTime(),
                 LabEvent.UI_EVENT_LOCATION, 1L, 101L, LabEvent.UI_PROGRAM_NAME);
-        BarcodedTube m1 = new BarcodedTube("M1", BarcodedTube.BarcodedTubeType.EppendoffFliptop15);
+        BarcodedTube m1 = new BarcodedTube("M1", BarcodedTube.BarcodedTubeType.EppendorfFliptop15);
         bloodToMicro.getVesselToVesselTransfers().add(new VesselToVesselTransfer(t1, m1, bloodToMicro));
         bloodToMicro.addReagent(new GenericReagent("R1", "1234", null));
         gregorianCalendar.add(Calendar.SECOND, 1);

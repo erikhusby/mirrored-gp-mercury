@@ -97,7 +97,7 @@
 
             <!-- These hidden inputs are populated by action bean so the javascript can get a map of flowcell name to lane count. -->
             <c:forEach items="${actionBean.flowcellTypes}" var="flowcell">
-                <stripes:hidden name="${flowcell}Count" value="${flowcell.vesselGeometry.rowCount}"/>
+                <input type="hidden" name="${flowcell}Count" value="${flowcell.vesselGeometry.rowCount}"/>
             </c:forEach>
             <input type="hidden" name="hasCrsp" value="${actionBean.hasCrsp}"/>
 

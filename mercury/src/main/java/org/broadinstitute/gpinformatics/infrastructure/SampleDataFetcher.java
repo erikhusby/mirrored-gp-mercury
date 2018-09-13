@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Dependent
@@ -92,13 +93,18 @@ public class SampleDataFetcher implements Serializable {
     }
 
     /**
-     * Fetch the data for multiple samples.
+     * Fetch the data for multiple samples, defaulting BSP sample search to PDO Search Columns.
      *
      * @param sampleNames The sample names, which should be short barcodes such as SM-4FHTK
      *
      * @return Mapping of sample id to its sample data
      */
     public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
+        return fetchSampleData(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+    }
+
+    public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames,
+                                                   BSPSampleSearchColumn... bspSampleSearchColumns) {
 
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
@@ -107,7 +113,8 @@ public class SampleDataFetcher implements Serializable {
 
         Map<String, SampleData> sampleData = new HashMap<>();
         if (!sampleIdsWithBspSource.isEmpty()) {
-            Map<String, BspSampleData> bspSampleData = bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource);
+            Map<String, BspSampleData> bspSampleData = bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource,
+                    bspSampleSearchColumns);
             sampleData.putAll(bspSampleData);
         }
         sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamplesWithMercurySource));
@@ -215,7 +222,7 @@ public class SampleDataFetcher implements Serializable {
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
 
         Set<String> bspSourceSampleNames = new HashSet<>(samples.size());
-        Map<String, ProductOrderSample> mapMercuryQuantIdToPdoSample = new HashMap<>();
+        Map<String, Optional<ProductOrderSample>> mapMercuryQuantIdToPdoSample = new HashMap<>();
         for (AbstractSample sample : samples) {
             if (sample.isHasBspSampleDataBeenInitialized()) {
                 sampleData.put(sample.getSampleKey(), sample.getSampleData());
@@ -248,7 +255,7 @@ public class SampleDataFetcher implements Serializable {
                 }
                 // To improve performance, check for Mercury quants only if the product indicates that they're there.
                 if (product != null && product.getExpectInitialQuantInMercury() && quantColumnRequested(bspSampleSearchColumns)) {
-                    mapMercuryQuantIdToPdoSample.put(sampleName, productOrderSample);
+                    mapMercuryQuantIdToPdoSample.put(sampleName, Optional.of(productOrderSample));
                 }
             }
         }
@@ -259,9 +266,12 @@ public class SampleDataFetcher implements Serializable {
             if (!sampleIdsWithBspSource.isEmpty()) {
                 Map<String, BspSampleData> bspSampleData =
                         bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource, bspSampleSearchColumns);
-                for (Map.Entry<String, ProductOrderSample> idPdoSampleEntry : mapMercuryQuantIdToPdoSample.entrySet()) {
-                    BspSampleData bspSampleData1 = bspSampleData.get(idPdoSampleEntry.getKey());
-                    bspSampleData1.overrideWithMercuryQuants(idPdoSampleEntry.getValue());
+                for (Map.Entry<String, Optional<ProductOrderSample>> idPdoSampleEntry : mapMercuryQuantIdToPdoSample.entrySet()) {
+
+                    if(idPdoSampleEntry.getValue().isPresent()) {
+                        BspSampleData bspSampleData1 = bspSampleData.get(idPdoSampleEntry.getKey());
+                        bspSampleData1.overrideWithMercuryQuants(idPdoSampleEntry.getValue().get());
+                    }
                 }
                 sampleData.putAll(bspSampleData);
             }

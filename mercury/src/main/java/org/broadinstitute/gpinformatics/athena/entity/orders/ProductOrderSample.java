@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValid
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -120,6 +120,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name="MERCURY_SAMPLE")
     private MercurySample mercurySample;
+
+    private String aggregationParticle;
 
     /**
      * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
@@ -1324,5 +1326,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public boolean isToBeBilled() {
         return getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
         && !isCompletelyBilled();
+    }
+
+    public String getAggregationParticle() {
+        return aggregationParticle;
+    }
+
+    public void setAggregationParticle(String aggregationParticle) {
+        this.aggregationParticle = aggregationParticle;
     }
 }

@@ -184,8 +184,11 @@
 
     <filter-mapping>
         <filter-name>GZipFilter</filter-name>
-        <url-pattern>/orders/*</url-pattern>
         <url-pattern>/resources/scripts/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>GZipFilter</filter-name>
         <url-pattern>/resources/css/*</url-pattern>
     </filter-mapping>
 
