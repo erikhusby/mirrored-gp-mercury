@@ -272,7 +272,7 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
         infiniumDescendantCriteria.captureLatestEventVesselsOnly();
 
         // Evaluate non-container only.  If a container, don't evaluate and return empty collection
-        if( isInfiniumSearch(context) && dnaPlateWell.getContainerRole() == null ) {
+        if( context == null || (isInfiniumSearch(context) && dnaPlateWell.getContainerRole() == null )) {
             dnaPlateWell.evaluateCriteria(infiniumDescendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         }
 
