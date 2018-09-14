@@ -377,8 +377,6 @@ public class VesselEjb {
                 return Triple.of(labMetricRun, null, microfluorPlates);
             }
 
-            boolean isDuplicatePico = false;
-
             Map<Result, String> mapResultToBarcode = microfluorPlates.stream()
                     .collect(Collectors.toMap(StaticPlate::nearestFormationAndTubePositionByWell, StaticPlate::getLabel));
 
@@ -389,7 +387,7 @@ public class VesselEjb {
                     .map(Result::getTubeFormation)
                     .collect(Collectors.toSet());
 
-            isDuplicatePico = uniqueTubeformations.size() == 1 && mapBarcodeToPlate.size() == 2;
+            boolean isDuplicatePico = uniqueTubeformations.size() == 1 && mapBarcodeToPlate.size() == 2;
 
             List<Result> traverserResults = new ArrayList<>(mapResultToBarcode.keySet());
             traverserResults.forEach( (r) -> validateTraverserResult(
@@ -483,7 +481,7 @@ public class VesselEjb {
      * Create a LabMetricRun from a Varioskan spreadsheet.
      */
     @DaoFree
-    public LabMetricRun createNexomeRunDaoFree(String runName, Date runDate,
+    private LabMetricRun createNexomeRunDaoFree(String runName, Date runDate,
                                                LabMetric.MetricType metricType, List<VarioskanPlateProcessor.PlateWellResult> plateWellResults,
                                                Map<String, StaticPlate> mapBarcodeToPlate, Long decidingUser,
                                                Map<String, Set<LabVessel.VesselEvent>> mapPlateToVesselEvent) {
@@ -696,9 +694,8 @@ public class VesselEjb {
                             }
                         }
                         if (!messageCollection.hasErrors()) {
-                            LabMetricRun run = null;
                             Date runStarted = parseRunDate(mapNameValueToValue);
-                            run = new LabMetricRun(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME),
+                            LabMetricRun run = new LabMetricRun(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME),
                                     runStarted, metricType);
 
                             String r2 = mapNameValueToValue.get(VarioskanRowParser.NameValue.CORRELATION_COEFFICIENT_R2);
@@ -711,12 +708,6 @@ public class VesselEjb {
                                     mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_NAME)));
                             run.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_SERIAL_NUMBER,
                                     mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_SERIAL_NUMBER)));
-
-                            Float factor = extractFactor(traverserResults.iterator().next().getLabEventMetadata(), SensitivityFactor);
-                            BigDecimal sensitivityFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
-
-                            factor = extractFactor(traverserResults.iterator().next().getLabEventMetadata(), DilutionFactor);
-                            BigDecimal dilutionFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
 
                             Map<String, Map<VesselPosition, LabVessel>> mapPicoWellToSourceVessel = new HashMap<>();
                             Map<String, Map<VesselPosition, VesselPosition>> mapPicoWellToSourceWell = new HashMap<>();
@@ -778,7 +769,7 @@ public class VesselEjb {
      * a supplied percent difference so that it can exclude reads that are outliers.
      */
     @DaoFree
-    public LabMetricRun createVarioskanRunMultiCurveDaoFree(LabMetricRun labMetricRun, Date runStarted,
+    private void createVarioskanRunMultiCurveDaoFree(LabMetricRun labMetricRun, Date runStarted,
             LabMetric.MetricType metricType, List<VarioskanPlateProcessor.PlateWellResult> plateWellResults,
             Map<String, StaticPlate> mapBarcodeToPlate, Long decidingUser, MessageCollection messageCollection,
             Map<String, Result> mapBarcodeToTraverser, float maxPercentDiff, boolean runFailed) {
@@ -916,8 +907,6 @@ public class VesselEjb {
                 }
             }
         }
-
-        return labMetricRun;
     }
 
     /**
