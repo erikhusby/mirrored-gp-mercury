@@ -357,8 +357,9 @@ public class SubmissionDto implements ISubmissionTuple {
         this.uuid = uuid;
     }
 
-    public SubmissionTracker buildSubmissionTracker() {
-        return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM, processingLocation, datatype);
+    public SubmissionTracker buildSubmissionTracker(String datatype) {
+        return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM, processingLocation,
+            SubmissionLibraryDescriptor.getNormalizedLibraryName(datatype));
     }
 
     public Set<String> getProductOrders() {
