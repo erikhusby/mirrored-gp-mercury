@@ -281,6 +281,31 @@
                         </stripes:link>
                     </li>
                 </ul>
+            <li class="dropdown">
+                <a id="receivingNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                        class="icon-envelope"></span> Receiving <b class="caret"></b></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li>
+                        <stripes:link id="receiveByKitScan"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
+                                      event="byKitScan">Receive By Kit Scan</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="receiveBySampleScan"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
+                                      event="bySampleScan">Receive By Sample Scan</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="receiveBySampleScanAndLink"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
+                                      event="bySampleScanAndLink">Receive By Sample Scan And Link</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="receiveBySkId"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
+                                      event="bySkId">Receive By SK-ID</stripes:link>
+                    </li>
+                </ul>
             </li>
 
         </ul>
