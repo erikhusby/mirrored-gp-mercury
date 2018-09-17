@@ -491,7 +491,7 @@ public class VesselEjb {
                     labMetricRun.addMetric(labMetric);
                 } else {
                     List<BigDecimal> concList =
-                            tubePlateWellResults.stream().map(VarioskanPlateProcessor.PlateWellResult::getResult)
+                            nonNullResults.stream().map(VarioskanPlateProcessor.PlateWellResult::getResult)
                                     .map(c -> c.multiply(dilutionFactor).divide(sensitivityFactor, HALF_EVEN))
                                     .collect(Collectors.toList());
 
