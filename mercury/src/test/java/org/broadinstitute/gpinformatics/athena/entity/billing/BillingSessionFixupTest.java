@@ -3,6 +3,7 @@
  */
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -11,6 +12,8 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -27,21 +30,12 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 @Test(groups = TestGroups.FIXUP)
 public class BillingSessionFixupTest extends Arquillian {
@@ -62,6 +56,9 @@ public class BillingSessionFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -266,5 +263,47 @@ public class BillingSessionFixupTest extends Arquillian {
         }
 
          ledgerEntryDao.persist(new FixupCommentary("GPLIM-5729: Associate SAP Delivery Document with negatively billed ledger entries for PDO-15708"));
+    }
+
+    @Test(enabled = false)
+    public void gplim5767BlockSAPBillingOnly() throws Exception {
+
+        userBean.loginOSUser();
+        String pdoKey = "PDO-15708";
+        List<String> sampleKeyList = Arrays.asList("SM-HCBHD", "SM-HCBHQ");
+
+        ProductOrder orderToUpdate = productOrderDao.findByBusinessKey(pdoKey);
+
+
+        Set<ProductOrderSample> targettedSamples = orderToUpdate.getSamples().stream()
+                .filter(productOrderSample -> sampleKeyList.contains(productOrderSample.getSampleKey())).collect(
+                        Collectors.toSet());
+
+        Assert.assertTrue(CollectionUtils.isNotEmpty(targettedSamples),"Unable to find the samples that are targetted.");
+
+        Set<LedgerEntry> entriesToCorrect = new HashSet<>();
+
+        for (ProductOrderSample targettedSample : targettedSamples) {
+            targettedSample.getLedgerItems().stream()
+                    .filter(ledgerEntry -> StringUtils.isBlank(ledgerEntry.getBillingMessage())
+                            && ledgerEntry.getBillingSession() == null)
+                    .forEach(entriesToCorrect::add);
+        }
+
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entriesToCorrect), "Unable to find LedgerItems to correct.");
+        Assert.assertTrue(entriesToCorrect.size() == 2, "There should only be 2 ledger entries found.");
+
+        for (LedgerEntry ledgerEntry : entriesToCorrect) {
+
+
+            ledgerEntry.setSapDeliveryDocumentId("Blocking SAP to balance out prior negatives");
+            System.out.println("For " + ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey() +
+                    " sample " + ledgerEntry.getProductOrderSample().getBusinessKey() +
+                    " Setting the ledger entry with quantity of " + ledgerEntry.getQuantity() +
+                    " to skip SAP by setting the delivery document id to " +
+                    ledgerEntry.getSapDeliveryDocumentId());
+        }
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-5767: blocking SAP for ledger entry Billing to balance the SAP entries"));
     }
 }

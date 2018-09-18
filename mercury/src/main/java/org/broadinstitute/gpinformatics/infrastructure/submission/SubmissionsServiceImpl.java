@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -211,13 +212,15 @@ public class SubmissionsServiceImpl implements SubmissionsService {
 
         // Since the SubmissionService does not return the submitted sample name in it's response it is necessary to
         // look up all the submission statuses to find if the submission exists on the Epsilon 9.
-        Collection<SubmissionStatusDetailBean> submissionStatus =
-            getSubmissionStatus(submissionTrackerMap.keySet().toArray(new String[0]));
+        if (CollectionUtils.isNotEmpty(submissionTrackerMap.keySet())) {
+            Collection<SubmissionStatusDetailBean> submissionStatus =
+                getSubmissionStatus(submissionTrackerMap.keySet().toArray(new String[0]));
             for (SubmissionStatusDetailBean status : submissionStatus) {
                 if (!status.submissionServiceHasRequest()) {
                     orphans.add(submissionTrackerMap.get(status.uuid));
                 }
             }
+        }
         return orphans;
     }
 

@@ -248,7 +248,7 @@ public class PlateMetadataActionBean extends CoreActionBean {
                 messageCollection.addInfo("Successfully added Plate Wells to PDOs");
             }
         } catch (Exception e) {
-            logger.error("Error attempting to create Single Cell LCSET", e);
+            logger.error("Error attempting to create Single Cell Bucket Entries.", e);
             messageCollection.addError(e);
         }
 
