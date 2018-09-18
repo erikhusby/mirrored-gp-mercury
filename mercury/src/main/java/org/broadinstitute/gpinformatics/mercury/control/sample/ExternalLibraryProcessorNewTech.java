@@ -34,8 +34,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     private List<String> molecularBarcodeNames = new ArrayList<>();
     private List<String> numbersOfLanes = new ArrayList<>();
     private List<String> organisms = new ArrayList<>();
-    private List<String> pooleds = new ArrayList<>();
-    private List<String> membersOfPool = new ArrayList<>();
     private List<String> readLengths = new ArrayList<>();
     private List<String> referenceSequences = new ArrayList<>();
     private List<Boolean> requiredValuesPresent = new ArrayList<>();
@@ -53,7 +51,7 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     // "DataPresence.IGNORED" means value not saved.
     public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
         SAMPLE_NUMBER("Sample Number", DataPresence.IGNORED),
-        TUBE_BARCODE("Sample Tube Barcode", DataPresence.ONCE_PER_TUBE),
+        TUBE_BARCODE("Sample Tube Barcode", DataPresence.REQUIRED),
         SEQUENCING_TECHNOLOGY("Sequencing Technology", DataPresence.REQUIRED),
         IRB_NUMBER("IRB Number", DataPresence.IGNORED),
         STRAIN("Strain", DataPresence.IGNORED),
@@ -66,9 +64,8 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         LIBRARY_TYPE("Library Type", DataPresence.OPTIONAL),
         MOLECULAR_BARCODE_NAME("Molecular Barcode Name", DataPresence.OPTIONAL),
         MOLECULAR_BARCODE_SEQUENCE("Molecular Barcode Sequence", DataPresence.IGNORED),
-        POOLED("Pooled (Y/N)", DataPresence.OPTIONAL), // Blank is the same as N
-        // If Pooled=Y then Member of Pool must be a Library Name of another row that has Pooled=N.
-        MEMBER_OF_POOL("Member of Pool", DataPresence.OPTIONAL),
+        POOLED("Pooled (Y/N)", DataPresence.IGNORED),
+        MEMBER_OF_POOL("Member of Pool", DataPresence.IGNORED),
         SUBMITTED_TO_GSSR("Submitted to Gssr", DataPresence.IGNORED),
         DERIVED_FROM("Derived From", DataPresence.IGNORED),
         INSERT_SIZE_RANGE("Insert Size Range", DataPresence.OPTIONAL),
@@ -82,7 +79,7 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         ORGANISM("Organism", DataPresence.OPTIONAL),
         SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", DataPresence.IGNORED),
         READ_LENGTH("Desired Read Length", DataPresence.OPTIONAL),
-        PROJECT_TITLE("Project Title (pipeline aggregator)", DataPresence.REQUIRED),
+        PROJECT_TITLE("Project Title (pipeline aggregator)", DataPresence.OPTIONAL),
         FUNDING_SOURCE("Funding Source", DataPresence.IGNORED),
         COVERAGE("Coverage (lanes/sample)", DataPresence.REQUIRED),
         APPROVED_BY("Approved By", DataPresence.IGNORED),
@@ -130,13 +127,8 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         }
 
         @Override
-        public boolean isIgnoredValue() {
-            return dataPresence == DataPresence.IGNORED;
-        }
-
-        @Override
-        public boolean isOncePerTube() {
-            return dataPresence == DataPresence.ONCE_PER_TUBE;
+        public DataPresence getDataPresenceIndicator() {
+            return dataPresence;
         }
     }
 
@@ -145,29 +137,24 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
         additionalAssemblyInformations.add(getFromRow(dataRow, Headers.ASSEMBLY_INFORMATION));
         additionalSampleInformations.add(getFromRow(dataRow, Headers.ADDITIONAL_SAMPLE_INFORMATION));
         aggregationParticles.add(getFromRow(dataRow, Headers.PROJECT_TITLE));
+        barcodes.add(getFromRow(dataRow, Headers.TUBE_BARCODE));
         collaboratorParticipantIds.add(getFromRow(dataRow, Headers.INDIVIDUAL_NAME));
         collaboratorSampleIds.add(getFromRow(dataRow, Headers.COLLABORATOR_SAMPLE_ID));
         concentrations.add(getFromRow(dataRow, Headers.CONCENTRATION));
         dataAnalysisTypes.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
         insertSizes.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE));
+        libraryNames.add(getFromRow(dataRow, Headers.LIBRARY_NAME));
         libraryTypes.add(getFromRow(dataRow, Headers.LIBRARY_TYPE));
         molecularBarcodeNames.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME));
         numbersOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
         organisms.add(getFromRow(dataRow, Headers.ORGANISM));
-        pooleds.add(getFromRow(dataRow, Headers.POOLED));
         readLengths.add(getFromRow(dataRow, Headers.READ_LENGTH));
         referenceSequences.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
+        // Uses the library name for the sample name.
+        sampleNames.add(getFromRow(dataRow, Headers.LIBRARY_NAME));
         sequencerModeNames.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
         sexes.add(getFromRow(dataRow, Headers.SEX));
         volumes.add(getFromRow(dataRow, Headers.VOLUME));
-
-        // Uses the library name for the tube barcode, unless its present in the spreadsheet.
-        String library = getFromRow(dataRow, Headers.LIBRARY_NAME);
-        libraryNames.add(library);
-        String tubeBarcode = getFromRow(dataRow, Headers.TUBE_BARCODE);
-        barcodes.add(StringUtils.isNotBlank(tubeBarcode) ? tubeBarcode : library);
-        // Uses the library name for the sample name.
-        sampleNames.add(library);
 
         this.requiredValuesPresent.add(requiredValuesPresent);
     }
@@ -183,13 +170,11 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
      */
     @Override
     public void validateAllRows(List<SampleInstanceEjb.RowDto> dtos, boolean overwrite, MessageCollection messages) {
-        Set<String> uniqueBarcodes = new HashSet<>();
-        Set<String> uniqueLibraryNames = new HashSet<>();
+        Set<String> barcodeAndLibraryKeys = new HashSet<>();
 
         for (SampleInstanceEjb.RowDto dto : dtos) {
-
-            // A library name must only appear in one row.
-            if (!uniqueLibraryNames.add(dto.getLibraryName())) {
+            // Each library name may appear only once per tube in an upload.
+            if (!barcodeAndLibraryKeys.add(dto.getLibraryName())) {
                 messages.addError(String.format(SampleInstanceEjb.DUPLICATE, dto.getRowNumber(), "Library Name"));
             }
             // The pipeline and elsewhere require a simple name so disallow chars that might cause trouble.
@@ -224,17 +209,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
                 }
             }
 
-            if (!dto.isPooled() && StringUtils.isBlank(dto.getBarcode())) {
-                messages.addError(String.format(SampleInstanceEjb.MISSING, dto.getRowNumber(),
-                        ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText()));
-            }
-            // xxx if isPooled, member of pool must be non-blank
-
-            // Tube barcode must be unique in the spreadsheet.
-            if (!uniqueBarcodes.add(dto.getBarcode())) {
-                messages.addError(String.format(SampleInstanceEjb.DUPLICATE, dto.getRowNumber(),
-                        ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText()));
-            }
             if (getLabVesselMap().get(dto.getBarcode()) != null && !overwrite) {
                 messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(),
                         ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText(), dto.getBarcode()));
@@ -353,11 +327,6 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
     @Override
     public List<String> getOrganisms() {
         return organisms;
-    }
-
-    @Override
-    public List<String> getPooleds() {
-        return pooleds;
     }
 
     @Override

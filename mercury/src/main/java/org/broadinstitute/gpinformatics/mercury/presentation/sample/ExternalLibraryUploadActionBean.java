@@ -7,16 +7,22 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.poi.hssf.usermodel.DVConstraint;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFPalette;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataValidation;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
@@ -37,14 +43,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @UrlBinding(value = "/sample/ExternalLibraryUpload.action")
 public class ExternalLibraryUploadActionBean extends CoreActionBean {
     private static final String SESSION_LIST_PAGE = "/sample/externalLibraryUpload.jsp";
     private static final String DOWNLOAD_TEMPLATE = "downloadTemplate";
-    public static final String ACCESSION = "accession";
+    public static final String ACCESSION = "uploadSamples";
     private boolean overWriteFlag;
 
     @Inject
@@ -139,8 +147,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
             Resolution resolution = new Resolution() {
                 @Override
-                public void execute(HttpServletRequest request, HttpServletResponse response)
-                        throws Exception {
+                public void execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
                     response.setContentType("application/ms-excel");
                     response.setContentLength(bytes.length);
                     response.setHeader("Expires:", "0"); // eliminates browser caching
@@ -158,138 +165,202 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         }
     }
 
-    private final String dataAnalysisTypeHeader = ExternalLibraryProcessor.fixupHeaderName(
-            ExternalLibraryProcessorNewTech.Headers.DATA_ANALYSIS_TYPE.getText());
-    private final String referenceSequenceHeader = ExternalLibraryProcessor.fixupHeaderName(
-            ExternalLibraryProcessorNewTech.Headers.REFERENCE_SEQUENCE.getText());
-    private final String sequencingTechnologyHeader = ExternalLibraryProcessor.fixupHeaderName(
-            ExternalLibraryProcessorNewTech.Headers.SEQUENCING_TECHNOLOGY.getText());
-
     /**
      * Makes a template spreadsheet containing headers.
      */
     private ByteArrayOutputStream templateSpreadsheet(HeaderValueRow[] headerValues, ColumnHeader[] columnHeaders)
             throws IOException {
-        // Makes lists of valid values to put in the templates.
-        List<String> validAnalysisTypes = analysisTypeDao.findAll().
-                stream().map(AnalysisType::getBusinessKey).sorted().collect(Collectors.toList());
-        List<String> validReferenceSequence = referenceSequenceDao.findAllCurrent().
-                stream().map(ReferenceSequence::getName).sorted().collect(Collectors.toList());
-        List<String> validSequencingTechnology = Arrays.asList(IlluminaFlowcell.FlowcellType.values()).stream().
+
+        // Makes data for the dropdown lists.
+        String[] validAnalysisTypes = analysisTypeDao.findAll().stream().
+                map(AnalysisType::getBusinessKey).
+                sorted().
+                collect(Collectors.toList()).toArray(new String[0]);
+        String[] validReferenceSequence = referenceSequenceDao.findAllCurrent().stream().
+                map(ReferenceSequence::getName).
+                sorted().
+                collect(Collectors.toList()).toArray(new String[0]);
+        String[] validSequencingTechnology = Arrays.asList(IlluminaFlowcell.FlowcellType.values()).stream().
                 filter(flowcellType -> flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.YES).
                 map(flowcellType -> SampleInstanceEjb.makeSequencerValue(flowcellType)).
-                sorted().collect(Collectors.toList());
+                sorted().
+                collect(Collectors.toList()).toArray(new String[0]);
+
+        // Makes the fixed up header names for the drowdown columns.
+        String dataAnalysisTypeHeader = ExternalLibraryProcessor.fixupHeaderName(
+                ExternalLibraryProcessorNewTech.Headers.DATA_ANALYSIS_TYPE.getText());
+        String referenceSequenceHeader = ExternalLibraryProcessor.fixupHeaderName(
+                ExternalLibraryProcessorNewTech.Headers.REFERENCE_SEQUENCE.getText());
+        String sequencingTechnologyHeader = ExternalLibraryProcessor.fixupHeaderName(
+                ExternalLibraryProcessorNewTech.Headers.SEQUENCING_TECHNOLOGY.getText());
 
         HSSFWorkbook workbook = new HSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Sheet1");
+        HSSFSheet sheet1 = workbook.createSheet("samples");
+        final String sheet2Name = "listInfo";
+        HSSFSheet sheet2 = workbook.createSheet(sheet2Name);
+
+        // Makes a mapping from type of data presence to the cell's background color.
+        Map<ExternalLibraryProcessor.DataPresence, Short> colorMap = new HashMap<>();
+        colorMap.put(ExternalLibraryProcessor.DataPresence.REQUIRED, HSSFColor.RED.index);
+        colorMap.put(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE, HSSFColor.PINK.index);
+        colorMap.put(ExternalLibraryProcessor.DataPresence.OPTIONAL, HSSFColor.TAN.index);
+        colorMap.put(ExternalLibraryProcessor.DataPresence.IGNORED, HSSFColor.GREY_25_PERCENT.index);
+        // Tweaks the colors for better appearance in Excel.
+        HSSFPalette palette = workbook.getCustomPalette();
+        palette.setColorAtIndex(HSSFColor.RED.index, (byte)255, (byte)64, (byte)64);
+        palette.setColorAtIndex(HSSFColor.PINK.index, (byte)255, (byte)160, (byte)148);
+        palette.setColorAtIndex(HSSFColor.TAN.index, (byte)255, (byte)220, (byte)240);
+        palette.setColorAtIndex(HSSFColor.GREY_25_PERCENT.index, (byte)200, (byte)195, (byte)190);
+
+        // Puts the dropdown list content in sheet2. This sheet only holds the lists of
+        // possible values for dropdowns in sheet1, so its appearance is not important.
+        final int REF_SEQ_LIST_COLUMN = 0;
+        final int ANALYSIS_LIST_COLUMN = 1;
+        final int SEQ_TECH_LIST_COLUMN = 2;
+        final int numberValidationRows = 1 + Math.max(validSequencingTechnology.length,
+                Math.max(validAnalysisTypes.length, validReferenceSequence.length));
+        for (int index = 0; index < numberValidationRows; ++index) {
+            sheet2.createRow(index);
+        }
+        // Puts a warning in the first row.
+        sheet2.getRow(0).createCell(REF_SEQ_LIST_COLUMN).
+                setCellValue("THESE AUTO-GENERATED LISTS MUST NOT BE EDITED.");
+        // Writes the reference sequence values available in Mercury starting in the second row.
+        Iterator<Row> rowIterator = sheet2.rowIterator();
+        rowIterator.next();
+        for (String value : validReferenceSequence) {
+            rowIterator.next().createCell(REF_SEQ_LIST_COLUMN).setCellValue(value);
+        }
+        // Writes the analysis type values available in Mercury starting in the second row.
+        rowIterator = sheet2.rowIterator();
+        rowIterator.next();
+        for (String value : validAnalysisTypes) {
+            rowIterator.next().createCell(ANALYSIS_LIST_COLUMN).setCellValue(value);
+        }
+        // Writes the sequencing technology values available in Mercury starting in the second row.
+        rowIterator = sheet2.rowIterator();
+        rowIterator.next();
+        for (String value : validSequencingTechnology) {
+            rowIterator.next().createCell(SEQ_TECH_LIST_COLUMN).setCellValue(value);
+        }
+        sheet2.autoSizeColumn(REF_SEQ_LIST_COLUMN);
+        sheet2.autoSizeColumn(ANALYSIS_LIST_COLUMN);
+        sheet2.autoSizeColumn(SEQ_TECH_LIST_COLUMN);
+
+        // Writes the color coded headers in sheet1.
         int rowIndex = 0;
+        // A blank row.
+        sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
 
-        // The first row shows the cell color code.
-        Row colorRow = sheet.createRow(rowIndex++);
-        int colIndex = 0;
-        colorRow.createCell(colIndex++).setCellValue("Cell color indicates data presence is: ");
-        Cell colorCell = colorRow.createCell(colIndex++);
-        colorCell.setCellValue(" Required ");
-        setBackground(workbook, colorCell, true, false, false);
-
-        colorCell = colorRow.createCell(colIndex++);
-        colorCell.setCellValue(" Required Once per Tube ");
-        setBackground(workbook, colorCell, false, false, true);
-
-        colorCell = colorRow.createCell(colIndex++);
-        colorCell.setCellValue(" Optional ");
-        setBackground(workbook, colorCell, false, false, false);
-
-        colorCell = colorRow.createCell(colIndex++);
-        colorCell.setCellValue(" Ignored ");
-        setBackground(workbook, colorCell, false, true, false);
-
-        // Adds a blank row.
-        sheet.createRow(rowIndex++).createCell(0).setCellValue("");
-
-        // Writes the headerValue rows, if any, with name in column 0 and value in column 1.
+        // Writes rows of headerValue pairs, if any.
         if (headerValues != null) {
             for (HeaderValueRow headerValue : headerValues) {
-                Row row = sheet.createRow(rowIndex++);
-                Cell col0 = row.createCell(0);
-                col0.setCellValue(headerValue.getText());
-                setBackground(workbook, col0, headerValue.isRequiredValue(), false, false);
-                Cell col1 = row.createCell(1);
-                col1.setCellValue("(value" + (headerValue.isRequiredValue() ? ")" : " or blank)"));
-                setBackground(workbook, col1, headerValue.isRequiredValue(), false, false);
+                Row row = sheet1.createRow(rowIndex++);
+                Cell cell = row.createCell(0);
+                cell.setCellValue(headerValue.getText());
+                // All the data in the header is currently ignored.
+                HSSFCellStyle style = workbook.createCellStyle();
+                style.setFillForegroundColor(colorMap.get(ExternalLibraryProcessor.DataPresence.IGNORED));
+                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+                cell.setCellStyle(style);
             }
-            sheet.createRow(rowIndex++).createCell(0).setCellValue(""); //a blank row
+            sheet1.createRow(rowIndex++).createCell(0).setCellValue(""); //a blank row
         }
 
-        // Writes a row of header names.
+        // Writes a row with the key for the color coding.
+        Row colorRow = sheet1.createRow(rowIndex++);
+        int columnIndex = 1; // leaves the first column blank.
+        boolean firstCell = true;
+        for (Pair<ExternalLibraryProcessor.DataPresence, String> pair : Arrays.asList(
+                Pair.of((ExternalLibraryProcessor.DataPresence)null, "Cell color indicates:"),
+                Pair.of(ExternalLibraryProcessor.DataPresence.REQUIRED, " Required "),
+                Pair.of(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE, " Required Once per Tube "),
+                Pair.of(ExternalLibraryProcessor.DataPresence.OPTIONAL, " Optional "),
+                Pair.of(ExternalLibraryProcessor.DataPresence.IGNORED, " Ignored "))) {
+
+            HSSFCellStyle style = workbook.createCellStyle();
+            style.setBorderTop(CellStyle.BORDER_MEDIUM);
+            style.setBorderBottom(CellStyle.BORDER_MEDIUM);
+            style.setBorderLeft(firstCell ? CellStyle.BORDER_MEDIUM : CellStyle.BORDER_NONE);
+            style.setBorderRight(CellStyle.BORDER_NONE);
+            if (pair.getLeft() != null) {
+                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+                style.setFillForegroundColor(colorMap.get(pair.getLeft()));
+            }
+            Cell cell = colorRow.createCell(columnIndex);
+            cell.setCellValue(pair.getRight());
+            cell.setCellStyle(style);
+
+            firstCell = false;
+            ++columnIndex;
+        }
+        // Puts a right border on the last cell.
+        colorRow.getCell(columnIndex - 1).getCellStyle().setBorderRight(CellStyle.BORDER_MEDIUM);
+
+        // A blank row.
+        sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
+
+        // Makes the style elements to be used with the header row cells.
+        Map<ExternalLibraryProcessor.DataPresence, HSSFCellStyle> headerStyles = new HashMap<>();
+        for (ExternalLibraryProcessor.DataPresence dataPresence : ExternalLibraryProcessor.DataPresence.values()) {
+            HSSFCellStyle style = workbook.createCellStyle();
+            style.setFillForegroundColor(colorMap.get(dataPresence));
+            style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+            headerStyles.put(dataPresence, style);
+        }
+
+        // Writes a row of header names in cells colored according to the column header properties.
+        Row headerRow = sheet1.createRow(rowIndex++);
+        Row dropdownRow = sheet1.createRow(rowIndex);
         int column = 0;
-        Row headerRow = sheet.createRow(rowIndex++);
-        Row firstDataRow = sheet.createRow(rowIndex++);
         for (ColumnHeader columnHeader : columnHeaders) {
             String headerName = columnHeader.getText();
             if (!headerName.isEmpty()) {
                 Cell cell = headerRow.createCell(column);
+                dropdownRow.createCell(column);
                 cell.setCellValue(headerName);
-                setBackground(workbook, cell, columnHeader);
 
-                Cell dataCell = firstDataRow.createCell(column);
-                dataCell.setCellValue("(value" + (columnHeader.isRequiredValue() ? ")" : " or blank)"));
-                setBackground(workbook, dataCell, columnHeader);
+                ExternalLibraryProcessor.DataPresence dataPresence =
+                        ((ColumnHeader.Ignorable) columnHeader).getDataPresenceIndicator();
+                cell.setCellStyle(headerStyles.get(dataPresence));
 
+                // If this cell is reference sequence, analysis type, or sequencing technology,
+                // puts a dropdown lists of valid values in the corresponding cell of the next row.
+                Character referenceColumn = null;
+                int length = 0;
+                if (columnHeader.getText().equalsIgnoreCase(referenceSequenceHeader)) {
+                    dropdownRow.getCell(column).setCellValue(validReferenceSequence[0]);
+                    referenceColumn = (char)('A' + REF_SEQ_LIST_COLUMN);
+                    length = validReferenceSequence.length + 1;
+                } else if (columnHeader.getText().equalsIgnoreCase(dataAnalysisTypeHeader)) {
+                    dropdownRow.getCell(column).setCellValue(validAnalysisTypes[0]);
+                    referenceColumn = (char)('A' + ANALYSIS_LIST_COLUMN);
+                    length = validAnalysisTypes.length + 1;
+                } else if (columnHeader.getText().equalsIgnoreCase(sequencingTechnologyHeader)) {
+                    dropdownRow.getCell(column).setCellValue(validSequencingTechnology[0]);
+                    referenceColumn = (char)('A' + SEQ_TECH_LIST_COLUMN);
+                    length = validSequencingTechnology.length + 1;
+                }
+                if (referenceColumn != null) {
+                    // Uses a cell range that is a column on sheet2 that contains the dropdown list values.
+                    DVConstraint dropdownContent = DVConstraint.createFormulaListConstraint(
+                            String.format("%s!$%s$%d:$%s$%d",
+                                    sheet2Name, referenceColumn, 2, referenceColumn, length));
+                    CellRangeAddressList dropdownCell = new CellRangeAddressList(dropdownRow.getRowNum(),
+                            dropdownRow.getRowNum(), column, column);
+                    DataValidation dropdownList = sheet1.getDataValidationHelper().
+                            createValidation(dropdownContent, dropdownCell);
+                    dropdownList.setEmptyCellAllowed(false);
+                    dropdownList.setShowErrorBox(true);
+                    sheet1.addValidationData(dropdownList);
+                }
+                sheet1.autoSizeColumn(column);
                 ++column;
             }
         }
-        sheet.createRow(rowIndex++).createCell(0).setCellValue(""); //a blank row
-
-        // Writes the possible selections for some columns having categorical data values.
-        int numberDataRows = Math.max(validSequencingTechnology.size(),
-                Math.max(validAnalysisTypes.size(), validReferenceSequence.size()));
-        String firstItem = "-- must be one of the following values --";
-        for (int index = -1; index < numberDataRows; ++index) {
-            Row dataRow = sheet.createRow(rowIndex++);
-            column = 0;
-            for (ColumnHeader columnHeader : columnHeaders) {
-                String headerName = columnHeader.getText();
-                if (!headerName.isEmpty()) {
-                    Cell cell = dataRow.createCell(column++);
-                    String fixedUpHeader = ExternalLibraryProcessor.fixupHeaderName(columnHeader.getText());
-                    if (fixedUpHeader.equals(dataAnalysisTypeHeader)) {
-                        cell.setCellValue(index < 0 ? firstItem :
-                                index < validAnalysisTypes.size() ? validAnalysisTypes.get(index) : "");
-                    } else if (fixedUpHeader.equals(referenceSequenceHeader)) {
-                        cell.setCellValue(index < 0 ? firstItem :
-                                index < validReferenceSequence.size() ? validReferenceSequence.get(index) : "");
-                    } else if (fixedUpHeader.equals(sequencingTechnologyHeader)) {
-                        cell.setCellValue(index < 0 ? firstItem :
-                                index < validSequencingTechnology.size() ? validSequencingTechnology.get(index) : "");
-                    } else {
-                        cell.setCellValue("");
-                    }
-                }
-            }
-        }
-
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         workbook.write(stream);
         return stream;
-    }
-
-    /** Sets the cell color depending on whether the value is required, optional, or ignored. */
-    private void setBackground(HSSFWorkbook workbook, Cell cell, ColumnHeader columnHeader) {
-        boolean ignored = (columnHeader instanceof ColumnHeader.Ignorable) ?
-                ((ColumnHeader.Ignorable) columnHeader).isIgnoredValue() : false;
-        boolean isOnlyOnce = (columnHeader instanceof ColumnHeader.Ignorable) ?
-                ((ColumnHeader.Ignorable) columnHeader).isOncePerTube() : false;
-        setBackground(workbook, cell, columnHeader.isRequiredValue(), ignored, isOnlyOnce);
-    }
-
-    /** Sets the cell color depending on whether the value is required, optional, or ignored. */
-    private void setBackground(HSSFWorkbook workbook, Cell cell, boolean isRequiredValue, boolean isIgnoredValue,
-            boolean isOnlyOncePerEntity) {
-        PoiSpreadsheetParser.setBackgroundColor(workbook, cell,
-                isRequiredValue ? HSSFColor.RED.index :
-                        isOnlyOncePerEntity ? HSSFColor.LAVENDER.index :
-                                isIgnoredValue ? HSSFColor.GREY_25_PERCENT.index : HSSFColor.WHITE.index);
     }
 
     public void setSamplesSpreadsheet(FileBean spreadsheet) {

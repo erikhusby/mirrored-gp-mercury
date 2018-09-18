@@ -48,7 +48,7 @@
                 </div>
                 <div class="control-group">
                     <div class="controls">
-                        <stripes:submit name="accession" value="Accession Libraries" class="btn btn-primary"/>
+                        <stripes:submit name="uploadSamples" value="Upload Samples" class="btn btn-primary"/>
                     </div>
                 </div>
             </div>

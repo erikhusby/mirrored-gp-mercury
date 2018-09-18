@@ -68,10 +68,6 @@ public class SampleInstanceEntity {
     private Set<SampleInstanceEntityTsk> sampleInstanceEntityTsks = new HashSet<>();
 
     @ManyToOne
-    @JoinColumn(name = "SAMPLE_KIT_REQUEST")
-    private SampleKitRequest sampleKitRequest;
-
-    @ManyToOne
     @JoinColumn(name = "REAGENT_DESIGN")
     private ReagentDesign reagentDesign;
 
@@ -186,24 +182,12 @@ public class SampleInstanceEntity {
         this.referenceSequence = referenceSequence;
     }
 
-    public Boolean getPooled() {
-        return pooled;
-    }
-
-    public void setPooled(Boolean pooled) {
-        this.pooled = pooled;
-    }
-
     public String getLibraryType() {
         return libraryType;
     }
 
     public void setLibraryType(String libraryType) {
         this.libraryType = libraryType;
-    }
-
-    public void setSampleKitRequest(SampleKitRequest sampleKitRequest) {
-        this.sampleKitRequest = sampleKitRequest;
     }
 
     public Integer getReadLength() {
@@ -240,10 +224,6 @@ public class SampleInstanceEntity {
     @Nonnull
     public LabVessel getLabVessel() {
         return labVessel;
-    }
-
-    public SampleKitRequest getSampleKitRequest() {
-        return sampleKitRequest;
     }
 
     public String getSampleLibraryName() {

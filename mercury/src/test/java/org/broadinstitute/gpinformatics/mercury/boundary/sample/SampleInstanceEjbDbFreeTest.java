@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -199,7 +198,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getAggregationParticle(), select(i, "G96213", "G96214", "G96227", "G96215"));
             Assert.assertEquals(entity.getNumberLanes(), 1);
             Assert.assertEquals(entity.getComments(), select(i, "", "sample info 1", "analysis info 1", "asi4; aaai4"));
-            Assert.assertEquals(entity.getPooled(), new Boolean(select(i, "false", "false", "true", "true")));
             Assert.assertEquals(entity.getReferenceSequence().getName().split("\\|")[0], "Homo_sapiens_RP11-78M2");
         }
     }
@@ -249,7 +247,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
             LabVessel tube = entity.getLabVessel();
-            Assert.assertEquals(tube.getLabel(), libraryName);
+            Assert.assertEquals(tube.getLabel(), select(i, "4076255991", "4076255992", "4076255993"));
             Assert.assertEquals(tube.getVolume(), new BigDecimal(select(i, "443.00", "444.00", "445.00")));
             Assert.assertEquals(tube.getConcentration(), new BigDecimal(select(i, "67.00", "68.00", "69.00")));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
@@ -261,7 +259,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getNumberLanes(), new int[]{2, 2, 4}[i]);
             Assert.assertEquals(entity.getComments(),
                     select(i, "more info; CCLF", "more inf 2; CCLF", "more inf3; CCLF"));
-            Assert.assertTrue(entity.getPooled());
             Assert.assertEquals(entity.getReferenceSequence().getName(), "Homo_sapiens_assembly19");
 
             if (i < 2) {
@@ -316,7 +313,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
             LabVessel tube = entity.getLabVessel();
-            Assert.assertEquals(tube.getLabel(), libraryName);
+            Assert.assertEquals(tube.getLabel(), select(i, "4076255991", "4076255992"));
             Assert.assertEquals(tube.getVolume(), new BigDecimal("77.00"));
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("100.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
@@ -328,7 +325,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getNumberLanes(), new int[]{3, 5}[i]);
             Assert.assertEquals(entity.getComments(),
                     select(i, "Some info; Sarah Youngs group", "Sarah Youngs group"));
-            Assert.assertTrue(entity.getPooled());
             Assert.assertEquals(entity.getReferenceSequence().getName(), "Plasmodium_falciparum_3D7");
             Assert.assertEquals(entity.getInsertSize(), select(i, "225-300", "1000-1000"));
 
@@ -384,7 +380,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
             LabVessel tube = entity.getLabVessel();
-            Assert.assertEquals(tube.getLabel(), libraryName);
+            Assert.assertEquals(tube.getLabel(), select(i, "4076255991", "4076255992"));
             Assert.assertEquals(tube.getVolume(), new BigDecimal("33.00"));
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("4444.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
@@ -396,7 +392,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getNumberLanes(), 4);
             Assert.assertEquals(entity.getComments(),
                     select(i, "mediocre sample; you, me, somebody", "great sample; you, me, somebody"));
-            Assert.assertFalse(entity.getPooled());
             Assert.assertEquals(entity.getReferenceSequence().getName(), "Homo_sapiens_assembly19");
 
             if (i == 0) {
@@ -474,7 +469,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertNull(entity.getAnalysisType());
             Assert.assertEquals(entity.getNumberLanes(), 1);
             Assert.assertEquals(entity.getComments(), "");
-            Assert.assertFalse(entity.getPooled());
             Assert.assertNull(entity.getReferenceSequence());
 
             Assert.assertEquals(entity.getReagentDesign().getName(), "NewtonCheh_NatPepMDC_12genes3regions_Sep2011");
@@ -660,7 +654,11 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
 
         Assert.assertTrue(errors.isEmpty(), "Found unexpected errors: " + StringUtils.join(errors, "; "));
-        Assert.assertTrue(errors.isEmpty(), "Found unexpected warnings: " + StringUtils.join(warnings, "; "));
+
+        Assert.assertTrue(warnings.contains("Row #2 Unknown header(s) \"Insert Size Range\"."));
+        Assert.assertTrue(warnings.contains(String.format(SampleInstanceEjb.DUPLICATE_S_M, 6,
+                "SM-748OO", "Illumina_P5-Nijow_P7-Waren")));
+        Assert.assertEquals(warnings.size(), 2, "Found unexpected warnings: " + StringUtils.join(warnings, "; "));
     }
 
     @Test
@@ -819,7 +817,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                                 map.put(name, new MercurySample(name, bspSampleData.get(name)));
                             } else if (!name.contains("UNKNOWN")) {
                                 // Root samples will have no metadata.
-                                map.put(name, new MercurySample(name, BSPUtil.isInBspFormat(name) ?
+                                map.put(name, new MercurySample(name, name.startsWith("SM-") ?
                                         MercurySample.MetadataSource.BSP : MercurySample.MetadataSource.MERCURY));
                             }
                         }

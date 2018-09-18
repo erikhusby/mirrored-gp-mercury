@@ -58,7 +58,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     private Map<String, ReferenceSequence> referenceSequenceMap = new HashMap<>();
     private Map<String, IlluminaFlowcell.FlowcellType> sequencerModelMap = new HashMap<>();
     private Set<Object> entitiesToUpdate = new HashSet<>();
-    private Map<String, Boolean> sampleHasMercuryData = new HashMap<>();
 
     // Maps adjusted header name to actual header name.
     protected Map<String, String> adjustedNames = new HashMap<>();
@@ -105,6 +104,11 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         }
 
         @Override
+        public DataPresence getDataPresenceIndicator() {
+            return dataPresence;
+        }
+
+        @Override
         public boolean isDateColumn() {
             return false;
         }
@@ -112,16 +116,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         @Override
         public boolean isStringColumn() {
             return true;
-        }
-
-        @Override
-        public boolean isIgnoredValue() {
-            return dataPresence == DataPresence.IGNORED;
-        }
-
-        @Override
-        public boolean isOncePerTube() {
-            return dataPresence == DataPresence.ONCE_PER_TUBE;
         }
     }
 
@@ -267,6 +261,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             dto.setAdditionalAssemblyInformation(get(getAdditionalAssemblyInformations(), index));
             dto.setAdditionalSampleInformation(get(getAdditionalSampleInformations(), index));
             dto.setAnalysisTypeName(get(getDataAnalysisTypes(), index));
+            dto.setUmisPresent(get(getUmisPresents(), index));
             dto.setBait(get(getBaits(), index));
             dto.setBarcode(get(getBarcodes(), index));
             if (StringUtils.isNotBlank(dto.getBarcode()) && !mapBarcodeToFirstRow.containsKey(dto.getBarcode())) {
@@ -291,7 +286,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                     ExternalLibraryProcessorNewTech.Headers.COVERAGE.getText(), dto.getRowNumber(), messages));
             dto.setOrganism(get(getOrganisms(), index));
             dto.setParticipantId(get(getBroadParticipantIds(), index));
-            dto.setPooled(isTrue(get(getPooleds(), index)));
             dto.setAggregationParticle(get(getAggregationParticles(), index));
             dto.setReadLength(asNonNegativeInteger(get(getReadLengths(), index),
                     VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(), dto.getRowNumber(), messages));
@@ -386,44 +380,41 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
      */
     protected void errorBspMetadataChanges(SampleInstanceEjb.RowDto dto, boolean overwrite,
             MessageCollection messages) {
-        MercurySample sample = getSampleMap().get(dto.getSampleName());
-        if (sample != null) {
-            SampleData sampleData = getFetchedData().get(dto.getSampleName());
-            if (sampleData != null) {
-                // Excludes Material Type since user cannot control it.
-                Set<Metadata> changes = makeSampleMetadata(dto).stream().
-                        filter(metadata -> metadata.getKey() != Metadata.Key.MATERIAL_TYPE).
-                        collect(Collectors.toSet());
-                // Metadata equality is based on both the key and the value.
-                changes.removeAll(makeSampleMetadata(sampleData));
-                // Makes a string of header names of the columns having changes.
-                String columnNames = changes.stream().
-                        map(metadata -> metadata.getKey().getDisplayName()).
-                        sorted().
-                        collect(Collectors.joining(", "));
-                // Checks BSP root sample name.
-                if (StringUtils.isNotBlank(dto.getRootSampleName()) &&
-                        sample.getMetadataSource() == MercurySample.MetadataSource.BSP &&
-                        !dto.getRootSampleName().equals(sampleData.getRootSample())) {
-                    columnNames = StringUtils.join(columnNames, " Root Sample", ',');
-                }
-                // If the upload has different metadata than the MercurySample, it's an error if the
-                // metadata source is BSP, or if the metadata source is Mercury and overwrite is not set.
-                if (StringUtils.isNotBlank(columnNames)) {
-                    if (sample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                        messages.addError(SampleInstanceEjb.BSP_METADATA, dto.getRowNumber(), columnNames,
-                                dto.getSampleName());
-                    } else if (!overwrite) {
-                        messages.addError(SampleInstanceEjb.PREXISTING_VALUES, dto.getRowNumber(), columnNames);
-                    }
+        SampleData sampleData = getFetchedData().get(dto.getSampleName());
+        if (sampleData != null) {
+            // Excludes Material Type since user cannot control it.
+            Set<Metadata> changes = makeSampleMetadata(dto).stream().
+                    filter(metadata -> metadata.getKey() != Metadata.Key.MATERIAL_TYPE).
+                    collect(Collectors.toSet());
+            // Metadata equality is based on both the key and the value.
+            changes.removeAll(makeSampleMetadata(sampleData));
+            // Makes a string of header names of the columns having changes.
+            String columnNames = changes.stream().
+                    map(metadata -> metadata.getKey().getDisplayName()).
+                    sorted().
+                    collect(Collectors.joining(", "));
+            // Checks BSP root sample name.
+            if (StringUtils.isNotBlank(dto.getRootSampleName()) &&
+                    sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP &&
+                    !dto.getRootSampleName().equals(sampleData.getRootSample())) {
+                columnNames = StringUtils.join(columnNames, " Root Sample", ',');
+            }
+            // If the upload has different metadata than the MercurySample, it's an error if the
+            // metadata source is BSP, or if the metadata source is Mercury and overwrite is not set.
+            if (StringUtils.isNotBlank(columnNames)) {
+                if (sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                    messages.addError(SampleInstanceEjb.BSP_METADATA, dto.getRowNumber(), columnNames,
+                            dto.getSampleName());
+                } else if (!overwrite) {
+                    messages.addError(SampleInstanceEjb.PREXISTING_VALUES, dto.getRowNumber(), columnNames);
                 }
             }
             // Issues a warning if the metadata source is Mercury and a root sample name was given.
-            if (StringUtils.isNotBlank(dto.getRootSampleName()) &&
-                    sample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+            if (sampleData.getMetadataSource() == MercurySample.MetadataSource.MERCURY &&
+                    StringUtils.isNotBlank(dto.getRootSampleName()) &&
+                    !dto.getRootSampleName().equals(dto.getSampleName())) {
                 messages.addWarning(SampleInstanceEjb.IGNORING_ROOT, dto.getRowNumber());
             }
-
         }
     }
 
@@ -432,7 +423,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
      * Entities fetched for the row data are accessed through maps referenced in the dtos.
      */
     abstract public void validateAllRows(List<SampleInstanceEjb.RowDto> dtos, boolean overwrite,
-            MessageCollection messageCollection);
+            MessageCollection messages);
 
     /**
      * Makes the Samples, LabVessels, and SampleInstanceEntities but does not persist them.
@@ -483,13 +474,20 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                     SampleInstanceEjb.RowDto dto = mapSampleNameToFirstRow.get(sampleName);
 
                     MercurySample mercurySample = getSampleMap().get(sampleName);
-                    Set<Metadata> metadata = makeSampleMetadata(dto);
+                    SampleData sampleData = getFetchedData().get(sampleName);
                     if (mercurySample == null) {
-                        mercurySample = new MercurySample(sampleName, metadata);
+                        if (sampleData != null) {
+                            // Can really be only BSP sample data, since otherwise mercurySample would exist.
+                            mercurySample = new MercurySample(sampleName, sampleData.getMetadataSource());
+                            mercurySample.setSampleData(sampleData);
+                        } else {
+                            // Mercury sample data.
+                            mercurySample = new MercurySample(sampleName, makeSampleMetadata(dto));
+                        }
                         getSampleMap().put(sampleName, mercurySample);
                     } else if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
                         // Adds new values or replaces existing values only for Mercury samples.
-                        mercurySample.updateMetadata(metadata);
+                        mercurySample.updateMetadata(makeSampleMetadata(dto));
                     }
                 });
     }
@@ -577,7 +575,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         sampleInstanceEntity.setMercurySample(mercurySample);
         sampleInstanceEntity.setMolecularIndexingScheme(getMolecularIndexingSchemeMap().get(dto.getMisName()));
         sampleInstanceEntity.setNumberLanes(dto.getNumberOfLanes());
-        sampleInstanceEntity.setPooled(dto.isPooled());
         sampleInstanceEntity.setReadLength(dto.getReadLength());
         sampleInstanceEntity.setReagentDesign(dto.getReagent());
         sampleInstanceEntity.setReferenceSequence(getReferenceSequenceMap().get(dto.getReferenceSequenceName()));
@@ -808,7 +805,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return Collections.emptyList();
     }
 
-    public List<String> getUmiPresences() {
+    public List<String> getUmisPresents() {
         return Collections.emptyList();
     }
 
@@ -833,14 +830,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     public List<String> getOrganisms() {
-        return Collections.emptyList();
-    }
-
-    public List<String> getPooleds() {
-        return Collections.emptyList();
-    }
-
-    public List<String> getMembersOfPool() {
         return Collections.emptyList();
     }
 
@@ -945,10 +934,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     public Map<String, IlluminaFlowcell.FlowcellType> getSequencerModelMap() {
         return sequencerModelMap;
-    }
-
-    public Map<String, Boolean> getSampleHasMercuryData() {
-        return sampleHasMercuryData;
     }
 
     /**

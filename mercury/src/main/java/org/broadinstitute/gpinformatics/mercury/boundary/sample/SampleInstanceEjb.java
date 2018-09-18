@@ -63,12 +63,10 @@ public class SampleInstanceEjb {
     public static final String RESTRICTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_";
     public static final String RESTRICTED_MESSAGE = "a-z, A-Z, 0-9, '.', '-', or '_'";
 
-    public static final String ALREADY_EXISTS = "Row #%d %s \"%s\" already exists in %s.";
     public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
     public static final String BSP_FORMAT = "Row #%d the new %s \"%s\" must not have a BSP sample name format.";
     public static final String BSP_METADATA =
             "Row #%d values for %s should be blank because BSP data for sample %s cannot be updated.";
-    public static final String CONFLICTING_SOURCE = "Row #%d sample \"%s\" has %s metadata source but is %s in BSP.";
     public static final String DUPLICATE = "Row #%d duplicate value for %s.";
     public static final String DUPLICATE_IN_TUBE = "Row #%d has a duplicate value for %s in tube %s.";
     public static final String DUPLICATE_S_M =
@@ -81,8 +79,6 @@ public class SampleInstanceEjb {
             "Row #%d value for %s is not consistent with row #%d (Tube Barcode %s).";
     public static final String INVALID_CHARS = "Row #%d %s characters must only be " + RESTRICTED_CHARS;
     public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
-    public static final String MERCURY_FORMAT =
-            "Row #%d the %s \"%s\" has the 10 digit format used for a Matrix tube manufacturer barcode.";
     public static final String MISSING = "Row #%d is missing a value for %s.";
     public static final String MUST_NOT_HAVE_BOTH = "Row #%d must not have both %s and %s.";
     public static final String NONEXISTENT = "Row #%d the value for %s \"%s\" does not exist in %s.";
@@ -155,8 +151,7 @@ public class SampleInstanceEjb {
     public SampleInstanceEjb(MolecularIndexingSchemeDao molecularIndexingSchemeDao, JiraService jiraService,
             ReagentDesignDao reagentDesignDao, LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao,
             SampleInstanceEntityDao sampleInstanceEntityDao, AnalysisTypeDao analysisTypeDao,
-            SampleDataFetcher sampleDataFetcher,
-            ReferenceSequenceDao referenceSequenceDao) {
+            SampleDataFetcher sampleDataFetcher, ReferenceSequenceDao referenceSequenceDao) {
         this.molecularIndexingSchemeDao = molecularIndexingSchemeDao;
         this.jiraService = jiraService;
         this.reagentDesignDao = reagentDesignDao;
@@ -172,19 +167,7 @@ public class SampleInstanceEjb {
     /**
      * Parses the uploaded spreadsheet, checks for correct headers and missing/incorrect data, and if it's
      * all ok then persists the SampleInstanceEntities and associated Sample, LabVessel, and other entities.
-     * <p>
-     * Uploads are either library uploads or tube uploads.
-     * Tube uploads give the tube barcode and sample name, which may or may not be known to Mercury and BSP.
-     * A pool of samples in one tube can be uploaded by repeating the barcode in multiple
-     * spreadsheet rows, each row with a different sample name.
-     * VesselPooledTube uploads can provide a JIRA DEV ticket and the relevant subtask ticket must be given.
-     * <p>
-     * Library uploads give no sample names, so the library name is used for that. All sample metadata
-     * must be present on every row since samples are expected to be unknown to Mercury and BSP (except
-     * when overwriting a previous external upload). The tube barcode is optional in the spreadsheet.
-     * If it is given it must not already exist in Mercury (unless a previous upload is being
-     * overwritten). If tube barcode is not given then the library name is used as the barcode.
-     * The lab user can later do an ExternalLibraryBarcodeUpdate upload to reassign the tube barcode.
+     *
      * @param inputStream the spreadsheet inputStream.
      * @param overwrite   specifies if existing entities should be overwritten.
      * @param processor   the TableProcessor subclass that should parse the spreadsheet.
@@ -310,89 +293,9 @@ public class SampleInstanceEjb {
             messages.addError("Failed to lookup Jira tickets: " + jiraException.toString());
         }
 
-        // A BSP lookup is done on samples that are unknown in Mercury, or that have sampleData
-        // source in BSP and either no root was given or spreadsheet metadata is present.
-        // The BSP request is batched for efficiency.
-
-        Set<String> bspSampleLookups = new HashSet<>();
-        for (RowDto dto : rowDtos) {
-            MercurySample mercurySample = processor.getSampleMap().get(dto.getSampleName());
-            if (mercurySample == null ||
-                    (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP &&
-                            (StringUtils.isBlank(dto.getRootSampleName()) || dto.isMetadataPresent()))) {
-                if (StringUtils.isNotBlank(dto.getSampleName())) {
-                    bspSampleLookups.add(dto.getSampleName());
-                }
-                if (StringUtils.isNotBlank(dto.getRootSampleName())) {
-                    bspSampleLookups.add(dto.getRootSampleName());
-                }
-            }
-        }
-        processor.getFetchedData().putAll(sampleDataFetcher.fetchSampleData(bspSampleLookups));
-
-        // The sample metadata cases:
-        //
-        // If the Broad sample doesn't exist in Mercury, i.e. there's no MercurySample for it:
-        //
-        //    If sample is found in BSP then the MercurySample is created with
-        //    metadata source = BSP. Neither metadata nor root sample are needed in the
-        //    spreadsheet but if present it's an error if they don't match BSP's data.
-        //    MercurySample metadata is created from the BSP root metadata.
-        //
-        //    If the sample is not in BSP then a Mercury sample is created with metadata
-        //    source = Mercury. The root sample name must appear in the spreadsheet.
-        //
-        //        If the root sample is not in BSP then a root MercurySample is created
-        //        with metadata from the spreadsheet.
-        //
-        //        If the root is in BSP then MercurySample metadata is created from
-        //        the BSP root metadata. It's an error if any spreadsheet metadata
-        //        (except lsid) doesn't must match BSP's data.
-        //
-        // If the Broad sample does exist in Mercury:
-        //
-        //    If sample metadata source = BSP, neither metadata or root sample are needed in the
-        //    spreadsheet. If present it's an error if they don't match what BSP has.
-        //
-        //    If metadata source = Mercury, neither metadata nor root sample name are needed
-        //    but if present and values differ, then the Mercury sample data is updated.
-        //
-        // FYI for these uploaded samples the chain of custody returned by getSampleInstance()
-        // is implemented by the link to the root sample found in SampleInstanceEntity.
-
-        for (RowDto dto : rowDtos) {
-            // Determines the source of sampleData for the Broad sample.
-            MercurySample mercurySample = processor.getSampleMap().get(dto.getSampleName());
-            if (mercurySample != null) {
-                boolean sourceIsMercury = mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY;
-                boolean hasBspData = processor.getFetchedData().containsKey(dto.getSampleName());
-                if (sourceIsMercury == hasBspData) {
-                    messages.addWarning(String.format(CONFLICTING_SOURCE, dto.getRowNumber(), dto.getSampleName(),
-                            mercurySample.getMetadataSource().getDisplayName(), hasBspData ? "also" : "not"));
-                }
-                Boolean sampleHasMercuryData = processor.getSampleHasMercuryData().get(dto.getSampleName());
-                if (sampleHasMercuryData == null) {
-                    sampleHasMercuryData = sourceIsMercury && !hasBspData;
-                    processor.getSampleHasMercuryData().put(dto.getSampleName(), sampleHasMercuryData);
-                }
-
-                MercurySample rootSample = processor.getSampleMap().get(dto.getRootSampleName());
-                if (rootSample != null) {
-                    boolean rootIsMercury = rootSample.getMetadataSource() == MercurySample.MetadataSource.MERCURY;
-                    boolean rootHasBspData = processor.getFetchedData().containsKey(dto.getRootSampleName());
-                    if (rootIsMercury == rootHasBspData) {
-                        messages.addWarning(String.format(CONFLICTING_SOURCE, dto.getRowNumber(), dto.getRootSampleName(),
-                                rootSample.getMetadataSource().getDisplayName(), rootHasBspData ? "also" : "not"));
-                    }
-                    Boolean rootHasMercuryData = processor.getSampleHasMercuryData().get(dto.getRootSampleName());
-                    if (rootHasMercuryData == null) {
-                        rootHasMercuryData = sampleHasMercuryData && rootIsMercury && !rootHasBspData;
-                        processor.getSampleHasMercuryData().put(dto.getRootSampleName(), rootHasMercuryData);
-                    }
-                }
-            }
-        }
-
+        // A sample data lookup is done on all samples and root samples. This returns either
+        // Mercury and BSP metadata for each sample, depending on the sample metadata source.
+        processor.getFetchedData().putAll(sampleDataFetcher.fetchSampleData(samplesToLookup));
     }
 
     /**
@@ -504,8 +407,6 @@ public class SampleInstanceEjb {
         sampleInstanceEntity.setReagentDesign(reagentDesign);
         sampleInstanceEntity.setLabVessel(labVessel);
         sampleInstanceEntity.setMercurySample(mercurySample);
-        sampleInstanceEntity.setPooled(
-                ExternalLibraryProcessor.isOneOf(walkUpSequencing.getPooledSample(), "y", "yes"));
         sampleInstanceEntity.setSequencerModel(sequencerModel);
 
         sampleInstanceEntityDao.persistAll(newEntities);
@@ -581,7 +482,6 @@ public class SampleInstanceEjb {
         private Integer numberOfLanes;
         private String organism;
         private String participantId;
-        private boolean pooled;
         private Integer readLength;
         private String referenceSequence;
         private String referenceSequenceName;
@@ -589,6 +489,7 @@ public class SampleInstanceEjb {
         private String sampleName;
         private String sequencerModelName;
         private String sex;
+        private String umisPresent;
         private BigDecimal volume;
 
         private int rowNumber;
@@ -775,14 +676,6 @@ public class SampleInstanceEjb {
             this.participantId = participantId;
         }
 
-        public boolean isPooled() {
-            return pooled;
-        }
-
-        public void setPooled(boolean pooled) {
-            this.pooled = pooled;
-        }
-
         public String getAggregationParticle() {
             return aggregationParticle;
         }
@@ -878,5 +771,12 @@ public class SampleInstanceEjb {
             this.reagent = reagent;
         }
 
+        public String getUmisPresent() {
+            return umisPresent;
+        }
+
+        public void setUmisPresent(String umisPresent) {
+            this.umisPresent = umisPresent;
+        }
     }
 }

@@ -4127,6 +4127,22 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Seq Only</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-09-13T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Seq Only</name>
+                <labEventTypes>SEQ_ONLY_BUCKET</labEventTypes>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -4678,6 +4694,17 @@
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
             <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Seq Only</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXTERNAL_QUANT_AND_SEQ</batchJiraIssueType>
+            <effectiveDate>2018-09-13T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Seq Only</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <sequencingConfigDefs>

@@ -28,8 +28,6 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     private List<String> molecularBarcodeNames = new ArrayList<>();
     private List<String> numbersOfLanes = new ArrayList<>();
     private List<String> organisms = new ArrayList<>();
-    private List<String> pooleds = new ArrayList<>();
-    private List<String> membersOfPool = new ArrayList<>();
     private List<String> sampleNames = new ArrayList<>();
     private List<String> readLengths = new ArrayList<>();
     private List<String> referenceSequences = new ArrayList<>();
@@ -82,9 +80,8 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         REQUESTED_COMPLETION_DATE("Requested Completion Date", DataPresence.IGNORED),
         DATA_SUBMISSION("Data Submission", DataPresence.IGNORED),
         ASSEMBLY_INFORMATION("Additional Assembly and Analysis Info", DataPresence.OPTIONAL),
-        POOLED("Pooled (Y/N)", DataPresence.OPTIONAL), // Blank is the same as N
-        // If Pooled=Y then Member of Pool must be a Library Name of another row that has Pooled=N.
-        MEMBER_OF_POOL("Member of Pool", DataPresence.OPTIONAL),
+        POOLED("Pooled (Y/N)", DataPresence.IGNORED),
+        MEMBER_OF_POOL("Member of Pool", DataPresence.IGNORED),
         VIRTUAL_GSSR_ID("Virtual Gssr Id", DataPresence.IGNORED),
         SQUID_PROJECT("Squid Project (pipeline aggregation)", DataPresence.OPTIONAL),
 
@@ -93,8 +90,8 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         READ_LENGTH("Desired Read Length", DataPresence.OPTIONAL),
         ORGANISM("Organism", DataPresence.OPTIONAL),
         DERIVED_FROM("Derived From", DataPresence.IGNORED),
-        BLANK("", DataPresence.IGNORED),
         SUBMITTED_TO_GSSR("Submitted to Gssr", DataPresence.IGNORED),
+        BLANK("", DataPresence.IGNORED),
         ;
 
         private final String text;
@@ -131,13 +128,8 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         }
 
         @Override
-        public boolean isIgnoredValue() {
-            return dataPresence == DataPresence.IGNORED;
-        }
-
-        @Override
-        public boolean isOncePerTube() {
-            return dataPresence == DataPresence.ONCE_PER_TUBE;
+        public DataPresence getDataPresenceIndicator() {
+            return dataPresence;
         }
     }
 
@@ -158,8 +150,6 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         molecularBarcodeNames.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME));
         numbersOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
         organisms.add(getFromRow(dataRow, Headers.ORGANISM));
-        pooleds.add(getFromRow(dataRow, Headers.POOLED));
-        membersOfPool.add(getFromRow(dataRow, Headers.MEMBER_OF_POOL));
         readLengths.add(getFromRow(dataRow, Headers.READ_LENGTH));
         referenceSequences.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
         sampleNames.add(getFromRow(dataRow, Headers.SOURCE_SAMPLE_GSSR_ID));
@@ -185,7 +175,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
 
         for (SampleInstanceEjb.RowDto dto : dtos) {
 
-            // Each library name may appear only once in the upload.
+            // Each library name may appear only once per tube in the upload.
             if (!barcodeAndLibraryKeys.add(dto.getLibraryName())) {
                 messages.addError(String.format(SampleInstanceEjb.DUPLICATE, dto.getRowNumber(), "Library Name"));
             }
@@ -328,11 +318,6 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     @Override
     public List<String> getOrganisms() {
         return organisms;
-    }
-
-    @Override
-    public List<String> getPooleds() {
-        return pooleds;
     }
 
     @Override

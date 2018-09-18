@@ -41,7 +41,7 @@ public abstract class HeaderValueRowTableProcessor extends TableProcessor {
                         filter(name -> adjustedHeader.equals(adjustHeaderName(name, NUMBER_OF_WORDS_TO_COMPARE))).
                         findFirst().ifPresent(enumHeaderName -> {
                     // The next cell on the row is expected to be the value.
-                    String value = (headerCell.getColumnIndex() < row.getLastCellNum()) ?
+                    String value = (headerCell.getColumnIndex() < row.getLastCellNum() - 1) ?
                             row.getCell(headerCell.getColumnIndex() + 1).getStringCellValue().trim() : "";
                     headerValueMap.put(enumHeaderName, value);
                     headerRowIndexMap.put(enumHeaderName, row.getRowNum());

@@ -45,6 +45,8 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     private List<String> sampleNames = new ArrayList<>();
     private List<String> sexes = new ArrayList<>();
     private List<String> volumes = new ArrayList<>();
+    private List<String> dataAnalysisTypes = new ArrayList<>();
+    private List<String> umisPresents = new ArrayList<>();
 
     public VesselPooledTubesProcessor() {
         super(null);
@@ -110,13 +112,8 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         }
 
         @Override
-        public boolean isIgnoredValue() {
-            return dataPresence == DataPresence.IGNORED;
-        }
-
-        @Override
-        public boolean isOncePerTube() {
-            return dataPresence == DataPresence.ONCE_PER_TUBE;
+        public DataPresence getDataPresenceIndicator() {
+            return dataPresence;
         }
     }
 
@@ -357,6 +354,16 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     @Override
     public List<Boolean> getRequiredValuesPresent() {
         return requiredValuesPresent;
+    }
+
+    @Override
+    public List<String> getDataAnalysisTypes() {
+        return dataAnalysisTypes;
+    }
+
+    @Override
+    public List<String> getUmisPresents() {
+        return umisPresents;
     }
 
     @Override
