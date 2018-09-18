@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import javax.xml.bind.JAXBException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -145,6 +146,8 @@ public class ReceivingActionBean extends RackScanActionBean {
             BspSampleData bspSampleData = new BspSampleData(dataMap);
             sampleRows.add(bspSampleData);
         }
+
+        sampleRows = checkStatusOfSamples(mapIdToSampleData.values());
     }
 
     @HandlesEvent(FIND_SK_ACTION)
@@ -174,16 +177,20 @@ public class ReceivingActionBean extends RackScanActionBean {
                 BSPSampleSearchColumn.SAMPLE_STATUS);
         for (String sampleKey: splitSampleIds) {
             if (!mapIdToSampleData.containsKey(sampleKey)) {
-                messageCollection.addError("Failed to find: " + sampleKey);
+                messageCollection.addError("Failed to find sample: " + sampleKey);
             } else if (!mapIdToSampleData.get(sampleKey).hasData()) {
                 messageCollection.addError("No sample data found for: " + sampleKey);
             }
         }
-        sampleRows = new ArrayList<>(mapIdToSampleData.values());
+        sampleRows = checkStatusOfSamples(mapIdToSampleData.values());
+
         if (messageCollection.hasErrors()) {
             showLayout = false;
-            addMessages(messageCollection);
+        } else if (sampleRows.size() == 0) {
+            showLayout = false;
+            messageCollection.addInfo("All samples are already received.");
         }
+        addMessages(messageCollection);
         return new ForwardResolution(RECEIVE_BY_SAMPLE_SCAN_PAGE);
     }
 
@@ -248,13 +255,16 @@ public class ReceivingActionBean extends RackScanActionBean {
         }
         mapSampleToCollaborator.put(sampleIds, collaboratorSampleId);
         BspSampleData sampleData = mapIdToSampleData.get(sampleIds);
-        Map<String, String> dataMap = new HashMap<>();
-        dataMap.put(BSPSampleSearchColumn.SAMPLE_ID.name(), sampleData.getSampleId());
-        dataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.name(), collaboratorSampleId);
-        dataMap.put(BSPSampleSearchColumn.SAMPLE_STATUS.name(), sampleData.getSampleStatus());
-        dataMap.put(BSPSampleSearchColumn.SAMPLE_KIT.name(), sampleData.getSampleKitId());
-        dataMap.put(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE.name(), sampleData.getOriginalMaterialType());
-        sampleCollaboratorRows.add(dataMap);
+        if (checkStatusOfSampleIsInShippedState(sampleData)) {
+            Map<String, String> dataMap = new HashMap<>();
+            dataMap.put(BSPSampleSearchColumn.SAMPLE_ID.name(), sampleData.getSampleId());
+            dataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.name(), collaboratorSampleId);
+            dataMap.put(BSPSampleSearchColumn.SAMPLE_STATUS.name(), sampleData.getSampleStatus());
+            dataMap.put(BSPSampleSearchColumn.SAMPLE_KIT.name(), sampleData.getSampleKitId());
+            dataMap.put(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE.name(), sampleData.getOriginalMaterialType());
+            sampleCollaboratorRows.add(dataMap);
+        }
+        addMessages(messageCollection);
 
         return new ForwardResolution(RECEIVE_BY_SCAN_AND_LINK_PAGE);
     }
@@ -269,6 +279,28 @@ public class ReceivingActionBean extends RackScanActionBean {
         receiveSamplesAndLink(selectedSampleToCollaborator, messageCollection);
         addMessages(messageCollection);
         return new ForwardResolution(RECEIVE_BY_SCAN_AND_LINK_PAGE);
+    }
+
+    private List<SampleData> checkStatusOfSamples(Collection<BspSampleData> sampleData) {
+        List<SampleData> retList = new ArrayList<>();
+        for (BspSampleData sample: sampleData) {
+            if (checkStatusOfSampleIsInShippedState(sample)) {
+                retList.add(sample);
+            }
+        }
+        return retList;
+    }
+
+    private boolean checkStatusOfSampleIsInShippedState(BspSampleData sample) {
+        if (sample.getSampleStatus().equalsIgnoreCase("shipped")) {
+            return true;
+        } else if (sample.getSampleStatus().equalsIgnoreCase("received")) {
+            messageCollection.addInfo(sample.getSampleId() + " already received.");
+        } else {
+            messageCollection.addError("Sample is not in a status that is ready to be received: "
+                                       + sample.getSampleId() + " (" + sample.getSampleStatus() + ")");
+        }
+        return false;
     }
 
     private boolean receiveSamples(MessageCollection messageCollection) throws JAXBException {
@@ -344,8 +376,6 @@ public class ReceivingActionBean extends RackScanActionBean {
             }
         }
 
-        //TODO Validate SK to SMs?
-
         if (rackScanEmpty) {
             messageCollection.addError("No results from rack scan");
         }
@@ -377,11 +407,9 @@ public class ReceivingActionBean extends RackScanActionBean {
 
         addMessages(messageCollection);
         if (!messageCollection.hasErrors()) {
-            //TODO Send Sample Receipt Message? Problem is one already exists
             addMessage("Sucessfully received samples in BSP");
         }
 
-        //TODO Email PM?
         return new ForwardResolution(RECEIVING_PAGE);
     }
 

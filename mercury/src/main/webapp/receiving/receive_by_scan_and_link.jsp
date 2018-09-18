@@ -110,8 +110,8 @@
                                                         value="${sampleData['COLLABORATOR_SAMPLE_ID']}"/>
                             </td>
                             <td>
-                                    ${sampleData['SAMPLE_KIT_ID']}
-                                    <stripes:hidden name="sampleCollaboratorRows[${status.index}]['SAMPLE_KIT_ID']"
+                                    ${sampleData['SAMPLE_KIT']}
+                                    <stripes:hidden name="sampleCollaboratorRows[${status.index}]['SAMPLE_KIT']"
                                                         value="${sampleData['SAMPLE_KIT']}"/>
                             </td>
                             <td>
