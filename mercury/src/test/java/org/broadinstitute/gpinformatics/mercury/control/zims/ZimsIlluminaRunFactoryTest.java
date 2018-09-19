@@ -681,6 +681,9 @@ public class ZimsIlluminaRunFactoryTest {
 
         boolean hasPositiveControl = false;
         for (LibraryBean libraryBean : libraryBeans) {
+            // This test is deeply flawed because mapSampleIdToDto is all BspSampleData but these
+            // assertions require the samples to have been made from MercurySampleData.
+
             Assert.assertEquals(libraryBean.getRootSample(),libraryBean.getSampleId());
             Assert.assertEquals(libraryBean.getMetadataSource(), MercurySample.MERCURY_METADATA_SOURCE);
             Assert.assertEquals(libraryBean.getReferenceSequence(), "Homo_sapiens_assembly19");

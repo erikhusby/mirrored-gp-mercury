@@ -1611,5 +1611,21 @@
         <dropTable tableName="sample_kit_request" schemaName="mercury" cascadeConstraints="true"/>
         <dropTable tableName="sample_kit_request_aud" schemaName="mercury" cascadeConstraints="true"/>
     </changeSet>
+    <changeSet id="GPLIM-4712-303" author="epolk">
+        <dropColumn tableName="sample_instance_entity" columnName="pooled"/>
+    </changeSet>
+    <changeSet id="GPLIM-4712-304" author="epolk">
+        <dropColumn tableName="sample_instance_entity_aud" columnName="pooled"/>
+    </changeSet>
+    <changeSet id="GPLIM-4712-305" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="umis_present" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4712-306" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="umis_present" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>

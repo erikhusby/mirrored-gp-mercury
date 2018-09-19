@@ -471,7 +471,6 @@ public class SampleInstanceEjb {
         private String collaboratorSampleId;
         private BigDecimal concentration;
         private List<String> conditions;
-        private String dataAnalysisType;
         private String experiment;
         private String insertSize;
         private String irbNumber;
@@ -489,7 +488,7 @@ public class SampleInstanceEjb {
         private String sampleName;
         private String sequencerModelName;
         private String sex;
-        private String umisPresent;
+        private Boolean umisPresent; // null if not given in spreadsheet
         private BigDecimal volume;
 
         private int rowNumber;
@@ -586,14 +585,6 @@ public class SampleInstanceEjb {
 
         public void setConditions(List<String> conditions) {
             this.conditions = conditions;
-        }
-
-        public String getDataAnalysisType() {
-            return dataAnalysisType;
-        }
-
-        public void setDataAnalysisType(String dataAnalysisType) {
-            this.dataAnalysisType = dataAnalysisType;
         }
 
         public String getExperiment() {
@@ -744,13 +735,6 @@ public class SampleInstanceEjb {
             return MaterialType.DNA.getDisplayName();
         }
 
-        public boolean isMetadataPresent() {
-            return StringUtils.isNotBlank(collaboratorParticipantId) ||
-                    StringUtils.isNotBlank(collaboratorSampleId) ||
-                    StringUtils.isNotBlank(lsid) ||
-                    StringUtils.isNotBlank(participantId);
-        }
-
         public int getRowNumber() {
             return rowNumber;
         }
@@ -771,12 +755,15 @@ public class SampleInstanceEjb {
             this.reagent = reagent;
         }
 
-        public String getUmisPresent() {
+        public Boolean getUmisPresent() {
             return umisPresent;
         }
 
+        /** A true value starts with either upper or lower case T or Y, or the number 1. A blank value gives null. */
         public void setUmisPresent(String umisPresent) {
-            this.umisPresent = umisPresent;
+            this.umisPresent = StringUtils.isBlank(umisPresent) ? null :
+                    "yt1".contains(umisPresent.toLowerCase().subSequence(0, 1)) ?
+                            Boolean.TRUE : Boolean.FALSE;
         }
     }
 }

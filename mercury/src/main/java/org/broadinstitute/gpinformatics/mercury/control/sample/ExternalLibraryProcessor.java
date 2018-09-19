@@ -273,7 +273,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             dto.setConcentration(asNonNegativeBigDecimal(get(getConcentrations(), index),
                     ExternalLibraryProcessorNewTech.Headers.CONCENTRATION.getText(), dto.getRowNumber(), messages));
             dto.setConditions(get(getConditions(), index));
-            dto.setDataAnalysisType(get(getDataAnalysisTypes(), index));
             dto.setExperiment(get(getExperiments(), index));
             dto.setInsertSize(asIntegerRange(get(getInsertSizes(), index),
                     ExternalLibraryProcessorNewTech.Headers.INSERT_SIZE_RANGE.getText(), dto.getRowNumber(), messages));
@@ -581,6 +580,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         sampleInstanceEntity.setRootSample(getSampleMap().get(dto.getRootSampleName()));
         sampleInstanceEntity.setSequencerModel(getSequencerModelMap().get(dto.getSequencerModelName()));
         sampleInstanceEntity.setUploadDate(new Date());
+        sampleInstanceEntity.setUmisPresent(dto.getUmisPresent());
         return sampleInstanceEntity;
     }
 

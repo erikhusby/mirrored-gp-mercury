@@ -25,6 +25,7 @@ import java.util.Set;
  * Handles spreadsheet uploads for "Pooled Tube" external DEV samples.
  */
 public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
+    private List<String> aggregationParticles = new ArrayList<>();
     private List<String> baits = new ArrayList<>();
     private List<String> barcodes = new ArrayList<>();
     private List<String> broadParticipantIds = new ArrayList<>();
@@ -74,8 +75,9 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         FRAGMENT_SIZE("Fragment Size", DataPresence.ONCE_PER_TUBE),
         READ_LENGTH("Read Length", DataPresence.OPTIONAL),
         LSID("Lsid", DataPresence.OPTIONAL),
-        ANALYSIS_TYPE("Analysis Type", DataPresence.OPTIONAL),
+        DATA_ANALYSIS_TYPE("Data Analysis Type", DataPresence.REQUIRED),
         UMIS_PRESENT("UMIs Present (Y/N)", DataPresence.OPTIONAL),
+        DATA_AGGREGATOR("Data Aggregator", DataPresence.OPTIONAL),
         ;
 
         private final String text;
@@ -143,6 +145,9 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         sampleNames.add(getFromRow(dataRow, Headers.BROAD_SAMPLE_ID));
         sexes.add(getFromRow(dataRow, Headers.GENDER));
         volumes.add(getFromRow(dataRow, Headers.VOLUME));
+        umisPresents.add(getFromRow(dataRow, Headers.UMIS_PRESENT));
+        dataAnalysisTypes.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
+        aggregationParticles.add(getFromRow(dataRow, Headers.DATA_AGGREGATOR));
 
         this.requiredValuesPresent.add(requiredValuesPresent);
     }
@@ -269,6 +274,12 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
                     }
                 }
             }
+
+            if (StringUtils.isNotBlank(dto.getAnalysisTypeName()) &&
+                    getAnalysisTypeMap().get(dto.getAnalysisTypeName()) == null) {
+                messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
+                        "Data Analysis Type", "Mercury"));
+            }
         }
     }
 
@@ -394,5 +405,10 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     @Override
     public List<String> getSexes() {
         return sexes;
+    }
+
+    @Override
+    public List<String> getAggregationParticles() {
+        return aggregationParticles;
     }
 }

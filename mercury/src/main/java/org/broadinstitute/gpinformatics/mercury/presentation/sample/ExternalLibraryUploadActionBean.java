@@ -267,10 +267,14 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
             sheet1.createRow(rowIndex++).createCell(0).setCellValue(""); //a blank row
         }
 
-        // Writes a row with the key for the color coding.
-        Row colorRow = sheet1.createRow(rowIndex++);
-        int columnIndex = 1; // leaves the first column blank.
-        boolean firstCell = true;
+        // Writes the color coded headers in successive rows in a sheet1 column.
+        final int colorColumnIdx = 3;
+        final int maxColorRow = 5;
+        // Either uses the existing header-value rows, or creates some blank ones.
+        while(rowIndex < maxColorRow + 2) {
+            sheet1.createRow(rowIndex++);
+        }
+        int colorRowIdx = 1;
         for (Pair<ExternalLibraryProcessor.DataPresence, String> pair : Arrays.asList(
                 Pair.of((ExternalLibraryProcessor.DataPresence)null, "Cell color indicates:"),
                 Pair.of(ExternalLibraryProcessor.DataPresence.REQUIRED, " Required "),
@@ -279,23 +283,23 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 Pair.of(ExternalLibraryProcessor.DataPresence.IGNORED, " Ignored "))) {
 
             HSSFCellStyle style = workbook.createCellStyle();
-            style.setBorderTop(CellStyle.BORDER_MEDIUM);
-            style.setBorderBottom(CellStyle.BORDER_MEDIUM);
-            style.setBorderLeft(firstCell ? CellStyle.BORDER_MEDIUM : CellStyle.BORDER_NONE);
-            style.setBorderRight(CellStyle.BORDER_NONE);
+            style.setBorderTop(colorRowIdx == 1 ? CellStyle.BORDER_THIN : CellStyle.BORDER_NONE);
+            style.setBorderTop(CellStyle.BORDER_NONE);
+            style.setBorderLeft(CellStyle.BORDER_THIN);
+            style.setBorderRight(CellStyle.BORDER_THIN);
+            style.setBorderBottom(CellStyle.BORDER_NONE);
             if (pair.getLeft() != null) {
                 style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
                 style.setFillForegroundColor(colorMap.get(pair.getLeft()));
             }
-            Cell cell = colorRow.createCell(columnIndex);
+            Row row = sheet1.getRow(colorRowIdx++);
+            Cell cell = row.createCell(colorColumnIdx);
             cell.setCellValue(pair.getRight());
             cell.setCellStyle(style);
-
-            firstCell = false;
-            ++columnIndex;
         }
-        // Puts a right border on the last cell.
-        colorRow.getCell(columnIndex - 1).getCellStyle().setBorderRight(CellStyle.BORDER_MEDIUM);
+        // Puts a border on the top and bottom color cells.
+        sheet1.getRow(1).getCell(colorColumnIdx).getCellStyle().setBorderTop(CellStyle.BORDER_THIN);
+        sheet1.getRow(colorRowIdx - 1).getCell(colorColumnIdx).getCellStyle().setBorderBottom(CellStyle.BORDER_THIN);
 
         // A blank row.
         sheet1.createRow(rowIndex++).createCell(0).setCellValue("");

@@ -86,7 +86,6 @@ public class SampleInstanceEntity {
     @Column(unique = true)
     private String sampleLibraryName;
 
-    private Boolean pooled;
     private String libraryType;
     private String experiment;
     private Integer readLength;
@@ -96,6 +95,7 @@ public class SampleInstanceEntity {
     private Integer numberLanes;
     private String aggregationParticle;
     private String insertSize;
+    private Boolean umisPresent;
 
     @Enumerated(EnumType.STRING)
     private IlluminaFlowcell.FlowcellType sequencerModel;
@@ -284,5 +284,13 @@ public class SampleInstanceEntity {
 
     public void setInsertSize(String insertSize) {
         this.insertSize = insertSize;
+    }
+
+    public Boolean getUmisPresent() {
+        return umisPresent;
+    }
+
+    public void setUmisPresent(Boolean umisPresent) {
+        this.umisPresent = umisPresent;
     }
 }

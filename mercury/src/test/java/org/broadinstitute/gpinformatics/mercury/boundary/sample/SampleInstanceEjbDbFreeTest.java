@@ -465,8 +465,9 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
             Assert.assertEquals(entity.getReadLength().intValue(), new int[]{4, 2}[i]);
             Assert.assertNull(entity.getLibraryType());
-            Assert.assertNull(entity.getAggregationParticle());
-            Assert.assertNull(entity.getAnalysisType());
+            Assert.assertEquals(entity.getAggregationParticle(), select(i, "1", ""));
+            Assert.assertEquals(entity.getUmisPresent(), new Boolean[]{null, Boolean.TRUE}[i]);
+            Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "HybridSelection.Resequencing");
             Assert.assertEquals(entity.getNumberLanes(), 1);
             Assert.assertEquals(entity.getComments(), "");
             Assert.assertNull(entity.getReferenceSequence());

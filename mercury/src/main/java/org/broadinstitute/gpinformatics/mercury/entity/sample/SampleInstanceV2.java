@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -92,8 +94,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private String sampleLibraryName;
     private Integer readLength;
     private String aggregationParticle;
+    private Boolean umisPresent;
     private String expectedInsertSize;
-
+    private ReferenceSequence referenceSequence;
+    private AnalysisType analysisType;
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
     private LabBatch singleWorkflowBatch;
@@ -130,7 +134,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     /**
-     * Constructs a sample instance from a LabVessel and manually uploaded pooled tube(s).
+     * Constructs a sample instance from a LabVessel and an external library.
      */
     public SampleInstanceV2(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
         if(sampleInstanceEntity.getRootSample() == null) {
@@ -202,6 +206,13 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         isPooledTube = other.getIsPooledTube();
         sampleLibraryName = other.getSampleLibraryName();
         readLength = other.getReadLength();
+
+        aggregationParticle = other.getAggregationParticle();
+        analysisType = other.getAnalysisType();
+        referenceSequence = other.getReferenceSequence();
+        umisPresent = other.getUmisPresent();
+        expectedInsertSize = other.getExpectedInsertSize();
+
     }
 
     /**
@@ -519,13 +530,13 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     /**
-     * Applies to a clone any new information in a LabVessel.
+     * Applies to a clone any new information in a LabVessel and external library.
      */
     public final void applyVesselChanges(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
 
         currentLabVessel = labVessel;
 
-        // Merge in sample instance pooled tubes upload.
+        // Merge in sample instance from the external upload.
         if (sampleInstanceEntity != null) {
             setIsPooledTube(true);
             MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
@@ -536,6 +547,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
             aggregationParticle = sampleInstanceEntity.getAggregationParticle();
+            analysisType = sampleInstanceEntity.getAnalysisType();
+            referenceSequence = sampleInstanceEntity.getReferenceSequence();
+            umisPresent = sampleInstanceEntity.getUmisPresent();
             expectedInsertSize = sampleInstanceEntity.getInsertSize();
             mercurySamples.add(mercurySample);
         } else {
@@ -760,6 +774,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return aggregationParticle;
     }
 
+    public Boolean getUmisPresent() {
+        return umisPresent;
+    }
+
     public String getExpectedInsertSize() {
         return expectedInsertSize;
     }
@@ -810,6 +828,14 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     private SampleInstanceEntity getSampleInstanceEntity() {
         return sampleInstanceEntity;
+    }
+
+    public ReferenceSequence getReferenceSequence() {
+        return referenceSequence;
+    }
+
+    public AnalysisType getAnalysisType() {
+        return analysisType;
     }
 
     @Override
