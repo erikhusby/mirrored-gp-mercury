@@ -85,6 +85,8 @@ public class BillingAdaptor implements Serializable {
     private SAPAccessControlEjb sapAccessControlEjb;
 
     private BillingEmailService billingEmailService;
+    public static final String NEGATIVE_BILL_ERROR =
+        "Attempt to create billing credit when sample has not been billed.";
 
     @Inject
     public BillingAdaptor(BillingEjb billingEjb, PriceListCache priceListCache,
@@ -385,15 +387,21 @@ public class BillingAdaptor implements Serializable {
                             billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
                                     BillingSession.BILLED_FOR_SAP + " " + BillingSession.BILLED_FOR_QUOTES);
                         }
-                        if (quantityForSAP < 0) {
-                            Set<LedgerEntry> priorBillings = new HashSet<>();
-                            item.getBillingReversals().forEach(ledgerEntry -> ledgerEntry.getPreviouslyBilled().stream()
-                                    .collect(Collectors.toCollection(() -> priorBillings))
-                            );
-                            if (CollectionUtils.isNotEmpty(priorBillings)) {
-                                billingEmailService.sendReverseBillingEmail(item, priorBillings);
-                                item.setBillingMessages(BillingSession.BILLING_CREDIT);
-                            }
+
+                        Set<LedgerEntry> priorBillings = new HashSet<>();
+                        item.getBillingReversals().forEach(ledgerEntry -> ledgerEntry.getPreviouslyBilled().stream()
+                            .collect(Collectors.toCollection(() -> priorBillings))
+                        );
+
+                        // Negative billing is allowed if the same positive number has been previously bille.
+                        // When this is not the case throw an exception.
+                        double previouslyBilledQty =
+                            priorBillings.stream().map(LedgerEntry::getQuantity).mapToDouble(Double::doubleValue).sum();
+                        if (quantityForSAP + previouslyBilledQty < 0) {
+                            throw new BillingException(NEGATIVE_BILL_ERROR);
+                        } else if (quantityForSAP < 0) {
+                            billingEmailService.sendReverseBillingEmail(item, priorBillings);
+                            item.setBillingMessages(BillingSession.BILLING_CREDIT);
                             billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
                                 BillingSession.BILLING_CREDIT);
                         }
