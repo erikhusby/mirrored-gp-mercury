@@ -111,7 +111,9 @@ public class VesselEventResultParamConfiguration extends ResultParamConfiguratio
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                         : eval.getPositions().asMap().entrySet()) {
                     for (VesselPosition position : labVesselAndPositions.getValue()) {
-                        results.add(position.toString());
+                        if( position != null ) {
+                            results.add(position.toString());
+                        }
                     }
                 }
                 break;
