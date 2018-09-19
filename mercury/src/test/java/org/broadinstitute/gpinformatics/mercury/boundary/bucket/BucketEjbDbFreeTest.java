@@ -35,7 +35,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.mockito.Mockito;
@@ -54,6 +53,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import static org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow.AGILENT_EXOME_EXPRESS;
+import static org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow.ICE;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.createNiceMock;
@@ -106,7 +107,7 @@ public class BucketEjbDbFreeTest {
         workflowLoader.load();
     }
 
-    private void setUp(Workflow workflow) {
+    private void setUp(String workflow) {
         reset(mocks);
 
         switch (workflow) {
@@ -119,7 +120,7 @@ public class BucketEjbDbFreeTest {
             pdo = ProductOrderTestFactory.buildIceProductOrder(SAMPLE_SIZE);
             break;
         default:
-            throw new RuntimeException("Unsupported workflow type: " + workflow.name());
+            throw new RuntimeException("Unsupported workflow type: " + workflow);
         }
 
         expectedSamples.clear();
@@ -198,10 +199,7 @@ public class BucketEjbDbFreeTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testSamplesToPicoBucket() throws Exception {
-        for (Workflow workflow : (new Workflow[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
-            if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
-                continue;
-            }
+        for (String workflow : (new String[]{AGILENT_EXOME_EXPRESS, ICE})) {
             setupCoreMocks(workflow, true);
 
             expect(labEventFactory
@@ -231,10 +229,7 @@ public class BucketEjbDbFreeTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE, dataProvider = "badLabelProvider")
     public void testBadLabelSamplesToPicoBucket(String badLabelResult) throws Exception {
-        for (Workflow workflow : (new Workflow[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
-            if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
-                continue;
-            }
+        for (String workflow : (new String[]{AGILENT_EXOME_EXPRESS, ICE})) {
             setupCoreMocks(workflow, false);
 
             for (BspSampleData sampleDTO : bspSampleDataMap.values()) {
@@ -268,8 +263,8 @@ public class BucketEjbDbFreeTest {
     }
 
     public void testApplyBucketCriteriaNoWorkflow(){
-        setupCoreMocks(Workflow.AGILENT_EXOME_EXPRESS, true);
-        pdo.getProduct().setWorkflow(Workflow.NONE);
+        setupCoreMocks(AGILENT_EXOME_EXPRESS, true);
+        pdo.getProduct().setWorkflowName(Workflow.NONE);
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever",
@@ -279,14 +274,14 @@ public class BucketEjbDbFreeTest {
     }
 
     public void testDuplicateSamplesToPicoBucket() throws Exception {
-        Workflow workflow = Workflow.AGILENT_EXOME_EXPRESS;
+        String workflow = AGILENT_EXOME_EXPRESS;
         setupCoreMocks(workflow, true);
 
         expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
                 .andReturn(bspSampleDataMap);
 
         replay(mocks);
-        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflow(AGILENT_EXOME_EXPRESS);
 
         WorkflowBucketDef picoBucket = workflowDef.getEffectiveVersion().findBucketDefByName("Pico/Plating Bucket");
 
@@ -309,7 +304,7 @@ public class BucketEjbDbFreeTest {
         return "R" + rackPosition;
     }
 
-    private void setupCoreMocks(Workflow workflow, boolean createVessels) {
+    private void setupCoreMocks(String workflow, boolean createVessels) {
         setUp(workflow);
 
         // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th samples.

@@ -36,7 +36,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 
 import javax.annotation.Nonnull;
@@ -342,12 +341,13 @@ public class BucketEjb {
      */
     public Map<String, Collection<ProductOrderSample>> addSamplesToBucket(ProductOrder order,
             Collection<ProductOrderSample> samples, ProductWorkflowDefVersion.BucketingSource bucketingSource) {
-        boolean hasWorkflow=false;
-        for (Workflow workflow : order.getProductWorkflows()) {
-            if (hasWorkflow = Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
-                if (hasWorkflow){
-                    break;
-                }
+        boolean hasWorkflow = false;
+        for (String workflow : order.getProductWorkflows()) {
+            ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflowByName(workflow);
+            ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
+            hasWorkflow = !workflowDefVersion.getBuckets().isEmpty();
+            if (hasWorkflow){
+                break;
             }
         }
         if (!hasWorkflow) {

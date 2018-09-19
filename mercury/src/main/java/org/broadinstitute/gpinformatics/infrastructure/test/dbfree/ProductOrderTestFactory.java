@@ -36,7 +36,7 @@ public class ProductOrderTestFactory {
     public static final String otherRpSynopsis = "To Study Stuff";
 
     public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey,
-                                                       Workflow workflow, long creatorId, String rpTitle,
+                                                       String workflow, long creatorId, String rpTitle,
                                                        String rpSynopsis, boolean irbNotEngaged,
                                                        String productPartNumber, String sampleSuffix, String quoteId) {
         Product dummyProduct =
@@ -128,10 +128,10 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.AGILENT_EXOME_EXPRESS);
     }
 
-    public static ProductOrder buildProductOrder(int maxSamples, String sampleSuffix, Workflow workflow) {
+    public static ProductOrder buildProductOrder(int maxSamples, String sampleSuffix, String workflow) {
         return createDummyProductOrder(maxSamples, "PD0-1EE", workflow, 101, "Test RP",
                 rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-" + workflow.name() + "-1232", sampleSuffix, "ExExQuoteId");
+                ResearchProject.IRB_ENGAGED, "P-" + workflow + "-1232", sampleSuffix, "ExExQuoteId");
     }
 
     public static ProductOrder buildIceProductOrder(int maxSamples) {

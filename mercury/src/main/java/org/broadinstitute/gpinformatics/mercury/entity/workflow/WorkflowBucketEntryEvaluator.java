@@ -31,8 +31,8 @@ import java.util.Set;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class WorkflowBucketEntryEvaluator implements Serializable {
     private static final Log log = LogFactory.getLog(WorkflowBucketEntryEvaluator.class);
-    private Set<String> workflows = new HashSet<>();
-    private Set<MaterialType> materialTypes = new HashSet<>();
+    Set<String> workflows = new HashSet<>();
+    Set<MaterialType> materialTypes = new HashSet<>();
 
     public WorkflowBucketEntryEvaluator() {
     }

@@ -655,7 +655,7 @@ public class LabBatchEjb {
         if (labBatch.getBatchName().startsWith("LCSET")) {
             messageCollection.addError("LCSETs must be rack scanned to add controls.");
         }
-        if (!labBatch.getWorkflowName().equals(Workflow.DNA_RNA_EXTRACTION_STOOL.getWorkflowName())) {
+        if (!labBatch.getWorkflowName().equals(Workflow.DNA_RNA_EXTRACTION_STOOL)) {
             messageCollection.addError("Only available for DNA and RNA from Stool");
         }
         Map<String, LabVessel> mapBarcodeToTube = tubeDao.findByBarcodes(parsedControls);

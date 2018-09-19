@@ -83,8 +83,8 @@ public class WorkflowConfig implements PreferenceDefinitionValue, Serializable {
         return sequencingConfigDef;
     }
 
-    public ProductWorkflowDef getWorkflow(@Nonnull Workflow workflow) {
-        return getWorkflowByName(workflow.getWorkflowName());
+    public ProductWorkflowDef getWorkflow(@Nonnull String workflow) {
+        return getWorkflowByName(workflow);
     }
 
     public ProductWorkflowDef getWorkflowByName(String workflowName) {

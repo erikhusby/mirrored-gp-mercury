@@ -18,7 +18,7 @@ public class ProductTestFactory {
         return createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber " + uuid);
     }
 
-    public static Product createDummyProduct(Workflow workflow, String partNumber) {
+    public static Product createDummyProduct(String workflow, String partNumber) {
         return createDummyProduct(workflow, partNumber, false, false);
     }
 
