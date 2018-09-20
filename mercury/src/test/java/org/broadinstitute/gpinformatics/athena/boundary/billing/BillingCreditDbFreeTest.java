@@ -44,8 +44,6 @@ import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.mockito.Mockito;
@@ -65,10 +63,7 @@ import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingCreditDbFreeTest {
-    private UserBean mockUserBean = Mockito.mock(UserBean.class);
-    private MercurySampleDao mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
     private EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
-    private SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
     private BillingEmailService billingEmailService;
     private PriceItem priceItem;
     private QuotePriceItem quotePriceItem;
@@ -150,7 +145,7 @@ public class BillingCreditDbFreeTest {
         billingAdaptor.setProductOrderEjb(productOrderEjb);
     }
 
-    public void testReverseBilling() {
+    public void testCreateBillingCreditRequest() {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
 
         List<BillingEjb.BillingResult> billingResults = bill(pdoSample, priceItem, initialQuantity);
