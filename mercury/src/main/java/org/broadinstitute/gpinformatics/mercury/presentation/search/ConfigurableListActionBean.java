@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
@@ -58,6 +59,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
     @Inject
     private ThreadEntityManager threadEntityManager;
+
+    @Inject
+    private ConstrainedValueDao constrainedValueDao;
 
     /**
      * Stream an Excel spreadsheet, from a list of IDs
@@ -133,6 +137,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         evalContext.setBspUserList( bspUserList );
         evalContext.setSearchInstance(searchInstance);
         evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
+        evalContext.setOptionValueDao(constrainedValueDao);
         return evalContext;
     }
 

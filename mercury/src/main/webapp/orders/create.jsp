@@ -503,6 +503,22 @@
                         initializeOrderCustomValues();
                         showCustomProductInfoDialog();
                     });
+
+                    <c:choose>
+                        <c:when test="${empty actionBean.editOrder.product}">
+                            $j('#reagentDesignGroup').hide();
+                        </c:when>
+                        <c:otherwise>
+                            <c:choose>
+                                <c:when test="${actionBean.editOrder.product.baitLocked}">
+                                    $j('#reagentDesignGroup').hide();
+                                </c:when>
+                                <c:otherwise>
+                                    $j('#reagentDesignGroup').show();
+                                </c:otherwise>
+                            </c:choose>
+                        </c:otherwise>
+                    </c:choose>
                 }
         );
 
@@ -884,6 +900,10 @@
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
                 $j("#primaryProductListPrice").show();
+            }
+
+            if (!data.baitLocked) {
+                $j('#reagentDesignGroup').show();
             }
             </security:authorizeBlock>
 
@@ -1557,6 +1577,16 @@
                         <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
                                       title="Enter the product name for this order"/>
                         <div id="primaryProductListPrice" ></div>
+                    </div>
+                </div>
+
+                <div class="control-group" id="reagentDesignGroup">
+                    <stripes:label for="reagentDesignKey" class="control-label"><abbr title="aka Reagent Design">Bait Design *</abbr></stripes:label>
+                    <div class="controls">
+                        <stripes:select id="reagentDesignKey" name="editOrder.reagentDesignKey">
+                            <stripes:option value="">Select One</stripes:option>
+                            <stripes:options-collection collection="${actionBean.reagentDesigns}" label="displayName" value="businessKey"/>
+                        </stripes:select>
                     </div>
                 </div>
 

@@ -12,7 +12,7 @@ public class BSPSetVolumeConcentrationStub implements BSPSetVolumeConcentration 
 
     @Override
     public String setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration,
-            BigDecimal receptacleWeight) {
+                                            BigDecimal receptacleWeight, TerminateAction terminateAction) {
         return RESULT_OK;
     }
 }
