@@ -85,7 +85,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     /**
      * Helper method to initialize the common client this service will utilize in order to communicate to SAP
      */
-    protected void initializeClient() {
+    private void initializeClient() {
 
         SapIntegrationClientImpl.SAPEnvironment environment;
 
