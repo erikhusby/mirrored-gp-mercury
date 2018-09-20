@@ -10,7 +10,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Resource;
 import javax.enterprise.context.Dependent;
 import javax.mail.Message;
-import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -31,6 +30,14 @@ public class EmailSender implements Serializable {
     @Resource(mappedName = "java:jboss/mail/Default")
     private Session mailSession;
 
+    // for testing
+    EmailSender(Session mailSession) {
+        this.mailSession = mailSession;
+    }
+
+    public EmailSender() {
+    }
+
     /**
      * Send an email in HTML format
      * @param appConfig The configuration for the deployed app.  This determines
@@ -49,16 +56,17 @@ public class EmailSender implements Serializable {
                     Message message = new MimeMessage(mailSession);
                     message.setFrom(new InternetAddress("gplims@broadinstitute.org"));
                     message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
-                        message.setRecipients(Message.RecipientType.CC, InternetAddress.parse(StringUtils.join(ccAddrdesses,",")));
+                    message.setRecipients(Message.RecipientType.CC,
+                        InternetAddress.parse(StringUtils.join(ccAddrdesses, ",")));
                     message.setSubject(subject);
                     message.setContent(body, "text/html; charset=utf-8");
                     message.setSentDate(new Date());
                     Transport.send(message);
-                } catch (MessagingException e) {
+                } catch (Exception e) {
                     LOG.error("Failed to send email", e);
+
                     //noinspection StatementWithEmptyBody
                     if (ignoreExceptions) {
-
                         // Don't rethrow, not fatal
                     } else {
                         throw new InformaticsServiceException("Error sending email", e);

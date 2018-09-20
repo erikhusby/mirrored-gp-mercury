@@ -65,7 +65,7 @@ public class BillingEmailService {
         try {
             body = processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, rootMap);
         } catch (RuntimeException e) {
-            throw new InformaticsServiceException("Invalid reference in map", e);
+            throw new InformaticsServiceException("Error creating message body from template", e);
         }
         emailSender.sendHtmlEmail(appConfig, sapConfig.getSapSupportEmail(), Collections.emptyList(),
                 sapConfig.getSapReverseBillingSubject(), body, true, false);

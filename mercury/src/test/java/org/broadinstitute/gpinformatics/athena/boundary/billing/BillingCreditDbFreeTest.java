@@ -63,31 +63,33 @@ import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingCreditDbFreeTest {
-    private EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
+    public BillingCreditDbFreeTest() {
+    }
+
     private BillingEmailService billingEmailService;
     private PriceItem priceItem;
     private QuotePriceItem quotePriceItem;
+    private BillingAdaptor billingAdaptor;
+    private ProductOrder pdo;
+    private SapIntegrationService sapService = new SapIntegrationServiceStub();
+
+    private EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
+    private BillingSessionDao billingSessionDao = Mockito.mock(BillingSessionDao.class);
+    private PriceListCache priceListCache = Mockito.mock(PriceListCache.class);
+    private QuoteService quoteService = Mockito.mock(QuoteService.class);
+    private BillingSessionAccessEjb billingSessionAccessEjb = Mockito.mock(BillingSessionAccessEjb.class);
+    private ProductOrderEjb productOrderEjb = Mockito.mock(ProductOrderEjb.class);
+    private SAPProductPriceCache productPriceCache = Mockito.mock(SAPProductPriceCache.class);
+    private SAPAccessControlEjb accessControlEjb = Mockito.mock(SAPAccessControlEjb.class);
+
+    private BillingEjb billingEjb = new BillingEjb(priceListCache, billingSessionDao, null, null, null);
 
     private final long initialQuantity = 2L;
     private final long negativeQuantity = Math.negateExact(initialQuantity);
 
-    public BillingCreditDbFreeTest() {
-    }
-
-    private BillingSessionDao billingSessionDao = Mockito.mock(BillingSessionDao.class);
-    private PriceListCache priceListCache = Mockito.mock(PriceListCache.class);
-    private BillingEjb billingEjb = new BillingEjb(priceListCache, billingSessionDao, null, null, null);
-    private QuoteService quoteService = Mockito.mock(QuoteService.class);
-    private BillingSessionAccessEjb billingSessionAccessEjb = Mockito.mock(BillingSessionAccessEjb.class);
-    private SapIntegrationService sapService = new SapIntegrationServiceStub();
-    private ProductOrderEjb productOrderEjb = Mockito.mock(ProductOrderEjb.class);
-    private BillingAdaptor billingAdaptor;
-    private ProductOrder pdo;
-    private SAPProductPriceCache productPriceCache = Mockito.mock(SAPProductPriceCache.class);
-    private SAPAccessControlEjb accessControlEjb = Mockito.mock(SAPAccessControlEjb.class);
-
     @BeforeMethod
     public void setUp() throws QuoteNotFoundException, QuoteServerException, InvalidProductException {
+        resetMocks();
         pdo = ProductOrderTestFactory.createDummyProductOrder(1, "PDO-1234");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         pdo.setProductOrderAddOns(Collections.emptyList());
@@ -205,5 +207,10 @@ public class BillingCreditDbFreeTest {
         List<BillingEjb.BillingResult> billingResults =
             billingAdaptor.billSessionItems("url", billingSession.getBusinessKey());
         return billingResults;
+    }
+
+    private void resetMocks(){
+        Mockito.reset(mockEmailSender, billingSessionDao, priceListCache, quoteService, productOrderEjb,
+            billingSessionAccessEjb, productPriceCache, accessControlEjb);
     }
 }

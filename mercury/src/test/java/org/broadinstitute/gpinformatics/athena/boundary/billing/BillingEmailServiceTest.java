@@ -32,6 +32,13 @@ public class BillingEmailServiceTest {
 
     private BillingEmailService billingEmailService;
 
+    @BeforeTest
+    public void setUp() {
+        TemplateEngine templateEngine = new TemplateEngine();
+        templateEngine.postConstruct();
+        billingEmailService = new BillingEmailService(AppConfig.produce(Deployment.DEV), null, null, templateEngine);
+    }
+
     public void testProcessTemplate() {
         String expected = "<table>\n"
                           + "    <thead>\n"
@@ -92,12 +99,5 @@ public class BillingEmailServiceTest {
         } catch (RuntimeException e) {
             assertThat(e.getCause(), instanceOf(InvalidReferenceException.class));
         }
-    }
-
-    @BeforeTest
-    public void setUp() {
-        TemplateEngine templateEngine = new TemplateEngine();
-        billingEmailService = new BillingEmailService(AppConfig.produce(Deployment.DEV), null, null, templateEngine);
-        templateEngine.postConstruct();
     }
 }
