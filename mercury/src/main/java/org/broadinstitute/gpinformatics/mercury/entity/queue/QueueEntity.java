@@ -43,4 +43,58 @@ public class QueueEntity {
 
     @Column(name = "completed_on")
     private Date completedOn;
+
+    public QueueEntity(QueueGrouping queueGrouping, LabVessel labVessel) {
+        this.queueGrouping = queueGrouping;
+        this.queueStatus = QueueStatus.Active;
+        this.labVessel = labVessel;
+    }
+
+    public Long getQueueEntityId() {
+        return queueEntityId;
+    }
+
+    public void setQueueEntityId(Long queueEntityId) {
+        this.queueEntityId = queueEntityId;
+    }
+
+    public QueueGrouping getQueueGrouping() {
+        return queueGrouping;
+    }
+
+    public void setQueueGrouping(QueueGrouping queueGrouping) {
+        this.queueGrouping = queueGrouping;
+    }
+
+    public QueueStatus getQueueStatus() {
+        return queueStatus;
+    }
+
+    public void setQueueStatus(QueueStatus queueStatus) {
+        this.queueStatus = queueStatus;
+    }
+
+    public LabVessel getLabVessel() {
+        return labVessel;
+    }
+
+    public void setLabVessel(LabVessel labVessel) {
+        this.labVessel = labVessel;
+    }
+
+    public Long getCompletedBy() {
+        return completedBy;
+    }
+
+    public void setCompletedBy(Long completedBy) {
+        this.completedBy = completedBy;
+    }
+
+    public Date getCompletedOn() {
+        return completedOn;
+    }
+
+    public void setCompletedOn(Date completedOn) {
+        this.completedOn = completedOn;
+    }
 }

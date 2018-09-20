@@ -1259,6 +1259,7 @@
             <column name="container_vessel_id" type="number" />
             <column name="queue_id" type="number" />
             <column name="sort_order" type="number" />
+            <column name="version" type="number" />
         </createTable>
     </changeSet>
     <changeSet id="GPLIM-5743-5" author="pdunlea">

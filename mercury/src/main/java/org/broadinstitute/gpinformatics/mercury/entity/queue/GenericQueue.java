@@ -50,4 +50,67 @@ public class GenericQueue {
             inverseJoinColumns = @JoinColumn(referencedColumnName = "product_id", columnDefinition = "product_id"))
     private List<Product> associatedProducts;
 
+    public Long getQueueId() {
+        return queueId;
+    }
+
+    public void setQueueId(Long queueId) {
+        this.queueId = queueId;
+    }
+
+    public String getQueueName() {
+        return queueName;
+    }
+
+    public void setQueueName(String queueName) {
+        this.queueName = queueName;
+    }
+
+    public QueueType getQueueType() {
+        return queueType;
+    }
+
+    public void setQueueType(QueueType queueType) {
+        this.queueType = queueType;
+    }
+
+    public String getQueueDescription() {
+        return queueDescription;
+    }
+
+    public void setQueueDescription(String queueDescription) {
+        this.queueDescription = queueDescription;
+    }
+
+    public SortedSet<QueueGrouping> getQueueGroupings() {
+        return queueGroupings;
+    }
+
+    public void setQueueGroupings(SortedSet<QueueGrouping> queueGroupings) {
+        this.queueGroupings = queueGroupings;
+    }
+
+    public List<Product> getAssociatedProducts() {
+        return associatedProducts;
+    }
+
+    public void setAssociatedProducts(List<Product> associatedProducts) {
+        this.associatedProducts = associatedProducts;
+    }
+
+    public boolean isQueueEmpty() {
+        if (getQueueGroupings() != null) {
+            for (QueueGrouping queueGrouping : getQueueGroupings()) {
+                if (queueGrouping.getQueuedEntities() != null) {
+                    for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
+                        if (queueEntity.getQueueStatus() == QueueStatus.Active) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 }
