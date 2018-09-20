@@ -74,6 +74,7 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -1209,6 +1210,14 @@ public class LabEventFactory implements Serializable {
 
     // todo jmt make this database free?
     private void addReagents(LabEvent labEvent, List<ReagentType> reagentTypes) {
+        LabEventType.ManualTransferDetails manualTransferDetails = labEvent.getLabEventType().getManualTransferDetails();
+        HashSet<String> reagentNameSet = null;
+
+        if (manualTransferDetails != null) {
+            // Populate hashset of reagent names that we need to verify expiration date.
+            reagentNameSet = new HashSet<>(Arrays.asList(manualTransferDetails.getReagentFieldExpirationRequired()));
+        }
+
         for (ReagentType reagentType : reagentTypes) {
             GenericReagent genericReagent = null;
             // This is null only in database free tests
@@ -1229,6 +1238,18 @@ public class LabEventFactory implements Serializable {
                 } else {
                     throw new RuntimeException("Failed to find metadata " + metadataType.getName());
                 }
+            }
+            // If the lab event type has a requirement for valid expiration date.
+            if ((manualTransferDetails != null && manualTransferDetails.getReagentFieldExpirationRequired() != null)) {
+                // check to see if the genericReagent name is in the reagentFieldExpirationRequired array. if yes, then ensure expiration date is valid.
+                if (reagentNameSet.contains(genericReagent.getName())) {
+                    if (reagentType.getExpiration() == null) {
+                        throw new RuntimeException("No expiration date provided for reagent " + genericReagent.getName());
+                    } if (reagentType.getExpiration().before(new Date())) {
+                        throw new RuntimeException("Reagent " + genericReagent.getName() + " expired as of " + reagentType.getExpiration().toString());
+                    }
+                }
+
             }
             labEvent.addReagentMetadata(genericReagent, metadataSet);
         }
