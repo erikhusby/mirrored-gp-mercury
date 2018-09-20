@@ -457,7 +457,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 3);
 
         testSingleSourceQuote3.setExpired(true);
@@ -475,7 +476,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 3);
 
 
@@ -486,7 +488,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
 
         Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId());
         Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(testSingleSourceQuote2.getAlphanumericId());
@@ -580,7 +583,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 2);
 
         Assert.assertFalse(conversionPdo.getPriorToSAP1_5());
@@ -592,7 +596,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
         Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
     }
 
@@ -673,7 +678,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
 
         Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
 
@@ -683,7 +689,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
     }
 
 
@@ -763,7 +770,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
 
         Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
 
@@ -773,7 +781,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
     }
 
 
@@ -859,7 +868,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
 
         Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
 
@@ -869,7 +879,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
 
     }
     public void testTransitionOrderToClosed() throws Exception {
@@ -1005,7 +1016,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
         productOrderEjb.updateOrderStatus(conversionPdo.getBusinessKey(), MessageReporter.UNUSED);
         assertThat(conversionPdo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Completed));
 
@@ -1014,7 +1026,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
 
         // called once for conversionPdo and once for childPdoTwo
         Mockito.verify(mockQuoteService, Mockito.times(3)).getQuoteByAlphaId(Mockito.anyString());
@@ -1123,7 +1136,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
         productOrderEjb.updateOrderStatus(conversionPdo.getBusinessKey(), MessageReporter.UNUSED);
         assertThat(conversionPdo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Completed));
 
@@ -1132,7 +1146,8 @@ public class ProductOrderEjbTest {
                 Mockito.<String>anyList(),
                 Mockito.anyString(),
                 Mockito.anyString(),
-                Mockito.anyBoolean(), true);
+                Mockito.anyBoolean(), 
+                Mockito.anyBoolean());
 
         // called once for conversionPdo and once for childPdoTwo
         Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
