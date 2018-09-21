@@ -14,7 +14,10 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 
 @Stateful
@@ -24,11 +27,13 @@ public class QueueEjb {
     public QueueEjb() {
     }
 
-    public QueueEjb(GenericQueueDao genericQueueDao) {
+    public QueueEjb(GenericQueueDao genericQueueDao, QueueValidationHandler queueValidationHandler) {
         this.genericQueueDao = genericQueueDao;
+        this.queueValidationHandler = queueValidationHandler;
     }
 
     private GenericQueueDao genericQueueDao;
+    private QueueValidationHandler queueValidationHandler;
 
     /**
      * Adds either a container lab vessel with its tubes, or a larger list of lab vessels of any type to a queue as a
@@ -42,7 +47,8 @@ public class QueueEjb {
      * @param queueType         Type of Queue to add the lab vessels to.
      */
     public void enqueueLabVessels(@Nullable LabVessel containerVessel, @Nonnull Collection<LabVessel> vesselList,
-                                  @Nonnull QueueType queueType, @Nullable String readableText) {
+                                  @Nonnull QueueType queueType, @Nullable String readableText,
+                                  @Nonnull MessageCollection messageCollection) {
 
         GenericQueue genericQueue = findQueueByType(queueType);
 
@@ -56,6 +62,11 @@ public class QueueEjb {
         genericQueue.getQueueGroupings().add(queueGrouping);
 
         for (LabVessel labVessel : vesselList) {
+            try {
+                queueValidationHandler.validate(labVessel, queueType, messageCollection);
+            } catch (Exception e) {
+                messageCollection.addWarning("Internal error trying to validate " + labVessel.getLabel());
+            }
             QueueEntity queueEntity = new QueueEntity(queueGrouping, labVessel);
             queueGrouping.getQueuedEntities().add(queueEntity);
             persist(queueEntity);
@@ -69,17 +80,24 @@ public class QueueEjb {
      * @param labVessels            Vessels to Dequeue.
      * @param queueType             Queue Type to remove from.
      * @param messageCollection     Messages back to the user.
+     * @param dequeueingOptions     Dequeueing Options
      */
-    public void dequeueLabVessels(Collection<LabVessel> labVessels, QueueType queueType, MessageCollection messageCollection) {
+    public void dequeueLabVessels(Collection<LabVessel> labVessels, QueueType queueType,
+                                  MessageCollection messageCollection, DequeueingOptions dequeueingOptions) {
+
         Iterator<LabVessel> iterator = labVessels.iterator();
         GenericQueue genericQueue = findQueueByType(queueType);
+
         for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {
             if (!iterator.hasNext()) {
                 break;
             }
             boolean found = false;
             LabVessel labVessel = iterator.next();
-            if (queueGrouping.getContainerVessel() != null
+            if (!queueValidationHandler.isComplete(labVessel, queueType, messageCollection) && dequeueingOptions == DequeueingOptions.DEFAULT_DEQUEUE_RULES) {
+                messageCollection.addWarning(labVessel.getLabel() + " has been denoted as not yet completed" +
+                        " from the " + queueType.getTextName() + " queue.");
+            } else if (queueGrouping.getContainerVessel() != null
                             && queueGrouping.getContainerVessel().getLabVesselId().equals(labVessel.getLabVesselId())) {
                 messageCollection.addWarning("The lab vessel " + labVessel.getLabel()
                                            + " is a container vessel and not allowed to be utilized during the"
@@ -95,8 +113,22 @@ public class QueueEjb {
             }
             if (!found) {
                 messageCollection.addWarning("The lab vessel " + labVessel.getLabel()
-                        + " was not found in the " + queueType.getTextName() + ".");
+                        + " was not found in the " + queueType.getTextName() + " queue.");
             }
+        }
+    }
+
+    public void reOrderQueue(Map<Long, Long> groupingIdToNewOrder, QueueType queueType) throws Exception {
+
+        GenericQueue genericQueue = findQueueByType(queueType);
+
+        Set<Long> testingSet = new HashSet<>(groupingIdToNewOrder.values());
+        if (testingSet.size() != groupingIdToNewOrder.size()) {
+            throw new Exception("Sample sorting order was assigned to multiple samples. Please fix and try again.");
+        }
+
+        for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {
+            queueGrouping.setSortOrder(groupingIdToNewOrder.get(queueGrouping.getQueueGroupingId()));
         }
     }
 

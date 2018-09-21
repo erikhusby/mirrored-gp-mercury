@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
@@ -52,6 +53,16 @@ public class QueueTestFactory {
 
         genericQueue.setQueueGroupings(new TreeSet<>(QueueGrouping.BY_SORT_ORDER));
 
+        QueueGrouping queueGrouping = addQueueGroupingToQueue(genericQueue, labVesselId);
+
+        addAnswerToPersist(genericQueueDao);
+
+        Mockito.when(genericQueueDao.findQueueByType(QueueType.PICO)).thenReturn(genericQueue);
+        return genericQueueDao;
+    }
+
+    @NotNull
+    private static QueueGrouping addQueueGroupingToQueue(GenericQueue genericQueue, Long labVesselId) {
         QueueGrouping queueGrouping = new QueueGrouping();
         queueGrouping.setQueueGroupingId(id++);
         queueGrouping.setSortOrder(queueGrouping.getQueueGroupingId());
@@ -65,6 +76,18 @@ public class QueueTestFactory {
         QueueEntity queueEntity = new QueueEntity(queueGrouping, labVessel);
         queueEntity.setQueueEntityId(id++);
         queueGrouping.getQueuedEntities().add(queueEntity);
+        return queueGrouping;
+    }
+
+    static GenericQueueDao getResortQueue() {
+        GenericQueueDao genericQueueDao = Mockito.mock(GenericQueueDao.class);
+        GenericQueue genericQueue = getEmptyPicoQueue();
+        genericQueue.setQueueGroupings(new TreeSet<>(QueueGrouping.BY_SORT_ORDER));
+
+        addQueueGroupingToQueue(genericQueue, id++);
+        addQueueGroupingToQueue(genericQueue, id++);
+        addQueueGroupingToQueue(genericQueue, id++);
+        addQueueGroupingToQueue(genericQueue, id++);
 
         addAnswerToPersist(genericQueueDao);
 
@@ -76,6 +99,27 @@ public class QueueTestFactory {
     static LabVessel generateLabVessel(Long labVesselId) {
         LabVessel labVessel = Mockito.mock(LabVessel.class);
         Mockito.when(labVessel.getLabVesselId()).thenReturn(labVesselId);
+        Mockito.when(labVessel.getLabel()).thenReturn(labVesselId.toString());
         return labVessel;
+    }
+
+    static QueueValidationHandler getPicoValidationWithErrors() {
+        QueueValidationHandler validationHandler = Mockito.mock(QueueValidationHandler.class);
+
+        Mockito.when(validationHandler.isComplete(Mockito.any(LabVessel.class),
+                     Mockito.eq(QueueType.PICO), Mockito.any(MessageCollection.class)))
+               .thenReturn(false);
+
+        return validationHandler;
+    }
+
+    static QueueValidationHandler getPicoValidationNoErrors() {
+        QueueValidationHandler validationHandler = Mockito.mock(QueueValidationHandler.class);
+
+        Mockito.when(validationHandler.isComplete(Mockito.any(LabVessel.class),
+                     Mockito.eq(QueueType.PICO), Mockito.any(MessageCollection.class)))
+               .thenReturn(true);
+
+        return validationHandler;
     }
 }
