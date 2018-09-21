@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
 import java.util.HashMap;
@@ -41,8 +42,9 @@ public abstract class HeaderValueRowTableProcessor extends TableProcessor {
                         filter(name -> adjustedHeader.equals(adjustHeaderName(name, NUMBER_OF_WORDS_TO_COMPARE))).
                         findFirst().ifPresent(enumHeaderName -> {
                     // The next cell on the row is expected to be the value.
-                    String value = (headerCell.getColumnIndex() < row.getLastCellNum() - 1) ?
-                            row.getCell(headerCell.getColumnIndex() + 1).getStringCellValue().trim() : "";
+                    int nextCellIndex = headerCell.getColumnIndex() + 1;
+                    Cell valueCell = (nextCellIndex < row.getLastCellNum()) ? row.getCell(nextCellIndex) : null;
+                    String value = (valueCell != null) ? valueCell.getStringCellValue().trim() : "";
                     headerValueMap.put(enumHeaderName, value);
                     headerRowIndexMap.put(enumHeaderName, row.getRowNum());
                 });
