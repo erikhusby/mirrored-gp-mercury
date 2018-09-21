@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentra
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
@@ -1281,7 +1282,7 @@ public class LabEventFactory implements Serializable {
                 if (reagentNameSet.contains(genericReagent.getName())) {
                     if (reagentType.getExpiration() == null) {
                         throw new RuntimeException("No expiration date provided for reagent " + genericReagent.getName());
-                    } if (reagentType.getExpiration().before(new Date())) {
+                    } else if (reagentType.getExpiration().before(DateUtils.getStartOfDay(new Date()))) {
                         throw new RuntimeException("Reagent " + genericReagent.getName() + " expired as of " + reagentType.getExpiration().toString());
                     }
                 }
