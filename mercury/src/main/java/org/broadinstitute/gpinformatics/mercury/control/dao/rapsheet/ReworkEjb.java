@@ -226,8 +226,11 @@ public class ReworkEjb {
     }
 
     private boolean productOrderSampleCanEnterBucket(ProductOrderSample sample) {
-        ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(sample.getProductOrder().getProduct().
-                getWorkflowName());
+        if (!sample.getProductOrder().getOrderStatus().readyForLab()) {
+            return false;
+        }
+        ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(
+                sample.getProductOrder().getProduct().getWorkflowName());
         return !workflowDef.getEffectiveVersion().getBuckets().isEmpty();
     }
 
