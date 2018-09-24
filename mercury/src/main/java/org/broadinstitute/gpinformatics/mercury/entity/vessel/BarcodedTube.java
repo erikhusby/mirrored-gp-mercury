@@ -38,8 +38,8 @@ public class BarcodedTube extends LabVessel {
         Cryovial010("Cryovial010", "Cryo vial [10.0 (9.8)mL]"),
         Cryovial_GSSR("Cryovial_GSSR", "Cryo vial [GSSR LABEL]"),
         @Deprecated /** TODO Clear up persistent data and usages with misspelled enum and display name and delete this **/
-        EppendoffFliptop15("EppendoffFliptop15", "Eppendoff Flip-top [1.5mL]"),
-        EppendorfFliptop15("EppendorfFliptop15", "Eppendoff Flip-top [1.5mL]"),
+        EppendoffFliptop15("EppendoffFliptop15", "Eppendof Flip-top [1.5mL]"),
+        EppendorfFliptop15("EppendorfFliptop15", "Eppendorf Flip-top [1.5mL]"),
         EppendorfFliptop15_Gates("EppendorfFliptop15_Gates", "Eppendorf Flip-top [1.5mL] (Gates)"),
         EppendorfFliptop20("EppendorfFliptop20", "Eppendorf Flip-top [2.0mL]"),
         EppendorfScrewcap15("EppendorfScrewcap15", "Eppendorf Screw cap [1.5mL]"),

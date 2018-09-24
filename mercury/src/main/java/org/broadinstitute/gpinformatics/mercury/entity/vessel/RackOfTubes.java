@@ -66,7 +66,7 @@ public class RackOfTubes extends LabVessel {
         TissueCassetteBox("TissueCassetteBox", "Tissue Cassette Box", VesselGeometry.G2x50_NUM),
         TissueCassetteBox_7x3("TissueCassetteBox_7x3", "Tissue Cassette Box 7x3", VesselGeometry.G3x7_NUM),
         TwoInch9x9box("TwoInch9x9box", "2\" 9x9 box", VesselGeometry.G9x9_NUM),
-        Vacutainer12x6Rack("Vacutainer12x6Rack", "Vacutainer 12x6 Rack", VesselGeometry.G12x6_NUM),
+        Vacutainer12x6Rack("Vacutainer12x6Rack", "Vacutainer 12x6 Rack", VesselGeometry.G6x12_NUM),
         Voucher_Box("Voucher_Box", "Voucher box", VesselGeometry.G10x1_NUM);
 
         public enum CanRackScan {
@@ -114,7 +114,7 @@ public class RackOfTubes extends LabVessel {
             for (RackType rackType : RackType.values()) {
                 // name and automation name
                 MAP_NAME_TO_RACK_TYPE.put(rackType.name(), rackType);
-                MAP_DISPLAY_NAME_TO_TYPE.put(rackType.name(), rackType);
+                MAP_DISPLAY_NAME_TO_TYPE.put(rackType.getDisplayName(), rackType);
             }
         }
 
