@@ -2702,6 +2702,7 @@ public class LabVesselSearchDefinition {
 
             // State variable to handle configuration option to stop on first hit
             TraversalControl outcome = TraversalControl.ContinueTraversing;
+            boolean catchThisVessel = false;
 
             // There is no event at traversal starting vessel (hopcount = 0)
             if ( context.getHopCount() > 0 ) {
@@ -2714,36 +2715,56 @@ public class LabVesselSearchDefinition {
                 }
 
                 LabVessel.VesselEvent eventNode = context.getVesselEvent();
-                boolean catchThisVessel = false;
 
                 if (labEventTypes.contains(eventNode.getLabEvent().getLabEventType())) {
-                    Map.Entry<LabVessel,VesselPosition> vesselPositionEntry = getTraversalVessel(context);
-                    positions.put(vesselPositionEntry.getKey(), vesselPositionEntry.getValue() );
+                    Map.Entry<LabVessel, VesselPosition> vesselPositionEntry = getTraversalVessel(context);
+                    positions.put(vesselPositionEntry.getKey(), vesselPositionEntry.getValue());
                     catchThisVessel = true;
 
-                    if(captureLatestEventVesselsFlag || captureAllEventVesselsFlag ) {
-                        eventMap.put(eventNode.getLabEvent(),vesselPositionEntry.getKey());
+                    if (captureLatestEventVesselsFlag || captureAllEventVesselsFlag) {
+                        eventMap.put(eventNode.getLabEvent(), vesselPositionEntry.getKey());
                     }
-                } else {
-                    // Try in-place events
-                    Map.Entry<LabVessel,VesselPosition> vesselPositionEntry = getTraversalVessel(context);
+                }
+            }
 
-                    for (LabEvent inPlaceEvent : vesselPositionEntry.getKey().getInPlaceLabEvents()) {
-                        if (labEventTypes.contains(inPlaceEvent.getLabEventType())) {
-                            positions.put(vesselPositionEntry.getKey(), vesselPositionEntry.getValue());
-                            catchThisVessel = true;
+            // Try in-place events
+            if( ! catchThisVessel ) {
+                Map.Entry<LabVessel,VesselPosition> vesselPositionEntry = getTraversalVessel(context);
 
-                            if(captureLatestEventVesselsFlag || captureAllEventVesselsFlag) {
-                                eventMap.put(eventNode.getLabEvent(),vesselPositionEntry.getKey());
+                for (LabEvent inPlaceEvent : vesselPositionEntry.getKey().getInPlaceLabEvents()) {
+                    if (labEventTypes.contains(inPlaceEvent.getLabEventType())) {
+                        positions.put(vesselPositionEntry.getKey(), vesselPositionEntry.getValue());
+                        catchThisVessel = true;
+
+                        if(captureLatestEventVesselsFlag || captureAllEventVesselsFlag) {
+                            eventMap.put(inPlaceEvent,vesselPositionEntry.getKey());
+                        }
+                        break;
+                    }
+                }
+
+                // First hop, try looking in containers for event type
+                if( ! catchThisVessel && context.getHopCount() == 0 ) {
+                    // Still here?  Try the container's in-place events
+                    for( VesselContainer container : vesselPositionEntry.getKey().getVesselContainers() ) {
+                        for( LabEvent inPlaceEvent : container.getEmbedder().getInPlaceLabEvents() ) {
+                            if (labEventTypes.contains(inPlaceEvent.getLabEventType() ) ) {
+                                positions.put(vesselPositionEntry.getKey(), container.getPositionOfVessel(vesselPositionEntry.getKey()));
+                                catchThisVessel = true;
+
+                                if(captureLatestEventVesselsFlag || captureAllEventVesselsFlag) {
+                                    eventMap.put(inPlaceEvent, vesselPositionEntry.getKey());
+                                }
+                                break;
+
                             }
-                            break;
                         }
                     }
                 }
+            }
 
-                if (catchThisVessel) {
-                    stopTraversingBeforeNextHop = stopTraverseAtFirstFind;
-                }
+            if (catchThisVessel) {
+                stopTraversingBeforeNextHop = stopTraverseAtFirstFind;
             }
 
             return outcome;
@@ -2759,8 +2780,13 @@ public class LabVesselSearchDefinition {
             LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
 
             LabVessel eventVessel;
-            VesselPosition position;
-            if( useEventTarget ) {
+            VesselPosition position = null;
+            if( context.getHopCount() == 0 ) {
+                eventVessel = context.getContextVessel();
+                if( eventVessel == null ) {
+                    eventVessel = context.getContextVesselContainer().getEmbedder();
+                }
+            } else if( useEventTarget ) {
                 position = contextVesselEvent.getTargetPosition();
                 if (contextVesselEvent.getTargetLabVessel() != null) {
                     eventVessel = contextVesselEvent.getTargetLabVessel();
