@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
@@ -54,19 +55,24 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.blankOrNullString;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingCreditDbFreeTest {
     public BillingCreditDbFreeTest() {
     }
 
-    private BillingEmailService billingEmailService;
     private PriceItem priceItem;
     private QuotePriceItem quotePriceItem;
     private BillingAdaptor billingAdaptor;
@@ -81,16 +87,15 @@ public class BillingCreditDbFreeTest {
     private ProductOrderEjb productOrderEjb = Mockito.mock(ProductOrderEjb.class);
     private SAPProductPriceCache productPriceCache = Mockito.mock(SAPProductPriceCache.class);
     private SAPAccessControlEjb accessControlEjb = Mockito.mock(SAPAccessControlEjb.class);
+    private BillingEjb billingEjb;
 
-    private BillingEjb billingEjb = new BillingEjb(priceListCache, billingSessionDao, null, null, null);
-
-    private final long initialQuantity = 2L;
-    private final long negativeQuantity = Math.negateExact(initialQuantity);
+    private final Double qtyPositiveTwo = 2D;
+    private final Double qtyNegativeTwo = (double) Math.negateExact(qtyPositiveTwo.longValue());
 
     @BeforeMethod
     public void setUp() throws QuoteNotFoundException, QuoteServerException, InvalidProductException {
         resetMocks();
-        pdo = ProductOrderTestFactory.createDummyProductOrder(1, "PDO-1234");
+        pdo = ProductOrderTestFactory.createDummyProductOrder(2, "PDO-1234");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         pdo.setProductOrderAddOns(Collections.emptyList());
         String quoteId = pdo.getQuoteId();
@@ -102,9 +107,10 @@ public class BillingCreditDbFreeTest {
 
         priceItem = pdo.getProduct().getPrimaryPriceItem();
         priceItem.setPrice("100");
-        priceItem.setUnits("2");
-        quotePriceItem = new QuotePriceItem(priceItem.getCategory(), quoteId, priceItem.getName(), priceItem.getPrice(),
-            priceItem.getUnits(), priceItem.getPlatform());
+        priceItem.setUnits("uL");
+        quotePriceItem =
+            new QuotePriceItem(priceItem.getCategory(), quoteId, priceItem.getName(), priceItem.getPrice(),
+                priceItem.getUnits(), priceItem.getPlatform());
 
         QuoteImportItem quoteImportItem =
             new QuoteImportItem(quotePriceItem.getId(), priceItem, "Quote Type", new ArrayList<>(),
@@ -118,9 +124,9 @@ public class BillingCreditDbFreeTest {
             new QuoteFunding(Collections.singleton(
                 new FundingLevel("100", Collections.singleton(new Funding(Funding.PURCHASE_ORDER, "foo", "bar"))))));
         quoteImportItem.setQuote(quote);
-
-        Mockito.when(priceListCache.getQuotePriceItems()).thenReturn(Collections.singleton(quotePriceItem));
-        Mockito.when(priceListCache.findByKeyFields(Mockito.any(PriceItem.class))).thenReturn(quotePriceItem);
+        final List<QuotePriceItem> quotePriceItems = Collections.singletonList(quotePriceItem);
+        Mockito.when(priceListCache.getQuotePriceItems()).thenReturn(quotePriceItems);
+        Mockito.when(priceListCache.findByKeyFields(priceItem)).thenReturn(quotePriceItem);
 
         Mockito.when(quoteService.getPriceItemsForDate(Mockito.anyListOf(QuoteImportItem.class)))
             .thenReturn(quoteImportItem.getPriceOnWorkDate());
@@ -137,23 +143,28 @@ public class BillingCreditDbFreeTest {
             SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
             .thenReturn(new SAPMaterial("material", "100", Collections.emptyMap(), Collections.emptyMap()));
         TemplateEngine templateEngine = new TemplateEngine();
-        templateEngine.postConstruct();
 
-        billingEmailService =
-            new BillingEmailService(AppConfig.produce(Deployment.DEV), SapConfig.produce(Deployment.DEV),
-                mockEmailSender, templateEngine);
+        templateEngine.postConstruct();
+        billingEjb =
+            new BillingEjb(priceListCache, billingSessionDao, null, null, null, AppConfig.produce(Deployment.DEV),
+                SapConfig.produce(Deployment.DEV), mockEmailSender, templateEngine);
         billingAdaptor = new BillingAdaptor(billingEjb, priceListCache, quoteService, billingSessionAccessEjb,
-            sapService, productPriceCache, accessControlEjb, billingEmailService);
+            sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
     }
 
     public void testCreateBillingCreditRequest() {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
 
-        List<BillingEjb.BillingResult> billingResults = bill(pdoSample, priceItem, initialQuantity);
-        validateBillingResults(pdoSample, billingResults, initialQuantity);
+        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
 
-        billingResults = bill(pdoSample, priceItem, negativeQuantity);
+        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
+        validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
+
+        billingMap.clear();
+        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 0);
 
         Mockito.verify(mockEmailSender, Mockito.times(1))
@@ -165,7 +176,10 @@ public class BillingCreditDbFreeTest {
     public void testNegativeBilling() {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
 
-        List<BillingEjb.BillingResult> billingResults = bill(pdoSample, priceItem, negativeQuantity);
+        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
+
         billingResults.forEach(
             billingResult -> assertThat(billingResult.getErrorMessage(), endsWith(BillingAdaptor.NEGATIVE_BILL_ERROR)));
 
@@ -175,19 +189,94 @@ public class BillingCreditDbFreeTest {
 
     }
 
-    public void testMoreNegativeThanPositiveBilling() {
+    public void testPositiveBilling() {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        List<BillingEjb.BillingResult> billingResults = bill(pdoSample, priceItem, 1);
+
+        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
+        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
+        billingResults.forEach(
+            billingResult -> {
+                assertThat(billingResult.getErrorMessage(), blankOrNullString());
+                assertThat(billingResult.getSAPBillingId(), not(blankOrNullString()));
+            });
+
+        Mockito.verify(mockEmailSender, Mockito.never())
+            .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyBoolean(), Mockito.anyBoolean());
+    }
+
+    public void testPositiveBillDifferentSamples() {
+        ProductOrderSample pdoSample1 = pdo.getSamples().get(0);
+        ProductOrderSample pdoSample2 = pdo.getSamples().get(1);
+
+        assertThat(pdoSample1, not(equalTo(pdoSample2)));
+
+        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample1, Pair.of(priceItem, qtyPositiveTwo));
+        billingMap.put(pdoSample2, Pair.of(priceItem, qtyPositiveTwo));
+        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
+
+        billingResults.forEach(
+            billingResult -> {
+                assertThat(billingResult.getErrorMessage(), blankOrNullString());
+                assertThat(billingResult.getSAPBillingId(), not(blankOrNullString()));
+            });
+
+        Mockito.verify(mockEmailSender, Mockito.never())
+            .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyBoolean(), Mockito.anyBoolean());
+    }
+
+    public void testNegativeBillDifferentSamples() {
+        ProductOrderSample pdoSample1 = pdo.getSamples().get(0);
+        ProductOrderSample pdoSample2 = pdo.getSamples().get(1);
+
+        assertThat(pdoSample1, not(equalTo(pdoSample2)));
+
+        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample1, Pair.of(priceItem, qtyPositiveTwo));
+        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
+
+        billingResults.forEach(
+            billingResult -> {
+                assertThat(billingResult.getErrorMessage(), blankOrNullString());
+                assertThat(billingResult.getSAPBillingId(), not(blankOrNullString()));
+            });
+
+        billingMap.clear();
+        billingMap.put(pdoSample2, Pair.of(priceItem, qtyNegativeTwo));
+        billingResults = bill(billingMap);
+
+        billingResults.forEach(
+            billingResult -> {
+                assertThat(billingResult.getErrorMessage(), blankOrNullString());
+                assertThat(billingResult.getSAPBillingId(), not(blankOrNullString()));
+            });
+
+        Mockito.verify(mockEmailSender, Mockito.never())
+            .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyBoolean(), Mockito.anyBoolean());
+    }
+
+    public void testMoreNegativeThanPositiveBillingPositiveFirst() {
+        ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(priceItem, 1d));
+
+        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 1);
 
-        billingResults = bill(pdoSample, priceItem, -2);
+        billingMap.clear();
+        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        billingResults = bill(billingMap);
+
         billingResults.forEach(
             billingResult -> assertThat(billingResult.getErrorMessage(), endsWith(BillingAdaptor.NEGATIVE_BILL_ERROR)));
 
         Mockito.verify(mockEmailSender, Mockito.never())
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyBoolean(), Mockito.anyBoolean());
-
     }
 
     private void validateBillingResults(ProductOrderSample sample, List<BillingEjb.BillingResult> results,
@@ -198,15 +287,18 @@ public class BillingCreditDbFreeTest {
         assertThat(totalBilled, equalTo(quantity));
     }
 
-    private List<BillingEjb.BillingResult> bill(ProductOrderSample productOrderSample, PriceItem priceItem,
-                                                double quantity) {
-        productOrderSample.addLedgerItem(new Date(), priceItem, quantity);
-        BillingSession billingSession = new BillingSession(1L, productOrderSample.getLedgerItems());
+    private List<BillingEjb.BillingResult> bill(Map<ProductOrderSample, Pair<PriceItem, Double>> samplePairMap) {
+        final Date date = new Date();
+        samplePairMap.forEach((productOrderSample, pricItemQtyPair) ->  {
+            productOrderSample.addLedgerItem(date, pricItemQtyPair.getKey(), pricItemQtyPair.getValue());
+        });
+        Set<LedgerEntry> ledgerItems = new HashSet<>();
+        samplePairMap.keySet().stream().map(ProductOrderSample::getLedgerItems).forEach(ledgerItems::addAll);
+
+        BillingSession billingSession = new BillingSession(1L, ledgerItems);
         Mockito.reset(billingSessionAccessEjb);
         Mockito.when(billingSessionAccessEjb.findAndLockSession(Mockito.anyString())).thenReturn(billingSession);
-        List<BillingEjb.BillingResult> billingResults =
-            billingAdaptor.billSessionItems("url", billingSession.getBusinessKey());
-        return billingResults;
+        return billingAdaptor.billSessionItems("url", billingSession.getBusinessKey());
     }
 
     private void resetMocks(){

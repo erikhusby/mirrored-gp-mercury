@@ -120,7 +120,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
         productPriceCache = Mockito.mock(SAPProductPriceCache.class);
         billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
-                billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb, null);
+                billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
                 SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn(new SAPMaterial("Test", "50", Collections.<Condition, BigDecimal>emptyMap(), Collections.singletonMap(
                 DeliveryCondition.LATE_DELIVERY_DISCOUNT, new BigDecimal("200.00"))));

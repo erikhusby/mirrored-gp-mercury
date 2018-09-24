@@ -39,8 +39,8 @@ public class BillingEjbTest {
                         return aliquotId;
                     }
                 }
-            }
-    );
+            },
+        null, null, null, null);
 
     public void testMapAliquotIdToSampleInvalid() {
         ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(STOCK_ID);

@@ -134,7 +134,7 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
         billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
-                billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb, null);
+                billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
 
         BillingSession billingSession = new BillingSession(-1L, ledgerEntries);

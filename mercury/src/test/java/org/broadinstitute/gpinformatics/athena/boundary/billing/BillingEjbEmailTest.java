@@ -28,15 +28,16 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class BillingEmailServiceTest {
+public class BillingEjbEmailTest {
 
-    private BillingEmailService billingEmailService;
+    private BillingEjb billingEjb;
 
     @BeforeTest
     public void setUp() {
         TemplateEngine templateEngine = new TemplateEngine();
         templateEngine.postConstruct();
-        billingEmailService = new BillingEmailService(AppConfig.produce(Deployment.DEV), null, null, templateEngine);
+        billingEjb = new BillingEjb(null, null, null, null, null, AppConfig.produce(Deployment.DEV),
+            SapConfig.produce(Deployment.DEV), null, templateEngine);
     }
 
     public void testProcessTemplate() {
@@ -44,6 +45,7 @@ public class BillingEmailServiceTest {
                           + "    <thead>\n"
                           + "    <tr>\n"
                           + "        <th>Mercury Order</th>\n"
+                          + "        <th>Material</th>\n"
                           + "        <th>SAP Sales Order</th>\n"
                           + "        <th>SAP Delivery Document(s)</th>\n"
                           + "        <th>Quantity</th>\n"
@@ -52,6 +54,7 @@ public class BillingEmailServiceTest {
                           + "    <tbody>\n"
                           + "    <tr>\n"
                           + "        <td>pdo-1</td>\n"
+                          + "        <td>material</td>\n"
                           + "        <td>sap-on</td>\n"
                           + "        <td>sap-dd</td>\n"
                           + "        <td>0</td>\n"
@@ -61,12 +64,13 @@ public class BillingEmailServiceTest {
 
         Map<String, Object> map = new HashMap<>();
         map.put("mercuryOrder", "pdo-1");
+        map.put("material", "material");
         map.put("sapOrderNumber", "sap-on");
         map.put("sapDeliveryDocuments", "sap-dd");
         map.put("quantity", "0");
 
         String result =
-            billingEmailService.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map).trim();
+            billingEjb.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map).trim();
 
         assertThat(result, containsString(expected));
     }
@@ -75,7 +79,7 @@ public class BillingEmailServiceTest {
         Map<String, Object> map = new HashMap<>();
         map.put(null, null);
         try {
-            billingEmailService.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map);
+            billingEjb.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map);
         } catch (RuntimeException e) {
             assertThat(e.getCause(), instanceOf(InvalidReferenceException.class));
         }
@@ -85,7 +89,7 @@ public class BillingEmailServiceTest {
         Map<String, Object> map = new HashMap<>();
         map.put(null, null);
         try {
-            billingEmailService.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map);
+            billingEjb.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map);
         } catch (Exception e) {
             assertThat(e.getCause(), instanceOf(InvalidReferenceException.class));
         }
@@ -95,7 +99,7 @@ public class BillingEmailServiceTest {
         Map<String, Object> map = null;
 
         try {
-            billingEmailService.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map);
+            billingEjb.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map);
         } catch (RuntimeException e) {
             assertThat(e.getCause(), instanceOf(InvalidReferenceException.class));
         }
