@@ -3,11 +3,9 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.SAPMaterial;
@@ -21,8 +19,6 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -467,7 +463,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.topLevelProduct = topLevelProduct;
     }
 
-    public void setWorkflowName(@Nonnull String workflowName) {
+    public void setWorkflowName(String workflowName) {
         this.workflowName = workflowName;
     }
 
