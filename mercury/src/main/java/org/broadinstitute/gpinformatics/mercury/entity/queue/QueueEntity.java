@@ -44,6 +44,9 @@ public class QueueEntity {
     @Column(name = "completed_on")
     private Date completedOn;
 
+    public QueueEntity() {
+    }
+
     public QueueEntity(QueueGrouping queueGrouping, LabVessel labVessel) {
         this.queueGrouping = queueGrouping;
         this.queueStatus = QueueStatus.Active;
