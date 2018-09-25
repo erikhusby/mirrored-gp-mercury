@@ -1328,4 +1328,12 @@
                                  referencedTableSchemaName="mercury" referencedTableName="queue"
                                  referencedColumnNames="queue_id" />
     </changeSet>
+
+    <changeSet id="GPLIM-5743-15" author="pdunlea">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+                values (mercury.seq_queue.nextval, 'PICO', 'Pico Queue',
+                        'Research Pico queue for newly received or extracted samples.');
+        </sql>
+    </changeSet>
 </databaseChangeLog>
