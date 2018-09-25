@@ -397,12 +397,17 @@ showColumnOptions = function (option, isEdit) {
     var overlayDiv = $j( "#resultParamsOverlay" );
     overlayDiv.dialog("option","paramType", "SEARCH_TERM");
     overlayDiv.dialog("option","entityName", $j("#entityName").val());
-    overlayDiv.dialog("option","elementName", option.data("elementName"));
-    overlayDiv.dialog("option","resultParams", option.val());
-    overlayDiv.dialog("open");
+
     if( isEdit ) {
-        // Hold a reference to option being edited
         overlayDiv.dialog("option","srchTermEditSrc", option);
+        overlayDiv.dialog("option","resultParams", option.val());
+        overlayDiv.dialog("option","elementName", JSON.parse( option.val() ).elementName );
+        overlayDiv.dialog("open");
+        // Hold a reference to option being edited (after opening)
+        overlayDiv.dialog("option","srchTermEditSrc", option);
+    } else {
+        overlayDiv.dialog("option","elementName", option.data("elementName"));
+        overlayDiv.dialog("open");
     }
 };
 
