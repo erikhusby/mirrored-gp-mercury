@@ -44,7 +44,7 @@ public class QueueGrouping {
     @ManyToOne(targetEntity = LabVessel.class)
     private LabVessel containerVessel;
 
-    @OneToMany(mappedBy = "bucket", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "queueGrouping", cascade = CascadeType.PERSIST)
     @Where(clause = "queue_status = 'Active'")
     @BatchSize(size = 100)
     private List<QueueEntity> queuedEntities;
@@ -123,7 +123,9 @@ public class QueueGrouping {
         this.version = version;
     }
 
-    public static final Comparator<? super QueueGrouping> BY_SORT_ORDER = new Comparator<QueueGrouping>() {
+    public static final BySortOrder BY_SORT_ORDER = new BySortOrder();
+
+    public static class BySortOrder implements Comparator<QueueGrouping> {
         @Override
         public int compare(QueueGrouping o1, QueueGrouping o2) {
             return o1.getSortOrder().compareTo(o2.getSortOrder());

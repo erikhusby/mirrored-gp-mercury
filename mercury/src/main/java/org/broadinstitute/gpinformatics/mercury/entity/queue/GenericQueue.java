@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Sort;
+import org.hibernate.annotations.SortType;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
@@ -15,6 +17,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -23,7 +26,7 @@ import java.util.SortedSet;
 
 @Entity
 @Audited
-@Table(schema = "mercury", name = "bucket")
+@Table(schema = "mercury", name = "queue")
 public class GenericQueue {
 
     @Id
@@ -43,9 +46,11 @@ public class GenericQueue {
 
     @OneToMany(mappedBy = "associatedQueue", cascade = CascadeType.ALL)
     @BatchSize(size = 100)
+    @Sort(comparator = QueueGrouping.BySortOrder.class, type = SortType.COMPARATOR)
     private SortedSet<QueueGrouping> queueGroupings;
 
-    @JoinTable(name = "product_queue",
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(name = "product_queue", schema = "mercury",
             joinColumns = @JoinColumn(referencedColumnName = "queue_id", columnDefinition = "queue_id"),
             inverseJoinColumns = @JoinColumn(referencedColumnName = "product_id", columnDefinition = "product_id"))
     private List<Product> associatedProducts;

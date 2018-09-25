@@ -1314,4 +1314,18 @@
             <column name="queue_id" type="number" />
         </createTable>
     </changeSet>
+
+    <changeSet id="GPLIM-5743-13" author="pdunlea">
+        <addForeignKeyConstraint constraintName="fk_product_queue_product_id" baseTableSchemaName="mercury"
+                                 baseTableName="product_queue" baseColumnNames="product_id"
+                                 referencedTableSchemaName="athena" referencedTableName="product"
+                                 referencedColumnNames="product_id" />
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-14" author="pdunlea">
+        <addForeignKeyConstraint constraintName="product_queue_queue_id" baseTableSchemaName="mercury"
+                                 baseTableName="product_queue" baseColumnNames="queue_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="queue"
+                                 referencedColumnNames="queue_id" />
+    </changeSet>
 </databaseChangeLog>

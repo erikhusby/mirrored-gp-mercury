@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
@@ -105,8 +106,8 @@ public class QueueEjbDbFreeTest {
         Assert.assertTrue(queueEjb.findQueueByType(QueueType.PICO).isQueueEmpty());
     }
 
-    @Test
-    public void testReOrderQueue() throws Exception {
+    @Test(groups = DATABASE_FREE)
+    public void testReOrderQueue() {
         QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getResortQueue(), QueueTestFactory.getPicoValidationNoErrors());
 
         long[] newSortOrder = new long[] { 4, 1, 3, 2};
@@ -114,8 +115,8 @@ public class QueueEjbDbFreeTest {
         handleReOrderTesting(queueEjb, newSortOrder, false);
     }
 
-    @Test
-    public void testReOrderQueueNonUniqueValues() throws Exception {
+    @Test(groups = DATABASE_FREE)
+    public void testReOrderQueueNonUniqueValues() {
         QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getResortQueue(), QueueTestFactory.getPicoValidationNoErrors());
 
         long[] newSortOrder = new long[] { 4, 4, 3, 2};
@@ -125,7 +126,7 @@ public class QueueEjbDbFreeTest {
 
     private void handleReOrderTesting(QueueEjb queueEjb, long[] newSortOrder, boolean failExpected) {
 
-        HashMap<Long, Long> newOrder = new HashMap<>();
+        Map<Long, Long> newOrder = new HashMap<>();
         int currentOrder = 0;
         GenericQueue queueByType = queueEjb.findQueueByType(QueueType.PICO);
         for (QueueGrouping queueGrouping : queueByType.getQueueGroupings()) {
