@@ -65,6 +65,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -419,6 +420,18 @@ public class LabEventFactory implements Serializable {
                         bspRestSender.postToBsp(bspBettaLIMSMessage,
                                 BSPRestSender.BSP_TRANSFER_REST_URL);
                     }
+                    // todo jmt assign SM-IDs to destinations
+                    for (LabEvent event : labEvents) {
+                        for (LabVessel labVessel : event.getTargetLabVessels()) {
+                            VesselContainer<?> containerRole = labVessel.getContainerRole();
+                            if (containerRole != null) {
+                                for (LabVessel vessel : containerRole.getContainedVessels()) {
+                                    if ()
+                                }
+                            }
+                        }
+                    }
+
                     break;
                 case GAP:
                     String forwardToGap = null;
@@ -428,7 +441,7 @@ public class LabEventFactory implements Serializable {
                         if (inPlaceLabVessel != null) {
                             labVessels.add(inPlaceLabVessel);
                         }
-                    }
+                    }`2
                     for (LabVessel labVessel : labVessels) {
                         forwardToGap = determineForwardToGap(labEvent, labVessel, productEjb,
                                 attributeArchetypeDao);
