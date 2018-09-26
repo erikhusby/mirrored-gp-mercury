@@ -642,7 +642,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.quantities = quantities;
         }
 
-        public boolean hasSubmittedQuantitiesSet() {
+        public boolean isSubmittedQuantitiesSet() {
 
             System.out.println("In the has submitted quantities method.");
             boolean result = false;

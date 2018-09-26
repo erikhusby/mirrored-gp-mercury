@@ -973,7 +973,23 @@
             <c:forEach items="${actionBean.productOrderSampleLedgerInfos}" var="info">
                 <tr class="${info.sample.deliveryStatus.displayName == 'Abandoned' ? 'abandoned' : ''}">
                     <td>
-                        <c:if test="${actionBean.ledgerData[info.sample.samplePosition].hasSubmittedQuantitiesSet() || info.sample.deliveryStatus.displayName != 'Abandoned'}">
+                        <c:set var="hideAbandoned" value="${false}" />
+                        <c:if test="${info.sample.deliveryStatus.displayName == 'Abandoned'}">
+                            <c:set var="hideAbandoned" value="${true}" />
+                            <c:choose>
+                                <c:when test="${actionBean.ledgerData[info.sample.samplePosition]. submittedQuantitiesSet()}">
+                                    <c:set var="hideAbandoned" value="${false}" />
+                                </c:when>
+                                <c:otherwise>
+                                    <c:set var="hideAbandoned" value="${true}" />
+                                </c:otherwise>
+                            </c:choose>
+                            <c:if test="${actionBean.ledgerData[info.sample.samplePosition]. submittedQuantitiesSet()}">
+
+
+                            </c:if>
+                        </c:if>
+                        <c:if test="${!hideAbandoned}">
                             <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
                         </c:if>
                     </td>
@@ -1015,7 +1031,7 @@
                         <c:set var="currentValue"
                                value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
                         <c:choose>
-                            <c:when test="${actionBean.ledgerData[info.sample.samplePosition].hasSubmittedQuantitiesSet() || info.sample.deliveryStatus.displayName != 'Abandoned' }">
+                            <c:when test="${!hideAbandoned}">
                                 <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
                                        value="${currentValue}" data-rownum = "${info.sample.samplePosition}"
                                        originalValue="${info.dateCompleteFormatted}"
