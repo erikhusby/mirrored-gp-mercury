@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjec
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -198,6 +199,9 @@ public class LabEventFactory implements Serializable {
 
     @Inject
     private BSPSetVolumeConcentration bspSetVolumeConcentration;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);
 
@@ -417,16 +421,26 @@ public class LabEventFactory implements Serializable {
                 case BSP:
                     BettaLIMSMessage bspBettaLIMSMessage = bspRestSender.bspBettaLIMSMessage(bettaLIMSMessage, labEvents);
                     if (bspBettaLIMSMessage != null) {
-                        bspRestSender.postToBsp(bspBettaLIMSMessage,
+                        TransferReturn transferReturn = bspRestSender.postToBsp(bspBettaLIMSMessage,
                                 BSPRestSender.BSP_TRANSFER_REST_URL);
-                    }
-                    // todo jmt assign SM-IDs to destinations
-                    for (LabEvent event : labEvents) {
-                        for (LabVessel labVessel : event.getTargetLabVessels()) {
-                            VesselContainer<?> containerRole = labVessel.getContainerRole();
-                            if (containerRole != null) {
-                                for (LabVessel vessel : containerRole.getContainedVessels()) {
-                                    if ()
+
+                        // Assign SM-IDs to destinations
+                        Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(
+                                transferReturn.getMapBarcodeToSmId().values());
+                        for (LabEvent event : labEvents) {
+                            for (LabVessel labVessel : event.getTargetLabVessels()) {
+                                VesselContainer<?> containerRole = labVessel.getContainerRole();
+                                if (containerRole != null) {
+                                    for (LabVessel vessel : containerRole.getContainedVessels()) {
+                                        String smId = transferReturn.getMapBarcodeToSmId().get(vessel.getLabel());
+                                        if (smId != null) {
+                                            MercurySample mercurySample = mapIdToMercurySample.get(smId);
+                                            if (mercurySample == null) {
+                                                mercurySample = new MercurySample(smId, MercurySample.MetadataSource.BSP);
+                                            }
+                                            vessel.getMercurySamples().add(mercurySample);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -441,7 +455,7 @@ public class LabEventFactory implements Serializable {
                         if (inPlaceLabVessel != null) {
                             labVessels.add(inPlaceLabVessel);
                         }
-                    }`2
+                    }
                     for (LabVessel labVessel : labVessels) {
                         forwardToGap = determineForwardToGap(labEvent, labVessel, productEjb,
                                 attributeArchetypeDao);
