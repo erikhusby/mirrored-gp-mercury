@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
 
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchTestUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -21,10 +23,14 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -93,8 +99,48 @@ public class QueueEjbTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasWarnings());
     }
 
-    private Collection<? extends LabVessel> generateLabVesselsForTest() {
+    @Test(groups = TestGroups.STANDARD)
+    public void reorderTest() throws Exception {
+        MessageCollection messageCollection = new MessageCollection();
+        queueEjb.enqueueLabVessels(null, generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection);
 
+
+        SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings();
+        Assert.assertNotNull(queueGroupings);
+
+        List<Long> originalOrder = new ArrayList<>();
+        for (QueueGrouping queueGrouping : queueGroupings) {
+            originalOrder.add(queueGrouping.getQueueGroupingId());
+        }
+
+        List<Long> oppositeOrder = new ArrayList<>(originalOrder);
+
+        Collections.reverse(oppositeOrder);
+
+        long currentNumber = 1;
+        Map<Long, Long> reorder = new HashMap<>();
+
+        for (Long orderId : oppositeOrder) {
+            reorder.put(orderId, currentNumber++);
+        }
+
+        queueEjb.reOrderQueue(reorder, QueueType.PICO);
+
+        GenericQueue queueByType = queueEjb.findQueueByType(QueueType.PICO);
+        int i = 0;
+        for (QueueGrouping queueGrouping : queueByType.getQueueGroupings()) {
+            Assert.assertEquals(queueGrouping.getQueueGroupingId(), oppositeOrder.get(0));
+            Assert.assertNotEquals(queueGrouping.getQueueGroupingId(), oppositeOrder.get(0));
+        }
+
+        queueEjb.dequeueLabVessels(generateLabVesselsForTest(), QueueType.PICO, messageCollection,
+                DequeueingOptions.OVERRIDE);
+
+        Assert.assertFalse(messageCollection.hasErrors());
+        Assert.assertFalse(messageCollection.hasWarnings());
+    }
+
+    private Collection<? extends LabVessel> generateLabVesselsForTest() {
         return mapBarcodeToTube.values();
     }
 }
