@@ -332,7 +332,7 @@ public class BillingEjb {
 
         String sapDocuments = priorBillings.stream()
             .map(LedgerEntry::getSapDeliveryDocumentId)
-            .filter(StringUtils::isNotBlank)
+            .filter(StringUtils::isNotBlank).distinct()
             .collect(Collectors.joining("<br/>"));
 
         rootMap.put("mercuryOrder", quoteImportItem.getProductOrder().getJiraTicketKey());
