@@ -1,7 +1,7 @@
 <html xmlns="http://www.w3.org/1999/html">
 <head>
     <style type="text/css">
-        th, td {text-align: left;padding-right: 1em;vertical-align: top;}
+        th, td {text-align: left;padding-right: 1em;vertical-align: top;}  td {border-top: 1px solid black;}  th {white-space: nowrap}
     </style>
 </head>
 <body>
@@ -13,6 +13,7 @@
     <tr>
         <th>Mercury Order</th>
         <th>Material</th>
+        <th>Price Item</th>
         <th>SAP Sales Order</th>
         <th>SAP Delivery Document(s)</th>
         <th>Quantity</th>
@@ -22,6 +23,7 @@
     <tr>
         <td>${mercuryOrder}</td>
         <td>${material}</td>
+        <td>${priceItem}</td>
         <td>${sapOrderNumber}</td>
         <td>${sapDeliveryDocuments}</td>
         <td>${quantity}</td>

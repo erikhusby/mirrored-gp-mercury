@@ -337,6 +337,7 @@ public class BillingEjb {
 
         rootMap.put("mercuryOrder", quoteImportItem.getProductOrder().getJiraTicketKey());
         rootMap.put("material", quoteImportItem.getProductOrder().getProduct().getDisplayName());
+        rootMap.put("priceItem", quoteImportItem.getPriceItem().getDisplayName());
         rootMap.put("sapOrderNumber", quoteImportItem.getProductOrder().getSapOrderNumber());
         rootMap.put("sapDeliveryDocuments", sapDocuments);
         rootMap.put("quantity", quoteImportItem.getQuantity());
