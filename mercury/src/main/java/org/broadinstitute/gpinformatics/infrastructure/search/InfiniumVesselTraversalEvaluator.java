@@ -147,7 +147,7 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
 
     /**
      * All Infinium related columns depend on search being related to Infinium arrays.
-     * @param context Used to determine if search has a costom infinium traverser attached
+     * @param context Used to determine if search has a custom infinium traverser attached
      * @return True if the search term is related to Infinium arrays
      */
     public static boolean isInfiniumSearch( SearchContext context ){
@@ -164,7 +164,7 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
     public static String getInfiniumDnaPlateBarcode(LabVessel infiniumVessel, SearchContext context ) {
         String result = null;
         if(!isInfiniumSearch(context)) {
-            return null;
+            return result;
         }
 
         // All Infinium vessels look in ancestors for dna plate barcode
@@ -203,6 +203,9 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
 
     public static String getInfiniumAmpPlateBarcode(LabVessel infiniumVessel, SearchContext context) {
         String result = null;
+        if(!isInfiniumSearch(context)) {
+            return result;
+        }
 
         // Infinium vessels look in ancestors and descendants for amp plate barcode
         LabVesselSearchDefinition.VesselsForEventTraverserCriteria infiniumAncestorCriteria = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
@@ -269,10 +272,9 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
         infiniumDescendantCriteria.captureLatestEventVesselsOnly();
 
         // Evaluate non-container only.  If a container, don't evaluate and return empty collection
-        if( dnaPlateWell.getContainerRole() == null ) {
+        if( context == null || (isInfiniumSearch(context) && dnaPlateWell.getContainerRole() == null )) {
             dnaPlateWell.evaluateCriteria(infiniumDescendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         }
-        // (Else throw IllegalStateException?)
 
         return infiniumDescendantCriteria.getPositions();
     }
@@ -293,10 +295,9 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
                 chipEventTypes, false, true);
 
         // Evaluate container only.  If not a container, don't evaluate and return empty collection
-        if( dnaPlate.getContainerRole() != null ) {
+        if( isInfiniumSearch(context) && dnaPlate.getContainerRole() != null ) {
             dnaPlate.getContainerRole().applyCriteriaToAllPositions(infiniumDescendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         }
-        // (Else throw IllegalStateException?)
 
         return infiniumDescendantCriteria.getPositions();
     }

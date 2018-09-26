@@ -55,7 +55,8 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
      * @return queryString to pass to the web service.
      */
     private static String getQueryString(@Nonnull String barcode, @Nullable BigDecimal volume,
-                                         @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight)
+                                         @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight,
+                                         @Nullable Boolean terminateDepleted)
             throws ValidationException {
         List<NameValuePair> parameters = new ArrayList<>();
 
@@ -71,6 +72,10 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
             parameters.add(new BasicNameValuePair("receptacle_weight", String.valueOf(receptacleWeight)));
         }
 
+        if (terminateDepleted != null && terminateDepleted) {
+            parameters.add(new BasicNameValuePair("terminate_depleted", "true"));
+        }
+
         if (parameters.isEmpty()) {
             throw new ValidationException("A value for volume, concentration or receptacleWeight is required.");
         }
@@ -84,18 +89,20 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
      * Call BSP WebService which sets the volume and or the concentration of the thing barcoded.
      * At lease one of must be Nonnull.
      *
-     * @param barcode       The thing having its quant updated. In BSP this currently can be a SM id or a manufacturer
-     *                      barcode.
-     * @param volume        new volume of the sample. Can be null.
-     * @param concentration the new concentration of the sample. Can be null.
+     * @param barcode         The thing having its quant updated. In BSP this currently can be a SM id or a manufacturer
+     *                        barcode.
+     * @param volume          New volume of the sample. Can be null.
+     * @param concentration   The new concentration of the sample. Can be null.
+     * @param terminateAction Whether to terminate the sample if it is depleted or leave the sample in the same state.
      */
     @Override
     public String setVolumeAndConcentration(@Nonnull String barcode, @Nullable BigDecimal volume,
-                                            @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight) {
+                                            @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight,
+                                            @Nullable TerminateAction terminateAction) {
         BufferedReader rdr = null;
         String result;
         try {
-            String queryString = getQueryString(barcode, volume, concentration, receptacleWeight);
+            String queryString = getQueryString(barcode, volume, concentration, receptacleWeight, terminateAction.getTerminateDepleted());
             String urlString = getUrl(queryString);
 
             WebResource webResource = getJerseyClient().resource(urlString);
