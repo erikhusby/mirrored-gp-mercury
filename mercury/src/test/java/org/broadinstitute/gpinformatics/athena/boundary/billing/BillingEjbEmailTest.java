@@ -46,7 +46,6 @@ public class BillingEjbEmailTest {
                           + "    <tr>\n"
                           + "        <th>Mercury Order</th>\n"
                           + "        <th>Material</th>\n"
-                          + "        <th>Price Item</th>\n"
                           + "        <th>SAP Sales Order</th>\n"
                           + "        <th>SAP Delivery Document(s)</th>\n"
                           + "        <th>Quantity</th>\n"
@@ -56,7 +55,6 @@ public class BillingEjbEmailTest {
                           + "    <tr>\n"
                           + "        <td>pdo-1</td>\n"
                           + "        <td>material</td>\n"
-                          + "        <td>price item</td>\n"
                           + "        <td>sap-on</td>\n"
                           + "        <td>sap-dd</td>\n"
                           + "        <td>0</td>\n"
@@ -67,7 +65,6 @@ public class BillingEjbEmailTest {
         Map<String, Object> map = new HashMap<>();
         map.put("mercuryOrder", "pdo-1");
         map.put("material", "material");
-        map.put("priceItem", "price item");
         map.put("sapOrderNumber", "sap-on");
         map.put("sapDeliveryDocuments", "sap-dd");
         map.put("quantity", "0");

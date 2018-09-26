@@ -13,7 +13,6 @@
     <tr>
         <th>Mercury Order</th>
         <th>Material</th>
-        <th>Price Item</th>
         <th>SAP Sales Order</th>
         <th>SAP Delivery Document(s)</th>
         <th>Quantity</th>
@@ -23,7 +22,6 @@
     <tr>
         <td>${mercuryOrder}</td>
         <td>${material}</td>
-        <td>${priceItem}</td>
         <td>${sapOrderNumber}</td>
         <td>${sapDeliveryDocuments}</td>
         <td>${quantity}</td>
