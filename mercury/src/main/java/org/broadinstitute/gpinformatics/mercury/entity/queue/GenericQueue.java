@@ -37,7 +37,7 @@ public class GenericQueue {
     @Column(name = "queue_name")
     private String queueName;
 
-    @Column(name = "STATUS", nullable = false)
+    @Column(name = "queue_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private QueueType queueType;
 

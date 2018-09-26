@@ -7,6 +7,6 @@ public abstract class AbstractQueueValidator {
 
     public abstract void validatePreEnqueue(LabVessel labVessel, MessageCollection messageCollection);
 
-    public abstract boolean isComplete(LabVessel labVessel);
+    public abstract boolean isComplete(LabVessel labVessel, MessageCollection messageCollection);
 
 }

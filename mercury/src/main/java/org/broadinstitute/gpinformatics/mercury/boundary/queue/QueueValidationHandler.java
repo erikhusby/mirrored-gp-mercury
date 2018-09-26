@@ -6,6 +6,11 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.enterprise.context.RequestScoped;
+
 public class QueueValidationHandler {
     private static final Log logger = LogFactory.getLog(QueueValidationHandler.class);
 
@@ -18,7 +23,7 @@ public class QueueValidationHandler {
         AbstractQueueValidator queueValidator;
         try {
             queueValidator = queueType.getValidatorClass().newInstance();
-            return queueValidator.isComplete(labVessel);
+            return queueValidator.isComplete(labVessel, messageCollection);
         } catch (InstantiationException | IllegalAccessException e) {
             logger.debug(e);
             return false;

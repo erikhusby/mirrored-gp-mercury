@@ -13,6 +13,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,8 +33,10 @@ public class QueueEjb {
         this.queueValidationHandler = queueValidationHandler;
     }
 
+    @Inject
     private GenericQueueDao genericQueueDao;
-    private QueueValidationHandler queueValidationHandler;
+
+    private QueueValidationHandler queueValidationHandler = new QueueValidationHandler();
 
     /**
      * Adds either a container lab vessel with its tubes, or a larger list of lab vessels of any type to a queue as a
@@ -46,7 +49,7 @@ public class QueueEjb {
      *                          the container lab vessel.
      * @param queueType         Type of Queue to add the lab vessels to.
      */
-    public void enqueueLabVessels(@Nullable LabVessel containerVessel, @Nonnull Collection<LabVessel> vesselList,
+    public void enqueueLabVessels(@Nullable LabVessel containerVessel, @Nonnull Collection<? extends LabVessel> vesselList,
                                   @Nonnull QueueType queueType, @Nullable String readableText,
                                   @Nonnull MessageCollection messageCollection) {
 
@@ -82,10 +85,10 @@ public class QueueEjb {
      * @param messageCollection     Messages back to the user.
      * @param dequeueingOptions     Dequeueing Options
      */
-    public void dequeueLabVessels(Collection<LabVessel> labVessels, QueueType queueType,
+    public void dequeueLabVessels(Collection<? extends LabVessel> labVessels, QueueType queueType,
                                   MessageCollection messageCollection, DequeueingOptions dequeueingOptions) {
 
-        Iterator<LabVessel> iterator = labVessels.iterator();
+        Iterator<? extends LabVessel> iterator = labVessels.iterator();
         GenericQueue genericQueue = findQueueByType(queueType);
 
         for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {

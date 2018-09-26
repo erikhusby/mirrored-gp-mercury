@@ -11,7 +11,7 @@ public class PicoQueueValidator extends AbstractQueueValidator {
     }
 
     @Override
-    public boolean isComplete(LabVessel labVessel) {
+    public boolean isComplete(LabVessel labVessel, MessageCollection messageCollection) {
         return true;
     }
 }
