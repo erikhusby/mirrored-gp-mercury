@@ -67,6 +67,7 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingCreditDbFreeTest {
@@ -206,59 +207,6 @@ public class BillingCreditDbFreeTest {
                 Mockito.anyBoolean(), Mockito.anyBoolean());
     }
 
-    public void testPositiveBillDifferentSamples() {
-        ProductOrderSample pdoSample1 = pdo.getSamples().get(0);
-        ProductOrderSample pdoSample2 = pdo.getSamples().get(1);
-
-        assertThat(pdoSample1, not(equalTo(pdoSample2)));
-
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample1, Pair.of(priceItem, qtyPositiveTwo));
-        billingMap.put(pdoSample2, Pair.of(priceItem, qtyPositiveTwo));
-        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
-
-        billingResults.forEach(
-            billingResult -> {
-                assertThat(billingResult.getErrorMessage(), blankOrNullString());
-                assertThat(billingResult.getSAPBillingId(), not(blankOrNullString()));
-            });
-
-        Mockito.verify(mockEmailSender, Mockito.never())
-            .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
-                Mockito.anyBoolean(), Mockito.anyBoolean());
-    }
-
-    public void testNegativeBillDifferentSamples() {
-        ProductOrderSample pdoSample1 = pdo.getSamples().get(0);
-        ProductOrderSample pdoSample2 = pdo.getSamples().get(1);
-
-        assertThat(pdoSample1, not(equalTo(pdoSample2)));
-
-        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
-        billingMap.put(pdoSample1, Pair.of(priceItem, qtyPositiveTwo));
-        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
-
-        billingResults.forEach(
-            billingResult -> {
-                assertThat(billingResult.getErrorMessage(), blankOrNullString());
-                assertThat(billingResult.getSAPBillingId(), not(blankOrNullString()));
-            });
-
-        billingMap.clear();
-        billingMap.put(pdoSample2, Pair.of(priceItem, qtyNegativeTwo));
-        billingResults = bill(billingMap);
-
-        billingResults.forEach(
-            billingResult -> {
-                assertThat(billingResult.getErrorMessage(), blankOrNullString());
-                assertThat(billingResult.getSAPBillingId(), not(blankOrNullString()));
-            });
-
-        Mockito.verify(mockEmailSender, Mockito.never())
-            .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
-                Mockito.anyBoolean(), Mockito.anyBoolean());
-    }
-
     public void testMoreNegativeThanPositiveBillingPositiveFirst() {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
@@ -281,9 +229,14 @@ public class BillingCreditDbFreeTest {
 
     private void validateBillingResults(ProductOrderSample sample, List<BillingEjb.BillingResult> results,
                                         double quantity) {
-        results.forEach(billingResult -> assertThat(billingResult.isError(), is(false)));
+        results.stream().filter(result -> !result.isError())
+            .forEach(billingResult -> {
+                assertThat(billingResult.isError(), is(false));
+                assertThat(billingResult.getSAPBillingId(), notNullValue());
+            });
         Double totalBilled =
-            sample.getLedgerItems().stream().map(LedgerEntry::getQuantity).mapToDouble(Double::longValue).sum();
+            sample.getLedgerItems().stream().filter(LedgerEntry::isSuccessfullyBilled)
+                .map(LedgerEntry::getQuantity).mapToDouble(Double::longValue).sum();
         assertThat(totalBilled, equalTo(quantity));
     }
 
