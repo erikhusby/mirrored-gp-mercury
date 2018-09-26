@@ -1849,7 +1849,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.broadinstitute.sapservices</groupId>
             <artifactId>SAPServices</artifactId>
-            <version>1.9</version>
+            <version>1.10</version>
             <exclusions>
                 <exclusion>
                     <groupId>javax.servlet</groupId>
