@@ -37,7 +37,7 @@ public class BillingEjbEmailTest {
         TemplateEngine templateEngine = new TemplateEngine();
         templateEngine.postConstruct();
         billingEjb = new BillingEjb(null, null, null, null, null, AppConfig.produce(Deployment.DEV),
-            SapConfig.produce(Deployment.DEV), null, templateEngine);
+            SapConfig.produce(Deployment.DEV), null, templateEngine, null);
     }
 
     public void testProcessTemplate() {

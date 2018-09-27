@@ -8,37 +8,41 @@ app:
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     AUTO_BUILD:
       host:     vmercurydev.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     TEST:
       host:     mercuryfb.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
     QA:
       host:     mercuryqa.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     RC:
       host:     mercuryrc.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     PROD:
       host:     mercury.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail: mercury-dev@broadinstitute.org
-      #limsworkflowvalidation@broadinstitute.org
+      gpBillingManagers: !!set { suhamil@broadinstitute.org, sferrier@broadinstitute.org }
 
 bsp:
 

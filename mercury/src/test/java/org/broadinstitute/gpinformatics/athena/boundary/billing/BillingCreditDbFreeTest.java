@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
@@ -148,7 +149,7 @@ public class BillingCreditDbFreeTest {
         templateEngine.postConstruct();
         billingEjb =
             new BillingEjb(priceListCache, billingSessionDao, null, null, null, AppConfig.produce(Deployment.DEV),
-                SapConfig.produce(Deployment.DEV), mockEmailSender, templateEngine);
+                SapConfig.produce(Deployment.DEV), mockEmailSender, templateEngine, Mockito.mock(BSPUserList.class));
         billingAdaptor = new BillingAdaptor(billingEjb, priceListCache, quoteService, billingSessionAccessEjb,
             sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
