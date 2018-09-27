@@ -386,7 +386,7 @@ public class BillingAdaptor implements Serializable {
                                     BillingSession.BILLED_FOR_SAP + " " + BillingSession.BILLED_FOR_QUOTES);
                         } else {
                             Set<LedgerEntry> priorSapBillings = new HashSet<>();
-                            item.getBillingReversals().stream()
+                            item.getBillingCredits().stream()
                                 .filter(ledgerEntry -> ledgerEntry.getPriceItem().equals(item.getPriceItem()))
                                 .forEach(ledgerEntry -> {
                                     ledgerEntry.getPreviouslyBilled().stream()
@@ -403,7 +403,7 @@ public class BillingAdaptor implements Serializable {
                                 result.setErrorMessage(NEGATIVE_BILL_ERROR);
                                 throw new BillingException(NEGATIVE_BILL_ERROR);
                             } else if (quantityForSAP < 0) {
-                                billingEjb.sendReverseBillingEmail(item, priorSapBillings);
+                                billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings);
                                 item.setBillingMessages(BillingSession.BILLING_CREDIT);
                                 sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
                                 result.setSAPBillingId(sapBillingId);

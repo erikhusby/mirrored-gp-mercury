@@ -75,8 +75,6 @@ public class DeploymentBuilder {
                 .addAsResource(new File("src/main/resources/WorkflowConfig.xml"), "WorkflowConfig.xml")
                 .addAsResource(new File("src/main/resources/templates/WorkflowValidation.ftl"),
                         "templates/WorkflowValidation.ftl")
-                .addAsResource(new File("src/main/resources/templates/BillingReversalRequest.ftl"),
-                        "templates/BillingReversalRequest.ftl")
                 .addPackages(true, "org.broadinstitute.gpinformatics")
                 .addPackages(true, "edu.mit.broad.prodinfo.bean.generated")
                 .addAsWebInfResource(new StringAsset(DeploymentProducer.MERCURY_DEPLOYMENT + "=" + deployment.name()),

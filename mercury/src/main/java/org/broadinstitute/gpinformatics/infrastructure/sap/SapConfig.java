@@ -15,8 +15,8 @@ import java.io.Serializable;
 @ApplicationScoped
 public class SapConfig extends AbstractConfig implements LoginAndPassword, Serializable {
     private static final String SHORT_CLOSE_REQUEST = "Short Close Request";
-    private static final String REVERSE_BILLING_REQUEST = "Reverse Billing Request";
-    public static final String BILLING_REVERSAL_TEMPLATE = "BillingReversalRequest.ftl";
+    private static final String BILLING_CREDIT_REQUEST = "Billing Credit Request";
+    public static final String BILLING_CREDIT_TEMPLATE = "BillingCreditRequest.ftl";
 
     private String login;
     private String password;
@@ -66,7 +66,7 @@ public class SapConfig extends AbstractConfig implements LoginAndPassword, Seria
     }
 
     public String getSapReverseBillingSubject() {
-        return getSapSupportEmailSubjectPrefix() + ": " + REVERSE_BILLING_REQUEST;
+        return getSapSupportEmailSubjectPrefix() + ": " + BILLING_CREDIT_REQUEST;
     }
 
     public String getSapSupportEmailSubjectPrefix() {

@@ -75,7 +75,7 @@ public class QuoteImportItem {
         return Collections.unmodifiableCollection(workItems);
     }
 
-    public Collection<LedgerEntry> getBillingReversals(){
+    public Collection<LedgerEntry> getBillingCredits(){
         return ledgerItems.stream().filter(ledgerEntry -> ledgerEntry.getQuantity() < 0).collect(Collectors.toSet());
     }
 

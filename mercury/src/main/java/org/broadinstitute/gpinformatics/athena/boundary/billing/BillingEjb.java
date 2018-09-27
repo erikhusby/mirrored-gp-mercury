@@ -326,7 +326,7 @@ public class BillingEjb {
         );
     }
 
-    public void sendReverseBillingEmail(QuoteImportItem quoteImportItem, Set<LedgerEntry> priorBillings) throws
+    public void sendBillingCreditRequestEmail(QuoteImportItem quoteImportItem, Set<LedgerEntry> priorBillings) throws
         InformaticsServiceException {
         Map<String, Object> rootMap = new HashMap<>();
 
@@ -343,7 +343,7 @@ public class BillingEjb {
 
         String body;
         try {
-            body = processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, rootMap);
+            body = processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, rootMap);
         } catch (RuntimeException e) {
             throw new InformaticsServiceException("Error creating message body from template", e);
         }

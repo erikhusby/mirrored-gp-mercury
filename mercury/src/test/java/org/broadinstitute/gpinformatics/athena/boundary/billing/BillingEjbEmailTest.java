@@ -70,7 +70,7 @@ public class BillingEjbEmailTest {
         map.put("quantity", "0");
 
         String result =
-            billingEjb.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map).trim();
+            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, map).trim();
 
         assertThat(result, containsString(expected));
     }
@@ -79,7 +79,7 @@ public class BillingEjbEmailTest {
         Map<String, Object> map = new HashMap<>();
         map.put(null, null);
         try {
-            billingEjb.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map);
+            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, map);
         } catch (RuntimeException e) {
             assertThat(e.getCause(), instanceOf(InvalidReferenceException.class));
         }
@@ -89,7 +89,7 @@ public class BillingEjbEmailTest {
         Map<String, Object> map = new HashMap<>();
         map.put(null, null);
         try {
-            billingEjb.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map);
+            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, map);
         } catch (Exception e) {
             assertThat(e.getCause(), instanceOf(InvalidReferenceException.class));
         }
@@ -99,7 +99,7 @@ public class BillingEjbEmailTest {
         Map<String, Object> map = null;
 
         try {
-            billingEjb.processTemplate(SapConfig.BILLING_REVERSAL_TEMPLATE, map);
+            billingEjb.processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, map);
         } catch (RuntimeException e) {
             assertThat(e.getCause(), instanceOf(InvalidReferenceException.class));
         }
