@@ -42,6 +42,7 @@ app:
       port:     8443
       jmsPort:  5445
       workflowValidationEmail: mercury-dev@broadinstitute.org
+      #limsworkflowvalidation@broadinstitute.org
       gpBillingManagers: !!set { suhamil@broadinstitute.org, sferrier@broadinstitute.org }
 
 bsp:
