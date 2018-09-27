@@ -1545,4 +1545,21 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary(fixupReason));
         commitTransaction();
     }
+
+    @Test(enabled = true)
+    public void gplim5824ReOpenPdo() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        String pdoKey = "PDO-16090";
+
+        ProductOrder orderToOpen = productOrderDao.findByBusinessKey(pdoKey);
+
+        orderToOpen.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+        System.out.println("Set the status of " +pdoKey + " to be " + orderToOpen.getOrderStatus().getDisplayName());
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-5824: repopening order to allow billing to continue"));
+        commitTransaction();
+    }
 }
