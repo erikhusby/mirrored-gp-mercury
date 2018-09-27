@@ -47,7 +47,7 @@ public class BillingEjbEmailTest {
                           + "        <th>Mercury Order</th>\n"
                           + "        <th>Material</th>\n"
                           + "        <th>SAP Sales Order</th>\n"
-                          + "        <th>SAP Delivery Document(s)</th>\n"
+                          + "        <th>Delivery Documents<br/>Related to this Item</th>\n"
                           + "        <th>Quantity</th>\n"
                           + "    </tr>\n"
                           + "    </thead>\n"
