@@ -112,7 +112,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             setTubeBarcode("TEST_BARCODE");
             setReadType("TEST_READ_TYPE");
             setAnalysisType("TEST");
-            setEmailAddress("TEST@TEST.COM");
             setLabName("TEST lab");
             setBaitSetName("TEST_BAIT");
             setReadType("Paried End");

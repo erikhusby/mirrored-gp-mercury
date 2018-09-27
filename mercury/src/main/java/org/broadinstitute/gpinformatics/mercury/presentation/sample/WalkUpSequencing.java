@@ -9,12 +9,10 @@ import java.io.Serializable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WalkUpSequencing implements Serializable {
-    private String emailAddress;
     private String submitDate;
     private String tubeBarcode;
     private String libraryName;
     private String labName;
-    private String quote;
     private String pooledSample;
     private String readType;
     private String illuminaTech;
@@ -30,14 +28,6 @@ public class WalkUpSequencing implements Serializable {
     private String comments;
     private String analysisType;
     private String baitSetName;
-
-    public void setEmailAddress(String value) {
-        this.emailAddress = value;
-    }
-
-    public String getEmailAddress() {
-        return this.emailAddress;
-    }
 
     public String getTubeBarcode() {
         return tubeBarcode;
@@ -61,14 +51,6 @@ public class WalkUpSequencing implements Serializable {
 
     public void setLabName(String labName) {
         this.labName = labName;
-    }
-
-    public String getQuote() {
-        return quote;
-    }
-
-    public void setQuote(String quote) {
-        this.quote = quote;
     }
 
     public String getPooledSample() {

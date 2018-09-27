@@ -1627,5 +1627,11 @@
             <column name="umis_present" type="number(1,0)"/>
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-4712-307" author="epolk">
+        <dropColumn tableName="sample_instance_entity" columnName="submit_date"/>
+    </changeSet>
+    <changeSet id="GPLIM-4712-308" author="epolk">
+        <dropColumn tableName="sample_instance_entity_aud" columnName="submit_date"/>
+    </changeSet>
 
 </databaseChangeLog>

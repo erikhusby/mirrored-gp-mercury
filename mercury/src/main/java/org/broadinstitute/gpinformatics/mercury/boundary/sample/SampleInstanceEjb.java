@@ -306,28 +306,14 @@ public class SampleInstanceEjb {
      * @param messages         collected errors, warnings, info to be passed back.
      */
     public void verifyAndPersistSubmission(WalkUpSequencing walkUpSequencing, MessageCollection messages) {
-        if (StringUtils.isBlank(walkUpSequencing.getEmailAddress())) {
-            messages.addError("Email is missing");
-        }
-        if (StringUtils.isBlank(walkUpSequencing.getLabName())) {
-            messages.addError("Lab Name is missing");
-        }
-
         if (ExternalLibraryProcessor.asInteger(walkUpSequencing.getFragmentSize()) < 0) {
             messages.addError("Fragment Size must be a non-zero integer or blank");
         }
-
         if (StringUtils.isBlank(walkUpSequencing.getLibraryName())) {
-            messages.addError("Library name (Mercury sample name) is missing.");
+            messages.addError("Sample name is missing.");
         }
         if (StringUtils.isBlank(walkUpSequencing.getTubeBarcode())) {
             messages.addError("Tube barcode is missing.");
-        }
-
-        if (StringUtils.isNotBlank(walkUpSequencing.getReadType()) &&
-                !walkUpSequencing.getReadType().substring(0, 1).equalsIgnoreCase("s") &&
-                !walkUpSequencing.getReadType().substring(0, 1).equalsIgnoreCase("p")) {
-            messages.addError("Read Type must either be blank or start with \"S\" or \"P\".");
         }
 
         ReferenceSequence referenceSequence = StringUtils.isBlank(walkUpSequencing.getReferenceVersion()) ?
@@ -335,16 +321,15 @@ public class SampleInstanceEjb {
                 referenceSequenceDao.findByNameAndVersion(walkUpSequencing.getReference(),
                         walkUpSequencing.getReferenceVersion());
         if (StringUtils.isNotBlank(walkUpSequencing.getReference()) && referenceSequence == null) {
-            messages.addError("Reference Sequence '" + walkUpSequencing.getReference() + "'" +
+            messages.addError("Unknown Reference Sequence '" + walkUpSequencing.getReference() + "'" +
                     (StringUtils.isNotBlank(walkUpSequencing.getReferenceVersion()) ?
-                            " version '" + walkUpSequencing.getReferenceVersion() + "'" : "") +
-                    " is not known in Mercury.");
+                            " version '" + walkUpSequencing.getReferenceVersion() + "'" : ""));
         }
 
-        ReagentDesign reagentDesign = null;
+        ReagentDesign baitSet = null;
         if (StringUtils.isNotBlank(walkUpSequencing.getBaitSetName())) {
-            reagentDesign = reagentDesignDao.findByBusinessKey(walkUpSequencing.getBaitSetName());
-            if (reagentDesign == null) {
+            baitSet = reagentDesignDao.findByBusinessKey(walkUpSequencing.getBaitSetName());
+            if (baitSet == null) {
                 messages.addError("Unknown Bait Reagent '" + walkUpSequencing.getBaitSetName() + "'");
             }
         }
@@ -353,63 +338,70 @@ public class SampleInstanceEjb {
         if (StringUtils.isNotBlank(walkUpSequencing.getIlluminaTech())) {
             sequencerModel = SampleInstanceEjb.findFlowcellType(walkUpSequencing.getIlluminaTech());
             if (sequencerModel == null) {
-                messages.addError("Unknown Sequencing Technology, must be one of " +
-                        SampleInstanceEjb.SEQUENCER_MODELS + ", or blank");
+                messages.addError("Unknown Sequencing Technology '" + walkUpSequencing.getIlluminaTech() + "'");
+            }
+        }
+
+        AnalysisType analysisType = null;
+        if (StringUtils.isNotBlank(walkUpSequencing.getAnalysisType())) {
+            analysisType = analysisTypeDao.findByBusinessKey(walkUpSequencing.getAnalysisType());
+            if (analysisType == null) {
+                messages.addError("Unknown Data Analysis Type '" + walkUpSequencing.getAnalysisType() + "'");
             }
         }
 
         if (!messages.hasErrors()) {
-            persistSubmission(walkUpSequencing, referenceSequence, reagentDesign, sequencerModel);
-        }
-    }
+            List<Object> newEntities = new ArrayList<>();
 
-    private void persistSubmission(WalkUpSequencing walkUpSequencing, ReferenceSequence referenceSequence,
-            ReagentDesign reagentDesign, IlluminaFlowcell.FlowcellType sequencerModel) {
-        List<Object> newEntities = new ArrayList<>();
+            LabVessel labVessel = labVesselDao.findByIdentifier(walkUpSequencing.getTubeBarcode());
+            if (labVessel == null) {
+                labVessel = new BarcodedTube(walkUpSequencing.getTubeBarcode(),
+                        BarcodedTube.BarcodedTubeType.MatrixTube);
+                newEntities.add(labVessel);
+            }
+            SampleInstanceEjb.addLibrarySize(labVessel, ExternalLibraryProcessor.asNonNegativeBigDecimal(
+                    walkUpSequencing.getFragmentSize(), "", 0, null));
+            labVessel.setVolume(ExternalLibraryProcessor.asNonNegativeBigDecimal(walkUpSequencing.getVolume(),
+                    "", 0, null));
+            // Concentration units are either ng/ul or nM. Apparently the event context tells the users which one it is.
+            labVessel.setConcentration(ExternalLibraryProcessor.asNonNegativeBigDecimal(
+                    walkUpSequencing.getConcentration(), "", 0, null));
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(walkUpSequencing.getLibraryName());
+            if (mercurySample == null) {
+                mercurySample = new MercurySample(walkUpSequencing.getLibraryName(),
+                        MercurySample.MetadataSource.MERCURY);
+                mercurySample.addMetadata(new HashSet<Metadata>() {{
+                    add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
+                }});
+            }
+            mercurySample.addLabVessel(labVessel);
+            newEntities.add(mercurySample);
 
-        LabVessel labVessel = labVesselDao.findByIdentifier(walkUpSequencing.getTubeBarcode());
-        if (labVessel == null) {
-            labVessel = new BarcodedTube(walkUpSequencing.getTubeBarcode(), BarcodedTube.BarcodedTubeType.MatrixTube);
-            newEntities.add(labVessel);
-        }
-        SampleInstanceEjb.addLibrarySize(labVessel,
-                ExternalLibraryProcessor.asNonNegativeBigDecimal(walkUpSequencing.getFragmentSize(), "", 0, null));
-        labVessel.setVolume(
-                ExternalLibraryProcessor.asNonNegativeBigDecimal(walkUpSequencing.getVolume(), "", 0, null));
-        // Concentration units are either ng/ul or nM. Apparently the event context tells the users which one it is.
-        labVessel.setConcentration(
-                ExternalLibraryProcessor.asNonNegativeBigDecimal(walkUpSequencing.getConcentration(), "", 0, null));
-        MercurySample mercurySample = mercurySampleDao.findBySampleKey(walkUpSequencing.getLibraryName());
-        if (mercurySample == null) {
-            mercurySample = new MercurySample(walkUpSequencing.getLibraryName(), MercurySample.MetadataSource.MERCURY);
-            mercurySample.addMetadata(new HashSet<Metadata>() {{
-                add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
-            }});
-        }
-        mercurySample.addLabVessel(labVessel);
-        newEntities.add(mercurySample);
+            SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(
+                    walkUpSequencing.getLibraryName());
+            if (sampleInstanceEntity == null) {
+                sampleInstanceEntity = new SampleInstanceEntity();
+                sampleInstanceEntity.setSampleLibraryName(walkUpSequencing.getLibraryName());
+                newEntities.add(sampleInstanceEntity);
+            }
+            sampleInstanceEntity.setPairedEndRead(StringUtils.startsWithIgnoreCase(walkUpSequencing.getReadType(),
+                    "p"));
+            sampleInstanceEntity.setReferenceSequence(referenceSequence);
+            sampleInstanceEntity.setUploadDate(walkUpSequencing.getSubmitDate());
+            sampleInstanceEntity.setReadLength(Math.max(
+                    ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength()),
+                    ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength2())));
+            sampleInstanceEntity.setNumberLanes(ExternalLibraryProcessor.asInteger(walkUpSequencing.getLaneQuantity()));
+            sampleInstanceEntity.setComments(walkUpSequencing.getComments());
+            sampleInstanceEntity.setReagentDesign(baitSet);
+            sampleInstanceEntity.setLabVessel(labVessel);
+            sampleInstanceEntity.setMercurySample(mercurySample);
+            sampleInstanceEntity.setSequencerModel(sequencerModel);
+            sampleInstanceEntity.setInsertSize(walkUpSequencing.getFragmentSize());
+            sampleInstanceEntity.setAnalysisType(analysisType);
 
-        SampleInstanceEntity sampleInstanceEntity =
-                sampleInstanceEntityDao.findByName(walkUpSequencing.getLibraryName());
-        if (sampleInstanceEntity == null) {
-            sampleInstanceEntity = new SampleInstanceEntity();
-            sampleInstanceEntity.setSampleLibraryName(walkUpSequencing.getLibraryName());
-            newEntities.add(sampleInstanceEntity);
+            sampleInstanceEntityDao.persistAll(newEntities);
         }
-        sampleInstanceEntity.setPairedEndRead(StringUtils.startsWithIgnoreCase(walkUpSequencing.getReadType(), "p"));
-        sampleInstanceEntity.setReferenceSequence(referenceSequence);
-        sampleInstanceEntity.setUploadDate(walkUpSequencing.getSubmitDate());
-        sampleInstanceEntity.setReadLength(Math.max(
-                ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength()),
-                ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength2())));
-        sampleInstanceEntity.setNumberLanes(ExternalLibraryProcessor.asInteger(walkUpSequencing.getLaneQuantity()));
-        sampleInstanceEntity.setComments(walkUpSequencing.getComments());
-        sampleInstanceEntity.setReagentDesign(reagentDesign);
-        sampleInstanceEntity.setLabVessel(labVessel);
-        sampleInstanceEntity.setMercurySample(mercurySample);
-        sampleInstanceEntity.setSequencerModel(sequencerModel);
-
-        sampleInstanceEntityDao.persistAll(newEntities);
     }
 
     private static Comparator<String> BY_ROW_NUMBER = new Comparator<String>() {
