@@ -340,9 +340,8 @@
                                 <label for="rgtBcd${loop.index}">Barcode </label>
                                 <input type="text" id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
                                         value="${reagent.barcode}" class="barcode" autocomplete="off"/>
-                                <c:if test="${actionBean.manualTransferDetails.expirationDateIncluded
-                                            || (reagent.kitType != prevReagentType && not empty actionBean.manualTransferDetails.mapReagentNameToExpireDate
-                                            && not empty actionBean.manualTransferDetails.mapReagentNameToExpireDate[reagent.kitType])}">
+                                <c:if test="${(reagent.kitType != prevReagentType && not empty actionBean.manualTransferDetails.mapReagentNameToRequirements[reagent.kitType]
+                                            && actionBean.manualTransferDetails.mapReagentNameToRequirements[reagent.kitType].expirationDateRequired)}">
                                     <label for="rgtExp${loop.index}">Expiration </label>
                                     <input type="text" id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
                                             value="${reagent.expiration}" class="date" autocomplete="off"/>

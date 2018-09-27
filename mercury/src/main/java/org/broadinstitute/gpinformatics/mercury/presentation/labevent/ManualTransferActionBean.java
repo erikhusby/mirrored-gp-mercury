@@ -76,7 +76,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -244,24 +243,28 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
     public Resolution chooseLabEventType() {
-        List<String> reagentNames;
-        int[] reagentFieldCounts;
+        List<String> reagentNames = new ArrayList<>();
+        Map<String, LabEventType.ReagentRequirements> mapReagentNameToRequirement;
         if (workflowStepDef != null && !CollectionUtils.isEmpty(workflowStepDef.getReagentTypes())) {
+            // TODO why isn't this within the manualTransferDetails element?? it can be in either...
             reagentNames = workflowStepDef.getReagentTypes();
-            reagentFieldCounts = new int[reagentNames.size()];
-            Arrays.fill(reagentFieldCounts, 1);
+            mapReagentNameToRequirement = new HashMap<>(reagentNames.size());
+            for (String reagentName : reagentNames) {
+                mapReagentNameToRequirement.put(reagentName,
+                        new LabEventType.ReagentRequirements(reagentName, "", 1, false,
+                                false));
+            }
+
         } else {
-            reagentNames = Arrays.asList(manualTransferDetails.getReagentNames());
-            reagentFieldCounts = manualTransferDetails.getReagentFieldCounts();
+            reagentNames.addAll(manualTransferDetails.getReagentNames());
+            mapReagentNameToRequirement = manualTransferDetails.getMapReagentNameToRequirements();
         }
-        int reagentIndex = 0;
         for (String reagentName : reagentNames) {
-            for (int fieldIndex = 0; fieldIndex < reagentFieldCounts[reagentIndex]; fieldIndex++) {
+            for (int fieldIndex = 0; fieldIndex < mapReagentNameToRequirement.get(reagentName).getFieldCount(); fieldIndex++) {
                 ReagentType reagentType = new ReagentType();
                 reagentType.setKitType(reagentName);
                 stationEvents.get(0).getReagent().add(reagentType);
             }
-            reagentIndex++;
         }
 
         int stationEventIndex = 0;
@@ -1046,15 +1049,23 @@ public class ManualTransferActionBean extends RackScanActionBean {
             addMessages(messageCollection);
         }
 
+        Map<String, LabEventType.ReagentRequirements> mapReagentNameToRequirements =
+                manualTransferDetails.getMapReagentNameToRequirements();
         for (ReagentType reagentType : stationEvents.get(0).getReagent()) {
             if (StringUtils.isBlank(reagentType.getKitType())) {
                 addGlobalValidationError("Reagent type is required");
             }
-            if (manualTransferDetails.getMapReagentNameToCount().get(reagentType.getKitType()) == 1) {
+            // TODO this checks whether there is only one reagent entree, if yes then checks if a barcode is provided and an expiration date...
+            // TODO note that if multiple fields are provided this doesn't get checked at all... so this is broken.
+            boolean foundOneReagent = false;
+//            if (manualTransferDetails.getMapReagentNameToCount().get(reagentType.getKitType()) == 1) {
+            LabEventType.ReagentRequirements reagentRequirements =
+                    mapReagentNameToRequirements.get(reagentType.getKitType());
+            if (reagentRequirements.getFieldCount() == 1) {
                 if (StringUtils.isBlank(reagentType.getBarcode())) {
                     addGlobalValidationError("Reagent barcode is required");
                 }
-                if (manualTransferDetails.isExpirationDateIncluded() &&
+                if (reagentRequirements.isExpirationDateIncluded() &&
                         reagentType.getExpiration() == null) {
                     addGlobalValidationError("Reagent expiration is required");
                 }
@@ -1068,7 +1079,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             while (reagentIterator.hasNext()) {
                 ReagentType reagentType = reagentIterator.next();
                 if (StringUtils.isBlank(reagentType.getBarcode()) &&
-                        manualTransferDetails.getMapReagentNameToCount().get(reagentType.getKitType()) > 1) {
+                    mapReagentNameToRequirements.get(reagentType.getKitType()).getFieldCount() > 1) {
                     reagentIterator.remove();
                 }
             }

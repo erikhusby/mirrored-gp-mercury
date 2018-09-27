@@ -55,9 +55,14 @@ public class ManualTransferActionBeanTest {
         PlateEventType plateEventType = (PlateEventType) stationEvents.get(0);
 
         int numReagentFields = 0;
-        for (int i : manualTransferDetails.getReagentFieldCounts()) {
-            numReagentFields += i;
+//        for (int i : manualTransferDetails.getReagentFieldCounts()) {
+//            numReagentFields += i;
+//        }
+        for (LabEventType.ReagentRequirements reagentRequirements : manualTransferDetails.getReagentRequirements()) {
+            numReagentFields += reagentRequirements.getFieldCount();
         }
+
+
         Assert.assertEquals(plateEventType.getReagent().size(), numReagentFields);
     }
 
