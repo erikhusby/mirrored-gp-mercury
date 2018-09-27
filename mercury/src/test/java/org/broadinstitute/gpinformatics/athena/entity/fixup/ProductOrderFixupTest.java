@@ -1546,7 +1546,7 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim5824ReOpenPdo() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
