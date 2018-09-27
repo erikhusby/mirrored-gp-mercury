@@ -1,15 +1,10 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.queue;
+package org.broadinstitute.gpinformatics.mercury.boundary.queue.validation;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-
-import javax.ejb.Stateful;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.enterprise.context.RequestScoped;
 
 public class QueueValidationHandler {
     private static final Log logger = LogFactory.getLog(QueueValidationHandler.class);

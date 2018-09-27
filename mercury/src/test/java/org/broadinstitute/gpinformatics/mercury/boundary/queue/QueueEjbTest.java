@@ -124,7 +124,7 @@ public class QueueEjbTest extends Arquillian {
             reorder.put(orderId, currentNumber++);
         }
 
-        queueEjb.reOrderQueue(reorder, QueueType.PICO);
+        queueEjb.reOrderQueue(reorder, QueueType.PICO, messageCollection);
 
         GenericQueue queueByType = queueEjb.findQueueByType(QueueType.PICO);
         int i = 0;

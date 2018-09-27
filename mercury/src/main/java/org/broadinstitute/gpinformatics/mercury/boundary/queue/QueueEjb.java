@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.QueueValidationHandler;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
@@ -121,17 +122,38 @@ public class QueueEjb {
         }
     }
 
-    public void reOrderQueue(Map<Long, Long> groupingIdToNewOrder, QueueType queueType) throws Exception {
+    /**
+     * Changes the ordering of the queue to whatever is passed in by the user.
+     *
+     * @param groupingIdToNewOrder      Map of the grouping ID ot the new order # to set it to
+     * @param queueType                 Queue to re-order
+     */
+    public void reOrderQueue(Map<Long, Long> groupingIdToNewOrder, QueueType queueType,
+                             MessageCollection messageCollection) throws Exception {
 
         GenericQueue genericQueue = findQueueByType(queueType);
 
         Set<Long> testingSet = new HashSet<>(groupingIdToNewOrder.values());
         if (testingSet.size() != groupingIdToNewOrder.size()) {
-            throw new Exception("Sample sorting order was assigned to multiple samples. Please fix and try again.");
+            messageCollection.addError("The same sample sorting order was assigned to multiple samples. Please fix and try again.");
+        }
+
+        if (groupingIdToNewOrder.size() != genericQueue.getQueueGroupings().size()) {
+            messageCollection.addError("Not all samples were assigned a sorting order.  Please fix this and try again.");
+        }
+
+        if (messageCollection.hasErrors()) {
+            throw new Exception("Errors in reordering.");
         }
 
         for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {
-            queueGrouping.setSortOrder(groupingIdToNewOrder.get(queueGrouping.getQueueGroupingId()));
+
+            if (groupingIdToNewOrder.containsKey(queueGrouping.getQueueGroupingId())) {
+                queueGrouping.setSortOrder(groupingIdToNewOrder.get(queueGrouping.getQueueGroupingId()));
+            } else {
+                messageCollection.addUniqueError(messageCollection, "Not all queued items had an order" +
+                        " number set upon them.");
+            }
         }
     }
 

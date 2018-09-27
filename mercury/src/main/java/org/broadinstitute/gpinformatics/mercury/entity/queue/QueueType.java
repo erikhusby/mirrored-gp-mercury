@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.AbstractQueueValidator;
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.PicoQueueValidator;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.AbstractQueueValidator;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.PicoQueueValidator;
 
 public enum QueueType {
     PICO("Pico", PicoQueueValidator.class);

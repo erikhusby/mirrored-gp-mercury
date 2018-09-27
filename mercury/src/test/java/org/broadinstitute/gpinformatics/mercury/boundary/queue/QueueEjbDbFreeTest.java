@@ -108,33 +108,55 @@ public class QueueEjbDbFreeTest {
 
     @Test(groups = DATABASE_FREE)
     public void testReOrderQueue() {
+        MessageCollection messageCollection = new MessageCollection();
         QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getResortQueue(), QueueTestFactory.getPicoValidationNoErrors());
 
         long[] newSortOrder = new long[] { 4, 1, 3, 2};
 
-        handleReOrderTesting(queueEjb, newSortOrder, false);
+        handleReOrderTesting(queueEjb, newSortOrder, false, messageCollection);
+
+        Assert.assertFalse(messageCollection.hasErrors());
     }
 
     @Test(groups = DATABASE_FREE)
     public void testReOrderQueueNonUniqueValues() {
+        MessageCollection messageCollection = new MessageCollection();
         QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getResortQueue(), QueueTestFactory.getPicoValidationNoErrors());
 
         long[] newSortOrder = new long[] { 4, 4, 3, 2};
 
-        handleReOrderTesting(queueEjb, newSortOrder, true);
+        handleReOrderTesting(queueEjb, newSortOrder, true, messageCollection);
+
+        Assert.assertFalse(messageCollection.hasErrors());
     }
 
-    private void handleReOrderTesting(QueueEjb queueEjb, long[] newSortOrder, boolean failExpected) {
+    @Test(groups = DATABASE_FREE)
+    public void testReOrderQueueMissingValues() {
+
+        MessageCollection messageCollection = new MessageCollection();
+        QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getResortQueue(), QueueTestFactory.getPicoValidationNoErrors());
+
+        long[] newSortOrder = new long[] { 1, 3, 2};
+
+        handleReOrderTesting(queueEjb, newSortOrder, true, messageCollection);
+
+        Assert.assertFalse(messageCollection.hasErrors());
+    }
+
+    private void handleReOrderTesting(QueueEjb queueEjb, long[] newSortOrder, boolean failExpected,
+                                      MessageCollection messageCollection) {
 
         Map<Long, Long> newOrder = new HashMap<>();
         int currentOrder = 0;
         GenericQueue queueByType = queueEjb.findQueueByType(QueueType.PICO);
         for (QueueGrouping queueGrouping : queueByType.getQueueGroupings()) {
-            newOrder.put(queueGrouping.getQueueGroupingId(), newSortOrder[currentOrder++]);
+            if (newSortOrder.length > currentOrder) {
+                newOrder.put(queueGrouping.getQueueGroupingId(), newSortOrder[currentOrder++]);
+            }
         }
 
         try {
-            queueEjb.reOrderQueue(newOrder, QueueType.PICO);
+            queueEjb.reOrderQueue(newOrder, QueueType.PICO, messageCollection);
             if (failExpected) {
                 Assert.fail("Expected exception");
             }

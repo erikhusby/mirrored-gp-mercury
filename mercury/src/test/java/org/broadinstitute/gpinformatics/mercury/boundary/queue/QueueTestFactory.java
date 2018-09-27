@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.QueueValidationHandler;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
