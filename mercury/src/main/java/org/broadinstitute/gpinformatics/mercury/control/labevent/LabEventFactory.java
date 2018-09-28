@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjec
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -197,6 +198,9 @@ public class LabEventFactory implements Serializable {
 
     @Inject
     private BSPSetVolumeConcentration bspSetVolumeConcentration;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);
 
@@ -549,6 +553,7 @@ public class LabEventFactory implements Serializable {
             extractBarcodes(barcodes, extractPositionMaps);
 
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            trySampleIds(barcodes, mapBarcodeToVessel);
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
 
@@ -1030,9 +1035,34 @@ public class LabEventFactory implements Serializable {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+        trySampleIds(barcodes, mapBarcodeToVessel);
+
         LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
         labEvent.setStationEventType(plateTransferEvent);
         return labEvent;
+    }
+
+    private void trySampleIds(List<String> barcodes, Map<String, LabVessel> mapBarcodeToVessel) {
+        List<String> sampleIds = new ArrayList<>();
+        for (String barcode : barcodes) {
+            if (barcode.startsWith("SM-")) {
+                if (mapBarcodeToVessel.get(barcode) == null) {
+                    sampleIds.add(barcode);
+                }
+            }
+        }
+        if (!sampleIds.isEmpty()) {
+            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+            for (Map.Entry<String, MercurySample> sampleIdSampleEntry : mapIdToMercurySample.entrySet()) {
+                MercurySample mercurySample = sampleIdSampleEntry.getValue();
+                if (mercurySample != null) {
+                    Set<LabVessel> labVessel = mercurySample.getLabVessel();
+                    if (labVessel.size() == 1) {
+                        mapBarcodeToVessel.put(sampleIdSampleEntry.getKey(), labVessel.iterator().next());
+                    }
+                }
+            }
+        }
     }
 
     /**

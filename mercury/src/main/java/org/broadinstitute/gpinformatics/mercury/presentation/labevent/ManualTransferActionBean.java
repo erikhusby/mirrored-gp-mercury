@@ -903,6 +903,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 }
             }
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            // todo jmt check for SM-IDs
             for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
                 LabVessel labVessel = stringLabVesselEntry.getValue();
                 String barcode = stringLabVesselEntry.getKey();
