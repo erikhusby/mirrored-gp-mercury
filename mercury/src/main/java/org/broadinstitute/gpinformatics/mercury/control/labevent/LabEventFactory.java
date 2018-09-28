@@ -1281,11 +1281,6 @@ public class LabEventFactory implements Serializable {
                     } else if (reagentType.getExpiration().before(DateUtils.getStartOfDay(new Date()))) {
                         throw new RuntimeException("Reagent " + genericReagent.getName() + " expired as of " + reagentType.getExpiration().toString());
                     }
-                    if (reagentType.getExpiration().before(new Date())) {
-                        throw new RuntimeException(
-                                "Reagent " + genericReagent.getName() + " expired as of " + reagentType.getExpiration()
-                                        .toString());
-                    }
                 }
             }
             labEvent.addReagentMetadata(genericReagent, metadataSet);
