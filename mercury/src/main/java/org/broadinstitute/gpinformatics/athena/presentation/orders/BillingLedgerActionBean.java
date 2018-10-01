@@ -546,6 +546,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         private Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantities;
         private ListMultimap<PriceItem, LedgerEntry> ledgerEntriesByPriceItem = ArrayListMultimap.create();
         private int autoFillQuantity = 0;
+        private boolean anyQuantitySet = false;
 
         public ProductOrderSampleLedgerInfo(ProductOrderSample productOrderSample, Date coverageFirstMet) {
             this.productOrderSample = productOrderSample;
@@ -567,6 +568,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 if (priceItemType == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM
                     || priceItemType == LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM) {
                     primaryBilled = true;
+                }
+                if(ledgerEntry.getQuantity()>0) {
+                    anyQuantitySet = true;
                 }
             }
 
@@ -607,6 +611,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
         public int getAutoFillQuantity() {
             return autoFillQuantity;
+        }
+
+        public boolean isAnyQuantitySet() {
+            return anyQuantitySet;
         }
     }
 

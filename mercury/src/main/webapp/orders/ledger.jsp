@@ -972,24 +972,20 @@
         <tbody>
             <c:forEach items="${actionBean.productOrderSampleLedgerInfos}" var="info">
                 <tr class="${info.sample.deliveryStatus.displayName == 'Abandoned' ? 'abandoned' : ''}">
+
+                    <c:set var="disableAbandon" value="${false}"/>
+                    <c:if test="${info.sample.deliveryStatus.abandoned}">
+                        <c:choose>
+                            <c:when test="${info.anyQuantitySet}">
+                                <c:set var="disableAbandon" value="${false}" />
+                            </c:when>
+                            <c:otherwise>
+                                <c:set var="disableAbandon" value="${true}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </c:if>
                     <td>
-                        <c:set var="hideAbandoned" value="${false}" />
-                        <c:if test="${info.sample.deliveryStatus.displayName == 'Abandoned'}">
-                            <c:set var="hideAbandoned" value="${true}" />
-                            <c:choose>
-                                <c:when test="${actionBean.ledgerData[info.sample.samplePosition]. submittedQuantitiesSet()}">
-                                    <c:set var="hideAbandoned" value="${false}" />
-                                </c:when>
-                                <c:otherwise>
-                                    <c:set var="hideAbandoned" value="${true}" />
-                                </c:otherwise>
-                            </c:choose>
-                            <c:if test="${actionBean.ledgerData[info.sample.samplePosition]. submittedQuantitiesSet()}">
-
-
-                            </c:if>
-                        </c:if>
-                        <c:if test="${!hideAbandoned}">
+                        <c:if test="${!disableAbandon}">
                             <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
                         </c:if>
                     </td>
@@ -1031,14 +1027,14 @@
                         <c:set var="currentValue"
                                value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
                         <c:choose>
-                            <c:when test="${!hideAbandoned}">
-                                <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
-                                       value="${currentValue}" data-rownum = "${info.sample.samplePosition}"
-                                       originalValue="${info.dateCompleteFormatted}"
-                                       class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
+                            <c:when test="${disableAbandon}">
+                                ${info.dateCompleteFormatted}
                             </c:when>
                             <c:otherwise>
-                                ${info.dateCompleteFormatted}
+                                <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
+                                       value="${currentValue}" data-rownum="${info.sample.samplePosition}"
+                                       originalValue="${info.dateCompleteFormatted}"
+                                       class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
                             </c:otherwise>
                         </c:choose>
                     </td>
@@ -1052,15 +1048,15 @@
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
                                    value="${info.getTotalForPriceItem(priceItem)}"/>
                             <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[priceItem.priceItemId].submittedQuantity}"/>
-                            <c:if test="${submittedQuantity != null || info.sample.deliveryStatus.displayName != 'Abandoned'}">
+                                <c:if test="${!disableAbandon}">
+                                    <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
+                                           name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
+                                           value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
+                                           class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
+                                           priceItemId="${priceItem.priceItemId}"
+                                           billedQuantity="${info.getBilledForPriceItem(priceItem)}">
 
-                                <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                       name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                       value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
-                                       class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
-                                       priceItemId="${priceItem.priceItemId}"
-                                       billedQuantity="${info.getBilledForPriceItem(priceItem)}">
-                            </c:if>
+                                </c:if>
                             <c:if test="${priceItem == actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product) && info.autoFillQuantity != 0}">
                                 <input type="hidden"
                                        name="${info.sample.samplePosition}-autoFill-${info.sample.name}"
