@@ -232,8 +232,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             String price = priceListCache.getEffectivePrice(placedOrder.determinePriceItemByCompanyCode(product),
                     quote);
 
-            final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
-                    getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder));
+            BigDecimal sampleCount =
+                getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder);
+
+            final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(), sampleCount);
 
             if(placedOrder.isPriorToSAP1_5()) {
                 sapOrderItem.addCondition(Condition.MATERIAL_PRICE, new BigDecimal(price));
