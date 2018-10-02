@@ -553,7 +553,7 @@ public class LabEventFactory implements Serializable {
             extractBarcodes(barcodes, extractPositionMaps);
 
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-            trySampleIds(barcodes, mapBarcodeToVessel);
+            trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
 
@@ -1035,14 +1035,15 @@ public class LabEventFactory implements Serializable {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-        trySampleIds(barcodes, mapBarcodeToVessel);
+        trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
 
         LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
         labEvent.setStationEventType(plateTransferEvent);
         return labEvent;
     }
 
-    private void trySampleIds(List<String> barcodes, Map<String, LabVessel> mapBarcodeToVessel) {
+    public static void trySampleIds(List<String> barcodes, Map<String, LabVessel> mapBarcodeToVessel,
+            MercurySampleDao mercurySampleDao) {
         List<String> sampleIds = new ArrayList<>();
         for (String barcode : barcodes) {
             if (barcode.startsWith("SM-")) {
