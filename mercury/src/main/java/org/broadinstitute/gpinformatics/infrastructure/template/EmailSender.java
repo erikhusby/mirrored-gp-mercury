@@ -46,8 +46,10 @@ public class EmailSender implements Serializable {
      * @param ccAddrdesses collection of email addresses which should also be CC'ed when the email is sent out.
      * @param subject subject line
      * @param body HTML
+     * @param overrideForTest
+     * @return null if not configured to send, false if there was a problem sending, or true if send succeeded.
      */
-    public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to,
+    public Boolean sendHtmlEmail(@Nonnull AppConfig appConfig, String to,
                               Collection<String> ccAddrdesses, String subject, String body, boolean overrideForTest,
                               boolean ignoreExceptions) {
         if (appConfig.shouldSendEmail() || overrideForTest) {
@@ -57,11 +59,13 @@ public class EmailSender implements Serializable {
                     message.setFrom(new InternetAddress("gplims@broadinstitute.org"));
                     message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
                     message.setRecipients(Message.RecipientType.CC,
-                        InternetAddress.parse(StringUtils.join(ccAddrdesses, ",")));
+                            InternetAddress.parse(StringUtils.join(ccAddrdesses, ",")));
                     message.setSubject(subject);
                     message.setContent(body, "text/html; charset=utf-8");
                     message.setSentDate(new Date());
                     Transport.send(message);
+                    return true;
+
                 } catch (Exception e) {
                     LOG.error("Failed to send email", e);
 
@@ -73,7 +77,9 @@ public class EmailSender implements Serializable {
                     }
                 }
             }
+            return false;
+        } else {
+            return null;
         }
     }
-
 }

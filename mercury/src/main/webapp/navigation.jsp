@@ -201,9 +201,9 @@
                                     event="view">Arrays Reports</stripes:link>
                         </li>
                         <li>
-                            <stripes:link id="pooledTubeUpload"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PooledTubeUploadActionBean"
-                                          event="view">Pooled Tube Upload</stripes:link>
+                            <stripes:link id="externalLibraryUpload"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean"
+                                          event="view">Pooled Tube and External Library Upload</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="tagVessel"

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -14,8 +15,10 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
 * @author Scott Matthews
@@ -79,7 +82,11 @@ public class PicoPlatingEntityBuilder {
         labEventHandler.processEvent(picoQcEntity);
 
         StaticPlate picoQcPlate = (StaticPlate) picoQcEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(picoQcPlate.getSampleInstancesV2().size(), mapBarcodeToTube.values().size());
+        Set<SampleInstanceV2> expectedSampleInstances = new HashSet<>();
+        for (LabVessel labVessel : mapBarcodeToTube.values()) {
+            expectedSampleInstances.addAll(labVessel.getSampleInstancesV2());
+        }
+        Assert.assertEquals(picoQcPlate.getSampleInstancesV2().size(), expectedSampleInstances.size());
 
         LabEventTest.validateWorkflow(LabEventType.PICO_DILUTION_TRANSFER.getName(), picoQcPlate);
         mapBarcodeToVessel.clear();
