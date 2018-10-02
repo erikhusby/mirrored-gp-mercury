@@ -2,8 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -40,14 +42,18 @@ public class QueueGrouping {
     @ManyToOne(targetEntity = GenericQueue.class)
     private GenericQueue associatedQueue;
 
-    @JoinColumn(name = "lab_vessel_id")
+    @JoinColumn(name = "container_vessel_id")
     @ManyToOne(targetEntity = LabVessel.class)
     private LabVessel containerVessel;
 
     @OneToMany(mappedBy = "queueGrouping", cascade = CascadeType.PERSIST)
-    @Where(clause = "queue_status = 'Active'")
     @BatchSize(size = 100)
     private List<QueueEntity> queuedEntities;
+
+    @NotAudited
+    @Formula("(select count(*) from mercury.queue_entity where queue_entity.queue_status = 'Active'" +
+            " and queue_entity.queue_grouping_id = queue_grouping_id)")
+    private Integer remainingEntities;
 
     @Column(name = "sort_order")
     private Long sortOrder;
@@ -131,4 +137,12 @@ public class QueueGrouping {
             return o1.getSortOrder().compareTo(o2.getSortOrder());
         }
     };
+
+    public Integer getRemainingEntities() {
+        return remainingEntities;
+    }
+
+    public void setRemainingEntities(Integer remainingEntities) {
+        this.remainingEntities = remainingEntities;
+    }
 }

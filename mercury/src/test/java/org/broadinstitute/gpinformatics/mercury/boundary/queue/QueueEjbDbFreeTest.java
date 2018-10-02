@@ -6,9 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -127,7 +129,7 @@ public class QueueEjbDbFreeTest {
 
         handleReOrderTesting(queueEjb, newSortOrder, true, messageCollection);
 
-        Assert.assertFalse(messageCollection.hasErrors());
+        Assert.assertTrue(messageCollection.hasErrors());
     }
 
     @Test(groups = DATABASE_FREE)
@@ -140,7 +142,36 @@ public class QueueEjbDbFreeTest {
 
         handleReOrderTesting(queueEjb, newSortOrder, true, messageCollection);
 
-        Assert.assertFalse(messageCollection.hasErrors());
+        Assert.assertTrue(messageCollection.hasErrors());
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testExclude() {
+
+        QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getDequeueTestQueue(LAB_VESSEL_ID), QueueTestFactory.getPicoValidationNoErrors());
+        LabVessel labVessel = QueueTestFactory.generateLabVessel(LAB_VESSEL_ID);
+
+        MessageCollection messageCollection = new MessageCollection();
+        queueEjb.enqueueLabVessels(null, Collections.singletonList(labVessel), QueueType.PICO,
+                null, messageCollection);
+
+        queueEjb.excludeItems(Collections.singletonList(labVessel), QueueType.PICO, messageCollection);
+
+        GenericQueue picoQueue = queueEjb.findQueueByType(QueueType.PICO);
+        int foundItems = 0;
+        for (QueueGrouping queueGrouping : picoQueue.getQueueGroupings()) {
+            for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
+                if (queueEntity.getLabVessel().getLabel().equals(BARCODE_1)
+                            && queueEntity.getQueueStatus() == QueueStatus.Excluded) {
+                    foundItems++;
+                } else if (queueEntity.getLabVessel().getLabel().equals(BARCODE_2)
+                            && queueEntity.getQueueStatus() == QueueStatus.Excluded) {
+                    foundItems++;
+                }
+            }
+        }
+
+        Assert.assertEquals(foundItems, 2);
     }
 
     private void handleReOrderTesting(QueueEjb queueEjb, long[] newSortOrder, boolean failExpected,

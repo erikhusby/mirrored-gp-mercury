@@ -37,7 +37,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.STANDARD)
 public class QueueEjbTest extends Arquillian {
 
-
     @Inject
     private UserTransaction utx;
 
@@ -48,7 +47,6 @@ public class QueueEjbTest extends Arquillian {
     LabBatchTestUtils labBatchTestUtils;
 
     private LinkedHashMap<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
-
 
     @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
@@ -104,7 +102,6 @@ public class QueueEjbTest extends Arquillian {
         MessageCollection messageCollection = new MessageCollection();
         queueEjb.enqueueLabVessels(null, generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection);
 
-
         SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings();
         Assert.assertNotNull(queueGroupings);
 
@@ -130,11 +127,21 @@ public class QueueEjbTest extends Arquillian {
         int i = 0;
         for (QueueGrouping queueGrouping : queueByType.getQueueGroupings()) {
             Assert.assertEquals(queueGrouping.getQueueGroupingId(), oppositeOrder.get(0));
-            Assert.assertNotEquals(queueGrouping.getQueueGroupingId(), oppositeOrder.get(0));
         }
 
         queueEjb.dequeueLabVessels(generateLabVesselsForTest(), QueueType.PICO, messageCollection,
                 DequeueingOptions.OVERRIDE);
+
+        Assert.assertFalse(messageCollection.hasErrors());
+        Assert.assertFalse(messageCollection.hasWarnings());
+    }
+
+    @Test(groups = TestGroups.STANDARD)
+    public void excludeTest() {
+
+        MessageCollection messageCollection = new MessageCollection();
+        queueEjb.enqueueLabVessels(null, generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection);
+        queueEjb.excludeItems(generateLabVesselsForTest(), QueueType.PICO, messageCollection);
 
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());

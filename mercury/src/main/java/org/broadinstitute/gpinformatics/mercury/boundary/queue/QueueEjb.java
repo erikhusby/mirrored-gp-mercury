@@ -54,6 +54,9 @@ public class QueueEjb {
                                   @Nonnull QueueType queueType, @Nullable String readableText,
                                   @Nonnull MessageCollection messageCollection) {
 
+        // TODO:  If containerVessel is null, error if readabletext is null.  If containerVessel is not null, and
+        // TODO:  readable text is null, then stilck the barcode from containerVessel into readable text
+
         GenericQueue genericQueue = findQueueByType(queueType);
 
         if (genericQueue.getQueueGroupings() == null) {
@@ -109,7 +112,7 @@ public class QueueEjb {
             } else {
                 for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
                     if (queueEntity.getLabVessel().getLabVesselId().equals(labVessel.getLabVesselId())) {
-                        queueEntity.setQueueStatus(QueueStatus.Completed);
+                        updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Completed);
                         found = true;
                         break;
                     }
@@ -154,6 +157,38 @@ public class QueueEjb {
                 messageCollection.addUniqueError(messageCollection, "Not all queued items had an order" +
                         " number set upon them.");
             }
+        }
+    }
+
+    public void excludeItems(Collection<? extends LabVessel> labVesselsToExclude, QueueType queueType, MessageCollection messageCollection) {
+
+        GenericQueue genericQueue = findQueueByType(queueType);
+
+        for (LabVessel labVessel : labVesselsToExclude) {
+            for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {
+                for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
+                    if (queueEntity.getLabVessel().getLabVesselId().equals(labVessel.getLabVesselId())) {
+                        updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Excluded);
+                    }
+                }
+            }
+        }
+    }
+
+    private void updateQueueEntityStatus(MessageCollection messageCollection, QueueEntity queueEntity, QueueStatus queueStatus) {
+
+        switch (queueStatus) {
+            case Completed:
+            case Excluded:
+                if (queueEntity.getQueueStatus() == QueueStatus.Active) {
+                    queueEntity.setQueueStatus(queueStatus);
+                } else {
+                    messageCollection.addInfo(queueEntity.getLabVessel().getLabel() + " was attempted to be "
+                            + queueStatus.name() + " but was not active, it currently is: " + queueEntity.getQueueStatus().name());
+                }
+                break;
+            default:
+                throw new RuntimeException("Unexpected update status.");
         }
     }
 

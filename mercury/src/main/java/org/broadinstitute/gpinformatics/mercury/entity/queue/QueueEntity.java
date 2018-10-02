@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 

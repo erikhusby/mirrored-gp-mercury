@@ -1255,7 +1255,7 @@
             <column name="queue_grouping_Id" type="number">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_queue_grouping_id" />
             </column>
-            <column name="queue_group_text" type="number" />
+            <column name="queue_group_text" type="varchar2(200)" />
             <column name="container_vessel_id" type="number" />
             <column name="queue_id" type="number" />
             <column name="sort_order" type="number" />
