@@ -674,7 +674,8 @@ public enum LabEventType {
                     targetVolume(true).
                     requireSingleParticipant(true).
                     build(),
-            LibraryType.NONE_ASSIGNED, "_BC", Metadata.Key.TUMOR_NORMAL, "Normal", MaterialType.WHOLE_BLOOD_BUFFY_COAT),
+            LibraryType.NONE_ASSIGNED, "_BC", Metadata.Key.TUMOR_NORMAL, "Normal", MaterialType.WHOLE_BLOOD_BUFFY_COAT,
+            SourceHandling.DEPLETE),
     BLOOD_PLASMA_TRANSFER("BloodPlasmaBuffyTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -707,7 +708,8 @@ public enum LabEventType {
                     targetVolume(true).
                     requireSingleParticipant(true).
                     build(),
-            LibraryType.NONE_ASSIGNED, "_P", Metadata.Key.TUMOR_NORMAL, "Tumor", MaterialType.PLASMA_PLASMA),
+            LibraryType.NONE_ASSIGNED, "_P", Metadata.Key.TUMOR_NORMAL, "Tumor", MaterialType.PLASMA_PLASMA,
+            SourceHandling.DEPLETE),
     CSF_TRANSFER("CsfTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -721,7 +723,8 @@ public enum LabEventType {
                     targetVolume(true).
                     requireSingleParticipant(true).
                     build(),
-            MaterialType.BODILY_FLUID_CEREBROSPINAL_FLUID, LibraryType.NONE_ASSIGNED),
+            MaterialType.BODILY_FLUID_CEREBROSPINAL_FLUID, LibraryType.NONE_ASSIGNED,
+            SourceHandling.DEPLETE),
     URINE_TRANSFER("UrineTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -734,7 +737,7 @@ public enum LabEventType {
                     targetContainerPrefix("UrineTarget").
                     requireSingleParticipant(true).
                     build(),
-            MaterialType.BODILY_FLUID_URINE, LibraryType.NONE_ASSIGNED),
+            MaterialType.BODILY_FLUID_URINE, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     URINE_SECOND_TRANSFER("UrineSecondTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -748,7 +751,7 @@ public enum LabEventType {
                     targetVolume(true).
                     requireSingleParticipant(true).
                     build(),
-            MaterialType.BODILY_FLUID_URINE, LibraryType.POOLED),
+            MaterialType.BODILY_FLUID_URINE, LibraryType.POOLED, SourceHandling.DEPLETE),
     BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -766,7 +769,7 @@ public enum LabEventType {
                     limsFile(true).
                     reagentNames(new String[]{"QIASymphony Kit"}).
                     build(),
-            MaterialType.DNA_DNA_CELL_FREE, LibraryType.NONE_ASSIGNED),
+            MaterialType.DNA_DNA_CELL_FREE, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     QIASYMPHONY_GENOMIC("QiaSymphonyGenomic",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -780,7 +783,7 @@ public enum LabEventType {
                     limsFile(true).
                     reagentNames(new String[]{"QIASymphony Kit"}).
                     build(),
-            MaterialType.DNA_DNA_GENOMIC, LibraryType.NONE_ASSIGNED),
+            MaterialType.DNA_DNA_GENOMIC, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     BLOOD_CRYOVIAL_EXTRACTION("BloodCryovialExtraction",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -2145,8 +2148,10 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24).
-                    reagentNames(new String[]{"LX1", "LX2", "EML", "SML", "ATM", "RA1", "XC3", "XC4", "PB1"}).
-                    reagentFieldCounts(new int[]{6, 6, 6, 6, 6, 1, 1, 1, 2}).expirationDateIncluded(false).numEvents(24).
+                    reagentNames(new String[]{"LX1", "LX2", "EML", "SML", "ATM", "RA1", "XC3", "XC4", "PB1", "PB2", "FORM20EDTA25", "ETOH"}).
+                    reagentFieldCounts(new int[]{6, 6, 6, 6, 6, 1, 1, 1, 2, 1, 1, 1}).expirationDateIncluded(false).
+                    reagentFieldExpirationRequired(new String[]{"FORM20EDTA25", "ETOH"})
+                    .expirationDateIncluded(false).numEvents(24).
                     machineNames(new String[]{"Rose", "Lily", "Scrappy"}).build(), LibraryType.NONE_ASSIGNED),
     INFINIUM_AUTOCALL_SOME_STARTED("InfiniumAutocallSomeStarted",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -2529,6 +2534,25 @@ public enum LabEventType {
 
     }
 
+    /**
+     * How the event expects to handle it's sources (if it is a transfer event).
+     */
+    public enum SourceHandling {
+        DEPLETE("Deplete Well"),                    // Expect to deplete the source(s) of the transfer.
+        TERMINATE_DEPLETED("Terminate Depleted"),   // Expected to terminate source(s) if the vol/mass reaches zero due to the transfer.
+        NONE("None");                               // No special changes to the source(s) of the transfer.
+
+        String displayName;
+
+        SourceHandling(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return this.displayName;
+        }
+    }
+
     private final LibraryType libraryType;
 
     private String collabSampleSuffix;
@@ -2536,6 +2560,8 @@ public enum LabEventType {
     private Metadata.Key metadataKey;
 
     private String metadataValue;
+
+    private SourceHandling sourceHandling;
 
     /**
      * Determines what metadata is added to messages forwarded to BSP.
@@ -2609,10 +2635,15 @@ public enum LabEventType {
 
         /** How many reagent fields for each entry in reagentNames. */
         private int[] reagentFieldCounts;
-    
-        /** Map from entries in reagentNames to corresponding entiry in reagentFieldCounts. */
+
+        /** Map from entries in reagentNames to corresponding entry in reagentFieldCounts. */
         private Map<String, Integer> mapReagentNameToCount;
-    
+
+        /** Entry in reagentNames that require expiration date. */
+        private String[] reagentFieldExpirationRequired = {};
+
+        private Map<String, String> mapReagentNameToExpireDate;
+
         /** Whether to include reagent expiration date fields. */
         private boolean expirationDateIncluded = true;
     
@@ -2701,6 +2732,7 @@ public enum LabEventType {
             requireSingleParticipant = builder.requireSingleParticipant;
             useWebCam = builder.useWebCam;
             targetWellTypeGeometry = builder.targetWellTypeGeometry;
+            reagentFieldExpirationRequired = builder.reagentFieldExpirationRequired;
         }
 
         public static class Builder {
@@ -2713,6 +2745,7 @@ public enum LabEventType {
             private SBSSection targetSection;
             private String[] reagentNames = {};
             private int[] reagentFieldCounts;
+            private String[] reagentFieldExpirationRequired;
             private boolean expirationDateIncluded = true;
             private int numEvents = 1;
             private String[] machineNames = {};
@@ -2759,6 +2792,11 @@ public enum LabEventType {
 
             public Builder reagentFieldCounts(int[] reagentFieldCounts) {
                 this.reagentFieldCounts = reagentFieldCounts;
+                return this;
+            }
+
+            public Builder reagentFieldExpirationRequired(String[] reagentFieldExpirationRequired) {
+                this. reagentFieldExpirationRequired = reagentFieldExpirationRequired;
                 return this;
             }
 
@@ -3026,6 +3064,23 @@ public enum LabEventType {
             return expirationDateIncluded;
         }
 
+        public String[] getReagentFieldExpirationRequired() {
+            if (reagentFieldExpirationRequired == null) {
+                reagentFieldExpirationRequired = new String[0];
+            }
+            return reagentFieldExpirationRequired;
+        }
+
+        public Map<String, String> getMapReagentNameToExpireDate() {
+            if (mapReagentNameToExpireDate == null) {
+                mapReagentNameToExpireDate = new HashMap<>();
+                for (int i = 0; i < reagentFieldExpirationRequired.length; i++) {
+                    mapReagentNameToExpireDate.put(reagentFieldExpirationRequired[i], getReagentFieldExpirationRequired()[i]);
+                }
+            }
+            return mapReagentNameToExpireDate;
+        }
+
         public LabEventType getSecondaryEvent() {
             return secondaryEvent;
         }
@@ -3121,13 +3176,15 @@ public enum LabEventType {
                  SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
                  PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
-                 String collabSampleSuffix, Metadata.Key metadataKey, String metadataValue, MaterialType resultingMaterialType) {
+                 String collabSampleSuffix, Metadata.Key metadataKey, String metadataValue, MaterialType resultingMaterialType,
+                 SourceHandling sourceHandling) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, resultingMaterialType,
                 libraryType);
         this.collabSampleSuffix = collabSampleSuffix;
         this.metadataKey = metadataKey;
         this.metadataValue = metadataValue;
+        this.sourceHandling = sourceHandling;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -3147,6 +3204,18 @@ public enum LabEventType {
         this.manualTransferDetails = manualTransferDetails;
         this.resultingMaterialType = resultingMaterialType;
         this.libraryType = libraryType;
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+                 VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails,
+                 MaterialType resultingMaterialType, LibraryType libraryType,
+                 SourceHandling sourceHandling) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails,
+                resultingMaterialType, libraryType);
+        this.sourceHandling = sourceHandling;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -3243,5 +3312,27 @@ public enum LabEventType {
 
     public TranslateBspMessage getTranslateBspMessage() {
         return translateBspMessage;
+    }
+
+    public SourceHandling getSourceHandling() {
+        return sourceHandling;
+    }
+
+    /**
+     * Check whether this event type expects to deplete all sources (if there are any transfers).
+     *
+     * @return True if the DEPLETE flag is set on the eventType, otherwise false.
+     */
+    public boolean depleteSources() {
+        return getSourceHandling() != null && getSourceHandling() == SourceHandling.DEPLETE;
+    }
+
+    /**
+     * Check whether this event type expects to allow terminating depleted sources (if there are any transfers).
+     *
+     * @return true if TERMINATE_DEPLETED flag is set on the eventType, otherwise false.
+     */
+    public boolean terminateDepletedSources() {
+        return getSourceHandling() != null && getSourceHandling() == SourceHandling.TERMINATE_DEPLETED;
     }
 }

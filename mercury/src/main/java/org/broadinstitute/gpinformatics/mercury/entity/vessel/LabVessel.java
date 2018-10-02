@@ -1199,13 +1199,20 @@ public abstract class LabVessel implements Serializable {
             traversalNodes = getDescendants();
         }
 
+        boolean shouldStop = false;
         for( VesselEvent vesselEvent : traversalNodes ) {
             context = TransferTraverserCriteria.buildTraversalNodeContext(vesselEvent, hopCount, traversalDirection);
-            transferTraverserCriteria.evaluateVesselPreOrder(context);
-            evaluateVesselEvent(transferTraverserCriteria,
+            TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVesselPreOrder(context);
+            if (traversalControl == TransferTraverserCriteria.TraversalControl.StopTraversing) {
+                shouldStop = true;
+            }
+            // Finish up handling this hop before stopping
+            if( !shouldStop ) {
+                evaluateVesselEvent(transferTraverserCriteria,
                         traversalDirection,
                         hopCount,
                         vesselEvent);
+            }
             transferTraverserCriteria.evaluateVesselPostOrder(context);
         }
     }

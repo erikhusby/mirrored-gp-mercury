@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSo
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
@@ -35,6 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.enterprise.context.Dependent;
@@ -44,8 +46,10 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -215,6 +219,75 @@ public class BSPRestSender implements Serializable {
         return atLeastOneTransfer ? plateCherryPickEvent : null;
     }
 
+    /**
+     * Check whether the event expects to handle source samples specifically. If yes, then check to see if the metadata
+     * needs to be added to the sourcePositionMap or to the sourcePlateType element in the message to BSP.
+     *
+     * @param targetEventType    The lab event type instance from the message
+     * @param sourcePlateType    PlateType instance from the message
+     * @param sourcePositionMaps The source position maps from the message
+     */
+    private void addSourceHandlingException(LabEventType targetEventType, List<PlateType> sourcePlateType, List<PositionMapType> sourcePositionMaps) {
+
+        // Check to see if 'DEPLETE' or 'TERMINATE_DEPLETED' flag is set on the lab event type.
+        if (targetEventType.depleteSources() || targetEventType.terminateDepletedSources()) {
+
+            // If there are any sourcePositionMap objects, then add the metadata to each receptacleType entree in the maps.
+            if (sourcePositionMaps != null && !sourcePositionMaps.isEmpty()) {
+                for (PositionMapType positionMapType : sourcePositionMaps) {
+                    for (ReceptacleType sourceReceptacleType : positionMapType.getReceptacle()) {
+
+                        addSourceHandlingException(targetEventType, sourceReceptacleType);
+                    }
+                }
+                // If no sourcePositionMap, then we need to add the special handling flag to the event's sourcePlateType element.
+            } else if (sourcePlateType != null) {
+
+                for (PlateType plateType : sourcePlateType) {
+
+                    // If the source container is a plate and no position map is provided for it, we need to set the source handling
+                    // metadata tag on the PlateType element.
+                    if (StaticPlate.PlateType.getByAutomationName(plateType.getPhysType()) != null) {
+
+                        MetadataType metadataType = new MetadataType();
+                        metadataType.setValue(Boolean.TRUE.toString());
+
+                        if (targetEventType.depleteSources()) {
+                            metadataType.setName(LabEventType.SourceHandling.DEPLETE.getDisplayName());
+                        } else {
+                            metadataType.setName(LabEventType.SourceHandling.TERMINATE_DEPLETED.getDisplayName());
+                        }
+                        plateType.getMetadata().add(metadataType);
+                        // Check to see if there is a sourcePositionMap where each source could be set with a metadataType.
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Check whether the event type expects to handle sources in a special way and do so if necessary.
+     *
+     * @param targetEventType      LabEventType of the lab event
+     * @param sourceReceptacleType Source
+     */
+    private void addSourceHandlingException(LabEventType targetEventType, ReceptacleType sourceReceptacleType) {
+        // Check to see if 'DEPLETE' or 'TERMINATE_DEPLETED' flag is set on the lab event type.
+        if (targetEventType.depleteSources() || targetEventType.terminateDepletedSources()) {
+
+            MetadataType metadataType = new MetadataType();
+            // Always add the 'Terminate Depleted' enum display name as BSP will handle termination if the volume is zero.
+            metadataType.setName(LabEventType.SourceHandling.TERMINATE_DEPLETED.getDisplayName());
+            metadataType.setValue(Boolean.TRUE.toString());
+            sourceReceptacleType.getMetadata().add(metadataType);
+
+            // If we are set to deplete the sources then we need to ensure it's volume is zero.
+            if (targetEventType.depleteSources()) {
+                sourceReceptacleType.setVolume(BigDecimal.ZERO);
+            }
+        }
+    }
+
     private Map<VesselPosition, ReceptacleType> buildMapPosToReceptacle(List<PositionMapType> positionMaps) {
         Map<VesselPosition, ReceptacleType> mapPosToReceptacle = new HashMap<>();
         if (positionMaps != null && !positionMaps.isEmpty()) {
@@ -231,9 +304,12 @@ public class BSPRestSender implements Serializable {
         // is two events in one message, but only one is configured to forward to BSP.
         BettaLIMSMessage copy = new BettaLIMSMessage();
         boolean atLeastOneEvent = false;
+
         for (PlateCherryPickEvent plateCherryPickEvent : message.getPlateCherryPickEvent()) {
-            if(LabEventType.getByName(plateCherryPickEvent.getEventType()).getForwardMessage() ==
-                    LabEventType.ForwardMessage.BSP) {
+            LabEventType labEventType = LabEventType.getByName(plateCherryPickEvent.getEventType());
+            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP) {
+
+                addSourceHandlingException(labEventType, plateCherryPickEvent.getSourcePlate(), plateCherryPickEvent.getSourcePositionMap());
                 // todo jmt method to filter out clinical samples
                 copy.getPlateCherryPickEvent().add(plateCherryPickEvent);
                 atLeastOneEvent = true;
@@ -242,6 +318,14 @@ public class BSPRestSender implements Serializable {
         for (PlateTransferEventType plateTransferEventType : message.getPlateTransferEvent()) {
             LabEventType labEventType = LabEventType.getByName(plateTransferEventType.getEventType());
             if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP) {
+                // If there is a sourcePositionMap create a list to handle.
+                List<PositionMapType> sourcePositionMapList = plateTransferEventType.getSourcePositionMap() != null ?
+                        Collections.singletonList(plateTransferEventType.getSourcePositionMap()) : null;
+
+                List<PlateType> sourcePlateType = plateTransferEventType.getSourcePlate() != null ?
+                        Collections.singletonList(plateTransferEventType.getSourcePlate()) : null;
+                addSourceHandlingException(labEventType, sourcePlateType, sourcePositionMapList);
+
                 if (labEventType.getTranslateBspMessage() == LabEventType.TranslateBspMessage.SECTION_TO_CHERRY) {
                     PlateCherryPickEvent plateCherryPickEvent = plateTransferToCherryPick(plateTransferEventType,
                             labEvents);
@@ -279,6 +363,7 @@ public class BSPRestSender implements Serializable {
             if(LabEventType.getByName(receptacleTransferEventType.getEventType()).getForwardMessage() ==
                     LabEventType.ForwardMessage.BSP) {
                 // todo jmt method to filter out clinical samples
+                addSourceHandlingException(LabEventType.getByName(receptacleTransferEventType.getEventType()), receptacleTransferEventType.getSourceReceptacle());
                 copy.getReceptacleTransferEvent().add(receptacleTransferEventType);
                 atLeastOneEvent = true;
             }

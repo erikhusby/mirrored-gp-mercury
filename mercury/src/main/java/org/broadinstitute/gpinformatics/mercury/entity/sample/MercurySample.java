@@ -357,7 +357,7 @@ public class MercurySample extends AbstractSample {
         for(LabVessel currentVessel : labVessel) {
             TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
                     new TransferTraverserCriteria.VesselForEventTypeCriteria(
-                            Collections.singletonList(LabEventType.SAMPLE_RECEIPT), true, true);
+                            Collections.singletonList(LabEventType.SAMPLE_RECEIPT), false, true);
             currentVessel.evaluateCriteria(vesselForEventTypeCriteria,
                     TransferTraverserCriteria.TraversalDirection.Ancestors);
             Map<LabEvent, Set<LabVessel>> vesselsForEvent = vesselForEventTypeCriteria.getVesselsForLabEventType();

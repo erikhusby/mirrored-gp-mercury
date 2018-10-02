@@ -571,9 +571,12 @@ public class ZimsIlluminaRunFactory {
             if (analyzeUmi == null) {
                 analyzeUmi = productOrder.getAnalyzeUmiOverride();
             }
-            // If there was no bait on the actual samples, use the one defined on the product.
+            if (analysisType == null) {
+                analysisType = product.getAnalysisTypeKey();
+            }
+            // If there was no bait on the actual samples, use the one defined on the product or pdo if unlocked.
             if (bait == null) {
-                bait = product.getReagentDesignKey();
+                bait = productOrder.getReagentDesignKey();
             }
 
             // Project stuff.

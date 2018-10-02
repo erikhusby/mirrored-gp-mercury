@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -51,8 +52,10 @@ public class ProductOrderSampleBean {
     public static final String VOLUME = "Volume";
     public static final String YIELD_AMOUNT = "Yield Amount";
     public static final String RACKSCAN_MISMATCH = "Rackscan Mismatch";
+    public static final String RACKSCAN_MISMATCH_DETAILS = "Rackscan Mismatch Details";
     public static final String CONCENTRATION = "Concentration";
     public static final String BILLED = "Billed";
+    public static final String BILLED_DETAILS = "Billed Details";
     public static final String RECEIVED_DATE = "Received Date";
     public static final String SHIPPED_DATE = "Shipped Date";
     public static final String ON_RISK = "On Risk";
@@ -112,8 +115,12 @@ public class ProductOrderSampleBean {
     private Double concentration;
     @JsonProperty(RACKSCAN_MISMATCH)
     private boolean hasSampleKitUploadRackscanMismatch;
+    @JsonProperty(RACKSCAN_MISMATCH_DETAILS)
+    private String sampleKitUploadRackscanMismatchDetails;
     @JsonProperty(BILLED)
     private boolean completelyBilled;
+    @JsonProperty(BILLED_DETAILS)
+    private String completelyBilledDetails;
     @JsonProperty(RECEIVED_DATE)
     private String receiptDate = "";
     @JsonProperty(SHIPPED_DATE)
@@ -159,8 +166,13 @@ public class ProductOrderSampleBean {
             position = sample.getSamplePosition() + 1;
         }
         if (initialLoad) {
-            if (preferenceSaver.showColumn(BILLED)) {
+            if (preferenceSaver.showColumn(BILLED_DETAILS)) {
                 completelyBilled = sample.isCompletelyBilled();
+                if(sample.isCompletelyBilled()) {
+                    completelyBilledDetails =
+                            buildBeenBilledDiv(sample, sample.getSampleKey() + "<BR>\n" +
+                                                       StringUtils.join(sample.completelyBilledDetails(), "<br>\n"));
+                }
             }
             if (preferenceSaver.showColumn(ON_RISK)) {
                 onRisk = sample.isOnRisk();
@@ -235,8 +247,13 @@ public class ProductOrderSampleBean {
             if (preferenceSaver.showColumn(PICO_RUN_DATE)) {
                 picoDate = formatPicoRunDate(sampleData.getPicoRunDate(), "");
             }
-            if (preferenceSaver.showColumn(RACKSCAN_MISMATCH)) {
+            if (preferenceSaver.showColumn(RACKSCAN_MISMATCH_DETAILS)) {
                 hasSampleKitUploadRackscanMismatch = sampleData.getHasSampleKitUploadRackscanMismatch();
+                if(sampleData.getHasSampleKitUploadRackscanMismatch()) {
+                    sampleKitUploadRackscanMismatchDetails =
+                            buildCheckColumnDiv(sample, "Rack Scan Mismatched for",
+                                    sample.getBusinessKey() + " has a rack scan mismatch");
+                }
             }
             if (preferenceSaver.showColumn(RECEIVED_DATE)) {
                 receiptDate = sample.getFormattedReceiptDate();
@@ -244,11 +261,21 @@ public class ProductOrderSampleBean {
         }
     }
 
+    private String buildBeenBilledDiv(ProductOrderSample sample, String billedDetailData) {
+        String billedDiv = buildCheckColumnDiv(sample, "Billed details for", billedDetailData);
+        return billedDiv;
+    }
+
     private String buildRiskDiv(ProductOrderSample sample) {
-        String riskDiv = String.format(
-                "<div class=\"onRisk\" title=\"On Risk Details for %s\" rel=\"popover\" data-trigger=\"hover\" data-placement=\"left\" data-html=\"true\" data-content=\"<div style='text-align: left; white-space: normal; word-break: break-word;'>%s</div>\"><img src=\"/Mercury/images/check.png\">...</div>",
-                sample.getSampleKey(), sample.getRiskString());
+        String riskDiv = buildCheckColumnDiv(sample, "On Risk Details for", sample.getRiskString());
         return riskDiv;
+    }
+
+    private String buildCheckColumnDiv(ProductOrderSample sample, final String titlePrefix, String detailData) {
+        return String.format(
+                "<div class=\"onRisk\" title=\"" + titlePrefix
+                + " %s\" rel=\"popover\" data-trigger=\"hover\" data-placement=\"left\" data-html=\"true\" data-content=\"<div style='text-align: left; white-space: normal; word-break: break-word;'>%s</div>\"><img src=\"/Mercury/images/check.png\">...</div>",
+                    sample.getSampleKey(), detailData);
     }
 
     private static String formatPicoRunDate(Date picoRunDate, String defaultReturn) {

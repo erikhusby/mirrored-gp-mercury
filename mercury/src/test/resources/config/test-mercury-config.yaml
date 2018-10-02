@@ -1,6 +1,36 @@
 
 # External system definitions.  These describe the various deployments of external systems with which Mercury might
 # integrate.
+app:
+
+    DEV:
+      host:     localhost
+      port:     8443
+      jmsPort:  5445
+      workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+
+    QA:
+      host:     mercuryqa.broadinstitute.org
+      port:     8443
+      jmsPort:  5445
+      workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
+
+    TEST:
+      host:     mercuryfb.broadinstitute.org
+      port:     8443
+      jmsPort:  5445
+      workflowValidationEmail:
+      gpBillingManagers: !!set { nobody@broadinstitute.org, nobody@localhost }
+
+    PROD:
+      host:     mercury.broadinstitute.org
+      port:     8443
+      jmsPort:  5445
+      workflowValidationEmail: mercury-dev@broadinstitute.org
+      #limsworkflowvalidation@broadinstitute.org
+      gpBillingManagers: !!set { suhamil@broadinstitute.org, sferrier@broadinstitute.org }
 
 
 bsp:
@@ -121,7 +151,7 @@ hipchat:
 mercury:
 
     DEV:
-
+      app:      DEV
       bsp:      QA
       jira:     TEST
       quote:    QA
@@ -131,7 +161,7 @@ mercury:
 
 
     TEST:
-
+      app:      TEST
       bsp:      QA
       jira:     TEST
       quote:    QA
@@ -141,7 +171,7 @@ mercury:
 
 
     QA:
-
+      app:      QA
       bsp:      QA
       jira:     TEST
       quote:    QA
@@ -151,7 +181,7 @@ mercury:
 
 
     PROD:
-
+      app:      PROD
       bsp:      PROD
       # not ready to talk to PROD jira yet, we should see an error if the live service asks to reference this
       #jira:     PROD

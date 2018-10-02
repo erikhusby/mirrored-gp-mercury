@@ -4,12 +4,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
 import javax.enterprise.context.Dependent;
 import javax.mail.Message;
-import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -30,6 +30,14 @@ public class EmailSender implements Serializable {
     @Resource(mappedName = "java:jboss/mail/Default")
     private Session mailSession;
 
+    // for testing
+    EmailSender(Session mailSession) {
+        this.mailSession = mailSession;
+    }
+
+    public EmailSender() {
+    }
+
     /**
      * Send an email in HTML format
      * @param appConfig The configuration for the deployed app.  This determines
@@ -42,7 +50,8 @@ public class EmailSender implements Serializable {
      * @return null if not configured to send, false if there was a problem sending, or true if send succeeded.
      */
     public Boolean sendHtmlEmail(@Nonnull AppConfig appConfig, String to,
-                              Collection<String> ccAddrdesses, String subject, String body, boolean overrideForTest) {
+                              Collection<String> ccAddrdesses, String subject, String body, boolean overrideForTest,
+                              boolean ignoreExceptions) {
         if (appConfig.shouldSendEmail() || overrideForTest) {
             if (mailSession != null) {
                 try {
@@ -57,9 +66,15 @@ public class EmailSender implements Serializable {
                     Transport.send(message);
                     return true;
 
-                } catch (MessagingException e) {
+                } catch (Exception e) {
                     LOG.error("Failed to send email", e);
-                    // Don't rethrow, not fatal
+
+                    //noinspection StatementWithEmptyBody
+                    if (ignoreExceptions) {
+                        // Don't rethrow, not fatal
+                    } else {
+                        throw new InformaticsServiceException("Error sending email", e);
+                    }
                 }
             }
             return false;

@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequestBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchValueBean;
@@ -20,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Configurable search definitions for various entities.
@@ -51,12 +54,38 @@ public class SearchDefinitionFactory {
      */
     private static SearchTerm.Evaluator<Object> pdoConverter = new SearchTerm.Evaluator<Object>() {
         @Override
-        public Object evaluate(Object entity, SearchContext context) {
+        public String evaluate(Object entity, SearchContext context) {
             String value = context.getSearchValueString();
             if( value.matches("[0-9]*")){
                 value = "PDO-" + value;
             }
             return value;
+        }
+    };
+
+    private static SearchTerm.Evaluator<Object> billingSessionConverter = new SearchTerm.Evaluator<Object>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            String value = context.getSearchValueString();
+
+            if(value.startsWith(BillingSession.ID_PREFIX)) {
+                value = value.split(BillingSession.ID_PREFIX)[0];
+            }
+            return value;
+        }
+    };
+    private static SearchTerm.Evaluator<Object> userIdConverter = new SearchTerm.Evaluator<Object>() {
+        @Override
+        public Long evaluate(Object entity, SearchContext context) {
+
+            String value = context.getSearchValueString();
+            final Optional<BspUser> searchBspUser = Optional.of(context.getBspUserList().getByUsername(value));
+
+            Long userId = null;
+            if(searchBspUser.isPresent()) {
+                userId = searchBspUser.get().getUserId();
+            }
+            return userId;
         }
     };
 
@@ -70,6 +99,7 @@ public class SearchDefinitionFactory {
         fact.buildReagentSearchDef();
         fact.buildLabMetricSearchDef();
         fact.buildLabMetricRunSearchDef();
+        fact.buildProductOrderSearchDef();
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
@@ -85,6 +115,7 @@ public class SearchDefinitionFactory {
             fact.buildReagentSearchDef();
             fact.buildLabMetricSearchDef();
             fact.buildLabMetricRunSearchDef();
+            fact.buildProductOrderSearchDef();
         }
 
         return MAP_NAME_TO_DEF.get(entity);
@@ -126,6 +157,12 @@ public class SearchDefinitionFactory {
         MAP_NAME_TO_DEF.put(ColumnEntity.LAB_METRIC_RUN.getEntityName(), configurableSearchDefinition);
     }
 
+    private void buildProductOrderSearchDef() {
+        ConfigurableSearchDefinition productOrderSearchDefinition
+                = new ProductOrderSearchDefinition().buildSearchDefinition();
+        MAP_NAME_TO_DEF.put(ColumnEntity.PRODUCT_ORDER.getEntityName(), productOrderSearchDefinition);
+    }
+
     static SearchTerm.Evaluator<Object> getBatchNameInputConverter(){
         return batchNameInputConverter;
     }
@@ -133,6 +170,15 @@ public class SearchDefinitionFactory {
     static SearchTerm.Evaluator<Object> getPdoInputConverter(){
         return pdoConverter;
     }
+
+    static SearchTerm.Evaluator<Object> getBillingSessionConverter() {
+        return billingSessionConverter;
+    }
+
+    static SearchTerm.Evaluator<Object> getUserIdConverter() {
+        return userIdConverter;
+    }
+
 
     /**
      * Shared logic to extract the type of any lab vessel
