@@ -280,8 +280,11 @@ public class LedgerEntry implements Serializable {
     }
 
     public Date getBucketDate() {
-        return billingSession.getBucketDate(workCompleteDate);
-    }
+        Date bucketDate = null;
+        if(billingSession != null) {
+            bucketDate = billingSession.getBucketDate(workCompleteDate);
+        }
+        return bucketDate;    }
 
     public void setSapOrderDetail(SapOrderDetail sapOrderDetail) {
         this.sapOrderDetail = sapOrderDetail;

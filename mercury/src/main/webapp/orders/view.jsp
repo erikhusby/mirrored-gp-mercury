@@ -245,9 +245,12 @@ $j(document).ready(function () {
                 {"data": "${columnHeaderPDOSampleId}","orderable": false, 'class': 'no-min-width', render:renderCheckbox},
                 {"data": "${columnHeaderPosition}", "title": "${columnHeaderPosition}", 'class': 'no-min-width'},
                 {"data": "${columnHeaderSampleId}", "title": "${columnHeaderSampleId}", "class": "${fn:replace(columnHeaderSampleId,' ','').trim()}", "sType": "html", render: renderSampleLink},
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 {"data": "${columnHeaderCollaboratorSampleId}", "title": "${columnHeaderCollaboratorSampleId}", "class": "${fn:replace(columnHeaderCollaboratorSampleId,' ','').trim()}"},
                 {"data": "${columnHeaderParticipantId}", "title": "${columnHeaderParticipantId}"},
                 {"data": "${columnHeaderCollaboratorParticipantId}", "title": "${columnHeaderCollaboratorParticipantId}"},
+                </security:authorizeBlock>
+
                 {"data": "${columnHeaderShippedDate}", "title": "${columnHeaderShippedDate}"},
                 {"data": "${columnHeaderReceivedDate}", "title": "${columnHeaderReceivedDate}", "class": "${fn:replace(columnHeaderReceivedDate,' ','').trim()}"},
                 {"data": "${columnHeaderSampleType}", "title": "${columnHeaderSampleType}"},
@@ -1256,12 +1259,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <stripes:submit name="validate" value="Validate" style="margin-left: 3px;" class="btn"/>
             </security:authorizeBlock>
 
-            <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-                          beanclass="${actionBean.class.name}" event="edit" class="btn"
-                          style="text-decoration: none !important; margin-left: 10px;">
-                <%=ProductOrderActionBean.EDIT_ORDER%>
-                <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-            </stripes:link>
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
+                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                              beanclass="${actionBean.class.name}" event="edit" class="btn"
+                              style="text-decoration: none !important; margin-left: 10px;">
+                    <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                </stripes:link>
+            </security:authorizeBlock>
 
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
@@ -1851,9 +1856,13 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 </th>
                 <th width="10">#</th>
                 <th width="90"></th>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
+
                 <th width="110"></th>
                 <th width="60"></th>
                 <th width="110"></th>
+                </security:authorizeBlock>
+
                 <th width="40"></th>
                 <th width="40"></th>
                 <th width="40"></th>
