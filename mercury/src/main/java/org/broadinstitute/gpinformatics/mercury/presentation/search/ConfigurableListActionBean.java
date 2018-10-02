@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListF
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
@@ -70,6 +71,10 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private ConstrainedValueDao constrainedValueDao;
+
     /**
      * Stream an Excel spreadsheet, from a list of IDs
      *
@@ -148,6 +153,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         evalContext.setJiraConfig(jiraConfig);
         evalContext.setPriceListCache(priceListCache);
         evalContext.setQuoteLink(quoteLink);
+        evalContext.setOptionValueDao(constrainedValueDao);
         return evalContext;
     }
 

@@ -102,6 +102,55 @@ public class PlateMetadataImportProcessor extends TableProcessor {
                     valid = false;
                 }
             }
+            if (header.getText().equals(Headers.PLATE.getText())) {
+                if (StringUtils.isBlank(val)) {
+                    addDataMessage("Plate Barcode field cannot be empty.", dataRowIndex);
+                    valid = false;
+                }
+            }
+            if (header.getText().equals(Headers.WELL.getText())) {
+                if (StringUtils.isBlank(val)) {
+                    addDataMessage("Well field cannot be empty.", dataRowIndex);
+                    valid = false;
+                }
+            }
+            if (header.getText().equals(Headers.COLLABORATOR_PARTICIPANT_ID.getText())) {
+                if (StringUtils.isBlank(val)) {
+                    addDataMessage("Collaborator Participant ID field cannot be empty.", dataRowIndex);
+                    valid = false;
+                }
+            }
+            if (header.getText().equals(Headers.COLLABORATOR_SAMPLE_ID.getText())) {
+                if (StringUtils.isBlank(val)) {
+                    addDataMessage("Collaborator Sample ID field cannot be empty.", dataRowIndex);
+                    valid = false;
+                }
+            }
+            if (header.getText().equals(Headers.CELL_TYPE.getText())) {
+                if (StringUtils.isBlank(val)) {
+                    addDataMessage("Cell Type field cannot be empty.", dataRowIndex);
+                    valid = false;
+                }
+            }
+            if (header.getText().equals(Headers.SPECIES.getText())) {
+                if (StringUtils.isBlank(val)) {
+                    addDataMessage("Species field cannot be empty.", dataRowIndex);
+                    valid = false;
+                }
+            }
+            if (header.getText().equals(Headers.VOLUME.getText())) {
+                if (StringUtils.isBlank(val)) {
+                    addDataMessage("Volume field cannot be empty.", dataRowIndex);
+                    valid = false;
+                } else {
+                    try {
+                        BigDecimal bigDecimal = new BigDecimal(val);
+                    } catch (NumberFormatException e) {
+                        addDataMessage("Volume field must be a number.", dataRowIndex);
+                        valid = false;
+                    }
+                }
+            }
         }
         return valid;
     }
@@ -119,14 +168,14 @@ public class PlateMetadataImportProcessor extends TableProcessor {
     public List<RowMetadata> getRowMetadataRecords() throws ValidationException {
         if (columnHeaders == null && rowMetadataRecords.isEmpty()) {
             getMessages().add(EMPTY_FILE_ERROR);
-        } else if (rowMetadataRecords.isEmpty()) {
+        } else if (getMessages().isEmpty() && rowMetadataRecords.isEmpty()) {
             getMessages().add(NO_DATA_ERROR);
         }
 
         Set<String> plateBarcodes = rowMetadataRecords.stream()
                 .map(RowMetadata::getPlateBarcode)
                 .collect(Collectors.toSet());
-        if (plateBarcodes.size() != 1) {
+        if (plateBarcodes.size() > 1) {
             getMessages().add(NON_UNIQUE_BARCODES);
         }
 
@@ -239,8 +288,10 @@ public class PlateMetadataImportProcessor extends TableProcessor {
                     if (StringUtils.isNotBlank(columnEntry.getValue())) {
                         if (columnEntry.getValue().trim().equalsIgnoreCase("Positive Control")) {
                             positiveControl = true;
+                            metadataList.add(new Metadata(Metadata.Key.POSITIVE_CONTROL, columnEntry.getValue()));
                         } else if (columnEntry.getValue().trim().equalsIgnoreCase("Negative Control")) {
                             negativeControl = true;
+                            metadataList.add(new Metadata(Metadata.Key.NEGATIVE_CONTROL, columnEntry.getValue()));
                         } else {
                             messageCollection.addError(BAD_CONTROL_ERROR + columnEntry.getValue());
                         }

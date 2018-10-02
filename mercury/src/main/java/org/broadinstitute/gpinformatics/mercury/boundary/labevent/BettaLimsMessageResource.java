@@ -262,7 +262,7 @@ public class BettaLimsMessageResource {
                 log.error(e.getMessage());
             }
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                    Collections.<String>emptyList(), "[Mercury] Failed to process message", e.getMessage(), false);
+                    Collections.<String>emptyList(), "[Mercury] Failed to process message", e.getMessage(), false, true);
             throw e;
         }
     }
@@ -453,7 +453,7 @@ public class BettaLimsMessageResource {
             if (labEvent.hasAmbiguousLcsetProblem()) {
                 emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
                         "[Mercury] Vessels have ambiguous LCSET", "After " + labEvent.getLabEventType().getName() +
-                                                                  " (" + labEvent.getLabEventId() + ")", false);
+                                                                  " (" + labEvent.getLabEventId() + ")", false, true);
             }
         }
     }

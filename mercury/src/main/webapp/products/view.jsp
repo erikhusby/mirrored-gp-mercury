@@ -299,6 +299,15 @@
                 </div>
 
                 <div class="view-control-group control-group">
+                    <label class="control-label label-form">Bait Locked</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.baitLocked ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
                     <label class="control-label label-form"><abbr title="aka Reagent Design">Bait Design</abbr></label>
                     <div class="controls">
                         <div class="form-value">

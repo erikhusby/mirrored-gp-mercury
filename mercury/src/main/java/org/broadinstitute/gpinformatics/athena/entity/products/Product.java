@@ -213,6 +213,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @BatchSize(size = 20)
     private List<ProductOrder> productOrders = new ArrayList<>();
 
+    @Column(name = "BAIT_LOCKED")
+    private Boolean baitLocked;
+
     /**
      * Helper method to allow the quick creation of a new Product based on the contents of an existing product
      *
@@ -241,6 +244,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
         clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
         clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
+        clonedProduct.setBaitLocked(productToClone.getBaitLocked());
         clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
         clonedProduct.setReadLength(productToClone.getReadLength());
         clonedProduct.setInsertSize(productToClone.getInsertSize());
@@ -917,6 +921,17 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setAnalyzeUmi(Boolean analyzeUmi) {
         this.analyzeUmi = analyzeUmi;
+    }
+
+    public Boolean getBaitLocked() {
+        if (baitLocked == null) {
+            return true;
+        }
+        return baitLocked;
+    }
+
+    public void setBaitLocked(Boolean baitLocked) {
+        this.baitLocked = baitLocked;
     }
 
     public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyConfiguration () {

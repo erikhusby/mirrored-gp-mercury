@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
@@ -61,6 +62,9 @@ public class ConfigurableListFactory {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private ConstrainedValueDao constrainedValueDao;
 
     /**
      * Create a ConfigurableList instance.
@@ -483,6 +487,7 @@ public class ConfigurableListFactory {
         evalContext.setJiraConfig(jiraConfig);
         evalContext.setPriceListCache(priceListCache);
         evalContext.setQuoteLink(quoteLink);
+        evalContext.setOptionValueDao(constrainedValueDao);
         return evalContext;
     }
 }

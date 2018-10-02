@@ -95,6 +95,12 @@ public class PlateMetadataImportProcessorTest {
                 case COLLECTION_DATE:
                     assertThat(value, startsWith("10-May"));
                     break;
+                case POSITIVE_CONTROL:
+                    assertThat(value, startsWith("Positive Control"));
+                    break;
+                case NEGATIVE_CONTROL:
+                    assertThat(value, startsWith("Negative Control"));
+                    break;
                 default:
                     throw new RuntimeException("Unknown metadata key in file: " + metadata.getKey().getDisplayName());
                 }

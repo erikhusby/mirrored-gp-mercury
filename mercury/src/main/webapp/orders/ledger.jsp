@@ -217,7 +217,6 @@
                  * they are filtered out of the DOM when the page loads
                  */
                 'bStateSave': false,
-                "iDisplayLength": 50,
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
                     {'bVisible': false},                                                    // 1: search text
@@ -818,6 +817,16 @@
     </div>
 
 <%-- ================ Product Order Information ================ --%>
+    <div class="row-fluid">
+
+        <div class="span12 title-header">
+            <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" event="view" class="pull-right">
+                <stripes:param name="productOrder" value="${actionBean.orderId}" />
+                << Return to Product Order
+            </stripes:link>
+        </div>
+
+    </div>
 
     <div class="row-fluid">
         <div class="span3"><span class="label-form">Product</span><br>${actionBean.productOrder.product.name}</div>

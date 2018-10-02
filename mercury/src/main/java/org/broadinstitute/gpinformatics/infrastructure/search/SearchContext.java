@@ -48,6 +48,8 @@ public class SearchContext {
     private QuoteLink quoteLink;
     private UserBean userBean;
 
+    private ResultParamValues rowTraverserParams;
+
     /**
      * Avoid having to access EJB or web application context to get user data for display
      */
@@ -273,5 +275,17 @@ public class SearchContext {
 
     public void setQuoteLink(QuoteLink quoteLink) {
         this.quoteLink = quoteLink;
+    }
+
+    public ResultParamValues getRowTraverserParams() {
+        return rowTraverserParams;
+    }
+
+    /**
+     * User configurable params for a selected customizable ancestor/descendant row traversal
+     */
+    public void setRowTraverserParams(
+            ResultParamValues rowTraverserParams) {
+        this.rowTraverserParams = rowTraverserParams;
     }
 }

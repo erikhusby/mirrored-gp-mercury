@@ -404,6 +404,9 @@ public class ResearchProjectEjb {
         // Since the database persists SubmissionTrackers in order to generate UUIDs to pass to the submissionsService,
         // We need to check for errors and manually remove ones which failed.
         List<SubmissionTracker> removeTrackers = new ArrayList<>();
+
+        // If some samples failed while others passed we need to keep note of it so we can inform the users later.
+        boolean someSubmissionsSucceeded=false;
         for (SubmissionStatusDetailBean status : submissionResults) {
 
             // remove current tracker from the map, so we can look up any trackers remaining when we exit the loop.
@@ -424,6 +427,7 @@ public class ResearchProjectEjb {
                 }
             } else {
                 submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
+                someSubmissionsSucceeded = true;
             }
         }
 
@@ -441,6 +445,10 @@ public class ResearchProjectEjb {
                 CoreActionBean.ERROR_CONTACT_SUPPORT);
             log.error(String.format("%s: %s", errorMessage, serializedStatus));
             errorMessages.add(errorMessage);
+        }
+        if (CollectionUtils.isNotEmpty(errorMessages) && someSubmissionsSucceeded) {
+            errorMessages.add("Some but not all submission requests have succeeded. "
+                              + "See the Submission Requests tab for further details\n");
         }
         return removeTrackers;
     }
