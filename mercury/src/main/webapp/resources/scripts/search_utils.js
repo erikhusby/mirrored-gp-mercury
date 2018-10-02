@@ -365,7 +365,7 @@ chooseColumns = function (available, chosen) {
         var option = $j( selected[i] );
         if (option.css("display") == "" || option.css("display") == 'block') {
             if (option.data("hasParams") ) {
-                showColumnOptions(option);
+                showColumnOptions(option, false);
                 // Do NOT hide this column
                 return;
             } else {
@@ -390,16 +390,25 @@ chooseColumns = function (available, chosen) {
  * @param available multi-select of available columns
  * @param chosen multi-select of chosen columns
  */
-showColumnOptions = function (option) {
+showColumnOptions = function (option, isEdit) {
     if (!option.data("hasParams") ) {
         return;
     }
     var overlayDiv = $j( "#resultParamsOverlay" );
     overlayDiv.dialog("option","paramType", "SEARCH_TERM");
     overlayDiv.dialog("option","entityName", $j("#entityName").val());
-    overlayDiv.dialog("option","elementName", option.data("elementName"));
-    overlayDiv.dialog("option","resultParams", option.val());
-    overlayDiv.dialog("open");
+
+    if( isEdit ) {
+        overlayDiv.dialog("option","srchTermEditSrc", option);
+        overlayDiv.dialog("option","resultParams", option.val());
+        overlayDiv.dialog("option","elementName", JSON.parse( option.val() ).elementName );
+        overlayDiv.dialog("open");
+        // Hold a reference to option being edited (after opening)
+        overlayDiv.dialog("option","srchTermEditSrc", option);
+    } else {
+        overlayDiv.dialog("option","elementName", option.data("elementName"));
+        overlayDiv.dialog("open");
+    }
 };
 
 editColumnParams = function (evt) {
@@ -407,7 +416,7 @@ editColumnParams = function (evt) {
     if (!option.data("hasParams") ) {
         return;
     }
-    showColumnOptions(option);
+    showColumnOptions(option, true);
 };
 
 toggleParamListShowAll = function( srcSpan, targetId ) {
@@ -762,6 +771,7 @@ initResultParamOverlay = function(){ //<%-- Dialog div element at bottom of conf
             var entityName = paramDialog.dialog("option","entityName");
             var elementName = paramDialog.dialog("option","elementName");
             var resultParams = paramDialog.dialog("option","resultParams");
+            paramDialog.dialog("option","srchTermEditSrc", null); // This is set after open if an edit is requested
             paramDialog.dialog("option", "reset")();
             $j.ajax({
                 url: '/Mercury/search/ResultParams.action',
@@ -831,20 +841,16 @@ initResultParamOverlay = function(){ //<%-- Dialog div element at bottom of conf
         if( rsltParamVal.paramType == "SEARCH_TERM") {
 
             var resultColumnSelect = $j('#selectedColumnDefNames')[0];
-            // Overwrite if already created
-            var newOption;
-            $j(resultColumnSelect).find("option").each(function(i,elem) {
-                var optionElement = $j(elem);
-                if(optionElement.text() == userColumnName) {
-                    newOption = optionElement;
-                }
-            });
-            if( !newOption ) { newOption = $j(document.createElement('option')); }
-            newOption.text(userColumnName);
-            newOption.val(JSON.stringify(rsltParamVal));
-            newOption.data("hasParams", true);
-            resultColumnSelect.options[resultColumnSelect.options.length] = newOption[0];
-            newOption.dblclick( editColumnParams );
+            // Overwrite if an edit is being processed
+            var editOption = paramDialog.dialog("option","srchTermEditSrc");
+            if( editOption == null ) {
+                editOption = $j(document.createElement('option'));
+                resultColumnSelect.options[resultColumnSelect.options.length] = editOption[0];
+            }
+            editOption.text(userColumnName);
+            editOption.val(JSON.stringify(rsltParamVal));
+            editOption.data("hasParams", true);
+            editOption.dblclick( editColumnParams );
         } else {
             var traverserSelect = $j("#customTraversalOptionConfig").find("option:selected");
             traverserSelect.val(JSON.stringify(rsltParamVal));
