@@ -712,7 +712,7 @@ public enum LabEventType {
             SourceHandling.DEPLETE),
     CSF_TRANSFER("CsfTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT,
                     RackOfTubes.RackType.FlipperRackRow8,
                     RackOfTubes.RackType.FlipperRackRow8).
@@ -740,7 +740,7 @@ public enum LabEventType {
             MaterialType.BODILY_FLUID_URINE, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     URINE_SECOND_TRANSFER("UrineSecondTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT,
                     RackOfTubes.RackType.FlipperRackRow8,
                     RackOfTubes.RackType.FlipperRackRow8).
@@ -2461,6 +2461,7 @@ public enum LabEventType {
      */
     public enum ForwardMessage {
         BSP,
+        BSP_APPLY_SM_IDS,
         GAP,
         NONE
     }
