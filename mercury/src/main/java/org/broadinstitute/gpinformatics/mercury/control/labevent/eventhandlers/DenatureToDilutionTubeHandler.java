@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
@@ -26,8 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The specific handler for the
- * {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.DENATURE_TO_DILUTION_TRANSFER} message.
+ * The specific handler for the DENATURE_TO_DILUTION_TRANSFER message.
  * <p/>
  * This handler will validate the relationship between an FLOWCELL_TICKET ticket specified for a denature tube and the
  * relationship both of these entities will have to the targetted dilution tube.
@@ -117,7 +115,7 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
              * -- If we find the Batch corresponding to the fct ticket and there is an existing dilution tube currently
              *     assigned, throw an exception
              * -- If we find the batch corresponding to the fct ticket but we don't find the starting vessel
-             *     in the lab batch then check against the ancestor normalization tube
+             *     in the lab batch then check each of the denature tube's ancestors
              * -- If we do not find any fct tickets associated with the denature, throw an exception that the
              *     association was not previously done
              */
@@ -125,24 +123,21 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
             for (LabBatch fctLabBatch : fctBatches) {
                 if (fctTicket.equals(fctLabBatch.getBusinessKey())) {
                     foundTicket = true;
-                    if (!updateLabBatch(fctLabBatch, denatureTube, dilutionTube, transfer)) {
-                        if (!denatureTube.getContainers().isEmpty()) {
-                            LabVessel denatureTubeFormation = denatureTube.getContainers().iterator().next();
-                            List<LabVessel.VesselEvent> ancestors =
-                                    denatureTubeFormation.getContainerRole().getAncestors(denatureTube);
-                            if (ancestors != null && !ancestors.isEmpty()) {
-                                LabVessel.VesselEvent denatureEvent = ancestors.get(0);
-                                LabVessel normTube = denatureEvent.getSourceLabVessel();
-                                if (!updateLabBatch(fctLabBatch, normTube, dilutionTube, transfer)) {
-                                    String errMsg = String.format(
-                                            "Neither the denature tube %s or its ancestor tube %s are associated"
-                                            + " with the given FCT.",
-                                            denatureTube.getLabel(), normTube.getLabel());
-                                    throw new ResourceException(
-                                            errMsg, Response.Status.BAD_REQUEST);
-                                }
-                            }
+                    LabBatchStartingVessel startingVessel = findStartingVessel(fctLabBatch, denatureTube, transfer);
+                    if (startingVessel != null) {
+                        if (startingVessel.getDilutionVessel() == null) {
+                            startingVessel.setDilutionVessel(dilutionTube);
+                        } else if (!startingVessel.getDilutionVessel().equals(dilutionTube)) {
+                            throw new ResourceException(fctLabBatch.getBatchName() + " starting tube " +
+                                    startingVessel.getLabVessel().getLabel() +
+                                    " was previously associated with dilution tube " +
+                                    startingVessel.getDilutionVessel().getLabel() +
+                                    " and cannot be reassociated with " + dilutionTube.getLabel(),
+                                    Response.Status.BAD_REQUEST);
                         }
+                    } else {
+                        throw new ResourceException("Cannot find the " + fctLabBatch.getBatchName() +
+                                " starting tube ancestor of " + denatureTube.getLabel(), Response.Status.BAD_REQUEST);
                     }
                 }
             }
@@ -154,46 +149,37 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
         }
     }
 
-    private boolean updateLabBatch(LabBatch fctLabBatch, LabVessel loadingTube,
-                                   LabVessel dilutionTube,
-                                   CherryPickTransfer transfer) {
-        boolean foundStartTube = false;
+    /**
+     * Returns a labBatchStartingVessel for this FCT batch by looking at the loading tube and its ancestors,
+     * or returns null if none found.
+     */
+    private LabBatchStartingVessel findStartingVessel(LabBatch fctLabBatch, LabVessel loadingTube,
+            CherryPickTransfer transfer) {
 
-        if (fctLabBatch.getFlowcellType() != null &&
-            (fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqFlowcell ||
-             fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell)) {
-            for (LabBatchStartingVessel labBatchStartingVessel: fctLabBatch.getLabBatchStartingVessels()) {
-                if (loadingTube.equals(labBatchStartingVessel.getLabVessel())) {
-                    int rowNum = transfer.getTargetPosition().name().charAt(0) - 'A' + 1;
-                    VesselPosition expectedLane = VesselPosition.getByName("LANE" + rowNum);
-                    if (labBatchStartingVessel.getVesselPosition() == expectedLane) {
-                        foundStartTube = true;
-                        if (labBatchStartingVessel.getDilutionVessel() == null) {
-                            labBatchStartingVessel.setDilutionVessel(dilutionTube);
-                        } else if (!labBatchStartingVessel.getDilutionVessel().equals(dilutionTube)) {
-                            throw new ResourceException(
-                                    "This FCT is associated with a different dilution tube " +
-                                    " for the given Denature", Response.Status.BAD_REQUEST);
-                        }
-                    }
-                }
-            }
+        boolean mustMatchLane = fctLabBatch.getFlowcellType() != null &&
+                (fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqFlowcell ||
+                        fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell);
 
-            return foundStartTube;
-        }
-
-        for (LabBatchStartingVessel fctVesselAssociation : fctLabBatch.getLabBatchStartingVessels()) {
-            if (loadingTube.equals(fctVesselAssociation.getLabVessel())) {
-                foundStartTube = true;
-                if (fctVesselAssociation.getDilutionVessel() == null) {
-                    fctVesselAssociation.setDilutionVessel(dilutionTube);
-                } else if (!fctVesselAssociation.getDilutionVessel().equals(dilutionTube)) {
-                    throw new ResourceException(
-                            "This FCT is associated with a different dilution tube " +
-                            " for the given Denature", Response.Status.BAD_REQUEST);
-                }
+        for (LabBatchStartingVessel labBatchStartingVessel : fctLabBatch.getLabBatchStartingVessels()) {
+            boolean tubeMatches = loadingTube.equals(labBatchStartingVessel.getLabVessel());
+            boolean laneMatches = !mustMatchLane || (labBatchStartingVessel.getVesselPosition() != null &&
+                    (transfer.getTargetPosition().name().charAt(0) - 'A' + 1) ==
+                            Integer.parseInt(StringUtils.substringAfter(
+                                    labBatchStartingVessel.getVesselPosition().name(), "LANE")));
+            if (tubeMatches && laneMatches) {
+                return labBatchStartingVessel;
             }
         }
-        return foundStartTube;
+        if (!loadingTube.getContainers().isEmpty()) {
+            LabVessel tubeFormation = loadingTube.getContainers().iterator().next();
+            List<LabVessel.VesselEvent> ancestors = tubeFormation.getContainerRole().getAncestors(loadingTube);
+            if (ancestors != null && !ancestors.isEmpty()) {
+                LabVessel.VesselEvent vesselEvent = ancestors.get(0);
+                LabVessel ancestorTube = vesselEvent.getSourceLabVessel();
+                // Recursively calls this method on the ancestor tube.
+                return findStartingVessel(fctLabBatch, ancestorTube, transfer);
+            }
+        }
+        return null;
     }
 }
