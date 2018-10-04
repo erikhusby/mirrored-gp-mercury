@@ -1042,6 +1042,14 @@ public class LabEventFactory implements Serializable {
         return labEvent;
     }
 
+    /**
+     * In extractions, it is sometimes easier to scan the SM-ID than the manufacturer barcode.  If a barcode starts
+     * with SM-, and it wasn't found when fetched by label, try fetching by sample ID.
+     * @param barcodes           barcodes from the message
+     * @param mapBarcodeToVessel vessels already fetched by manufacturer barcode, added to if fetch by SM-ID is
+     *                           successful
+     * @param mercurySampleDao   used to fetch
+     */
     public static void trySampleIds(List<String> barcodes, Map<String, LabVessel> mapBarcodeToVessel,
             MercurySampleDao mercurySampleDao) {
         List<String> sampleIds = new ArrayList<>();
