@@ -15,9 +15,11 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -132,7 +134,7 @@ public class QueueEjb {
      * @param queueType                 Queue to re-order
      */
     public void reOrderQueue(Map<Long, Long> groupingIdToNewOrder, QueueType queueType,
-                             MessageCollection messageCollection) throws Exception {
+                             MessageCollection messageCollection) throws ReorderException {
 
         GenericQueue genericQueue = findQueueByType(queueType);
 
@@ -146,7 +148,7 @@ public class QueueEjb {
         }
 
         if (messageCollection.hasErrors()) {
-            throw new Exception("Errors in reordering.");
+            throw new ReorderException("Errors in reordering.");
         }
 
         for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {
@@ -210,5 +212,40 @@ public class QueueEjb {
 
     public GenericQueue findQueueByType(QueueType queueType) {
         return genericQueueDao.findQueueByType(queueType);
+    }
+
+    public void moveToTops(GenericQueue queue, Long queueGroupingId) {
+
+        List<QueueGrouping> groupingsInCurrentOrder = new ArrayList<>(queue.getQueueGroupings());
+
+        long i = 2;
+        for (QueueGrouping grouping : groupingsInCurrentOrder) {
+            if (grouping.getQueueGroupingId().equals(queueGroupingId)) {
+                grouping.setSortOrder(1L);
+                break;
+            } else {
+                grouping.setSortOrder(i++);
+            }
+        }
+    }
+
+    public void moveToBottom(GenericQueue queue, Long queueGroupingId) {
+
+        List<QueueGrouping> groupingsInCurrentOrder = new ArrayList<>(queue.getQueueGroupings());
+
+        long i = 1;
+
+        QueueGrouping groupingToMakeLast = null;
+        for (QueueGrouping grouping : groupingsInCurrentOrder) {
+            if (grouping.getQueueGroupingId().equals(queueGroupingId)) {
+                groupingToMakeLast = grouping;
+            } else {
+                grouping.setSortOrder(i++);
+            }
+        }
+
+        if (groupingToMakeLast != null) {
+            groupingToMakeLast.setSortOrder(i);
+        }
     }
 }

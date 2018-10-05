@@ -8,9 +8,11 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.SimpleMessage;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.ReorderException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
@@ -34,6 +36,8 @@ public class QueueActionBean extends CoreActionBean {
     private Long queueGroupingId;
 
     private QueueGrouping queueGrouping;
+
+    private Map<Long, Long> updatePositions;
 
     private Map<Long, BspUser> userIdToUsername = new HashMap<>();
 
@@ -77,6 +81,40 @@ public class QueueActionBean extends CoreActionBean {
         }
 
         return new ForwardResolution("/queue/show_queue_grouping.jsp");
+    }
+
+    @HandlesEvent("moveToTop")
+    public Resolution moveToTop() {
+        queue = queueEjb.findQueueByType(queueType);
+
+        queueEjb.moveToTops(queue, queueGroupingId);
+
+        return showQueuePage();
+    }
+
+    @HandlesEvent("moveToBottom")
+    public Resolution moveToBottom() {
+
+        queue = queueEjb.findQueueByType(queueType);
+
+        queueEjb.moveToBottom(queue, queueGroupingId);
+
+        return showQueuePage();
+    }
+
+    @HandlesEvent("updatePositions")
+    public Resolution updatePositions() {
+        MessageCollection messageCollection = new MessageCollection();
+
+        try {
+            queueEjb.reOrderQueue(updatePositions, queueType, messageCollection);
+        } catch (ReorderException ignored) {
+            // exception only utilized to exit method. No other use
+        }
+
+        queue = queueEjb.findQueueByType(queueType);
+        addMessages(messageCollection);
+        return showQueuePage();
     }
 
     public QueueType getQueueType() {

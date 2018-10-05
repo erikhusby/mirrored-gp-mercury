@@ -17,6 +17,10 @@
             .numberNeedingPico { float: left; margin-top: -16px; font-weight: bold; margin-left: 3px; color: white; }
             .numberNotNeedingPico { float: right; margin-top: -16px; font-weight: bold; margin-right: 3px; color: white; }
 
+            .positioning-input {
+                width: 40px;
+            }
+
         </style>
 
         <script type="text/javascript">
@@ -42,41 +46,60 @@
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
-
-        <table class="table simple dataTable" id="queueTable">
-            <thead>
-                <tr>
-                    <th>Readable Text</th><th>Vessel Container Barcode</th><th>Location</th><th>PDO</th><th>Queue Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <c:forEach items="${actionBean.queue.queueGroupings}" var="queueGrouping">
+        <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
+            <table class="table simple dataTable" id="queueTable">
+                <thead>
                     <tr>
-                        <td>
-                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean" event="viewGrouping">
-                                <stripes:param name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
-                                <stripes:param name="queueType" value="${actionBean.queueType}" />
-
-                                ${queueGrouping.queueGroupingText}
-                            </stripes:link>
-                        </td>
-                        <td>${queueGrouping.containerVessel.label}</td>
-                        <td>Location</td><td>PDO</td>
-
-                        <c:set var="doNotNeedPico" value="${fn:length(queueGrouping.queuedEntities) - queueGrouping.remainingEntities}" />
-                        <c:set var="needPico" value="${queueGrouping.remainingEntities}" />
-                        <c:set var="percentNotNeedingPico" value="${doNotNeedPico * 100 / (doNotNeedPico + needPico)}" />
-                        <c:set var="percentNeedingPico" value="${needPico * 100 / (doNotNeedPico + needPico)}" />
-
-                        <td title="${needPico} need Pico, ${doNotNeedPico} do not need Pico" class="barFull">
-                            <span class="barNeedingPico" style="width:${percentNeedingPico}%"></span>
-                            <span class="barNotNeedingPico" style="width:${percentNotNeedingPico}%"></span>
-                            <span class="numberNeedingPico">${needPico}</span>
-                            <span class="numberNotNeedingPico">${doNotNeedPico}</span>
-                        </td>
+                        <th>Readable Text</th><th>Vessel Container Barcode</th><th>Location</th>
+                        <th>PDO</th><th>Queue Status</th><th>Positioning</th>
                     </tr>
-                </c:forEach>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <c:forEach items="${actionBean.queue.queueGroupings}" var="queueGrouping" varStatus="status">
+                        <tr>
+                            <td>
+                                <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean" event="viewGrouping">
+                                    <stripes:param name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
+                                    <stripes:param name="queueType" value="${actionBean.queueType}" />
+
+                                    ${queueGrouping.queueGroupingText}
+                                </stripes:link>
+                            </td>
+                            <td>${queueGrouping.containerVessel.label}</td>
+                            <td>Location</td><td>PDO</td>
+
+                            <c:set var="doNotNeedPico" value="${fn:length(queueGrouping.queuedEntities) - queueGrouping.remainingEntities}" />
+                            <c:set var="needPico" value="${queueGrouping.remainingEntities}" />
+                            <c:set var="percentNotNeedingPico" value="${doNotNeedPico * 100 / (doNotNeedPico + needPico)}" />
+                            <c:set var="percentNeedingPico" value="${needPico * 100 / (doNotNeedPico + needPico)}" />
+
+                            <td title="${needPico} need Pico, ${doNotNeedPico} do not need Pico" class="barFull">
+                                <span class="barNeedingPico" style="width:${percentNeedingPico}%"></span>
+                                <span class="barNotNeedingPico" style="width:${percentNotNeedingPico}%"></span>
+                                <span class="numberNeedingPico">${needPico}</span>
+                                <span class="numberNotNeedingPico">${doNotNeedPico}</span>
+                            </td>
+                            <td>
+                                <span class="position">
+                                    <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean" event="moveToTop">
+                                        <stripes:param name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
+                                        <stripes:param name="queueType" value="${actionBean.queueType}" />
+                                        <img src="${ctxpath}/images/up.png" title="Move To Top" />
+                                    </stripes:link>
+                                    <stripes:text name="groupingCount[${queueGrouping.queueGroupingId}]" value="${status.count}" class="positioning-input" />
+                                    <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean" event="moveToBottom">
+                                        <stripes:param name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
+                                        <stripes:param name="queueType" value="${actionBean.queueType}" />
+                                        <img src="${ctxpath}/images/down.png" title="Move To Bottom" />
+                                    </stripes:link>
+                                </span>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </tbody>
+            </table>
+
+            <stripes:submit name="updatePositions" value="Update Positions" />
+        </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>
