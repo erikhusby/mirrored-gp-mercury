@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchSet;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.annotation.Nullable;
@@ -628,10 +629,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
                 LabVessel targetLabVessel = labEvent.getTargetLabVessels().iterator().next();
                 VesselContainer<?> containerRole = targetLabVessel.getContainerRole();
                 if (containerRole != null) {
-                    Set<LabBatch> posLabBatches = labEvent.getMapPositionToLcSets().get(
+                    LabBatchSet posLabBatches = labEvent.getMapPositionToLcSets().get(
                             containerRole.getPositionOfVessel(labVessel));
-                    if (posLabBatches != null) {
-                        computedLcsets = posLabBatches;
+                    if (!posLabBatches.getLabBatchSet().isEmpty()) {
+                        computedLcsets = posLabBatches.getLabBatchSet();
                     }
                 }
             }

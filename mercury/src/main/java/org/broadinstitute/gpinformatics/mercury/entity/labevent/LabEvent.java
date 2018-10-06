@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchSet;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -193,6 +194,7 @@ public class LabEvent {
     @Column(name = "LAB_EVENT_TYPE")
     private LabEventType labEventType;
 
+    /** For events that apply to an entire Batch in a Workflow, e.g. add reagent. */
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     @JoinColumn(name = "LAB_BATCH")
     private LabBatch labBatch;
@@ -206,10 +208,20 @@ public class LabEvent {
     /**
      * Set by transfer traversal, based on ancestor lab batches and transfers.
      */
-    @Transient
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinTable(schema = "mercury", name = "le_computed_lcsets"
+            , joinColumns = {@JoinColumn(name = "LAB_EVENT")}
+            , inverseJoinColumns = {@JoinColumn(name = "COMPUTED_LCSETS")})
     private Set<LabBatch> computedLcSets;
-    @Transient
-    private Map<VesselPosition, Set<LabBatch>> mapPositionToLcSets = new HashMap<>();
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinTable(schema = "mercury", name = "le_map_pos_to_lcsets"
+            , joinColumns = {@JoinColumn(name = "LAB_EVENT")}
+            , inverseJoinColumns = {@JoinColumn(name = "MAP_POS_TO_LCSETS")})
+    @MapKeyEnumerated(EnumType.STRING)
+    @MapKeyColumn(name = "mapkey")
+    private Map<VesselPosition, LabBatchSet> mapPositionToLcSets = new HashMap<>();
+    // todo jmt table with FK from event, position, FK from LabBatch
 
     /**
      * Can be set by a user to indicate the LCSET, in the absence of any distinguishing context, e.g. a set of samples
@@ -544,7 +556,7 @@ todo jmt adder methods
         if (manualOverrideLcSet != null) {
             return Collections.singleton(manualOverrideLcSet);
         }
-        return computeLcSets();
+        return Collections.emptySet(); //computeLcSets();
     }
 
     public void addComputedLcSets(Set<LabBatch> lcSets) {
@@ -554,7 +566,7 @@ todo jmt adder methods
         computedLcSets.addAll(lcSets);
     }
 
-    public Map<VesselPosition, Set<LabBatch>> getMapPositionToLcSets() {
+    public Map<VesselPosition, LabBatchSet> getMapPositionToLcSets() {
         return mapPositionToLcSets;
     }
 
@@ -668,14 +680,10 @@ todo jmt adder methods
                 VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
                 if (i == cherryPickTransferList.size() - 1 ||
                         targetPosition != cherryPickTransferList.get(i + 1).getTargetPosition()) {
-                    Set<LabBatch> labBatches = mapPositionToLcSets.get(targetPosition);
-                    if (labBatches == null) {
-                        labBatches = new HashSet<>();
-                        mapPositionToLcSets.put(targetPosition, labBatches);
-                    }
+                    LabBatchSet labBatches = mapPositionToLcSets.get(targetPosition);
                     Set<LabBatch> localComputedLcSets = VesselContainer.computeLcSets(mapLabBatchToCount,
                             numVesselsWithBucketEntries);
-                    labBatches.addAll(localComputedLcSets);
+                    labBatches.getLabBatchSet().addAll(localComputedLcSets);
                     totalLabBatches.addAll(localComputedLcSets);
                     mapLabBatchToCount.clear();
                     numVesselsWithBucketEntries = 0;
