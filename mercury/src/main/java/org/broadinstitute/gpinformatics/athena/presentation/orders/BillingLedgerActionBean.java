@@ -650,25 +650,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.quantities = quantities;
         }
 
-        public boolean isSubmittedQuantitiesSet() {
-
-            System.out.println("In the has submitted quantities method.");
-            boolean result = false;
-            for (Map.Entry<Long, ProductOrderSampleQuantities> quantitiesByPriceItem : getQuantities()
-                    .entrySet()) {
-                if(quantitiesByPriceItem.getValue().getSubmittedQuantity() >0) {
-                    result = true;
-                    System.out.println("Found some Quantities");
-                    break;
-                }
-            }
-
-            if(!result) {
-                System.out.println("Did not find any quantities");
-            }
-
-            return result;
-        }
     }
 
     /**
