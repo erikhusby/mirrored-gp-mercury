@@ -254,7 +254,7 @@
                 </li>
             </security:authorizeBlock>
 
-            <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+            <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
 
                 <li class="dropdown">
                     <a id="storageNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
@@ -269,13 +269,11 @@
                                               event="list">List</stripes:link>
                             </li>
                         </security:authorizeBlock>
-                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
-                            <li>
-                                <stripes:link id="createStorage"
-                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
-                                              event="create">Create New Storage</stripes:link>
-                            </li>
-                        </security:authorizeBlock>
+                        <li>
+                            <stripes:link id="createStorage"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
+                                          event="create">Create New Storage</stripes:link>
+                        </li>
                         <li class="divider"></li>
                         <security:authorizeBlock
                                 roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
