@@ -30,7 +30,6 @@
                 </xs:simpleType>
             </xs:element>
             <xs:element type="reagentRequirementsType" name="reagentRequirements" minOccurs="0"/>
-            <!--<xs:element type="xs:string" name="reagentNames" maxOccurs="unbounded" minOccurs="0"/>-->
             <xs:element type="xs:string" name="sourceVesselTypeGeometryString" minOccurs="0"/>
             <xs:element type="xs:string" name="sourceSection" minOccurs="0"/>
             <xs:element type="xs:string" name="targetVesselTypeGeometryString"/>

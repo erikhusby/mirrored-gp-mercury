@@ -246,13 +246,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
         List<String> reagentNames = new ArrayList<>();
         Map<String, LabEventType.ReagentRequirements> mapReagentNameToRequirement;
         if (workflowStepDef != null && !CollectionUtils.isEmpty(workflowStepDef.getReagentTypes())) {
-            // TODO why isn't this within the manualTransferDetails element?? it can be in either...
             reagentNames = workflowStepDef.getReagentTypes();
             mapReagentNameToRequirement = new HashMap<>(reagentNames.size());
             for (String reagentName : reagentNames) {
-                mapReagentNameToRequirement.put(reagentName,
-                        new LabEventType.ReagentRequirements(reagentName, "", 1, false,
-                                false));
+                mapReagentNameToRequirement.put(reagentName, new LabEventType.ReagentRequirements(reagentName));
             }
 
         } else {
@@ -1055,19 +1052,25 @@ public class ManualTransferActionBean extends RackScanActionBean {
             if (StringUtils.isBlank(reagentType.getKitType())) {
                 addGlobalValidationError("Reagent type is required");
             }
-            // TODO this checks whether there is only one reagent entree, if yes then checks if a barcode is provided and an expiration date...
-            // TODO note that if multiple fields are provided this doesn't get checked at all... so this is broken.
-            boolean foundOneReagent = false;
-//            if (manualTransferDetails.getMapReagentNameToCount().get(reagentType.getKitType()) == 1) {
             LabEventType.ReagentRequirements reagentRequirements =
                     mapReagentNameToRequirements.get(reagentType.getKitType());
+
+            // If the reagent barcode is not blank, check to see if the barcode is valid based off requirements defined.
+            if (!StringUtils.isBlank(reagentType.getBarcode()) && !reagentRequirements.verifyBarcode(reagentType.getBarcode())){
+                addGlobalValidationError("The reagent barcode " + reagentType.getBarcode() + " is in an invalid format.");
+            }
+
+            // We're only checking for reagent requirements if there is only one instance of a reagent expected.
             if (reagentRequirements.getFieldCount() == 1) {
                 if (StringUtils.isBlank(reagentType.getBarcode())) {
                     addGlobalValidationError("Reagent barcode is required");
                 }
-                if (reagentRequirements.isExpirationDateIncluded() &&
-                        reagentType.getExpiration() == null) {
-                    addGlobalValidationError("Reagent expiration is required");
+                // If a expiration date is expected, add an error if one is not found.
+                // The manual transfer page is expected to handle validating dates and provide a warning accordingly.
+                if (reagentRequirements.isExpirationDateIncluded()) {
+                    if (reagentType.getExpiration() == null) {
+                        addGlobalValidationError("Reagent expiration is required");
+                    }
                 }
             }
         }

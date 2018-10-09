@@ -20,6 +20,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Properties common to all events of a particular message type
@@ -2222,45 +2224,36 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
-                    new ReagentRequirements[]{new ReagentRequirements("LC1", "-lc1", 6, false, false),
-                            new ReagentRequirements("LC2", "-lc2", 6, false, false),
-                            new ReagentRequirements("EML", "-eml", 6, false, false),
-                            new ReagentRequirements("SML", "-sml", 6, false, false),
-                            new ReagentRequirements("ATM", "-atm", 6, false, false),
-                            new ReagentRequirements("RA1", "-ra1", 1, false, false),
-                            new ReagentRequirements("XC3", "-xc3", 1, false, false),
-                            new ReagentRequirements("XC4", "-xc4", 1, false, false),
-                            new ReagentRequirements("PB1", "-pb1", 1, false, false),
-                            new ReagentRequirements("PB2", "-pb2", 1, false, false),
-                            new ReagentRequirements("FORM20EDTA25", "", 1, false, true),
-                            new ReagentRequirements("ETOH", "", 1, false, true)}).
-//                    reagentNames(new String[]{"LX1", "LX2", "EML", "SML", "ATM", "RA1", "XC3", "XC4", "PB1", "PB2", "FORM20EDTA25", "ETOH"}).
-//                    reagentFieldCounts(new int[]{6, 6, 6, 6, 6, 1, 1, 1, 2, 1, 1, 1}).expirationDateIncluded(false).
-//                    reagentFieldExpirationRequired(new String[]{"FORM20EDTA25", "ETOH"})
-//                    .expirationDateIncluded(false).numEvents(24).
-                    machineNames(new String[]{"Rose", "Lily", "Scrappy"}).build(), LibraryType.NONE_ASSIGNED),
+                    new ReagentRequirements[]{new ReagentRequirements("LC1", Pattern.compile("wg.*\\d+.*(-lc1|-LC1)\\b"), 6, false),
+                            new ReagentRequirements("LC2", Pattern.compile("wg.*\\d+.*(-lc2|-LC2)\\b"), 6, false),
+                            new ReagentRequirements("EML", Pattern.compile("wg.*\\d+.*(-eml|-EML)\\b"), 6, false),
+                            new ReagentRequirements("SML", Pattern.compile("wg.*\\d+.*(-sml|-SM1)\\b"), 6, false),
+                            new ReagentRequirements("ATM", Pattern.compile("wg.*\\d+.*(-atm|-ATM)\\b"), 6, false),
+                            new ReagentRequirements("RA1", Pattern.compile("wg.*\\d+.*(-ra1|-RA1)\\b"), 1, false),
+                            new ReagentRequirements("XC3", Pattern.compile("wg.*\\d+.*(-xc3|-XC3)\\b"), 1, false),
+                            new ReagentRequirements("XC4", Pattern.compile("wg.*\\d+.*(-xc4|-XC4)\\b"), 1, false),
+                            new ReagentRequirements("PB1", Pattern.compile("wg.*\\d+.*(-pb1|-PB1)\\b"), 1, false),
+                            new ReagentRequirements("PB2", Pattern.compile("wg.*\\d+.*(-pb2|-PB2)\\b"), 1, false),
+                            new ReagentRequirements("FORM20EDTA25", Pattern.compile("\\d{2}[a-zA-Z]\\d{2}[a-zA-Z]\\d{4}"), 1, true),
+                            new ReagentRequirements("ETOH", 1, true)}).
+            numEvents(24).machineNames(new String[]{"Rose", "Lily", "Scrappy"}).build(), LibraryType.NONE_ASSIGNED),
     INFINIUM_XSTAIN_HD("InfiniumXStainHD",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
-                    new ReagentRequirements[]{new ReagentRequirements("XC1", "-xc1", 6, false, false),
-                            new ReagentRequirements("XC2", "-xc2", 6, false, false),
-                            new ReagentRequirements("TEM", "-tem", 6, false, false),
-                            new ReagentRequirements("STM", "-stm", 6, false, false),
-                            new ReagentRequirements("ATM", "-atm", 6, false, false),
-                            new ReagentRequirements("RA1", "-ra1", 1, false, false),
-                            new ReagentRequirements("XC3", "-xc3", 1, false, false),
-                            new ReagentRequirements("XC4", "-xc4", 1, false, false),
-                            new ReagentRequirements("PB1", "-pb1", 1, false, false),
-                            new ReagentRequirements("PB2", "-pb2", 1, false, false),
-                            new ReagentRequirements("FORM20EDTA25", "", 1),
-                            new ReagentRequirements("ETOH", "", 1)}).
-//                    reagentNames(new String[]{"XC1", "XC2", "TEM", "STM", "ATM", "RA1", "XC3", "XC4", "PB1", "PB2", "FORM20EDTA25", "ETOH"}).
-//                    .reagentNameExpression(new String[]{"XC1", "XC2", "TEM", "STM", "ATM"}).
-//                    reagentFieldCounts(new int[]{6, 6, 6, 6, 6, 1, 1, 1, 2, 1, 1, 1}).expirationDateIncluded(false).
-//                    reagentFieldExpirationRequired(new String[]{"FORM20EDTA25", "ETOH"})
-//                    .expirationDateIncluded(false).numEvents(24).
-                    machineNames(new String[]{"Rose", "Lily", "Scrappy"}).build(), LibraryType.NONE_ASSIGNED),
+                    new ReagentRequirements[]{new ReagentRequirements("XC1", Pattern.compile("wg.*\\d+.*(-xc1|-XC1)\\b"), 6, false),
+                            new ReagentRequirements("XC2", Pattern.compile("wg.*\\d+.*(-xc2|-XC2)\\b"), 6, false),
+                            new ReagentRequirements("TEM", Pattern.compile("wg.*\\d+.*(-tem|-TEM)\\b"), 6, false),
+                            new ReagentRequirements("STM", Pattern.compile("wg.*\\d+.*(-stm|-STM)\\b"), 6, false),
+                            new ReagentRequirements("ATM", Pattern.compile("wg.*\\d+.*(-atm|-ATM)\\b"), 6, false),
+                            new ReagentRequirements("RA1", Pattern.compile("wg.*\\d+.*(-ra1|-RA1)\\b"), 1, false),
+                            new ReagentRequirements("XC3", Pattern.compile("wg.*\\d+.*(-xc3|-XC3)\\b"), 1, false),
+                            new ReagentRequirements("XC4", Pattern.compile("wg.*\\d+.*(-xc4|-XC4)\\b"), 1, false),
+                            new ReagentRequirements("PB1", Pattern.compile("wg.*\\d+.*(-pb1|-PB1)\\b"), 1, false),
+                            new ReagentRequirements("PB2", Pattern.compile("wg.*\\d+.*(-pb2|-PB2)\\b"), 1, false),
+                            new ReagentRequirements("FORM20EDTA25", Pattern.compile("\\d{2}[a-zA-Z]\\d{2}[a-zA-Z]\\d{4}"), 1, true),
+                            new ReagentRequirements("ETOH", 1, true)}).
+            numEvents(24).machineNames(new String[]{"Rose", "Lily", "Scrappy"}).build(), LibraryType.NONE_ASSIGNED),
     INFINIUM_AUTOCALL_SOME_STARTED("InfiniumAutocallSomeStarted",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -2660,22 +2653,37 @@ public enum LabEventType {
     // Holds details regarding each reagent possibly used.
     public static class ReagentRequirements {
         String reagentName;
-        String nameRegEx;
+        @XmlTransient
+        Pattern barcodePattern;
+        @XmlTransient
         int fieldCount;
+        @XmlTransient
         boolean expirationDateIncluded;
-        boolean expirationDateRequired; // TODO I think we can dispense with the 'expirationDateIncluded' boolean.
 
-        public ReagentRequirements(String reagentName, String nameRegEx, int fieldCount) {
-
-            this(reagentName, nameRegEx, fieldCount, true, true);
+        // This constructor is required for xml loading.
+        public ReagentRequirements(String reagentName) {
+            this(reagentName, 1);
         }
 
-        public ReagentRequirements(String reagentName, String nameRegEx, int fieldCount, boolean expirationDateIncluded, boolean expirationDateRequired) {
+        public ReagentRequirements(String reagentName, int fieldCount) {
+
+            this(reagentName, null, fieldCount, true);
+        }
+
+        public ReagentRequirements(String reagentName, Pattern barcodePattern, int fieldCount) {
+
+            this(reagentName, barcodePattern, fieldCount, true);
+        }
+
+        public ReagentRequirements(String reagentName, int fieldCount, boolean expirationDateIncluded) {
+            this(reagentName, null, fieldCount, expirationDateIncluded);
+        }
+
+        public ReagentRequirements(String reagentName, Pattern barcodePattern, int fieldCount, boolean expirationDateIncluded) {
             this.reagentName = reagentName;
-            this.nameRegEx = nameRegEx;
+            this.barcodePattern = barcodePattern;
             this.fieldCount = fieldCount;
             this.expirationDateIncluded = expirationDateIncluded;
-            this.expirationDateRequired = expirationDateRequired;
         }
 
         public ReagentRequirements() {}
@@ -2684,8 +2692,8 @@ public enum LabEventType {
             return reagentName;
         }
 
-        public String getNameRegEx() {
-            return nameRegEx;
+        public Pattern getBarcodePattern() {
+            return barcodePattern;
         }
 
         public int getFieldCount() {
@@ -2696,8 +2704,21 @@ public enum LabEventType {
             return expirationDateIncluded;
         }
 
-        public boolean isExpirationDateRequired() {
-            return expirationDateRequired;
+        /**
+         * Compare the passed barcode to the pattern noted for the reagent (if it exists).
+         *
+         * @param barcode Barcode scanned
+         *
+         * @return True if no pattern is set to be checked or if the barcode scanned does match the pattern.
+         */
+        public boolean verifyBarcode(String barcode) {
+            // If the regex field is blank then we aren't verifying the barcode.
+            if (getBarcodePattern() == null) {
+                return true;
+            }
+
+            Matcher matcher = getBarcodePattern().matcher(barcode);
+            return matcher.matches();
         }
     }
 
@@ -2781,25 +2802,8 @@ public enum LabEventType {
         /** If false, display error message when target has transfers.  */
         private boolean targetExpectedEmpty = true;
 
-        /** How many reagent fields for each entry in reagentNames. */
-//        private int[] reagentFieldCounts;
-
-        /** Map from entries in reagentNames to corresponding entry in reagentFieldCounts. */
-//        private Map<String, Integer> mapReagentNameToCount;
-
-        /** Entry in reagentNames that require expiration date. */
-//        private String[] reagentFieldExpirationRequired = {};
-
-//        private Map<String, String> mapReagentNameToExpireDate;
-
-        /** Whether to include reagent expiration date fields. */
-//        private boolean expirationDateIncluded = true;
-    
         /** Allows multiple events to share one set of reagents. */
         private int numEvents = 1;
-
-        /** Prompts user for reagents. */
-//        private String[] reagentNames = {};
 
         /** Prompts user with a list of machines. */
         private String[] machineNames = {};
@@ -2869,10 +2873,7 @@ public enum LabEventType {
             targetVolume = builder.targetVolume;
             sourceMassRemoved = builder.sourceMassRemoved;
             targetContainerPrefix = builder.targetContainerPrefix;
-//            reagentFieldCounts = builder.reagentFieldCounts;
-//            expirationDateIncluded = builder.expirationDateIncluded;
             numEvents = builder.numEvents;
-//            reagentNames = builder.reagentNames;
             machineNames = builder.machineNames;
             secondaryEvent = builder.secondaryEvent;
             repeatedEvent = builder.repeatedEvent;
@@ -2886,7 +2887,6 @@ public enum LabEventType {
             requireSingleParticipant = builder.requireSingleParticipant;
             useWebCam = builder.useWebCam;
             targetWellTypeGeometry = builder.targetWellTypeGeometry;
-//            reagentFieldExpirationRequired = builder.reagentFieldExpirationRequired;
             reagentRequirements = builder.reagentRequirements;
         }
 
@@ -2898,10 +2898,6 @@ public enum LabEventType {
 
             private SBSSection sourceSection;
             private SBSSection targetSection;
-//            private String[] reagentNames = {};
-//            private int[] reagentFieldCounts;
-//            private String[] reagentFieldExpirationRequired;
-//            private boolean expirationDateIncluded = true;
             private int numEvents = 1;
             private String[] machineNames = {};
             private VesselTypeGeometry[] sourceVesselTypeGeometries = {};
@@ -3207,49 +3203,6 @@ public enum LabEventType {
             }
             return mapReagentNameToReagentRequirements;
         }
-
-//        public String[] getReagentNames() {
-//            return reagentNames;
-//        }
-//
-//        public int[] getReagentFieldCounts() {
-//            if (reagentFieldCounts == null) {
-//                reagentFieldCounts = new int[reagentNames.length];
-//                Arrays.fill(reagentFieldCounts, 1);
-//            }
-//            return reagentFieldCounts;
-//        }
-//
-//        public Map<String, Integer> getMapReagentNameToCount() {
-//            if (mapReagentNameToCount == null) {
-//                mapReagentNameToCount = new HashMap<>();
-//                for (int i = 0; i < reagentNames.length; i++) {
-//                    mapReagentNameToCount.put(reagentNames[i], getReagentFieldCounts()[i]);
-//                }
-//            }
-//            return mapReagentNameToCount;
-//        }
-//
-//        public boolean isExpirationDateIncluded() {
-//            return expirationDateIncluded;
-//        }
-//
-//        public String[] getReagentFieldExpirationRequired() {
-//            if (reagentFieldExpirationRequired == null) {
-//                reagentFieldExpirationRequired = new String[0];
-//            }
-//            return reagentFieldExpirationRequired;
-//        }
-//
-//        public Map<String, String> getMapReagentNameToExpireDate() {
-//            if (mapReagentNameToExpireDate == null) {
-//                mapReagentNameToExpireDate = new HashMap<>();
-//                for (int i = 0; i < reagentFieldExpirationRequired.length; i++) {
-//                    mapReagentNameToExpireDate.put(reagentFieldExpirationRequired[i], getReagentFieldExpirationRequired()[i]);
-//                }
-//            }
-//            return mapReagentNameToExpireDate;
-//        }
 
         public LabEventType getSecondaryEvent() {
             return secondaryEvent;

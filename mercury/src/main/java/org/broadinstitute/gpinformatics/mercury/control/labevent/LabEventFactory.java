@@ -1274,12 +1274,10 @@ public class LabEventFactory implements Serializable {
                 LabEventType.ReagentRequirements reagentRequirements =
                         manualTransferDetails.getMapReagentNameToRequirements().get(reagentType.getKitType());
                 // Check to see if the lab event type has a requirement for valid expiration date of this reagent type.
-                if (reagentRequirements != null && reagentRequirements.isExpirationDateRequired()) {
-                    // Check to see if the genericReagent name is in the reagentFieldExpirationRequired array. if yes, then ensure expiration date is valid.
+                if (reagentRequirements != null && reagentRequirements.isExpirationDateIncluded()) {
+                    // Check to see if there is an expiration date provided at all. (validated within jsp page).
                     if (reagentType.getExpiration() == null) {
                         throw new RuntimeException("No expiration date provided for reagent " + genericReagent.getName());
-                    } else if (reagentType.getExpiration().before(DateUtils.getStartOfDay(new Date()))) {
-                        throw new RuntimeException("Reagent " + genericReagent.getName() + " expired as of " + reagentType.getExpiration().toString());
                     }
                 }
             }
