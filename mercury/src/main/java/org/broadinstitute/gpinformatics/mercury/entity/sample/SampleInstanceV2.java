@@ -26,7 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchSet;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.PositionLabBatches;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.annotation.Nullable;
@@ -47,7 +47,7 @@ import java.util.Set;
 public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     /**
-     * Allows LabEvent.computeLcSets to choose the nearest match if there are multiple.
+     * Allows LabEvent.computeLabBatches to choose the nearest match if there are multiple.
      */
     public static class LabBatchDepth {
         private final int depth;
@@ -629,9 +629,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
                 LabVessel targetLabVessel = labEvent.getTargetLabVessels().iterator().next();
                 VesselContainer<?> containerRole = targetLabVessel.getContainerRole();
                 if (containerRole != null) {
-                    LabBatchSet posLabBatches = labEvent.getMapPositionToLcSets().get(
+                    PositionLabBatches posLabBatches = labEvent.getMapPositionToLcSets().get(
                             containerRole.getPositionOfVessel(labVessel));
-                    if (!posLabBatches.getLabBatchSet().isEmpty()) {
+                    if (posLabBatches != null && !posLabBatches.getLabBatchSet().isEmpty()) {
                         computedLcsets = posLabBatches.getLabBatchSet();
                     }
                 }

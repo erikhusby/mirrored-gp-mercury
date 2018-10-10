@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchSet;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.PositionLabBatches;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -40,6 +40,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -208,19 +210,18 @@ public class LabEvent {
     /**
      * Set by transfer traversal, based on ancestor lab batches and transfers.
      */
+    // todo jmt rename to computedLabBatches
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "mercury", name = "le_computed_lcsets"
             , joinColumns = {@JoinColumn(name = "LAB_EVENT")}
             , inverseJoinColumns = {@JoinColumn(name = "COMPUTED_LCSETS")})
     private Set<LabBatch> computedLcSets;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "mercury", name = "le_map_pos_to_lcsets"
-            , joinColumns = {@JoinColumn(name = "LAB_EVENT")}
-            , inverseJoinColumns = {@JoinColumn(name = "MAP_POS_TO_LCSETS")})
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
+    @BatchSize(size = 20)
     @MapKeyEnumerated(EnumType.STRING)
-    @MapKeyColumn(name = "mapkey")
-    private Map<VesselPosition, LabBatchSet> mapPositionToLcSets = new HashMap<>();
+    @MapKeyColumn(name = "VESSEL_POSITION")
+    private Map<VesselPosition, PositionLabBatches> mapPositionToLcSets = new HashMap<>();
     // todo jmt table with FK from event, position, FK from LabBatch
 
     /**
@@ -556,92 +557,90 @@ todo jmt adder methods
         if (manualOverrideLcSet != null) {
             return Collections.singleton(manualOverrideLcSet);
         }
-        return Collections.emptySet(); //computeLcSets();
+        return Collections.emptySet(); //computeLabBatches();
     }
 
+/*
     public void addComputedLcSets(Set<LabBatch> lcSets) {
         if (computedLcSets == null) {
             computedLcSets = new HashSet<>();
         }
         computedLcSets.addAll(lcSets);
     }
+*/
 
-    public Map<VesselPosition, LabBatchSet> getMapPositionToLcSets() {
+    public Map<VesselPosition, PositionLabBatches> getMapPositionToLcSets() {
         return mapPositionToLcSets;
     }
 
-    private Set<LabBatch> computeLcSets() {
-        if (computedLcSets == null) {
-            computedLcSets = new HashSet<>();
-
-            if (inPlaceLabVessel != null) {
-                // Event in-place vessel is mutually exclusive to any event transfers
-                if (inPlaceLabVessel.getContainerRole() != null) {
-                    computedLcSets.addAll(inPlaceLabVessel.getContainerRole()
-                            .getNearestLabBatches(LabBatch.LabBatchType.WORKFLOW));
-                } else {
-                    // In place vessel is not a container
-                    computedLcSets.addAll( inPlaceLabVessel.getWorkflowLabBatches());
-
-                }
-                // Revert to transfers if no LCSET for vessel or container
-                if (computedLcSets.isEmpty()) {
-                    for (LabEvent xferEvent : inPlaceLabVessel.getTransfersTo()) {
-                        computedLcSets.addAll( xferEvent.getComputedLcSets() );
-                    }
-                }
+    public Set<LabBatch> computeLabBatches() {
+        if (inPlaceLabVessel != null) {
+            // Event in-place vessel is mutually exclusive to any event transfers
+            if (inPlaceLabVessel.getContainerRole() != null) {
+                computedLcSets.addAll(inPlaceLabVessel.getContainerRole()
+                        .getNearestLabBatches(LabBatch.LabBatchType.WORKFLOW));
             } else {
-                // No in-place vessel requires analysis of all event transfers
-                // First attempt to find the LCSET that all single-sample vessels have in common
-                for (SectionTransfer sectionTransfer : sectionTransfers) {
-                    Set<LabBatch> sectionLcsets = sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
-                            sectionTransfer.getSourceSection());
-                    if( !sectionLcsets.isEmpty() ) {
-                        computedLcSets.addAll(sectionLcsets);
-                    } else {
-                        // Try target vessel container(s) when section transfer source vessel container comes up blank
-                        // (e.g. IndexedAdapterLigation event from IndexedAdapterPlate96 source)
-                        // Results of this are only valid when the event source vessel contains only reagents
-                        //            (or has no samples associated with it)
-                        // TODO jms - Serious performance hit on some events - revisit after we remove inference of LCSETs for controls.
-                        /***
-                        System.out.println( Thread.currentThread().getStackTrace()[1] + " - Try target for samples, event " + labEventId );
-                        boolean allReagents = true;
-                        Set<SampleInstanceV2> sampleInstances =
-                                sectionTransfer.getSourceVesselContainer().getSampleInstancesV2();
-                        for( SampleInstanceV2 sampleInstanceV2 : sampleInstances ) {
-                            if (!sampleInstanceV2.isReagentOnly()) {
-                                allReagents = false;
-                                break;
-                            }
-                        }
-                        System.out.println(Thread.currentThread().getStackTrace()[1] + " - Source has " + sampleInstances.size() + " samples and reagents only is: " + allReagents );
-                        if (allReagents) {
-                            computedLcSets.addAll(sectionTransfer.getTargetVesselContainer().getComputedLcSetsForSection(
-                                    sectionTransfer.getSourceSection()));
-                            System.out.println(Thread.currentThread().getStackTrace()[1] + " - Compute target LCSETs done: " + computedLcSets.size() );
-                        }
-                        **** */
-                    }
-                }
-                computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
-                computedLcSets.addAll(computeLcSetsForVesselToSectionTransfers());
+                // In place vessel is not a container
+                computedLcSets.addAll( inPlaceLabVessel.getWorkflowLabBatches());
 
-    /*
-                todo jmt revisit after we remove inference of LCSETs for controls.  The performance penalty is too high now.
-                // Handle issue with orphan source vessels (e.g. bait)
-                if (computedLcSets.isEmpty()) {
-                    for (LabVessel labVessel : getTargetLabVessels()) {
-                        for (LabEvent labEvent : labVessel.getTransfersTo()) {
-                            // Stop this from being called when traversing from same lab event
-                            if( !labEvent.equals( this ) ) {
-                                computedLcSets.addAll(labEvent.getComputedLcSets());
-                            }
+            }
+            // Revert to transfers if no LCSET for vessel or container
+            if (computedLcSets.isEmpty()) {
+                for (LabEvent xferEvent : inPlaceLabVessel.getTransfersTo()) {
+                    computedLcSets.addAll( xferEvent.getComputedLcSets() );
+                }
+            }
+        } else {
+            // No in-place vessel requires analysis of all event transfers
+            // First attempt to find the LCSET that all single-sample vessels have in common
+            for (SectionTransfer sectionTransfer : sectionTransfers) {
+                Set<LabBatch> sectionLcsets = sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
+                        sectionTransfer.getSourceSection());
+                if( !sectionLcsets.isEmpty() ) {
+                    computedLcSets.addAll(sectionLcsets);
+                } else {
+                    // Try target vessel container(s) when section transfer source vessel container comes up blank
+                    // (e.g. IndexedAdapterLigation event from IndexedAdapterPlate96 source)
+                    // Results of this are only valid when the event source vessel contains only reagents
+                    //            (or has no samples associated with it)
+                    // TODO jms - Serious performance hit on some events - revisit after we remove inference of LCSETs for controls.
+                    /***
+                    System.out.println( Thread.currentThread().getStackTrace()[1] + " - Try target for samples, event " + labEventId );
+                    boolean allReagents = true;
+                    Set<SampleInstanceV2> sampleInstances =
+                            sectionTransfer.getSourceVesselContainer().getSampleInstancesV2();
+                    for( SampleInstanceV2 sampleInstanceV2 : sampleInstances ) {
+                        if (!sampleInstanceV2.isReagentOnly()) {
+                            allReagents = false;
+                            break;
+                        }
+                    }
+                    System.out.println(Thread.currentThread().getStackTrace()[1] + " - Source has " + sampleInstances.size() + " samples and reagents only is: " + allReagents );
+                    if (allReagents) {
+                        computedLcSets.addAll(sectionTransfer.getTargetVesselContainer().getComputedLcSetsForSection(
+                                sectionTransfer.getSourceSection()));
+                        System.out.println(Thread.currentThread().getStackTrace()[1] + " - Compute target LCSETs done: " + computedLcSets.size() );
+                    }
+                    **** */
+                }
+            }
+            computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
+            computedLcSets.addAll(computeLcSetsForVesselToSectionTransfers());
+
+/*
+            todo jmt revisit after we remove inference of LCSETs for controls.  The performance penalty is too high now.
+            // Handle issue with orphan source vessels (e.g. bait)
+            if (computedLcSets.isEmpty()) {
+                for (LabVessel labVessel : getTargetLabVessels()) {
+                    for (LabEvent labEvent : labVessel.getTransfersTo()) {
+                        // Stop this from being called when traversing from same lab event
+                        if( !labEvent.equals( this ) ) {
+                            computedLcSets.addAll(labEvent.getComputedLcSets());
                         }
                     }
                 }
-    */
             }
+*/
         }
         if (LabVessel.DIAGNOSTICS) {
             System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets);
@@ -680,7 +679,11 @@ todo jmt adder methods
                 VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
                 if (i == cherryPickTransferList.size() - 1 ||
                         targetPosition != cherryPickTransferList.get(i + 1).getTargetPosition()) {
-                    LabBatchSet labBatches = mapPositionToLcSets.get(targetPosition);
+                    PositionLabBatches labBatches = mapPositionToLcSets.get(targetPosition);
+                    if (labBatches == null) {
+                        labBatches = new PositionLabBatches();
+                        mapPositionToLcSets.put(targetPosition, labBatches);
+                    }
                     Set<LabBatch> localComputedLcSets = VesselContainer.computeLcSets(mapLabBatchToCount,
                             numVesselsWithBucketEntries);
                     labBatches.getLabBatchSet().addAll(localComputedLcSets);

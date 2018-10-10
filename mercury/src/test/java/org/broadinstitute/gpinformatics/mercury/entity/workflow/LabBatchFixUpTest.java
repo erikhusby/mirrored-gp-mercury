@@ -57,6 +57,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -1813,6 +1814,86 @@ public class LabBatchFixUpTest extends Arquillian {
         removeSamples(samplesToRemove, labBatch);
 
         labBatchDao.persist(new FixupCommentary(lines.get(0) + " Removed samples from " + lcsetName));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
+
+    @Test(enabled = false)
+    public void backfillInference() throws SystemException, NotSupportedException, HeuristicRollbackException,
+            HeuristicMixedException, RollbackException, IOException {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("BackfillLabBatchInference.txt"));
+        for (String line : lines) {
+            if (line.startsWith("#")) {
+                continue;
+            }
+            LabBatch labBatch = labBatchDao.findByName(line);
+            System.out.println(labBatch.getBatchName());
+            for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+                TransferTraverserCriteria transferTraverserCriteria = new TransferTraverserCriteria() {
+                    @Override
+                    public TraversalControl evaluateVesselPreOrder(Context context) {
+                        LabVessel contextVessel = context.getContextVessel();
+                        VesselContainer<?> contextVesselContainer = context.getContextVesselContainer();
+                        LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+
+                        if(contextVesselEvent != null ) {
+                            contextVesselEvent.getLabEvent().computeLabBatches();
+                        }
+
+                        if( contextVessel != null ) {
+                            for (LabEvent labEvent : contextVessel.getInPlaceLabEvents()) {
+                                labEvent.computeLabBatches();
+                            }
+
+                            for (VesselContainer<?> containerVessel : contextVessel.getVesselContainers()) {
+                                // In place events may apply to containers
+                                for (LabEvent labEvent : containerVessel.getEmbedder().getInPlaceLabEvents()) {
+                                    labEvent.computeLabBatches();
+                                }
+                            }
+                        }
+
+                        // Check for in place events on vessel container (e.g. EndRepair, ABase, APWash)
+                        if( contextVesselContainer != null ) { // todo jmt does this over count
+                            LabVessel containerVessel = contextVesselContainer.getEmbedder();
+                            if (containerVessel != null) {
+                                for (LabEvent labEvent : containerVessel.getInPlaceLabEvents()) {
+                                    labEvent.computeLabBatches();
+                                }
+
+                                // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
+                                for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
+                                    containerEvent.computeLabBatches();
+                                    for (LabVessel ancestorLabVessel : containerEvent.getSourceLabVessels()) {
+                                        if( ancestorLabVessel.getContainerRole() != null ){
+                                            for (LabEvent labEvent : ancestorLabVessel.getContainerRole().getEmbedder().getTransfersTo()) {
+                                                labEvent.computeLabBatches();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        return TraversalControl.ContinueTraversing;
+                    }
+
+                    @Override
+                    public void evaluateVesselPostOrder(Context context) {
+
+                    }
+                };
+                bucketEntry.getLabVessel().evaluateCriteria(transferTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+            }
+
+            labBatchDao.flush();
+            labBatchDao.clear();
+        }
+
+        labBatchDao.persist(new FixupCommentary("GPLIM-5849 backfill LabBatch inference"));
         labBatchDao.flush();
         userTransaction.commit();
     }
