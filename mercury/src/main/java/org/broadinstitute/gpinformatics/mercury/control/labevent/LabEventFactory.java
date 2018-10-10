@@ -1338,11 +1338,13 @@ public class LabEventFactory implements Serializable {
         }
 
         SBSSection targetSection;
+        SBSSection sourceSection = SBSSection.STRIP_TUBE8;
         switch (flowcellType.getVesselGeometry()) {
         case FLOWCELL1x1:
             targetSection = SBSSection.LANE1;
             break;
         case FLOWCELL1x2:
+            sourceSection = SBSSection.STRIP_TUBE2;
             targetSection = SBSSection.ALL2;
             break;
         case FLOWCELL1x8:
@@ -1351,7 +1353,7 @@ public class LabEventFactory implements Serializable {
         }
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourceStripTube.getContainerRole(), SBSSection.STRIP_TUBE8, null,
+                sourceStripTube.getContainerRole(), sourceSection, null,
                 targetFlowcell.getContainerRole(), targetSection, null, labEvent));
         return labEvent;
     }
