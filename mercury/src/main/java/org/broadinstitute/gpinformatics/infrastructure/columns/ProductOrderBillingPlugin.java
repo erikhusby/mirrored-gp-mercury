@@ -53,8 +53,8 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                         "Billing Session",
                         ""));
         mapTypeToHeader.put(QUOTE_WORK_IDENTIFIER_HEADER,
-                new ConfigurableList.Header("Quote Work ID",
-                        "Quote Work ID",
+                new ConfigurableList.Header("Quote Work Item",
+                        "Quote Work Item",
                         ""));
         mapTypeToHeader.put(SAP_DELIVERY_DOCUMENT_HEADER,
                 new ConfigurableList.Header("SAP Delivery Document ID",
