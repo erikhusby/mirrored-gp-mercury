@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -65,13 +66,16 @@ public class SearchDefinitionFactory {
 
     private static SearchTerm.Evaluator<Object> billingSessionConverter = new SearchTerm.Evaluator<Object>() {
         @Override
-        public String evaluate(Object entity, SearchContext context) {
+        public Long evaluate(Object entity, SearchContext context) {
             String value = context.getSearchValueString();
 
             if(value.startsWith(BillingSession.ID_PREFIX)) {
-                value = value.split(BillingSession.ID_PREFIX)[0];
+                value = value.split(BillingSession.ID_PREFIX)[1];
             }
-            return value;
+            if (!NumberUtils.isNumber(value)) {
+                value = "0";
+            }
+            return Long.valueOf(value);
         }
     };
     private static SearchTerm.Evaluator<Object> userIdConverter = new SearchTerm.Evaluator<Object>() {
