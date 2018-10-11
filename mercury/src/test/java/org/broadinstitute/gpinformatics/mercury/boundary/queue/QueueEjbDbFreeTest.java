@@ -109,38 +109,26 @@ public class QueueEjbDbFreeTest {
     }
 
     @Test(groups = DATABASE_FREE)
-    public void testReOrderQueue() {
+    public void testReOrderQueueNoError() {
         MessageCollection messageCollection = new MessageCollection();
         QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getResortQueue(), QueueTestFactory.getPicoValidationNoErrors());
 
-        long[] newSortOrder = new long[] { 4, 1, 3, 2};
+        Long validQueueGroupingId = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings().first().getQueueGroupingId();
+        queueEjb.reOrderQueue(validQueueGroupingId, 2, QueueType.PICO, messageCollection);
 
-        handleReOrderTesting(queueEjb, newSortOrder, false, messageCollection);
+        // NOTE:  Because we are mocking, the only thing we can do is verify no error occurs, we can't verify the change
+        //        itself because the mocked dao will ALWAYS return the same queue groupings order.   The funcitonality
+        //        of the items moving is actually tested within the DB test in QueueEjbTest.
 
         Assert.assertFalse(messageCollection.hasErrors());
     }
 
     @Test(groups = DATABASE_FREE)
-    public void testReOrderQueueNonUniqueValues() {
+    public void testReOrderQueueBadQueueGroupingId() {
         MessageCollection messageCollection = new MessageCollection();
         QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getResortQueue(), QueueTestFactory.getPicoValidationNoErrors());
 
-        long[] newSortOrder = new long[] { 4, 4, 3, 2};
-
-        handleReOrderTesting(queueEjb, newSortOrder, true, messageCollection);
-
-        Assert.assertTrue(messageCollection.hasErrors());
-    }
-
-    @Test(groups = DATABASE_FREE)
-    public void testReOrderQueueMissingValues() {
-
-        MessageCollection messageCollection = new MessageCollection();
-        QueueEjb queueEjb = new QueueEjb(QueueTestFactory.getResortQueue(), QueueTestFactory.getPicoValidationNoErrors());
-
-        long[] newSortOrder = new long[] { 1, 3, 2};
-
-        handleReOrderTesting(queueEjb, newSortOrder, true, messageCollection);
+        queueEjb.reOrderQueue(Long.MAX_VALUE, 2, QueueType.PICO, messageCollection);
 
         Assert.assertTrue(messageCollection.hasErrors());
     }
@@ -172,32 +160,5 @@ public class QueueEjbDbFreeTest {
         }
 
         Assert.assertEquals(foundItems, 2);
-    }
-
-    private void handleReOrderTesting(QueueEjb queueEjb, long[] newSortOrder, boolean failExpected,
-                                      MessageCollection messageCollection) {
-
-        Map<Long, Long> newOrder = new HashMap<>();
-        int currentOrder = 0;
-        GenericQueue queueByType = queueEjb.findQueueByType(QueueType.PICO);
-        for (QueueGrouping queueGrouping : queueByType.getQueueGroupings()) {
-            if (newSortOrder.length > currentOrder) {
-                newOrder.put(queueGrouping.getQueueGroupingId(), newSortOrder[currentOrder++]);
-            }
-        }
-
-        try {
-            queueEjb.reOrderQueue(newOrder, QueueType.PICO, messageCollection);
-            if (failExpected) {
-                Assert.fail("Expected exception");
-            }
-            for (QueueGrouping queueGrouping : queueByType.getQueueGroupings()) {
-                Assert.assertEquals(queueGrouping.getSortOrder(), newOrder.get(queueGrouping.getQueueGroupingId()));
-            }
-        } catch (Exception e) {
-            if (!failExpected) {
-                Assert.fail("Unexpected exception");
-            }
-        }
     }
 }

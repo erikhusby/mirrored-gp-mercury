@@ -1336,4 +1336,10 @@
                         'Research Pico queue for newly received or extracted samples.');
         </sql>
     </changeSet>
+
+    <changeSet id="GPLIM-5743-16" author="pdunlea">
+        <addColumn tableName="queue_grouping" schemaName="mercury">
+            <column name="queue_priority_type" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

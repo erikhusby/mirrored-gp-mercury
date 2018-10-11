@@ -66,7 +66,7 @@
                                 </stripes:link>
                             </td>
                             <td>${queueGrouping.containerVessel.label}</td>
-                            <td>Location</td><td>PDO</td>
+                            <td>${queueGrouping.containerVessel.storageLocation.buildLocationTrail()}</td><td>PDO</td>
 
                             <c:set var="doNotNeedPico" value="${fn:length(queueGrouping.queuedEntities) - queueGrouping.remainingEntities}" />
                             <c:set var="needPico" value="${queueGrouping.remainingEntities}" />
@@ -86,7 +86,7 @@
                                         <stripes:param name="queueType" value="${actionBean.queueType}" />
                                         <img src="${ctxpath}/images/up.png" title="Move To Top" />
                                     </stripes:link>
-                                    <stripes:text name="groupingCount[${queueGrouping.queueGroupingId}]" value="${status.count}" class="positioning-input" />
+                                    <input type="radio" name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean" event="moveToBottom">
                                         <stripes:param name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
                                         <stripes:param name="queueType" value="${actionBean.queueType}" />
@@ -99,6 +99,7 @@
                 </tbody>
             </table>
 
+            Position to move Selected Items to: <input type="text" name="positionToMoveTo" value="" />
             <stripes:submit name="updatePositions" value="Update Positions" />
         </stripes:form>
     </stripes:layout-component>

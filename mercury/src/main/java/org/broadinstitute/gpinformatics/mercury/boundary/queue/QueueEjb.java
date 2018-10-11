@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.QueueValidationHandler;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping_;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -20,7 +23,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -40,6 +42,7 @@ public class QueueEjb {
     private GenericQueueDao genericQueueDao;
 
     private QueueValidationHandler queueValidationHandler = new QueueValidationHandler();
+
 
     /**
      * Adds either a container lab vessel with its tubes, or a larger list of lab vessels of any type to a queue as a
@@ -65,7 +68,7 @@ public class QueueEjb {
             genericQueue.setQueueGroupings(new TreeSet<>(QueueGrouping.BY_SORT_ORDER));
         }
 
-        QueueGrouping queueGrouping = createGroupingAndSetInitialOrder(containerVessel, readableText);
+        QueueGrouping queueGrouping = createGroupingAndSetInitialOrder(containerVessel, readableText, genericQueue);
 
         queueGrouping.setAssociatedQueue(genericQueue);
         genericQueue.getQueueGroupings().add(queueGrouping);
@@ -129,35 +132,40 @@ public class QueueEjb {
 
     /**
      * Changes the ordering of the queue to whatever is passed in by the user.
-     *
-     * @param groupingIdToNewOrder      Map of the grouping ID ot the new order # to set it to
-     * @param queueType                 Queue to re-order
+     *  @param queueGroupingId
+     * @param positionToMoveTo
+     * @param queueType             Queue to re-order
+     * @param messageCollection
      */
-    public void reOrderQueue(Map<Long, Long> groupingIdToNewOrder, QueueType queueType,
-                             MessageCollection messageCollection) throws ReorderException {
+    public void reOrderQueue(Long queueGroupingId, Integer positionToMoveTo, QueueType queueType, MessageCollection messageCollection) {
 
         GenericQueue genericQueue = findQueueByType(queueType);
 
-        Set<Long> testingSet = new HashSet<>(groupingIdToNewOrder.values());
-        if (testingSet.size() != groupingIdToNewOrder.size()) {
-            messageCollection.addError("The same sample sorting order was assigned to multiple samples. Please fix and try again.");
+        long currentIndex = 1;
+
+        QueueGrouping queueGroupingBeingMoved = null;
+
+        List<QueueGrouping> queueGroupings = new ArrayList<>(genericQueue.getQueueGroupings());
+
+        for (QueueGrouping queueGrouping : queueGroupings) {
+            if (queueGrouping.getQueueGroupingId().equals(queueGroupingId)) {
+                queueGroupingBeingMoved = queueGrouping;
+            }
         }
 
-        if (groupingIdToNewOrder.size() != genericQueue.getQueueGroupings().size()) {
-            messageCollection.addError("Not all samples were assigned a sorting order.  Please fix this and try again.");
-        }
+        if (queueGroupingBeingMoved == null) {
+            messageCollection.addError("Error finding the Queue'd item you wish to move within the queue.");
+        } else {
 
-        if (messageCollection.hasErrors()) {
-            throw new ReorderException("Errors in reordering.");
-        }
+            for (QueueGrouping queueGrouping : queueGroupings) {
+                if (positionToMoveTo.longValue() == currentIndex) {
+                    queueGroupingBeingMoved.setSortOrder(currentIndex++);
+                    queueGroupingBeingMoved.setQueuePriority(QueuePriority.HEIGHTENED);
+                }
 
-        for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {
-
-            if (groupingIdToNewOrder.containsKey(queueGrouping.getQueueGroupingId())) {
-                queueGrouping.setSortOrder(groupingIdToNewOrder.get(queueGrouping.getQueueGroupingId()));
-            } else {
-                messageCollection.addUniqueError(messageCollection, "Not all queued items had an order" +
-                        " number set upon them.");
+                if (!queueGrouping.getQueueGroupingId().equals(queueGroupingId)) {
+                    queueGrouping.setSortOrder(currentIndex++);
+                }
             }
         }
     }
@@ -194,12 +202,31 @@ public class QueueEjb {
         }
     }
 
-    private QueueGrouping createGroupingAndSetInitialOrder(@Nullable LabVessel containerVessel, @Nullable String readableText) {
-        QueueGrouping queueGrouping = new QueueGrouping(containerVessel, readableText);
+    public QueueGrouping createGroupingAndSetInitialOrder(@Nullable LabVessel containerVessel, @Nullable String readableText, GenericQueue genericQueue) {
+        QueueGrouping queueGrouping = new QueueGrouping(containerVessel, readableText, genericQueue);
         persist(queueGrouping);
         genericQueueDao.flush();
-        queueGrouping.setSortOrder(queueGrouping.getQueueGroupingId());
+        setInitialOrder(queueGrouping);
         return queueGrouping;
+    }
+
+    private void setInitialOrder(QueueGrouping queueGrouping) {
+        try {
+            AbstractEnqueueOverride enqueueOverride = queueGrouping.getAssociatedQueue().getQueueType().getEnqueueOverrideClass().newInstance();
+
+            List<Long> vesselIds = new ArrayList<>();
+
+            List<QueueEntity> entitiesByVesselIds = genericQueueDao.findEntitiesByVesselIds(vesselIds);
+
+            Set<Long> uniqueVesselIdsAlreadyInQueue = new HashSet<>();
+            for (QueueEntity entity : entitiesByVesselIds) {
+                uniqueVesselIdsAlreadyInQueue.add(entity.getLabVessel().getLabVesselId());
+            }
+
+            enqueueOverride.setInitialOrder(queueGrouping, uniqueVesselIdsAlreadyInQueue);
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void persist(QueueEntity queueEntity) {
@@ -214,7 +241,9 @@ public class QueueEjb {
         return genericQueueDao.findQueueByType(queueType);
     }
 
-    public void moveToTops(GenericQueue queue, Long queueGroupingId) {
+    public void moveToTop(QueueType queueType, Long queueGroupingId) {
+
+        GenericQueue queue = findQueueByType(queueType);
 
         List<QueueGrouping> groupingsInCurrentOrder = new ArrayList<>(queue.getQueueGroupings());
 
@@ -229,7 +258,9 @@ public class QueueEjb {
         }
     }
 
-    public void moveToBottom(GenericQueue queue, Long queueGroupingId) {
+    public void moveToBottom(QueueType queueType, Long queueGroupingId) {
+
+        GenericQueue queue = findQueueByType(queueType);
 
         List<QueueGrouping> groupingsInCurrentOrder = new ArrayList<>(queue.getQueueGroupings());
 

@@ -12,7 +12,6 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.queue.ReorderException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
@@ -34,10 +33,9 @@ public class QueueActionBean extends CoreActionBean {
     private GenericQueue queue;
 
     private Long queueGroupingId;
+    private Integer positionToMoveTo;
 
     private QueueGrouping queueGrouping;
-
-    private Map<Long, Long> updatePositions;
 
     private Map<Long, BspUser> userIdToUsername = new HashMap<>();
 
@@ -85,9 +83,8 @@ public class QueueActionBean extends CoreActionBean {
 
     @HandlesEvent("moveToTop")
     public Resolution moveToTop() {
-        queue = queueEjb.findQueueByType(queueType);
 
-        queueEjb.moveToTops(queue, queueGroupingId);
+        queueEjb.moveToTop(queueType, queueGroupingId);
 
         return showQueuePage();
     }
@@ -95,9 +92,7 @@ public class QueueActionBean extends CoreActionBean {
     @HandlesEvent("moveToBottom")
     public Resolution moveToBottom() {
 
-        queue = queueEjb.findQueueByType(queueType);
-
-        queueEjb.moveToBottom(queue, queueGroupingId);
+        queueEjb.moveToBottom(queueType, queueGroupingId);
 
         return showQueuePage();
     }
@@ -106,11 +101,8 @@ public class QueueActionBean extends CoreActionBean {
     public Resolution updatePositions() {
         MessageCollection messageCollection = new MessageCollection();
 
-        try {
-            queueEjb.reOrderQueue(updatePositions, queueType, messageCollection);
-        } catch (ReorderException ignored) {
-            // exception only utilized to exit method. No other use
-        }
+        positionToMoveTo = null;
+        queueEjb.reOrderQueue(queueGroupingId, positionToMoveTo, queueType, messageCollection);
 
         queue = queueEjb.findQueueByType(queueType);
         addMessages(messageCollection);
@@ -155,5 +147,13 @@ public class QueueActionBean extends CoreActionBean {
 
     public void setUserIdToUsername(Map<Long, BspUser> userIdToUsername) {
         this.userIdToUsername = userIdToUsername;
+    }
+
+    public Integer getPositionToMoveTo() {
+        return positionToMoveTo;
+    }
+
+    public void setPositionToMoveTo(Integer positionToMoveTo) {
+        this.positionToMoveTo = positionToMoveTo;
     }
 }

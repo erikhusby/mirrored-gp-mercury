@@ -3,13 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.entity.queue;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
-import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -22,8 +23,6 @@ import javax.persistence.Version;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 @Entity
 @Audited
@@ -62,13 +61,18 @@ public class QueueGrouping {
     @Column(name = "version")
     private long version;
 
+    @Column(name = "queue_priority_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private QueuePriority queuePriority;
+
     public QueueGrouping() {
     }
 
-    public QueueGrouping(LabVessel containerVessel, String readableText) {
+    public QueueGrouping(LabVessel containerVessel, String readableText, GenericQueue genericQueue) {
         this.containerVessel = containerVessel;
         this.queueGroupingText = readableText;
         this.sortOrder = Long.MAX_VALUE;
+        this.associatedQueue = genericQueue;
 
         this.queuedEntities = new ArrayList<>();
     }
@@ -144,5 +148,13 @@ public class QueueGrouping {
 
     public void setRemainingEntities(Integer remainingEntities) {
         this.remainingEntities = remainingEntities;
+    }
+
+    public QueuePriority getQueuePriority() {
+        return queuePriority;
+    }
+
+    public void setQueuePriority(QueuePriority queuePriority) {
+        this.queuePriority = queuePriority;
     }
 }
