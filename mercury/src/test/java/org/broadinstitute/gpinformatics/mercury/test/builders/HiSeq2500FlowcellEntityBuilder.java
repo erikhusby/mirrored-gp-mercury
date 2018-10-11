@@ -95,10 +95,12 @@ public class HiSeq2500FlowcellEntityBuilder {
             //DenatureToDilution
             LabEventTest.validateWorkflow("DenatureToDilutionTransfer", denatureRack);
 
-            LabEvent dilutionTransferEntity =
-                    labEventFactory.buildFromBettaLims(dilutionJaxb, new HashMap<String, LabVessel>() {{
-                        put(denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getLabel(),
-                                denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01));
+            LabEvent dilutionTransferEntity = labEventFactory.buildFromBettaLims(dilutionJaxb,
+                    new HashMap<String, LabVessel>() {{
+                        for (Entry<VesselPosition, BarcodedTube> mapEntry :
+                                denatureRack.getContainerRole().getMapPositionToVessel().entrySet()) {
+                            put(mapEntry.getValue().getLabel(), mapEntry.getValue());
+                        }
                         put(denatureRack.getLabel(), denatureRack);
                     }});
             labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionJaxb);

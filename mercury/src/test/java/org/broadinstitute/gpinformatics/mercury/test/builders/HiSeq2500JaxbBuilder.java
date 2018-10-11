@@ -6,15 +6,22 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Scott Matthews
@@ -30,12 +37,13 @@ public class HiSeq2500JaxbBuilder {
     private int flowcellLanes;
     private final String denatureRackBarcode;
 
-    private String dilutionTubeBarcode;
+    private List<String> dilutionTubeBarcodes = new ArrayList<>();
     private String dilutionRackBarcode;
     private final String fctTicket;
 
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private ReceptaclePlateTransferEvent flowcellTransferJaxb;
+    private PlateCherryPickEvent flowcellTransferCherryPickJaxb;
     private PlateCherryPickEvent dilutionTransferJaxb;
     private final ProductionFlowcellPath productionFlowcellPath;
 
@@ -47,7 +55,8 @@ public class HiSeq2500JaxbBuilder {
     private String stripTubeBarcode;
 
     private final int poolSize;
-
+    private final Map<String, String> tubeToPosition = new HashMap<>();
+    private final List<Integer> lanesPerSample = new ArrayList<>();
 
     public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                 String testPrefix, List<String> denatureTubeBarcodes, String denatureRackBarcode,
@@ -67,36 +76,91 @@ public class HiSeq2500JaxbBuilder {
     public HiSeq2500JaxbBuilder invoke() {
 
         dilutionRackBarcode = "DilutionRack" + testPrefix;
-        dilutionTubeBarcode = "DilutionTube" + testPrefix;
         flowcellBarcode = "Flowcell" + testPrefix;
 
         switch (productionFlowcellPath) {
 
         case DILUTION_TO_FLOWCELL:
-            List<BettaLimsMessageTestFactory.CherryPick> dilutionCherrypicks =
-                    Collections.singletonList(new BettaLimsMessageTestFactory.CherryPick(
-                            denatureRackBarcode, Character.toString((char) ('A')) + "01",
-                            dilutionRackBarcode, Character.toString((char) ('A')) + "01"));
-
+            // First adds a denature to dilution transfer message.
+            List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
+            int destTubeIndex = 0;
+            for (int i = 0; i < denatureTubeBarcodes.size(); ++i) {
+                String denatureBarcode = denatureTubeBarcodes.get(i);
+                // Rearrays tubes if positions are given, or leaves them in a row if not given.
+                String sourcePosition = tubeToPosition.containsKey(denatureBarcode) ?
+                        tubeToPosition.get(denatureBarcode) :
+                        bettaLimsMessageTestFactory.buildWellName(i + 1, BettaLimsMessageTestFactory.WellNameType.SHORT);
+                // Supports putting a sample on multiple lanes by cherry picking to multiple denature tubes.
+                for (int j = 0; j < lanesPerSample.get(i); ++j) {
+                    if (destTubeIndex >= flowcellLanes) {
+                        throw new RuntimeException(denatureTubeBarcodes.size() + " denature tubes allocated to " +
+                                lanesPerSample.stream().mapToInt(Integer::intValue).sum() + " lanes will not fit on " +
+                                flowcellLanes + " flowcell lanes.");
+                    }
+                    // If source position is the A row then destination is also. Otherwise destination is a column.
+                    String destPosition = sourcePosition.startsWith("A") ?
+                            bettaLimsMessageTestFactory.buildWellName(destTubeIndex + 1,
+                                    BettaLimsMessageTestFactory.WellNameType.SHORT) :
+                            String.format("%c1", "ABCDEFGH".charAt(destTubeIndex));
+                    ++destTubeIndex;
+                    cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(denatureRackBarcode, sourcePosition,
+                            dilutionRackBarcode, destPosition));
+                    String dilutionBarcode = "Dilution" + destPosition + "_" + testPrefix;
+                    dilutionTubeBarcodes.add(dilutionBarcode);
+                    tubeToPosition.put(dilutionBarcode, destPosition);
+                }
+            }
             dilutionTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureToDilutionTransfer",
                     Collections.singletonList(denatureRackBarcode),
                     Collections.singletonList(denatureTubeBarcodes),
                     Collections.singletonList(dilutionRackBarcode),
-                    Collections.singletonList(Collections.singletonList(dilutionTubeBarcode)), dilutionCherrypicks);
+                    Collections.singletonList(dilutionTubeBarcodes), cherryPicks);
+            QtpJaxbBuilder.fixupPositionMap(tubeToPosition, dilutionTransferJaxb.getSourcePositionMap(),
+                    dilutionTransferJaxb.getPositionMap());
+
+            // Puts FCT metadata on each dilution tube.
             MetadataType dilutionMetadata = new MetadataType();
             dilutionMetadata.setName(DenatureToDilutionTubeHandler.FCT_METADATA_NAME);
             dilutionMetadata.setValue(fctTicket);
-            dilutionTransferJaxb.getPositionMap().iterator().next().
-                    getReceptacle().iterator().next().getMetadata()
-                    .add(dilutionMetadata);
+            dilutionTransferJaxb.getPositionMap().stream().
+                    map(PositionMapType::getReceptacle).
+                    flatMap(List::stream).
+                    forEach(receptacleType -> receptacleType.getMetadata().add(dilutionMetadata));
 
             bettaLimsMessageTestFactory.addMessage(messageList, dilutionTransferJaxb);
 
-            flowcellTransferJaxb =
-                    bettaLimsMessageTestFactory.buildTubeToPlate("DilutionToFlowcellTransfer",
-                            dilutionTubeBarcode, flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
-                            LabEventTest.SECTION_ALL_2, "tube");
-            bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
+            // Adds the dilution to flowcell message. For legacy compatibility a single tube is handled
+            // differently than multiple tubes.
+            if (dilutionTubeBarcodes.size() == 1) {
+                flowcellTransferJaxb =
+                        bettaLimsMessageTestFactory.buildTubeToPlate("DilutionToFlowcellTransfer",
+                                dilutionTubeBarcodes.get(0), flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
+                                LabEventTest.SECTION_ALL_2, "tube");
+                bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
+            } else {
+                cherryPicks.clear();
+                Set<Integer> laneNumbers = new HashSet<>();
+                for (ReceptacleType receptacleType : dilutionTransferJaxb.getPositionMap().get(0).getReceptacle()) {
+                    int laneNumber = "-ABCDEFGH".indexOf(receptacleType.getPosition().substring(0, 1));
+                    if (!laneNumbers.add(laneNumber)) {
+                        throw new RuntimeException("Dilution tube positions must be in one column (found " +
+                                dilutionTransferJaxb.getPositionMap().get(0).getReceptacle().stream().
+                                        map(ReceptacleType::getPosition).collect(Collectors.joining(", ")) + ")");
+                    }
+                    cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(dilutionRackBarcode,
+                            receptacleType.getPosition(), flowcellBarcode, "LANE" + laneNumber));
+                }
+                flowcellTransferCherryPickJaxb = bettaLimsMessageTestFactory.buildCherryPickToPlate(
+                        "DilutionToFlowcellTransfer", "TubeRack",
+                        Collections.singletonList(dilutionRackBarcode),
+                        Collections.singletonList(dilutionTubeBarcodes),
+                        Collections.singletonList(flowcellBarcode), cherryPicks);
+                QtpJaxbBuilder.fixupPositionMap(tubeToPosition, flowcellTransferCherryPickJaxb.getSourcePositionMap());
+                flowcellTransferCherryPickJaxb.getPlate().get(0).setPhysType(
+                        "Flowcell" + flowcellLanes + (flowcellBarcode.endsWith("DSXX") ? "LaneNova" : "Lane"));
+                flowcellTransferCherryPickJaxb.getPlate().get(0).setSection("ALL8");
+                bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferCherryPickJaxb);
+            }
             break;
         case DENATURE_TO_FLOWCELL:
 
@@ -177,8 +241,8 @@ public class HiSeq2500JaxbBuilder {
         return dilutionTransferJaxb;
     }
 
-    public String getDilutionTubeBarcode() {
-        return dilutionTubeBarcode;
+    public List<String> getDilutionTubeBarcodes() {
+        return dilutionTubeBarcodes;
     }
 
     public String getDilutionRackBarcode() {
@@ -205,5 +269,11 @@ public class HiSeq2500JaxbBuilder {
         return stbFlowcellTransferJaxb;
     }
 
+    public Map<String, String> getTubeToPosition() {
+        return tubeToPosition;
+    }
 
+    public List<Integer> getLanesPerSample() {
+        return lanesPerSample;
+    }
 }
