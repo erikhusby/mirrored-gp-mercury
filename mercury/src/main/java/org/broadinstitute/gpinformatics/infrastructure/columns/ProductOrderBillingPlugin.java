@@ -163,9 +163,10 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                     if(billingKey.isPresent()) {
                         businessKey = billingKey.get().getBusinessKey();
                     }
+
                     final List<String> cellList =
                             new ArrayList(Arrays.asList(getBillingSessionLink(
-                                    businessKey, singleWorkItem.isPresent()?singleWorkItem.get():""),
+                                    businessKey, singleWorkItem.isPresent()?singleWorkItem.get():"", context),
                                     billedDate.isPresent()?dateFormatter.format(billedDate.get()):"",
                                     getQuoteLink(quoteImportItem.getQuoteId(), context),
                                     getWorkItemLink(singleWorkItem.isPresent()?singleWorkItem.get():"", quoteImportItem.getQuoteId(), context),
@@ -200,9 +201,17 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
      * @return Anchor link to the quote definition on the quote server
      */
     private String getQuoteLink(String quoteId, SearchContext context) {
-        StringBuffer quoteLink = new StringBuffer("<a class=\"external\" target=\"QUOTE\" href=\"");
-        quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
-        quoteLink.append("\">").append(quoteId).append("</a>");
+
+        StringBuffer quoteLink = new StringBuffer();
+        if(StringUtils.isNotBlank(quoteId)) {
+            if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
+                quoteLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
+                quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
+                quoteLink.append("\">").append(quoteId).append("</a>");
+            } else {
+                quoteLink.append(quoteId);
+            }
+        }
         return quoteLink.toString();
     }
 
@@ -216,14 +225,18 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
      */
     private String getWorkItemLink(String workItemId, String quoteId, SearchContext context) {
         StringBuffer workLink = new StringBuffer();
-        if(StringUtils.isNotBlank(workItemId)) {
+        final boolean webDisplay = StringUtils.isNotBlank(workItemId) &&
+                          context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB;
+        if(webDisplay) {
             workLink.append("<a class=\"external\" target=\"QUOTE\" href=\"");
             workLink.append(context.getQuoteLink().workUrl(quoteId, workItemId));
             workLink.append("\">");
         }
         workLink.append(workItemId);
-        if(StringUtils.isNotBlank(workItemId)) {
-            workLink.append("</a>");
+        if(webDisplay) {
+            if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
+                workLink.append("</a>");
+            }
         }
 
         return workLink.toString();
@@ -234,9 +247,11 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
      * @param billingSession Unique business key for the billing session for which the generated link will be
      *                     associated
      * @param workItem Quote service work item with which the billing session aggregation is associated
+     * @param context
      * @return
      */
-    private String getBillingSessionLink(String billingSession, String workItem) {
+    private String getBillingSessionLink(String billingSession, String workItem,
+                                         SearchContext context) {
         String billingSessionFormat =
                 "<a class=\"external\" target=\"new\" href=\"/Mercury/billing/session.action?billingSession=%s"
                 + "&workId=%s" +
@@ -244,7 +259,11 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
 
         String formattedOutput = "";
         if(StringUtils.isNotBlank(billingSession)) {
-            formattedOutput = String.format(billingSessionFormat, billingSession, workItem, billingSession);
+            if(context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
+                formattedOutput = String.format(billingSessionFormat, billingSession, workItem, billingSession);
+            } else {
+                formattedOutput = billingSession;
+            }
         }
         return formattedOutput;
     }
