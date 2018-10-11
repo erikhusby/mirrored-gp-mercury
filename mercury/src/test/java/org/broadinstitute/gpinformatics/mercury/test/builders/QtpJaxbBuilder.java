@@ -4,11 +4,14 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Builds JAXB objects for QTP messages
@@ -49,6 +52,7 @@ public class QtpJaxbBuilder {
     private PlateTransferEventType ecoTransferTriplicateA7;
     private BettaLIMSMessage ecoTransferTriplicateMessage;
     private PlateTransferEventType ecoTransferDuplicateB3Jaxb;
+    private final Map<String, String> tubeToPosition = new HashMap<>();
 
     public QtpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageFactory, String testPrefix,
             List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes,
@@ -203,44 +207,63 @@ public class QtpJaxbBuilder {
 
         // NormalizationTransfer
         normalizationRackBarcode = "NormalizationRack" + testPrefix;
-        List<BettaLimsMessageTestFactory.CherryPick> normaliztionCherryPicks = new ArrayList<>();
-        for (int j = 0; j < poolTubeBarcodes.size(); j++) {
-            normaliztionCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
-                    poolRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
-                    BettaLimsMessageTestFactory.WellNameType.SHORT),
-                    normalizationRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
-                    BettaLimsMessageTestFactory.WellNameType.SHORT)));
-            String normalizationTubeBarcode = "NormalizationTube" + testPrefix + j;
-            normalizationTubeBarcodes.add(normalizationTubeBarcode);
-        }
+        List<BettaLimsMessageTestFactory.CherryPick> normaliztionCherryPicks = makeCherryPicks(poolRackBarcode,
+                normalizationRackBarcode, poolTubeBarcodes, normalizationTubeBarcodes, tubeToPosition,
+                bettaLimsMessageTestFactory, "Norm", testPrefix);
         normalizationJaxb = bettaLimsMessageTestFactory.buildCherryPick("NormalizationTransfer",
                 Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
                 Collections.singletonList(normalizationRackBarcode),
                 Collections.singletonList(normalizationTubeBarcodes),
                 normaliztionCherryPicks);
+        fixupPositionMap(tubeToPosition, normalizationJaxb.getSourcePositionMap(), normalizationJaxb.getPositionMap());
         bettaLimsMessageTestFactory.addMessage(messageList, normalizationJaxb);
 
         // DenatureTransfer
         denatureRackBarcode = "DenatureRack" + testPrefix;
-        List<BettaLimsMessageTestFactory.CherryPick> denatureCherryPicks = new ArrayList<>();
-
-        for (int j = 0; j < normalizationTubeBarcodes.size(); j++) {
-            denatureCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
-                    normalizationRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
-                    BettaLimsMessageTestFactory.WellNameType.SHORT),
-                    denatureRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
-                    BettaLimsMessageTestFactory.WellNameType.SHORT)));
-            denatureTubeBarcode = "DenatureTube" + testPrefix + j;
-            denatureTubeBarcodes.add(denatureTubeBarcode);
-        }
+        List<BettaLimsMessageTestFactory.CherryPick> denatureCherryPicks = makeCherryPicks(normalizationRackBarcode,
+                denatureRackBarcode, normalizationTubeBarcodes, denatureTubeBarcodes, tubeToPosition,
+                bettaLimsMessageTestFactory, "Denature", testPrefix);
         denatureJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureTransfer",
                 Collections.singletonList(normalizationRackBarcode),
                 Collections.singletonList(normalizationTubeBarcodes),
                 Collections.singletonList(denatureRackBarcode), Collections.singletonList(denatureTubeBarcodes),
                 denatureCherryPicks);
+        fixupPositionMap(tubeToPosition, denatureJaxb.getSourcePositionMap(), denatureJaxb.getPositionMap());
+
         denatureMessage = bettaLimsMessageTestFactory.addMessage(messageList, denatureJaxb);
 
         return this;
+    }
+
+    public static List<BettaLimsMessageTestFactory.CherryPick> makeCherryPicks(String sourceRack, String destRack,
+            List<String> sourceTubes, List<String> destTubes, Map<String, String> tubeToPosition,
+            BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String destTubePrefix, String testPrefix) {
+
+        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
+        for (int j = 0; j < sourceTubes.size(); j++) {
+            // Uses tube positions if given, possibly rearraying the source tubes. If not given puts them in a row.
+            String sourcePosition = tubeToPosition.containsKey(sourceTubes.get(j)) ?
+                    tubeToPosition.get(sourceTubes.get(j)) :
+                    bettaLimsMessageTestFactory.buildWellName(j + 1, BettaLimsMessageTestFactory.WellNameType.SHORT);
+            String destPosition = sourcePosition;
+            cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(sourceRack, sourcePosition,
+                    destRack, destPosition));
+            String destTube = destTubePrefix + testPrefix + j;
+            tubeToPosition.put(destTube, destPosition);
+            destTubes.add(destTube);
+        }
+        return cherryPicks;
+    }
+
+    /** Updates the jaxb position maps with the actual tube positions. */
+    public static void fixupPositionMap(Map<String, String> tubeToPosition, List<PositionMapType>... positionMaps) {
+        // Extracts each receptacleType and updates the position if the barcode is in the tubeToPosition map.
+        Arrays.asList(positionMaps).stream().
+                flatMap(List::stream).
+                map(PositionMapType::getReceptacle).
+                flatMap(List::stream).
+                filter(receptacle -> tubeToPosition.containsKey(receptacle.getBarcode())).
+                forEach(receptacle -> receptacle.setPosition(tubeToPosition.get(receptacle.getBarcode())));
     }
 
     public BettaLIMSMessage getStep01PoolingTransferMessage() {
@@ -277,5 +300,9 @@ public class QtpJaxbBuilder {
 
     public enum PcrType {
         ECO_DUPLICATE, ECO_TRIPLICATE, VIIA_7
+    }
+
+    public Map<String, String> getTubeToPosition() {
+        return tubeToPosition;
     }
 }
