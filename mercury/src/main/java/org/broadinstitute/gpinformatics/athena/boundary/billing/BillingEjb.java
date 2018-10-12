@@ -355,6 +355,7 @@ public class BillingEjb {
         rootMap.put("material", quoteImportItem.getProduct().getDisplayName());
         rootMap.put("sapOrderNumber", quoteImportItem.getProductOrder().getSapOrderNumber());
         rootMap.put("sapDeliveryDocuments", sapDocuments);
+        rootMap.put("deliveryDiscount", Boolean.valueOf(StringUtils.equals(quoteImportItem.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())).toString());
         rootMap.put("quantity", quoteImportItem.getQuantity());
 
         String body;
