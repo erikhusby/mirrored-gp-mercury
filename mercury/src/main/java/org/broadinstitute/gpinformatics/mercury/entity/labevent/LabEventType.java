@@ -260,8 +260,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96,
-                    RackOfTubes.RackType.Matrix96,
-            new ReagentRequirements[]{new ReagentRequirements("EB")})
+                    RackOfTubes.RackType.Matrix96, new ReagentRequirements[]{new ReagentRequirements("EB")})
             .build(),
             LibraryType.POOLED),
     CALIBRATED_POOLING_TRANSFER("CalibratedPoolingTransfer",
@@ -284,8 +283,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96,
-                    RackOfTubes.RackType.Matrix96,
-                    new ReagentRequirements[]{new ReagentRequirements("EB")})
+                    RackOfTubes.RackType.Matrix96, new ReagentRequirements[]{new ReagentRequirements("EB")})
                     .build(),
             LibraryType.NORMALIZED),
     DENATURE_TRANSFER("DenatureTransfer",
@@ -2200,8 +2198,8 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
-                    new ReagentRequirements[]{new ReagentRequirements("LC1", Pattern.compile("wg.*\\d+.*(-lc1|-LC1)\\b"), 6, false),
-                            new ReagentRequirements("LC2", Pattern.compile("wg.*\\d+.*(-lc2|-LC2)\\b"), 6, false),
+                    new ReagentRequirements[]{new ReagentRequirements("LX1", Pattern.compile("wg.*\\d+.*(-lx1|-LX1)\\b"), 6, false),
+                            new ReagentRequirements("LX2", Pattern.compile("wg.*\\d+.*(-lx2|-LX2)\\b"), 6, false),
                             new ReagentRequirements("EML", Pattern.compile("wg.*\\d+.*(-eml|-EML)\\b"), 6, false),
                             new ReagentRequirements("SML", Pattern.compile("wg.*\\d+.*(-sml|-SM1)\\b"), 6, false),
                             new ReagentRequirements("ATM", Pattern.compile("wg.*\\d+.*(-atm|-ATM)\\b"), 6, false),
