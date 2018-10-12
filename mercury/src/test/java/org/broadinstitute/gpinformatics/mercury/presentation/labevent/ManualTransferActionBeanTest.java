@@ -59,7 +59,6 @@ public class ManualTransferActionBeanTest {
             numReagentFields += reagentRequirements.getFieldCount();
         }
 
-
         Assert.assertEquals(plateEventType.getReagent().size(), numReagentFields);
     }
 

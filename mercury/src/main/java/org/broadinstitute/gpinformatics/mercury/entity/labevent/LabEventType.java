@@ -2206,7 +2206,7 @@ public enum LabEventType {
                             new ReagentRequirements("RA1", Pattern.compile("wg.*\\d+.*(-ra1|-RA1)\\b"), 1, false),
                             new ReagentRequirements("XC3", Pattern.compile("wg.*\\d+.*(-xc3|-XC3)\\b"), 1, false),
                             new ReagentRequirements("XC4", Pattern.compile("wg.*\\d+.*(-xc4|-XC4)\\b"), 1, false),
-                            new ReagentRequirements("PB1", Pattern.compile("wg.*\\d+.*(-pb1|-PB1)\\b"), 1, false),
+                            new ReagentRequirements("PB1", Pattern.compile("wg.*\\d+.*(-pb1|-PB1)\\b"), 2, false),
                             new ReagentRequirements("PB2", Pattern.compile("wg.*\\d+.*(-pb2|-PB2)\\b"), 1, false),
                             new ReagentRequirements("FORM20EDTA25", Pattern.compile("\\d{2}[a-zA-Z]\\d{2}[a-zA-Z]\\d{4}"), 1, true),
                             new ReagentRequirements("ETOH", 1, true)}).
@@ -2223,7 +2223,7 @@ public enum LabEventType {
                             new ReagentRequirements("RA1", Pattern.compile("wg.*\\d+.*(-ra1|-RA1)\\b"), 1, false),
                             new ReagentRequirements("XC3", Pattern.compile("wg.*\\d+.*(-xc3|-XC3)\\b"), 1, false),
                             new ReagentRequirements("XC4", Pattern.compile("wg.*\\d+.*(-xc4|-XC4)\\b"), 1, false),
-                            new ReagentRequirements("PB1", Pattern.compile("wg.*\\d+.*(-pb1|-PB1)\\b"), 1, false),
+                            new ReagentRequirements("PB1", Pattern.compile("wg.*\\d+.*(-pb1|-PB1)\\b"), 2, false),
                             new ReagentRequirements("PB2", Pattern.compile("wg.*\\d+.*(-pb2|-PB2)\\b"), 1, false),
                             new ReagentRequirements("FORM20EDTA25", Pattern.compile("\\d{2}[a-zA-Z]\\d{2}[a-zA-Z]\\d{4}"), 1, true),
                             new ReagentRequirements("ETOH", 1, true)}).
@@ -2630,11 +2630,15 @@ public enum LabEventType {
 
     // Holds details regarding each reagent possibly used.
     public static class ReagentRequirements {
+
         String reagentName;
+
         @XmlTransient
         Pattern barcodePattern;
+
         @XmlTransient
         int fieldCount;
+
         @XmlTransient
         boolean expirationDateIncluded;
 
