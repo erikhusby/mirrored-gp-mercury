@@ -37,7 +37,7 @@ public class BillingEjbEmailTest {
         TemplateEngine templateEngine = new TemplateEngine();
         templateEngine.postConstruct();
         billingEjb = new BillingEjb(null, null, null, null, null, AppConfig.produce(Deployment.DEV),
-            SapConfig.produce(Deployment.DEV), null, templateEngine, null);
+            SapConfig.produce(Deployment.DEV), null, templateEngine, null, null);
     }
 
     public void testProcessTemplate() {
@@ -48,7 +48,7 @@ public class BillingEjbEmailTest {
                           + "        <th>Material</th>\n"
                           + "        <th>SAP Sales Order</th>\n"
                           + "        <th>Delivery Documents<br/>Related to this Item</th>\n"
-                          + "        <th>Are there Delivery Discounts?</th>\n"
+                          + "        <th>Was there Delivery Discounts?</th>\n"
                           + "        <th>Quantity</th>\n"
                           + "    </tr>\n"
                           + "    </thead>\n"

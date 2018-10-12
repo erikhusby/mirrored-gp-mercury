@@ -15,7 +15,7 @@
         <th>Material</th>
         <th>SAP Sales Order</th>
         <th>Delivery Documents<br/>Related to this Item</th>
-        <th>Are there Delivery Discounts?</th>
+        <th>Was there Delivery Discounts?</th>
         <th>Quantity</th>
     </tr>
     </thead>
