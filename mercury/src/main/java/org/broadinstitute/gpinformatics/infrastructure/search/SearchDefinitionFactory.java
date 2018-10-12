@@ -83,9 +83,9 @@ public class SearchDefinitionFactory {
         public Long evaluate(Object entity, SearchContext context) {
 
             String value = context.getSearchValueString();
-            final Optional<BspUser> searchBspUser = Optional.of(context.getBspUserList().getByUsername(value));
+            final Optional<BspUser> searchBspUser = Optional.ofNullable(context.getBspUserList().getByUsername(value));
 
-            Long userId = null;
+            Long userId = 0L;
             if(searchBspUser.isPresent()) {
                 userId = searchBspUser.get().getUserId();
             }

@@ -149,7 +149,8 @@ public class BillingCreditDbFreeTest {
         templateEngine.postConstruct();
         billingEjb =
             new BillingEjb(priceListCache, billingSessionDao, null, null, null, AppConfig.produce(Deployment.DEV),
-                SapConfig.produce(Deployment.DEV), mockEmailSender, templateEngine, Mockito.mock(BSPUserList.class));
+                SapConfig.produce(Deployment.DEV), mockEmailSender, templateEngine, Mockito.mock(BSPUserList.class),
+                    Mockito.mock(SAPProductPriceCache.class));
         billingAdaptor = new BillingAdaptor(billingEjb, priceListCache, quoteService, billingSessionAccessEjb,
             sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);

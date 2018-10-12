@@ -312,7 +312,7 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
-                Optional<BspUser> bspDisplayUser = Optional.of(context.getBspUserList().getById(order.getCreatedBy()));
+                Optional<BspUser> bspDisplayUser = Optional.ofNullable(context.getBspUserList().getById(order.getCreatedBy()));
                 StringBuilder userDisplayName = new StringBuilder();
 
                 bspDisplayUser.ifPresent(bspUser -> userDisplayName.append(bspUser.getFullName()));
@@ -339,6 +339,17 @@ public class ProductOrderSearchDefinition {
                 String statusSearchValue = context.getSearchValueString();
 
                 return ProductOrder.OrderStatus.valueOf(statusSearchValue);
+            }
+        });
+
+        pdoStatusTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+                List<ConstrainedValue> constrainedStatusValues = new ArrayList<>();
+                for (ProductOrder.OrderStatus status: ProductOrder.OrderStatus.values()) {
+                    constrainedStatusValues.add(new ConstrainedValue(status.toString(), status.getDisplayName()));
+                }
+                return constrainedStatusValues;
             }
         });
         SearchTerm.CriteriaPath orderStatusPath = new SearchTerm.CriteriaPath();
