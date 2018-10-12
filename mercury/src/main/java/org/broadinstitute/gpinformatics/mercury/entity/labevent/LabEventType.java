@@ -53,7 +53,6 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.Matrix96,
                     StaticPlate.PlateType.Eppendorf96,
                     new ReagentRequirements[]{new ReagentRequirements("CrimpCapLot", null, 1)}).
-//                    reagentNames(new String[]{"CrimpCapLot"}).
                     build(),
             LibraryType.NONE_ASSIGNED),
     COVARIS_LOADED("CovarisLoaded",
@@ -263,7 +262,6 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96,
                     RackOfTubes.RackType.Matrix96,
             new ReagentRequirements[]{new ReagentRequirements("EB", null, 1)})
-//    .reagentNames(new String[]{"EB"})
             .build(),
             LibraryType.POOLED),
     CALIBRATED_POOLING_TRANSFER("CalibratedPoolingTransfer",
@@ -288,7 +286,6 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96,
                     RackOfTubes.RackType.Matrix96,
                     new ReagentRequirements[]{new ReagentRequirements("EB", null, 1)})
-//                    .reagentNames(new String[]{"EB"}).build(),
                     .build(),
             LibraryType.NORMALIZED),
     DENATURE_TRANSFER("DenatureTransfer",
@@ -299,7 +296,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("Hyb Buffer", null, 1),
                             new ReagentRequirements("NaOH", null, 1),
                             new ReagentRequirements("NucleaseFreeWater", null, 1)})
-//                    .reagentNames(new String[]{"Hyb Buffer", "NaOH","NucleaseFreeWater"})
                     .build(),
             LibraryType.DENATURED),
     STRIP_TUBE_B_TRANSFER("StripTubeBTransfer",
@@ -308,7 +304,6 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.STRIP_TUBE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96,
                     RackOfTubes.RackType.StripTubeRackOf12,
                     new ReagentRequirements[]{new ReagentRequirements("Hyb Buffer", null, 1)}).
-//                    reagentNames(new String[]{"Hyb Buffer"}).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.StripTube).
                     build(),
@@ -321,7 +316,6 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, StaticPlate.ManualTransferFlowCellType.StripTube1x1,
                     StaticPlate.ManualTransferFlowCellType.FlowCell8,
                     new ReagentRequirements[]{new ReagentRequirements("CbotReagentKit", null, 1)}).
-//                    .reagentNames(new String[]{"CbotReagentKit"}).
                     machineNames(new String[]{"ST-001", "ST-002", "ST-003", "ST-004", "ST-005", "ST-006", "ST-007", "ST-008",
                             "ST-009", "ST-010", "ST-011", "ST-012", "ST-013", "ST-014", "ST-015", "ST-016", "ST-017",
                             "ST-018", "ST-019", "ST-020", "ST-021", "ST-022", "ST-023", "ST-024", "ST-025", "ST-026",
@@ -791,10 +785,7 @@ public enum LabEventType {
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).
                     sourceSection(SBSSection.P96_24ROWSOF4_COLWISE_8TIP).
-                    targetSection(SBSSection.ALL96).
-                    limsFile(true).
-//                    reagentNames(new String[]{"QIASymphony Kit"}).
-                    build(),
+                    targetSection(SBSSection.ALL96).limsFile(true).build(),
             MaterialType.DNA_DNA_CELL_FREE, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     QIASYMPHONY_GENOMIC("QiaSymphonyGenomic",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -806,10 +797,7 @@ public enum LabEventType {
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).
                     sourceSection(SBSSection.P96_24ROWSOF4_COLWISE_8TIP).
-                    targetSection(SBSSection.ALL96).
-                    limsFile(true).
-//                    reagentNames(new String[]{"QIASymphony Kit"}).
-                    build(),
+                    targetSection(SBSSection.ALL96).limsFile(true).build(),
             MaterialType.DNA_DNA_GENOMIC, LibraryType.NONE_ASSIGNED, SourceHandling.DEPLETE),
     BLOOD_CRYOVIAL_EXTRACTION("BloodCryovialExtraction",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
@@ -1954,7 +1942,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("Proteinase K", null, 1),
                             new ReagentRequirements("Buffer AL", null, 1),
                             new ReagentRequirements("100% Ethanol", null, 1)}).
-//                    reagentNames(new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}).
                     build(), LibraryType.NONE_ASSIGNED),
     // Transfer blood to spin column
     EXTRACT_BLOOD_MICRO_TO_SPIN("ExtractBloodMicroToSpin",
@@ -1972,7 +1959,6 @@ public enum LabEventType {
                     targetSection(SBSSection.ROWOF8).
                     targetVolume(true).
                     sourceContainerPrefix("WB").
-//                    reagentNames(new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}).
                     useWebCam(true).build(), LibraryType.NONE_ASSIGNED),
     // Transfer blood to matrix tube
     EXTRACT_BLOOD_SPIN_TO_MATRIX("ExtractBloodSpinToMatrix",
@@ -1991,7 +1977,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("Proteinase K", null, 1),
                             new ReagentRequirements("Buffer AL", null, 1),
                             new ReagentRequirements("100% Ethanol", null, 1)}).
-//                    reagentNames(new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"})
                     build(), LibraryType.NONE_ASSIGNED),
     // Transfer cell suspension to spin column
     EXTRACT_CELL_SUSP_MICRO_TO_SPIN("ExtractCellSuspMicroToSpin",
@@ -2002,7 +1987,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("Buffer AW1", null, 1),
                             new ReagentRequirements("Buffer AW2", null, 1),
                             new ReagentRequirements("Buffer AE", null, 1)}).
-//                    reagentNames(new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}).
                     build(), LibraryType.NONE_ASSIGNED),
     // Optional Transfer cell suspension to micro centrifuge tube
     EXTRACT_CELL_SUSP_SPIN_TO_MICRO("ExtractCellSuspSpinToMicro",
@@ -2013,7 +1997,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("SPRI", null, 1),
                             new ReagentRequirements("70% Ethanol", null, 1),
                             new ReagentRequirements("TE", null, 1)}).
-//                    reagentNames(new String[]{"SPRI", "70% Ethanol", "TE"}).
                     build(), LibraryType.NONE_ASSIGNED),
     // Transfer cell suspension to matrix tube
     EXTRACT_CELL_SUSP_TO_MATRIX("ExtractCellSuspToMatrix",
@@ -2032,7 +2015,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("Deparaffinization Solution", null, 1),
                             new ReagentRequirements("Buffer ATL", null, 1),
                             new ReagentRequirements("Proteinase K", null, 1)}).
-//                    reagentNames(new String[]{"Deparaffinization Solution", "Buffer ATL", "Proteinase K"}).
                     build(), LibraryType.NONE_ASSIGNED),
     // Transfer tissue in paraffin to micro centrifuge tube to micro centrifuge tube
     EXTRACT_FFPE_MICRO1_TO_MICRO2("ExtractFfpeMicro1ToMicro2",
@@ -2043,7 +2025,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("RNase A", null, 1),
                             new ReagentRequirements("Buffer AL", null, 1),
                             new ReagentRequirements("100% Ethanol", null, 1)}).
-//                    reagentNames(new String[]{"RNase A", "Buffer AL", "100% Ethanol"}).
                     build(), LibraryType.NONE_ASSIGNED),
     // Transfer tissue in paraffin to spin column
     EXTRACT_FFPE_MICRO2_TO_SPIN("ExtractFfpeMicro2ToSpin",
@@ -2054,7 +2035,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("Buffer AW1", null, 1),
                             new ReagentRequirements("Buffer AW2", null, 1),
                             new ReagentRequirements("Buffer ATE", null, 1)}).
-//                    reagentNames(new String[]{"Buffer AW1", "Buffer AW2", "Buffer ATE"}).
                     build(), LibraryType.NONE_ASSIGNED),
     // Transfer tissue in paraffin to matrix tube
     EXTRACT_FFPE_SPIN_TO_MATRIX("ExtractFfpeSpinToMatrix",
@@ -2075,7 +2055,6 @@ public enum LabEventType {
                             new ReagentRequirements("RNase", null, 1),
                             new ReagentRequirements("Buffer AL", null, 1),
                             new ReagentRequirements("Ethanol", null, 1)}).
-//                    reagentNames(new String[]{"Buffer ATL", "Proteinase K", "RNase", "Buffer AL", "Ethanol"}).
                     build(), LibraryType.NONE_ASSIGNED),
     // Transfer fresh frozen tissue to spin column
     EXTRACT_FRESH_TISSUE_MICRO_TO_SPIN("ExtractFreshTissueMicroToSpin",
@@ -2086,7 +2065,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("Buffer AW1", null, 1),
                             new ReagentRequirements("Buffer AW2", null, 1),
                             new ReagentRequirements("Buffer AE", null, 1)}).
-//                    reagentNames(new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}).
                     build(), LibraryType.NONE_ASSIGNED),
     // Transfer fresh frozen tissue to matrix tube
     EXTRACT_FRESH_TISSUE_SPIN_TO_MATRIX("ExtractFreshTissueSpinToMatrix",
@@ -2105,7 +2083,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("Proteinase K", null, 1),
                             new ReagentRequirements("Buffer AL", null, 1),
                             new ReagentRequirements("100% Ethanol", null, 1)}).
-//                    reagentNames(new String[]{"PBS", "Proteinase K", "Buffer AL", "100% Ethanol"}).
                     build(), LibraryType.NONE_ASSIGNED),
     // Transfer saliva to spin column
     EXTRACT_SALIVA_CONICAL_TO_SPIN("ExtractSalivaConicalToSpin",
@@ -2116,7 +2093,6 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("Buffer AW1", null, 1),
                             new ReagentRequirements("Buffer AW2", null, 1),
                             new ReagentRequirements("Buffer AE", null, 1)}).
-//                    reagentNames(new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}).
                     build(), LibraryType.NONE_ASSIGNED),
     // Transfer saliva to matrix tube
     EXTRACT_SALIVA_SPIN_TO_MATRIX("ExtractSalivaSpinToMatrix",
