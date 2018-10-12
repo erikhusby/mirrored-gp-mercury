@@ -37,6 +37,7 @@ public class QtpEntityBuilder {
 
     private TubeFormation denatureRack;
     private TubeFormation normalizationRack;
+    private List<BarcodedTube> poolTubes = new ArrayList<>();
 
     public QtpEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory,
@@ -70,7 +71,6 @@ public class QtpEntityBuilder {
         String normalizationRackBarcode = qtpJaxbBuilder.getNormalizationRackBarcode();
         PlateCherryPickEvent normalizationJaxb = qtpJaxbBuilder.getNormalizationJaxb();
 
-        List<BarcodedTube> poolTubes = new ArrayList<>();
         List<TubeFormation> poolingRacks = new ArrayList<>();
         if (doPoolingTransfer) {
             for (TubeFormation normCatchRack : normCatchRacks) {
@@ -253,5 +253,9 @@ public class QtpEntityBuilder {
 
     public TubeFormation getNormalizationRack() {
         return normalizationRack;
+    }
+
+    public List<BarcodedTube> getPoolTubes() {
+        return poolTubes;
     }
 }

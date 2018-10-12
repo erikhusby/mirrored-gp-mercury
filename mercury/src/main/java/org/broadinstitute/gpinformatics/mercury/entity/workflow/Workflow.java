@@ -26,6 +26,7 @@ public enum Workflow {
     PCR_PLUS_HYPER_PREP("Whole Genome PCR Plus HyperPrep"),
     CELL_FREE_HYPER_PREP("Cell Free HyperPrep"),
     CELL_FREE_HYPER_PREP_UMIS("Cell Free HyperPrep With UMIs"),
+    G_DNA_ULTRA_LOW_PASS_WGS("gDNA Ultra Low Pass WGS"),
     ICE_EXOME_EXPRESS_HYPER_PREP("Hyper Prep ICE Exome Express"),
     ICE_EXOME_EXPRESS_HYPER_PREP_UMIS("Hyper Prep ICE Exome Express With UMIs"),
     CUSTOM_SELECTION("Custom Selection"),
@@ -43,6 +44,7 @@ public enum Workflow {
     DNA_RNA_EXTRACTION_STOOL("DNA and RNA from Stool"),
     SINGLE_CELL_SMART_SEQ("Single Cell SmartSeq"),
     SINGLE_CELL_10X("Single Cell 10X"),
+    SEQ_ONLY("Seq Only"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
@@ -78,7 +80,8 @@ public enum Workflow {
                     PCR_FREE_HYPER_PREP, PCR_PLUS_HYPER_PREP, CELL_FREE_HYPER_PREP, ICE_EXOME_EXPRESS_HYPER_PREP,
                     TEN_X, INFINIUM, INFINIUM_METHYLATION, MALARIA, CELL_FREE_HYPER_PREP_UMIS,
                     ICE_EXOME_EXPRESS_HYPER_PREP_UMIS, DNA_RNA_EXTRACTION_STOOL, CUSTOM_SELECTION,
-                    DNA_RNA_EXTRACTION_CELL_PELLETS_BSP, LASSO, SINGLE_CELL_SMART_SEQ, SINGLE_CELL_10X
+                    DNA_RNA_EXTRACTION_CELL_PELLETS_BSP, LASSO, SINGLE_CELL_SMART_SEQ, SINGLE_CELL_10X, SEQ_ONLY,
+                    G_DNA_ULTRA_LOW_PASS_WGS
             );
 
     public boolean isWorkflowSupportedByMercury() {
