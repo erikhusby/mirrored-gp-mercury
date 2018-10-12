@@ -48,6 +48,7 @@ public class BillingEjbEmailTest {
                           + "        <th>Material</th>\n"
                           + "        <th>SAP Sales Order</th>\n"
                           + "        <th>Delivery Documents<br/>Related to this Item</th>\n"
+                          + "        <th>Are there Delivery Discounts?</th>\n"
                           + "        <th>Quantity</th>\n"
                           + "    </tr>\n"
                           + "    </thead>\n"
@@ -57,6 +58,7 @@ public class BillingEjbEmailTest {
                           + "        <td>material</td>\n"
                           + "        <td>sap-on</td>\n"
                           + "        <td>sap-dd</td>\n"
+                          + "        <td>true</td>\n"
                           + "        <td>0</td>\n"
                           + "    </tr>\n"
                           + "    </tbody>\n"
@@ -67,6 +69,7 @@ public class BillingEjbEmailTest {
         map.put("material", "material");
         map.put("sapOrderNumber", "sap-on");
         map.put("sapDeliveryDocuments", "sap-dd");
+        map.put("deliveryDiscount", Boolean.TRUE.toString());
         map.put("quantity", "0");
 
         String result =
