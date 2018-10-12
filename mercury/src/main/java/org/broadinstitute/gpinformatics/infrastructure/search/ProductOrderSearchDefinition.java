@@ -341,6 +341,17 @@ public class ProductOrderSearchDefinition {
                 return ProductOrder.OrderStatus.valueOf(statusSearchValue);
             }
         });
+
+        pdoStatusTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+                List<ConstrainedValue> constrainedStatusValues = new ArrayList<>();
+                for (ProductOrder.OrderStatus status: ProductOrder.OrderStatus.values()) {
+                    constrainedStatusValues.add(new ConstrainedValue(status.toString(), status.getDisplayName()));
+                }
+                return constrainedStatusValues;
+            }
+        });
         SearchTerm.CriteriaPath orderStatusPath = new SearchTerm.CriteriaPath();
         orderStatusPath.setPropertyName("orderStatus");
         pdoStatusTerm.setCriteriaPaths(Collections.singletonList(orderStatusPath));
