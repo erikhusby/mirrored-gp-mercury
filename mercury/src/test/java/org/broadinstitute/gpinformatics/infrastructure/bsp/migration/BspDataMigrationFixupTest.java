@@ -41,6 +41,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  *
  * ******************************************************************************************
  * ************************** TRANSACTION TIMEOUT ADJUSTMENT REQUIRED ***********************
+ * Each phase 2 batch takes ~25 minutes
  * Wildfly standalone-full.xml:  <coordinator-environment default-timeout="7200"/>
  * ******************************************************************************************
  */
@@ -65,14 +66,13 @@ public class BspDataMigrationFixupTest extends Arquillian {
     private String phaseOneMapName = "gplim5728_phase1.dat";
     private PrintWriter processPhaseTwoMap = null;
     private String phaseTwoMapName = "gplim5728_phase2.dat";
-    private PrintWriter processPhaseThreeMap = null;
-    private String phaseThreeMapName = "gplim5728_phase3.dat";
 
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
     public static WebArchive buildMercuryWar() {
         WebArchive webArchive = DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        // Manually add the Oracle driver file to the deploy, otherwise need to add module reference to jboss-deployment-structure.xml
         webArchive.addAsLibrary( oracleDriverFile );
 
         return webArchive;
@@ -80,6 +80,7 @@ public class BspDataMigrationFixupTest extends Arquillian {
 
     @BeforeClass
     public void initialize() throws Exception {
+        // JDBC 101
         DriverManager.registerDriver( new oracle.jdbc.OracleDriver() );
     }
 
@@ -120,7 +121,7 @@ public class BspDataMigrationFixupTest extends Arquillian {
      * @throws Exception on any error - only the current batch fails and is rolled back
      *   - Examine the phase 2 <strong>LOG</strong> file and remove the successful rows from the phase 1 <strong>.dat</strong> status file before correcting and rerunning
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim5728PhaseTwoMigrateTubes() throws Exception {
 
         System.gc();
@@ -152,7 +153,7 @@ public class BspDataMigrationFixupTest extends Arquillian {
         lineReader.close();
 
         try {
-            // Roll through list (~40,000), 2500 at a time, hits about 4.5G max heap.
+            // Roll through list (~40,000), 2500 at a time, hits about 3G max heap, 25 minutes per batch, 16 batches.
             int fromIndex = 0;
             int toIndex;
             do {

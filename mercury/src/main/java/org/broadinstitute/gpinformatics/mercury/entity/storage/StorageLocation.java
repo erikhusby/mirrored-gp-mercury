@@ -48,7 +48,9 @@ public class StorageLocation {
         RACK("Rack", ExpectParentLocation.TRUE),
         GAUGERACK("Gauge Rack", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE, CanRename.TRUE),
         BOX("Box", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE, CanRename.TRUE),
-        SLOT("Slot", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE);
+        SLOT("Slot", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE),
+        // Special case to collect loose BarcodedTubes (cryo straws, slides) stored outside of any automation container
+        LOOSE("Loose", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE);
 
         private enum CanCreate {
             TRUE(true),

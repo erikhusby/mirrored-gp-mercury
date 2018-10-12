@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.migration;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -21,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean;
 
 import javax.ejb.TransactionManagement;
 import javax.enterprise.context.RequestScoped;
@@ -41,29 +44,30 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import static javax.ejb.TransactionManagementType.BEAN;
 
 /**
- * Transaction timeout control in an arquillian test is an epic fail - danced around several trial and error solutions and every one failed
- * Put the functionality in a real EJB and it all works.
+ * Does all the heavy lifting for freezer migration logic
+ * Put it in an EJB so JavaEE framework bean managed transactions (vs. whatever it is that Arquillian does) can be used in each method call.
  */
-
 @RequestScoped
 @TransactionManagement(BEAN)
 public class Gplim5728WorkHorseEjb {
 
+    private static final Log logger = LogFactory.getLog(Gplim5728WorkHorseEjb.class);
+
     final String logDirName = System.getProperty("jboss.server.log.dir");
 
+    // Detailed output log files
     private PrintWriter processPhaseOneLog = null;
     private final String phaseOneLogName = "gplim5728_phase1.log";
 
     private PrintWriter processPhaseTwoLog = null;
     private final String phaseTwoLogName = "gplim5728_phase2.log";
 
-    private PrintWriter processPhaseThreeLog = null;
-    private final String phaseThreeLogName = "gplim5728_phase3.log";
-
+    // Phase 2 troubleshooting output values
     static final String EMPTY = "";
     static final String SAMPLE = "sample";
     static final String PLATE = "plate";
@@ -106,7 +110,6 @@ public class Gplim5728WorkHorseEjb {
 
             userBean.loginOSUser();
 
-
             List<Long> rootBspPks = migrateRootStorageLocations( pkMap );
             processPhaseOneLog.write("Processed " + rootBspPks.size() + " root storage locations.\n");
             processPhaseOneLog.flush();
@@ -128,15 +131,15 @@ public class Gplim5728WorkHorseEjb {
             processPhaseOneLog.flush();
 
             storageLocationDao.persist( new FixupCommentary("GPLIM-5728 phase 1 - Migrate BSP Storage locations and stored vessels to Mercury") );
-            storageLocationDao.flush();
-
-            processPhaseOneLog.write("======== FINISHED GPLIM-5728 PHASE 1 FIXUP =============\n");
-            processPhaseOneLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
+            // storageLocationDao.flush();
 
             utx.commit();
 
-            // Release all entities from entity manager, memory issues
+            // Explicitly release all entities from entity manager to reduce heap memory usage
             storageLocationDao.clear();
+
+            processPhaseOneLog.write("======== FINISHED GPLIM-5728 PHASE 1 FIXUP =============\n");
+            processPhaseOneLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
 
         } catch ( Exception ex ) {
             try {
@@ -150,6 +153,7 @@ public class Gplim5728WorkHorseEjb {
                 processPhaseOneLog.write( "Process died due to exception - see server log \n" );
                 processPhaseOneLog.write( ex.getMessage() );
             }
+            logger.error("Fixup test failed", ex);
             throw ex;
         } finally {
             if (this.processPhaseOneLog != null ) {
@@ -194,13 +198,11 @@ public class Gplim5728WorkHorseEjb {
 
         try {
             utx.begin();
-
             userBean.loginOSUser();
 
             // Now build out the contents of the stored containers using entities in the mapping
             try {
                 conn = DriverManager.getConnection(bspURL, bspUser, bspPassword);
-                // Result columns MUST match migrateRootStorageLocations!!
                 containerStmt = conn.prepareStatement("select samp.sample_id \n"
                                              + "     , samp.receptacle_id as tube_id \n"
                                              + "     , nvl( tube.external_id, 'SM-' || samp.sample_id ) as tube_label \n"
@@ -217,7 +219,6 @@ public class Gplim5728WorkHorseEjb {
                                              + "   and tube_type.receptacle_type_id = tube.receptacle_type_id \n"
                                              + "   and tube.receptacle_group_id = rack.receptacle_id \n"
                                              + "   and rack.receptacle_id = ? " );  // <-- ********* STORAGE CONTAINER RECEPTACLE **********
-
                 sampleStmt = conn.prepareStatement( "select s.sample_id \n"
                                              + "  from bsp_receptacle r \n"
                                              + "     , bsp_sample s \n"
@@ -237,9 +238,8 @@ public class Gplim5728WorkHorseEjb {
                         throw new Exception(error);
                     }
 
-                    // Register as sample source and continue - no contained vessels (slides, cryo vials)
+                    // Is slide or cryo straw, no contained vessels.  Register as sample source and continue, storage location set in phase 1
                     if( storedVessel instanceof BarcodedTube) {
-                        addStorageLocationToVessel( storedVessel, storageId );
                         sampleStmt.setLong(1, receptacleId);
                         ResultSet rs = sampleStmt.executeQuery();
                         if( rs.next() ) {
@@ -248,6 +248,7 @@ public class Gplim5728WorkHorseEjb {
                             createCheckInEvent(storedVessel, new Date(), labelToBspReceptaclIdMap.size());
                             tubeCount++;
                         } else {
+                            // Sanity test
                             throw new Exception("No receptacle in BSP for receptacle_id = " + receptacleId + "?!");
                         }
                         rs.close();
@@ -281,6 +282,10 @@ public class Gplim5728WorkHorseEjb {
 
             storageLocationDao.clear();
 
+            processPhaseTwoLog.write( "======== FINISHED MIGRATING STORED CONTAINER CONTENTS BATCH =============\n" );
+            processPhaseTwoLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
+            processPhaseTwoLog.write( "\n\n");
+            processPhaseTwoLog.flush();
         } catch ( Exception ex ) {
             try {
                 utx.rollback();
@@ -293,6 +298,7 @@ public class Gplim5728WorkHorseEjb {
                 processPhaseTwoLog.write( "Process died due to exception \n" );
                 processPhaseTwoLog.write( ex.getMessage()==null?ex.getClass().getName():ex.getMessage() );
             }
+            logger.error("Phase 2 freezer migration failure", ex);
 
             processPhaseTwoLog.write( "\n!!!!!!!!!! Recovery requires all processed container records be removed from phase 1 data file !!!!!!!!!!\n" );
 
@@ -329,7 +335,6 @@ public class Gplim5728WorkHorseEjb {
      * Migrates the root storage locations to Mercury to start hierarchy drill down
      */
     private List<Long> migrateRootStorageLocations( BspMigrationMapping pkMap ) throws Exception {
-        // BSP data via old school JDBC access
         Connection conn = null;
         Statement stmt = null;
         List<Long> rootPks = null;
@@ -362,7 +367,6 @@ public class Gplim5728WorkHorseEjb {
      * Drill down each hierarchy level and migrates the root storage locations to Mercury
      */
     private List<Long> migrateChildStorageLocations( BspMigrationMapping pkMap, List<Long> parentPks ) throws Exception {
-        // BSP data via old school JDBC access
         Connection conn = null;
         PreparedStatement stmt = null;
         List<Long> allChildPks = new ArrayList<>();
@@ -407,7 +411,7 @@ public class Gplim5728WorkHorseEjb {
     }
 
     /**
-     * Create the Mercury StorageLocation objects
+     * Create the Mercury StorageLocation objects for root and child nodes
      */
     private List<Long> buildMercuryLocations(ResultSet rs, BspMigrationMapping pkMap ) throws Exception {
         Long bspPk;
@@ -602,6 +606,7 @@ public class Gplim5728WorkHorseEjb {
                 if (well == null) {
                     well = new PlateWell(staticPlate, position);
                     storageLocationDao.persist(well);
+                    staticPlate.getContainerRole().addContainedVessel(well, position);
                 }
                 // Wells don't have storage location attached
 
@@ -783,7 +788,7 @@ public class Gplim5728WorkHorseEjb {
                 storageVessel.setStorageLocation(mercuryStorage);
 
                 // We don't do anything with a Mercury static plate other than give it a storage location
-                // Migration of wells will be ignored
+                //   , assumption is that wells are already in place
                 if( mercuryVessel != null && vesselSubClass.equals( StaticPlate.class ) ) {
                     processPhaseOneLog.write( "Static plate already in Mercury, ignoring wells "  );
                     processPhaseOneLog
@@ -807,19 +812,6 @@ public class Gplim5728WorkHorseEjb {
         processPhaseOneLog.write("Updated location for " + updateCount + " BSP stored receptacles (containers) already in Mercury\n" );
         processPhaseOneLog.write( "****************\n" );
 
-    }
-
-    private void addStorageLocationToVessel( LabVessel storedVessel, Long storageId) throws Exception {
-        // Shouldn't happen, but quietly don't overwrite Mercury value
-        if( storedVessel.getStorageLocation() != null ) {
-            return;
-        }
-        StorageLocation storageLocation = storageLocationDao.findSingle(StorageLocation.class,
-                StorageLocation_.storageLocationId, storageId);
-        if( storageLocation == null ) {
-            throw new Exception( "Storage location id " + storageId + " unavailable in mercury");
-        }
-        storedVessel.setStorageLocation(storageLocation);
     }
 
     private void createCheckInEvent( LabVessel inPlaceVessel, Date eventdate, int disambiguator) {
