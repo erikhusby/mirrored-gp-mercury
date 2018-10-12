@@ -17,13 +17,13 @@ import java.util.Map;
 public class PlateWell extends LabVessel {
 
     public enum WellType implements VesselTypeGeometry {
-        Well40("Well40",     "Well [40ul]"),
-        Well50("Well50",     "Well [50ul]"),
+        Well40("Well40",     "Well [40uL]"),
+        Well50("Well50",     "Well [50uL]"),
         Well150("Well150",   "Well [150uL]"),
         Well200("Well200",   "Well [200uL]"),
         Well500("Well500",   "Well [500uL]"),
         Well800("Well800",   "Well [800uL]"),
-        Well1000("Well1000", "Well [1000ul]"),
+        Well1000("Well1000", "Well [1000uL]"),
         Well1200("Well1200", "Well [1200uL]"),
         Well2000("Well2000", "Well [2000uL]"),
         Well5000("Well5000", "Well [5000uL]"),
@@ -73,7 +73,8 @@ public class PlateWell extends LabVessel {
         static {
             for (WellType wellType : WellType.values()) {
                 MAP_NAME_TO_TYPE.put(wellType.automationName, wellType);
-                MAP_DISPLAY_NAME_TO_TYPE.put(wellType.displayName, wellType);
+                // Make display name case insensitive, uL/ul in BSP all over the map
+                MAP_DISPLAY_NAME_TO_TYPE.put(wellType.displayName.toUpperCase(), wellType);
             }
         }
 
@@ -93,7 +94,7 @@ public class PlateWell extends LabVessel {
         }
 
         public static WellType getByDisplayName(String displayName) {
-            return MAP_DISPLAY_NAME_TO_TYPE.get(displayName);
+            return MAP_DISPLAY_NAME_TO_TYPE.get(displayName.toUpperCase());
         }
     }
 

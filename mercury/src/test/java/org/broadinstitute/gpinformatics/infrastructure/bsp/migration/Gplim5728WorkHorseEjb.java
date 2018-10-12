@@ -1,15 +1,20 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.migration;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
+import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -31,6 +36,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -42,12 +48,26 @@ import static javax.ejb.TransactionManagementType.BEAN;
  * Transaction timeout control in an arquillian test is an epic fail - danced around several trial and error solutions and every one failed
  * Put the functionality in a real EJB and it all works.
  */
+
 @RequestScoped
 @TransactionManagement(BEAN)
 public class Gplim5728WorkHorseEjb {
 
+    final String logDirName = System.getProperty("jboss.server.log.dir");
 
-    PrintWriter processLogWriter = null;
+    private PrintWriter processPhaseOneLog = null;
+    private final String phaseOneLogName = "gplim5728_phase1.log";
+
+    private PrintWriter processPhaseTwoLog = null;
+    private final String phaseTwoLogName = "gplim5728_phase2.log";
+
+    private PrintWriter processPhaseThreeLog = null;
+    private final String phaseThreeLogName = "gplim5728_phase3.log";
+
+    static final String EMPTY = "";
+    static final String SAMPLE = "sample";
+    static final String PLATE = "plate";
+    static final String RACK = "rack";
 
     @Inject
     private UserBean userBean;
@@ -63,137 +83,246 @@ public class Gplim5728WorkHorseEjb {
     private String bspPassword;
 
     /**
-     * The freezer migration fixup entry point
+     * The freezer migration fixup entry point - migrates all the non-archived freezers locations and
+     * the containers/vessels stored in any of the locations
+     * @return List of mercury vessel label to BSP receptacle ID for every receptacle in BSP Freezer storage
      */
-    public void justDoIt(String bspURL, String bspUser, String bspPassword ) throws Exception {
+    public Collection<Pair<LabVessel,Long>> migrateLocsAndStoredVessels(String bspURL, String bspUser, String bspPassword ) throws Exception {
 
         this.bspURL = bspURL;
         this.bspUser = bspUser;
         this.bspPassword = bspPassword;
 
-        DriverManager.registerDriver( new oracle.jdbc.OracleDriver() );
-
         // We want a detailed log of all the activity
-        String logDirName = System.getProperty("jboss.server.log.dir");
-        processLogWriter = new PrintWriter( new FileWriter(logDirName + File.separator + "gplim5728_fixup.log", true) );
-        ToStringBuilder.setDefaultStyle(ToStringStyle.SHORT_PREFIX_STYLE);
-        processLogWriter.write("======== STARTING GPLIM-5728 FIXUP =============\n");
-        processLogWriter.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
-        processLogWriter.write( "\n");
+        processPhaseOneLog = new PrintWriter( new FileWriter(logDirName + File.separator + phaseOneLogName, true) );
+        processPhaseOneLog.write("======== STARTING GPLIM-5728 PHASE 1 FIXUP =============\n");
+        processPhaseOneLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
+        processPhaseOneLog.write( "\n");
 
-        userBean.loginOSUser();
-
+        // Hold mappings to build out location hierarchies and stored vessels
+        BspMigrationMapping pkMap = new BspMigrationMapping();
         try {
             utx.begin();
-            // Give it 120 minutes
-            utx.setTransactionTimeout( 60 * 60);
 
-            // Migrate storage locations
-            BspMigrationMapping pkMap = new BspMigrationMapping();
+            userBean.loginOSUser();
+
+
             List<Long> rootBspPks = migrateRootStorageLocations( pkMap );
-            processLogWriter.write("Processed " + rootBspPks.size() + " root storage locations.\n");
-            processLogWriter.flush();
+            processPhaseOneLog.write("Processed " + rootBspPks.size() + " root storage locations.\n");
+            processPhaseOneLog.flush();
 
             // Recurse into children from parents
             migrateChildStorageLocations( pkMap, rootBspPks );
 
-            // Flush the storage locations
-            storageLocationDao.flush();
-            processLogWriter.write("======== FINISHED MIGRATING STORAGE LOCATIONS =============\n\n");
-            processLogWriter.flush();
+            // Storage locations complete
+            processPhaseOneLog.write("======== FINISHED MIGRATING STORAGE LOCATIONS =============\n\n");
+            processPhaseOneLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
+            processPhaseOneLog.write( "\n");
+            processPhaseOneLog.flush();
 
             // Migrate racks, etc. with storage locations, build out mapping with attached entities
             migrateBspStoredReceptacles(pkMap);
-            storageLocationDao.flush();
-            processLogWriter.write( "======== FINISHED MIGRATING STORED CONTAINERS =============\n\n" );
-            processLogWriter.flush();
+            processPhaseOneLog.write( "======== FINISHED MIGRATING STORED CONTAINERS =============\n\n" );
+            processPhaseOneLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
+            processPhaseOneLog.write( "\n");
+            processPhaseOneLog.flush();
 
-            // Now build out the contents of the stored containers using entities in the mapping
-            migrateContainerContents( pkMap );
-            storageLocationDao.flush();
-            processLogWriter.write( "======== FINISHED MIGRATING STORED CONTAINER CONTENTS =============\n\n" );
-            processLogWriter.flush();
-
-
-            // Samples need to be migrated
-
-
-            storageLocationDao.persist( new FixupCommentary("GPLIM-5728 Migrate BSP Storage to Mercury") );
+            storageLocationDao.persist( new FixupCommentary("GPLIM-5728 phase 1 - Migrate BSP Storage locations and stored vessels to Mercury") );
             storageLocationDao.flush();
 
-            processLogWriter.write("======== FINISHED GPLIM-5728 FIXUP =============\n");
-            processLogWriter.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
+            processPhaseOneLog.write("======== FINISHED GPLIM-5728 PHASE 1 FIXUP =============\n");
+            processPhaseOneLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
 
             utx.commit();
+
+            // Release all entities from entity manager, memory issues
+            storageLocationDao.clear();
 
         } catch ( Exception ex ) {
             try {
                 utx.rollback();
             } catch ( Exception trex ){
-                processLogWriter.write( "Rollback failed \n" );
-                processLogWriter.write( ex.getMessage() );
-                processLogWriter.write( "\n" );
+                processPhaseOneLog.write( "Rollback failed \n" );
+                processPhaseOneLog.write( ex.getMessage() );
+                processPhaseOneLog.write( "\n" );
             }
-            if ( this.processLogWriter != null ) {
-                processLogWriter.write( "Process died due to exception \n" );
-                processLogWriter.write( ex.getMessage() );
+            if (this.processPhaseOneLog != null ) {
+                processPhaseOneLog.write( "Process died due to exception - see server log \n" );
+                processPhaseOneLog.write( ex.getMessage() );
             }
             throw ex;
         } finally {
-            if ( this.processLogWriter != null ) {
-                try {  processLogWriter.flush(); processLogWriter.close();  } catch ( Exception ignored ){}
+            if (this.processPhaseOneLog != null ) {
+                try {  processPhaseOneLog.flush(); processPhaseOneLog.close();  } catch ( Exception ignored ){}
             }
         }
+
+        return pkMap.getStoredContainerLabelToVesselMap().values();
     }
 
+
     /**
+     * The second phase of the freezer migration builds out the contents of all containers migrated from BSP locations
      * Using the container entities in mapping. build out the contents (plate wells, tube formations, etc.
+     * @param labelToReceptacleIds stored vessel label (containers mostly), corresponding BSP receptacle id, mercury storage location ID
+     * @return List of six values: type (sample/rack/plate), barcode, tube formation barcode (null if stored container is not a rack, BSP receptacle ID, sample id, true if sample created in mercury)
      */
-    private void migrateContainerContents(BspMigrationMapping pkMap ) throws Exception {
+    public List<String[]> migrateStoredVesselContents(String bspURL, String bspUser, String bspPassword, List<Triple<String,Long,Long>> labelToReceptacleIds ) throws Exception {
+
+        this.bspURL = bspURL;
+        this.bspUser = bspUser;
+        this.bspPassword = bspPassword;
+
+        String status = "Batch of " + labelToReceptacleIds.size() + " phase 1 vessels from label [" + labelToReceptacleIds.get(0).getLeft() + "], to [" + labelToReceptacleIds.get( labelToReceptacleIds.size() - 1 ).getLeft() + "]";
+
+        // We want a detailed log of all the activity, appending all new writes
+        processPhaseTwoLog = new PrintWriter( new FileWriter(logDirName + File.separator + phaseTwoLogName, true) );
+        processPhaseTwoLog.write("======== STARTING GPLIM-5728 PHASE 2 FIXUP BATCH =============\n");
+        processPhaseTwoLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
+        processPhaseTwoLog.write( "\n");
+        processPhaseTwoLog.write("======== " + status + " =============\n");
+        processPhaseTwoLog.write("Thread: " + Thread.currentThread().getName() + "\n");
+        processPhaseTwoLog.flush();
+
+        // Hold mercury vessel to BSP sample receptacle ID mappings to build out stored vessel samples
+        List<String[]> labelToBspReceptaclIdMap = new ArrayList<>();
         Connection conn = null;
-        PreparedStatement stmt = null;
+        PreparedStatement containerStmt = null;
+        PreparedStatement sampleStmt = null;
         int count = 0;
+        int tubeCount = 0;
 
         try {
-            conn = DriverManager.getConnection(bspURL, bspUser, bspPassword);
-            // Result columns MUST match migrateRootStorageLocations!!
-            stmt = conn.prepareStatement("select 'SM-' || samp.sample_id as sample_id \n"
-                                         + "     , samp.receptacle_id as tube_id \n"
-                                         + "     , tube.external_id as tube_label \n"
-                                         + "     , tube_type.receptacle_name as tube_type \n"
-                                         + "     , rack.receptacle_id as rack_id \n"
-                                         + "     , rack.external_id as rack_label \n"
-                                         + "     , rack_type.receptacle_name as rack_type \n"
-                                         + "     , tube.receptacle_row \n"
-                                         + "     , tube.receptacle_column \n"
-                                         + "  from bsp_sample samp \n"
-                                         + "     , bsp_receptacle tube \n"
-                                         + "     , bsp_receptacle_type tube_type \n"
-                                         + "     , bsp_receptacle rack \n"
-                                         + "     , bsp_receptacle_type rack_type \n"
-                                         + " where samp.receptacle_id = tube.receptacle_id \n"
-                                         + "   and tube_type.receptacle_type_id = tube.receptacle_type_id \n"
-                                         + "   and tube.receptacle_group_id = rack.receptacle_id \n"
-                                         + "   and rack_type.receptacle_type_id = rack.receptacle_type_id \n"
-                                         + "   and rack.receptacle_id = ? " );  // <-- ********* STORAGE RECEPTACLE **********
-            for( Pair<LabVessel,Long> storedVesselData : pkMap.getStoredContainerLabelToVesselMap().values() ) {
-                // TODO Register as sample source
-                if( storedVesselData.getLeft() instanceof BarcodedTube) {
-                    continue;
+            utx.begin();
+
+            userBean.loginOSUser();
+
+            // Now build out the contents of the stored containers using entities in the mapping
+            try {
+                conn = DriverManager.getConnection(bspURL, bspUser, bspPassword);
+                // Result columns MUST match migrateRootStorageLocations!!
+                containerStmt = conn.prepareStatement("select samp.sample_id \n"
+                                             + "     , samp.receptacle_id as tube_id \n"
+                                             + "     , nvl( tube.external_id, 'SM-' || samp.sample_id ) as tube_label \n"
+                                             + "     , tube_type.receptacle_name as tube_type \n"
+                                             + "     , rack.receptacle_id as rack_id \n"
+                                             + "     , rack.external_id as rack_label \n"
+                                             + "     , tube.receptacle_row \n"
+                                             + "     , tube.receptacle_column \n"
+                                             + "  from bsp_receptacle tube \n"
+                                             + "     , bsp_receptacle_type tube_type \n"
+                                             + "     , bsp_receptacle rack \n"
+                                             + "     , bsp_sample samp \n"
+                                             + " where samp.receptacle_id = tube.receptacle_id \n"
+                                             + "   and tube_type.receptacle_type_id = tube.receptacle_type_id \n"
+                                             + "   and tube.receptacle_group_id = rack.receptacle_id \n"
+                                             + "   and rack.receptacle_id = ? " );  // <-- ********* STORAGE CONTAINER RECEPTACLE **********
+
+                sampleStmt = conn.prepareStatement( "select s.sample_id \n"
+                                             + "  from bsp_receptacle r \n"
+                                             + "     , bsp_sample s \n"
+                                             + " where s.receptacle_id = r.receptacle_id \n"
+                                             + "   and r.receptacle_id = ? ");  // <-- ********* STORAGE SAMPLE RECEPTACLE **********
+
+                for( Triple<String,Long,Long> storedVesselData : labelToReceptacleIds ) {
+                    String label = storedVesselData.getLeft();
+                    Long receptacleId = storedVesselData.getMiddle();
+                    Long storageId = storedVesselData.getRight();
+                    LabVessel storedVessel = storageLocationDao.findSingle( LabVessel.class, LabVessel_.label, label );
+                    // Sanity check - should probably let it die on its own
+                    if( storedVessel == null ) {
+                        String error = "Stored vessel label (" + label + ") not found in Mercury" ;
+                        this.processPhaseTwoLog.write(error);
+                        this.processPhaseTwoLog.write("\n");
+                        throw new Exception(error);
+                    }
+
+                    // Register as sample source and continue - no contained vessels (slides, cryo vials)
+                    if( storedVessel instanceof BarcodedTube) {
+                        addStorageLocationToVessel( storedVessel, storageId );
+                        sampleStmt.setLong(1, receptacleId);
+                        ResultSet rs = sampleStmt.executeQuery();
+                        if( rs.next() ) {
+                            String sampleId = rs.getString(1);
+                            addSampleToVessel( storedVessel, receptacleId, sampleId, labelToBspReceptaclIdMap);
+                            createCheckInEvent(storedVessel, new Date(), labelToBspReceptaclIdMap.size());
+                            tubeCount++;
+                        } else {
+                            throw new Exception("No receptacle in BSP for receptacle_id = " + receptacleId + "?!");
+                        }
+                        rs.close();
+                    } else {
+                        containerStmt.setLong(1, receptacleId);
+                        ResultSet rs = containerStmt.executeQuery();
+                        count += buildMercuryStoredVesselContents(rs, storedVessel, labelToBspReceptaclIdMap,
+                                processPhaseTwoLog);
+                    }
                 }
-                stmt.setLong(1, storedVesselData.getRight() );
-                ResultSet rs = stmt.executeQuery();
-                count += buildMercuryStoredVessels( rs, storedVesselData.getLeft(), pkMap );
+
+                this.processPhaseTwoLog.write("Processed " + count + " sample vessel container storage \n");
+                this.processPhaseTwoLog.write("Processed " + tubeCount + " sample vessel tube only storage \n");
+
+            } finally {
+                closeResource(containerStmt);
+                closeResource(sampleStmt);
+                closeResource(conn);
+                this.processPhaseTwoLog.flush();
             }
 
+            storageLocationDao.persist( new FixupCommentary("GPLIM-5728 phase 2 - Migrate BSP Storage location container contents " + status ) );
+            //storageLocationDao.flush();
+
+            processPhaseTwoLog.write( "======== FINISHED MIGRATING STORED CONTAINER CONTENTS BATCH =============\n" );
+            processPhaseTwoLog.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
+            processPhaseTwoLog.write( "\n\n");
+            processPhaseTwoLog.flush();
+
+            utx.commit();
+
+            storageLocationDao.clear();
+
+        } catch ( Exception ex ) {
+            try {
+                utx.rollback();
+            } catch ( Exception trex ){
+                processPhaseTwoLog.write( "Rollback failed \n" );
+                processPhaseTwoLog.write( trex.getMessage() );
+                processPhaseTwoLog.write( "\n" );
+            }
+            if (this.processPhaseTwoLog != null ) {
+                processPhaseTwoLog.write( "Process died due to exception \n" );
+                processPhaseTwoLog.write( ex.getMessage()==null?ex.getClass().getName():ex.getMessage() );
+            }
+
+            processPhaseTwoLog.write( "\n!!!!!!!!!! Recovery requires all processed container records be removed from phase 1 data file !!!!!!!!!!\n" );
+
+            throw ex;
         } finally {
-            closeResource(stmt);
-            closeResource(conn);
+            if (this.processPhaseTwoLog != null ) {
+                try {  processPhaseTwoLog.flush(); processPhaseTwoLog.close();  } catch ( Exception ignored ){}
+            }
         }
 
-        this.processLogWriter.write( "Processed " + count + " sample vessels storage \n");
-        this.processLogWriter.flush();
+        // Request a garbage collection
+        System.gc();
 
+        return labelToBspReceptaclIdMap;
+    }
+
+    private void addSampleToVessel(LabVessel storedVessel, Long receptacleId, String sampleId, List<String[]> labelToBspReceptaclIdMap) {
+        if( storedVessel.getMercurySamples().size() > 0 ) {
+            // At least one sample already attached, do nothing
+            labelToBspReceptaclIdMap.add( new String[] {SAMPLE, storedVessel.getLabel(), EMPTY, receptacleId.toString(), sampleId, Boolean.FALSE.toString() } );
+        } else {
+            String mercurySampleKey = "SM-" + sampleId;
+            MercurySample sample = storageLocationDao.findSingle(MercurySample.class, MercurySample_.sampleKey, mercurySampleKey);
+            if( sample == null ) {
+                sample = new MercurySample( "SM-" + sampleId, MercurySample.MetadataSource.BSP );
+                storageLocationDao.persist(sample);
+            }
+            storedVessel.addSample( sample );
+            labelToBspReceptaclIdMap.add( new String[] {SAMPLE, storedVessel.getLabel(), EMPTY, receptacleId.toString(), sampleId, Boolean.TRUE.toString() } );
+        }
     }
 
     /**
@@ -216,7 +345,8 @@ public class Gplim5728WorkHorseEjb {
                                              + "       bsp_storage_container_type st \n"
                                              + " WHERE sc.archived = 0 \n"
                                              + "   AND st.storage_container_type_id = sc.storage_container_type_id \n"
-                                             + "   AND sc.parent_strg_container_id IS NULL" );  // <-- ********* ROOTS HAVE NO PARENT **********
+                                             + "   AND sc.parent_strg_container_id IS NULL \n"  // <-- ********* ROOTS HAVE NO PARENT **********
+                                             + "   AND sc.storage_container_id NOT IN ( 1, 2 )" );  // <-- ********* EXCLUDE RTS1 and RTS2 **********
             // Do not re-use ResultSet! Closed when migration complete
             rootPks = buildMercuryLocations(rs, pkMap);
         } finally {
@@ -264,12 +394,13 @@ public class Gplim5728WorkHorseEjb {
         }
 
         if( allChildPks.size() > 0 ) {
-            this.processLogWriter.write( "Processed " + allChildPks.size() + " child storage locations for " + parentPks.size() + " parent locations.\n");
-            this.processLogWriter.flush();
+            this.processPhaseOneLog
+                    .write("Processed " + allChildPks.size() + " child storage locations for " + parentPks.size() + " parent locations.\n");
+            this.processPhaseOneLog.flush();
             migrateChildStorageLocations( pkMap, allChildPks );
         } else {
-            this.processLogWriter.write( "Hit the bottom of the hierarchy and stopping recursion.\n");
-            this.processLogWriter.flush();
+            this.processPhaseOneLog.write( "Hit the bottom of the hierarchy and stopping recursion.\n");
+            this.processPhaseOneLog.flush();
         }
 
         return allChildPks;
@@ -333,119 +464,150 @@ public class Gplim5728WorkHorseEjb {
         return bspPks;
     }
 
-    private int buildMercuryStoredVessels( ResultSet rs, LabVessel storedContainer, BspMigrationMapping pkMap ) throws Exception {
+    /**
+     * Builds out contents of containers
+     * @param rs  BSP container (group) contents
+     * @param storedContainer container in Mercury (attached to entity manager)
+     * @param labelToBspReceptaclIdMap Reference to add data to (container label, tube formation label, BSP receptacle ID)
+     * @param out Log writer (using instance variable throws NPE)
+     * @return Count of children added
+     */
+    private int buildMercuryStoredVesselContents(ResultSet rs, LabVessel storedContainer, List<String[]> labelToBspReceptaclIdMap, PrintWriter out ) throws Exception {
         int childCount = 0;
 
+        // Result set fields in this order
         String smId;
         Long tubeId;
         String tubeLabel;
         String tubeType;
-        Long rackId;
-        String rackLabel;
+        Long containerId = null; // Same value for entire result set
+        String rackLabel; // Same value for entire result set
         Integer row;
         Integer column;
+
+        Date eventdate = new Date();
 
         RackOfTubes rackOfTubes = null;
         StaticPlate staticPlate = null;
         Map<VesselPosition, BarcodedTube> mapPositionToTube = null;
 
-        while ( true ) {
+        while (true) {
             // ***** Begin column data fetching
-            if( !rs.next() ) {
+            if (!rs.next()) {
                 break;
             }
             smId = rs.getString(1);
             tubeId = rs.getLong(2);
             tubeLabel = rs.getString(3);
-            if( rs.wasNull() ) {
+            if (rs.wasNull()) {
                 // Create plate well barcode or assign to sm id later
                 tubeLabel = null;
             }
             tubeType = rs.getString(4);
-            rackId = rs.getLong(5);
+            containerId = rs.getLong(5);
             rackLabel = rs.getString(6);
-            if( rs.wasNull() ) {
-                rackLabel = "CO-" + rackId;
+            if (rs.wasNull()) {
+                rackLabel = "CO-" + containerId;
             }
             //String rackType = rs.getString(7);
-            row = rs.getInt(8);
-            if( rs.wasNull() ) {
+            row = rs.getInt(7);
+            if (rs.wasNull()) {
                 row = null;
             }
-            column = rs.getInt(9);
-            if( rs.wasNull() ) {
+            column = rs.getInt(8);
+            if (rs.wasNull()) {
                 column = null;
             }
             // ***** End column data fetching
 
-            if( row == null || column == null ) {
+            if (row == null || column == null) {
                 // Log it and carry on, skipping contents
-                processLogWriter.write( "No row and/or column in stored container " + rackLabel + ", Sample " + smId + ", ignoring.\n" );
+                out.write(
+                        "No row and/or column in stored container " + rackLabel + ", Sample " + smId + ", ignoring.\n");
                 continue;
             }
 
             // Different logic for different container types, but a result set applies to only one container
-            Pair<Class<? extends LabVessel>,Object> classAndType = pkMap.getMercuryVesselType( tubeType );
-            if( storedContainer instanceof RackOfTubes ) {
+            Pair<Class<? extends LabVessel>, Object> classAndType = BspMigrationMapping.getMercuryVesselType(tubeType);
+            if (storedContainer instanceof RackOfTubes) {
                 // Initialize variables representing rack of tubes
-                if( rackOfTubes == null ) {
+                if (rackOfTubes == null) {
                     rackOfTubes = (RackOfTubes) storedContainer;
                     mapPositionToTube = new HashMap<>();
                 }
 
-                if( classAndType == null || ! classAndType.getLeft().equals(BarcodedTube.class ) ) {
+                if (classAndType == null || !classAndType.getLeft().equals(BarcodedTube.class)) {
                     // Log it and carry on, skipping contents
-                    processLogWriter.write( "Rack of tubes cannot contain other than BarcodedTube, rack " + rackLabel + ", Sample " + smId + ", ignoring.\n" );
+                    out.write("Rack of tubes cannot contain other than BarcodedTube, rack " + rackLabel + ", Sample "
+                              + smId + ", ignoring.\n");
                     continue;
                 }
-                BarcodedTube.BarcodedTubeType barcodedTubeType = (BarcodedTube.BarcodedTubeType) classAndType.getRight();
+                BarcodedTube.BarcodedTubeType barcodedTubeType =
+                        (BarcodedTube.BarcodedTubeType) classAndType.getRight();
 
                 VesselGeometry geometry = rackOfTubes.getVesselGeometry();
                 VesselPosition position;
                 try {
                     position = geometry.getVesselPositions()[(row * geometry.getColumnCount()) + column];
-                } catch( ArrayIndexOutOfBoundsException ae ) {
-                    String error = "Geometry " + geometry + " for receptacle id " + rackId + ", sample id " + smId + " is inconsistent with row " + row + " and column " + column + ". (index = " + ae.getMessage() + ")\n";
-                    processLogWriter.write( error );
+                } catch (ArrayIndexOutOfBoundsException ae) {
+                    String error = "Geometry " + geometry + " for receptacle id " + containerId + ", sample id " + smId
+                                   + " is inconsistent with row " + row + " and column " + column + ". (index = " + ae
+                                           .getMessage() + ")\n";
+                    out.write(error);
                     continue;
                     //throw new RuntimeException( error );
                 }
 
-                if( tubeLabel == null ) {
+                if (tubeLabel == null) {
                     tubeLabel = smId;
                 }
 
-                LabVessel containedVessel = storageLocationDao.findSingle( LabVessel.class, LabVessel_.label, tubeLabel );
-                if( containedVessel == null ) {
-                    containedVessel = new BarcodedTube(tubeLabel, barcodedTubeType );
-                    storageLocationDao.persist( containedVessel );
+                LabVessel containedVessel = storageLocationDao.findSingle(LabVessel.class, LabVessel_.label, tubeLabel);
+                if (containedVessel == null) {
+                    containedVessel = new BarcodedTube(tubeLabel, barcodedTubeType);
+                    storageLocationDao.persist(containedVessel);
                 }
-                if( ! (containedVessel instanceof BarcodedTube) ) {
-                    throw new RuntimeException( "RackOfTubes content in mercury must be a BarcodedTube, label: " + tubeLabel);
+                if (!(containedVessel instanceof BarcodedTube)) {
+                    throw new RuntimeException(
+                            "RackOfTubes content in mercury must be a BarcodedTube, label: " + tubeLabel);
                 }
-                mapPositionToTube.put(position, ( BarcodedTube) containedVessel );
-                pkMap.addBspSampleToVesselMap( tubeId, containedVessel);
+                mapPositionToTube.put(position, (BarcodedTube) containedVessel);
+
+                // Store the tube in same location as rack
+                containedVessel.setStorageLocation(rackOfTubes.getStorageLocation());
+
+                // Add sample to tube
+                addSampleToVessel( containedVessel, tubeId, smId, labelToBspReceptaclIdMap);
 
 
-            } else if ( storedContainer instanceof StaticPlate ) {
+            } else if (storedContainer instanceof StaticPlate) {
 
                 // Initialize variables representing static plate
-                if( staticPlate == null ) {
-                    staticPlate = (StaticPlate)storedContainer;
+                if (staticPlate == null) {
+                    staticPlate = (StaticPlate) storedContainer;
                 }
 
-                if( classAndType == null || ! classAndType.getLeft().equals(PlateWell.class ) ) {
+                if (classAndType == null || !classAndType.getLeft().equals(PlateWell.class)) {
                     // Log it and carry on, skipping contents
-                    processLogWriter.write( "Static plate cannot contain other than plate wells, plate " + rackLabel + ", Sample " + smId + ", ignoring.\n" );
+                    out.write("Static plate cannot contain other than plate wells, plate " + rackLabel + ", Sample "
+                              + smId + ", ignoring.\n");
                     continue;
                 }
 
                 VesselGeometry geometry = storedContainer.getVesselGeometry();
-                VesselPosition position = geometry.getVesselPositions()[ ( row * geometry.getColumnCount() ) + column ];
+                VesselPosition position = geometry.getVesselPositions()[(row * geometry.getColumnCount()) + column];
 
-                PlateWell well = new PlateWell( (StaticPlate)storedContainer, position );
-                storageLocationDao.persist( well );
-                pkMap.addBspSampleToVesselMap( tubeId, well);
+                PlateWell well = storageLocationDao
+                        .findSingle(PlateWell.class, PlateWell_.label, staticPlate.getLabel() + position);
+                if (well == null) {
+                    well = new PlateWell(staticPlate, position);
+                    storageLocationDao.persist(well);
+                }
+                // Wells don't have storage location attached
+
+                // Add sample to well
+                addSampleToVessel( well, tubeId, smId, labelToBspReceptaclIdMap);
+
             }
 
             childCount++;
@@ -455,16 +617,30 @@ public class Gplim5728WorkHorseEjb {
         // Clean up DB resources
         closeResource(rs);
 
-        // Persist the tube formation
-        if( rackOfTubes != null ) {
-            TubeFormation tubeFormation = new TubeFormation( mapPositionToTube, rackOfTubes.getRackType() );
-            TubeFormation mercuryTubeFormation = storageLocationDao.findSingle( TubeFormation.class, LabVessel_.label, tubeFormation.getLabel() );
-            if( mercuryTubeFormation != null ) {
-                mercuryTubeFormation.addRackOfTubes(rackOfTubes);
+        // Don't do anything if no contents
+        if (childCount == 0) {
+            return 0;
+        }
+
+        if ( rackOfTubes != null ) {
+            // Persist the tube formation
+            TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, rackOfTubes.getRackType());
+            TubeFormation mercuryTubeFormation =
+                    storageLocationDao.findSingle(TubeFormation.class, LabVessel_.label, tubeFormation.getLabel());
+            if (mercuryTubeFormation != null) {
+                tubeFormation = mercuryTubeFormation;
             } else {
-                tubeFormation.addRackOfTubes(rackOfTubes);
                 storageLocationDao.persist(tubeFormation);
             }
+            tubeFormation.addRackOfTubes(rackOfTubes);
+
+            // Add entry for rack
+            labelToBspReceptaclIdMap.add( new String[]{RACK, rackOfTubes.getLabel(), tubeFormation.getLabel(), containerId.toString(), EMPTY, EMPTY});
+
+            createCheckInEvent(tubeFormation, eventdate, labelToBspReceptaclIdMap.size());
+        } else if (staticPlate != null) {
+            labelToBspReceptaclIdMap.add( new String[]{PLATE, staticPlate.getLabel(), EMPTY, containerId.toString(), EMPTY, EMPTY});
+            createCheckInEvent(staticPlate, eventdate, labelToBspReceptaclIdMap.size());
         }
 
         return childCount;
@@ -489,15 +665,18 @@ public class Gplim5728WorkHorseEjb {
                                      + "     , NVL( container_id_level_4, NVL( container_id_level_3, NVL( container_id_level_2, container_id_level_1 ) ) ) as container_id \n"
                                      + "     , rt.receptacle_name as receptacle_type \n"
                                      + "     , r.external_id \n"
+                                     + "     , CASE rt.container WHEN 1 THEN CAST( NULL AS VARCHAR2(12) ) \n"
+                                     + "       ELSE ( SELECT 'SM-' || s.sample_id from bsp_sample s where s.receptacle_id = r.receptacle_id ) END as sample_id \n"
                                      + "  from bsp_receptacle r \n"
                                      + "     , bsp_receptacle_type rt \n"
                                      + "     , bsp_location l \n"
                                      + " where rt.receptacle_type_id = r.receptacle_type_id \n"
                                      + "   and r.location_id = l.location_id \n"
-                                     + "   and r.location_id is not null " );
+                                     + "   and r.location_id is not null \n"
+                                     + "   and r.location_id NOT IN ( 334, 4992 ) "); // Exclude anything stored in RTS1 and RTS2 (matrix tubes)
 
             Long bspReceptacleId, bspContainerId;
-            String bspReceptacleType, bspLabel;
+            String bspReceptacleType, bspLabel, bspSampleId;
             while ( true ) {
                 // BSP data fields
                 if( !rs.next() ) {
@@ -511,17 +690,24 @@ public class Gplim5728WorkHorseEjb {
                     bspContainerId = 0L;
                 }
                 bspReceptacleType = rs.getString(3);
-                // Null external_id check (prepend CO- to bspReceptacleId for label)
+                // external_id is manufacturers label
                 bspLabel = rs.getString(4);
                 if( rs.wasNull() ) {
                     bspLabel = null;
                 }
 
+                bspSampleId = rs.getString(5);
+                // Null external_id uses sample id as label
+                // If no sample id, prepend CO- to bspReceptacleId for label
+                if( rs.wasNull() ) {
+                    bspSampleId = null;
+                }
+
                 // Mercury lab vessel type
                 Pair<Class<? extends LabVessel>,Object> classAndType = pkMap.getMercuryVesselType( bspReceptacleType );
                 if( classAndType == null ) {
-                    processLogWriter.write( "No mercury vessel type found for BSP receptacle type " + bspReceptacleType );
-                    processLogWriter.write( "  -->   (bspReceptacleId: " + bspReceptacleId + ")\n" );
+                    processPhaseOneLog.write("No mercury vessel type found for BSP receptacle type " + bspReceptacleType );
+                    processPhaseOneLog.write("  -->   (bspReceptacleId: " + bspReceptacleId + ")\n" );
                     continue;
                 }
 
@@ -548,19 +734,25 @@ public class Gplim5728WorkHorseEjb {
                     String label;
                     if (bspLabel != null) {
                         label = bspLabel;
+                    } else if ( bspSampleId != null ) {
+                        label = bspSampleId;
                     } else {
-                        label = "CO-" + bspReceptacleId;
+                        processPhaseOneLog
+                                .write("BSP receptacle type (" + bspReceptacleType + ") is not a container "  );
+                        processPhaseOneLog.write("  and has no external_id or sample_id, skipping -->   (bspReceptacleId: " + bspReceptacleId + ")\n" );
+                        continue;
                     }
                     storageVessel = new BarcodedTube( label,(BarcodedTube.BarcodedTubeType) classAndType.getRight() );
                 } else if ( vesselSubClass.equals( PlateWell.class ) ) {
-                    processLogWriter.write( "Not putting an individual plate well (" + bspReceptacleType + ") into storage "  );
-                    processLogWriter.write( "  -->   (bspReceptacleId: " + bspReceptacleId + ")\n" );
+                    processPhaseOneLog
+                            .write("Not putting an individual plate well (" + bspReceptacleType + ") into storage "  );
+                    processPhaseOneLog.write("  -->   (bspReceptacleId: " + bspReceptacleId + ")\n" );
                     continue;
                 }
 
                 if ( storageVessel == null ) {
-                    processLogWriter.write( "Can't determine which type of mercury lab vessel corresponds to " + bspReceptacleType  );
-                    processLogWriter.write( "  -->   (bspReceptacleId: " + bspReceptacleId + ")\n" );
+                    processPhaseOneLog.write("Can't determine which type of mercury lab vessel corresponds to " + bspReceptacleType  );
+                    processPhaseOneLog.write("  -->   (bspReceptacleId: " + bspReceptacleId + ")\n" );
                     continue;
                 }
 
@@ -569,11 +761,11 @@ public class Gplim5728WorkHorseEjb {
                     // Damn! Some BSP storage containers are children of archived parents or there are no container_ids in location
                     //throw new RuntimeException("BSP storage location container ID " + bspContainerId + " was not migrated to Mercury.");
                     if( bspContainerId.equals(0L) ) {
-                        processLogWriter.write("BSP storage location has no container ID in any of the 4 levels ");
+                        processPhaseOneLog.write("BSP storage location has no container ID in any of the 4 levels ");
                     } else {
-                        processLogWriter.write("BSP storage location container ID " + bspContainerId + " was not migrated to Mercury, is a parent archived? ");
+                        processPhaseOneLog.write("BSP storage location container ID " + bspContainerId + " was not migrated to Mercury, is a parent archived? ");
                     }
-                    processLogWriter.write( "  -->   (skipping bspReceptacleId: " + bspReceptacleId + ")\n" );
+                    processPhaseOneLog.write("  -->   (skipping bspReceptacleId: " + bspReceptacleId + ")\n" );
                     continue;
                 }
 
@@ -593,8 +785,9 @@ public class Gplim5728WorkHorseEjb {
                 // We don't do anything with a Mercury static plate other than give it a storage location
                 // Migration of wells will be ignored
                 if( mercuryVessel != null && vesselSubClass.equals( StaticPlate.class ) ) {
-                    processLogWriter.write( "Static plate already in Mercury, ignoring wells "  );
-                    processLogWriter.write( "  -->   (bspReceptacleId: " + bspReceptacleId + ", label: " + storageVessel.getLabel() + ")\n" );
+                    processPhaseOneLog.write( "Static plate already in Mercury, ignoring wells "  );
+                    processPhaseOneLog
+                            .write("  -->   (bspReceptacleId: " + bspReceptacleId + ", label: " + storageVessel.getLabel() + ")\n" );
                 } else {
                     // Contained vessels in these receptacles will be migrated
                     pkMap.addVesselToBspLocation( storageVessel, bspContainerId, bspReceptacleId );
@@ -609,18 +802,37 @@ public class Gplim5728WorkHorseEjb {
             closeResource( conn );
         }
 
-        processLogWriter.write( "****************\n" );
-        processLogWriter.write( "Created " + newCount  + " stored receptacles (containers) in Mercury\n" );
-        processLogWriter.write( "Updated location for " + updateCount  + " BSP stored receptacles (containers) already in Mercury\n" );
-        processLogWriter.write( "****************\n" );
+        processPhaseOneLog.write( "****************\n" );
+        processPhaseOneLog.write("Created " + newCount + " stored receptacles (containers) in Mercury\n" );
+        processPhaseOneLog.write("Updated location for " + updateCount + " BSP stored receptacles (containers) already in Mercury\n" );
+        processPhaseOneLog.write( "****************\n" );
 
+    }
+
+    private void addStorageLocationToVessel( LabVessel storedVessel, Long storageId) throws Exception {
+        // Shouldn't happen, but quietly don't overwrite Mercury value
+        if( storedVessel.getStorageLocation() != null ) {
+            return;
+        }
+        StorageLocation storageLocation = storageLocationDao.findSingle(StorageLocation.class,
+                StorageLocation_.storageLocationId, storageId);
+        if( storageLocation == null ) {
+            throw new Exception( "Storage location id " + storageId + " unavailable in mercury");
+        }
+        storedVessel.setStorageLocation(storageLocation);
+    }
+
+    private void createCheckInEvent( LabVessel inPlaceVessel, Date eventdate, int disambiguator) {
+        LabEvent checkInEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, eventdate, "Mercury", Long.valueOf(disambiguator), userBean.getBspUser().getUserId(),"Mercury");
+        checkInEvent.setInPlaceLabVessel(inPlaceVessel);
+        storageLocationDao.persist(checkInEvent);
     }
 
     private void closeResource( Connection conn ){
         if ( conn != null ) {
             try {  conn.close();  } catch ( Exception e ) {
-                processLogWriter.write( "**************** Fail connection close \n" );
-                e.printStackTrace(processLogWriter);
+                processPhaseOneLog.write( "**************** Fail connection close \n" );
+                e.printStackTrace(processPhaseOneLog);
             }
         }
     }
@@ -628,8 +840,8 @@ public class Gplim5728WorkHorseEjb {
     private void closeResource( Statement stmt ){
         if( stmt != null ) {
             try { stmt.close(); } catch ( Exception e ) {
-                processLogWriter.write( "**************** Fail statement close \n" );
-                e.printStackTrace(processLogWriter);
+                processPhaseOneLog.write( "**************** Fail statement close \n" );
+                e.printStackTrace(processPhaseOneLog);
             }
         }
     }
@@ -637,8 +849,8 @@ public class Gplim5728WorkHorseEjb {
     private void closeResource( ResultSet rs ){
         if( rs != null ) {
             try { rs.close(); } catch ( Exception e ) {
-                processLogWriter.write( "**************** Fail resultset close \n" );
-                e.printStackTrace(processLogWriter);
+                processPhaseOneLog.write( "**************** Fail resultset close \n" );
+                e.printStackTrace(processPhaseOneLog);
             }
         }
     }

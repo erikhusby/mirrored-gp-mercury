@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.migration;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.xmlbeans.impl.xb.xsdschema.Public;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -17,39 +16,29 @@ public class BspMigrationMapping {
     // Map the BSP location ID to the Mercury StorageLocation
     private Map<Long, StorageLocation> bspToMercuryLocationMap = new HashMap<>();
 
-    // Map the Mercury vessel label to the BSP location ID
-    private Map<String, Long> labelToBspLocationMap = new HashMap<>();
-
-    // Map the container label (Mercury) to mercury vessel/bsp ID pair
+    // Map the container label to mercury vessel/bsp ID pair
     private Map<String, Pair<LabVessel, Long>> storedContainerLabelToVesselMap = new HashMap<>();
 
-    // Map the BSP tube/well ID to the Mercury vessel
-    private Map<Long, LabVessel> bspToMercuryTubeMap = new HashMap<>();
-
-    public void addBspToMercuryLocationPk( Long bspPk, StorageLocation mercuryStorageLocation) {
+    void addBspToMercuryLocationPk( Long bspPk, StorageLocation mercuryStorageLocation) {
         bspToMercuryLocationMap.put( bspPk, mercuryStorageLocation );
     }
 
-    public StorageLocation getMercuryLocationPk( Long bspPk ) {
+    StorageLocation getMercuryLocationPk( Long bspPk ) {
         return bspToMercuryLocationMap.get( bspPk );
     }
 
-    public void addVesselToBspLocation(LabVessel vessel, Long bspLocationId, Long bspReceptacleId ){
-        labelToBspLocationMap.put( vessel.getLabel(), bspLocationId );
+    void addVesselToBspLocation(LabVessel vessel, Long bspLocationId, Long bspReceptacleId ){
         storedContainerLabelToVesselMap.put( vessel.getLabel(), Pair.of( vessel, bspReceptacleId ) );
     }
 
-    public Map<String, Pair<LabVessel, Long>> getStoredContainerLabelToVesselMap(){
+    Map<String, Pair<LabVessel, Long>> getStoredContainerLabelToVesselMap(){
         return storedContainerLabelToVesselMap;
     }
 
-    public StorageLocation getLocationByBspId( Long bspLocationId ) {
+    StorageLocation getLocationByBspId( Long bspLocationId ) {
         return bspToMercuryLocationMap.get(bspLocationId);
     }
 
-    public void addBspSampleToVesselMap( Long bspId, LabVessel containedVessel) {
-        bspToMercuryTubeMap.put(bspId, containedVessel);
-    }
 
     /**
      * Get Mercury enum corresponding to BSP type, null if no match and let caller commit suicide on it
@@ -64,6 +53,10 @@ public class BspMigrationMapping {
         if( bspStorageType.startsWith("Side") ) {
             return StorageLocation.LocationType.SECTION;
         }
+        // Allow drag and drop of racks in Mercury
+        if( bspStorageType.equals("Rack") ) {
+            return StorageLocation.LocationType.GAUGERACK;
+        }
         return  StorageLocation.LocationType.getByDisplayName(bspStorageType);
     }
 
@@ -71,7 +64,7 @@ public class BspMigrationMapping {
      * Try to find the mercury lab vessel type associated with BSP_RECEPTACLE_TYPE.RECEPTACLE_NAME
      * @return LabVessel subclass and type, null if no match found
      */
-    Pair<Class<? extends LabVessel>,Object> getMercuryVesselType( String bspReceptacleType ) {
+    static Pair<Class<? extends LabVessel>,Object> getMercuryVesselType( String bspReceptacleType ) {
         RackOfTubes.RackType rackType = RackOfTubes.RackType.getByDisplayName(bspReceptacleType);
         if( rackType != null ) {
             return Pair.of( RackOfTubes.class, rackType );
