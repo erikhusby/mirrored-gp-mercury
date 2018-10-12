@@ -318,7 +318,7 @@ sap:
     DEV:
       login:      GPCOMU
       password:   SAPERD300!
-      sapSupportEmail: scottmat@broadinstitute.org
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
     TEST:
       login:      GPCOMU
