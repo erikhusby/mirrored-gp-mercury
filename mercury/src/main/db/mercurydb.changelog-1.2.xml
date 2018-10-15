@@ -1749,4 +1749,17 @@
                                  referencedTableName="REV_INFO" referencedColumnNames="REV_INFO_ID" referencedTableSchemaName="MERCURY"/>
     </changeSet>
 
+    <changeSet id="GPLIM-5849-9" author="thompson">
+        <sql>delete from lab_batch_reworks where lab_batch = 56127 and reworks = 882095</sql>
+        <addPrimaryKey tableName="LAB_BATCH_REWORKS" columnNames="LAB_BATCH, REWORKS" constraintName="PK_LAB_BATCH_REWORKS"/>
+        <createIndex tableName="SAMPLE_INSTANCE_ENTITY" indexName="IX_SIE_LAB_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-5849-10" author="thompson">
+        <createIndex tableName="LAB_BATCH_REWORKS" indexName="IX_LBR_REWORKS">
+            <column name="REWORKS"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
