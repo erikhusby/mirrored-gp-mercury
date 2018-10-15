@@ -553,30 +553,7 @@ public class ProductOrderSearchDefinition {
         sampleCriteriaPath.setPropertyName("sampleName");
         sampleCriteriaPath.setCriteria(Arrays.asList("PDOSamples", "samples"));
         sampleTerm.setCriteriaPaths(Collections.singletonList(sampleCriteriaPath));
-        // Extracts all sample names defined on the product order for display or download
-        sampleTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-
-                ProductOrder order = (ProductOrder) entity;
-                Set<String> sampleNames = new HashSet<>();
-
-                for (ProductOrderSample productOrderSample : order.getSamples()) {
-                    sampleNames.add(productOrderSample.getName());
-                }
-
-                return sampleNames;
-            }
-        });
-        // Altered UI display for sample names to simply separate the sample name with a comma
-        sampleTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
-            @Override
-            public String evaluate(Object entity, SearchContext context) {
-                Set<String> sampleSet = (Set<String>) entity;
-
-                return StringUtils.join(sampleSet, ", ");
-            }
-        });
+        sampleTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(sampleTerm);
 
         // Defines the search term for finding product orders by the SAP order with which they are associated.
