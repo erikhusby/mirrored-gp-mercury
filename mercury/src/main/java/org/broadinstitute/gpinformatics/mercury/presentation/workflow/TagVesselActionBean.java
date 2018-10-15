@@ -405,9 +405,9 @@ public class TagVesselActionBean extends RackScanActionBean {
                 return;
             }
             if(existingTicket == null)
-                vessel.getJiraTickets().add(new JiraTicket(jiraService,devItem));
+                vessel.addJiraTicket(new JiraTicket(jiraService,devItem));
             else
-                vessel.getJiraTickets().add(existingTicket);
+                vessel.addJiraTicket(existingTicket);
         }
         labVesselDao.persist(vessel);
         messageCollection.addInfo("Successfully Added: " + getRackScan().get(position) + " to position: " + position);

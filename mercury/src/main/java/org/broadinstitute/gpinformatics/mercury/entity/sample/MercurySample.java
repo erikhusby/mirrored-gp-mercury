@@ -433,7 +433,7 @@ public class MercurySample extends AbstractSample {
 
     public void removeSampleFromVessels(Collection<LabVessel> vesselsForRemoval) {
         for (LabVessel labVesselForRemoval : vesselsForRemoval) {
-            labVesselForRemoval.getMercurySamples().remove(this);
+            labVesselForRemoval.getMercurySamples().remove(this); // todo jmt
             labVessel.remove(labVesselForRemoval);
         }
     }

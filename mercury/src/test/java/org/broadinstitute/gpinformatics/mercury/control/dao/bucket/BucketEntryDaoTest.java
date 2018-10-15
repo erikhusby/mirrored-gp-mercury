@@ -176,7 +176,7 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
             productOrderSampleDao.persist(productOrderSample);
             mercurySample.addProductOrderSample(productOrderSample);
             tubeDao.persist(mercurySample);
-            vessel.getMercurySamples().add(mercurySample);
+            vessel.addSample(mercurySample);
             tubeDao.persist(vessel);
 //            tubeDao.flush();
         }
@@ -203,7 +203,7 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
 
         testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
         BarcodedTube anotherVessel = new BarcodedTube("A1324"+System.currentTimeMillis());
-        anotherVessel.getMercurySamples().add(new MercurySample("SM-1234"+System.currentTimeMillis(), MercurySample.MetadataSource.BSP));
+        anotherVessel.addSample(new MercurySample("SM-1234"+System.currentTimeMillis(), MercurySample.MetadataSource.BSP));
         productOrderDao.persist(anotherOrder);
 
         BucketEntry anotherEntry =

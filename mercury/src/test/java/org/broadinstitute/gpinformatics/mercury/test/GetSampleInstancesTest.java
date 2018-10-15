@@ -416,7 +416,7 @@ public class GetSampleInstancesTest {
             BarcodedTube barcodedTube = new BarcodedTube("tube1." + i, BarcodedTube.BarcodedTubeType.MatrixTube);
             productOrderSample.setMercurySample(new MercurySample(productOrderSample.getSampleKey(),
                     MercurySample.MetadataSource.BSP));
-            barcodedTube.getMercurySamples().add(productOrderSample.getMercurySample());
+            barcodedTube.addSample(productOrderSample.getMercurySample());
             mapPositionToTube.put(SBSSection.ALL96.getWells().get(i), barcodedTube);
             starterVessels1.add(barcodedTube);
             i++;
@@ -491,9 +491,9 @@ public class GetSampleInstancesTest {
         // Create LCSET 1 with 2 new tubes
         Map<VesselPosition, BarcodedTube> mapLcset1Pos1ToTube = new HashMap<>();
         BarcodedTube lcset1T1 = new BarcodedTube("LCSET1T1");
-        lcset1T1.getMercurySamples().add(new MercurySample("S1_1", MercurySample.MetadataSource.MERCURY));
+        lcset1T1.addSample(new MercurySample("S1_1", MercurySample.MetadataSource.MERCURY));
         BarcodedTube lcset1T2 = new BarcodedTube("LCSET1T2");
-        lcset1T2.getMercurySamples().add(new MercurySample("S1_2", MercurySample.MetadataSource.MERCURY));
+        lcset1T2.addSample(new MercurySample("S1_2", MercurySample.MetadataSource.MERCURY));
         mapLcset1Pos1ToTube.put(VesselPosition.A01, lcset1T1);
         mapLcset1Pos1ToTube.put(VesselPosition.A02, lcset1T2);
         LabBatch lcset1 = new LabBatch("LCSET1", new HashSet<LabVessel>(mapLcset1Pos1ToTube.values()),
@@ -503,7 +503,7 @@ public class GetSampleInstancesTest {
         // Create LCSET 2 with 1 new tube and 1 rework
         Map<VesselPosition, BarcodedTube> mapLcset2Pos1ToTube = new HashMap<>();
         BarcodedTube lcset2T1 = new BarcodedTube("LCSET2T1");
-        lcset2T1.getMercurySamples().add(new MercurySample("S2_1", MercurySample.MetadataSource.MERCURY));
+        lcset2T1.addSample(new MercurySample("S2_1", MercurySample.MetadataSource.MERCURY));
         mapLcset2Pos1ToTube.put(VesselPosition.A01, lcset2T1);
         mapLcset2Pos1ToTube.put(VesselPosition.A02, lcset1T2);
         LabBatch lcset2 = new LabBatch("LCSET2", Collections.<LabVessel>singleton(lcset2T1),
