@@ -386,7 +386,12 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
-                return order.getResearchProject().getJiraTicketKey();
+                String result = "";
+                final Optional<ResearchProject> researchProject = Optional.ofNullable(order.getResearchProject());
+                if(researchProject.isPresent()) {
+                    result = researchProject.get().getBusinessKey();
+                }
+                return result;
             }
         });
         // Defines the UI enhanced display for the research projects to display.  Enhanced with a link to allow the
@@ -395,8 +400,12 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 String output = (String) entity;
-                return "<a class=\"external\" target=\"new\" href=\"/Mercury/projects/project.action?view=&researchProject="
-                       + output +"\">"+ output +"</a>";
+                String result = "";
+                if(StringUtils.isNotBlank(output)) {
+                    result = "<a class=\"external\" target=\"new\" href=\"/Mercury/projects/project.action?view=&researchProject="
+                    + output + "\">" + output + "</a>";
+                }
+                return result;
             }
         });
         searchTerms.add(researchProjectDisplayTerm);
