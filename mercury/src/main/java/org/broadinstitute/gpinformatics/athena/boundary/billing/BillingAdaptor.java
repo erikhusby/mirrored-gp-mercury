@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import com.google.common.collect.HashMultimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,7 +41,6 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -182,13 +180,11 @@ public class BillingAdaptor implements Serializable {
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
                     quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     itemForPriceUpdate.setQuote(quote);
+                    ProductOrder.checkQuoteValidity(quote);
 
                     if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(itemForPriceUpdate.getPriceItem().getName())))
                        && productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder(), itemForPriceUpdate.getWorkCompleteDate()) &&
                        itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
-
-                        ProductOrder.checkQuoteValidity(quote,
-                                DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
 
                         effectivePricesForProducts = getEffectivePricesForProducts(allProductsOrdered, quote, priceItemsForDate,
                                 itemForPriceUpdate.getProductOrder());
@@ -244,8 +240,7 @@ public class BillingAdaptor implements Serializable {
                 try {
                     priceItemsForDate = item.getPriceOnWorkDate();
                     quote = item.getQuote();
-                    ProductOrder.checkQuoteValidity(quote,
-                            DateUtils.truncate(item.getWorkCompleteDate(), Calendar.DATE));
+                    ProductOrder.checkQuoteValidity(quote, item.getWorkCompleteDate());
 
 //                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
 //                    quote.setAlphanumericId(item.getQuoteId());
@@ -262,11 +257,10 @@ public class BillingAdaptor implements Serializable {
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     // todo need to set the price on the Price Item before this step
-                    QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate
-                    );
+                    QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate);
+
                     // todo need to set the price on the Price Item before this step
-                    QuotePriceItem primaryPriceItemIfReplacementForSAP =item.getPrimaryForReplacement(priceItemsForDate
-                    );
+                    QuotePriceItem primaryPriceItemIfReplacementForSAP =item.getPrimaryForReplacement(priceItemsForDate);
 
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
@@ -277,9 +271,7 @@ public class BillingAdaptor implements Serializable {
                     // set the primary to null so it will be billed as if it is a primary.
                     if (primaryPriceItemIfReplacement != null) {
                         if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
-                            quoteItemNames.contains(priceItemBeingBilled.getName()))
-                        {
-
+                            quoteItemNames.contains(priceItemBeingBilled.getName())) {
                             primaryPriceItemIfReplacement = null;
 
                         }

@@ -15,6 +15,9 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @XmlRootElement(name="Quote")
 public class Quote {
@@ -30,6 +33,8 @@ public class Quote {
     private Collection<QuoteItem> quoteItems = new ArrayList<> ();
     private Date expirationDate;
 
+    @XmlTransient
+    private Collection<Funding> cachedFunding;
 
     // quick access Cache of quote items
     @XmlTransient
@@ -284,5 +289,15 @@ public class Quote {
         }
 
         return foundItem;
+    }
+
+    public Collection<Funding> getFunding() {
+        if (CollectionUtils.isEmpty(cachedFunding)) {
+            cachedFunding = new HashSet<>();
+            getQuoteFunding().getFundingLevel(true).stream().filter(Objects::nonNull).
+                forEach(fundingLevel -> fundingLevel.getFunding().stream()
+                    .collect(Collectors.toCollection(() -> cachedFunding)));
+        }
+        return cachedFunding;
     }
 }
