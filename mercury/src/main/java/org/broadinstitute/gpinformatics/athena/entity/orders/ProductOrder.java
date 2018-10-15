@@ -538,12 +538,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
         }
 
-        if (pdoSampleToMercurySample.isEmpty()) {
-            // This early return is needed to avoid making a unnecessary injection, which could cause
-            // DB Free automated tests to fail.
-            return;
-        }
-
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         Map<String, SampleData> sampleDataMap = Collections.emptyMap();
         try {
