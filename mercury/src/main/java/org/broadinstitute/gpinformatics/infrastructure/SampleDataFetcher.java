@@ -186,6 +186,7 @@ public class SampleDataFetcher implements Serializable {
             MercurySample.MetadataSource metadataSource = entry.getValue();
 
             switch (metadataSource) {
+            case CRSP_PORTAL:
             case MERCURY:
                 mercurySamplesWithMercurySource.add(allMercurySamples.get(sampleId));
                 break;
@@ -248,10 +249,10 @@ public class SampleDataFetcher implements Serializable {
                     sampleName = productOrderSample.getName();
                 }
                 if (mercurySample != null &&
-                        mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                    mercurySamplesWithMercurySource.add(mercurySample);
-                } else {
+                        mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
                     bspSourceSampleNames.add(sampleName);
+                } else {
+                    mercurySamplesWithMercurySource.add(mercurySample);
                 }
                 // To improve performance, check for Mercury quants only if the product indicates that they're there.
                 if (product != null && product.getExpectInitialQuantInMercury() && quantColumnRequested(bspSampleSearchColumns)) {

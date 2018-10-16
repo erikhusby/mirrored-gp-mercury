@@ -70,7 +70,7 @@ public class CrspPipelineUtils {
             SampleData sampleData,
             String bait) {
         throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
-        if (sampleData.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+        if (sampleData.getMetadataSource() != MercurySample.MetadataSource.BSP) {
             setBuickVisitAndCollectionDate(libraryBean, sampleData);
             libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
             libraryBean.setRootSample(libraryBean.getSampleId());

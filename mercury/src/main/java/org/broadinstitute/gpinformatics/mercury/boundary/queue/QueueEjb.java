@@ -62,6 +62,9 @@ public class QueueEjb {
         // TODO:  If containerVessel is null, error if readabletext is null.  If containerVessel is not null, and
         // TODO:  readable text is null, then stilck the barcode from containerVessel into readable text
 
+
+        // TODO:  Verify that the overrides are only done IF it is the first time a vessel is put into the queue.
+
         GenericQueue genericQueue = findQueueByType(queueType);
 
         if (genericQueue.getQueueGroupings() == null) {
@@ -214,8 +217,8 @@ public class QueueEjb {
         try {
             AbstractEnqueueOverride enqueueOverride = queueGrouping.getAssociatedQueue().getQueueType().getEnqueueOverrideClass().newInstance();
 
+            // Find the vessel ids which already have been in the queue.  These would get standard priority.
             List<Long> vesselIds = new ArrayList<>();
-
             List<QueueEntity> entitiesByVesselIds = genericQueueDao.findEntitiesByVesselIds(vesselIds);
 
             Set<Long> uniqueVesselIdsAlreadyInQueue = new HashSet<>();

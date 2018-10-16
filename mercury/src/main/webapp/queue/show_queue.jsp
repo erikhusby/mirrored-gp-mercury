@@ -84,13 +84,13 @@
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean" event="moveToTop">
                                         <stripes:param name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
                                         <stripes:param name="queueType" value="${actionBean.queueType}" />
-                                        <img src="${ctxpath}/images/up.png" title="Move To Top" />
+                                        <img src="${ctxpath}/images/Double_arrow_green_up.png" title="Move To Top" style="height: 24px;" />
                                     </stripes:link>
                                     <input type="radio" name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean" event="moveToBottom">
                                         <stripes:param name="queueGroupingId" value="${queueGrouping.queueGroupingId}" />
                                         <stripes:param name="queueType" value="${actionBean.queueType}" />
-                                        <img src="${ctxpath}/images/down.png" title="Move To Bottom" />
+                                        <img src="${ctxpath}/images/Double_arrow_green_down.png" title="Move To Bottom" style="height: 24px;"/>
                                     </stripes:link>
                                 </span>
                             </td>

@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
@@ -286,7 +287,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                     VesselPosition tubePosition = entry.getKey();
                     BarcodedTube tube = entry.getValue();
                     for (SampleInstanceV2 sampleInstance : tube.getSampleInstancesV2()) {
-                        if (!sampleInstance.getRootOrEarliestMercurySample().canSampleBeUsedForClinical()) {
+                        if (sampleInstance.getRootOrEarliestMercurySample().getMetadataSource() == MercurySample.MetadataSource.BSP) {
                             researchTubePositions.add(tubePosition);
                             break;
                         }

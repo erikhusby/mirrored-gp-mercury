@@ -29,19 +29,17 @@ public class PicoEnqueueOverride extends AbstractEnqueueOverride {
     protected QueuePriority determineQueuePriorityType(QueueGrouping queueGrouping) {
         QueuePriority finalPriorityType = QueuePriority.STANDARD;
         for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
-            for (MercurySample mercurySample : queueEntity.getLabVessel().getMercurySamples()) {
-                QueuePriority priorityType = checkForSpecialPriorityType(mercurySample.getProductOrderSamples());
-                // Clia has highest priority, so we drop as soon as we find.
-                if (priorityType == QueuePriority.CLIA) {
-                    return priorityType;
-                } else if (priorityType == QueuePriority.EXOME_EXPRESS) {
-                    // Ex Ex. isn't the highest, so we cache to return later
-                    finalPriorityType = priorityType;
-                }
+            QueuePriority priorityType = checkForSpecialPriorityType(queueEntity.getLabVessel().getMercurySamples());
+            // Clia has highest priority, so we drop as soon as we find.
+            if (priorityType == QueuePriority.CLIA) {
+                return priorityType;
+            } else if (priorityType == QueuePriority.EXOME_EXPRESS) {
+                // Ex Ex. isn't the highest, so we cache to return later
+                finalPriorityType = priorityType;
             }
 
             for (SampleInstanceV2 sampleInstanceV2 : queueEntity.getLabVessel().getSampleInstancesV2()) {
-                QueuePriority priorityType = checkForSpecialPriorityType(sampleInstanceV2.getAllProductOrderSamples());
+                priorityType = checkForSpecialPriorityType(sampleInstanceV2.getRootMercurySamples());
                 // Clia has highest priority, so we drop as soon as we find.
                 if (priorityType == QueuePriority.CLIA) {
                     return priorityType;
@@ -58,21 +56,25 @@ public class PicoEnqueueOverride extends AbstractEnqueueOverride {
     /**
      * Checks the ProductOrderSamples passed in for either of the two special cases.
      *
-     * @param allProductOrderSamples    All the ProductOrderSample objects to review
-     * @return                          Priority Type found
+     * @param mercurySamples    All the ProductOrderSample objects to review
+     * @return                  Priority Type found
      */
-    private QueuePriority checkForSpecialPriorityType(Collection<ProductOrderSample> allProductOrderSamples) {
+    private QueuePriority checkForSpecialPriorityType(Collection<MercurySample> mercurySamples) {
         QueuePriority queuePriority = QueuePriority.STANDARD;
-        for (ProductOrderSample productOrderSample : allProductOrderSamples) {
-            ResearchProject.RegulatoryDesignation regulatoryDesignation = productOrderSample.getProductOrder().getResearchProject().getRegulatoryDesignation();
+        for (MercurySample mercurySample : mercurySamples) {
             // Clia has the highest priority, so once found we can just return it.
-            if (regulatoryDesignation == ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS
-                    || regulatoryDesignation == ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP) {
+            if (mercurySample.isClinicalSample()) {
                 return QueuePriority.CLIA;
             }
-            // Ex Ex. isn't the highest, so we cache to return later
-            if (productOrderSample.getProductOrder().getProduct().isExomeExpress()) {
-                queuePriority = QueuePriority.EXOME_EXPRESS;
+            if (mercurySample.getProductOrderSamples() != null) {
+                for (ProductOrderSample productOrderSample : mercurySample.getProductOrderSamples()) {
+                    // Ex Ex. isn't the highest, so we cache to return later
+                    if (productOrderSample.getProductOrder().getProduct().isExomeExpress()) {
+                        queuePriority = QueuePriority.EXOME_EXPRESS;
+                    }
+                }
+            } else {
+                // TODO:  call BSP w/ lab vessels to find out if in ExEx work request
             }
         }
         return queuePriority;

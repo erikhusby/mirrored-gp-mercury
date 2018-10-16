@@ -211,6 +211,7 @@ public class PlateMetadataActionBean extends CoreActionBean {
                                 wellMetadata.getMetadata().add(materialType);
                                 MercurySample mercurySample = new MercurySample(wellSampleInfo.getSampleBarcode(),
                                         MercurySample.MetadataSource.MERCURY, true);
+                                // TODO: Find out if this is strictly KCO - if so delete this line, if not we should find out what to do. (walsh)
                                 mercurySample.addMetadata(new HashSet<>(wellMetadata.getMetadata()));
                                 plateWell.setVolume(wellMetadata.getVolume());
                                 plateWell.getMercurySamples().add(mercurySample);

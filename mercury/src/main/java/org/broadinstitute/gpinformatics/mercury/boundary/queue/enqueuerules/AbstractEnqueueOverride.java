@@ -39,6 +39,8 @@ public abstract class AbstractEnqueueOverride {
             }
         }
 
+        // If ALL samples have been in the queue in the past, it will stay standard regardless of what would have
+        // happened the first time it was put into the queue.
         if (countFound == queueGrouping.getQueuedEntities().size()) {
             return QueuePriority.STANDARD;
         }
