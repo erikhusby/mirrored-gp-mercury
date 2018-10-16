@@ -786,7 +786,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                         }
                     });
             }
-// todo: here!
+
             validateQuoteDetails(quote, !editOrder.hasJiraTicketKey(), 0);
 
         } catch (QuoteServerException e) {
