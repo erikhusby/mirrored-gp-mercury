@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import java.io.Serializable;
@@ -15,6 +18,7 @@ public class WalkUpSequencing implements Serializable {
     private String labName;
     private String pooledSample;
     private String readType;
+    private String isDualBarcoded;
     private String illuminaTech;
     private String reference;
     private String referenceVersion;
@@ -22,7 +26,9 @@ public class WalkUpSequencing implements Serializable {
     private String volume;
     private String concentration;
     private String concentrationUnit;
-    private String readLength;
+    private String indexLength1;
+    private String indexLength2;
+    private String readLength1;
     private String readLength2;
     private String laneQuantity;
     private String comments;
@@ -125,12 +131,12 @@ public class WalkUpSequencing implements Serializable {
         this.concentrationUnit = concentrationUnit;
     }
 
-    public String getReadLength() {
-        return readLength;
+    public String getReadLength1() {
+        return readLength1;
     }
 
-    public void setReadLength(String readLength) {
-        this.readLength = readLength;
+    public void setReadLength1(String readLength1) {
+        this.readLength1 = readLength1;
     }
 
     public String getReadLength2() {
@@ -141,6 +147,39 @@ public class WalkUpSequencing implements Serializable {
         this.readLength2 = readLength2;
     }
 
+    public String getIndexLength1() {
+        return indexLength1;
+    }
+
+    public void setIndexLength1(String indexLength1) {
+        this.indexLength1 = indexLength1;
+    }
+
+    public String getIndexLength2() {
+        return indexLength2;
+    }
+
+    public void setIndexLength2(String indexLength2) {
+        this.indexLength2 = indexLength2;
+    }
+
+    public String getIsDualBarcoded() {
+        return isDualBarcoded;
+    }
+
+    public void setIsDualBarcoded(String isDualBarcoded) {
+        this.isDualBarcoded = isDualBarcoded;
+    }
+
+    public FlowcellDesignation.IndexType getIndexType() {
+        return ExternalLibraryProcessor.isOneOf(isDualBarcoded, "no", "false") ? FlowcellDesignation.IndexType.SINGLE :
+                ExternalLibraryProcessor.isOneOf(isDualBarcoded, "yes", "true") ? FlowcellDesignation.IndexType.DUAL :
+                        FlowcellDesignation.IndexType.NONE;
+    }
+
+    public boolean isPairedEndRead() {
+        return StringUtils.startsWithIgnoreCase(readType, "p");
+    }
     public String getLaneQuantity() {
         return laneQuantity;
     }

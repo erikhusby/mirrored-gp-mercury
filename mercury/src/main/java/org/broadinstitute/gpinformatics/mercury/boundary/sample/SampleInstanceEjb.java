@@ -384,13 +384,14 @@ public class SampleInstanceEjb {
                 sampleInstanceEntity.setSampleLibraryName(walkUpSequencing.getLibraryName());
                 newEntities.add(sampleInstanceEntity);
             }
-            sampleInstanceEntity.setPairedEndRead(StringUtils.startsWithIgnoreCase(walkUpSequencing.getReadType(),
-                    "p"));
+            sampleInstanceEntity.setPairedEndRead(walkUpSequencing.isPairedEndRead());
             sampleInstanceEntity.setReferenceSequence(referenceSequence);
             sampleInstanceEntity.setUploadDate(walkUpSequencing.getSubmitDate());
-            sampleInstanceEntity.setReadLength(Math.max(
-                    ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength()),
-                    ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength2())));
+            sampleInstanceEntity.setReadLength1(ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength1()));
+            sampleInstanceEntity.setReadLength2(ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength2()));
+            sampleInstanceEntity.setIndexLength1(ExternalLibraryProcessor.asInteger(walkUpSequencing.getIndexLength1()));
+            sampleInstanceEntity.setIndexLength2(ExternalLibraryProcessor.asInteger(walkUpSequencing.getIndexLength2()));
+            sampleInstanceEntity.setIndexType(walkUpSequencing.getIndexType());
             sampleInstanceEntity.setNumberLanes(ExternalLibraryProcessor.asInteger(walkUpSequencing.getLaneQuantity()));
             sampleInstanceEntity.setComments(walkUpSequencing.getComments());
             sampleInstanceEntity.setReagentDesign(baitSet);

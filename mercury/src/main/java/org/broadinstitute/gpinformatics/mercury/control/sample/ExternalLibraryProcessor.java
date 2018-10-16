@@ -574,7 +574,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         sampleInstanceEntity.setMercurySample(mercurySample);
         sampleInstanceEntity.setMolecularIndexingScheme(getMolecularIndexingSchemeMap().get(dto.getMisName()));
         sampleInstanceEntity.setNumberLanes(dto.getNumberOfLanes());
-        sampleInstanceEntity.setReadLength(dto.getReadLength());
+        sampleInstanceEntity.setReadLength1(dto.getReadLength());
         sampleInstanceEntity.setReagentDesign(dto.getReagent());
         sampleInstanceEntity.setReferenceSequence(getReferenceSequenceMap().get(dto.getReferenceSequenceName()));
         sampleInstanceEntity.setRootSample(getSampleMap().get(dto.getRootSampleName()));

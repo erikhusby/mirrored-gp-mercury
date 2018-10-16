@@ -52,7 +52,9 @@ public class QtpJaxbBuilder {
     private PlateTransferEventType ecoTransferTriplicateA7;
     private BettaLIMSMessage ecoTransferTriplicateMessage;
     private PlateTransferEventType ecoTransferDuplicateB3Jaxb;
-    private final Map<String, String> tubeToPosition = new HashMap<>();
+    private Map<String, String> tubeToPosition = new HashMap<>();
+    private boolean columnWiseNormPositions = false;
+    private boolean columnWiseDenaturePositions = false;
 
     public QtpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageFactory, String testPrefix,
             List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes,
@@ -148,7 +150,8 @@ public class QtpJaxbBuilder {
                 poolingTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("PoolingTransfer",
                         Arrays.asList(normCatchRackBarcodes.get(i)), Collections.singletonList(normCatchBarcodes),
                         Collections.singletonList(poolRackBarcode),
-                        Collections.singletonList(Collections.singletonList(poolTubeBarcodes.get(i))), poolingCherryPicks);
+                        Collections.singletonList(Collections.singletonList(poolTubeBarcodes.get(i))),
+                        poolingCherryPicks);
                 poolingTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, poolingTransferJaxb);
                 i++;
             }
@@ -208,8 +211,8 @@ public class QtpJaxbBuilder {
         // NormalizationTransfer
         normalizationRackBarcode = "NormalizationRack" + testPrefix;
         List<BettaLimsMessageTestFactory.CherryPick> normaliztionCherryPicks = makeCherryPicks(poolRackBarcode,
-                normalizationRackBarcode, poolTubeBarcodes, normalizationTubeBarcodes, tubeToPosition,
-                bettaLimsMessageTestFactory, "Norm", testPrefix);
+                normalizationRackBarcode, poolTubeBarcodes, normalizationTubeBarcodes, tubeToPosition, null,
+                columnWiseNormPositions, bettaLimsMessageTestFactory, "Norm", testPrefix);
         normalizationJaxb = bettaLimsMessageTestFactory.buildCherryPick("NormalizationTransfer",
                 Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
                 Collections.singletonList(normalizationRackBarcode),
@@ -221,8 +224,8 @@ public class QtpJaxbBuilder {
         // DenatureTransfer
         denatureRackBarcode = "DenatureRack" + testPrefix;
         List<BettaLimsMessageTestFactory.CherryPick> denatureCherryPicks = makeCherryPicks(normalizationRackBarcode,
-                denatureRackBarcode, normalizationTubeBarcodes, denatureTubeBarcodes, tubeToPosition,
-                bettaLimsMessageTestFactory, "Denature", testPrefix);
+                denatureRackBarcode, normalizationTubeBarcodes, denatureTubeBarcodes, tubeToPosition, null,
+                columnWiseDenaturePositions, bettaLimsMessageTestFactory, "DenatureTube", testPrefix);
         denatureJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureTransfer",
                 Collections.singletonList(normalizationRackBarcode),
                 Collections.singletonList(normalizationTubeBarcodes),
@@ -235,22 +238,43 @@ public class QtpJaxbBuilder {
         return this;
     }
 
-    public static List<BettaLimsMessageTestFactory.CherryPick> makeCherryPicks(String sourceRack, String destRack,
-            List<String> sourceTubes, List<String> destTubes, Map<String, String> tubeToPosition,
-            BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String destTubePrefix, String testPrefix) {
+    public static List<BettaLimsMessageTestFactory.CherryPick> makeCherryPicks(String sourceRackBarcode,
+            String destRackBarcode, List<String> sourceTubeBarcodes, List<String> destTubeBarcodes,
+            Map<String, String> tubeToPosition, Map<Integer, String> destPositionNumberToSourceTube,
+            boolean columnWiseDestPositions, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+            String destTubePrefix, String testPrefix) {
 
         List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
-        for (int j = 0; j < sourceTubes.size(); j++) {
-            // Uses tube positions if given, possibly rearraying the source tubes. If not given puts them in a row.
-            String sourcePosition = tubeToPosition.containsKey(sourceTubes.get(j)) ?
-                    tubeToPosition.get(sourceTubes.get(j)) :
-                    bettaLimsMessageTestFactory.buildWellName(j + 1, BettaLimsMessageTestFactory.WellNameType.SHORT);
-            String destPosition = sourcePosition;
-            cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(sourceRack, sourcePosition,
-                    destRack, destPosition));
-            String destTube = destTubePrefix + testPrefix + j;
-            tubeToPosition.put(destTube, destPosition);
-            destTubes.add(destTube);
+        int destBarcodeDigit = 0;
+        for (int i = 0; i < sourceTubeBarcodes.size(); i++) {
+            String sourceTubeBarcode = sourceTubeBarcodes.get(i);
+            // Uses tube positions if given, possibly rearraying the source tubes. If not given they're put in a row.
+            String sourcePosition = tubeToPosition.containsKey(sourceTubeBarcode) ?
+                    tubeToPosition.get(sourceTubeBarcode) :
+                    bettaLimsMessageTestFactory.buildWellName(i + 1, BettaLimsMessageTestFactory.WellNameType.SHORT);
+            // Uses either the given dest tube position number, or if none given makes one dest tube for each
+            // source tube in the same position number as the source tube.
+            // Dest tubes are either in a row or in a column depending on the columnWiseDestPostions flag.
+            List<String> destPositions = new ArrayList<>();
+            if (destPositionNumberToSourceTube != null && destPositionNumberToSourceTube.size() > 0) {
+                for (Map.Entry<Integer, String> mapEntry : destPositionNumberToSourceTube.entrySet()) {
+                    if (mapEntry.getValue().equals(sourceTubeBarcode)) {
+                        destPositions.add(bettaLimsMessageTestFactory.buildWellName(mapEntry.getKey(),
+                                BettaLimsMessageTestFactory.WellNameType.SHORT, columnWiseDestPositions));
+                    }
+                }
+            }
+            if (destPositions.isEmpty()) {
+                destPositions.add(bettaLimsMessageTestFactory.buildWellName(i + 1,
+                        BettaLimsMessageTestFactory.WellNameType.SHORT, columnWiseDestPositions));
+            }
+            for (String destPosition : destPositions) {
+                cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(sourceRackBarcode, sourcePosition,
+                        destRackBarcode, destPosition));
+                String destTube = destTubePrefix + testPrefix + destBarcodeDigit++;
+                tubeToPosition.put(destTube, destPosition);
+                destTubeBarcodes.add(destTube);
+            }
         }
         return cherryPicks;
     }
@@ -304,5 +328,13 @@ public class QtpJaxbBuilder {
 
     public Map<String, String> getTubeToPosition() {
         return tubeToPosition;
+    }
+
+    public void setColumnWiseNormPositions(boolean columnWiseNormPositions) {
+        this.columnWiseNormPositions = columnWiseNormPositions;
+    }
+
+    public void setColumnWiseDenaturePositions(boolean columnWiseDenaturePositions) {
+        this.columnWiseDenaturePositions = columnWiseDenaturePositions;
     }
 }

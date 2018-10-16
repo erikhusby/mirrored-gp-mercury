@@ -52,7 +52,6 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -62,6 +61,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -594,12 +594,12 @@ public class SequencingTemplateFactory {
                 Product product = productOrder.getProduct();
                 if (product != null) {
                     products.add(product);
-                    //If this is a pooled tube override it with the uploaded read length.
-                    if (sampleInstance.getReadLength() != null) {
-                        readLengths.add(sampleInstance.getReadLength());
+                    // If this is an external sample upload, override it with the uploaded read length.
+                    if (sampleInstance.getReadLength1() != null) {
+                        readLengths.add(sampleInstance.getReadLength1());
                     }
                     //Otherwise take the read length from the product.
-                    if(product.getReadLength() != null && sampleInstance.getReadLength() == null) {
+                    if(product.getReadLength() != null && sampleInstance.getReadLength1() == null) {
                         readLengths.add(product.getReadLength());
                     }
                     if (product.getPairedEndRead() != null) {
@@ -612,8 +612,18 @@ public class SequencingTemplateFactory {
                         indexReadStructure += index.getSequence().length() + "B";
                     }
                     molecularIndexReadStructures.add(indexReadStructure);
+                } else {
+                    // If this is an external sample upload, override it with the uploaded index lengths.
+                    if (sampleInstance.getIndexType() != FlowcellDesignation.IndexType.SINGLE) {
+                        molecularIndexReadStructures.add(String.format("%dB",
+                                sampleInstance.getIndexLength1() != null ? sampleInstance.getIndexLength1() : 8));
+                    }
+                    if (sampleInstance.getIndexType() != FlowcellDesignation.IndexType.DUAL) {
+                        molecularIndexReadStructures.add(String.format("%dB%dB",
+                                sampleInstance.getIndexLength1() != null ? sampleInstance.getIndexLength1() : 8,
+                                sampleInstance.getIndexLength1() != null ? sampleInstance.getIndexLength1() : 8));
+                    }
                 }
-
                 for (Reagent reagent : sampleInstance.getReagents()) {
                     if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
                         UMIReagent umiReagent =
@@ -633,9 +643,11 @@ public class SequencingTemplateFactory {
         }
 
         // If mix of single and dual index, then choose dual index read structure
-        if (molecularIndexReadStructures.size() > 1 && molecularIndexReadStructures.contains("8B8B")) {
+        Optional<String> dualIndexReadStructure = molecularIndexReadStructures.stream().
+                filter(s -> s.split("B").length == 2).findFirst();
+        if (dualIndexReadStructure.isPresent()) {
             molecularIndexReadStructures.clear();
-            molecularIndexReadStructures.add("8B8B");
+            molecularIndexReadStructures.add(dualIndexReadStructure.get());
         }
     }
 

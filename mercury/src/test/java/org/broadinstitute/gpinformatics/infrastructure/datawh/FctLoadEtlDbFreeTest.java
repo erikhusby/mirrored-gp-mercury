@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -11,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -42,6 +45,7 @@ public class FctLoadEtlDbFreeTest {
     private String flowcellLabel = "H16FDADXX";
     private VesselPosition flowcellLane = VesselPosition.LANE1;
     private FctLoadEtl tst;
+    private long flowcellDesignationId = 556677L;
 
     private LabEventDao dao = createMock(LabEventDao.class);
     private LabEvent labEvent = createMock(LabEvent.class);
@@ -55,9 +59,10 @@ public class FctLoadEtlDbFreeTest {
     private VesselContainer stripTubeContainer = createMock(VesselContainer.class);
 
     private LabBatchStartingVessel labBatchStartingVessel = createMock(LabBatchStartingVessel.class);
+    private FlowcellDesignation flowcellDesignation = createMock(FlowcellDesignation.class);
 
     private Object[] mocks = new Object[]{dao, labEvent, flowcell, flowcellContainer
-            , dilutionTube, stripTube, stripTubeContainer, labBatchStartingVessel };
+            , dilutionTube, stripTube, stripTubeContainer, labBatchStartingVessel, flowcellDesignation };
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
@@ -106,19 +111,21 @@ public class FctLoadEtlDbFreeTest {
         Set<LabVessel> targets = new HashSet<>();
         targets.add(flowcell);
         expect(labEvent.getTargetLabVessels()).andReturn(targets);
-        expect(flowcell.getContainerRole()).andReturn(flowcellContainer);
+        expect(flowcell.getContainerRole()).andReturn(flowcellContainer).anyTimes();
 
         // Flowcell transfer source
         // Dummy up with a null source container so falls through strip tube logic into dilution tube logic
         LabVessel.VesselEvent ancestorVesselEvent = new LabVessel.VesselEvent(dilutionTube, null,null,labEvent,flowcell, flowcellContainer, VesselPosition.LANE1);
-        expect(flowcellContainer.getAncestors(flowcellLane)).andReturn(Collections.singletonList(ancestorVesselEvent));
+        expect(flowcellContainer.getAncestors(flowcellLane)).andReturn(Collections.singletonList(ancestorVesselEvent)).anyTimes();
         Map<VesselPosition,LabVessel> loadedVesselsAndPositions = new HashMap<>();
         loadedVesselsAndPositions.put(flowcellLane, dilutionTube);
+        expect(flowcellContainer.getPositions()).andReturn(loadedVesselsAndPositions.keySet()).anyTimes();
         expect(flowcell.getNearestTubeAncestorsForLanes()).andReturn(loadedVesselsAndPositions);
         expect( dilutionTube.getDilutionReferences()).andReturn(Collections.singleton(labBatchStartingVessel));
 
         // ETL fields
-        expect(labBatchStartingVessel.getBatchStartingVesselId()).andReturn(labBatchVesselId);
+        expect(labBatchStartingVessel.getBatchStartingVesselId()).andReturn(labBatchVesselId).anyTimes();
+        expect(labBatchStartingVessel.getFlowcellDesignation()).andReturn(flowcellDesignation).anyTimes();
         expect(flowcell.getLabel()).andReturn(flowcellLabel);
 
         replay(mocks);
@@ -140,20 +147,22 @@ public class FctLoadEtlDbFreeTest {
         Set<LabVessel> targets = new HashSet<>();
         targets.add(flowcell);
         expect(labEvent.getTargetLabVessels()).andReturn(targets);
-        expect(flowcell.getContainerRole()).andReturn(flowcellContainer);
+        expect(flowcell.getContainerRole()).andReturn(flowcellContainer).anyTimes();
 
         // Flowcell transfer source
         // Strip tube source container will invoke strip tube logic
         LabVessel.VesselEvent ancestorVesselEvent = new LabVessel.VesselEvent(stripTube, stripTubeContainer, VesselPosition.TUBE1,
                 labEvent, flowcell, flowcellContainer, VesselPosition.LANE1);
-        expect(flowcellContainer.getAncestors(flowcellLane)).andReturn(Collections.singletonList(ancestorVesselEvent));
+        expect(flowcellContainer.getPositions()).andReturn(Collections.singleton(VesselPosition.LANE1)).anyTimes();
+        expect(flowcellContainer.getAncestors(flowcellLane)).andReturn(Collections.singletonList(ancestorVesselEvent)).anyTimes();
         expect(stripTubeContainer.getEmbedder()).andReturn(stripTube).times(2);
         expect(stripTube.getType()).andReturn(LabVessel.ContainerType.STRIP_TUBE);
 
         expect(stripTube.getDilutionReferences()).andReturn(Collections.singleton(labBatchStartingVessel));
 
         // ETL fields
-        expect(labBatchStartingVessel.getBatchStartingVesselId()).andReturn(labBatchVesselId);
+        expect(labBatchStartingVessel.getBatchStartingVesselId()).andReturn(labBatchVesselId).anyTimes();
+        expect(labBatchStartingVessel.getFlowcellDesignation()).andReturn(flowcellDesignation).anyTimes();
         expect(flowcell.getLabel()).andReturn(flowcellLabel);
 
         replay(mocks);

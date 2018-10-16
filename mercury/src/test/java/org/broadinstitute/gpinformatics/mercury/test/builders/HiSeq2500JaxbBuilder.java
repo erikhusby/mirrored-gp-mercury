@@ -55,8 +55,9 @@ public class HiSeq2500JaxbBuilder {
     private String stripTubeBarcode;
 
     private final int poolSize;
-    private final Map<String, String> tubeToPosition = new HashMap<>();
-    private final List<Integer> lanesPerSample = new ArrayList<>();
+    private Map<String, String> tubeToPosition = new HashMap<>();
+    private boolean columnWiseDilutionPositions = false;
+    private Map<Integer, String> laneNumberToDenatureTube = new HashMap<>();
 
     public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                 String testPrefix, List<String> denatureTubeBarcodes, String denatureRackBarcode,
@@ -82,34 +83,10 @@ public class HiSeq2500JaxbBuilder {
 
         case DILUTION_TO_FLOWCELL:
             // First adds a denature to dilution transfer message.
-            List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
-            int destTubeIndex = 0;
-            for (int i = 0; i < denatureTubeBarcodes.size(); ++i) {
-                String denatureBarcode = denatureTubeBarcodes.get(i);
-                // Rearrays tubes if positions are given, or leaves them in a row if not given.
-                String sourcePosition = tubeToPosition.containsKey(denatureBarcode) ?
-                        tubeToPosition.get(denatureBarcode) :
-                        bettaLimsMessageTestFactory.buildWellName(i + 1, BettaLimsMessageTestFactory.WellNameType.SHORT);
-                // Supports putting a sample on multiple lanes by cherry picking to multiple denature tubes.
-                for (int j = 0; j < lanesPerSample.get(i); ++j) {
-                    if (destTubeIndex >= flowcellLanes) {
-                        throw new RuntimeException(denatureTubeBarcodes.size() + " denature tubes allocated to " +
-                                lanesPerSample.stream().mapToInt(Integer::intValue).sum() + " lanes will not fit on " +
-                                flowcellLanes + " flowcell lanes.");
-                    }
-                    // If source position is the A row then destination is also. Otherwise destination is a column.
-                    String destPosition = sourcePosition.startsWith("A") ?
-                            bettaLimsMessageTestFactory.buildWellName(destTubeIndex + 1,
-                                    BettaLimsMessageTestFactory.WellNameType.SHORT) :
-                            String.format("%c1", "ABCDEFGH".charAt(destTubeIndex));
-                    ++destTubeIndex;
-                    cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(denatureRackBarcode, sourcePosition,
-                            dilutionRackBarcode, destPosition));
-                    String dilutionBarcode = "Dilution" + destPosition + "_" + testPrefix;
-                    dilutionTubeBarcodes.add(dilutionBarcode);
-                    tubeToPosition.put(dilutionBarcode, destPosition);
-                }
-            }
+            List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = QtpJaxbBuilder.makeCherryPicks(
+                    denatureRackBarcode, dilutionRackBarcode, denatureTubeBarcodes, dilutionTubeBarcodes,
+                    tubeToPosition, laneNumberToDenatureTube, columnWiseDilutionPositions,
+                    bettaLimsMessageTestFactory, "Dilution", testPrefix);
             dilutionTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureToDilutionTransfer",
                     Collections.singletonList(denatureRackBarcode),
                     Collections.singletonList(denatureTubeBarcodes),
@@ -273,7 +250,11 @@ public class HiSeq2500JaxbBuilder {
         return tubeToPosition;
     }
 
-    public List<Integer> getLanesPerSample() {
-        return lanesPerSample;
+    public void setColumnWiseDilutionPositions(boolean columnWiseDilutionPositions) {
+        this.columnWiseDilutionPositions = columnWiseDilutionPositions;
+    }
+
+    public Map<Integer, String> getLaneNumberToDenatureTube() {
+        return laneNumberToDenatureTube;
     }
 }

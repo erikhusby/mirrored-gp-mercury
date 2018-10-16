@@ -251,7 +251,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getConcentration(), new BigDecimal(select(i, "67.00", "68.00", "69.00")));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), 76);
+            Assert.assertEquals(entity.getReadLength1().intValue(), 76);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
             Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
@@ -317,7 +317,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("100.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), 151);
+            Assert.assertEquals(entity.getReadLength1().intValue(), 151);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
             Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
@@ -384,7 +384,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("4444.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), 151);
+            Assert.assertEquals(entity.getReadLength1().intValue(), 151);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
             Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
@@ -462,7 +462,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getExperiment(), "DEV-7501");
             Assert.assertEquals(entity.getSubTasks().get(0), select(i, "DEV-7538", "DEV-7539"));
 
-            Assert.assertEquals(entity.getReadLength().intValue(), new int[]{4, 2}[i]);
+            Assert.assertEquals(entity.getReadLength1().intValue(), new int[]{4, 2}[i]);
             Assert.assertNull(entity.getLibraryType());
             Assert.assertEquals(entity.getAggregationParticle(), select(i, "1", ""));
             Assert.assertEquals(entity.getUmisPresent(), new Boolean[]{null, Boolean.TRUE}[i]);

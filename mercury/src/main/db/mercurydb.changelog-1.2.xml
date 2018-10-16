@@ -1634,4 +1634,47 @@
         <dropColumn tableName="sample_instance_entity_aud" columnName="submit_date"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4711-200" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="index_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4711-201" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="index_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4711-202" author="epolk">
+        <sql>
+	  UPDATE SAMPLE_INSTANCE_ENTITY SET INDEX_TYPE = 'NONE' WHERE INDEX_TYPE IS NULL;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-4711-203" author="epolk">
+        <sql>
+	  UPDATE SAMPLE_INSTANCE_ENTITY_AUD SET INDEX_TYPE = 'NONE' WHERE INDEX_TYPE IS NULL AND REVTYPE IN (0,1);
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-4711-204" author="epolk">
+      <renameColumn schemaName="mercury" tableName="sample_instance_entity"
+		    newColumnName="read_length1" oldColumnName="read_length"/>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="read_length2" type="number(19,0)"/>
+            <column name="index_length1" type="number(19,0)"/>
+            <column name="index_length2" type="number(19,0)"/>
+	</addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4711-205" author="epolk">
+      <renameColumn schemaName="mercury" tableName="sample_instance_entity_aud"
+		    newColumnName="read_length1" oldColumnName="read_length"/>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="read_length2" type="number(19,0)"/>
+            <column name="index_length1" type="number(19,0)"/>
+            <column name="index_length2" type="number(19,0)"/>
+	</addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4711-206" author="epolk">
+      <addDefaultValue schemaName="mercury" tableName="sample_instance_entity"
+		       columnName="index_type" defaultValue="NONE"/>
+    </changeSet>
+
 </databaseChangeLog>
