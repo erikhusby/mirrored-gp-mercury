@@ -784,6 +784,24 @@ public class Gplim5728WorkHorseEjb {
                     newCount++;
                 }
 
+                // Store loose vessels in 'Loose' pseudo location
+                if ( vesselSubClass.equals( BarcodedTube.class ) ) {
+                    // Need to create loose storage for barcoded tube
+                    StorageLocation looseStorage = null;
+                    for( StorageLocation loc : mercuryStorage.getChildrenStorageLocation() ) {
+                        if( loc.getLocationType() == StorageLocation.LocationType.LOOSE ) {
+                            looseStorage = loc;
+                            break;
+                        }
+                    }
+                    if( looseStorage == null ) {
+                        looseStorage = new StorageLocation( StorageLocation.LocationType.LOOSE.getDisplayName(), StorageLocation.LocationType.LOOSE, mercuryStorage );
+                        mercuryStorage.getChildrenStorageLocation().add(looseStorage);
+                        storageLocationDao.persist( looseStorage );
+                    }
+                    mercuryStorage = looseStorage;
+                }
+
                 // Vessel attached to entity manager - storage will be persisted
                 storageVessel.setStorageLocation(mercuryStorage);
 

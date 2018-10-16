@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocat
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -64,7 +65,7 @@ public class StorageLocationActionBean extends CoreActionBean {
     @Inject
     private StorageLocationDao storageLocationDao;
 
-    @Inject
+    // Test, via setter
     private LabVesselDao labVesselDao;
 
     private MessageCollection messageCollection = new MessageCollection();
@@ -407,6 +408,12 @@ public class StorageLocationActionBean extends CoreActionBean {
                         ObjectNode objectNode = root.objectNode();
                         objectNode.put("text", labVessel.getLabel());
                         objectNode.put("type", StaticPlate.class.getSimpleName());
+                        arrayNode.add(objectNode);
+                    } else if (parentStorageLocation.getLocationType().equals(StorageLocation.LocationType.LOOSE )
+                                    && OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)){
+                        ObjectNode objectNode = root.objectNode();
+                        objectNode.put("text", labVessel.getLabel());
+                        objectNode.put("type", BarcodedTube.class.getSimpleName());
                         arrayNode.add(objectNode);
                     }
                 }

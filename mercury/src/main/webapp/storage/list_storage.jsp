@@ -16,7 +16,8 @@
                 /*ensure lower nodes move down*/
                 height : auto !important;
                 /*offset icon width*/
-                padding-right : 24px;
+                padding-right : 18px;
+                font-size: 11pt;
             }
             .show-loading-icon {
                 background: url("${ctxpath}/resources/scripts/jsTree/themes/default/throbber.gif") center center no-repeat;
@@ -171,6 +172,9 @@
 
                         },
                         RackOfTubes: {
+
+                        },
+                        BarcodedTube: {
 
                         }
                     },
