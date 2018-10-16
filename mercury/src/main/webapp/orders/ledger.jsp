@@ -517,7 +517,7 @@
                                 rowsCompleted += samples.length;
                                 if (samples.length <= 20) {
                                     message = "Ledger data updated for ".concat(samples.join(", ")).concat(".");
-                                } else {;
+                                } else {
                                     message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples, ").concat(rowsRemaining).concat(" remaining.");
                                 }
                                 modalMessages("info").add(message, statusNamespace);
