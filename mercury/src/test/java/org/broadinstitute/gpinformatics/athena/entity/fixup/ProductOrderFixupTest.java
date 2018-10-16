@@ -33,7 +33,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -76,6 +79,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -84,6 +88,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,6 +96,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -98,6 +104,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -163,6 +170,11 @@ public class ProductOrderFixupTest extends Arquillian {
     @Inject
     private BucketEntryDao bucketEntryDao;
 
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private QuoteService quoteService;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -781,7 +793,7 @@ public class ProductOrderFixupTest extends Arquillian {
             RegulatoryInfo selectedRegulatoryInfo = null;
             for(RegulatoryInfo candidate: pdoToChange.getResearchProject().getRegulatoryInfos()) {
                 if(candidate.getIdentifier().equals(orderToRegInfo.getRegulatoryInfoIdentifier()) &&
-                        candidate.getType() == orderToRegInfo.getRegulatoryInfoType()) {
+                   candidate.getType() == orderToRegInfo.getRegulatoryInfoType()) {
                     selectedRegulatoryInfo = candidate;
                     break;
                 }
@@ -1265,8 +1277,8 @@ public class ProductOrderFixupTest extends Arquillian {
         String pdoTicket = "PDO-13827";
 
         List<String> sampleKeys =
-            Arrays.asList("SM-GBMDQ", "SM-GBME1", "SM-GBME3", "SM-GBME8", "SM-GBMES", "SM-GBMCE", "SM-GBOBR",
-                "SM-GBMBT", "SM-GBOB7");
+                Arrays.asList("SM-GBMDQ", "SM-GBME1", "SM-GBME3", "SM-GBME8", "SM-GBMES", "SM-GBMCE", "SM-GBOBR",
+                        "SM-GBMBT", "SM-GBOB7");
 
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoTicket);
 
@@ -1560,6 +1572,48 @@ public class ProductOrderFixupTest extends Arquillian {
         System.out.println("Set the status of " +pdoKey + " to be " + orderToOpen.getOrderStatus().getDisplayName());
 
         productOrderDao.persist(new FixupCommentary("GPLIM-5824: repopening order to allow billing to continue"));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void gplim5878ChangeSampleToAbandoned() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        final String pdoKey = "PDO-16123";
+        final List<String> sampleList = Collections.singletonList("SM-GHWSQ");
+        final String fixupReason = "GPLIM-5878: abandoning SM-GHWSQ on PDO-16123";
+
+
+        final ProductOrder orderToModify = productOrderDao.findByBusinessKey(pdoKey);
+        final List<ProductOrderSample> samplesToTransition =
+                orderToModify.getSamples().stream()
+                        .filter(productOrderSample -> sampleList.contains(productOrderSample.getSampleKey()))
+                        .collect(Collectors.toList());
+
+        productOrderEjb.transitionSamples(orderToModify,
+                EnumSet.of(ProductOrderSample.DeliveryStatus.ABANDONED, ProductOrderSample.DeliveryStatus.NOT_STARTED),
+                ProductOrderSample.DeliveryStatus.ABANDONED, samplesToTransition);
+
+        final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToModify);
+        Quote quote = orderToModify.getQuote(quoteService);
+        final List<String> effectivePricesForProducts = productPriceCache
+                .getEffectivePricesForProducts(allProductsOrdered,orderToModify, quote);
+
+        productOrderEjb.updateOrderInSap(orderToModify, allProductsOrdered, effectivePricesForProducts, new MessageCollection(),
+                CollectionUtils.containsAny(Arrays.asList(
+                        ProductOrder.OrderStatus.Abandoned, ProductOrder.OrderStatus.Completed),
+                        Collections.singleton(orderToModify.getOrderStatus()))
+                && !orderToModify.isPriorToSAP1_5());
+
+        JiraIssue issue = jiraService.getIssue(orderToModify.getJiraTicketKey());
+        issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
+                productOrderEjb.getUserName(), ProductOrderSample.DeliveryStatus.ABANDONED.getDisplayName(),
+                StringUtils.join(ProductOrderSample.getSampleNames(samplesToTransition), ","),
+                StringUtils.stripToEmpty(fixupReason)));
+        productOrderEjb.updateOrderStatus(orderToModify.getJiraTicketKey(), MessageReporter.UNUSED);
+
+        productOrderDao.persist(new FixupCommentary(fixupReason));
         commitTransaction();
     }
 }
