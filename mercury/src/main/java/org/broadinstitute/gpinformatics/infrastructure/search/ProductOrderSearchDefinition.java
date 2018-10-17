@@ -42,7 +42,7 @@ public class ProductOrderSearchDefinition {
     public static final String SUBMITTER_NAME_COLUMN_HEADER = "Product Order Submitter Name";
     public static final String ORDER_STATUS_COLUMN_HEADER = "Order Status";
     public static final String RESEARCH_PROJECT_COLUMN_HEADER = "Research Project";
-    public static final String LCSETS_COLUMN_HEADER = "LCSET(s)";
+    public static final String LCSETS_COLUMN_HEADER = "LCSET";
     public static final String PDO_TICKET_COLUMN_HEADER = "PDO Ticket";
     public static final String PRODUCT_ORDER_SAMPLES_COLUMN_HEADER = "Product Order Sample(s)";
     public static final String SAP_ORDER_ID_COLUMN_HEADER = "SAP Order Id";
@@ -312,7 +312,7 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
-                Optional<BspUser> bspDisplayUser = Optional.of(context.getBspUserList().getById(order.getCreatedBy()));
+                Optional<BspUser> bspDisplayUser = Optional.ofNullable(context.getBspUserList().getById(order.getCreatedBy()));
                 StringBuilder userDisplayName = new StringBuilder();
 
                 bspDisplayUser.ifPresent(bspUser -> userDisplayName.append(bspUser.getFullName()));
@@ -339,6 +339,17 @@ public class ProductOrderSearchDefinition {
                 String statusSearchValue = context.getSearchValueString();
 
                 return ProductOrder.OrderStatus.valueOf(statusSearchValue);
+            }
+        });
+
+        pdoStatusTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+                List<ConstrainedValue> constrainedStatusValues = new ArrayList<>();
+                for (ProductOrder.OrderStatus status: ProductOrder.OrderStatus.values()) {
+                    constrainedStatusValues.add(new ConstrainedValue(status.toString(), status.getDisplayName()));
+                }
+                return constrainedStatusValues;
             }
         });
         SearchTerm.CriteriaPath orderStatusPath = new SearchTerm.CriteriaPath();
@@ -375,7 +386,12 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
-                return order.getResearchProject().getJiraTicketKey();
+                String result = "";
+                final Optional<ResearchProject> researchProject = Optional.ofNullable(order.getResearchProject());
+                if(researchProject.isPresent()) {
+                    result = researchProject.get().getBusinessKey();
+                }
+                return result;
             }
         });
         // Defines the UI enhanced display for the research projects to display.  Enhanced with a link to allow the
@@ -384,8 +400,12 @@ public class ProductOrderSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 String output = (String) entity;
-                return "<a class=\"external\" target=\"new\" href=\"/Mercury/projects/project.action?view=&researchProject="
-                       + output +"\">"+ output +"</a>";
+                String result = "";
+                if(StringUtils.isNotBlank(output)) {
+                    result = "<a class=\"external\" target=\"new\" href=\"/Mercury/projects/project.action?view=&researchProject="
+                    + output + "\">" + output + "</a>";
+                }
+                return result;
             }
         });
         searchTerms.add(researchProjectDisplayTerm);
@@ -533,30 +553,7 @@ public class ProductOrderSearchDefinition {
         sampleCriteriaPath.setPropertyName("sampleName");
         sampleCriteriaPath.setCriteria(Arrays.asList("PDOSamples", "samples"));
         sampleTerm.setCriteriaPaths(Collections.singletonList(sampleCriteriaPath));
-        // Extracts all sample names defined on the product order for display or download
-        sampleTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-
-                ProductOrder order = (ProductOrder) entity;
-                Set<String> sampleNames = new HashSet<>();
-
-                for (ProductOrderSample productOrderSample : order.getSamples()) {
-                    sampleNames.add(productOrderSample.getName());
-                }
-
-                return sampleNames;
-            }
-        });
-        // Altered UI display for sample names to simply separate the sample name with a comma
-        sampleTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
-            @Override
-            public String evaluate(Object entity, SearchContext context) {
-                Set<String> sampleSet = (Set<String>) entity;
-
-                return StringUtils.join(sampleSet, ", ");
-            }
-        });
+        sampleTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerms.add(sampleTerm);
 
         // Defines the search term for finding product orders by the SAP order with which they are associated.
