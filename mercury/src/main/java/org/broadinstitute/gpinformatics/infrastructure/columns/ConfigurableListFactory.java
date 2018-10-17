@@ -4,8 +4,11 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
@@ -14,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hibernate.Criteria;
 
 import javax.annotation.Nonnull;
@@ -46,6 +50,18 @@ public class ConfigurableListFactory {
 
     @Inject
     private ThreadEntityManager threadEntityManager;
+
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private JiraConfig jiraConfig;
+
+    @Inject
+    private PriceListCache priceListCache;
+
+    @Inject
+    private QuoteLink quoteLink;
 
     @Inject
     private ConstrainedValueDao constrainedValueDao;
@@ -467,6 +483,10 @@ public class ConfigurableListFactory {
         evalContext.setBspUserList( bspUserList );
         evalContext.setSearchInstance(searchInstance);
         evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
+        evalContext.setUserBean(userBean);
+        evalContext.setJiraConfig(jiraConfig);
+        evalContext.setPriceListCache(priceListCache);
+        evalContext.setQuoteLink(quoteLink);
         evalContext.setOptionValueDao(constrainedValueDao);
         return evalContext;
     }

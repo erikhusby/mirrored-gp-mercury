@@ -21,7 +21,7 @@
                         {"bSortable": true, "sType": "title-string"},   // Part Number
                         {"bSortable": true},                            // Product Name
                         {"bSortable": true},                            // Product Family
-                        <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM, FinanceViewer)%>">
                         {"bSortable": true, "sType": "title-string"},   // Units
                         {"bSortable": true, "sType": "title-string"},   // Price item Display Name
                         {"bSortable": true, "sType": "title-string"},   // Price Item Platform
@@ -74,7 +74,7 @@
                 <th>Part Number</th>
                 <th>Product Name</th>
                 <th>Product Family</th>
-                <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, FinanceViewer)%>">
                     <th>Units</th>
                     <th>Price Item Display Name</th>
                     <th>Price Item Platform</th>
@@ -94,33 +94,33 @@
             <c:forEach items="${actionBean.allProducts}" var="product">
                 <c:set var="priceClass" value="" />
                 <c:set var="inSAP" value="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}" />
-                <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, FinanceViewer)%>">
                     <c:if test="${inSAP && !product.quoteServerPrice.equals(product.sapFullPrice)}">
                         <c:set var="priceClass" value="bad-prices"/>
                     </c:if>
                 </security:authorizeBlock>
                 <tr class="${priceClass}">
-
+                    <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
+                        <td>
+                            <c:if test="${!inSAP}">
+                                <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}"
+                                                  class="shiftCheckbox"/>
+                            </c:if>
+                        </td>
+                    </security:authorizeBlock>
                     <td>
                         <span class="bad-price-div">The prices for this product information differ between the quote server and SAP.  Please correct this before any orders can be placed or updated
                         </span>
-                        <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
-                        <c:if test="${!inSAP}">
-                            <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}"
-                                              class="shiftCheckbox"/>
-                        </c:if>
-                        </security:authorizeBlock>
-                    </td>
-                    <td>
-                    <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
-                        <stripes:param name="product" value="${product.businessKey}"/>
-                        ${product.partNumber}
-                    </stripes:link>
-                </td>
 
-                <td>${product.productName}</td>
+                        <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
+                            <stripes:param name="product" value="${product.businessKey}"/>
+                            ${product.partNumber}
+                        </stripes:link>
+                    </td>
+
+                    <td>${product.productName}</td>
                 <td>${product.productFamily.name}</td>
-                <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, FinanceViewer)%>">
                     <td>${product.primaryPriceItem.units}</td>
                     <td>${product.primaryPriceItem.displayName}</td>
                     <td>${product.primaryPriceItem.platform}</td>

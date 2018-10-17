@@ -132,7 +132,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String plate = dataRow.get(Headers.PLATE.getText());
         String sample = dataRow.get(Headers.SAMPLE.getText());
         String well = dataRow.get(Headers.WELL.getText());
@@ -147,7 +147,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
                     String paddedBarcode = StringUtils.leftPad(matcher.group(1), 12, '0');
                     VesselPosition vesselPosition = VesselPosition.getByName(well.trim());
                     if (vesselPosition == null) {
-                        addDataMessage("Failed to find position " + well, dataRowIndex);
+                        addDataMessage("Failed to find position " + well, dataRowNumber);
                     }
                     try {
                         BigDecimal bigDecimal;
@@ -169,7 +169,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
                         bigDecimal = MathUtils.scaleTwoDecimalPlaces(bigDecimal);
                         plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal, bigDecimal == null, curve, new BigDecimal(value)));
                     } catch (NumberFormatException e) {
-                        addDataMessage("Failed to parse number " + result, dataRowIndex);
+                        addDataMessage("Failed to parse number " + result, dataRowNumber);
                     }
                 }
             }
