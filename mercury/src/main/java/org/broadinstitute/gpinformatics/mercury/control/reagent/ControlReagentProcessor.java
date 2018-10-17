@@ -101,14 +101,14 @@ public class ControlReagentProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String tubeBarcode = dataRow.get(Headers.TUBE_BARCODE.getText());
         String control = dataRow.get(Headers.CONTROL.getText());
         String lot = dataRow.get(Headers.LOT.getText());
         String expiration = dataRow.get(Headers.EXPIRATION.getText());
 
         if (mapTubeBarcodeToControl.containsKey(tubeBarcode)) {
-            addDataMessage("Duplicate tube barcode " + tubeBarcode, dataRowIndex);
+            addDataMessage("Duplicate tube barcode " + tubeBarcode, dataRowNumber);
         }
         try {
             // todo jmt error if expiration varies within lot?
@@ -120,7 +120,7 @@ public class ControlReagentProcessor extends TableProcessor {
             }
             mapTubeBarcodeToControl.put(tubeBarcode, controlValue);
         } catch (ParseException e) {
-            addDataMessage("Incorrect data format " + expiration, dataRowIndex);
+            addDataMessage("Incorrect data format " + expiration, dataRowNumber);
         }
     }
 

@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -121,6 +123,15 @@ public class BucketEjbDbFreeTest {
         default:
             throw new RuntimeException("Unsupported workflow type: " + workflow.name());
         }
+
+        // Changes the name of the 4th pdo sample to be the vessel barcode.
+        Collection<ProductOrderSample> productOrderSamples = pdo.getSamples();
+        Collection<ProductOrderSample> revisedProductOrderSamples = new ArrayList();
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            revisedProductOrderSamples.add(productOrderSample.getName().startsWith("SM-3") ?
+                    new ProductOrderSample("R3", productOrderSample.getSampleData()) : productOrderSample);
+        }
+        pdo.setSamples(revisedProductOrderSamples);
 
         expectedSamples.clear();
         labVessels.clear();
@@ -309,17 +320,25 @@ public class BucketEjbDbFreeTest {
         return "R" + rackPosition;
     }
 
+
     private void setupCoreMocks(Workflow workflow, boolean createVessels) {
         setUp(workflow);
+        mockVessels = new ArrayList<>();
+        final Multimap<String, LabVessel> sampleKeyToVessels = HashMultimap.create();
+        final Map<String, LabVessel> barcodeToVessel = new HashMap<>();
 
         // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th samples.
         // The 4th sample is in house so a standalone vessel/sample should be created.
-        mockVessels = new ArrayList<>();
-        ProductOrderSample pdoSample;
+        // The 3rd product order sample name is a vessel barcode.
         for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
-            pdoSample = pdo.getSamples().get(rackPosition - 1);
+            ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
+            LabVessel labVessel = labVessels.get(rackPosition - 1);
             if (rackPosition != 1 && rackPosition != 4) {
-                mockVessels.add(labVessels.get(rackPosition - 1));
+                mockVessels.add(labVessel);
+                if (rackPosition != 3) {
+                    sampleKeyToVessels.put(pdoSample.getName(), labVessel);
+                }
+                barcodeToVessel.put(labVessel.getLabel(), labVessel);
             }
             if (createVessels) {
                 if (rackPosition == 4) {
@@ -334,7 +353,22 @@ public class BucketEjbDbFreeTest {
                 }
             }
         }
-        expect(labVesselDao.findBySampleKeyList(EasyMock.<Collection<String>>anyObject())).andReturn(mockVessels);
+
+        expect(labVesselDao.findBySampleKey(EasyMock.<String>anyObject())).andAnswer(new IAnswer<List<LabVessel>>() {
+            @Override
+            public List<LabVessel> answer() throws Throwable {
+                String sampleKey = (String) EasyMock.getCurrentArguments()[0];
+                return new ArrayList<>(sampleKeyToVessels.get(sampleKey));
+            }
+        }).anyTimes();
+
+        expect(labVesselDao.findByIdentifier(EasyMock.<String>anyObject())).andAnswer(new IAnswer<LabVessel>() {
+            @Override
+            public LabVessel answer() throws Throwable {
+                String barcode = (String) EasyMock.getCurrentArguments()[0];
+                return barcodeToVessel.get(barcode);
+            }
+        }).anyTimes();
 
         expect(bucketDao.findByName(EasyMock.<String>anyObject())).andAnswer(new IAnswer<Bucket>() {
             @Override
