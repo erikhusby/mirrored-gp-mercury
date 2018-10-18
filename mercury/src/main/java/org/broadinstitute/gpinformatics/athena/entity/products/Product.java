@@ -3,11 +3,9 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.SAPMaterial;
@@ -153,7 +151,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             , inverseJoinColumns = {@JoinColumn(name = "ADD_ONS")})
     private final Set<Product> addOns = new HashSet<>();
 
-    // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.
     private String workflowName;
 
     private boolean pdmOrderableOnly;
@@ -236,7 +233,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                 productToClone.getExpectedCycleTimeSeconds(), productToClone.getGuaranteedCycleTimeSeconds(),
                 productToClone.getSamplesPerWeek(),productToClone.getMinimumOrderSize(),
                 productToClone.getInputRequirements(), productToClone.getDeliverables(),
-                productToClone.isTopLevelProduct(), productToClone.getWorkflow(),
+                productToClone.isTopLevelProduct(), productToClone.getWorkflowName(),
                 productToClone.isPdmOrderableOnly(),productToClone.getAggregationDataType());
 
         clonedProduct.setExternalOnlyProduct(productToClone.isExternalOnlyProduct());
@@ -272,7 +269,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public Product() {}
 
     public Product(boolean topLevelProduct) {
-        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, Workflow.NONE, false, null);
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false, null);
     }
 
     public Product(String productName,
@@ -288,7 +285,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
-                   @Nonnull Workflow workflow,
+                   String workflowName,
                    boolean pdmOrderableOnly,
                    String aggregationDataType) {
         this.productName = productName;
@@ -304,7 +301,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.inputRequirements = inputRequirements;
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
-        workflowName = workflow.getWorkflowName();
+        this.workflowName = workflowName;
         this.pdmOrderableOnly = pdmOrderableOnly;
         this.aggregationDataType = aggregationDataType;
     }
@@ -471,8 +468,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.topLevelProduct = topLevelProduct;
     }
 
-    public void setWorkflow(@Nonnull Workflow workflow) {
-        workflowName = workflow.getWorkflowName();
+    public void setWorkflowName(String workflowName) {
+        this.workflowName = workflowName;
     }
 
     public Set<Product> getAddOns() {
@@ -501,9 +498,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         addOns.add(addOn);
     }
 
-    @Nonnull
-    public Workflow getWorkflow() {
-        return Workflow.findByName(workflowName);
+    public String getWorkflowName() {
+        return workflowName;
     }
 
     public String getAnalysisTypeKey() {
