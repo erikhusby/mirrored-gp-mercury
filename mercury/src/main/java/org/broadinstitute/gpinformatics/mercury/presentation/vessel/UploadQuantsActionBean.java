@@ -17,11 +17,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
@@ -104,6 +107,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private BSPRestSender bspRestSender;
     @Inject
     private TubeFormationDao tubeFormationDao;
+    @Inject
+    private JiraConfig jiraConfig;
+    @Inject
+    private PriceListCache priceListCache;
+    @Inject
+    private QuoteLink quoteLink;
 
     @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
@@ -364,6 +373,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
         SearchContext searchContext = new SearchContext();
         searchContext.setBspUserList(bspUserList);
+        searchContext.setUserBean(userBean);
+        searchContext.setJiraConfig(jiraConfig);
+        searchContext.setPriceListCache(priceListCache);
+        searchContext.setQuoteLink(quoteLink);
         ConfigurableList configurableList = configurableListFactory.create(labMetricList, "Default",
                 ColumnEntity.LAB_METRIC, searchContext,
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_METRIC.getEntityName()));

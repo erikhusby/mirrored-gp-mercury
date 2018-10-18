@@ -56,10 +56,10 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         return bucketEntryEvaluator.invoke(labVessel, productOrder);
     }
 
-    public Workflow getWorkflowForProductOrder(ProductOrder productOrder) {
-        Workflow workflow = bucketEntryEvaluator.getMatchingWorkflow(productOrder);
-        if (workflow == Workflow.NONE) {
-            workflow = productOrder.getProduct().getWorkflow();
+    public String getWorkflowForProductOrder(ProductOrder productOrder) {
+        String workflow = bucketEntryEvaluator.getMatchingWorkflow(productOrder);
+        if (workflow == null) {
+            workflow = productOrder.getProduct().getWorkflowName();
         }
         return workflow;
     }

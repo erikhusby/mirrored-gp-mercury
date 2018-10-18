@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
 
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
+
 /**
  * Derived implementation from BSP core code.  This interface is intended to represent a column on a Spreadsheet
  * that is to be parsed by the {@link TableProcessor}.  This interface will assist in making the parser generic
@@ -25,4 +27,9 @@ public interface ColumnHeader {
 
     boolean isDateColumn();
     boolean isStringColumn();
+
+    /** Interface that extends the data presence indicators. */
+    interface Ignorable {
+        ExternalLibraryProcessor.DataPresence getDataPresenceIndicator();
+    }
 }

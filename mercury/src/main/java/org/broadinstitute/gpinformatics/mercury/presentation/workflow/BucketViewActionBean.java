@@ -45,7 +45,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -208,8 +207,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public void init() {
         // Gets bucket names for supported products (workflows), and associates workflow(s) for each bucket.
         Multimap<String, String> bucketWorkflows = HashMultimap.create();
-        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+        for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
                 String bucketName = bucket.getName();
@@ -221,7 +219,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 }
                 buckets.add(bucketName);
                 mapBucketToJiraProject.put(bucketName, jiraProjectType);
-                bucketWorkflows.put(bucketName, workflow.getWorkflowName());
+                bucketWorkflows.put(bucketName, workflowDef.getName());
             }
         }
         mapBucketToWorkflows = bucketWorkflows.asMap();
@@ -530,8 +528,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     private Map<String, BucketCount> initBucketCountsMap(Map<String, BucketCount> bucketCountMap) {
         Map<String, BucketCount> resultBucketCountMap = new TreeMap<>();
-        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+        for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
                 BucketCount bucketCount = bucketCountMap.get(bucket.getName());
@@ -737,8 +734,8 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public List<String> bucketWorkflowNames(BucketEntry bucketEntry) {
         List<String> workflowNames = new ArrayList<>();
-        for (Workflow workflow : bucketEntry.getWorkflows(workflowConfig)) {
-            workflowNames.add(workflow.getWorkflowName());
+        for (String workflow : bucketEntry.getWorkflows(workflowConfig)) {
+            workflowNames.add(workflow);
         }
         return workflowNames;
     }

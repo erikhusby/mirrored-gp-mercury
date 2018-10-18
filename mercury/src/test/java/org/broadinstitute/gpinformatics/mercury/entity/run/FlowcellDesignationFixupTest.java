@@ -624,4 +624,22 @@ public class FlowcellDesignationFixupTest extends Arquillian {
         utx.commit();
     }
 
+    // Change read length.
+    @Test(enabled = false)
+    public void support4584() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+        for (long id : new long[]{122305, 122306, 122308, 122309, 122310}) {
+            FlowcellDesignation flowcellDesignation  = illuminaFlowcellDao.findById(FlowcellDesignation.class, id);
+            Assert.assertNotNull(flowcellDesignation);
+            System.out.println("Change read length from 101 to 76 on flowcell designation " + id);
+            Assert.assertEquals(flowcellDesignation.getReadLength().intValue(), 101);
+            flowcellDesignation.setReadLength(76);
+        }
+        FixupCommentary fixupCommentary = new FixupCommentary("SUPPORT-4584 fix incorrectly entered read length.");
+        labVesselDao.persist(fixupCommentary);
+        labVesselDao.flush();
+        utx.commit();
+    }
+
 }

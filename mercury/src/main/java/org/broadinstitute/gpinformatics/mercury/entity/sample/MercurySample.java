@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -295,6 +296,26 @@ public class MercurySample extends AbstractSample {
         }
     }
 
+    /** Adds new metadata entries or updates existing ones, but does not remove existing entries. */
+    public void updateMetadata(Set<Metadata> updates) {
+        if (metadataSource == MetadataSource.MERCURY) {
+            for (Metadata update : updates) {
+                Metadata.Key key = update.getKey();
+                for (Iterator<Metadata> iterator = metadata.iterator(); iterator.hasNext(); ) {
+                    // Lookup on name and remove is necessary in case the data type changes.
+                    if (key.name().equals(iterator.next().getKey().name())) {
+                        iterator.remove();
+                    }
+                }
+                metadata.add(update);
+            }
+            setSampleData(new MercurySampleData(sampleKey, this.metadata, getReceivedDate()));
+        } else {
+            throw new IllegalStateException(String.format(
+                    "MercurySamples with metadata source of %s cannot have Mercury metadata", metadataSource));
+        }
+    }
+
     public Set<Metadata> getMetadata() {
         return metadata;
     }
@@ -336,7 +357,7 @@ public class MercurySample extends AbstractSample {
         for(LabVessel currentVessel : labVessel) {
             TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
                     new TransferTraverserCriteria.VesselForEventTypeCriteria(
-                            Collections.singletonList(LabEventType.SAMPLE_RECEIPT), true, true);
+                            Collections.singletonList(LabEventType.SAMPLE_RECEIPT), false, true);
             currentVessel.evaluateCriteria(vesselForEventTypeCriteria,
                     TransferTraverserCriteria.TraversalDirection.Ancestors);
             Map<LabEvent, Set<LabVessel>> vesselsForEvent = vesselForEventTypeCriteria.getVesselsForLabEventType();

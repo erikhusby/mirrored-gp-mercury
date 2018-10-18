@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 //import com.jprofiler.api.agent.Controller;
+
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
@@ -384,7 +386,7 @@ public class ConfigurableSearchTest extends Arquillian {
 
         searchInstance.getPredefinedViewColumns().add("Infinium DNA Plate Drill Down");
         searchInstance.getPredefinedViewColumns().add("Infinium Amp Plate Drill Down");
-        searchInstance.setCustomTraversalOptionName(InfiniumVesselTraversalEvaluator.DNA_PLATE_INSTANCE.getUiName());
+        searchInstance.setCustomTraversalOptionConfig(InfiniumVesselTraversalEvaluator.DNA_PLATE_INSTANCE.getUiName());
         searchInstance.setExcludeInitialEntitiesFromResults(true);
         searchInstance.getTraversalEvaluatorValues().put(LabEventSearchDefinition.TraversalEvaluatorName.DESCENDANTS.getId(), Boolean.TRUE);
         searchInstance.getTraversalEvaluatorValues().put(LabEventSearchDefinition.TraversalEvaluatorName.ANCESTORS.getId(), Boolean.FALSE);
@@ -433,5 +435,144 @@ public class ConfigurableSearchTest extends Arquillian {
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000003038103");
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(2), "E09");
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(3), "FingerprintingPlateSetup, 10/29/2014, Michael Wilson");
+    }
+
+    @Test
+    public void testViewOnlyProductOrderType() throws Exception {
+
+        userBean.loginViewOnlyUser();
+
+        SearchInstance searchInstance = new SearchInstance();
+        final String productOrderEntityName = ColumnEntity.PRODUCT_ORDER.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDefinition =
+                SearchDefinitionFactory.getForEntity(productOrderEntityName);
+
+        SearchInstance.SearchValue quoteSearchValue = searchInstance.addTopLevelTerm("Quote Identifier",
+                configurableSearchDefinition);
+        quoteSearchValue.setOperator(SearchInstance.Operator.EQUALS);
+        quoteSearchValue.setValues(Collections.singletonList("GPSPIE8"));
+
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.RESEARCH_PROJECT_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PRODUCT_ORDER_SAMPLES_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER);
+
+
+        Map<PreferenceType, Preference> mapTypeToPreference = new HashMap<>();
+        Map<String,String> newSearchLevels = new HashMap<>();
+        Map<String,String> searchInstanceNames = new HashMap<>();
+        try {
+            searchInstanceEjb.fetchInstances(ColumnEntity.PRODUCT_ORDER, mapTypeToPreference, searchInstanceNames,
+                    newSearchLevels);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        String newSearchName = "Test-" + productOrderEntityName + "-" +
+                               new SimpleDateFormat("MM/dd/yyyy").format(new Date(System.currentTimeMillis()));
+        searchInstanceEjb.persistSearch(true, searchInstance, new MessageCollection(),
+                PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
+        preferenceDao.flush();
+        preferenceDao.clear();
+
+        // Retrieve instance
+        mapTypeToPreference.clear();
+        searchInstanceNames.clear();
+        newSearchLevels.clear();
+        try {
+            searchInstanceEjb.fetchInstances( ColumnEntity.PRODUCT_ORDER, mapTypeToPreference, searchInstanceNames, newSearchLevels);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Preference preference = mapTypeToPreference.get(PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES);
+        SearchInstance fetchedSearchInstance = null;
+        try {
+            SearchInstanceList searchInstanceList =
+                    (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
+            for (SearchInstance instance : searchInstanceList.getSearchInstances()) {
+                if (instance.getName().equals(newSearchName)) {
+                    fetchedSearchInstance = instance;
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Assert.assertNotNull(fetchedSearchInstance);
+
+
+        fetchedSearchInstance.establishRelationships(configurableSearchDefinition);
+        fetchedSearchInstance.postLoad();
+
+        testSearch(fetchedSearchInstance, productOrderEntityName, configurableSearchDefinition);
+
+        searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES,
+                newSearchName, mapTypeToPreference);
+    }
+
+    @Test
+    public void testProductOrderType() throws Exception {
+
+        userBean.loginOSUser();
+
+        SearchInstance searchInstance = new SearchInstance();
+        final String productOrderEntityName = ColumnEntity.PRODUCT_ORDER.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDefinition =
+                SearchDefinitionFactory.getForEntity(productOrderEntityName);
+
+        SearchInstance.SearchValue quoteSearchValue = searchInstance.addTopLevelTerm("Quote Identifier",
+                configurableSearchDefinition);
+        quoteSearchValue.setOperator(SearchInstance.Operator.EQUALS);
+        quoteSearchValue.setValues(Collections.singletonList("GPSPIE8"));
+
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.RESEARCH_PROJECT_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PRODUCT_ORDER_SAMPLES_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER);
+
+        searchInstance.establishRelationships(configurableSearchDefinition);
+        searchInstance.postLoad();
+
+        testSearch(searchInstance, productOrderEntityName, configurableSearchDefinition);
+    }
+
+    private void testSearch(SearchInstance searchInstance, String productOrderEntityName,
+                            ConfigurableSearchDefinition configurableSearchDefinition) {
+        ConfigurableListFactory.FirstPageResults pageResults =
+                configurableListFactory.getFirstResultsPage(searchInstance, configurableSearchDefinition,
+                        null, 1, null, "ASC",
+                        productOrderEntityName);
+
+        ConfigurableList.ResultRow row = null;
+        for( ConfigurableList.ResultRow currentRow : pageResults.getResultList().getResultRows() ){
+            row = currentRow;
+            break;
+        }
+
+        Map<String, Integer> colunnNumbersByHeader = new HashMap<>();
+        int columnNumber = 0;
+        for (ConfigurableList.Header header : pageResults.getResultList().getHeaders()) {
+            colunnNumbersByHeader.put(header.getViewHeader(), columnNumber);
+            columnNumber++;
+        }
+
+        List<String> rowValues = row.getRenderableCells();
+        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER)), "Draft-220113 -- Johan Nilsson_Lund University_Heart Transplant_PCR-PLUS_FFPE_XXTimepoints", "Incorrect PDO found");
+        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER)), "GPSPIE8", "Incorrect quote found");
+        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.RESEARCH_PROJECT_COLUMN_HEADER)), "RP-797", "Incorrect RP found");
+
+        final String samples = rowValues
+                .get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PRODUCT_ORDER_SAMPLES_COLUMN_HEADER));
+
+        List<String> testSamples = Arrays.asList("SM-D8WVS", "SM-D8WVT", "SM-D8WVU", "SM-D8WVV", "SM-D8WVX",
+                "SM-D8WW2", "SM-D8WW4", "SM-D8WW5", "SM-D8WW7", "SM-D8WW8", "SM-D8WW9", "SM-D8WJL", "SM-D8WJM",
+                "SM-D8WJN", "SM-D8WJO", "SM-D8WJP", "SM-D8WJQ", "SM-D8WJR");
+
+        Assert.assertTrue(Arrays.stream(StringUtils.split(samples, " ")).allMatch(testSamples::contains),
+                "Incorrect Samples found");
+
+        Assert.assertTrue(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER)).contains("XTNL-WGS-010307"), "Incorrect product part number found");
     }
 }

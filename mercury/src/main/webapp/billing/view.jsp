@@ -29,10 +29,10 @@
             });
 
             $j(window).load(function() {
-                var idToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
+                var workItemIdToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
                 // if the url contains a quote server work item, highlight the corresponding row
-                $j(idToHighlight).attr('class','highlighted');
-                $('html, body').scrollTop($(idToHighlight).offset().top);
+                $j(workItemIdToHighlight).attr('class','highlighted');
+                $('html, body').scrollTop($(workItemIdToHighlight).offset().top);
             });
 
         </script>
@@ -99,7 +99,7 @@
                 <th width="60">Quote</th>
                 <th width="250">PDOs</th>
                 <th width="50">Work Items</th>
-                <th width="50">SAP Document ID(s)</th>
+                <th width="90">SAP<br/>Document ID(s)</th>
                 <th>Platform</th>
                 <th>Category</th>
                 <th>Price Item</th>

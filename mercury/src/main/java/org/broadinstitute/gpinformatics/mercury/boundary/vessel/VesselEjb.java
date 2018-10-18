@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -1476,7 +1477,7 @@ public class VesselEjb {
             LabEventMetadata.LabEventMetadataType factorType) {
         Float factor = null;
         for (LabEventMetadata metadata : labEventMetadata) {
-            if (StringUtils.isNumeric(metadata.getValue())) {
+            if (NumberUtils.isNumber(metadata.getValue())) {
                 float value = Float.parseFloat(metadata.getValue());
                 if (metadata.getLabEventMetadataType() == factorType) {
                     factor = (factor == null) ? value : Math.max(value, factor);
