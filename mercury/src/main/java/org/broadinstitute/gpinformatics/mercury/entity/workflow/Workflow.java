@@ -46,6 +46,7 @@ public enum Workflow {
     SINGLE_CELL_10X("Single Cell 10X"),
     SEQ_ONLY("Seq Only"),
     NEXOME("Nexome"),
+    SIXTEEN_S("16S"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
@@ -82,7 +83,7 @@ public enum Workflow {
                     TEN_X, INFINIUM, INFINIUM_METHYLATION, MALARIA, CELL_FREE_HYPER_PREP_UMIS,
                     ICE_EXOME_EXPRESS_HYPER_PREP_UMIS, DNA_RNA_EXTRACTION_STOOL, CUSTOM_SELECTION,
                     DNA_RNA_EXTRACTION_CELL_PELLETS_BSP, LASSO, SINGLE_CELL_SMART_SEQ, SINGLE_CELL_10X, SEQ_ONLY,
-                    G_DNA_ULTRA_LOW_PASS_WGS, NEXOME
+                    G_DNA_ULTRA_LOW_PASS_WGS, NEXOME, SIXTEEN_S
             );
 
     public boolean isWorkflowSupportedByMercury() {
