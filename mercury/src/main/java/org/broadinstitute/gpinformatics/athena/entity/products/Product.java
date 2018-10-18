@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
