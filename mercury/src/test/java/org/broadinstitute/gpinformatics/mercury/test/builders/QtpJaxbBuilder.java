@@ -32,7 +32,6 @@ public class QtpJaxbBuilder {
     private PlateTransferEventType ecoTransferDuplicateA3Jaxb;
     private String viia7PlateBarcode;
     private PlateTransferEventType viia7TransferJaxb;
-    private String normalizationTubeBarcode;
     private String normalizationRackBarcode;
     private PlateCherryPickEvent normalizationJaxb;
     private final List<String> normalizationTubeBarcodes = new ArrayList<>();
@@ -114,8 +113,8 @@ public class QtpJaxbBuilder {
         return denatureTubeBarcode;
     }
 
-    public String getNormalizationTubeBarcode() {
-        return normalizationTubeBarcode;
+    public List<String> getNormalizationTubeBarcodes() {
+        return normalizationTubeBarcodes;
     }
 
     public String getNormalizationRackBarcode() {
@@ -211,7 +210,7 @@ public class QtpJaxbBuilder {
                     BettaLimsMessageTestFactory.WellNameType.SHORT),
                     normalizationRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
                     BettaLimsMessageTestFactory.WellNameType.SHORT)));
-            normalizationTubeBarcode = "NormalizationTube" + testPrefix + j;
+            String normalizationTubeBarcode = "NormalizationTube" + testPrefix + j;
             normalizationTubeBarcodes.add(normalizationTubeBarcode);
         }
         normalizationJaxb = bettaLimsMessageTestFactory.buildCherryPick("NormalizationTransfer",

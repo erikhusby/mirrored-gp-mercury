@@ -29,13 +29,12 @@ This Stripes layout displays a dynamically generated UI snippet to display in a 
                 </c:when>
                 <c:when test="${inputParam.type eq 'PICKLIST'}">
                     <c:if test="${paramValue eq '' }"><c:set value="${inputParam.defaultSingleValue}" var="paramValue"/></c:if>
-                    <p>${inputParam.label} <span id="showAllToggle_${inputParam.name}" data-show-all="true" onclick="toggleParamListShowAll(this,'dlg_${inputParam.name}'');" style="display: inline-block; width: 18px; height:18px; padding: 0px; border-width:0px; background-image: url('/Mercury/images/ui-icons_2e83ff_256x240.png'); background-repeat: no-repeat; background-position: -64px -128px;"> </span><br/>
+                    <p>${inputParam.label} <span id="showAllToggle_${inputParam.name}" data-show-all="true" onclick="toggleParamListShowAll(this,'dlg_${inputParam.name}');" style="display: inline-block; width: 18px; height:18px; padding: 0px; border-width:0px; background-image: url('/Mercury/images/ui-icons_2e83ff_256x240.png'); background-repeat: no-repeat; background-position: -64px -128px;"> </span><br/>
                     <select name="${inputParam.name}" id="dlg_${inputParam.name}" size="16">
                         <c:forEach items="${inputParam.optionItems}" var="option">
                             <option value="${option.code}" <c:if test="${option.code eq paramValue}">selected="true"</c:if> >${option.label}</option>
                         </c:forEach>
-                    </select></p>
-                    Filter: <input type="text" style="height:16px;width:170px;margin-top:4px" id="dlg_filterColumns" onkeyup="filterSelect($j('#dlg_${inputParam.name}')[0], this);">
+                    </select><br/>Filter: <input type="text" style="height:16px;width:170px;margin-top:4px" id="dlg_filterColumns" onkeyup="filterSelect($j('#dlg_${inputParam.name}')[0], this);"></p>
                 </c:when>
                 <c:when test="${inputParam.type eq 'MULTI_PICKLIST'}">
                     <p>${inputParam.label} <span id="showAllToggle_${inputParam.name}" data-show-all="true" onclick="toggleParamListShowAll(this,'dlg_${inputParam.name}');" style="display: inline-block; width: 18px; height:18px; padding: 0px; border-width:0px; background-image: url('/Mercury/images/ui-icons_2e83ff_256x240.png'); background-repeat: no-repeat; background-position: -64px -128px;"> </span><br/>

@@ -43,12 +43,12 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Fundi
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
@@ -726,7 +726,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     public boolean isRegulatoryInfoEditAllowed(RegulatoryInfo regulatoryInfo) {
         OrspProject orspProject = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
-        return !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
+        return !getUserBean().isViewer() && !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
     }
 
     /**
@@ -964,9 +964,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
         List<SubmissionDto> selectedSubmissions = new ArrayList<>();
         if (!errors) {
-
-
-            for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject, this)) {
+            populateSubmissionSamples(false);
+            for (SubmissionDto submissionDto : submissionSamples) {
                 if (tupleToSampleMap.containsKey(submissionDto.getSubmissionTuple())) {
                     // All required data are in the submissionDto
                     selectedSubmissions.add(submissionDto);
@@ -988,7 +987,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                         researchProjectEjb
                                 .processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
                                         selectedSubmissions, submissionRepository, submissionLibraryDescriptor);
-                updateUuid(selectedSubmissions);
                 addMessage("The selected samples for submission have been successfully posted to ''{0}''. " +
                            "See the Submission Requests tab for further details",
                     submissionsService.findRepositoryByKey(selectedSubmissionRepository).getDescription());
@@ -998,6 +996,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             } catch (SessionCacheException e) {
                 log.error("Error accessing cache", e);
             }
+            updateUuid(selectedSubmissions);
         }
         return new ForwardResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject)
@@ -1009,7 +1008,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     /**
-     * Update the actionBean's UUIDs with values in provided selectedSubmissons
+     * Update the actionBean's UUIDs with values in provided selectedSubmissions
      */
     private void updateUuid(List<SubmissionDto> selectedSubmissions) {
         populateSubmissionSamples(false);

@@ -11,7 +11,6 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
@@ -50,6 +49,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The Billing Adaptor was derived to provide the ability to provide singular interface calls related to billingEJB
@@ -64,10 +64,9 @@ public class BillingAdaptor implements Serializable {
 
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
     public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
+    public static final String BILLING_CREDIT_REQUESTED_INDICATOR = "Credit Requested";
 
     private BillingEjb billingEjb;
-
-    private BillingSessionDao billingSessionDao;
 
     private PriceListCache priceListCache;
 
@@ -86,14 +85,16 @@ public class BillingAdaptor implements Serializable {
 
     private SAPAccessControlEjb sapAccessControlEjb;
 
+    public static final String NEGATIVE_BILL_ERROR =
+        "Attempt to create billing credit when sample has not been billed.";
+
     @Inject
-    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
+    public BillingAdaptor(BillingEjb billingEjb, PriceListCache priceListCache,
                           QuoteService quoteService, BillingSessionAccessEjb billingSessionAccessEjb,
                           SapIntegrationService sapService,
                           SAPProductPriceCache productPriceCache,
                           SAPAccessControlEjb sapAccessControlEjb) {
         this.billingEjb = billingEjb;
-        this.billingSessionDao = billingSessionDao;
         this.priceListCache = priceListCache;
         this.quoteService = quoteService;
         this.billingSessionAccessEjb = billingSessionAccessEjb;
@@ -285,13 +286,14 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     BigDecimal replacementMultiplier = null;
+                    double quantityForSAP = item.getQuantityForSAP();
                     if(primaryPriceItemIfReplacementForSAP != null) {
                         BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
                         BigDecimal replacementPrice  = new BigDecimal(price);
 
-                        if(item.getProductOrder().isPriorToSAP1_5()) {
+                        if(item.getProductOrder().isPriorToSAP1_5() && quantityForSAP > 0) {
                             replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN))
-                                    .multiply(BigDecimal.valueOf(item.getQuantityForSAP()))
+                                    .multiply(BigDecimal.valueOf(quantityForSAP))
                                     .setScale(3, BigDecimal.ROUND_DOWN);
                         }
                     }
@@ -372,18 +374,44 @@ public class BillingAdaptor implements Serializable {
 
 
                     if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName())))
-                        && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(), item.getWorkCompleteDate() )
-                        && !item.getProductOrder().getOrderStatus().canPlace()
-                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                        && StringUtils.isBlank(item.getSapItems()))
-                    {
+                       && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(), item.getWorkCompleteDate() )
+                       && !item.getProductOrder().getOrderStatus().canPlace()
+                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                       && StringUtils.isBlank(item.getSapItems())) {
 
-                        if(item.getQuantityForSAP() != 0) {
+                        if (quantityForSAP > 0) {
                             sapBillingId = sapService.billOrder(item, replacementMultiplier, new Date());
+                            result.setSAPBillingId(sapBillingId);
+                            billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
+                                    BillingSession.BILLED_FOR_SAP + " " + BillingSession.BILLED_FOR_QUOTES);
+                        } else {
+                            Set<LedgerEntry> priorSapBillings = new HashSet<>();
+                            item.getBillingCredits().stream()
+                                .filter(ledgerEntry -> ledgerEntry.getPriceItem().equals(item.getPriceItem()))
+                                .forEach(ledgerEntry -> {
+                                    ledgerEntry.getPreviouslyBilled().stream()
+                                        .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId() != null)
+                                        .collect(Collectors.toCollection(() -> priorSapBillings));
+                                });
+
+                            // Negative billing is allowed if the same positive number has been previously billed.
+                            // When this is not the case throw an exception.
+                            double previouslyBilledQty =
+                                priorSapBillings.stream().map(LedgerEntry::getQuantity).mapToDouble(Double::doubleValue)
+                                    .sum();
+                            if (quantityForSAP + previouslyBilledQty < 0) {
+                                result.setErrorMessage(NEGATIVE_BILL_ERROR);
+                                throw new BillingException(NEGATIVE_BILL_ERROR);
+                            } else if (quantityForSAP < 0) {
+                                billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings, billingSession.getCreatedBy());
+                                item.setBillingMessages(BillingSession.BILLING_CREDIT);
+                                sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
+                                result.setSAPBillingId(sapBillingId);
+                                billingEjb
+                                    .updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
+                                        BillingSession.BILLING_CREDIT);
+                            }
                         }
-                        result.setSAPBillingId(sapBillingId);
-                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
-                                BillingSession.BILLED_FOR_SAP + BillingSession.BILLED_FOR_QUOTES);
                         item.getProductOrder().latestSapOrderDetail().addLedgerEntries(item.getLedgerItems());
                     }
 
@@ -420,7 +448,7 @@ public class BillingAdaptor implements Serializable {
                                 .append("The quote for this item may have been successfully sent to the quote server");
                     }
 
-                    log.error(errorMessage + ex.toString());
+                    log.error(errorMessage + ex.toString(), ex);
 
                     item.setBillingMessages(errorMessage + ex.getMessage());
                     result.setErrorMessage(errorMessage + ex.getMessage());

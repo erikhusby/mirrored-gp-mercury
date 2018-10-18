@@ -1,9 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -39,6 +43,10 @@ public class SearchContext {
     private String baseSearchURL;
     private PaginationUtil.Pagination pagination;
     private ResultParamValues columnParams;
+    private JiraConfig jiraConfig;
+    private PriceListCache priceListCache;
+    private QuoteLink quoteLink;
+    private UserBean userBean;
 
     private ResultParamValues rowTraverserParams;
 
@@ -235,6 +243,38 @@ public class SearchContext {
      */
     public ResultParamValues getColumnParams(){
         return columnParams;
+    }
+
+    public UserBean getUserBean() {
+        return userBean;
+    }
+
+    public void setUserBean(UserBean userBean) {
+        this.userBean = userBean;
+    }
+
+    public JiraConfig getJiraConfig() {
+        return jiraConfig;
+    }
+
+    public void setJiraConfig(JiraConfig jiraConfig) {
+        this.jiraConfig = jiraConfig;
+    }
+
+    public PriceListCache getPriceListCache() {
+        return priceListCache;
+    }
+
+    public void setPriceListCache(PriceListCache priceListCache) {
+        this.priceListCache = priceListCache;
+    }
+
+    public QuoteLink getQuoteLink() {
+        return quoteLink;
+    }
+
+    public void setQuoteLink(QuoteLink quoteLink) {
+        this.quoteLink = quoteLink;
     }
 
     public ResultParamValues getRowTraverserParams() {

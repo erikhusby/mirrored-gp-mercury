@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
@@ -204,6 +205,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Column(name = "ANALYZE_UMI")
     private Boolean analyzeUmi = false;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @BatchSize(size = 20)
+    private List<ProductOrder> productOrders = new ArrayList<>();
 
     @Column(name = "BAIT_LOCKED")
     private Boolean baitLocked;
@@ -990,6 +995,5 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             }
         }
         return fee;
-
     }
 }

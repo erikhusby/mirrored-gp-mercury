@@ -10,7 +10,7 @@ import javax.inject.Inject;
  */
 @Dependent
 public class JiraLink {
-    private static final String BROWSE = "/browse/";
+    public static final String BROWSE = "/browse/";
 
     @Inject
     private JiraConfig jiraConfig;
