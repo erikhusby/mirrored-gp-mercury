@@ -142,6 +142,17 @@
                     <c:forEach items="${actionBean.genotypingChipInfo}" var="iterator" varStatus="iteratorStatus">
                         addGenotypingChip('${iterator.left}', '${iterator.middle}', '${iterator.right}');
                     </c:forEach>
+
+                    $j("#reagentDesignKey").prop('disabled', ${not actionBean.editProduct.baitLocked});
+                    $j('#baitLocked').change(function() {
+                        var locked = ($j(this).val() === 'true');
+                        $j("#reagentDesignKey").prop( "disabled", !locked);
+                    });
+                    $j("#createForm").submit(function() {
+                        // We want to keep the old value if available and not set to null, so re-enable before submit.
+                        $j("#reagentDesignKey").prop('disabled', false);
+                        return true;
+                    });
                 }
             );
 
@@ -690,6 +701,17 @@
                         </div>
 
                         <div class="control-group">
+                            <stripes:label for="baitLocked" class="control-label">
+                                Bait Locked
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:select id="baitLocked" name="editProduct.baitLocked">
+                                    <stripes:option value="true">True</stripes:option>
+                                    <stripes:option value="false">False</stripes:option>
+                                </stripes:select>
+                            </div>
+                        </div>
+                        <div class="control-group" id="reagentDesignGroup">
                             <stripes:label for="reagentDesignKey" class="control-label"><abbr title="aka Reagent Design">Bait Design</abbr></stripes:label>
                             <div class="controls">
                                 <stripes:select id="reagentDesignKey" name="editProduct.reagentDesignKey">

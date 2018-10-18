@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -37,6 +38,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -278,6 +280,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "ANALYZE_UMI_OVERRIDE")
     private Boolean analyzeUmiOverride;
 
+    @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
+    private String reagentDesignKey;
+
     @Transient
     private Quote cachedQuote;
 
@@ -485,9 +490,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
         Set<String> sampleNames = new HashSet<>(samples.size());
+        Multimap<String, ProductOrderSample> linkableSamples = HashMultimap.create();
         for (ProductOrderSample productOrderSample : samples) {
             if (!productOrderSample.isHasBspSampleDataBeenInitialized()) {
                 sampleNames.add(productOrderSample.getName());
+                if (productOrderSample.getMercurySample() == null) {
+                    linkableSamples.put(productOrderSample.getName(), productOrderSample);
+                }
             }
         }
         if (sampleNames.isEmpty()) {
@@ -496,20 +505,53 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return;
         }
 
-        // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
+        // Samples created from externally uploaded samples will not have a Mercury Sample link yet
+        // and it needs to be present in order to correctly look up sample data.
+        if (!linkableSamples.isEmpty()) {
+            SampleInstanceEntityDao dao = ServiceAccessUtility.getBean(SampleInstanceEntityDao.class);
+            // Finds Mercury Sample using PDO sample name which may be a Mercury Sample name or a tube barcode.
+            Multimap<String, MercurySample> map = dao.lookupSamplesByIdentifiers(linkableSamples.keySet());
+            for (String identifier : map.keySet()) {
+                if (map.get(identifier).size() > 1) {
+                    List<String> names = new ArrayList<>();
+                    for (MercurySample mercurySample : map.get(identifier)) {
+                        names.add(mercurySample.getSampleKey());
+                    }
+                    throw new RuntimeException("Multiple MercurySamples " + StringUtils.join(names, ", ") +
+                            " are associated with " + identifier);
+                } else if (map.get(identifier).size() == 1) {
+                    // There may be multiple pdo samples having the same name.
+                    for (ProductOrderSample pdoSample : linkableSamples.get(identifier)) {
+                        pdoSample.setMercurySample(map.get(identifier).iterator().next());
+                    }
+                }
+            }
+        }
+
+        // In order to do risk calculation on a new PDO sample the FFPE status is fetched for BSP
+        // samples though it's not needed for Mercury samples.
+        Map<String, MercurySample> pdoSampleToMercurySample = new HashMap<>();
+        for (ProductOrderSample productOrderSample : samples) {
+            MercurySample mercurySample = productOrderSample.getMercurySample();
+            if (mercurySample != null && mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                pdoSampleToMercurySample.put(productOrderSample.getName(), mercurySample);
+            }
+        }
+
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         Map<String, SampleData> sampleDataMap = Collections.emptyMap();
-
         try {
-            sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(samples, bspSampleSearchColumns);
+            // Fetches BSP data by Mercury Sample not PDO Sample which may be a tube barcode.
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(pdoSampleToMercurySample.values(),
+                    bspSampleSearchColumns);
         } catch (BSPLookupException ignored) {
             // not a bsp sample?
         }
-
         // Collect SampleData which we will then use to look up FFPE status.
         List<SampleData> nonNullSampleData = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
-            SampleData sampleData = sampleDataMap.get(sample.getName());
+            MercurySample mercurySample = sample.getMercurySample();
+            SampleData sampleData = mercurySample != null ? sampleDataMap.get(mercurySample.getSampleKey()) : null;
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
             if (sampleData != null) {
@@ -2228,6 +2270,25 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setAnalyzeUmiOverride(boolean analyzeUmiOverride) {
         this.analyzeUmiOverride = analyzeUmiOverride;
+    }
+
+    /**
+     * @return - Reagent Design set on Product if its 'Bait Locked', otherwise check the PDO for override else default
+     * back to whatever the product says.
+     */
+    public String getReagentDesignKey() {
+        if (product != null) {
+            if (product.getBaitLocked()) {
+                return product.getReagentDesignKey();
+            } else {
+                return reagentDesignKey != null ? reagentDesignKey : product.getReagentDesignKey();
+            }
+        }
+        return reagentDesignKey;
+    }
+
+    public void setReagentDesignKey(String reagentDesignKey) {
+        this.reagentDesignKey = reagentDesignKey;
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {

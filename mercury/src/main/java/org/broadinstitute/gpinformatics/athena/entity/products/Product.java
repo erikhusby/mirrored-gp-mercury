@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
@@ -21,8 +22,6 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -210,6 +209,13 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Column(name = "ANALYZE_UMI")
     private Boolean analyzeUmi = false;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @BatchSize(size = 20)
+    private List<ProductOrder> productOrders = new ArrayList<>();
+
+    @Column(name = "BAIT_LOCKED")
+    private Boolean baitLocked;
+
     /**
      * Helper method to allow the quick creation of a new Product based on the contents of an existing product
      *
@@ -238,6 +244,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
         clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
         clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
+        clonedProduct.setBaitLocked(productToClone.getBaitLocked());
         clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
         clonedProduct.setReadLength(productToClone.getReadLength());
         clonedProduct.setInsertSize(productToClone.getInsertSize());
@@ -916,6 +923,17 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.analyzeUmi = analyzeUmi;
     }
 
+    public Boolean getBaitLocked() {
+        if (baitLocked == null) {
+            return true;
+        }
+        return baitLocked;
+    }
+
+    public void setBaitLocked(Boolean baitLocked) {
+        this.baitLocked = baitLocked;
+    }
+
     public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyConfiguration () {
 
         SapIntegrationClientImpl.SAPCompanyConfiguration configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
@@ -981,6 +999,5 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             }
         }
         return fee;
-
     }
 }

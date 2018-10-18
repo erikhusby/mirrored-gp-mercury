@@ -771,9 +771,10 @@ public abstract class TransferTraverserCriteria {
         public TraversalControl evaluateVesselPreOrder(Context context) {
 
             LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+            boolean shouldStop = false;
             if( contextVesselEvent != null ) {
                 if (evaluteVesselEvent(contextVesselEvent, context.getTraversalDirection()) == TraversalControl.StopTraversing) {
-                    return TraversalControl.StopTraversing;
+                    shouldStop = true;
                 }
             } else {
                 // No VesselEvent means we're on starting vessel, process any in place events
@@ -783,12 +784,12 @@ public abstract class TransferTraverserCriteria {
                 }
                 for (LabEvent inPlaceEvent : contextVessel.getInPlaceLabEvents()) {
                     if (evaluateEvent(contextVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
-                        return TraversalControl.StopTraversing;
+                        shouldStop = true;
                     }
                 }
             }
 
-            return TraversalControl.ContinueTraversing;
+            return shouldStop?TraversalControl.StopTraversing:TraversalControl.ContinueTraversing;
         }
 
         private TraversalControl evaluteVesselEvent(LabVessel.VesselEvent contextVesselEvent, TraversalDirection traversalDirection){
@@ -804,34 +805,28 @@ public abstract class TransferTraverserCriteria {
                 targetVessel = contextVesselEvent.getTargetVesselContainer().getEmbedder();
             }
 
-            if( traversalDirection == TraversalDirection.Ancestors ) {
-                for (LabEvent inPlaceEvent : sourceVessel.getInPlaceLabEvents()) {
-                    if (evaluateEvent(sourceVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
-                        return TraversalControl.StopTraversing;
-                    }
-                }
-                if( useTargetVessels ) {
-                    // Some ancestry logic wants the event target vessel
-                    if (evaluateEvent(targetVessel, contextEvent) == TraversalControl.StopTraversing) {
-                        return TraversalControl.StopTraversing;
-                    }
-                } else {
-                    // Ancestor by default uses source vessel
-                    if (evaluateEvent(sourceVessel, contextEvent) == TraversalControl.StopTraversing) {
-                        return TraversalControl.StopTraversing;
-                    }
-                }
-            } else {
+            boolean shouldStop = false;
+            if( useTargetVessels ) {
+                // Some logic wants the event target vessel
                 for (LabEvent inPlaceEvent : targetVessel.getInPlaceLabEvents()) {
                     if (evaluateEvent(targetVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
-                        return TraversalControl.StopTraversing;
+                        shouldStop = true;
                     }
                 }
                 if (evaluateEvent(targetVessel, contextEvent) == TraversalControl.StopTraversing) {
-                    return TraversalControl.StopTraversing;
+                    shouldStop = true;
+                }
+            } else {
+                for (LabEvent inPlaceEvent : sourceVessel.getInPlaceLabEvents()) {
+                    if (evaluateEvent(sourceVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
+                        shouldStop = true;
+                    }
+                }
+                if (evaluateEvent(sourceVessel, contextEvent) == TraversalControl.StopTraversing) {
+                    shouldStop = true;
                 }
             }
-            return TraversalControl.ContinueTraversing;
+            return shouldStop?TraversalControl.StopTraversing:TraversalControl.ContinueTraversing;
         }
 
         private void addVesselForType(LabVessel vessel, LabEvent event){

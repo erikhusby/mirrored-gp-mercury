@@ -9,6 +9,8 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -33,6 +35,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferExcept
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -317,7 +321,7 @@ public abstract class LabVessel implements Serializable {
      * @param labVessels
      */
     public static void loadSampleDataForBuckets(Collection<LabVessel> labVessels) {
-        BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         Map<String, MercurySample> samplesBySampleKey = new HashMap<>();
         for (LabVessel labVessel : labVessels) {
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
@@ -326,9 +330,9 @@ public abstract class LabVessel implements Serializable {
             }
         }
 
-        Map<String, BspSampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(samplesBySampleKey.keySet(),
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(samplesBySampleKey.keySet(),
                 BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
-        for (Map.Entry<String, BspSampleData> sampleDataEntry : sampleDataMap.entrySet()) {
+        for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
             samplesBySampleKey.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
         }
     }
@@ -401,23 +405,16 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Well A01, Lane 3, Region 6 all might
-     * be considered a labeled sub-section
-     * of a lab vessel.  Labels are GUIDs
-     * for LabVessels; no two LabVessels
-     * may share this id.  It's primarily the
-     * barcode on the piece of plastic.
+     * Label is typically the barcode of a lab vessel and must be unique in Mercury.
      */
     public String getLabel() {
         return label;
     }
 
     /**
-     * This is used only for fixups.
-     *
-     * @param label barcode
+     * Warning this method also changes the equals and hashcode of this lab vessel entity.
      */
-    void setLabel(String label) {
+    public void setLabel(String label) {
         this.label = label;
     }
 
@@ -1202,13 +1199,20 @@ public abstract class LabVessel implements Serializable {
             traversalNodes = getDescendants();
         }
 
+        boolean shouldStop = false;
         for( VesselEvent vesselEvent : traversalNodes ) {
             context = TransferTraverserCriteria.buildTraversalNodeContext(vesselEvent, hopCount, traversalDirection);
-            transferTraverserCriteria.evaluateVesselPreOrder(context);
-            evaluateVesselEvent(transferTraverserCriteria,
+            TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVesselPreOrder(context);
+            if (traversalControl == TransferTraverserCriteria.TraversalControl.StopTraversing) {
+                shouldStop = true;
+            }
+            // Finish up handling this hop before stopping
+            if( !shouldStop ) {
+                evaluateVesselEvent(transferTraverserCriteria,
                         traversalDirection,
                         hopCount,
                         vesselEvent);
+            }
             transferTraverserCriteria.evaluateVesselPostOrder(context);
         }
     }

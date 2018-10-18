@@ -16,6 +16,8 @@ public enum Role {
     BillingManager("Mercury-BillingManagers"),
     PipelineManager("Mercury-PipelineAdmins"),
     GPProjectManager("Mercury-GPProjectManagers"),
+    Viewer("Mercury-ViewOnly"),
+    FinanceViewer("Mercury-FinanceViewer"),
     FingerprintWebService(Constants.FINGERPRINT_WEB_SERVICE),
     All("All");
 

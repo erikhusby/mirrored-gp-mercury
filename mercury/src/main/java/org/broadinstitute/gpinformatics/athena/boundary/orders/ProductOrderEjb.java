@@ -962,6 +962,23 @@ public class ProductOrderEjb {
 
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void addAndRemoveSamplesAndBucket(Map<ProductOrder, Set<ProductOrderSample>> mapPdoToSamplesToAdd,
+                                             Map<ProductOrder, Set<ProductOrderSample>> mapPdoToSamplesToRemove)
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
+        for (Map.Entry<ProductOrder, Set<ProductOrderSample>> entry: mapPdoToSamplesToRemove.entrySet()) {
+            ProductOrder productOrder = entry.getKey();
+            Set<ProductOrderSample> productOrderSamples = entry.getValue();
+            removeSamples(productOrder.getJiraTicketKey(), productOrderSamples, MessageReporter.UNUSED);
+        }
+
+        for (Map.Entry<ProductOrder, Set<ProductOrderSample>> entry: mapPdoToSamplesToAdd.entrySet()) {
+            ProductOrder productOrder = entry.getKey();
+            List<ProductOrderSample> productOrderSamples = new ArrayList<>(entry.getValue());
+            addSamples(productOrder.getJiraTicketKey(), productOrderSamples, MessageReporter.UNUSED);
+        }
+    }
+
     public static class NoSuchPDOException extends Exception {
         private static final long serialVersionUID = -5418019063691592665L;
 
@@ -1283,8 +1300,8 @@ public class ProductOrderEjb {
             ccAddrdesses .addAll(currentUserForCC);
         }
 
-        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapShortCloseRecipientEmail(), ccAddrdesses,
-                sapConfig.getSapShortCloseEmailSubject(), body, !isProduction);
+        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapSupportEmail(), ccAddrdesses,
+                sapConfig.getSapShortCloseEmailSubject(), body, !isProduction, true);
     }
 
     /**

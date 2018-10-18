@@ -119,9 +119,11 @@
 
         function validateNumberOfLanes() {
             var numberOfLanes = $j("#numberOfLanes");
+            var lanesFieldDiv = $j("#numberOfLanesDiv");
             var productOrderKey = $j("input[name='productOrder']");
 
-            if (numberOfLanes.length && productOrderKey.val().includes("Draft")) {
+            if (lanesFieldDiv.css('display') !== 'none' && lanesFieldDiv.css("visibility") !== 'hidden' &&
+                lanesFieldDiv.css('opacity') !== 0 && numberOfLanes.length && productOrderKey.val().includes("Draft")) {
                 return confirm(numberOfLanes.val() + " for the total number of lanes on the order\n\n" +
                     "By Clicking 'OK' you are declaring that you wish to accept the entered number of lanes for the entire order.  Do you wish to continue?")
             }
@@ -513,6 +515,22 @@
                         initializeOrderCustomValues();
                         showCustomProductInfoDialog();
                     });
+
+                    <c:choose>
+                        <c:when test="${empty actionBean.editOrder.product}">
+                            $j('#reagentDesignGroup').hide();
+                        </c:when>
+                        <c:otherwise>
+                            <c:choose>
+                                <c:when test="${actionBean.editOrder.product.baitLocked}">
+                                    $j('#reagentDesignGroup').hide();
+                                </c:when>
+                                <c:otherwise>
+                                    $j('#reagentDesignGroup').show();
+                                </c:otherwise>
+                            </c:choose>
+                        </c:otherwise>
+                    </c:choose>
                 }
         );
 
@@ -894,6 +912,10 @@
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
                 $j("#primaryProductListPrice").show();
+            }
+
+            if (!data.baitLocked) {
+                $j('#reagentDesignGroup').show();
             }
             </security:authorizeBlock>
 
@@ -1570,6 +1592,16 @@
                     </div>
                 </div>
 
+                <div class="control-group" id="reagentDesignGroup">
+                    <stripes:label for="reagentDesignKey" class="control-label"><abbr title="aka Reagent Design">Bait Design *</abbr></stripes:label>
+                    <div class="controls">
+                        <stripes:select id="reagentDesignKey" name="editOrder.reagentDesignKey">
+                            <stripes:option value="">Select One</stripes:option>
+                            <stripes:options-collection collection="${actionBean.reagentDesigns}" label="displayName" value="businessKey"/>
+                        </stripes:select>
+                    </div>
+                </div>
+
 
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
                 <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
@@ -1608,7 +1640,7 @@
 
                 <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.requiresLaneCount() ? 'block' : 'none'};">
                     <stripes:label for="numberOfLanes" class="control-label">
-                        Number of Lanes Per Sample
+                        Number of Lanes For the Order
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"

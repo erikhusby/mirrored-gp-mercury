@@ -1046,6 +1046,8 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
@@ -1897,7 +1899,6 @@
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
                     <buttonValue>Cross Check</buttonValue>
-                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1937,7 +1938,6 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
-                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2308,7 +2308,6 @@
                     <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
                     <targetSection>P96_ROWSAB</targetSection>
                     <targetExpectedToExist>true</targetExpectedToExist>
-                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2456,7 +2455,6 @@
                     <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
                     <targetSection>P96_ROWSAB</targetSection>
                     <targetExpectedToExist>true</targetExpectedToExist>
-                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -2530,7 +2528,6 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
-                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -3958,6 +3955,194 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Single Cell SmartSeq</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-04-02T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Single Cell SmartSeq</name>
+                <labEventTypes>SINGLE_CELL_SMART_SEQ_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellSPRIAddition</name>
+                <labEventTypes>SINGLE_CELL_SPRI_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellPolyA</name>
+                <labEventTypes>SINGLE_CELL_POLY_A</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellRT</name>
+                <labEventTypes>SINGLE_CELL_RT</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellWTA</name>
+                <labEventTypes>SINGLE_CELL_WTA</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellWTASpri</name>
+                <labEventTypes>SINGLE_CELL_SPRI</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellElutionTransfer</name>
+                <labEventTypes>SINGLE_CELL_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Pico</name>
+                <labEventTypes>POND_PICO</labEventTypes>
+                <optional>true</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellNormalization</name>
+                <labEventTypes>SINGLE_CELL_NORMALIZATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellTagmentation</name>
+                <labEventTypes>SINGLE_CELL_TAGMENTATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellStopTagmentation</name>
+                <labEventTypes>SINGLE_CELL_STOP_TAGMENTATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellIndexAdapterLigation</name>
+                <labEventTypes>SINGLE_CELL_INDEX_ADAPTER_LIGATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellPooling</name>
+                <labEventTypes>SINGLE_CELL_POOLING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellBulkSPRICleanup</name>
+                <labEventTypes>SINGLE_CELL_BULK_SPRI_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Single Cell 10X</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-04-02T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Single Cell 10X</name>
+                <labEventTypes>SINGLE_CELL_10X_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellEndRepairABase</name>
+                <labEventTypes>SINGLE_CELL_END_REPAIR_ABASE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellATailCleanup</name>
+                <labEventTypes>SINGLE_CELL_ATAIL_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellAdapterLigation</name>
+                <labEventTypes>SINGLE_CELL_ADAPTER_LIGATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellLigationCleanup</name>
+                <labEventTypes>SINGLE_CELL_LIGATION_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellIndexAdapterPCR</name>
+                <labEventTypes>SINGLE_CELL_INDEX_ADAPTER_PCR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellDoubleSidedCleanup</name>
+                <labEventTypes>SINGLE_CELL_DOUBLE_SIDED_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Pico</name>
+                <labEventTypes>POND_PICO</labEventTypes>
+                <optional>true</optional>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Seq Only</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-09-13T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Seq Only</name>
+                <labEventTypes>SEQ_ONLY_BUCKET</labEventTypes>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -4236,6 +4421,26 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
+        <name>gDNA Ultra Low Pass WGS</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>HUMAN_PCR_PLUS</batchJiraIssueType>
+            <effectiveDate>2018-09-22T12:04:23.932-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
+            <workflowProcessDefs>Cell Free Library Construction Hyper Prep UMI</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
         <name>Whole Genome PCR Free HyperPrep</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
@@ -4415,6 +4620,46 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
+        <name>Single Cell SmartSeq</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <effectiveDate>2018-04-02T12:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell SmartSeq</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Single Cell 10X</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <effectiveDate>2018-04-02T12:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell 10X</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
         <name>DNA and RNA from Cell Pellets</name>
         <productWorkflowDefVersions>
             <version>01</version>
@@ -4469,6 +4714,17 @@
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
             <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Seq Only</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXTERNAL_QUANT_AND_SEQ</batchJiraIssueType>
+            <effectiveDate>2018-09-13T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Seq Only</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <sequencingConfigDefs>

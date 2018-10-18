@@ -200,7 +200,6 @@ public class ReworkEjb {
             }
             bucketCandidates.addAll(collectBucketCandidatesThatHaveBSPVessels(sampleCollection));
         }
-
         return bucketCandidates;
     }
 
@@ -226,8 +225,10 @@ public class ReworkEjb {
             if (productOrderSampleCanEnterBucket(sample)) {
                 String sampleKey = sample.getName();
                 String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
-                bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sampleKey,
-                        tubeBarcode, ProductFamily.ProductFamilyInfo.EXOME, null, ""));
+                if (StringUtils.isNotBlank(tubeBarcode)) {
+                    bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sampleKey,
+                            tubeBarcode, ProductFamily.ProductFamilyInfo.EXOME, null, ""));
+                }
             }
         }
         return bucketCandidates;

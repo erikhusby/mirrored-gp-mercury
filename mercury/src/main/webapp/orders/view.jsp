@@ -29,7 +29,7 @@
     <c:set var="columnHeaderPicoRunDate" value="<%= ProductOrderSampleBean.PICO_RUN_DATE %>"/>
     <c:set var="columnHeaderConcentration" value="<%= ProductOrderSampleBean.CONCENTRATION %>"/>
     <c:set var="columnHeaderMaterialType" value="<%= ProductOrderSampleBean.MATERIAL_TYPE %>"/>
-    <c:set var="columnHeaderRackscanMismatch" value="<%= ProductOrderSampleBean.RACKSCAN_MISMATCH %>"/>
+    <c:set var="columnHeaderRackscanMismatch" value="<%= ProductOrderSampleBean.RACKSCAN_MISMATCH_DETAILS %>"/>
     <c:set var="columnHeaderOnRisk" value="<%= ProductOrderSampleBean.ON_RISK %>"/>
     <c:set var="columnHeaderYieldAmount" value="<%= ProductOrderSampleBean.YIELD_AMOUNT %>"/>
     <c:set var="columnHeaderRin" value="<%= ProductOrderSampleBean.RIN %>"/>
@@ -39,7 +39,7 @@
     <c:set var="columnHeaderOnRiskString" value="<%= ProductOrderSampleBean.RISK_STRING %>"/>
     <c:set var="columnHeaderProceedOutOfSpec" value="<%= ProductOrderSampleBean.PROCEED_OOS %>"/>
     <c:set var="columnHeaderStatus" value="<%= ProductOrderSampleBean.STATUS %>"/>
-    <c:set var="columnHeaderCompletelyBilled" value="<%= ProductOrderSampleBean.BILLED %>"/>
+    <c:set var="columnHeaderCompletelyBilled" value="<%= ProductOrderSampleBean.BILLED_DETAILS %>"/>
     <c:set var="columnHeaderComment" value="<%= ProductOrderSampleBean.COMMENT %>"/>
 
 
@@ -245,9 +245,12 @@ $j(document).ready(function () {
                 {"data": "${columnHeaderPDOSampleId}","orderable": false, 'class': 'no-min-width', render:renderCheckbox},
                 {"data": "${columnHeaderPosition}", "title": "${columnHeaderPosition}", 'class': 'no-min-width'},
                 {"data": "${columnHeaderSampleId}", "title": "${columnHeaderSampleId}", "class": "${fn:replace(columnHeaderSampleId,' ','').trim()}", "sType": "html", render: renderSampleLink},
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 {"data": "${columnHeaderCollaboratorSampleId}", "title": "${columnHeaderCollaboratorSampleId}", "class": "${fn:replace(columnHeaderCollaboratorSampleId,' ','').trim()}"},
                 {"data": "${columnHeaderParticipantId}", "title": "${columnHeaderParticipantId}"},
                 {"data": "${columnHeaderCollaboratorParticipantId}", "title": "${columnHeaderCollaboratorParticipantId}"},
+                </security:authorizeBlock>
+
                 {"data": "${columnHeaderShippedDate}", "title": "${columnHeaderShippedDate}"},
                 {"data": "${columnHeaderReceivedDate}", "title": "${columnHeaderReceivedDate}", "class": "${fn:replace(columnHeaderReceivedDate,' ','').trim()}"},
                 {"data": "${columnHeaderSampleType}", "title": "${columnHeaderSampleType}"},
@@ -267,11 +270,11 @@ $j(document).ready(function () {
                 },
                 </c:if>
                 {"data": "${columnHeaderYieldAmount}", "title": "${columnHeaderYieldAmount}"},
-                {"data": "${columnHeaderRackscanMismatch}", "title": "${columnHeaderRackscanMismatch}",render:renderRackscanMismatch},
+                {"data": "${columnHeaderRackscanMismatch}", "title": "${columnHeaderRackscanMismatch}"},
                 {"data": "${columnHeaderOnRiskString}", "title": "${columnHeaderOnRisk}"},
                 {"data": "${columnHeaderProceedOutOfSpec}", "title": "${columnHeaderProceedOutOfSpec}"},
                 {"data": "${columnHeaderStatus}", "title": "${columnHeaderStatus}"},
-                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "boolean", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
+                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}"}
             ],
             "stateSaveCallback": function (settings, data) {
                 var api = new $j.fn.dataTable.Api(settings);
@@ -1256,12 +1259,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <stripes:submit name="validate" value="Validate" style="margin-left: 3px;" class="btn"/>
             </security:authorizeBlock>
 
-            <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-                          beanclass="${actionBean.class.name}" event="edit" class="btn"
-                          style="text-decoration: none !important; margin-left: 10px;">
-                <%=ProductOrderActionBean.EDIT_ORDER%>
-                <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-            </stripes:link>
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
+                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                              beanclass="${actionBean.class.name}" event="edit" class="btn"
+                              style="text-decoration: none !important; margin-left: 10px;">
+                    <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                </stripes:link>
+            </security:authorizeBlock>
 
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
@@ -1677,6 +1682,16 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         </div>
     </div>
 </div>
+<c:if test="${not empty actionBean.editOrder.product and not actionBean.editOrder.product.baitLocked and not empty actionBean.editOrder.reagentDesignKey}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Bait Design</label>
+        <div class="controls">
+            <div class="form-value">
+                    ${actionBean.editOrder.reagentDesignKey}
+            </div>
+        </div>
+    </div>
+</c:if>
 <div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
@@ -1841,9 +1856,13 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 </th>
                 <th width="10">#</th>
                 <th width="90"></th>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
+
                 <th width="110"></th>
                 <th width="60"></th>
                 <th width="110"></th>
+                </security:authorizeBlock>
+
                 <th width="40"></th>
                 <th width="40"></th>
                 <th width="40"></th>

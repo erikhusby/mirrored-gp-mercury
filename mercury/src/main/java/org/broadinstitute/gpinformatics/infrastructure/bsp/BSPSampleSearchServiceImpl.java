@@ -102,12 +102,6 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             throw new RuntimeException(uex);
         }
 
-        // Sample IDs were provided, BSP service should at minimum return the same set of IDs with blank data.
-        // An empty return set represents a service failure
-        if(ret.isEmpty()) {
-            throw new BSPLookupException("BSP sample service failed");
-        }
-
         return ret;
     }
 }

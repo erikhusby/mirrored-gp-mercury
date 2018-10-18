@@ -87,7 +87,7 @@ public final class VarioskanPlateProcessorTwoCurve {
             } else if (brResult.getResult().compareTo(PicoCurve.BROAD_RANGE.getLowestAccurateRead()) > 0) {
                 finalValues.add(brResult);
             } else if (hsResult.isNaN()) {
-                hsResult.setResult(BigDecimal.ZERO);
+                hsResult.setResult(null);
                 finalValues.add(hsResult);
             } else {
                 finalValues.add(hsResult);
