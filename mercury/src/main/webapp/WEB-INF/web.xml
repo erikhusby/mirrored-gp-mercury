@@ -62,7 +62,7 @@
         </init-param>
         <init-param>
             <param-name>referer-pattern</param-name>
-            <param-value>.*localhost.*</param-value>
+            <param-value>.*localhost.*|.*broadinstitute.*</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>
