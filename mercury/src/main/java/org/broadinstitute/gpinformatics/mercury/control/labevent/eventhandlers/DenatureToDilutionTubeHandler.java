@@ -123,7 +123,14 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
             for (LabBatch fctLabBatch : fctBatches) {
                 if (fctTicket.equals(fctLabBatch.getBusinessKey())) {
                     foundTicket = true;
-                    LabBatchStartingVessel startingVessel = findStartingVessel(fctLabBatch, denatureTube, transfer);
+                    String lane = null;
+                    // Only NovaSeq flowcells are known to be loaded from rows in the first column to each lane in order.
+                    if (fctLabBatch.getFlowcellType() != null &&
+                            (fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqFlowcell ||
+                                    fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell)) {
+                        lane = "LANE" + (transfer.getTargetPosition().name().charAt(0) - 'A' + 1);
+                    }
+                    LabBatchStartingVessel startingVessel = findStartingVessel(fctLabBatch, lane, denatureTube);
                     if (startingVessel != null) {
                         if (startingVessel.getDilutionVessel() == null) {
                             startingVessel.setDilutionVessel(dilutionTube);
@@ -150,34 +157,27 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
     }
 
     /**
-     * Returns a labBatchStartingVessel for this FCT batch by looking at the loading tube and its ancestors,
+     * Returns a labBatchStartingVessel for this FCT batch by looking at the event tube and its ancestors,
      * or returns null if none found.
      */
-    private LabBatchStartingVessel findStartingVessel(LabBatch fctLabBatch, LabVessel loadingTube,
-            CherryPickTransfer transfer) {
-
-        boolean mustMatchLane = fctLabBatch.getFlowcellType() != null &&
-                (fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqFlowcell ||
-                        fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell);
+    public static LabBatchStartingVessel findStartingVessel(LabBatch fctLabBatch, String lane, LabVessel eventTube) {
 
         for (LabBatchStartingVessel labBatchStartingVessel : fctLabBatch.getLabBatchStartingVessels()) {
-            boolean tubeMatches = loadingTube.equals(labBatchStartingVessel.getLabVessel());
-            boolean laneMatches = !mustMatchLane || (labBatchStartingVessel.getVesselPosition() != null &&
-                    (transfer.getTargetPosition().name().charAt(0) - 'A' + 1) ==
-                            Integer.parseInt(StringUtils.substringAfter(
-                                    labBatchStartingVessel.getVesselPosition().name(), "LANE")));
+            boolean tubeMatches = eventTube.equals(labBatchStartingVessel.getLabVessel());
+            boolean laneMatches = lane == null || (labBatchStartingVessel.getVesselPosition() != null &&
+                    lane.equals(labBatchStartingVessel.getVesselPosition().name()));
             if (tubeMatches && laneMatches) {
                 return labBatchStartingVessel;
             }
         }
-        if (!loadingTube.getContainers().isEmpty()) {
-            LabVessel tubeFormation = loadingTube.getContainers().iterator().next();
-            List<LabVessel.VesselEvent> ancestors = tubeFormation.getContainerRole().getAncestors(loadingTube);
+        if (!eventTube.getContainers().isEmpty()) {
+            LabVessel tubeFormation = eventTube.getContainers().iterator().next();
+            List<LabVessel.VesselEvent> ancestors = tubeFormation.getContainerRole().getAncestors(eventTube);
             if (ancestors != null && !ancestors.isEmpty()) {
                 LabVessel.VesselEvent vesselEvent = ancestors.get(0);
                 LabVessel ancestorTube = vesselEvent.getSourceLabVessel();
                 // Recursively calls this method on the ancestor tube.
-                return findStartingVessel(fctLabBatch, ancestorTube, transfer);
+                return findStartingVessel(fctLabBatch, lane, ancestorTube);
             }
         }
         return null;

@@ -1676,5 +1676,13 @@
       <addDefaultValue schemaName="mercury" tableName="sample_instance_entity"
 		       columnName="index_type" defaultValue="NONE"/>
     </changeSet>
+    <changeSet id="GPLIM-4711-207" author="epolk">
+      <renameColumn schemaName="mercury" tableName="flowcell_designation"
+		    newColumnName="starting_tube" oldColumnName="loading_tube"/>
+    </changeSet>
+    <changeSet id="GPLIM-4711-208" author="epolk">
+      <renameColumn schemaName="mercury" tableName="flowcell_designation_aud"
+		    newColumnName="starting_tube" oldColumnName="loading_tube"/>
+    </changeSet>
 
 </databaseChangeLog>

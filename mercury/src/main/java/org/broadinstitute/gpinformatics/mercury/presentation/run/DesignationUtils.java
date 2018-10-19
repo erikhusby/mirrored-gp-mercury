@@ -166,7 +166,7 @@ public class DesignationUtils {
                                                              MessageCollection messageCollection) {
         List<LcsetAssignmentDto> lcsetAssignmentDtos = new ArrayList<>();
         for (FlowcellDesignation designation : flowcellDesignations) {
-            Pair<Set<LabBatch>, Set<SampleInstanceV2>> lcsetsSampleInsts = findBestLcsets(designation.getLoadingTube());
+            Pair<Set<LabBatch>, Set<SampleInstanceV2>> lcsetsSampleInsts = findBestLcsets(designation.getStartingTube());
             Set<LabBatch> lcsets = lcsetsSampleInsts.getLeft();
             Set<SampleInstanceV2> sampleInstances = lcsetsSampleInsts.getRight();
             // If there is only one lcset, uses it. If there are multiple lcsets and one of those is the
@@ -178,12 +178,12 @@ public class DesignationUtils {
                 if (lcsets.size() > 1) {
                     // Returns the ambiguous lcset assignment dtos in case it's a good time to
                     // have the user to choose one.
-                    LcsetAssignmentDto assignmentDto = new LcsetAssignmentDto(designation.getLoadingTube(), lcsets);
+                    LcsetAssignmentDto assignmentDto = new LcsetAssignmentDto(designation.getStartingTube(), lcsets);
                     assignmentDto.setDesignationId(designation.getDesignationId());
                     lcsetAssignmentDtos.add(assignmentDto);
                 }
                 messageCollection.addError(String.format(UNKNOWN_LCSET_MSG, designation.getDesignationId(),
-                        designation.getLoadingTube().getLabel()));
+                        designation.getStartingTube().getLabel()));
             } else {
                 Set<BucketEntry> bucketEntries = new HashSet<>();
                 Set<LabVessel> startingVessels = new HashSet<>();
@@ -216,7 +216,7 @@ public class DesignationUtils {
                     controls.remove(bucketEntry.getLabVessel());
                 }
 
-                DesignationDto designationDto = makeDesignationDto(designation.getLoadingTube(),
+                DesignationDto designationDto = makeDesignationDto(designation.getStartingTube(),
                         lcset, bucketEntries, controls, designation);
 
                 caller.getDtos().add(designationDto);
@@ -262,6 +262,9 @@ public class DesignationUtils {
                 }
             } else {
                 productName = "[" + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
+            }
+            if (dto.getIndexType() == null) {
+                dto.setIndexType(FlowcellDesignation.IndexType.NONE);
             }
             productToStartingVessel.put(productName, bucketEntry.getLabVessel().getLabel());
 

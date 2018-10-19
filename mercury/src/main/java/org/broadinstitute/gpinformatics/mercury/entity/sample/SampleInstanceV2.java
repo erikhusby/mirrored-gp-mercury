@@ -565,6 +565,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mercurySamples.add(mercurySample);
             pairedEndRead = sampleInstanceEntity.getPairedEndRead();
             indexType = sampleInstanceEntity.getIndexType();
+            readLength1 = sampleInstanceEntity.getReadLength1();
+            readLength2 = sampleInstanceEntity.getReadLength2();
             indexLength1 = sampleInstanceEntity.getIndexLength1();
             indexLength2 = sampleInstanceEntity.getIndexLength2();
         } else {
@@ -732,7 +734,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     /**
      * Merges DesignedReagent into Reagents
-     *   - as of July 2018 only to support DEV Tagged pooled tubes upload
      */
     private void mergeReagents(ReagentDesign reagentDesign) {
         if (reagentDesign != null) {

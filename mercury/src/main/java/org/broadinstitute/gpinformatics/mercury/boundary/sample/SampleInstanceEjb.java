@@ -332,6 +332,10 @@ public class SampleInstanceEjb {
             if (baitSet == null) {
                 messages.addError("Unknown Bait Reagent '" + walkUpSequencing.getBaitSetName() + "'");
             }
+            if (CollectionUtils.isEmpty(baitSet.getDesignedReagents())) {
+                messages.addError("Unusable Bait Reagent '" + walkUpSequencing.getBaitSetName() +
+                        "' has no Mercury Reagent components.");
+            }
         }
 
         IlluminaFlowcell.FlowcellType sequencerModel = null;

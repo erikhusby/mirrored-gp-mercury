@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -190,13 +189,11 @@ public class ZimsIlluminaRunFactory {
                 sampleIds.add(sampleId);
                 LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
                 if (flowcellDesignation == null) {
-                    // Only need one designation since all of them constituting this flowcell will have been
-                    // grouped by and therefore have the same flowcell parameters.
-                    List<FlowcellDesignation> flowcellDesignations =
-                            flowcellDesignationEjb.getFlowcellDesignations(Collections.singleton(libraryVessel));
-                    if (CollectionUtils.isNotEmpty(flowcellDesignations)) {
-                        flowcellDesignation = flowcellDesignations.get(0);
-                    }
+                    // Gets the flowcell designation from batch starting vessel.
+                    flowcellDesignation = laneSampleInstance.getAllBatchVessels(LabBatch.LabBatchType.FCT).stream().
+                            filter(lbsVessel -> lbsVessel.getFlowcellDesignation() != null).
+                            map(LabBatchStartingVessel::getFlowcellDesignation).
+                            findFirst().orElse(null);
                 }
                 boolean isCrspLane;
                 if (mixedLaneOk && singleBucketEntry != null) {
@@ -372,7 +369,7 @@ public class ZimsIlluminaRunFactory {
             String baitName = null;
             List<String> catNames = new ArrayList<>();
 
-            //If this is an uploaded pooled tube we already have the reagent design
+            // If this is an uploaded library, uses its reagent design.
             if(!sampleInstance.getReagentsDesigns().isEmpty())            {
                 for (ReagentDesign reagentDesign : sampleInstance.getReagentsDesigns()) {
                     indexingSchemeEntity = sampleInstance.getMolecularIndexingScheme();
@@ -545,9 +542,6 @@ public class ZimsIlluminaRunFactory {
             }
         }
 
-        // default to the passed in bait name, but override if there is product specified version.
-        String bait = baitName;
-
         // These items are pulled off the project, product, or SampleInstanceEntity.
         String aligner = null;
         Boolean analyzeUmi = sampleInstanceDto.sampleInstance.getUmisPresent();
@@ -563,6 +557,10 @@ public class ZimsIlluminaRunFactory {
             referenceSequenceVersion = sampleInstanceDto.sampleInstance.getReferenceSequence().getVersion();
         }
 
+        // Uses the bait found in the workflow reagents or from the uploaded library.
+        // If none, takes the one defined on the product order.
+        String bait = baitName;
+
         if (productOrder != null) {
             Product product = productOrder.getProduct();
             if (StringUtils.isBlank(expectedInsertSize) && product.getInsertSize() != null) {
@@ -574,7 +572,6 @@ public class ZimsIlluminaRunFactory {
             if (analysisType == null) {
                 analysisType = product.getAnalysisTypeKey();
             }
-            // If there was no bait on the actual samples, use the one defined on the product or pdo if unlocked.
             if (bait == null) {
                 bait = productOrder.getReagentDesignKey();
             }

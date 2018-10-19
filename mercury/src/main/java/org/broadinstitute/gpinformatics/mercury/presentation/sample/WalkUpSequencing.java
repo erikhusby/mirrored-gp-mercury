@@ -26,9 +26,9 @@ public class WalkUpSequencing implements Serializable {
     private String volume;
     private String concentration;
     private String concentrationUnit;
-    private String indexLength1;
+    private String indexLength;
     private String indexLength2;
-    private String readLength1;
+    private String readLength;
     private String readLength2;
     private String laneQuantity;
     private String comments;
@@ -132,11 +132,15 @@ public class WalkUpSequencing implements Serializable {
     }
 
     public String getReadLength1() {
-        return readLength1;
+        return readLength;
     }
 
-    public void setReadLength1(String readLength1) {
-        this.readLength1 = readLength1;
+    public String getReadLength() {
+        return readLength;
+    }
+
+    public void setReadLength(String readLength) {
+        this.readLength = readLength;
     }
 
     public String getReadLength2() {
@@ -148,11 +152,15 @@ public class WalkUpSequencing implements Serializable {
     }
 
     public String getIndexLength1() {
-        return indexLength1;
+        return indexLength;
     }
 
-    public void setIndexLength1(String indexLength1) {
-        this.indexLength1 = indexLength1;
+    public String getIndexLength() {
+        return indexLength;
+    }
+
+    public void setIndexLength(String indexLength) {
+        this.indexLength = indexLength;
     }
 
     public String getIndexLength2() {
