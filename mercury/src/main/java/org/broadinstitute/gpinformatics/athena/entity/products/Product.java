@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
@@ -21,8 +20,6 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -103,6 +100,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
+
+    @Column(name = "COVERAGE_TYPE_KEY", nullable = true, length = 200)
+    private String coverageTypeKey;
 
 
     @Column(name = "PART_NUMBER")
@@ -240,6 +240,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
         clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
         clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
+        clonedProduct.setCoverageTypeKey(productToClone.getCoverageTypeKey());
         clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
         clonedProduct.setBaitLocked(productToClone.getBaitLocked());
         clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
@@ -517,6 +518,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setReagentDesignKey(String reagentDesignKey) {
         this.reagentDesignKey = reagentDesignKey;
+    }
+
+    public String getCoverageTypeKey() {
+        return coverageTypeKey;
+    }
+
+    public void setCoverageTypeKey(String covereageTypeKey) {
+        this.coverageTypeKey = covereageTypeKey;
     }
 
     public boolean isPdmOrderableOnly() {

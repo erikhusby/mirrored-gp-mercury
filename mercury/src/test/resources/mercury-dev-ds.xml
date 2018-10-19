@@ -1,14 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <datasources xmlns="http://www.jboss.org/ironjacamar/schema"
-             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-			 xsi:schemaLocation="http://www.jboss.org/ironjacamar/schema http://docs.jboss.org/ironjacamar/schema/datasources_1_1.xsd">
-    <datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true" jta="true">
-		<connection-url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</connection-url>
-		<driver-class>oracle.jdbc.OracleDriver</driver-class>
+			 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			 xsi:schemaLocation="
+        http://www.jboss.org/ironjacamar/schema
+        http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
+	<datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true">
+		<connection-url>jdbc:oracle:thin:@192.168.194.58:1521:gpgold</connection-url>
 		<driver>oracle</driver>
 		<security>
 			<user-name>mercury</user-name>
-			<password>mercury_dev</password>
+			<password>guest</password>
+			<!--<password>mercury_local</password>-->
 		</security>
 		<validation>
 			<valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
@@ -17,5 +18,5 @@
 			<stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
 			<exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
 		</validation>
-    </datasource>
+	</datasource>
 </datasources>

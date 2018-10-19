@@ -116,7 +116,7 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
              *      assigned, assign the cherry pick dilution tube to the batch association
              * -- If we find the Batch corresponding to the fct ticket and there is an existing dilution tube currently
              *     assigned, throw an exception
-             * -- If we find the batch corresponding to the fct ticket but we don't find the starting vessel
+             * -- If we find the batch corresponding to the fct ticket but we don't find the starting  vessel
              *     in the lab batch then check against the ancestor normalization tube
              * -- If we do not find any fct tickets associated with the denature, throw an exception that the
              *     association was not previously done

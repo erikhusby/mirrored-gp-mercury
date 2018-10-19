@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.CoverageTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -118,6 +119,9 @@ public class ProductActionBean extends CoreActionBean {
     private AnalysisTypeDao analysisTypeDao;
 
     @Inject
+    private CoverageTypeDao coverageTypeDao;
+
+    @Inject
     private ReagentDesignDao reagentDesignDao;
 
     @Inject
@@ -154,6 +158,8 @@ public class ProductActionBean extends CoreActionBean {
 
     // Map of chip technology to chip names, for populating UI dropdowns.
     private Map<String, SortedSet<String>> availableChipTechnologyAndChipNames = new HashMap<>();
+
+    private List<String> availableCoverageOptions = new ArrayList<>();
 
     @Validate(required = true, on = {SAVE_ACTION})
     private Long productFamilyId;
@@ -238,6 +244,8 @@ public class ProductActionBean extends CoreActionBean {
         }
         productPriceCache.refreshCache();
         availableChipTechnologyAndChipNames = productEjb.findChipFamiliesAndNames();
+
+        availableCoverageOptions = Arrays.asList("15X", "20X", "30X", "60X", "150X");
     }
 
     private void initGenotypingInfo() {
@@ -740,6 +748,27 @@ public class ProductActionBean extends CoreActionBean {
     public Collection<DisplayableItem> getAnalysisTypes() {
         return makeDisplayableItemCollection(analysisTypeDao.findAll());
     }
+
+    /**
+     * Get the list of available analysis types.
+     *
+     * @return List of strings representing the analysis types
+     */
+    public Collection<DisplayableItem> getCoverageTypes() {
+        return makeDisplayableItemCollection(coverageTypeDao.findAll());
+    }
+
+    /**
+     * Get the coverage type.
+     *
+     * @param businessKey the businessKey
+     *
+     * @return UI helper object {@link DisplayableItem} representing the coverage type
+     */
+    public DisplayableItem getCoverageType(String businessKey) {
+        return getDisplayableItemInfo(businessKey, coverageTypeDao);
+    }
+
 
     /**
      * Get the list of research projects for controls.

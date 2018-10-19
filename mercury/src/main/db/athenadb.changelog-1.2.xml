@@ -1353,4 +1353,40 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="jowalsh" id="GPLIM-5831-1">
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-2">
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-3">
+        <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-4">
+        <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-5">
+        <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5831-6">
+        <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
+            <column name="COVERAGE_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

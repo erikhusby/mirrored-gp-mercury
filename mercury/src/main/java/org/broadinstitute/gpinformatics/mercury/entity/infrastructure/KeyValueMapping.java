@@ -25,6 +25,8 @@ public class KeyValueMapping extends AttributeArchetype {
     // The first implementation of a KeyValueMapping.
     public static final String BAIT_PRODUCT_MAPPING = "BaitToProductMapping";
 
+    public static final String COVERAGE_LIST = "CoverageList";
+
     private static final String GENERIC_KEY_VALUE_ATTRIBUTE = "theValue";
 
     // Used by Hibernate.

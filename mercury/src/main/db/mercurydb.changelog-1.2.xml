@@ -1229,4 +1229,43 @@
 /
         </sql>
     </changeSet>
+
+    <changeSet id="GPLIM-5831-1" author="jowalsh">
+        <createTable tableName="COVERAGE_TYPE" schemaName="mercury">
+            <column name="COVERAGE_TYPE_ID" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="COVERAGE_TYPE" columnNames="NAME"
+                             constraintName="uk_coverage_type_name" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-5831-2" author="jowalsh">
+        <createSequence sequenceName="SEQ_COVERAGE_TYPE" schemaName="mercury" startValue="1" incrementBy="10"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-5831-3" author="jowalsh">
+        <createTable tableName="COVERAGE_TYPE_AUD" schemaName="mercury">
+            <column name="COVERAGE_TYPE_ID" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-5831-4" author="jowalsh">
+        <addPrimaryKey schemaName="MERCURY" tableName="COVERAGE_TYPE_AUD"
+                       constraintName="PK_COVERAGE_TYPE_AUD"
+                       columnNames="rev, coverage_type_id"/>
+    </changeSet>
 </databaseChangeLog>
