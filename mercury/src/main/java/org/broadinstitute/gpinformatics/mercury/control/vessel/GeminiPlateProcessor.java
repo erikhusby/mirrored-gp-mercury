@@ -138,7 +138,7 @@ public class GeminiPlateProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex, boolean requiredValuesPresent) {
         try {
             String well = dataRow.get(Headers.WELL.getText());
             VesselPosition vesselPosition = VesselPosition.getByName(well);
@@ -225,14 +225,21 @@ public class GeminiPlateProcessor extends TableProcessor {
         CONCENTRATION("Concentration"),
         MEAN_CONC("MeanConc"),
         CONCENTRATION_BR("Conc with BroadRange"),
-        CONCENTRATION_HS("Conc with HighSense");
+        CONCENTRATION_HS("Conc with HighSense"),
+        RFU_VALUES("RFU_Values"),
+        SD("SD"),
+        CV("CV"),
+        MEAN_CONC_WITH_BR("MeanConc with BR"),
+        MEAN_CONC_WITH_HS("MeanConc with HS"),
+        VALUES("Values"),
+        MEAN_RESULT("MeanResult");
 
         private final String text;
-        private final boolean isString;
+        private final boolean requiredHeader;
 
-        Headers(String text, boolean isString) {
+        Headers(String text, boolean requiredHeader) {
             this.text = text;
-            this.isString = isString;
+            this.requiredHeader = requiredHeader;
         }
 
         Headers(String text) {
@@ -246,7 +253,7 @@ public class GeminiPlateProcessor extends TableProcessor {
 
         @Override
         public boolean isRequiredHeader() {
-            return true;
+            return requiredHeader;
         }
 
         @Override
@@ -261,7 +268,7 @@ public class GeminiPlateProcessor extends TableProcessor {
 
         @Override
         public boolean isStringColumn() {
-            return isString;
+            return true;
         }
 
         /**
