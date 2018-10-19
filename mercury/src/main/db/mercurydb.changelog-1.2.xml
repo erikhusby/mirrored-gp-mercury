@@ -1575,7 +1575,7 @@
     <changeSet id="GPLIM-4712-207" author="epolk">
         <addForeignKeyConstraint constraintName="FK_SMPL_INST_ANALYSIS_TYPE"
                                  baseTableSchemaName="mercury" baseTableName="sample_instance_entity" baseColumnNames="analysis_type"
-             
+
                     referencedTableSchemaName="mercury" referencedTableName="analysis_type" referencedColumnNames="analysis_type_id"/>
     </changeSet>
     <changeSet id="GPLIM-4712-210" author="epolk">
@@ -1632,6 +1632,207 @@
     </changeSet>
     <changeSet id="GPLIM-4712-308" author="epolk">
         <dropColumn tableName="sample_instance_entity_aud" columnName="submit_date"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-5122-1" author="thompson">
+        <createTable tableName="fingerprint" schemaName="mercury">
+            <column name="fingerprint_id" type="number(19,0)">
+                <constraints primaryKey="true" primaryKeyName="PK_FINGERPRINT"/>
+            </column>
+            <column name="date_generated" type="timestamp"/>
+            <column name="disposition" type="varchar2(255)"/>
+            <column name="gender" type="varchar2(255)"/>
+            <column name="genome_build" type="varchar2(255)"/>
+            <column name="match" type="number(1,0)"/>
+            <column name="platform" type="varchar2(255)"/>
+            <column name="mercury_sample" type="number(19,0)"/>
+            <column name="snp_list" type="number(19,0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-5122-2" author="thompson">
+        <createTable tableName="fingerprint_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)"/>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="fingerprint_id" type="number(19,0)"/>
+            <column name="call_confidences" type="varchar2(500)"/>
+            <column name="date_generated" type="timestamp"/>
+            <column name="disposition" type="varchar2(255)"/>
+            <column name="gender" type="varchar2(255)"/>
+            <column name="genome_build" type="varchar2(255)"/>
+            <column name="genotypes" type="varchar2(500)"/>
+            <column name="match" type="number(1,0)"/>
+            <column name="platform" type="varchar2(255)"/>
+            <column name="mercury_sample" type="number(19,0)"/>
+            <column name="snp_list" type="number(19,0)"/>
+        </createTable>
+        <addPrimaryKey tableName="fingerprint_aud" schemaName="mercury" columnNames="rev, fingerprint_id"
+                       constraintName="PK_FINGERPRINT_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_FP_MERCURY_SAMPLE"
+                                 baseTableName="fingerprint" baseColumnNames="mercury_sample"
+                                 referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+    <!-- todo jmt index on mercury_sample -->
+    <changeSet id="GPLIM-5122-4" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_FPA_REV_INFO"
+                                 baseTableName="fingerprint_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-5" author="thompson">
+        <createSequence sequenceName="SEQ_FINGERPRINT" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-5122-6" author="thompson">
+        <createTable tableName="fp_genotype" schemaName="mercury">
+            <column name="fp_genotype_id" type="number(19,0)">
+                <constraints primaryKey="true" primaryKeyName="PK_FP_GENOTYPE"/>
+            </column>
+            <column name="call_confidence" type="number(5,2)"/>
+            <column name="genotype" type="varchar2(255)"/>
+            <column name="fingerprint" type="number(19,0)"/>
+            <column name="snp" type="number(19,0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-5122-7" author="thompson">
+        <createTable tableName="fp_genotype_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)"/>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="fp_genotype_id" type="number(19,0)"/>
+            <column name="call_confidence" type="number(5,2)"/>
+            <column name="genotype" type="varchar2(255)"/>
+            <column name="fingerprint" type="number(19,0)"/>
+            <column name="snp" type="number(19,0)"/>
+        </createTable>
+        <addPrimaryKey tableName="fp_genotype_aud" schemaName="mercury" columnNames="rev, fp_genotype_id"
+                       constraintName="PK_FP_GENOTYPE_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-7-1" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_FPG_FINGERPRINT"
+                                 baseTableName="fp_genotype" baseColumnNames="fingerprint"
+                                 referencedTableName="fingerprint" referencedColumnNames="fingerprint_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-7-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_FPGA_REV_INFO"
+                                 baseTableName="fp_genotype_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-7-4" author="thompson">
+        <createSequence sequenceName="SEQ_FP_GENOTYPE" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-5122-8" author="thompson">
+        <createTable tableName="snp" schemaName="mercury">
+            <column name="snp_id" type="number(19,0)">
+                <constraints primaryKey="true" primaryKeyName="PK_SNP"/>
+            </column>
+            <column name="rs_id" type="varchar2(255)"/>
+            <column name="is_failed" type="number(1,0)"/>
+            <column name="is_gender" type="number(1,0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-5122-9" author="thompson">
+        <createTable tableName="snp_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)"/>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="snp_id" type="number(19,0)"/>
+            <column name="rs_id" type="varchar2(255)"/>
+            <column name="is_failed" type="number(1,0)"/>
+            <column name="is_gender" type="number(1,0)"/>
+        </createTable>
+        <addPrimaryKey tableName="snp_aud" schemaName="mercury" columnNames="rev, snp_id"
+                       constraintName="PK_SNP_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-9-1" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_SA_REV_INFO"
+                                 baseTableName="snp_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-9-2" author="thompson">
+        <createSequence sequenceName="SEQ_SNP" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-7-2" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_FPG_SNP"
+                                 baseTableName="fp_genotype" baseColumnNames="snp"
+                                 referencedTableName="snp" referencedColumnNames="snp_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-5122-10" author="thompson">
+        <createTable tableName="snp_list" schemaName="mercury">
+            <column name="snp_list_id" type="number(19,0)">
+                <constraints primaryKey="true" primaryKeyName="PK_SNP_LIST"/>
+            </column>
+            <column name="name" type="varchar2(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-5122-11" author="thompson">
+        <createTable tableName="snp_list_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)"/>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="snp_list_id" type="number(19,0)"/>
+            <column name="name" type="varchar2(255)"/>
+        </createTable>
+        <addPrimaryKey tableName="snp_list_aud" schemaName="mercury" columnNames="rev, snp_list_id"
+                       constraintName="PK_SNP_LIST_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-11-2" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_SLA_REV_INFO"
+                                 baseTableName="snp_list_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-11-3" author="thompson">
+        <createSequence sequenceName="SEQ_SNP_LIST" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-3-1" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_FP_SNP_LIST"
+                                 baseTableName="fingerprint" baseColumnNames="snp_list"
+                                 referencedTableName="snp_list" referencedColumnNames="snp_list_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-5122-12" author="thompson">
+        <createTable tableName="snp_list_snps" schemaName="mercury">
+            <column name="snp_list" type="number(19,0)"/>
+            <column name="snps" type="number(19,0)"/>
+            <column name="snps_order" type="number(10,0)"/>
+        </createTable>
+        <addPrimaryKey tableName="snp_list_snps" schemaName="mercury" columnNames="snp_list, snps_order"
+                       constraintName="PK_SNP_LIST_SNPS"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-13" author="thompson">
+        <createTable tableName="snp_list_snps_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)"/>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="snp_list" type="number(19,0)"/>
+            <column name="snps" type="number(19,0)"/>
+            <column name="snps_order" type="number(10,0)"/>
+        </createTable>
+        <addPrimaryKey tableName="snp_list_snps_aud" schemaName="mercury" columnNames="rev, snp_list, snps, snps_order"
+                       constraintName="PK_SNP_LIST_SNPS_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-13-1" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_SLS_SNP_LIST"
+                                 baseTableName="snp_list_snps" baseColumnNames="snp_list"
+                                 referencedTableName="snp_list" referencedColumnNames="snp_list_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-13-2" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_SLS_SNP"
+                                 baseTableName="snp_list_snps" baseColumnNames="snps"
+                                 referencedTableName="snp" referencedColumnNames="snp_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-13-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_SLSA_REV_INFO"
+                                 baseTableName="snp_list_snps_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-14" author="thompson">
+        <createIndex schemaName="MERCURY" tableName="FP_GENOTYPE" indexName="IX_FPG_FINGERPRINT">
+            <column name="FINGERPRINT"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-5122-15" author="thompson">
+        <createIndex schemaName="MERCURY" tableName="FINGERPRINT" indexName="IX_FP_MERCURY_SAMPLE">
+            <column name="MERCURY_SAMPLE"/>
+        </createIndex>
     </changeSet>
 
 </databaseChangeLog>

@@ -500,6 +500,26 @@
                                     </transformSchemas>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>FingerprintSchemaGen</id>
+                                <goals>
+                                    <goal>schemagen</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java
+                                        </include>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/run/Finger*Bean.java
+                                        </include>
+                                    </includes>
+                                    <transformSchemas>
+                                        <transformSchema>
+                                            <uri>http://broadinstitute.org/gpinformatics/mercury/fingerprint</uri>
+                                            <toFile>fingerprint.xsd</toFile>
+                                        </transformSchema>
+                                    </transformSchemas>
+                                </configuration>
+                            </execution>
                         </executions>
                     </plugin>
                 </plugins>
@@ -1862,6 +1882,36 @@ nodePrinter.print(webapp)
             <groupId>uk.com.robust-it</groupId>
             <artifactId>cloning</artifactId>
             <version>1.9.5</version>
+        </dependency>
+
+<!-- todo jmt for fingerprint concordance checking
+        <dependency>
+            <groupId>com.github.broadinstitute</groupId>
+            <artifactId>picard</artifactId>
+            <version>2.16.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.broadinstitute</groupId>
+            <artifactId>picard-private</artifactId>
+            <version>1.1</version>
+        </dependency>
+-->
+
+        <dependency>
+            <groupId>com.github.pukkaone</groupId>
+            <artifactId>webappenhance</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
+            <version>1.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.owasp</groupId>
+            <artifactId>csrfguard</artifactId>
+            <version>3.1.0</version>
         </dependency>
     </dependencies>
 

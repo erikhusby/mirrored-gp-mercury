@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.PublicMessageActionBean;
@@ -12,7 +13,10 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.StringTokenizer;
 
 /**
  * AuthorizationFilter is a ServletFilter used to assist the Mercury application with validating whether a users
@@ -33,7 +37,6 @@ public class AuthorizationFilter implements Filter {
      * web deployment descriptor).
      *
      * @param filterConfig Contains all values defined in the deployment descriptor
-     * @throws ServletException
      */
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -47,9 +50,6 @@ public class AuthorizationFilter implements Filter {
     /**
      * Check to see if a user is already authenticated. If not, we redirect to the login page preserving the
      * current page so we can navigate to it once the user has been authenticated.
-     *
-     * @throws IOException
-     * @throws ServletException
      */
     @Override
     public void doFilter(ServletRequest servletRequest,
@@ -59,7 +59,13 @@ public class AuthorizationFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         String pageUri = request.getServletPath();
 
+        // External web services require BASIC authentication.
+        if (request.getRequestURI().startsWith(request.getContextPath() + "/rest/external")) {
+            basicAuth(servletRequest, servletResponse, filterChain);
+            return;
+        }
         if (!excludeFromFilter(pageUri)) {
+            // Everything else is FORM authentication
             log.debug("Checking authentication for: " + pageUri);
 
             if (request.getRemoteUser() == null) {
@@ -79,10 +85,52 @@ public class AuthorizationFilter implements Filter {
     }
 
     /**
+     * Decode request headers that include username and password.
+     */
+    private void basicAuth(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
+            throws IOException {
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+        HttpServletResponse response = (HttpServletResponse) servletResponse;
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null) {
+            StringTokenizer st = new StringTokenizer(authHeader);
+            if (st.hasMoreTokens()) {
+                String basic = st.nextToken();
+
+                if (basic.equalsIgnoreCase("Basic")) {
+                    try {
+                        String credentials = new String(Base64.decodeBase64(st.nextToken()), "UTF-8");
+                        int p = credentials.indexOf(':');
+                        if (p == -1) {
+                            unauthorized(response, "Invalid authentication token");
+                        } else {
+                            String username = credentials.substring(0, p).trim();
+                            String password = credentials.substring(p + 1).trim();
+                            if (request.getRemoteUser() == null || !request.getRemoteUser().equals(username)) {
+                                request.login(username, password);
+                            }
+                            filterChain.doFilter(servletRequest, servletResponse);
+                        }
+                    } catch (ServletException ignored) {
+                        unauthorized(response, "Bad credentials");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException("Couldn't decode authentication", e);
+                    }
+                }
+            }
+        } else {
+            unauthorized(response, "Unauthorized");
+        }
+    }
+
+    private void unauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setHeader("WWW-Authenticate", "Basic realm=\"" + "REST" + "\"");
+        response.sendError(401, message);
+    }
+
+    /**
      * Pages to ignore from the authorization filter.
      *
-     * @param path
-     * @return
      */
     private static boolean excludeFromFilter(String path) {
         return path.startsWith("/rest") ||

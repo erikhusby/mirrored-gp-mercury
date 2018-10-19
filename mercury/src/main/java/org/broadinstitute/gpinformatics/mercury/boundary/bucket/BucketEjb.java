@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 
 import javax.annotation.Nonnull;
@@ -121,7 +120,6 @@ public class BucketEjb {
             Collection<LabVessel> bucketVessels = bucketVesselsEntry.getValue();
             WorkflowBucketDef bucketDef = bucketVesselsEntry.getKey();
             Bucket bucket = findOrCreateBucket(bucketDef.getName());
-            Workflow workflow = bucketVesselsEntry.getKey().getWorkflowForProductOrder(pdo);
             LabEventType bucketEventType = bucketDef.getBucketEventType();
 
             for (LabVessel currVessel : bucketVessels) {
@@ -344,12 +342,13 @@ public class BucketEjb {
      */
     public Map<String, Collection<ProductOrderSample>> addSamplesToBucket(ProductOrder order,
             Collection<ProductOrderSample> samples, ProductWorkflowDefVersion.BucketingSource bucketingSource) {
-        boolean hasWorkflow=false;
-        for (Workflow workflow : order.getProductWorkflows()) {
-            if (hasWorkflow = Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
-                if (hasWorkflow){
-                    break;
-                }
+        boolean hasWorkflow = false;
+        for (String workflow : order.getProductWorkflows()) {
+            ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflowByName(workflow);
+            ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
+            hasWorkflow = !workflowDefVersion.getBuckets().isEmpty();
+            if (hasWorkflow){
+                break;
             }
         }
         if (!hasWorkflow) {
@@ -458,7 +457,7 @@ public class BucketEjb {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         List<Product> possibleProducts = new ArrayList<>();
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            if (productOrderAddOn.getAddOn().getWorkflow() != Workflow.NONE) {
+            if (productOrderAddOn.getAddOn().getWorkflowName() != null) {
                 possibleProducts.add(productOrderAddOn.getAddOn());
             }
         }
@@ -471,8 +470,8 @@ public class BucketEjb {
                 // Avoid unique constraint on bucket lab events
                 localDate = new Date(date.getTime() + offset);
             }
-            if (product.getWorkflow() != Workflow.NONE) {
-                ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflow(product.getWorkflow());
+            if (product.getWorkflowName() != null) {
+                ProductWorkflowDef productWorkflowDef = workflowLoader.load().getWorkflowByName(product.getWorkflowName());
                 workflowDefVersion = productWorkflowDef.getEffectiveVersion();
                 Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
                         workflowDefVersion.getInitialBucket(productOrder, vessels, bucketingSource);
