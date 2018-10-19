@@ -159,8 +159,6 @@ public class ProductActionBean extends CoreActionBean {
     // Map of chip technology to chip names, for populating UI dropdowns.
     private Map<String, SortedSet<String>> availableChipTechnologyAndChipNames = new HashMap<>();
 
-    private List<String> availableCoverageOptions = new ArrayList<>();
-
     @Validate(required = true, on = {SAVE_ACTION})
     private Long productFamilyId;
 
@@ -244,8 +242,6 @@ public class ProductActionBean extends CoreActionBean {
         }
         productPriceCache.refreshCache();
         availableChipTechnologyAndChipNames = productEjb.findChipFamiliesAndNames();
-
-        availableCoverageOptions = Arrays.asList("15X", "20X", "30X", "60X", "150X");
     }
 
     private void initGenotypingInfo() {
