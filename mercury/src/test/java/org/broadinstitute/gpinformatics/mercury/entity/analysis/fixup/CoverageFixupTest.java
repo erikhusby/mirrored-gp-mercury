@@ -51,7 +51,7 @@ public class CoverageFixupTest extends Arquillian {
     }
 
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim5831AddCoverageTypes() throws Exception {
         userBean.loginOSUser();
         utx.begin();
