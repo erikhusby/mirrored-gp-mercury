@@ -319,4 +319,8 @@ public abstract class TableProcessor implements Serializable {
         return headerToColumnIndex;
     }
 
+
+    public boolean quitOnMatch(Collection<String> dataByHeader) {
+        return false;
+    }
 }
