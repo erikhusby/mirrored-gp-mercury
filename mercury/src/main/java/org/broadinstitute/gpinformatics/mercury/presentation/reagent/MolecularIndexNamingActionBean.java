@@ -228,7 +228,7 @@ public class MolecularIndexNamingActionBean extends CoreActionBean {
         }
 
         @Override
-        public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+        public void processRowDetails(Map<String, String> dataRow, int dataRowIndex, boolean requiredValuesPresent) {
             // Skips parsing the data if there are header errors.
             if (!hasHeaderError) {
                 validateAndCollectRowData(dataRow, dataRowIndex);

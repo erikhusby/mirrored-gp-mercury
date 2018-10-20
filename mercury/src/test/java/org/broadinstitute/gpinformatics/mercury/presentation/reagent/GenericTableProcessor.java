@@ -31,7 +31,7 @@ public class GenericTableProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int rowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int rowIndex, boolean requiredValuesPresent) {
         List<String> dataValues = new ArrayList<>();
         // Puts data values in a list ordered by header name.
         for (String header : getHeaderNames()) {
