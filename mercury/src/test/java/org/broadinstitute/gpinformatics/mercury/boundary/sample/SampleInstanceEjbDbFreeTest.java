@@ -113,7 +113,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             setReadType("TEST_READ_TYPE");
             setAnalysisType("TEST");
             setLabName("TEST lab");
-            setBaitSetName("TEST_BAIT");
             setReadType("Paried End");
         }}, messages);
 
