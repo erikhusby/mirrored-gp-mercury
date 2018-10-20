@@ -263,7 +263,7 @@
                     <label class="control-label label-form">Workflow</label>
                     <div class="controls">
                         <div class="form-value">
-                        ${actionBean.editProduct.workflow.workflowName}
+                        ${actionBean.editProduct.workflowName}
                         </div>
                     </div>
                 </div>

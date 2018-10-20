@@ -145,8 +145,8 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
         ResearchProject dummy = researchProjectDao.findByTitle("ADHD");
 
-        List<Product> products = productDao.findList(Product.class, Product_.workflowName, Workflow.AGILENT_EXOME_EXPRESS
-                .getWorkflowName());
+        List<Product> products = productDao.findList(Product.class, Product_.workflowName,
+                Workflow.AGILENT_EXOME_EXPRESS);
         assertThat(products, is(not(nullOrEmptyCollection())));
         Product product = products.get(new Random().nextInt(products.size()));
 

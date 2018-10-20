@@ -179,7 +179,7 @@ public class LabBatchResource {
                         if (product.getProductFamily().getName().equals(productFamilyName) ||
                                 // Some array / sequencing combo products are in family "Exome"
                                 productFamilyName.equals(ProductFamily.WHOLE_GENOME_GENOTYPING) &&
-                                        product.getWorkflow().name().contains("INFINIUM")) {
+                                        product.getWorkflowName().toUpperCase().contains("INFINIUM")) {
                             if (productOrderSample.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
                                 productOrders.add(productOrderSample.getProductOrder());
                             }

@@ -7,6 +7,7 @@
 
 <stripes:form beanclass="${actionBean.class.name}">
     <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
+    <input type="hidden" name="<csrf:tokenname/>" value="<csrf:tokenvalue/>"/>
     <div class="form-horizontal span6">
         <c:set var="hasErrors" value="${actionBean.scanErrors!=null}"/>
         <c:choose>

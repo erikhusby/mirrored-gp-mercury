@@ -123,7 +123,9 @@
             $j("#bioProject").tokenInput(
                     "${ctxpath}/projects/project.action?bioProjectAutocomplete=", {
                         hintText: "Type a Study Name",
+                        <enhance:out escapeXml="false">
                         prePopulate: ${actionBean.ensureStringResult(actionBean.bioProjectTokenInput.completeData)},
+                        </enhance:out>
                         tokenDelimiter: "${actionBean.bioProjectTokenInput.separator}",
                         preventDuplicates: true,
                         tokenLimit: 1,
