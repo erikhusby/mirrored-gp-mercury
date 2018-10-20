@@ -298,7 +298,9 @@
                     $j("#owner").tokenInput(
                             "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                 hintText: "Type a name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                                </enhance:out>
                                 tokenLimit: 1,
                                 tokenDelimiter: "${actionBean.owner.separator}",
                                 resultsFormatter: formatInput,
@@ -311,7 +313,9 @@
                                 hintText: "Type a Research Project key or title",
                                 onAdd: updateUIForProjectChoice,
                                 onDelete: updateUIForProjectChoice,
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                                </enhance:out>
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.projectTokenInput.separator}",
                                 tokenLimit: 1,
@@ -325,7 +329,9 @@
                                 onDelete: updateUIForProductChoice,
                                 onChange: resetCustomizationChoices,
                                 resultsFormatter: formatInput,
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.productTokenInput.separator}",
                                 tokenLimit: 1,
                                 autoSelectFirstResult: true
@@ -334,7 +340,9 @@
                     $j("#kitCollection").tokenInput(
                             "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
                                 hintText: "Search for group and collection",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.getCompleteData(!actionBean.editOrder.draft)) },
+                                </enhance:out>
                                 onAdd: updateUIForCollectionChoice,
                                 onDelete: updateUIForCollectionChoice,
                                 resultsFormatter: formatInput,
@@ -347,7 +355,9 @@
                     $j("#shippingLocation").tokenInput(
                             getShippingLocationURL, {
                                 hintText: "Search for shipping location",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.getCompleteData(!actionBean.editOrder.draft))},
+                                </enhance:out>
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
                                 tokenLimit: 1,
@@ -358,7 +368,9 @@
                     $j("#notificationList").tokenInput(
                             "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
                                 hintText: "Enter a user name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.getCompleteData(!actionBean.editOrder.draft))},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput,
@@ -503,6 +515,22 @@
                         initializeOrderCustomValues();
                         showCustomProductInfoDialog();
                     });
+
+                    <c:choose>
+                        <c:when test="${empty actionBean.editOrder.product}">
+                            $j('#reagentDesignGroup').hide();
+                        </c:when>
+                        <c:otherwise>
+                            <c:choose>
+                                <c:when test="${actionBean.editOrder.product.baitLocked}">
+                                    $j('#reagentDesignGroup').hide();
+                                </c:when>
+                                <c:otherwise>
+                                    $j('#reagentDesignGroup').show();
+                                </c:otherwise>
+                            </c:choose>
+                        </c:otherwise>
+                    </c:choose>
                 }
         );
 
@@ -884,6 +912,10 @@
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
                 $j("#primaryProductListPrice").show();
+            }
+
+            if (!data.baitLocked) {
+                $j('#reagentDesignGroup').show();
             }
             </security:authorizeBlock>
 
@@ -1557,6 +1589,16 @@
                         <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
                                       title="Enter the product name for this order"/>
                         <div id="primaryProductListPrice" ></div>
+                    </div>
+                </div>
+
+                <div class="control-group" id="reagentDesignGroup">
+                    <stripes:label for="reagentDesignKey" class="control-label"><abbr title="aka Reagent Design">Bait Design *</abbr></stripes:label>
+                    <div class="controls">
+                        <stripes:select id="reagentDesignKey" name="editOrder.reagentDesignKey">
+                            <stripes:option value="">Select One</stripes:option>
+                            <stripes:options-collection collection="${actionBean.reagentDesigns}" label="displayName" value="businessKey"/>
+                        </stripes:select>
                     </div>
                 </div>
 

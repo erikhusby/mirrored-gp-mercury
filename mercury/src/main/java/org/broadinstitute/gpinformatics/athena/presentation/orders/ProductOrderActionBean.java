@@ -71,6 +71,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.SquidLink;
@@ -116,6 +117,7 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRang
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
@@ -138,6 +140,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -307,6 +310,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private OrspProjectDao orspProjectDao;
+
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
 
     private SapIntegrationService sapService;
 
@@ -798,6 +804,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (editOrder != null) {
             validateRinScores(editOrder);
+
+            if (editOrder.getProduct() != null) {
+                if (editOrder.getProduct().getBaitLocked() == null || !editOrder.getProduct().getBaitLocked()) {
+                    requireField(editOrder.getReagentDesignKey(), "a reagent design", action);
+                }
+            }
         }
     }
 
@@ -1472,7 +1484,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         if (editOrder == null) {
-            addGlobalValidationError("A PDO named '" + productOrder + "' could not be found.");
+            addGlobalValidationError("A PDO named '" + Encode.forHtml(productOrder) +
+                    "' could not be found.");
             Resolution errorResolution;
 
             try {
@@ -2399,6 +2412,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             productInfo.put("clinicalProduct", productEntity.isClinicalProduct());
             productInfo.put("externalProduct", productEntity.isExternalOnlyProduct());
             productInfo.put("productName", productEntity.getName());
+            productInfo.put("baitLocked", productEntity.getBaitLocked());
             String priceTitle = "researchListPrice";
 
             if(productEntity.isExternalOnlyProduct()) {
@@ -3788,5 +3802,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public Boolean canEditPrice(String units) {
         return StringUtils.equalsIgnoreCase(units, "Sample") && (userBean.isPDMUser() || userBean.isDeveloperUser()) || !StringUtils.equalsIgnoreCase(units, "Sample") ;
+    }
+
+    /**
+     * Get the list of available reagent designs.
+     *
+     * @return List of strings representing the reagent designs
+     */
+    public Collection<DisplayableItem> getReagentDesigns() {
+        return makeDisplayableItemCollection(reagentDesignDao.findAll());
     }
 }

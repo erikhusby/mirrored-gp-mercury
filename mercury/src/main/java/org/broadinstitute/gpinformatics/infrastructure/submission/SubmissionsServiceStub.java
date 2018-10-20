@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 @Stub
@@ -127,7 +128,7 @@ public class SubmissionsServiceStub implements SubmissionsService {
     }
 
     @Override
-    public List<SubmissionTracker> findOrphans(Collection<SubmissionTracker> submissionTrackers) {
+    public List<SubmissionTracker> findOrphans(Map<String, SubmissionTracker> submissionTrackerMap) {
         return Collections.emptyList();
     }
 }

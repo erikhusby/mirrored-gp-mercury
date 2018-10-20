@@ -24,7 +24,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -180,8 +179,7 @@ public class AddReworkActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, ADD_SAMPLE_ACTION})
     public void initWorkflowBuckets() {
         Set<String> bucketNames = new HashSet<>();
-        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-            ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+        for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef workflowBucketDef : workflowVersion.getBuckets()) {
                 if (bucketNames.add(workflowBucketDef.getName())) {

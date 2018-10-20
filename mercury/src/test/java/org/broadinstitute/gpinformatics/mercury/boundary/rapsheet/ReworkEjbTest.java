@@ -499,7 +499,7 @@ public class ReworkEjbTest extends Arquillian {
      * findBucketDef will utilize the WorkflowConfig to return an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef} based
      * on a given workflow definition and and step labEventType
      */
-    public static WorkflowBucketDef findBucketDef(@Nonnull Workflow workflow, @Nonnull LabEventType stepDef) {
+    public static WorkflowBucketDef findBucketDef(@Nonnull String workflow, @Nonnull LabEventType stepDef) {
 
         WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
         assert (workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
@@ -592,7 +592,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
     private Product createProduct(boolean isExomeExpress, ProductFamily productFamily, String name) {
-        Workflow workflow = isExomeExpress ? Workflow.AGILENT_EXOME_EXPRESS : Workflow.WHOLE_GENOME;
+        String workflow = isExomeExpress ? Workflow.AGILENT_EXOME_EXPRESS : Workflow.WHOLE_GENOME;
         Product product = new Product(name,
                                       productFamily,
                                       "Description",
@@ -730,7 +730,7 @@ public class ReworkEjbTest extends Arquillian {
 
         // first set the workflow to something unsupported.  nothing should end up as a candidate.
         for (ProductOrderSample pdoSample : bucketReadySamples1) {
-            pdoSample.getProductOrder().getProduct().setWorkflow(Workflow.WHOLE_GENOME);
+            pdoSample.getProductOrder().getProduct().setWorkflowName(Workflow.WHOLE_GENOME);
         }
         Collection<ReworkEjb.BucketCandidate> candidates = reworkEjb.findBucketCandidates(new ArrayList<>(
                 mapBarcodeToTube.keySet()));
@@ -1471,10 +1471,10 @@ public class ReworkEjbTest extends Arquillian {
 
     private void resetExExProductWorkflow() {
         if (exExProductOrder2 != null) {
-            exExProductOrder2.getProduct().setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+            exExProductOrder2.getProduct().setWorkflowName(Workflow.AGILENT_EXOME_EXPRESS);
         }
         if (exExProductOrder1 != null) {
-            exExProductOrder1.getProduct().setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+            exExProductOrder1.getProduct().setWorkflowName(Workflow.AGILENT_EXOME_EXPRESS);
         }
     }
 

@@ -4,7 +4,6 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
-import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.athena.presentation.filters.CacheFilter;
 import org.scannotation.AnnotationDB;
 import org.scannotation.ClasspathUrlFinder;
@@ -37,15 +36,13 @@ import java.util.Set;
  * </ol>
  */
 public class MercuryConfiguration {
-    Logger log = Logger.getLogger(MercuryConfiguration.class);
-
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
 
     private static final String MERCURY_CONFIG_LOCAL = "/mercury-config-local.yaml";
 
     private static final String MERCURY_STANZA = "mercury";
 
-    private static MercuryConfiguration instance;
+    private static MercuryConfiguration instance = new MercuryConfiguration();
 
     private static String MERCURY_BUILD_INFO;
 
@@ -58,13 +55,13 @@ public class MercuryConfiguration {
 
         public void set(String systemKey, Deployment deployment, AbstractConfig config) {
             if (!map.containsKey(systemKey)) {
-                map.put(systemKey, new EnumMap<Deployment, AbstractConfig>(Deployment.class));
+                map.put(systemKey, new EnumMap<>(Deployment.class));
             }
 
             map.get(systemKey).put(deployment, config);
         }
 
-        public AbstractConfig getConfig(String systemKey, Deployment deployment) {
+        AbstractConfig getConfig(String systemKey, Deployment deployment) {
             if (!map.containsKey(systemKey)) {
                 return null;
             }
@@ -88,13 +85,13 @@ public class MercuryConfiguration {
 
         public void set(String systemKey, Deployment mercuryDeployment, Deployment externalDeployment) {
             if (!map.containsKey(systemKey)) {
-                map.put(systemKey, new EnumMap<Deployment, Deployment>(Deployment.class));
+                map.put(systemKey, new EnumMap<>(Deployment.class));
             }
 
             map.get(systemKey).put(mercuryDeployment, externalDeployment);
         }
 
-        public Deployment getExternalDeployment(String systemKey, Deployment mercuryDeployment) {
+        Deployment getExternalDeployment(String systemKey, Deployment mercuryDeployment) {
             if (!map.containsKey(systemKey)) {
                 return null;
             }
@@ -105,6 +102,10 @@ public class MercuryConfiguration {
 
             return map.get(systemKey).get(mercuryDeployment);
         }
+
+        public void clear() {
+            map.clear();
+        }
     }
 
     // Map of system key ("bsp", "squid", "thrift") to external system Deployments (TEST, QA, PROD) to
@@ -113,7 +114,7 @@ public class MercuryConfiguration {
 
     // Map of system key ("bsp", "squid", "thrift") to *Mercury* Deployments to the corresponding external
     // system Deployment.
-    private ApplicationConnections applicationConnections = new ApplicationConnections();
+    private final ApplicationConnections applicationConnections = new ApplicationConnections();
 
     private String getConfigKey(Class<? extends AbstractConfig> configClass) {
 
@@ -124,9 +125,9 @@ public class MercuryConfiguration {
             // Config class may be a Weld proxy, the only annotation is @ApplicationScoped, try on superclass
             // TODO: JMS Blech! Is this really the best way to do this?
             // The config classes should be ApplicationScoped and initialized once and only once.
-            Class superClass = configClass.getSuperclass();
+            Class<?> superClass = configClass.getSuperclass();
             if( superClass != null ) {
-                annotation = configClass.getSuperclass().getAnnotation(ConfigKey.class);
+                annotation = superClass.getAnnotation(ConfigKey.class);
             }
         }
         if (annotation == null) {
@@ -155,7 +156,7 @@ public class MercuryConfiguration {
 
 
             // Check if we have a ServletContext to determine if running inside the container.
-            URL classPathUrl = (servletContext == null) ?
+            URL classPathUrl = servletContext == null ?
                     // Handle calls when running outside the container.
                     ClasspathUrlFinder.findClassBase(AbstractConfig.class) :
                     // Handle calls when running inside the container.
@@ -195,10 +196,6 @@ public class MercuryConfiguration {
     }
 
     public static MercuryConfiguration getInstance() {
-        if (instance == null) {
-            instance = new MercuryConfiguration();
-        }
-
         return instance;
     }
 
@@ -292,7 +289,7 @@ public class MercuryConfiguration {
                 throw new RuntimeException("Problem reading version file " + versionFilename, ioe);
             } catch (ParseException e) {
                 // Problem parsing the maven build date, use its default one.
-                if ((buildDate != null) && !buildDate.isEmpty()) {
+                if (buildDate != null && !buildDate.isEmpty()) {
                     MERCURY_BUILD_INFO += " built on " + buildDate;
                 }
             } finally {
@@ -371,7 +368,7 @@ public class MercuryConfiguration {
     /* package */
     void clear() {
         externalSystems = new ExternalSystems();
-        applicationConnections = new ApplicationConnections();
+        applicationConnections.clear();
     }
 
     /* package */
@@ -405,33 +402,31 @@ public class MercuryConfiguration {
     public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
         InputStream is = null;
         try {
-            if (!applicationConnections.isInitialized()) {
-                synchronized (this) {
-                    if (!applicationConnections.isInitialized()) {
+            synchronized (applicationConnections) {
+                if (!applicationConnections.isInitialized()) {
 
-                        is = getClass().getResourceAsStream(getConfigPath());
+                    is = getClass().getResourceAsStream(getConfigPath());
 
-                        if (is == null) {
-                            throw new RuntimeException("Cannot find global config file '" + getConfigPath() + "'.");
-                        }
-
-                        Yaml yaml = new Yaml();
-
-                        @SuppressWarnings("unchecked")
-                        Map<String, Map<String, Map<String, String>>> globalConfigDoc =
-                                (Map<String, Map<String, Map<String, String>>>) yaml.load(is);
-
-                        // take local overrides if any
-                        Map<String, Map<String, Map<String, String>>> localConfigDoc = null;
-                        is = getClass().getResourceAsStream(getLocalConfigPath());
-
-                        if (is != null) {
-                            //noinspection unchecked
-                            localConfigDoc = (Map<String, Map<String, Map<String, String>>>) yaml.load(is);
-                        }
-
-                        load(globalConfigDoc, localConfigDoc);
+                    if (is == null) {
+                        throw new RuntimeException("Cannot find global config file '" + getConfigPath() + "'.");
                     }
+
+                    Yaml yaml = new Yaml();
+
+                    @SuppressWarnings("unchecked")
+                    Map<String, Map<String, Map<String, String>>> globalConfigDoc =
+                            (Map<String, Map<String, Map<String, String>>>) yaml.load(is);
+
+                    // take local overrides if any
+                    Map<String, Map<String, Map<String, String>>> localConfigDoc = null;
+                    is = getClass().getResourceAsStream(getLocalConfigPath());
+
+                    if (is != null) {
+                        //noinspection unchecked
+                        localConfigDoc = (Map<String, Map<String, Map<String, String>>>) yaml.load(is);
+                    }
+
+                    load(globalConfigDoc, localConfigDoc);
                 }
             }
 
