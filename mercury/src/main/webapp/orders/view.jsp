@@ -421,7 +421,9 @@ $j(document).ready(function () {
         });
         $sampleDataTable.on('init.dt', updateShowHideButton);
 
+        <enhance:out escapeXml="false">
         var slowColumns = ${actionBean.slowColumns}
+        </enhance:out>
 
             // When the "Show or Hide" button is clicked
             $j(document.body).on("click", "a.buttons-colvis", function (event) {
