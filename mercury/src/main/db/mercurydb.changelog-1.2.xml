@@ -1834,5 +1834,21 @@
             <column name="MERCURY_SAMPLE"/>
         </createIndex>
     </changeSet>
-
+    <changeSet id="GPLIM-5122-16" author="thompson">
+        <createIndex tableName="SNP_AUD" indexName="IX_SA_SNP_ID">
+            <column name="SNP_ID"/>
+        </createIndex>
+        <createIndex tableName="SNP_LIST_AUD" indexName="IX_SLA_SNP_LIST_ID">
+            <column name="SNP_LIST_ID"/>
+        </createIndex>
+        <createIndex tableName="SNP_LIST_SNPS_AUD" indexName="IX_SLSA_SNP_LIST">
+            <column name="SNP_LIST"/>
+        </createIndex>
+        <createIndex tableName="FINGERPRINT_AUD" indexName="IX_FA_FINGERPRINT_ID">
+            <column name="FINGERPRINT_ID"/>
+        </createIndex>
+        <createIndex tableName="FP_GENOTYPE_AUD" indexName="IX_FGA_FP_GENOTYPE_ID">
+            <column name="FP_GENOTYPE_ID"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
