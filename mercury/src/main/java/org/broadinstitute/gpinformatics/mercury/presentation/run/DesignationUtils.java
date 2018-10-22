@@ -260,6 +260,9 @@ public class DesignationUtils {
                 if (dto.getLoadingConc() == null) {
                     dto.setLoadingConc(product.getLoadingConcentration());
                 }
+                if (dto.getIndexType() == null) {
+                    dto.setIndexType(product.getIndexType());
+                }
             } else {
                 productName = "[" + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
             }

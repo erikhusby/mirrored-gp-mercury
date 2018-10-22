@@ -664,7 +664,7 @@
 
                 <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                     <div class="control-group">
-                        <stripes:label for="workflow" class="control-label">
+                        <stripes:label for="`" class="control-label">
                             Workflow
                         </stripes:label>
                         <div class="controls">
@@ -761,6 +761,17 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="pairedEndRead" name="editProduct.pairedEndRead" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="indexType" class="control-label">Index Type</stripes:label>
+                            <div class="controls">
+                                <stripes:select name="editProduct.indexType">
+                                    <stripes:options-enumeration
+                                            enum="org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation.IndexType"
+                                            label="displayName"/>
+                                </stripes:select>
                             </div>
                         </div>
 
