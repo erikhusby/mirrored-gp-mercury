@@ -539,12 +539,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
         }
 
-        if (pdoSampleToMercurySample.isEmpty()) {
-            // This early return is needed to avoid making a unnecessary injection, which could cause
-            // DB Free automated tests to fail.
-            return;
-        }
-
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         Map<String, SampleData> sampleDataMap = Collections.emptyMap();
         try {
@@ -558,7 +552,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         List<SampleData> nonNullSampleData = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
             MercurySample mercurySample = sample.getMercurySample();
-            SampleData sampleData = sampleDataMap.get(mercurySample.getSampleKey());
+            SampleData sampleData = mercurySample != null ? sampleDataMap.get(mercurySample.getSampleKey()) : null;
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
             if (sampleData != null) {
@@ -2055,17 +2049,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      *
      * @return List of all Workflows associated with the ProductOrder
      */
-    public List<Workflow> getProductWorkflows() {
-        List<Workflow> workflows = new ArrayList<>();
+    public List<String> getProductWorkflows() {
+        List<String> workflows = new ArrayList<>();
         for (ProductOrderAddOn addOn : getAddOns()) {
-            Workflow addOnWorkflow = addOn.getAddOn().getWorkflow();
-            if (addOnWorkflow != Workflow.NONE) {
+            String addOnWorkflow = addOn.getAddOn().getWorkflowName();
+            if (addOnWorkflow != null) {
                 workflows.add(addOnWorkflow);
             }
         }
 
-        Workflow workflow = getProduct().getWorkflow();
-        if (workflow != Workflow.NONE) {
+        String workflow = getProduct().getWorkflowName();
+        if (workflow != null) {
             workflows.add(workflow);
         }
         return workflows;

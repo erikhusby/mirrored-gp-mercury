@@ -52,7 +52,7 @@ public class EventEtlDbFreeTest {
     private final String programName = "FlowcellLoader";
     private final long vesselId = 5511223344L;
     private final Date eventDate = new Date(1413676800000L);
-    private final String workflowName = Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName();
+    private final String workflowName = Workflow.AGILENT_EXOME_EXPRESS;
     private final String indexingSchemeName = "Illumina_P5-Bilbo_P7-Frodo";
     private final MolecularIndexingScheme indexingScheme = new MolecularIndexingScheme();
 
@@ -286,10 +286,10 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(pdo.getBusinessKey()).andReturn(pdoName);
         EasyMock.expect(pdo.getCreatedDate()).andReturn(eventDate);
 
-        EasyMock.expect(product.getWorkflow()).andReturn(Workflow.AGILENT_EXOME_EXPRESS);
+        EasyMock.expect(product.getWorkflowName()).andReturn(Workflow.AGILENT_EXOME_EXPRESS);
 
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.PICO_PLATING_BUCKET.getName(),
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), eventDate)).andReturn(wfConfig);
+                Workflow.AGILENT_EXOME_EXPRESS, eventDate)).andReturn(wfConfig);
 
         EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         EasyMock.expect(wfConfig.getProductWorkflowName()).andReturn(workflowName);
@@ -392,7 +392,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(labBatch.getCreatedOn()).andReturn(eventDate).anyTimes();
 
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.SAMPLE_IMPORT.getName(),
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), eventDate)).andReturn(wfConfig);
+                Workflow.AGILENT_EXOME_EXPRESS, eventDate)).andReturn(wfConfig);
 
         EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         EasyMock.expect(wfConfig.getProductWorkflowName()).andReturn(workflowName);
@@ -444,7 +444,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(labBatch.getCreatedOn()).andReturn(eventDate).anyTimes();
 
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.SAMPLE_IMPORT.getName(),
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), eventDate)).andReturn(wfConfig);
+                Workflow.AGILENT_EXOME_EXPRESS, eventDate)).andReturn(wfConfig);
 
         EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         EasyMock.expect(wfConfig.getProductWorkflowName()).andReturn(workflowName);
@@ -496,7 +496,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(pdo.getBusinessKey()).andReturn(pdoName);
 
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.PICO_PLATING_BUCKET.getName(),
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), eventDate)).andReturn(wfConfig);
+                Workflow.AGILENT_EXOME_EXPRESS, eventDate)).andReturn(wfConfig);
 
         EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         EasyMock.expect(wfConfig.getProductWorkflowName()).andReturn(workflowName);
@@ -553,7 +553,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(labBatch.getCreatedOn()).andReturn(eventDate).anyTimes();
 
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.PICO_PLATING_BUCKET.getName(),
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), eventDate)).andReturn(wfConfig);
+                Workflow.AGILENT_EXOME_EXPRESS, eventDate)).andReturn(wfConfig);
 
         EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         EasyMock.expect(wfConfig.getProductWorkflowName()).andReturn(workflowName);

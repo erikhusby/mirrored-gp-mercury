@@ -215,6 +215,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PlateMetadataActionBean"
                                           event="view">Single Cell Metadata Upload</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="molecularIndexNaming"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexNamingActionBean"
+                                          event="view">Make Molecular Index Names</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

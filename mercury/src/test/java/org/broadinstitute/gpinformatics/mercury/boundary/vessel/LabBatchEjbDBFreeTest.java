@@ -206,7 +206,7 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatchWithVessels() throws Exception {
 
         LabBatch testBatch =
-                labBatchEJB.createLabBatch(LabBatch.LabBatchType.WORKFLOW, Workflow.ICE_EXOME_EXPRESS.getWorkflowName(),
+                labBatchEJB.createLabBatch(LabBatch.LabBatchType.WORKFLOW, Workflow.ICE_EXOME_EXPRESS,
                         testLCSetKey,null,null,"","scottmat",new HashSet<>(mapBarcodeToTube.values()),
                         Collections.<LabVessel>emptySet());
         for (LabVessel labVessel : mapBarcodeToTube.values()) {

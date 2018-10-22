@@ -138,7 +138,7 @@ public class BucketEntry {
      * getWorkflows()
      */
     @Transient
-    private Collection<Workflow> workflows = null;
+    private Collection<String> workflows = null;
 
     protected BucketEntry() {
     }
@@ -341,10 +341,10 @@ public class BucketEntry {
     }
 
     @Nonnull
-    private Collection<Workflow> loadWorkflows(WorkflowConfig workflowConfig) {
-        Collection<Workflow> workflows = new HashSet<>();
-        for (Workflow workflow : getProductOrder().getProductWorkflows()) {
-            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
+    private Collection<String> loadWorkflows(WorkflowConfig workflowConfig) {
+        Collection<String> workflows = new HashSet<>();
+        for (String workflow : getProductOrder().getProductWorkflows()) {
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflow);
             for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
                 if (workflowBucketDef.meetsBucketCriteria(labVessel, productOrder)) {
                     workflows.add(workflow);
@@ -359,7 +359,7 @@ public class BucketEntry {
      * @return
      */
     @Nonnull
-    public Collection<Workflow> getWorkflows(WorkflowConfig workflowConfig) {
+    public Collection<String> getWorkflows(WorkflowConfig workflowConfig) {
         if (workflows == null) {
             workflows = loadWorkflows(workflowConfig);
         }

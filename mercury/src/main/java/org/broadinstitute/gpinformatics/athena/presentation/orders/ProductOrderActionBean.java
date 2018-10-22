@@ -139,6 +139,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -1461,7 +1462,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         if (editOrder == null) {
-            addGlobalValidationError("A PDO named '" + productOrder + "' could not be found.");
+            addGlobalValidationError("A PDO named '" + Encode.forHtml(productOrder) +
+                    "' could not be found.");
             Resolution errorResolution;
 
             try {
