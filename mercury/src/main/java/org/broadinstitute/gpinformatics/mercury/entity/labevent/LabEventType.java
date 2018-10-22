@@ -2201,7 +2201,7 @@ public enum LabEventType {
                     new ReagentRequirements[]{new ReagentRequirements("LX1", Pattern.compile("wg.*\\d+.*(-lx1|-LX1)\\b"), 6, false),
                             new ReagentRequirements("LX2", Pattern.compile("wg.*\\d+.*(-lx2|-LX2)\\b"), 6, false),
                             new ReagentRequirements("EML", Pattern.compile("wg.*\\d+.*(-eml|-EML)\\b"), 6, false),
-                            new ReagentRequirements("SML", Pattern.compile("wg.*\\d+.*(-sml|-SM1)\\b"), 6, false),
+                            new ReagentRequirements("SML", Pattern.compile("wg.*\\d+.*(-sml|-SML)\\b"), 6, false),
                             new ReagentRequirements("ATM", Pattern.compile("wg.*\\d+.*(-atm|-ATM)\\b"), 6, false),
                             new ReagentRequirements("RA1", Pattern.compile("wg.*\\d+.*(-ra1|-RA1)\\b"), 1, false),
                             new ReagentRequirements("XC3", Pattern.compile("wg.*\\d+.*(-xc3|-XC3)\\b"), 1, false),
@@ -2209,7 +2209,7 @@ public enum LabEventType {
                             new ReagentRequirements("PB1", Pattern.compile("wg.*\\d+.*(-pb1|-PB1)\\b"), 2, false),
                             new ReagentRequirements("PB2", Pattern.compile("wg.*\\d+.*(-pb2|-PB2)\\b"), 1, false),
                             new ReagentRequirements("FORM20EDTA25", Pattern.compile("\\d{2}[a-zA-Z]\\d{2}[a-zA-Z]\\d{4}"), 1, true),
-                            new ReagentRequirements("ETOH", 1, true)}).
+                            new ReagentRequirements("ETOH", Pattern.compile("\\d{2}[a-zA-Z]\\d{2}[a-zA-Z]\\d{4}"), 1, true)}).
             numEvents(24).machineNames(new String[]{"Rose", "Lily", "Scrappy"}).build(), LibraryType.NONE_ASSIGNED),
     INFINIUM_XSTAIN_HD("InfiniumXStainHD",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -2226,7 +2226,7 @@ public enum LabEventType {
                             new ReagentRequirements("PB1", Pattern.compile("wg.*\\d+.*(-pb1|-PB1)\\b"), 2, false),
                             new ReagentRequirements("PB2", Pattern.compile("wg.*\\d+.*(-pb2|-PB2)\\b"), 1, false),
                             new ReagentRequirements("FORM20EDTA25", Pattern.compile("\\d{2}[a-zA-Z]\\d{2}[a-zA-Z]\\d{4}"), 1, true),
-                            new ReagentRequirements("ETOH", 1, true)}).
+                            new ReagentRequirements("ETOH", Pattern.compile("\\d{2}[a-zA-Z]\\d{2}[a-zA-Z]\\d{4}"), 1, true)}).
             numEvents(24).machineNames(new String[]{"Rose", "Lily", "Scrappy"}).build(), LibraryType.NONE_ASSIGNED),
     INFINIUM_AUTOCALL_SOME_STARTED("InfiniumAutocallSomeStarted",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
