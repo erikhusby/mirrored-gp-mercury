@@ -304,7 +304,9 @@ $j(document).ready(function () {
                 });
             },
             "stateLoadCallback": function (settings, data) {
+                <enhance:out escapeXml="false">
                 var storedJson = '${actionBean.preferenceSaver.tableStateJson}';
+                </enhance:out>
                 var useLocalData = true;
                 if (storedJson && storedJson !== '{}') {
                     // if bad data was stored in the preferences it will cause problems here, so wrap

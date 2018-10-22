@@ -71,7 +71,7 @@ public class MercurySampleFixupTest extends Arquillian {
          * If the need comes to utilize this fixup in production, change the buildMercuryWar parameters accordingly
          */
         return DeploymentBuilder.buildMercuryWar(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "DEV");
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "prod");
     }
 
     @Test(groups = TestGroups.FIXUP, enabled = false)
@@ -520,7 +520,7 @@ public class MercurySampleFixupTest extends Arquillian {
      * SM-H5GZC SM-H5GZC
      * SM-H5GZI SM-H5GZI
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void fixupSupport3907() throws IOException {
         userBean.loginOSUser();
 
