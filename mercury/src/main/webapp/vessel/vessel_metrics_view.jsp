@@ -50,7 +50,9 @@
         <script type="text/javascript">
             $j(document).ready(function () {
                 <c:if test="${actionBean.foundResults}">
+                    <enhance:out escapeXml="false">
                     var platemaps = ${actionBean.metricsTableJson};
+                    </enhance:out>
                     var json = {};
                     json.platemaps = platemaps;
                     console.log(json);
