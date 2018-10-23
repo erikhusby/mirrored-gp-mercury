@@ -41,10 +41,6 @@ public class QueueGrouping {
     @ManyToOne(targetEntity = GenericQueue.class)
     private GenericQueue associatedQueue;
 
-    @JoinColumn(name = "container_vessel_id")
-    @ManyToOne(targetEntity = LabVessel.class)
-    private LabVessel containerVessel;
-
     @OneToMany(mappedBy = "queueGrouping", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private List<QueueEntity> queuedEntities;
@@ -68,8 +64,7 @@ public class QueueGrouping {
     public QueueGrouping() {
     }
 
-    public QueueGrouping(LabVessel containerVessel, String readableText, GenericQueue genericQueue) {
-        this.containerVessel = containerVessel;
+    public QueueGrouping(String readableText, GenericQueue genericQueue) {
         this.queueGroupingText = readableText;
         this.sortOrder = Long.MAX_VALUE;
         this.associatedQueue = genericQueue;
@@ -99,14 +94,6 @@ public class QueueGrouping {
 
     public void setAssociatedQueue(GenericQueue associatedQueue) {
         this.associatedQueue = associatedQueue;
-    }
-
-    public LabVessel getContainerVessel() {
-        return containerVessel;
-    }
-
-    public void setContainerVessel(LabVessel containerVessel) {
-        this.containerVessel = containerVessel;
     }
 
     public List<QueueEntity> getQueuedEntities() {

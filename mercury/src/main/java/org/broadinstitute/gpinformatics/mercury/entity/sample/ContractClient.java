@@ -5,7 +5,7 @@ import java.util.List;
 
 public enum ContractClient {
     MAYO("Mayo Clinic"),
-    KCO("KCO"),
+    KCO("Klarman Cell Observatory"),
     EXTERNAL_CLINICAL_PHARMA("External Pharma Company under NDA"),
     EXTERNAL_NON_CLINICAL_PHARMA("External Pharma Company under NDA non-Clinical");
 

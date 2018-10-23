@@ -1256,17 +1256,10 @@
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_queue_grouping_id" />
             </column>
             <column name="queue_group_text" type="varchar2(200)" />
-            <column name="container_vessel_id" type="number" />
             <column name="queue_id" type="number" />
             <column name="sort_order" type="number" />
             <column name="version" type="number" />
         </createTable>
-    </changeSet>
-    <changeSet id="GPLIM-5743-5" author="pdunlea">
-        <addForeignKeyConstraint constraintName="fk_lab_vessel_queue_group" baseTableSchemaName="mercury"
-                                 baseTableName="queue_grouping" baseColumnNames="container_vessel_id"
-                                 referencedTableSchemaName="mercury" referencedTableName="lab_vessel"
-                                 referencedColumnNames="lab_vessel_id"/>
     </changeSet>
     <changeSet id="GPLIM-5743-6" author="pdunlea">
         <addForeignKeyConstraint constraintName="fk_queue_queue_group" baseTableSchemaName="mercury" baseTableName="queue_grouping"
@@ -1339,6 +1332,68 @@
 
     <changeSet id="GPLIM-5743-16" author="pdunlea">
         <addColumn tableName="queue_grouping" schemaName="mercury">
+            <column name="queue_priority_type" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-17" author="pdunlea">
+        <createTable schemaName="mercury" tableName="queue_aud">
+            <column name="queue_id" type="number">
+                <constraints nullable="false" />
+            </column>
+            <column name="queue_type" type="varchar2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="queue_name" type="varchar2(255)" />
+            <column name="queue_description" type="varchar2(500)" />
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-18" author="pdunlea">
+        <createTable schemaName="mercury" tableName="queue_grouping_aud">
+            <column name="queue_grouping_Id" type="number">
+                <constraints nullable="false" />
+            </column>
+            <column name="queue_group_text" type="varchar2(200)" />
+            <column name="queue_id" type="number" />
+            <column name="sort_order" type="number" />
+            <column name="version" type="number" />
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-19" author="pdunlea">
+        <createTable schemaName="mercury" tableName="queue_entity_aud">
+            <column name="queue_entity_id" type="number">
+                <constraints nullable="false" />
+            </column>
+            <column name="queue_grouping_id" type="number" />
+            <column name="queue_status" type="varchar(255)" />
+            <column name="lab_vessel_id" type="number" />
+            <column name="completed_by" type="number" />
+            <column name="completed_on" type="timestamp" />
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-20" author="pdunlea">
+        <addColumn tableName="queue_grouping_aud" schemaName="mercury">
             <column name="queue_priority_type" type="varchar2(255)" />
         </addColumn>
     </changeSet>

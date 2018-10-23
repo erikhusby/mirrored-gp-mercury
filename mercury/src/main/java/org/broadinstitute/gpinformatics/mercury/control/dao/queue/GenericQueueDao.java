@@ -6,10 +6,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue_;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity_;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping_;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
-import org.hibernate.Criteria;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -20,7 +22,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 @Stateful
@@ -32,7 +33,7 @@ public class GenericQueueDao extends GenericDao {
         return findSingle(GenericQueue.class, GenericQueue_.queueType, queueType);
     }
 
-    public List<QueueEntity> findEntitiesByVesselIds(List<Long> vesselIds) {
+    public List<QueueEntity> findActiveEntitiesByVesselIds(QueueType queueType, List<Long> vesselIds) {
         if (CollectionUtils.isEmpty(vesselIds)) {
             return new ArrayList<>();
         }
@@ -41,7 +42,28 @@ public class GenericQueueDao extends GenericDao {
             public void callback(CriteriaQuery<QueueEntity> criteriaQuery, Root<QueueEntity> root) {
                 CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
                 Path<LabVessel> labVesselPath = root.get(QueueEntity_.labVessel);
-                criteriaQuery.where(criteriaBuilder.in(labVesselPath.get(LabVessel_.labVesselId)).in(vesselIds));
+                Path<QueueGrouping> queueGroupingPath = root.get(QueueEntity_.queueGrouping);
+                Path<GenericQueue> genericQueuePath = queueGroupingPath.get(QueueGrouping_.associatedQueue);
+                criteriaQuery.where(criteriaBuilder.in(labVesselPath.get(LabVessel_.labVesselId)).in(vesselIds),
+                        criteriaBuilder.equal(genericQueuePath.get(GenericQueue_.queueType), queueType),
+                        criteriaBuilder.equal(root.get(QueueEntity_.queueStatus), QueueStatus.Active));
+            }
+        });
+    }
+
+    public List<QueueEntity> findEntitiesByVesselIds(QueueType queueType, List<Long> vesselIds) {
+        if (CollectionUtils.isEmpty(vesselIds)) {
+            return new ArrayList<>();
+        }
+        return findAll(QueueEntity.class, new GenericDaoCallback<QueueEntity>() {
+            @Override
+            public void callback(CriteriaQuery<QueueEntity> criteriaQuery, Root<QueueEntity> root) {
+                CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+                Path<LabVessel> labVesselPath = root.get(QueueEntity_.labVessel);
+                Path<QueueGrouping> queueGroupingPath = root.get(QueueEntity_.queueGrouping);
+                Path<GenericQueue> genericQueuePath = queueGroupingPath.get(QueueGrouping_.associatedQueue);
+                criteriaQuery.where(criteriaBuilder.in(labVesselPath.get(LabVessel_.labVesselId)).in(vesselIds),
+                        criteriaBuilder.equal(genericQueuePath.get(GenericQueue_.queueType), queueType));
             }
         });
     }

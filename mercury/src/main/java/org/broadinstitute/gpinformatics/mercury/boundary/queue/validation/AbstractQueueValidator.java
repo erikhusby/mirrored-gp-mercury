@@ -3,10 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.queue.validation;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
-public abstract class AbstractQueueValidator {
+import java.util.Collection;
+import java.util.Map;
 
-    public abstract void validatePreEnqueue(LabVessel labVessel, MessageCollection messageCollection);
+public interface AbstractQueueValidator {
 
-    public abstract boolean isComplete(LabVessel labVessel, MessageCollection messageCollection);
+    Map<Long, ValidationResult> validatePreEnqueue(Collection<LabVessel> labVessel, MessageCollection messageCollection);
 
+    boolean isComplete(LabVessel labVessel, MessageCollection messageCollection);
 }

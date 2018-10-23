@@ -185,7 +185,6 @@ public class MercurySample extends AbstractSample {
         public abstract boolean sourceSpecificAvailabilityCheck(ProductOrderSample productOrderSample);
 
         public abstract SampleData makeSampleData(MercurySample mercurySample);
-
     }
 
     @Id

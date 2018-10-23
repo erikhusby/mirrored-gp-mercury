@@ -13,5 +13,5 @@ public enum QueuePriority {
     STANDARD,
     EXOME_EXPRESS,
     CLIA,
-    HEIGHTENED
+    ALTERED
 }

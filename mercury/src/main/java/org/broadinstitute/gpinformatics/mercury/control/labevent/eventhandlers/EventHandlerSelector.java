@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -71,6 +72,11 @@ public class EventHandlerSelector {
         case ARRAY_PLATING_DILUTION:
             createLabBatchHandler.handleEvent(targetEvent, stationEvent);
             break;
+        }
+
+        if (targetEvent.getLabEventType() != null && targetEvent.getLabEventType().getResultingMaterialType() != null
+                && targetEvent.getLabEventType().getResultingMaterialType().containsIgnoringCase("dna")) {
+            // TODO: add to pico queue
         }
     }
 

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
+import org.broadinstitute.bsp.client.queue.DequeueingOptions;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.QueueValidationHandler;
@@ -7,10 +8,14 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDa
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping_;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
@@ -23,6 +28,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -48,44 +54,71 @@ public class QueueEjb {
      * Adds either a container lab vessel with its tubes, or a larger list of lab vessels of any type to a queue as a
      * single queue group.  The general intent is for all lab vessels added together to stay together.
      *
-     * @param containerVessel   Container vessel if there is a single container being added.
      * @param vesselList        List of vessels to queue up as a single group.
      * @param readableText      Text displayed on the queue row for this item.  If none is there, default text will be
      *                          provided.  Recommended that if a single container is utilized, you use the barcode of
      *                          the container lab vessel.
      * @param queueType         Type of Queue to add the lab vessels to.
      */
-    public void enqueueLabVessels(@Nullable LabVessel containerVessel, @Nonnull Collection<? extends LabVessel> vesselList,
+    public Long enqueueLabVessels(@Nonnull Collection<LabVessel> vesselList,
                                   @Nonnull QueueType queueType, @Nullable String readableText,
                                   @Nonnull MessageCollection messageCollection) {
-
-        // TODO:  If containerVessel is null, error if readabletext is null.  If containerVessel is not null, and
-        // TODO:  readable text is null, then stilck the barcode from containerVessel into readable text
-
-
-        // TODO:  Verify that the overrides are only done IF it is the first time a vessel is put into the queue.
 
         GenericQueue genericQueue = findQueueByType(queueType);
 
         if (genericQueue.getQueueGroupings() == null) {
             genericQueue.setQueueGroupings(new TreeSet<>(QueueGrouping.BY_SORT_ORDER));
         }
-
-        QueueGrouping queueGrouping = createGroupingAndSetInitialOrder(containerVessel, readableText, genericQueue);
-
-        queueGrouping.setAssociatedQueue(genericQueue);
-        genericQueue.getQueueGroupings().add(queueGrouping);
-
+        Set<Long> vesselIds = new HashSet<>();
         for (LabVessel labVessel : vesselList) {
-            try {
-                queueValidationHandler.validate(labVessel, queueType, messageCollection);
-            } catch (Exception e) {
-                messageCollection.addWarning("Internal error trying to validate " + labVessel.getLabel());
-            }
-            QueueEntity queueEntity = new QueueEntity(queueGrouping, labVessel);
-            queueGrouping.getQueuedEntities().add(queueEntity);
-            persist(queueEntity);
+            vesselIds.add(labVessel.getLabVesselId());
         }
+
+        boolean isUniqueSetOfActiveVessels = true;
+
+        for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {
+            if (queueGrouping.getQueuedEntities().size() == vesselList.size()) {
+                // Make a copy of the vessel ids list so we can try to add all the vessel ids and see if there are any differences
+                Set<Long> verifyingVesselIds = new HashSet<>(vesselIds);
+                for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
+                    // If the status isn't active, already there is a difference so cut out.
+                    if (queueEntity.getQueueStatus() != QueueStatus.Active) {
+                        verifyingVesselIds.clear();
+                        break;
+                    }
+                    // try to add the vessel id - if successful it is different list so we can cut out.
+                    if (verifyingVesselIds.add(queueEntity.getLabVessel().getLabVesselId())) {
+                        break;
+                    }
+                }
+                // Since the # of the entities in the group is the same as the vessels, and the Ids are identical in both
+                // then we know it is a duplicate request and can stop trying to enqueue.
+                if (verifyingVesselIds.size() == vesselList.size()) {
+                    isUniqueSetOfActiveVessels = false;
+                }
+            }
+        }
+
+        if (isUniqueSetOfActiveVessels) {
+            QueueGrouping queueGrouping = createGroupingAndSetInitialOrder(readableText, genericQueue);
+
+            queueGrouping.setAssociatedQueue(genericQueue);
+            genericQueue.getQueueGroupings().add(queueGrouping);
+            try {
+                queueValidationHandler.validate(vesselList, queueType, messageCollection);
+            } catch (Exception e) {
+                messageCollection.addWarning("Internal error trying to validate: " + e.getMessage());
+            }
+            for (LabVessel labVessel : vesselList) {
+
+                QueueEntity queueEntity = new QueueEntity(queueGrouping, labVessel);
+                queueGrouping.getQueuedEntities().add(queueEntity);
+                persist(queueEntity);
+            }
+            return queueGrouping.getQueueGroupingId();
+        }
+
+        return null;
     }
 
     /**
@@ -97,45 +130,32 @@ public class QueueEjb {
      * @param messageCollection     Messages back to the user.
      * @param dequeueingOptions     Dequeueing Options
      */
-    public void dequeueLabVessels(Collection<? extends LabVessel> labVessels, QueueType queueType,
+    public void dequeueLabVessels(Collection<LabVessel> labVessels, QueueType queueType,
                                   MessageCollection messageCollection, DequeueingOptions dequeueingOptions) {
 
-        Iterator<? extends LabVessel> iterator = labVessels.iterator();
-        GenericQueue genericQueue = findQueueByType(queueType);
+        List<Long> labVesselIds = new ArrayList<>();
+        for (LabVessel labVessel : labVessels) {
+            labVesselIds.add(labVessel.getLabVesselId());
+        }
 
-        for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {
-            if (!iterator.hasNext()) {
-                break;
-            }
-            boolean found = false;
-            LabVessel labVessel = iterator.next();
-            if (!queueValidationHandler.isComplete(labVessel, queueType, messageCollection) && dequeueingOptions == DequeueingOptions.DEFAULT_DEQUEUE_RULES) {
-                messageCollection.addWarning(labVessel.getLabel() + " has been denoted as not yet completed" +
+        // Finds all the Active entities by the vessel Ids
+        List<QueueEntity> entitiesByVesselIds = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
+
+        // Check for completeness, then if somplete update status.
+        for (QueueEntity queueEntity : entitiesByVesselIds) {
+            if (!queueValidationHandler.isComplete(queueEntity.getLabVessel(), queueType, messageCollection)
+                            && dequeueingOptions == DequeueingOptions.DEFAULT_DEQUEUE_RULES) {
+                messageCollection.addWarning(queueEntity.getLabVessel().getLabel() + " has been denoted as not yet completed" +
                         " from the " + queueType.getTextName() + " queue.");
-            } else if (queueGrouping.getContainerVessel() != null
-                            && queueGrouping.getContainerVessel().getLabVesselId().equals(labVessel.getLabVesselId())) {
-                messageCollection.addWarning("The lab vessel " + labVessel.getLabel()
-                                           + " is a container vessel and not allowed to be utilized during the"
-                                           + " dequeueing process " + queueType.getTextName() + ".");
             } else {
-                for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
-                    if (queueEntity.getLabVessel().getLabVesselId().equals(labVessel.getLabVesselId())) {
-                        updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Completed);
-                        found = true;
-                        break;
-                    }
-                }
-            }
-            if (!found) {
-                messageCollection.addWarning("The lab vessel " + labVessel.getLabel()
-                        + " was not found in the " + queueType.getTextName() + " queue.");
+                updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Completed);
             }
         }
     }
 
     /**
      * Changes the ordering of the queue to whatever is passed in by the user.
-     *  @param queueGroupingId
+     * @param queueGroupingId
      * @param positionToMoveTo
      * @param queueType             Queue to re-order
      * @param messageCollection
@@ -163,7 +183,7 @@ public class QueueEjb {
             for (QueueGrouping queueGrouping : queueGroupings) {
                 if (positionToMoveTo.longValue() == currentIndex) {
                     queueGroupingBeingMoved.setSortOrder(currentIndex++);
-                    queueGroupingBeingMoved.setQueuePriority(QueuePriority.HEIGHTENED);
+                    queueGroupingBeingMoved.setQueuePriority(QueuePriority.ALTERED);
                 }
 
                 if (!queueGrouping.getQueueGroupingId().equals(queueGroupingId)) {
@@ -205,8 +225,8 @@ public class QueueEjb {
         }
     }
 
-    public QueueGrouping createGroupingAndSetInitialOrder(@Nullable LabVessel containerVessel, @Nullable String readableText, GenericQueue genericQueue) {
-        QueueGrouping queueGrouping = new QueueGrouping(containerVessel, readableText, genericQueue);
+    public QueueGrouping createGroupingAndSetInitialOrder(@Nullable String readableText, GenericQueue genericQueue) {
+        QueueGrouping queueGrouping = new QueueGrouping(readableText, genericQueue);
         persist(queueGrouping);
         genericQueueDao.flush();
         setInitialOrder(queueGrouping);
@@ -219,7 +239,22 @@ public class QueueEjb {
 
             // Find the vessel ids which already have been in the queue.  These would get standard priority.
             List<Long> vesselIds = new ArrayList<>();
-            List<QueueEntity> entitiesByVesselIds = genericQueueDao.findEntitiesByVesselIds(vesselIds);
+            // Grab the vessel is from the queue entity
+            for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
+                vesselIds.add(queueEntity.getLabVessel().getLabVesselId());
+
+                // grab the vessel id from the root mercury samples
+                for (SampleInstanceV2 sampleInstanceV2 : queueEntity.getLabVessel().getSampleInstancesV2()) {
+                    for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
+                        for (LabVessel labVessel : mercurySample.getLabVessel()) {
+                            vesselIds.add(labVessel.getLabVesselId());
+                        }
+                    }
+                }
+            }
+
+            // Find the existing entities
+            List<QueueEntity> entitiesByVesselIds = genericQueueDao.findEntitiesByVesselIds(queueGrouping.getAssociatedQueue().getQueueType(), vesselIds);
 
             Set<Long> uniqueVesselIdsAlreadyInQueue = new HashSet<>();
             for (QueueEntity entity : entitiesByVesselIds) {
@@ -281,5 +316,16 @@ public class QueueEjb {
         if (groupingToMakeLast != null) {
             groupingToMakeLast.setSortOrder(i);
         }
+    }
+
+    public void dequeueLabVessels(LabMetricRun labMetricRun, QueueType queueType, MessageCollection messageCollection) {
+        List<LabVessel> passingLabVessels = new ArrayList<>();
+        for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+            if (labMetric.getLabMetricDecision().getDecision() == LabMetricDecision.Decision.PASS) {
+                passingLabVessels.add(labMetric.getLabVessel());
+            }
+        }
+
+        dequeueLabVessels(passingLabVessels, queueType, messageCollection, DequeueingOptions.OVERRIDE);
     }
 }
