@@ -525,6 +525,10 @@ public class VesselEjb {
                         }
                     }
 
+                    if (decisionType == LabMetricDecision.Decision.PASS && average > 225) {
+                        decisionType = LabMetricDecision.Decision.NORM;
+                    }
+
                     LabMetric labMetric = new LabMetric(quant, metricType, LabMetric.LabUnit.NG_PER_UL,
                             posEntry.getKey().name(), runStarted);
                     LabMetricDecision decision = null;

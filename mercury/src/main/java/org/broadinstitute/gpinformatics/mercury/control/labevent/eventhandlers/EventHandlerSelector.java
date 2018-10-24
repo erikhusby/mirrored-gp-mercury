@@ -1,11 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
+import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.util.Date;
 
 /**
  * BettaLims messages that are processed in mercury are, for the most part, generic.  There is no specific validation
@@ -23,18 +27,20 @@ public class EventHandlerSelector {
     private FlowcellLoadedHandler flowcellLoadedHandler;
     private BspNewRootHandler bspNewRootHandler;
     private CreateLabBatchHandler createLabBatchHandler;
+    private QueueEjb queueEjb;
 
     @Inject
     public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
-            FlowcellMessageHandler flowcellMessageHandler,
-            FlowcellLoadedHandler flowcellLoadedHandler,
-            BspNewRootHandler bspNewRootHandler,
-            CreateLabBatchHandler createLabBatchHandler) {
+                                FlowcellMessageHandler flowcellMessageHandler,
+                                FlowcellLoadedHandler flowcellLoadedHandler,
+                                BspNewRootHandler bspNewRootHandler,
+                                CreateLabBatchHandler createLabBatchHandler, QueueEjb queueEjb) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
         this.bspNewRootHandler = bspNewRootHandler;
         this.createLabBatchHandler = createLabBatchHandler;
+        this.queueEjb = queueEjb;
     }
 
     /**
@@ -76,7 +82,10 @@ public class EventHandlerSelector {
 
         if (targetEvent.getLabEventType() != null && targetEvent.getLabEventType().getResultingMaterialType() != null
                 && targetEvent.getLabEventType().getResultingMaterialType().containsIgnoringCase("dna")) {
-            // TODO: add to pico queue
+
+            MessageCollection messageCollection = new MessageCollection();
+            queueEjb.enqueueLabVessels(targetEvent.getTargetLabVessels(), QueueType.PICO, "Extracted" +
+                    " on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()), messageCollection);
         }
     }
 

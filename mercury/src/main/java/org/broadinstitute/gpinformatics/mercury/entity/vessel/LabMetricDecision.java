@@ -34,7 +34,8 @@ public class LabMetricDecision {
         OVER_THE_CURVE(true),
         TEN_PERCENT_DIFF_REPEAT(true),
         FAIL(true),
-        RISK(true);
+        RISK(true),
+        NORM(true);
 
         private boolean editable;
 

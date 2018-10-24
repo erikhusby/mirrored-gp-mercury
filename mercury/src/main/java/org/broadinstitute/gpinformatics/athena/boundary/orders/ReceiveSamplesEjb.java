@@ -13,10 +13,16 @@ import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValid
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -47,6 +53,8 @@ public class ReceiveSamplesEjb {
     private ProductOrderSampleDao productOrderSampleDao;
     private BSPUserList bspUserList;
     private SampleReceiptResource sampleReceiptResource;
+    private LabVesselDao labVesselDao;
+    private QueueEjb queueEjb;
 
     public ReceiveSamplesEjb() {
     }
@@ -56,12 +64,16 @@ public class ReceiveSamplesEjb {
                              BSPManagerFactory managerFactory,
                              ProductOrderSampleDao productOrderSampleDao,
                              BSPUserList bspUserList,
-                             SampleReceiptResource sampleReceiptResource) {
+                             SampleReceiptResource sampleReceiptResource,
+                             LabVesselDao labVesselDao,
+                             QueueEjb queueEjb) {
         this.receiptService = receiptService;
         this.managerFactory = managerFactory;
         this.productOrderSampleDao = productOrderSampleDao;
         this.bspUserList = bspUserList;
         this.sampleReceiptResource = sampleReceiptResource;
+        this.labVesselDao = labVesselDao;
+        this.queueEjb = queueEjb;
     }
 
     /**
@@ -107,6 +119,18 @@ public class ReceiveSamplesEjb {
                             parentVesselBeans, bspUser.getUsername());
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
                 }
+
+                List<LabVessel> vesselsForPico = new ArrayList<>();
+                List<LabVessel> labVessels = labVesselDao.findBySampleKeyList(sampleIds);
+                labVessels.addAll(labVesselDao.findByBarcodes(sampleIds).values());
+
+                for (LabVessel labVessel : labVessels) {
+                    if (labVessel.isDNA()) {
+                        vesselsForPico.add(labVessel);
+                    }
+                }
+                queueEjb.enqueueLabVessels(vesselsForPico, QueueType.PICO,
+                        "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection);
             }
         }
 
