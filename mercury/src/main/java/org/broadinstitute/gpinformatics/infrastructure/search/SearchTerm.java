@@ -257,6 +257,8 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     private Evaluator<String> uiDisplayOutputExpression;
 
+    private boolean mustEscape = true;
+
     /**
      * Header text (or expression to derive it) for displaying search results.
      * Null if same as name.
@@ -771,6 +773,15 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             return evalPlainTextOutputExpression(value, context);
         }
         return uiDisplayOutputExpression.evaluate(value, context);
+    }
+
+    @Override
+    public boolean mustEscape() {
+        return mustEscape;
+    }
+
+    public void setMustEscape(boolean mustEscape) {
+        this.mustEscape = mustEscape;
     }
 
     @Override
