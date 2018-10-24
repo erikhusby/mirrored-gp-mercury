@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -205,7 +206,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
                 continue;
             } else if ( metricEntry.getValue().size() == 1 ) {
                 LabMetric labMetric = metricEntry.getValue().get(0);
-                barcode = labMetric.getLabVessel().getLabel();
+                barcode = Encode.forHtml(labMetric.getLabVessel().getLabel());
                 position = labMetric.getVesselPosition();
                 metricValue = ColumnValueType.TWO_PLACE_DECIMAL.format( labMetric.getValue(), "" )
                         + " " + labMetric.getUnits().getDisplayName();
@@ -250,7 +251,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
                         metricDate = ColumnValueType.DATE_TIME.format( labMetric.getCreatedDate(), "" );
                     }
 
-                    barcode = barcodeAppend.toString().trim();
+                    barcode = Encode.forHtml(barcodeAppend.toString().trim());
                     position = positionAppend.toString().trim();
                     metricValue = valueAppend.toString().trim();
                 }
@@ -258,7 +259,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
             }
 
             fullHeaderName = metricEntry.getKey() + " " + MetricColumn.BARCODE.getDisplayName();
-            resultCell = new ConfigurableList.Cell(quantHeaders.get(fullHeaderName), barcode, barcode);
+            resultCell = new ConfigurableList.Cell(quantHeaders.get(fullHeaderName), barcode, barcode, false);
             row.addCell(resultCell);
 
             fullHeaderName = metricEntry.getKey() + " " + MetricColumn.POSITION.getDisplayName();

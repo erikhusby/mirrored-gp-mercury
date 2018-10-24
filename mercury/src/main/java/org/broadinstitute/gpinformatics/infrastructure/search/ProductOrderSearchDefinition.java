@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.jetbrains.annotations.NotNull;
+import org.owasp.encoder.Encode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -273,7 +274,7 @@ public class ProductOrderSearchDefinition {
             public Object evaluate(Object entity, SearchContext context) {
                 ProductOrder orderData = (ProductOrder) entity;
 
-                return orderData.getQuoteId();
+                return Encode.forHtml(orderData.getQuoteId());
             }
         });
         // Takes the output of setDisplayValueExpression and wraps the quote ID in an anchor tag to allow the user
@@ -287,11 +288,12 @@ public class ProductOrderSearchDefinition {
                 if(StringUtils.isNotBlank(quoteId)) {
                     quoteLink .append("<a class=\"external\" target=\"QUOTE\" href=\"");
                     quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
-                    quoteLink.append("\">").append(quoteId).append("</a>");
+                    quoteLink.append("\">").append(Encode.forHtml(quoteId)).append("</a>");
                 }
                 return quoteLink.toString();
             }
         });
+        quoteTerm.setMustEscape(false);
         searchTerms.add(quoteTerm);
 
         // Defines the search term for finding PDOs by the Broad user id of the PDOs owner
@@ -389,7 +391,7 @@ public class ProductOrderSearchDefinition {
                 String result = "";
                 final Optional<ResearchProject> researchProject = Optional.ofNullable(order.getResearchProject());
                 if(researchProject.isPresent()) {
-                    result = researchProject.get().getBusinessKey();
+                    result = Encode.forHtml(researchProject.get().getBusinessKey());
                 }
                 return result;
             }
@@ -402,12 +404,14 @@ public class ProductOrderSearchDefinition {
                 String output = (String) entity;
                 String result = "";
                 if(StringUtils.isNotBlank(output)) {
+                    output = Encode.forHtml(output);
                     result = "<a class=\"external\" target=\"new\" href=\"/Mercury/projects/project.action?view=&researchProject="
                     + output + "\">" + output + "</a>";
                 }
                 return result;
             }
         });
+        researchProjectDisplayTerm.setMustEscape(false);
         searchTerms.add(researchProjectDisplayTerm);
 
         // Defines the search term to find product orders by a given set of LCSETs which were created with samples
@@ -442,7 +446,7 @@ public class ProductOrderSearchDefinition {
                         for (LabVessel labVessel : mercurySample1.getLabVessel()) {
                             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                                 for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
-                                    results.add(labBatch.getBatchName());
+                                    results.add(Encode.forHtml(labBatch.getBatchName()));
                                 }
                             }
                         }
@@ -465,6 +469,7 @@ public class ProductOrderSearchDefinition {
 
                 for (String batchName : batchNames) {
 
+                    batchName = Encode.forHtml(batchName);
                     Matcher batchMatch = batchPattern.matcher(batchName);
                     if(batchMatch.find()) {
                         batchMatch.appendReplacement(uiOutput, String.format(jiraBatchLinkFormat,batchMatch.group(), batchName));
@@ -475,6 +480,7 @@ public class ProductOrderSearchDefinition {
                 return uiOutput.toString();
             }
         });
+        lcsetTerm.setMustEscape(false);
         searchTerms.add(lcsetTerm);
         return searchTerms;
     }
@@ -504,8 +510,8 @@ public class ProductOrderSearchDefinition {
             public String evaluate(Object entity, SearchContext context) {
                 ProductOrder order = (ProductOrder) entity;
                 StringBuffer productOrderDisplay = new StringBuffer();
-                productOrderDisplay.append(order.getBusinessKey()).append(" -- ");
-                productOrderDisplay.append(order.getName());
+                productOrderDisplay.append(Encode.forHtml(order.getBusinessKey())).append(" -- ");
+                productOrderDisplay.append(Encode.forHtml(order.getName()));
 
                 return productOrderDisplay.toString();
             }
@@ -535,7 +541,8 @@ public class ProductOrderSearchDefinition {
                     } else {
                         linkText = matchGroup;
                     }
-                    pdoMatch.appendReplacement(pdoLinkOutput, String.format(format, matchGroup, linkText));
+                    pdoMatch.appendReplacement(pdoLinkOutput, String.format(format, Encode.forHtml(matchGroup),
+                            Encode.forHtml(linkText)));
                     pdoMatch.appendTail(pdoLinkOutput);
 
                     pdoLinkOutput.append("</a>");
@@ -544,6 +551,7 @@ public class ProductOrderSearchDefinition {
                 return pdoLinkOutput.toString();
             }
         });
+        pdoJiraTicketTerm.setMustEscape(false);
         searchTerms.add(pdoJiraTicketTerm);
 
         // Defines the search term to find product orders by the sample name of samples with which they are defined
