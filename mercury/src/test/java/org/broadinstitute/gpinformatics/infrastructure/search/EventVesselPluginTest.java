@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -32,6 +33,9 @@ public class EventVesselPluginTest extends Arquillian {
 
     @Inject
     private ConfigurableListFactory configurableListFactory;
+
+    @Inject
+    private UserBean userBean;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -140,6 +144,10 @@ public class EventVesselPluginTest extends Arquillian {
         searchInstance.getPredefinedViewColumns().add("Collaborator Sample ID");
         searchInstance.getPredefinedViewColumns().add("Layout");
         searchInstance.establishRelationships(configurableSearchDef);
+        SearchContext searchContext = new SearchContext();
+        searchContext.setUserBean(userBean);
+        searchContext.setColumnEntityType(ColumnEntity.LAB_VESSEL);
+        searchInstance.setEvalContext(searchContext);
 
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                 searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);

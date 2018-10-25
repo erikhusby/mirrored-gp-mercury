@@ -45,7 +45,7 @@ public class LabMetricProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String barcode = dataRow.get(LabMetricHeaders.BARCODE.getText());
         String metric = dataRow.get(LabMetricHeaders.METRIC.getText());
         String vesselPosition = dataRow.get(LabMetricHeaders.LOCATION.getText());
@@ -66,7 +66,7 @@ public class LabMetricProcessor extends TableProcessor {
                     vesselPosition, metricDate);
             LabVessel metricVessel = labVesselDao.findByIdentifier(barcode);
             if (metricVessel == null) {
-                addDataMessage("Vessel not found for " + barcode, dataRowIndex);
+                addDataMessage("Vessel not found for " + barcode, dataRowNumber);
             } else {
 
                 currentMetric.setLabVessel(metricVessel);
@@ -76,7 +76,7 @@ public class LabMetricProcessor extends TableProcessor {
         } catch (NumberFormatException e) {
             addDataMessage(
                     "Value for quant: " + dataRow.get(LabMetricHeaders.METRIC.getText()) + " is invalid.",
-                    dataRowIndex);
+                    dataRowNumber);
         }
     }
 

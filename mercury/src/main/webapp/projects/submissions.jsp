@@ -123,7 +123,9 @@
             $j("#bioProject").tokenInput(
                     "${ctxpath}/projects/project.action?bioProjectAutocomplete=", {
                         hintText: "Type a Study Name",
+                        <enhance:out escapeXml="false">
                         prePopulate: ${actionBean.ensureStringResult(actionBean.bioProjectTokenInput.completeData)},
+                        </enhance:out>
                         tokenDelimiter: "${actionBean.bioProjectTokenInput.separator}",
                         preventDuplicates: true,
                         tokenLimit: 1,
@@ -367,10 +369,12 @@
 
                 includeAdvancedFilter(oTable, "#submissionSamples");
                 $j('#submissionSamples').one('init', function (event, oSettings, aaData) {
+                    <enhance:out escapeXml="false">
                     $j('#submissionSamples').filterColumn("Current Status", ${actionBean.submissionStatusesJson}, {
                         selectedValues: ${actionBean.preselectedStatusesJson},
                         filteringText: "#columnFilter_filteringText .headerText"
                     });
+                    </enhance:out>
                 });
             }
             });

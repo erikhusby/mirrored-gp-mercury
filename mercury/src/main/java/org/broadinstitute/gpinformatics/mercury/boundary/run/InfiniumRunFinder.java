@@ -110,7 +110,7 @@ public class InfiniumRunFinder implements Serializable {
                         emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
                                 Collections.emptyList(), "[Mercury] Failed to process infinium chip",
                                 "For " + barcode + " with error: " + e.getMessage(),
-                                false);
+                                false, true);
                     }
                 }
             }
@@ -229,7 +229,7 @@ public class InfiniumRunFinder implements Serializable {
         emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
                 Collections.emptyList(),
                 subject, body,
-                false);
+                false, true);
     }
 
     /**

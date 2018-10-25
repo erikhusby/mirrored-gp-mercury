@@ -250,15 +250,25 @@ public enum DisplayExpression {
     COLLABORATOR_SAMPLE_ID(SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
+            
             SampleData sampleData = (SampleData) entity;
-            return sampleData.getCollaboratorsSampleName();
+            String collaboratorsSampleName = "";
+            if (!context.getUserBean().isViewer()) {
+                collaboratorsSampleName = sampleData.getCollaboratorsSampleName();
+            }
+            return collaboratorsSampleName;
         }
     }),
     COLLABORATOR_PARTICIPANT_ID(SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
+
             SampleData sampleData = (SampleData) entity;
-            return sampleData.getCollaboratorParticipantId();
+            String collaboratorParticipantId = "";
+            if (!context.getUserBean().isViewer()) {
+                collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
+            }
+            return collaboratorParticipantId;
         }
     }),
     SAMPLE_TYPE(SampleData.class, new SearchTerm.Evaluator<String>() {
@@ -281,8 +291,7 @@ public enum DisplayExpression {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getOriginalMaterialType();
         }
-    }),
-    ;
+    });
 
     private final Class<?> expressionClass;
     private final SearchTerm.Evaluator<?> evaluator;
