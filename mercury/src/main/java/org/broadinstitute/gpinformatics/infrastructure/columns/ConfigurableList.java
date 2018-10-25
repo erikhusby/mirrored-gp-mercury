@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -370,9 +371,15 @@ public class ConfigurableList {
         private String formattedValue;
 
         Cell(Header header, Comparable<?> sortableValue, String formattedValue) {
+            this(header, sortableValue, formattedValue, true);
+        }
+
+        Cell(Header header, Comparable<?> sortableValue, String formattedValue, boolean xssEncode) {
             this.header = header;
             this.sortableValue = sortableValue;
-            this.formattedValue = formattedValue;
+            if (formattedValue != null) {
+                this.formattedValue = xssEncode ? Encode.forHtml(formattedValue) : formattedValue;
+            }
         }
 
         public Header getHeader() {
@@ -596,7 +603,7 @@ public class ConfigurableList {
             Comparable<?> comparableValue =
                     columnTabulation.evalValueTypeExpression(entity,context)
                         .getComparableValue(currentValue,multiValueDelimiter);
-            Cell cell = new Cell(header, comparableValue, formattedString);
+            Cell cell = new Cell(header, comparableValue, formattedString, columnTabulation.mustEscape());
             row.addCell(cell);
             valueIndex++;
         }
