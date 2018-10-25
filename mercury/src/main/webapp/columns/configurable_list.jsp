@@ -181,7 +181,7 @@
             </c:if>
             <enhance:out escapeXml="false">
                 <c:forEach items="${resultRow.renderableCells}" var="cell">
-                    <td>${fn:replace( cell, CRLF, "<br>" )}</td>
+                    <td><enhance:out escapeXml="false">${fn:replace( cell, CRLF, "<br>" )}</enhance:out></td>
                 </c:forEach>
             </enhance:out>
             <c:if test="${not empty resultList.conditionalCheckboxHeader}">
