@@ -6,6 +6,7 @@ import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.util.Set;
 
 /**
  * The class contains the config settings for the app itself. Use this to generate external links that refer back to
@@ -37,6 +38,8 @@ public class AppConfig extends AbstractConfig implements Serializable {
     private int jmsPort;
 
     private String workflowValidationEmail;
+
+    private Set<String> gpBillingManagers;
 
     public String getUrl() {
         return "https://" + host + ":" + port + "/Mercury/";
@@ -81,6 +84,14 @@ public class AppConfig extends AbstractConfig implements Serializable {
 
     public void setWorkflowValidationEmail(String workflowValidationEmail) {
         this.workflowValidationEmail = workflowValidationEmail;
+    }
+
+    public void setGpBillingManagers(Set<String> gpBillingManagers) {
+        this.gpBillingManagers = gpBillingManagers;
+    }
+
+    public Set<String> getGpBillingManagers() {
+        return gpBillingManagers;
     }
 
     public static AppConfig produce(Deployment deployment) {

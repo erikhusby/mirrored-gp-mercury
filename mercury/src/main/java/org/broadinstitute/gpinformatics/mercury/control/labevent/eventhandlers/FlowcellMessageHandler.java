@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -142,7 +141,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
             String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
             logger.error(emptyBatchListMessage);
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
-                    "[Mercury] Failed update FCT Ticket", emptyBatchListMessage, false);
+                    "[Mercury] Failed update FCT Ticket", emptyBatchListMessage, false, true);
             return batchesToUpdate;
         }
 
@@ -163,7 +162,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
                         flowcell.getLabel() + " to determine which one to update";
                 logger.error(emptyBatchListMessage);
                 emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
-                        "[Mercury] Failed update FCT Ticket", emptyBatchListMessage, false);
+                        "[Mercury] Failed update FCT Ticket", emptyBatchListMessage, false, true);
                 return batchesToUpdate;
             } else {
                 for (Map.Entry<VesselPosition, LabVessel> loadingVesselByPosition : loadedVesselsAndPosition
@@ -187,7 +186,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
             String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
             logger.error(emptyBatchListMessage);
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
-                    "[Mercury] Failed update FCT Ticket", emptyBatchListMessage, false);
+                    "[Mercury] Failed update FCT Ticket", emptyBatchListMessage, false, true);
         }
         return batchesToUpdate;
     }

@@ -13,13 +13,18 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
@@ -64,11 +69,13 @@ import java.util.stream.Collectors;
 @UrlBinding(value = "/view/uploadQuants.action")
 @Dependent // To support injection into PicoToBspContainerTest
 public class UploadQuantsActionBean extends CoreActionBean {
+    private static final Log logger = LogFactory.getLog(UploadQuantsActionBean.class);
 
     public static final String ENTITY_NAME = "LabMetric";
 
     public enum QuantFormat {
         VARIOSKAN("Varioskan"),
+        GEMINI("Gemini"),
         WALLAC("Wallac"),
         CALIPER("Caliper"),
         GENERIC("Generic");
@@ -106,6 +113,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private BSPRestSender bspRestSender;
     @Inject
     private TubeFormationDao tubeFormationDao;
+    @Inject
+    private JiraConfig jiraConfig;
+    @Inject
+    private PriceListCache priceListCache;
+    @Inject
+    private QuoteLink quoteLink;
 
     @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
@@ -142,6 +155,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
         case WALLAC:
             break;
         case CALIPER:
+            break;
+        case GEMINI:
             break;
         case GENERIC:
             MessageCollection messageCollection = new MessageCollection();
@@ -200,6 +215,22 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 addMessages(messageCollection);
                 break;
             }
+            case GEMINI: {
+                MessageCollection messageCollection = new MessageCollection();
+                Triple<LabMetricRun, List<Result>, Set<StaticPlate>> triple = vesselEjb.createGeminiRun(
+                        quantStream, quantSpreadsheet.getFileName(), getQuantType(), userBean.getBspUser().getUserId(),
+                        messageCollection, acceptRePico);
+                if (triple != null) {
+                    labMetricRun = triple.getLeft();
+                    if (triple.getMiddle() != null) {
+                        tubeFormationLabels = triple.getMiddle().stream()
+                                .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
+                    }
+                }
+
+                addMessages(messageCollection);
+                break;
+            }
             case GENERIC:
                 labMetrics = quantEJB.validateQuantsDontExist(quantStream, quantType, acceptRePico);
                 break;
@@ -220,6 +251,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
             errors.add("quantSpreadsheet", new SimpleError(errorBuilder.toString()));
         } catch (Exception e) {
             errors.add("quantSpreadsheet", new SimpleError("Exception while parsing upload. " + e.getMessage()));
+            logger.error("Exception while parsing upload", e);
         } finally {
             IOUtils.closeQuietly(quantStream);
             try {
@@ -349,6 +381,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
         SearchContext searchContext = new SearchContext();
         searchContext.setBspUserList(bspUserList);
+        searchContext.setUserBean(userBean);
+        searchContext.setJiraConfig(jiraConfig);
+        searchContext.setPriceListCache(priceListCache);
+        searchContext.setQuoteLink(quoteLink);
         ConfigurableList configurableList = configurableListFactory.create(labMetricList, "Default",
                 ColumnEntity.LAB_METRIC, searchContext,
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_METRIC.getEntityName()));

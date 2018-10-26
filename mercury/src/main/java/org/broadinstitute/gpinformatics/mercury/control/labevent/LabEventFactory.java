@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentra
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
@@ -30,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjec
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -75,6 +77,7 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -195,6 +198,9 @@ public class LabEventFactory implements Serializable {
 
     @Inject
     private BSPSetVolumeConcentration bspSetVolumeConcentration;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);
 
@@ -547,6 +553,7 @@ public class LabEventFactory implements Serializable {
             extractBarcodes(barcodes, extractPositionMaps);
 
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
 
@@ -1028,9 +1035,43 @@ public class LabEventFactory implements Serializable {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+        trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
+
         LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
         labEvent.setStationEventType(plateTransferEvent);
         return labEvent;
+    }
+
+    /**
+     * In extractions, it is sometimes easier to scan the SM-ID than the manufacturer barcode.  If a barcode starts
+     * with SM-, and it wasn't found when fetched by label, try fetching by sample ID.
+     * @param barcodes           barcodes from the message
+     * @param mapBarcodeToVessel vessels already fetched by manufacturer barcode, added to if fetch by SM-ID is
+     *                           successful
+     * @param mercurySampleDao   used to fetch
+     */
+    public static void trySampleIds(List<String> barcodes, Map<String, LabVessel> mapBarcodeToVessel,
+            MercurySampleDao mercurySampleDao) {
+        List<String> sampleIds = new ArrayList<>();
+        for (String barcode : barcodes) {
+            if (barcode.startsWith("SM-")) {
+                if (mapBarcodeToVessel.get(barcode) == null) {
+                    sampleIds.add(barcode);
+                }
+            }
+        }
+        if (!sampleIds.isEmpty()) {
+            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+            for (Map.Entry<String, MercurySample> sampleIdSampleEntry : mapIdToMercurySample.entrySet()) {
+                MercurySample mercurySample = sampleIdSampleEntry.getValue();
+                if (mercurySample != null) {
+                    Set<LabVessel> labVessel = mercurySample.getLabVessel();
+                    if (labVessel.size() == 1) {
+                        mapBarcodeToVessel.put(sampleIdSampleEntry.getKey(), labVessel.iterator().next());
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -1245,6 +1286,14 @@ public class LabEventFactory implements Serializable {
 
     // todo jmt make this database free?
     private void addReagents(LabEvent labEvent, List<ReagentType> reagentTypes) {
+        LabEventType.ManualTransferDetails manualTransferDetails = labEvent.getLabEventType().getManualTransferDetails();
+        HashSet<String> reagentNameSet = null;
+
+        if (manualTransferDetails != null) {
+            // Populate hashset of reagent names that we need to verify expiration date.
+            reagentNameSet = new HashSet<>(Arrays.asList(manualTransferDetails.getReagentFieldExpirationRequired()));
+        }
+
         for (ReagentType reagentType : reagentTypes) {
             GenericReagent genericReagent = null;
             // This is null only in database free tests
@@ -1265,6 +1314,18 @@ public class LabEventFactory implements Serializable {
                 } else {
                     throw new RuntimeException("Failed to find metadata " + metadataType.getName());
                 }
+            }
+            // If the lab event type has a requirement for valid expiration date.
+            if ((manualTransferDetails != null && manualTransferDetails.getReagentFieldExpirationRequired() != null)) {
+                // check to see if the genericReagent name is in the reagentFieldExpirationRequired array. if yes, then ensure expiration date is valid.
+                if (reagentNameSet.contains(genericReagent.getName())) {
+                    if (reagentType.getExpiration() == null) {
+                        throw new RuntimeException("No expiration date provided for reagent " + genericReagent.getName());
+                    } else if (reagentType.getExpiration().before(DateUtils.getStartOfDay(new Date()))) {
+                        throw new RuntimeException("Reagent " + genericReagent.getName() + " expired as of " + reagentType.getExpiration().toString());
+                    }
+                }
+
             }
             labEvent.addReagentMetadata(genericReagent, metadataSet);
         }

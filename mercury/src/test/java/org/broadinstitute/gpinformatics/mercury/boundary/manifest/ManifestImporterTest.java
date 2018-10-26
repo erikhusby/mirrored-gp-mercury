@@ -27,7 +27,6 @@ import org.testng.annotations.Test;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,9 +61,6 @@ public class ManifestImporterTest {
     private static final String DUPLICATE_COLUMNS = relativePathToTestFile("test-manifest-duplicate-columns.xlsx");
     private static final String EMPTY_MANIFEST= relativePathToTestFile("empty.xlsx");
     private static final String HEADERS_ONLY= relativePathToTestFile("headers-only.xlsx");
-
-    private static final String ROW_NUMBER_PREFIX = "Row #%s ";
-    private static final String REQUIRED_VALUE_IS_MISSING = ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING;
     private static final String VALIDATION_EXCEPTION_MESSAGE = "This test should have thrown a ValidationException.";
 
     private ManifestImportProcessor manifestImportProcessor;
@@ -121,7 +117,8 @@ public class ManifestImporterTest {
             Assert.fail(VALIDATION_EXCEPTION_MESSAGE);
         } catch (ValidationException e) {
             assertThat(manifestImportProcessor.getMessages(),
-                    hasItem(String.format(REQUIRED_VALUE_IS_MISSING, 1, header.getColumnName())));
+                    hasItem(TableProcessor.getPrefixedMessage(
+                            String.format(TableProcessor.REQUIRED_VALUE_IS_MISSING, header.getColumnName()), null, 1)));
             assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
         }
     }
@@ -134,8 +131,8 @@ public class ManifestImporterTest {
             validateManifestRecords(manifestImportProcessor);
             Assert.fail(VALIDATION_EXCEPTION_MESSAGE);
         } catch (ValidationException e) {
-            assertThat(manifestImportProcessor.getMessages(),
-                    hasItem(String.format("Required header missing: %s.", ManifestHeader.PATIENT_ID.getColumnName())));
+            assertThat(manifestImportProcessor.getMessages(), hasItem(String.format(
+                    TableProcessor.REQUIRED_HEADER_IS_MISSING, ManifestHeader.PATIENT_ID.getColumnName())));
             assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
         }
     }
@@ -152,8 +149,7 @@ public class ManifestImporterTest {
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
         validateManifestRecords(manifestImportProcessor);
-        String expectedError =
-                String.format(ManifestImportProcessorTest.TEST_UNKNOWN_HEADER_FORMAT, 0, Arrays.asList("YOMAMA"));
+        String expectedError = String.format(TableProcessor.UNKNOWN_HEADER, "YOMAMA", 1);
         assertThat(manifestImportProcessor.getMessages(), contains(expectedError));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
@@ -174,9 +170,7 @@ public class ManifestImporterTest {
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
         validateManifestRecords(manifestImportProcessor);
-        String errorMessageFormat = ROW_NUMBER_PREFIX + ManifestImportProcessor.DUPLICATE_HEADER_FORMAT;
-        String expectedError =
-                String.format(errorMessageFormat, 0, "Patient_ID");
+        String expectedError = String.format(TableProcessor.DUPLICATE_HEADER, "Patient_ID", 0);
         assertThat(manifestImportProcessor.getMessages(), hasItem(expectedError));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
@@ -186,10 +180,22 @@ public class ManifestImporterTest {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(EMPTY_MANIFEST));
         try {
             PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
-            validateManifestRecords(manifestImportProcessor);
             Assert.fail();
         } catch (ValidationException e) {
-            assertThat(manifestImportProcessor.getMessages(), hasItem(ManifestImportProcessor.EMPTY_FILE_ERROR));
+            assertThat(manifestImportProcessor.getMessages(), hasItem(
+                    String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Specimen_Number")));
+            assertThat(manifestImportProcessor.getMessages(), hasItem(
+                    String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Sex")));
+            assertThat(manifestImportProcessor.getMessages(), hasItem(
+                    String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Patient_ID")));
+            assertThat(manifestImportProcessor.getMessages(), hasItem(
+                    String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Collection_Date")));
+            assertThat(manifestImportProcessor.getMessages(), hasItem(
+                    String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Visit")));
+            assertThat(manifestImportProcessor.getMessages(), hasItem(
+                    String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "SAMPLE_TYPE")));
+            assertThat(manifestImportProcessor.getMessages(), hasItem(
+                    String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Material Type")));
         }
     }
 
