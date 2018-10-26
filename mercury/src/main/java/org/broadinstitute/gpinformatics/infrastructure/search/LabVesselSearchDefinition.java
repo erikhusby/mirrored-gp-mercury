@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.owasp.encoder.Encode;
 
 import java.math.BigDecimal;
 import java.util.AbstractMap;
@@ -1889,7 +1890,7 @@ public class LabVesselSearchDefinition {
                 if (entity != null && entity instanceof String) {
                     String str = (String) entity;
                     if (str.contains("[")) {
-                        String containerBarcode = str.substring(str.indexOf("[")+1,str.indexOf("]"));
+                        String containerBarcode = Encode.forHtml(str.substring(str.indexOf("[")+1,str.indexOf("]")));
                         String href = String.format(
                                 "/Mercury/container/container.action?containerBarcode=%s&viewContainerSearch=",
                                 containerBarcode
