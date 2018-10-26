@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -527,20 +528,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
         }
 
-        // The ProductOrderSample may be a tube barcode, so translate it to its MercurySample
-        Map<String, MercurySample> pdoSampleToMercurySample = new HashMap<>();
+        // The code here wants to fetch sample data, which means a sample name is needed. The code attempts
+        // to use the linked MercurySample to get a sample name, or if there is no MercurySample then it
+        // uses ProductOrderSample as a sample name.
+        // Unfortunately a ProductOrderSample name is permitted to be a tube barcode, which when combined
+        // with the arbitrary naming permitted with external library uploads, means the code can't
+        // disambiguate barcodes from samples here. Ignore that elephant in the room and pray for uniqueness.
+        Map<String, AbstractSample> pdoSampleToAbstractSample = new HashMap<>();
         for (ProductOrderSample productOrderSample : samples) {
             MercurySample mercurySample = productOrderSample.getMercurySample();
-            if (mercurySample != null) {
-                pdoSampleToMercurySample.put(productOrderSample.getName(), mercurySample);
-            }
+            pdoSampleToAbstractSample.put(productOrderSample.getName(),
+                    mercurySample != null ? mercurySample : productOrderSample);
         }
 
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         Map<String, SampleData> sampleDataMap = Collections.emptyMap();
         try {
-            // Fetches BSP data by Mercury Sample not PDO Sample which may be a tube barcode.
-            sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(pdoSampleToMercurySample.values(),
+            // Fetches BSP data.
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(pdoSampleToAbstractSample.values(),
                     bspSampleSearchColumns);
         } catch (BSPLookupException ignored) {
             // not a bsp sample?
