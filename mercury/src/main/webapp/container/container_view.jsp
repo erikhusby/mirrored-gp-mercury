@@ -118,7 +118,8 @@
                 <div class="controls">
                     <stripes:hidden id="storageId" name="storageId"/>
                     <stripes:hidden id="containerBarcode" name="containerBarcode"/>
-                    <stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true" style="width:${empty actionBean.locationTrail ? 200 : actionBean.locationTrail.length() * 8}px"/>
+                    <input type="hidden" name="<csrf:tokenname/>" value="<csrf:tokenvalue/>"/>
+                    <enhance:out escapeXml='false'><stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true" style="width:${empty actionBean.locationTrail ? 200 : actionBean.locationTrail.length() * 8}px"/></enhance:out>
                     <c:if test="${not empty actionBean.staticPlate or (actionBean.showLayout && !actionBean.editLayout)}">
                         <stripes:submit name="browse" id="browse" value="Browse"
                                         class="btn"/>
