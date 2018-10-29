@@ -554,7 +554,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         List<SampleData> nonNullSampleData = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
             MercurySample mercurySample = sample.getMercurySample();
-            SampleData sampleData = mercurySample != null ? sampleDataMap.get(mercurySample.getSampleKey()) : null;
+            String sampleKey = mercurySample == null ? sample.getSampleKey() : mercurySample.getSampleKey();
+            SampleData sampleData = sampleDataMap.get(sampleKey);
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
             if (sampleData != null) {
