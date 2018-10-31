@@ -96,6 +96,10 @@ public class SampleInstanceEtlData {
                     && bucketEntry.getCreatedDate().getTime() <= eventTs) {
                     sampleInstanceData.labBatch = bucketEntry.getLabBatch();
                     bucketTs = bucketEntry.getCreatedDate().getTime();
+                    // Overwrite PDO with bucketed value
+                    if( !foundSingleBucket && bucketEntry.getProductOrder() != null ) {
+                        sampleInstanceData.pdo = bucketEntry.getProductOrder();
+                    }
                 }
             }
         }
