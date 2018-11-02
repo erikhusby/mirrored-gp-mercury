@@ -1682,9 +1682,7 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void gplim5918_updateIncorrectOrsp()
-        throws HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException,
-        NotSupportedException {
+    public void gplim5918_updateIncorrectOrsp() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
 
