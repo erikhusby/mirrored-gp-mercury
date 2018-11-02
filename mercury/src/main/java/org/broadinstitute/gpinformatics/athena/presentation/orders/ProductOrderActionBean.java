@@ -774,7 +774,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 ProductOrder.checkQuoteValidity(quote);
                 final String[] error = new String[1];
                 quote.getFunding().stream()
-                    .filter(funding -> funding.getFundingType().equals(Funding.FUNDS_RESERVATION))
+                    .filter(Funding::isFundsReservation)
                     .forEach(funding -> {
                         int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
                         if (numDaysBetween > 0 && numDaysBetween < 45) {
@@ -1406,7 +1406,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
                 if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
-                    for (FundingLevel fundingLevel : quoteFunding.getFundingLevel(true)) {
+                    for (FundingLevel fundingLevel : quoteFunding.getActiveFundingLevel()) {
 
                         if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
                             for (Funding funding:fundingLevel.getFunding()) {

@@ -42,7 +42,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanc
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -2236,6 +2235,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             this.orderType = orderType;
     }
 
+    public boolean isCommercial() {
+        return orderType == OrderAccessType.COMMERCIAL;
+    }
+
     public String getOrderTypeDisplay() {
 
         String displayName = getOrderType().getDisplayName();
@@ -2301,7 +2304,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         final Set<String> errors = new HashSet<>();
         if (Objects.nonNull(quote)) {
             quote.getFunding().stream()
-                .filter(funding -> funding.getFundingType().equals(Funding.FUNDS_RESERVATION))
+                .filter(Funding::isFundsReservation)
                 .filter(funding -> !FundingLevel.isGrantActiveForDate(todayTruncated, funding))
                 .forEach(funding -> {
                     errors.add(String.format("The funding source %s has expired making this quote currently unfunded.",

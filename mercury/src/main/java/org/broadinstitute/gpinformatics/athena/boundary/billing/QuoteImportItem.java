@@ -342,4 +342,14 @@ public class QuoteImportItem {
     public String getEffectivePrice() throws InvalidProductException {
         return this.priceOnWorkDate.getEffectivePrice(this.priceItem, this.quote, this.getWorkCompleteDate());
     }
+
+    public boolean canBill() {
+        return !getProductOrder().getOrderStatus().canPlace() &&
+               StringUtils.isNotBlank(getProductOrder().getSapOrderNumber()) &&
+               StringUtils.isBlank(getSapItems());
+    }
+
+    public boolean needsCustomization() {
+        return productOrder.needsCustomization(product);
+    }
 }

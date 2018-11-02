@@ -36,7 +36,7 @@ public class QuoteTest {
         assertThat(testQuote.getQuoteItems(), hasSize(6));
         assertThat(testQuote.getExpirationDate(), is(notNullValue()));
 
-        assertThat(testQuote.isEligibleForSAP(), is(true));
+        assertThat(testQuote.isFunded(), is(true));
 
     }
 
@@ -61,17 +61,17 @@ public class QuoteTest {
         assertThat(testQuote.getQuoteItems(), hasSize(5));
         assertThat(testQuote.getExpirationDate(), is(notNullValue()));
 
-        assertThat(testQuote.isEligibleForSAP(), is(false));
+        assertThat(testQuote.isFunded(), is(false));
 
         Calendar cal = Calendar.getInstance();
         cal.set(2013, Calendar.JANUARY, 9); //Year, month, day of month
         Date date = cal.getTime();
 
-        assertThat(testQuote.isEligibleForSAP(date), is(true));
+        assertThat(testQuote.isFunded(date), is(true));
 
     }
 
-    public void testQuoteIneligibiltySplitFunding() throws Exception{
+    public void testQuoteIneligibilitySplitFunding() throws Exception{
         QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
 
         Quote gp87Uquote = stubbedQuoteService.getQuoteByAlphaId("GP87U");
@@ -82,7 +82,7 @@ public class QuoteTest {
         assertThat(firstRelevantFundingLevel, is(nullValue()));
 
         try {
-            quoteEligibility = gp87Uquote.isEligibleForSAP();
+            quoteEligibility = gp87Uquote.isFunded();
             Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
@@ -90,7 +90,7 @@ public class QuoteTest {
 
     }
 
-    public void testTrueSplitFundingEligibilty() throws Exception {
+    public void testTrueSplitFundingEligibility() throws Exception {
 
         QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
 
@@ -99,13 +99,13 @@ public class QuoteTest {
         boolean quoteEligibility = true;
 
         try {
-            quoteEligibility = splitFundedQuote.isEligibleForSAP();
+            quoteEligibility = splitFundedQuote.isFunded();
             Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
         }
     }
-    public void testSplitCostObjectEligibilty() throws Exception {
+    public void testSplitCostObjectEligibility() throws Exception {
 
         QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
 
@@ -114,7 +114,7 @@ public class QuoteTest {
         boolean quoteEligibility = true;
 
         try {
-            quoteEligibility = splitCostObjectQuote.isEligibleForSAP();
+            quoteEligibility = splitCostObjectQuote.isFunded();
             Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
@@ -129,7 +129,7 @@ public class QuoteTest {
         boolean quoteEligibility = true;
 
         try {
-            quoteEligibility = eligibleQuote.isEligibleForSAP();
+            quoteEligibility = eligibleQuote.isFunded();
             Assert.assertTrue(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
@@ -145,7 +145,7 @@ public class QuoteTest {
         boolean quoteEligibility = true;
 
         try {
-            quoteEligibility = eligibleQuote.isEligibleForSAP();
+            quoteEligibility = eligibleQuote.isFunded();
             Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
@@ -160,7 +160,7 @@ public class QuoteTest {
         boolean quoteEligibility = true;
 
         try {
-            quoteEligibility = eligibleQuote.isEligibleForSAP();
+            quoteEligibility = eligibleQuote.isFunded();
             Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
@@ -175,7 +175,7 @@ public class QuoteTest {
         boolean quoteEligibility = true;
 
         try {
-            quoteEligibility = eligibleQuote.isEligibleForSAP();
+            quoteEligibility = eligibleQuote.isFunded();
             Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());

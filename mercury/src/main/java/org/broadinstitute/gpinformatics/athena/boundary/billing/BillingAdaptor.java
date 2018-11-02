@@ -167,12 +167,12 @@ public class BillingAdaptor implements Serializable {
             }
 
             for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
-
                 final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(itemForPriceUpdate.getProductOrder());
-                final MessageCollection messageCollection = new MessageCollection();
                 List<String> effectivePricesForProducts;
 
                 try {
+
+                    // get and set the priceItem (reallly PriceList) for this quoteImportItem
                     priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(itemForPriceUpdate));
                     itemForPriceUpdate.setPriceOnWorkDate(priceItemsForDate);
 
@@ -182,17 +182,22 @@ public class BillingAdaptor implements Serializable {
                     itemForPriceUpdate.setQuote(quote);
                     ProductOrder.checkQuoteValidity(quote);
 
+                    // publish order to SAP if ...
+                    // 1 products are not blacklisted
+                    // 2 Prices are valid and products are not black listed
+                    // 3 order is in sap
+                    // ?? does funding matter here ??
                     if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(itemForPriceUpdate.getPriceItem().getName())))
-                       && productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder(), itemForPriceUpdate.getWorkCompleteDate()) &&
+                       && productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder()) &&
                        itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
-
+                        MessageCollection messageCollection = new MessageCollection();
                         effectivePricesForProducts = getEffectivePricesForProducts(allProductsOrdered, quote, priceItemsForDate,
                                 itemForPriceUpdate.getProductOrder());
                         if (itemForPriceUpdate.getProductOrder().isPriorToSAP1_5()) {
 
+                            // price and effective prices differ
                             if (!StringUtils.equals(itemForPriceUpdate.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
-                                    TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
-                                    ) {
+                                    TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))) {
                                 productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true, itemForPriceUpdate.getWorkCompleteDate());
                             }
                         } else {
@@ -202,9 +207,11 @@ public class BillingAdaptor implements Serializable {
                             BigDecimal listPrice = new BigDecimal(price);
                             BigDecimal effectivePrice = new BigDecimal(itemForPriceUpdate.getEffectivePrice());
 
-                            if(itemForPriceUpdate.getProductOrder().getOrderType() != ProductOrder.OrderAccessType.COMMERCIAL
-                               && !itemForPriceUpdate.getProductOrder().needsCustomization(itemForPriceUpdate.getProduct())
-                               && listPrice.compareTo(effectivePrice) != 0) {
+                            // not commercial
+                            // not custom
+                            // list and effective prices differ
+                            if(!itemForPriceUpdate.getProductOrder().isCommercial()
+                               && !itemForPriceUpdate.needsCustomization() && listPrice.compareTo(effectivePrice) != 0) {
                                 itemForPriceUpdate.getProductOrder().addQuoteAdjustment(itemForPriceUpdate.getProduct(), effectivePrice, listPrice);
                             }
                             productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, false, itemForPriceUpdate.getWorkCompleteDate());
@@ -237,16 +244,17 @@ public class BillingAdaptor implements Serializable {
                 quote = null;
                 String sapBillingId = null;
                 String workId = null;
+                boolean isQuoteFunded = false;
                 try {
                     priceItemsForDate = item.getPriceOnWorkDate();
                     quote = item.getQuote();
-                    ProductOrder.checkQuoteValidity(quote, item.getWorkCompleteDate());
+                    isQuoteFunded = quote.isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
 
 //                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
 //                    quote.setAlphanumericId(item.getQuoteId());
 
-                    workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
-                    sapBillingId = quote.isEligibleForSAP(item.getWorkCompleteDate())? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
+                    workId = CollectionUtils.isEmpty(item.getWorkItems())? null: item.getWorkItems().toArray(new String[0])[0];
+                    sapBillingId = quote.isEligibleForSAP() && isQuoteFunded ? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
 
                     // The price item that we are billing.
                     // todo need to set the price on the Price Item before this step
@@ -290,12 +298,12 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName()))) &&
-                       productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate() )
-                       && !item.getProductOrder().getOrderStatus().canPlace()
-                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                       && StringUtils.isBlank(item.getSapItems())) {
+                    boolean areProductsBlocked = productOrderEjb
+                        .areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName())));
+                    boolean orderEligibleForSAP =
+                        !areProductsBlocked && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder());
 
+                    if(orderEligibleForSAP && item.canBill()) {
                         final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
                                 item.getProductOrder().getSapCompanyConfigurationForProductOrder());
 
@@ -326,12 +334,7 @@ public class BillingAdaptor implements Serializable {
                         PriceAdjustment singlePriceAdjustment =
                                 item.getProductOrder().getAdjustmentForProduct(item.getProduct());
 
-                        if (!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName()))) &&
-                            productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate())
-                            && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
-
-
-
+                        if (orderEligibleForSAP && item.getProductOrder().isSavedInSAP()) {
                             if (singlePriceAdjustment == null) {
                                 workId = quoteService
                                         .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
@@ -365,25 +368,21 @@ public class BillingAdaptor implements Serializable {
                     }
 
 
-                    if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName())))
-                       && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(), item.getWorkCompleteDate() )
-                       && !item.getProductOrder().getOrderStatus().canPlace()
-                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                       && StringUtils.isBlank(item.getSapItems())) {
-
+                    if (orderEligibleForSAP && item.canBill()  && quote.isFunded(item.getWorkCompleteDate())) {
                         if (quantityForSAP > 0) {
                             sapBillingId = sapService.billOrder(item, replacementMultiplier, new Date());
                             result.setSAPBillingId(sapBillingId);
-                            billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
+                            billingEjb
+                                .updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
                                     BillingSession.BILLED_FOR_SAP + " " + BillingSession.BILLED_FOR_QUOTES);
                         } else {
                             Set<LedgerEntry> priorSapBillings = new HashSet<>();
                             item.getBillingCredits().stream()
                                 .filter(ledgerEntry -> ledgerEntry.getPriceItem().equals(item.getPriceItem()))
                                 .forEach(ledgerEntry -> {
-                                    ledgerEntry.getPreviouslyBilled().stream()
+                                    priorSapBillings.addAll(ledgerEntry.getPreviouslyBilled().stream()
                                         .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId() != null)
-                                        .collect(Collectors.toCollection(() -> priorSapBillings));
+                                        .collect(Collectors.toSet()));
                                 });
 
                             // Negative billing is allowed if the same positive number has been previously billed.
@@ -424,8 +423,7 @@ public class BillingAdaptor implements Serializable {
                                 .append(billingSession.getBusinessKey()).append(".");
 
                     } else if (StringUtils.isBlank(result.getSAPBillingId()) && quote != null
-                               && quote.isEligibleForSAP(item.getWorkCompleteDate())
-                               && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+                               && isQuoteFunded && item.getProductOrder().isSavedInSAP()) {
 
                         errorMessage.append("A problem occured attempting to post to SAP for ")
                                 .append(billingSession.getBusinessKey()).append(".");
