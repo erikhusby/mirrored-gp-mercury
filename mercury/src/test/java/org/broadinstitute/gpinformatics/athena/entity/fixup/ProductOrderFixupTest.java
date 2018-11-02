@@ -1681,6 +1681,49 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.updateOrderStatus(orderToModify.getJiraTicketKey(), MessageReporter.UNUSED);
     }
 
+    @Test(enabled = false)
+    public void gplim5918_updateIncorrectOrsp()
+        throws HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException,
+        NotSupportedException {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        String incorrectOrspIdentifier = "2861";
+        String correctOrspIdentifier = "ORSP-2861";
+
+        List<ProductOrder> productOrders = productOrderDao.findOrdersByRegulatoryInfoIdentifier(incorrectOrspIdentifier);
+        List<RegulatoryInfo> incorrectRegulatoryInfos = regulatoryInfoDao.findByIdentifier(incorrectOrspIdentifier);
+        assertThat(incorrectRegulatoryInfos, hasSize(1));
+        RegulatoryInfo incorrectRegulatoryInfo = incorrectRegulatoryInfos.iterator().next();
+        List<RegulatoryInfo> replacementRegulatoryInfos = regulatoryInfoDao.findByIdentifier(correctOrspIdentifier);
+        assertThat(replacementRegulatoryInfos, hasSize(1));
+        RegulatoryInfo replacement = replacementRegulatoryInfos.iterator().next();
+
+        Set<ResearchProject> projectList =
+            productOrders.stream().map(ProductOrder::getResearchProject).collect(Collectors.toSet());
+
+        // add replacement regulatoryInfo if it isn't there yet.
+        projectList.forEach(researchProject -> {
+            if (!researchProject.getRegulatoryInfos().contains(replacement)) {
+                researchProject.getRegulatoryInfos().add(replacement);
+            }
+        });
+
+        // remove incorrect regulatoryInfo and add the replacement.
+        productOrders.forEach(productOrder -> {
+            assertThat(productOrder.getRegulatoryInfos().remove(incorrectRegulatoryInfo), is(true));
+            productOrder.getRegulatoryInfos().add(replacement);
+        });
+
+        // remove incorrect regulatoryInfo from the research project.
+        projectList.forEach(researchProject -> researchProject.getRegulatoryInfos().remove(incorrectRegulatoryInfo));
+
+        // finally, delete the old regulatoryInfo
+        regulatoryInfoDao.remove(incorrectRegulatoryInfo);
+        productOrderDao.persist(new FixupCommentary("See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-5918"));
+        commitTransaction();
+    }
+
     /**
      * Duplicate of the 'isOrderEligible' check from ProductOrderEjb.  For the purposes of why we are using it, we
      * need to bypass the Quote funding check which is what this version will do.
