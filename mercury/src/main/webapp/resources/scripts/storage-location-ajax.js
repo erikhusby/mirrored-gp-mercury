@@ -21,7 +21,6 @@ $j(document).ready( function() {
                 if( resultObj.hasErrors) {
                     displayNotification(resultObj.errors, "alert-error");
                 } else {
-                    console.log(resultObj);
                     $j("#storageName").val(resultObj.locationTrail);
                     $j("#storageName").css("width", resultObj.locationTrail.length * 8);
                     $j("#storageId").val(storageId);

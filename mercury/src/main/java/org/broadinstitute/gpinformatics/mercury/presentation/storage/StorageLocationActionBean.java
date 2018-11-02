@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
+import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -102,20 +103,23 @@ public class StorageLocationActionBean extends CoreActionBean {
         return new ForwardResolution(STORAGE_LIST_PAGE);
     }
 
+    /**
+     * Children nodes loaded on demand
+     */
     @HandlesEvent(LOAD_TREE_AJAX_ACTION)
     public Resolution loadTreeAjax() throws Exception {
-        List<StorageLocation> rootStorageLocations;
-        StorageLocation storageLocation = null;
+        List<StorageLocation> childNodeStorageLocations;
+        StorageLocation parentNodeStorageLocation = null;
         if (id.equals(ROOT_NODE)) {
-            rootStorageLocations = storageLocationDao.findByLocationTypes(
+            childNodeStorageLocations = storageLocationDao.findByLocationTypes(
                     StorageLocation.LocationType.getTopLevelLocationTypes());
         } else {
             long parentId = Long.parseLong(id);
-            storageLocation = storageLocationDao.findById(StorageLocation.class, parentId);
-            rootStorageLocations = new ArrayList<>(storageLocation.getChildrenStorageLocation());
+            parentNodeStorageLocation = storageLocationDao.findById(StorageLocation.class, parentId);
+            childNodeStorageLocations = new ArrayList<>(parentNodeStorageLocation.getChildrenStorageLocation());
         }
-        Collections.sort(rootStorageLocations, new StorageLocation.StorageLocationLabelComparator());
-        String storageJson = generateJsonFromRoots(storageLocation, rootStorageLocations, true);
+        Collections.sort(childNodeStorageLocations, new StorageLocation.StorageLocationLabelComparator());
+        String storageJson = generateJsonFromRoots(parentNodeStorageLocation, childNodeStorageLocations, true);
         return new StreamingResolution("text", new StringReader(storageJson));
     }
 
@@ -294,17 +298,13 @@ public class StorageLocationActionBean extends CoreActionBean {
     }
 
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {EDIT_ACTION, SAVE_BARCODES_ACTION})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {EDIT_ACTION, SAVE_BARCODES_ACTION})
     public void editInit() {
-        String storageParam = getContext().getRequest().getParameter("storageId");
-        if (!StringUtils.isEmpty(storageParam)) {
-            storageId = Long.parseLong(storageParam);
-            storageLocation = storageLocationDao.findById(StorageLocation.class, storageId);
-            childStorageLocations = new ArrayList<>(storageLocation.getChildrenStorageLocation());
-            Collections.sort(childStorageLocations, new StorageLocation.StorageLocationLabelComparator());
-            for (StorageLocation storageLocation: childStorageLocations) {
-                mapIdToStorageLocation.put(storageLocation.getStorageLocationId(), storageLocation);
-            }
+        storageLocation = storageLocationDao.findById(StorageLocation.class, storageId);
+        childStorageLocations = new ArrayList<>(storageLocation.getChildrenStorageLocation());
+        Collections.sort(childStorageLocations, new StorageLocation.StorageLocationLabelComparator());
+        for (StorageLocation storageLocation: childStorageLocations) {
+            mapIdToStorageLocation.put(storageLocation.getStorageLocationId(), storageLocation);
         }
     }
 
@@ -386,13 +386,14 @@ public class StorageLocationActionBean extends CoreActionBean {
         this.newParentName = newParentName;
     }
 
-    public String generateJsonFromRoots(StorageLocation parentStorageLocation, List<StorageLocation> topLevelLocations,
+    public String generateJsonFromRoots(StorageLocation parentStorageLocation, List<StorageLocation> childStorageLocations,
                                         boolean ajax) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
         ObjectNode root = mapper.createObjectNode();
         ArrayNode arrayNode = mapper.createArrayNode();
-        for (StorageLocation storageLocation: topLevelLocations) {
+        for (StorageLocation storageLocation: childStorageLocations) {
+
             ObjectNode rootNode = generateJSON(storageLocation, mapper.createObjectNode(), ajax);
             arrayNode.add(rootNode);
         }
@@ -408,12 +409,6 @@ public class StorageLocationActionBean extends CoreActionBean {
                         ObjectNode objectNode = root.objectNode();
                         objectNode.put("text", labVessel.getLabel());
                         objectNode.put("type", StaticPlate.class.getSimpleName());
-                        arrayNode.add(objectNode);
-                    } else if (parentStorageLocation.getLocationType().equals(StorageLocation.LocationType.LOOSE )
-                                    && OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)){
-                        ObjectNode objectNode = root.objectNode();
-                        objectNode.put("text", labVessel.getLabel());
-                        objectNode.put("type", BarcodedTube.class.getSimpleName());
                         arrayNode.add(objectNode);
                     }
                 }
@@ -438,7 +433,7 @@ public class StorageLocationActionBean extends CoreActionBean {
         ObjectMapper objectMapper = new ObjectMapper();
         obN.put("id", storageLocation.getStorageLocationId());
         obN.put("text", storageLocation.getLabel());
-        obN.put("type", storageLocation.getLocationType().name());
+        obN.put("type", storageLocation.getLocationType().toString());
         ObjectNode dataNode = objectMapper.createObjectNode();
         dataNode.put("storageLocationId", storageLocation.getStorageLocationId());
         obN.put("data", dataNode);

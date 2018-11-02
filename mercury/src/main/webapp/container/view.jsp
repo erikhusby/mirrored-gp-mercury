@@ -66,5 +66,19 @@
             <c:set var="geometry" value="${actionBean.viewVessel.vesselGeometry}" scope="request"/>
             <jsp:include page="container_view.jsp"/>
         </c:if>
+        <div id="storage_location_overlay">
+            <div class="alert" id="error-dialog-ajax">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <span id="error-text-ajax">default error message.</span>
+            </div>
+            <div class="control-group">
+                <div class="control">
+                    <input type="text" id="searchTermAjax" name="searchTerm" placeholder="storage barcode"/>
+                    <input type="submit" value="Find" id="searchTermAjaxSubmit"/>
+                </div>
+            </div>
+
+            <div id="ajax-jstree"></div>
+        </div>
     </stripes:layout-component>
 </stripes:layout-render>

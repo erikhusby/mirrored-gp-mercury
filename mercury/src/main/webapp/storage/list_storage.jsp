@@ -1,4 +1,5 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"/>
@@ -24,6 +25,30 @@
             }
         </style>
         <script type="text/javascript">
+
+            function removeLooseVessels(){
+                var theform = new FormData($j("#replaceMeWithStorageContents > #looseVesselForm" )[0]);
+                // Submit value needed
+                theform.append("removeLooseLoc", "");
+                $j.ajax("${ctxpath}/container/container.action", {
+                    type: 'POST',
+                    accepts:"text/html",
+                    data: theform,
+                    async: false,
+                    cache: false,
+                    dataType: "html",
+                    processData: false,
+                    contentType: false,
+                    success: function (results) {
+                        $j("#replaceMeWithStorageContents").html(results);
+                    },
+                    error: function(results){
+                        $j("#looseMessages").html("An unspecified error occurred");
+                    }
+
+                });
+            }
+
             $j(document).ready(function () {
                 $j("#error-dialog").hide();
                 var canCreate = ${actionBean.moveAllowed};
@@ -47,8 +72,14 @@
                 function findContainer(containerBarcode, node) {
                     $j("#error-dialog").hide();
                     var formData = new FormData();
-                    formData.append("viewContainerAjax", "");
-                    formData.append("containerBarcode", containerBarcode);
+                    formData.append("<csrf:tokenname/>", "<csrf:tokenvalue/>");
+                    if( node != undefined && node.type == "LOOSE" ) {
+                        formData.append("viewContainerAjax", node.type);
+                        formData.append("storageId", node.id);
+                    } else {
+                        formData.append("viewContainerAjax", "");
+                        formData.append("containerBarcode", containerBarcode);
+                    }
                     var replaceDom = $j("#replaceMeWithStorageContents");
                     replaceDom.addClass("show-loading-icon");
                     var nodeDom;
@@ -58,11 +89,15 @@
                         console.log(nodeDom);
                         nodeDom.addClass("jstree-loading")
                     }
-                    $j.ajax({
-                        url: "${ctxpath}/container/container.action",
+                    $j.ajax("${ctxpath}/container/container.action", {
                         type: 'POST',
+                        accepts:"text/html",
                         data: formData,
                         async: true,
+                        cache: false,
+                        dataType: "html",
+                        processData: false,
+                        contentType: false,
                         success: function (results) {
                             replaceDom.removeClass("show-loading-icon");
                             if (node) {
@@ -72,17 +107,18 @@
                         },
                         error: function(results){
                             console.log(results);
-                            displayError("Failed to find container.");
-                            $j('#jstree').jstree("refresh");
                             replaceDom.removeClass("show-loading-icon");
                             if (node) {
                                 nodeDom.removeClass("jstree-loading");
+                                if( node.type === "LOOSE" ) {
+                                    displayError("Failed to load loose vessels.");
+                                } else {
+                                    displayError("Failed to find container.");
+                                }
+                            } else {
+                                displayError("Server error occurred.");
                             }
-                        },
-                        cache: false,
-                        datatype: "text",
-                        processData: false,
-                        contentType: false
+                        }
                     });
                 }
 
@@ -168,15 +204,12 @@
                             "valid_children" : [ "lab_vessel" ],
                             "max_depth" : 1
                         },
-                        StaticPlate: {
-
+                        LOOSE: {
+                            "valid_children" : [ "lab_vessel" ],
+                            "max_depth" : 1
                         },
-                        RackOfTubes: {
-
-                        },
-                        BarcodedTube: {
-
-                        }
+                        StaticPlate: {},
+                        RackOfTubes: {}
                     },
                     'core' : {
                         "check_callback" :  function (op, node, par, pos, more) {
@@ -218,7 +251,7 @@
                             "dataType" : "json",
                             'error': function (data) {
                                 displayError("Failed to find storage.");
-                                $j("#jstree").jstree(true).refresh();
+                                //$j("#jstree").jstree(true).refresh();
                             }
                         }
                     }
@@ -258,7 +291,7 @@
                 }).bind("select_node.jstree", function (e, data) {
                     var node = data.node;
                     console.log(node);
-                    if (node.type === "StaticPlate" || node.type === "RackOfTubes") {
+                    if (node.type === "StaticPlate" || node.type === "RackOfTubes" || node.type === "LOOSE" ) {
                         findContainer(node.text, node);
                     }
                 }).bind("rename_node.jstree", function (e, data) {
@@ -294,6 +327,7 @@
                 });
             });
         </script>
+        <script src="${ctxpath}/resources/scripts/storage-location-ajax.js"></script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -313,10 +347,22 @@
             </div>
             <div class="row-fluid">
                 <div id="jstree" class="span3"></div>
-                <div id="replaceMeWithStorageContents" class="span9">
-
+                <div id="replaceMeWithStorageContents" class="span9"></div>
+            </div>
+        </div>
+        <div id="storage_location_overlay">
+            <div class="alert" id="error-dialog-ajax">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <span id="error-text-ajax">default error message.</span>
+            </div>
+            <div class="control-group">
+                <div class="control">
+                    <input type="text" id="searchTermAjax" name="searchTerm" placeholder="storage barcode"/>
+                    <input type="submit" value="Find" id="searchTermAjaxSubmit"/>
                 </div>
             </div>
+
+            <div id="ajax-jstree"></div>
         </div>
 
     </stripes:layout-component>
