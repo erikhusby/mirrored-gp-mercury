@@ -26,7 +26,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -38,8 +37,9 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -91,6 +91,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("UnusedDeclaration")
 @Entity
@@ -98,6 +100,8 @@ import java.util.Set;
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
+    public static final String AMBIGUOUS_PDO_SAMPLE =
+            "PDO Sample name %s identifies both a tube barcode and a mercury sample name.";
 
     // for clarity in jira, we use this string in the quote field when there is no quote
     public static final String QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY = "no quote";
@@ -488,80 +492,94 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public static void loadSampleData(List<ProductOrderSample> samples,
                                       BSPSampleSearchColumn... bspSampleSearchColumns) {
 
-        // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
-        Set<String> sampleNames = new HashSet<>(samples.size());
-        Multimap<String, ProductOrderSample> linkableSamples = HashMultimap.create();
+        // Avoids a call to BSP for sample data if sample data has already been cached.
+        boolean hasUninitializedSampleData = false;
+        Multimap<String, ProductOrderSample> mercurySampleLookups = HashMultimap.create();
         for (ProductOrderSample productOrderSample : samples) {
             if (!productOrderSample.isHasBspSampleDataBeenInitialized()) {
-                sampleNames.add(productOrderSample.getName());
+                hasUninitializedSampleData = true;
                 if (productOrderSample.getMercurySample() == null) {
-                    linkableSamples.put(productOrderSample.getName(), productOrderSample);
+                    mercurySampleLookups.put(productOrderSample.getName(), productOrderSample);
                 }
             }
         }
-        if (sampleNames.isEmpty()) {
+        if (!hasUninitializedSampleData) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
         }
 
-        // Samples created from externally uploaded samples will not have a Mercury Sample link yet
-        // and it needs to be present in order to correctly look up sample data.
-        if (!linkableSamples.isEmpty()) {
-            SampleInstanceEntityDao dao = ServiceAccessUtility.getBean(SampleInstanceEntityDao.class);
-            // Finds Mercury Sample using PDO sample name which may be a Mercury Sample name or a tube barcode.
-            Multimap<String, MercurySample> map = dao.lookupSamplesByIdentifiers(linkableSamples.keySet());
-            for (String identifier : map.keySet()) {
-                if (map.get(identifier).size() > 1) {
-                    List<String> names = new ArrayList<>();
-                    for (MercurySample mercurySample : map.get(identifier)) {
-                        names.add(mercurySample.getSampleKey());
+        // Links PDO with a Mercury Sample if the pdo sample name is a barcode.
+        Set<String> noMercurySample = new HashSet<>();
+        LabVesselDao labVesselDao = mercurySampleLookups.keySet().isEmpty() ?
+                null : ServiceAccessUtility.getBean(LabVesselDao.class);
+        MercurySampleDao mercurySampleDao = null;
+        for (String pdoSampleName : mercurySampleLookups.keySet()) {
+            LabVessel labVessel = labVesselDao.findByIdentifier(pdoSampleName);
+            if (labVessel == null || CollectionUtils.isEmpty(labVessel.getMercurySamples())) {
+                noMercurySample.add(pdoSampleName);
+            } else if (labVessel.getMercurySamples().size() > 1) {
+                throw new RuntimeException("Multiple MercurySamples " + labVessel.getMercurySamples().stream().
+                        map(MercurySample::getSampleKey).collect(Collectors.joining(" ")) +
+                        " are associated with tube " + labVessel.getLabel());
+            } else {
+                MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
+                mercurySampleLookups.get(pdoSampleName).stream().
+                        filter(productOrderSample -> productOrderSample != null).
+                        forEach(productOrderSample ->
+                                mercurySample.addProductOrderSample(productOrderSample));
+                // The PDO sample name is a tube barcode. Checks if PDO sample name is also a
+                // mercury sample name identifying a different mercury sample.
+                if (!mercurySample.getSampleKey().equals(labVessel.getLabel())) {
+                    if (mercurySampleDao == null) {
+                        mercurySampleDao = ServiceAccessUtility.getBean(MercurySampleDao.class);
                     }
-                    throw new RuntimeException("Multiple MercurySamples " + StringUtils.join(names, ", ") +
-                            " are associated with " + identifier);
-                } else if (map.get(identifier).size() == 1) {
-                    // There may be multiple pdo samples having the same name.
-                    for (ProductOrderSample pdoSample : linkableSamples.get(identifier)) {
-                        pdoSample.setMercurySample(map.get(identifier).iterator().next());
+                    MercurySample mercurySample1 = mercurySampleDao.findBySampleKey(pdoSampleName);
+                    if (mercurySample1 != null) {
+                        throw new RuntimeException(String.format(AMBIGUOUS_PDO_SAMPLE, pdoSampleName));
                     }
                 }
             }
         }
 
-        // The code here wants to fetch sample data, which means a sample name is needed. The code attempts
-        // to use the linked MercurySample to get a sample name, or if there is no MercurySample then it
-        // uses ProductOrderSample as a sample name.
-        // Unfortunately a ProductOrderSample name is permitted to be a tube barcode, which when combined
-        // with the arbitrary naming permitted with external library uploads, means the code can't
-        // disambiguate barcodes from samples here. Ignore that elephant in the room and pray for uniqueness.
-        Map<String, AbstractSample> pdoSampleToAbstractSample = new HashMap<>();
-        for (ProductOrderSample productOrderSample : samples) {
-            MercurySample mercurySample = productOrderSample.getMercurySample();
-            pdoSampleToAbstractSample.put(productOrderSample.getName(),
-                    mercurySample != null ? mercurySample : productOrderSample);
+        // Links PDO with a Mercury Sample if it's from a sample instance entity (e.g. an external library upload).
+        if (!noMercurySample.isEmpty()) {
+            SampleInstanceEntityDao dao = ServiceAccessUtility.getBean(SampleInstanceEntityDao.class);
+            // "identifier" is either a sample name or a barcode.
+            Multimap<String, MercurySample> map = dao.lookupSamplesByIdentifiers(noMercurySample);
+            for (String identifier : map.keySet()) {
+                if (map.get(identifier).size() > 1) {
+                    throw new RuntimeException("Multiple MercurySamples " +  map.get(identifier).stream().
+                            map(MercurySample::getSampleKey).collect(Collectors.joining(" ")) +
+                            " are associated with " + identifier);
+                } else if (map.get(identifier).size() == 1) {
+                    MercurySample mercurySample = map.get(identifier).iterator().next();
+                    mercurySampleLookups.get(identifier).stream().
+                            filter(productOrderSample -> productOrderSample != null).
+                            forEach(productOrderSample ->
+                                    mercurySample.addProductOrderSample(productOrderSample));
+                }
+            }
         }
 
+        // Fetches sample data for BSP and Mercury samples.
+        Map<String, ProductOrderSample> pdoSampleMap = samples.stream().
+                collect(Collectors.toMap(ProductOrderSample::getSampleKey, Function.identity()));
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> sampleDataMap = Collections.emptyMap();
-        try {
-            // Fetches BSP data.
-            sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(pdoSampleToAbstractSample.values(),
-                    bspSampleSearchColumns);
-        } catch (BSPLookupException ignored) {
-            // not a bsp sample?
-        }
-        // Collect SampleData which we will then use to look up FFPE status.
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(pdoSampleMap.values(),
+                bspSampleSearchColumns);
+
         List<SampleData> nonNullSampleData = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
             MercurySample mercurySample = sample.getMercurySample();
-            String sampleKey = mercurySample == null ? sample.getSampleKey() : mercurySample.getSampleKey();
-            SampleData sampleData = sampleDataMap.get(sampleKey);
-
-            // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
+            SampleData sampleData = sampleDataMap.containsKey(sample.getSampleKey()) ?
+                    sampleDataMap.get(sample.getSampleKey()) : mercurySample != null ?
+                    sampleDataMap.get(mercurySample.getSampleKey()) : null;
             if (sampleData != null) {
                 sample.setSampleData(sampleData);
                 nonNullSampleData.add(sampleData);
             } else {
+                // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
                 sample.setSampleData(sample.makeSampleData());
             }
         }
@@ -648,7 +666,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @return The number of samples calculated to be on risk.
      */
     public int calculateRisk(List<ProductOrderSample> selectedSamples) {
-        // Load the bsp data for the selected samples
+        // Load the sample data for the selected samples
         loadSampleData(selectedSamples);
 
         Set<String> uniqueSampleNamesOnRisk = new HashSet<>();
@@ -1029,7 +1047,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
-     * Use the BSP Manager to load the bsp data for every sample in this product order.
+     * Fetches sample data for every sample in this product order.
      */
     public void loadSampleData() {
         loadSampleData(samples);
@@ -1706,7 +1724,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 return;
             }
 
-            // This gets the BSP data for every sample in the order.
+            // This gets the sample data for every sample in the order.
             loadSampleData();
 
             // Initialize all counts.
