@@ -549,4 +549,36 @@ public class MercurySampleFixupTest extends Arquillian {
         labVesselDao.persist(new FixupCommentary(lines.get(0)));
         labVesselDao.flush();
     }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateSampleToRoot.txt,
+     * so it can be used for other similar fixups, without writing a new test.  It is used to add BSP samples to
+     * vessels that are the result of messages.  Example contents of the file are (first line is the fixup commentary,
+     * subsequent lines are whitespace separated vessel barcode and sample ID):
+     * SUPPORT-4707 mark sample as root
+     * SM-H5GZC
+     * SM-H5GZI
+     */
+    @Test(enabled = false)
+    public void fixupSuppor4707() throws IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateSampleToRoot.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 1) {
+                throw new RuntimeException("Expected one white-space separated fields in " + lines.get(i));
+            }
+            String sampleKey = fields[0];
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleKey);
+            if (mercurySample == null) {
+                throw new RuntimeException("Failed to find Mercury Sample " + sampleKey);
+            }
+            System.out.println("Setting " + sampleKey + " is root to true.");
+            mercurySample.setRoot(true);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
 }

@@ -332,6 +332,10 @@ public class MercurySample extends AbstractSample {
         return isRoot;
     }
 
+    public void setRoot(Boolean root) {
+        isRoot = root;
+    }
+
     /**
      * Find the latest material type by first searching the event history then falling back on the sample's metadata.
      */
