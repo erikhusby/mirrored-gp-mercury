@@ -552,8 +552,8 @@ public class MercurySampleFixupTest extends Arquillian {
 
     /**
      * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateSampleToRoot.txt,
-     * so it can be used for other similar fixups, without writing a new test.  It is used to add BSP samples to
-     * vessels that are the result of messages.  Example contents of the file are (first line is the fixup commentary,
+     * so it can be used for other similar fixups, without writing a new test.  It is used to add BSP samples to vessels
+     * that are the result of messages.  Example contents of the file are (first line is the fixup commentary,
      * subsequent lines are whitespace separated vessel barcode and sample ID):
      * SUPPORT-4707 mark sample as root
      * SM-H5GZC
