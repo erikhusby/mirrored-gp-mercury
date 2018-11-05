@@ -129,8 +129,9 @@ $j(document).ready( function() {
         }
     });
 
-    $j("#browse").click(function(e) {
-        e.preventDefault();
-        $j("#storage_location_overlay").dialog("open");
-    });
 });
+
+function handleBrowseClick(event) {
+    event.preventDefault();
+    $j("#storage_location_overlay").dialog("open");
+}

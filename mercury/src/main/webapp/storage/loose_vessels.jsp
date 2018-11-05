@@ -54,7 +54,7 @@
                     <enhance:out escapeXml="false"><stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true" style="width:${empty actionBean.locationTrail ? 200 : actionBean.locationTrail.length() * 8}px"/></enhance:out>
                     <c:if test="${not empty actionBean.staticPlate or (actionBean.showLayout && !actionBean.editLayout)}">
                         <stripes:submit name="browse" id="browse" value="Browse"
-                                        class="btn"/>
+                                        class="btn" onclick="handleBrowseClick(event);"/>
                         <stripes:submit id="saveStorageLocation" name="saveLocation" value="Save To Location"
                                         class="btn btn-primary"/>
                     </c:if>

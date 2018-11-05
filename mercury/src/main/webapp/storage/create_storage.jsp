@@ -68,7 +68,7 @@
                                 <div class="controls">
                                     <stripes:text id="storageName" name="storageName"  readonly="true"/>
                                     <stripes:submit name="browse" id="browse" value="Browse"
-                                                    class="btn btn-primary"/>
+                                                    class="btn btn-primary" onclick="handleBrowseClick(event);"/>
                                 </div>
                             </div>
                         </c:when>

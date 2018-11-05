@@ -655,18 +655,40 @@ public class ContainerActionBean extends RackScanActionBean {
         if (!StringUtils.isEmpty(storageId)) {
             storageLocation = storageLocationDao.findById(StorageLocation.class, Long.valueOf(storageId));
             MessageCollection messageCollection = new MessageCollection();
-            getViewVessel().setStorageLocation(storageLocation);
-            List<BarcodedTube> barcodedTubes = savePositionMapToLocation(messageCollection);
-            if (messageCollection.hasErrors()) {
-                addMessages(messageCollection);
-                return new ForwardResolution(CONTAINER_VIEW_PAGE);
-            }
-            if (barcodedTubes != null) {
-                for (BarcodedTube barcodedTube : barcodedTubes) {
+
+            if( this.barcodedTube != null ) {
+                // Put loose tubes in 'Loose' pseudo location
+                if( !storageLocation.getLocationType().equals(StorageLocation.LocationType.LOOSE ) ) {
+                    // Is there a loose child?
+                    StorageLocation looseSubLocation = null;
+                    for( StorageLocation child : storageLocation.getChildrenStorageLocation() ) {
+                        if( child.getLocationType().equals(StorageLocation.LocationType.LOOSE ) ) {
+                            looseSubLocation = child;
+                            break;
+                        }
+                    }
+                    if( looseSubLocation == null ) {
+                        looseSubLocation =
+                                new StorageLocation("Loose", StorageLocation.LocationType.LOOSE, storageLocation);
+                        storageLocationDao.persist(looseSubLocation);
+                    }
+                    barcodedTube.setStorageLocation(looseSubLocation);
+                } else {
                     barcodedTube.setStorageLocation(storageLocation);
                 }
+            } else {
+                getViewVessel().setStorageLocation(storageLocation);
+                List<BarcodedTube> barcodedTubes = savePositionMapToLocation(messageCollection);
+                if (messageCollection.hasErrors()) {
+                    addMessages(messageCollection);
+                    return new ForwardResolution(CONTAINER_VIEW_PAGE);
+                }
+                if (barcodedTubes != null) {
+                    for (BarcodedTube barcodedTube : barcodedTubes) {
+                        barcodedTube.setStorageLocation(storageLocation);
+                    }
+                }
             }
-            storageLocationDao.persist(getViewVessel());
             storageLocationDao.flush();
             showLayout = true;
             addMessage("Successfully added to storage.");

@@ -135,7 +135,7 @@
                         try {
                             $j("#jstree").jstree(true).settings.core.data.url = newPath;
                             $j("#jstree").jstree(true).refresh();
-                        } finally {
+                        } catch( err ) {
                             $j("#jstree").jstree(true).settings.core.data.url = oldPath;
                         }
                     }
@@ -242,16 +242,21 @@
                         'data' : {
                             "url" : "${ctxpath}/storage/storage.action?loadTreeAjax=",
                             "data" : function (node) {
-                                if (node.id == "#") {
-                                    return {"id": node.id};
-                                } else {
-                                    return {"id": node.data.storageLocationId};
+                                try {
+                                    if (node.id == "#") {
+                                        return {"id": node.id};
+                                    } else {
+                                        return {"id": node.data.storageLocationId};
+                                    }
+                                } catch(err) {
+                                    // Session timeout? jQuery ajax handler does no capture
+                                    displayError("Your session may have timed out.");
+                                    return {};
                                 }
                             },
                             "dataType" : "json",
                             'error': function (data) {
-                                displayError("Failed to find storage.");
-                                //$j("#jstree").jstree(true).refresh();
+                                displayError("Server error finding storage.");
                             }
                         }
                     }
