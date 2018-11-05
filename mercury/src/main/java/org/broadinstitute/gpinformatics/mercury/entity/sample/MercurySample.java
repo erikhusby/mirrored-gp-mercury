@@ -332,7 +332,8 @@ public class MercurySample extends AbstractSample {
         return isRoot;
     }
 
-    public void setRoot(Boolean root) {
+    // For fixup tests only.
+    void setRoot(Boolean root) {
         isRoot = root;
     }
 
