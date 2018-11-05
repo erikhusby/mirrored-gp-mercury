@@ -634,11 +634,13 @@ public class ConfigurableList {
             List<String> cells = new ArrayList<>();
             for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
                 Object value = nestedColumnTabulation.evalValueExpression(entity, context);
+                String output;
                 if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
-                    cells.add(nestedColumnTabulation.evalUiDisplayOutputExpression(value, context));
+                    output = nestedColumnTabulation.evalUiDisplayOutputExpression(value, context);
                 } else {
-                    cells.add(nestedColumnTabulation.evalPlainTextOutputExpression(value, context));
+                    output = nestedColumnTabulation.evalPlainTextOutputExpression(value, context);
                 }
+                cells.add(nestedColumnTabulation.mustEscape() ? Encode.forHtml(output) : output);
             }
             ResultRow row = new ResultRow( emptySortableCells, cells, null );
             localRows.add(row);
@@ -945,6 +947,12 @@ public class ConfigurableList {
          */
         private List<ResultList> cellNestedTables = new ArrayList<>();
 
+        /**
+         *
+         * @param sortableCells see field
+         * @param renderableCells must be escaped for XSS
+         * @param resultId see field
+         */
         ResultRow(List<Comparable<?>> sortableCells, List<String> renderableCells, String resultId) {
             this.sortableCells = sortableCells;
             this.renderableCells = renderableCells;

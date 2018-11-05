@@ -150,7 +150,10 @@
             }
 
             var oTable;
-            $j("${submissionsTabSelector}").click(function () {
+            <enhance:out escapeXml="false">
+                var submissionsTabSelector = "${submissionsTabSelector}";
+            </enhance:out>
+            $j(submissionsTabSelector).click(function () {
                 function buildMessage(jqXHR) {
                     var responseText = jqXHR.responseJSON;
                     if (responseText && responseText.stripesMessages) {
