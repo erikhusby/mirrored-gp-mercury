@@ -302,8 +302,11 @@ public class BillingAdaptor implements Serializable {
                         .areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName())));
                     boolean orderEligibleForSAP =
                         !areProductsBlocked && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder());
+                    boolean canBeBilledInSap = !item.getProductOrder().getOrderStatus().canPlace() &&
+                                   StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber()) &&
+                                   StringUtils.isBlank(item.getSapItems());
 
-                    if(orderEligibleForSAP && item.canBill()) {
+                    if(orderEligibleForSAP && canBeBilledInSap) {
                         final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
                                 item.getProductOrder().getSapCompanyConfigurationForProductOrder());
 
@@ -367,8 +370,7 @@ public class BillingAdaptor implements Serializable {
                                 BillingSession.BILLED_FOR_QUOTES);
                     }
 
-
-                    if (orderEligibleForSAP && item.canBill()  && quote.isFunded(item.getWorkCompleteDate())) {
+                    if (orderEligibleForSAP && canBeBilledInSap  && quote.isFunded(item.getWorkCompleteDate())) {
                         if (quantityForSAP > 0) {
                             sapBillingId = sapService.billOrder(item, replacementMultiplier, new Date());
                             result.setSAPBillingId(sapBillingId);
