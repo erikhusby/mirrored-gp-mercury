@@ -148,8 +148,7 @@ public class ProductOrderContainerTest extends Arquillian {
             LabVessel tube = new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075);
             tube.setReceiptEvent(new BSPUserList.QADudeUser("LU", i), new Date(), (long) i, LabEvent.UI_EVENT_LOCATION);
             mercurySample.addLabVessel(tube);
-            labVesselDao.getEntityManager().persist(tube);
-            labVesselDao.flush();
+            labVesselDao.persist(tube);
         }
         ProductOrder testOrder = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, uniqueId + "test",
                 // Mix of sample names and tube barcodes.
@@ -183,9 +182,8 @@ public class ProductOrderContainerTest extends Arquillian {
                 tube.setReceiptEvent(new BSPUserList.QADudeUser("LU", i), new Date(), (long) i,
                         LabEvent.UI_EVENT_LOCATION);
                 mercurySample.addLabVessel(tube);
-                labVesselDao.getEntityManager().persist(tube);
+                labVesselDao.persist(tube);
                 labVesselDao.flush();
-                Assert.assertNotNull(labVesselDao.findByIdentifier(tubeBarcode), tubeBarcode);
             }
             try {
                 ProductOrder testOrder = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, uniqueId + "test",

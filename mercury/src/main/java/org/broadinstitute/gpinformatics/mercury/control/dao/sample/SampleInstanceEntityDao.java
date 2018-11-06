@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.sample;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -66,22 +64,5 @@ public class SampleInstanceEntityDao extends GenericDao {
                 return getEntityManager().createQuery(criteria);
             }
         });
-    }
-
-    /**
-     * Returns a map of identifier to mercury sample for the sample instance entities identified either
-     * by sample name or by lab vessel barcode. There may be multiple MercurySamples for one barcode.
-     */
-    public Multimap<String, MercurySample> lookupSamplesByIdentifiers(Collection<String> identifiers) {
-        Multimap<String, MercurySample> map = HashMultimap.create();
-        for (SampleInstanceEntity sampleInstanceEntity : findBySampleNames(identifiers)) {
-            MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
-            map.put(mercurySample.getSampleKey(), mercurySample);
-        }
-        for (SampleInstanceEntity sampleInstanceEntity : findByBarcodes(identifiers)) {
-            LabVessel labVessel = sampleInstanceEntity.getLabVessel();
-            map.put(labVessel.getLabel(), sampleInstanceEntity.getMercurySample());
-        }
-        return map;
     }
 }
