@@ -221,6 +221,11 @@ public class PicoDispositionActionBean extends RackScanActionBean {
                 return (rangeComparison <= 0) ? SHEARING_DAUGHTER : FP_DAUGHTER;
             case RISK:
                 return SHEARING_DAUGHTER_AT_RISK;
+            case RUN_FAILED:
+            case REPEAT:
+            case BAD_TRIP:
+            case OVER_THE_CURVE:
+            case TEN_PERCENT_DIFF_REPEAT:
             case FAIL:
                 return EXCLUDE;
             default:
