@@ -332,6 +332,13 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.MISEQ_FLOWCELL),
 
+    PIZZABOX_DAUGHTER_TRANSFER("PizzaBoxDaughterTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.BSP_AND_MERCURY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
+                    RackOfTubes.RackType.values()).build(),
+            LibraryType.NONE_ASSIGNED),
+
     // Dev Samples
     DEV("DevCherryPick",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -2737,8 +2744,8 @@ public enum LabEventType {
 
         public static class Builder {
             private final MessageType messageType;
-            private final VesselTypeGeometry sourceVesselTypeGeometry;
-            private final VesselTypeGeometry targetVesselTypeGeometry;
+            private VesselTypeGeometry sourceVesselTypeGeometry;
+            private VesselTypeGeometry targetVesselTypeGeometry;
             private VesselTypeGeometry targetWellTypeGeometry;
 
             private SBSSection sourceSection;
@@ -2773,6 +2780,14 @@ public enum LabEventType {
                 this.messageType = messageType;
                 this.sourceVesselTypeGeometry = sourceVesselTypeGeometry;
                 this.targetVesselTypeGeometry = targetVesselTypeGeometry;
+            }
+
+            // Need to allow the ability to make multiple source geometries to be available for choosing.
+            public Builder(MessageType messageType, VesselTypeGeometry[] sourceVesselTypeGeometries,
+                           VesselTypeGeometry[] targetVesselTypeGeometries) {
+                this.messageType = messageType;
+                this.sourceVesselTypeGeometries = sourceVesselTypeGeometries;
+                this.targetVesselTypeGeometries = targetVesselTypeGeometries;
             }
 
             public Builder sourceSection(SBSSection sourceSection) {

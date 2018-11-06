@@ -105,6 +105,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String PARSE_LIMS_FILE_ACTION = "parseLimsFile";
     public static final String SKIP_LIMS_FILE_ACTION = "skipLimsFile";
     public static final String DECODE_IMAGE_ACTION = "decodeImage";
+    private static final String VIEW_TRANSFER_ACTION = "viewTransfer";
+
     private final String syntheticBarcode = String.valueOf(System.currentTimeMillis());
 
     /** Parameter from batch workflow page. */
@@ -171,10 +173,34 @@ public class ManualTransferActionBean extends RackScanActionBean {
     @Inject
     private SampleDataFetcher sampleDataFetcher;
 
+    private VesselTypeGeometry selectedSourceGeometry;
+
+    private VesselTypeGeometry selectedTargetGeometry;
+
+    public VesselTypeGeometry getSelectedSourceGeometry() {
+        return selectedSourceGeometry;
+    }
+
+    public void setSelectedSourceGeometry(VesselTypeGeometry selectedSourceGeometry) { this.selectedSourceGeometry = selectedSourceGeometry; }
+
+    public VesselTypeGeometry getSelectedTargetGeometry() {
+        return selectedTargetGeometry;
+    }
+
+    public void setSelectedTargetGeometry(VesselTypeGeometry selectedTargetGeometry) { this.selectedTargetGeometry = selectedTargetGeometry; }
+
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    @HandlesEvent(VIEW_TRANSFER_ACTION)
+    public Resolution viewTransfer() {
+
+        initializeMessageObjects();
+
+        return view();
     }
 
     /**
@@ -240,6 +266,15 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 stationEvents.add(stationEvent);
             }
         }
+
+        String sourceVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].sourcePlate[0].physType");
+        if (sourceVesselTypeGeometryString != null) {
+            selectedSourceGeometry = RackOfTubes.RackType.getByName(sourceVesselTypeGeometryString);
+        }
+        String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
+        if (targetVesselTypeGeometryString != null) {
+            selectedTargetGeometry = RackOfTubes.RackType.getByName(targetVesselTypeGeometryString);
+        }
     }
 
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
@@ -264,6 +299,14 @@ public class ManualTransferActionBean extends RackScanActionBean {
             reagentIndex++;
         }
 
+        initializeMessageObjects();
+
+        isParseLimsFile = manualTransferDetails.isLimsFile();
+        isUseWebCam = manualTransferDetails.isUseWebCam();
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    private void initializeMessageObjects() {
         int stationEventIndex = 0;
         for (StationEventType stationEvent : stationEvents) {
             if (manualTransferDetails.getSecondaryEvent() != null && stationEventIndex > 0) {
@@ -333,8 +376,17 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     //Source
                     PlateType sourcePlateCp = new PlateType();
-                    VesselTypeGeometry sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
-                    sourcePlateCp.setPhysType(sourceVesselTypeGeometryCp.getDisplayName());
+                    VesselTypeGeometry sourceVesselTypeGeometryCp;
+                    if (selectedSourceGeometry != null) {
+                        sourceVesselTypeGeometryCp = selectedSourceGeometry;
+                    } else {
+                        sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
+                    }
+
+                    if (sourceVesselTypeGeometryCp != null) {
+                        sourcePlateCp.setPhysType(sourceVesselTypeGeometryCp.getDisplayName());
+                    }
+
                     plateCherryPickEvent.getSourcePlate().add(sourcePlateCp);
                     if (sourceVesselTypeGeometryCp instanceof RackOfTubes.RackType) {
                         plateCherryPickEvent.getSourcePositionMap().add(new PositionMapType());
@@ -342,8 +394,17 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     //Target
                     PlateType destinationPlateTypeCp = new PlateType();
-                    VesselTypeGeometry targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
-                    destinationPlateTypeCp.setPhysType(targetVesselTypeGeometryCp.getDisplayName());
+                    VesselTypeGeometry targetVesselTypeGeometryCp;
+                    if (selectedTargetGeometry != null) {
+                        targetVesselTypeGeometryCp = selectedTargetGeometry;
+                    } else {
+                        targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
+                    }
+
+                    if (targetVesselTypeGeometryCp != null ) {
+                        destinationPlateTypeCp.setPhysType(targetVesselTypeGeometryCp.getDisplayName());
+                    }
+
                     plateCherryPickEvent.getPlate().add(destinationPlateTypeCp);
                     if (targetVesselTypeGeometryCp instanceof RackOfTubes.RackType) {
                         plateCherryPickEvent.getPositionMap().add(new PositionMapType());
@@ -388,10 +449,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
             stationEventIndex++;
         }
         assignSyntheticBarcodes();
-        isParseLimsFile = manualTransferDetails.isLimsFile();
-        isUseWebCam = manualTransferDetails.isUseWebCam();
-        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
+
 
     private void assignSyntheticBarcode(PlateType plateType, VesselTypeGeometry vesselTypeGeometry,
             String containerPrefix) {
@@ -991,18 +1050,22 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     //Source
                     VesselTypeGeometry sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
-                    assignSyntheticBarcode(plateCherryPickEvent.getSourcePlate().get(0), sourceVesselTypeGeometryCp,
-                            localManualTransferDetails.getSourceContainerPrefix());
+                    if (sourceVesselTypeGeometryCp != null) {
+                        assignSyntheticBarcode(plateCherryPickEvent.getSourcePlate().get(0), sourceVesselTypeGeometryCp,
+                                localManualTransferDetails.getSourceContainerPrefix());
+                    }
 
                     //Target
                     VesselTypeGeometry targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
-                    assignSyntheticBarcode(plateCherryPickEvent.getPlate().get(0), targetVesselTypeGeometryCp,
-                            localManualTransferDetails.getTargetContainerPrefix() + anonymousRackDisambiguator);
+                    if (targetVesselTypeGeometryCp != null) {
+                        assignSyntheticBarcode(plateCherryPickEvent.getPlate().get(0), targetVesselTypeGeometryCp,
+                                localManualTransferDetails.getTargetContainerPrefix() + anonymousRackDisambiguator);
+                    }
                     for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
-                        if (!sourceVesselTypeGeometryCp.isBarcoded()) {
+                        if (sourceVesselTypeGeometryCp != null && !sourceVesselTypeGeometryCp.isBarcoded()) {
                             cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
                         }
-                        if (!targetVesselTypeGeometryCp.isBarcoded()) {
+                        if (targetVesselTypeGeometryCp != null && !targetVesselTypeGeometryCp.isBarcoded()) {
                             cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
                         }
                     }
