@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import clover.org.apache.commons.lang3.tuple.ImmutablePair;
 import clover.org.apache.commons.lang3.tuple.Pair;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
@@ -126,7 +127,7 @@ public class FingerprintResource {
         }
 
         // Map queried LSIDs to MercurySamples that may have fingerprints
-        Multimap<String, MercurySample> mapLsidToFpSamples = ArrayListMultimap.create();
+        Multimap<String, MercurySample> mapLsidToFpSamples = HashMultimap.create();
         for (String lsid : lsids) {
             MercurySample mercurySample = mapIdToMercurySample.get(getSmIdFromLsid(lsid));
             if (mercurySample == null) {
@@ -209,6 +210,7 @@ public class FingerprintResource {
                         null, null, null, null, Collections.emptyList()));
             }
         }
+        fingerprints.sort((o1, o2) -> o2.getDateGenerated().compareTo(o1.getDateGenerated()));
 
         return new FingerprintsBean(fingerprints);
     }
