@@ -107,16 +107,24 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     public void testWalkupSequencing() throws Exception {
         SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.WALKUP);
         MessageCollection messages = new MessageCollection();
-        sampleInstanceEjb.verifyAndPersistSubmission(new WalkUpSequencing() {{
+        SampleInstanceEntity entity = sampleInstanceEjb.verifyAndPersistSubmission(new WalkUpSequencing() {{
             setLibraryName("TEST_LIBRARY");
             setTubeBarcode("TEST_BARCODE");
-            setReadType("TEST_READ_TYPE");
-            setAnalysisType("TEST");
-            setLabName("TEST lab");
+            setAnalysisType("No_Analysis");
             setReadType("Paried End");
+            setBaitSetName("TEST bait");
         }}, messages);
+        // dbFree must explicitly do what Hibernate entity mapping would normally do.
+        entity.getLabVessel().getSampleInstanceEntities().add(entity);
 
         Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entity.getLabVessel().getSampleInstancesV2()));
+        for (SampleInstanceV2 sampleInstance : entity.getLabVessel().getSampleInstancesV2()) {
+            Assert.assertEquals(sampleInstance.getBaitNameOverride(), "TEST bait");
+            Assert.assertEquals(sampleInstance.getAnalysisType().getName(), "No_Analysis");
+            Assert.assertEquals(sampleInstance.getSampleLibraryName(), "TEST_LIBRARY");
+            Assert.assertTrue(sampleInstance.getPairedEndRead());
+        }
     }
 
     @Test
@@ -657,7 +665,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         Assert.assertTrue(warnings.contains("Row #2 Unknown header(s) \"Insert Size Range\"."));
         Assert.assertTrue(warnings.contains(String.format(SampleInstanceEjb.DUPLICATE_S_M, 6,
                 "SM-748OO", "Illumina_P5-Nijow_P7-Waren")));
-        Assert.assertEquals(warnings.size(), 2, "Found unexpected warnings: " + StringUtils.join(warnings, "; "));
+        Assert.assertTrue(warnings.get(2).startsWith("Row #7 value for Read Length is not consistent with row #6"));
+        Assert.assertEquals(warnings.size(), 3, "Found unexpected warnings: " + StringUtils.join(warnings, "; "));
     }
 
     @Test
@@ -911,7 +920,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             public ReagentDesign answer(InvocationOnMock invocation) throws Throwable {
                 String name = (String)invocation.getArguments()[0];
                 ReagentDesign reagentDesign = null;
-                if (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) {
+                if (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown") || name.startsWith("TEST ")) {
                     return null;
                 }
                 reagentDesign = new ReagentDesign();

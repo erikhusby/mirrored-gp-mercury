@@ -305,7 +305,8 @@ public class SampleInstanceEjb {
      * @param walkUpSequencing the data from a walkup sequencing submission.
      * @param messages         collected errors, warnings, info to be passed back.
      */
-    public void verifyAndPersistSubmission(WalkUpSequencing walkUpSequencing, MessageCollection messages) {
+    public SampleInstanceEntity verifyAndPersistSubmission(WalkUpSequencing walkUpSequencing,
+            MessageCollection messages) {
         if (ExternalLibraryProcessor.asInteger(walkUpSequencing.getFragmentSize()) < 0) {
             messages.addError("Fragment Size must be a non-zero integer or blank");
         }
@@ -409,7 +410,9 @@ public class SampleInstanceEjb {
             sampleInstanceEntity.setAnalysisType(analysisType);
 
             sampleInstanceEntityDao.persistAll(newEntities);
+            return sampleInstanceEntity;
         }
+        return null;
     }
 
     private static Comparator<String> BY_ROW_NUMBER = new Comparator<String>() {
