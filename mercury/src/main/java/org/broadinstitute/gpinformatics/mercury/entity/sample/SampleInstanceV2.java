@@ -124,6 +124,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private FlowcellDesignation.IndexType indexType;
     private Integer indexLength1;
     private Integer indexLength2;
+    private String baitNameOverride;
 
     /**
      * For a reagent-only sample instance.
@@ -569,6 +570,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             readLength2 = sampleInstanceEntity.getReadLength2();
             indexLength1 = sampleInstanceEntity.getIndexLength1();
             indexLength2 = sampleInstanceEntity.getIndexLength2();
+            baitNameOverride = sampleInstanceEntity.getBaitName();
         } else {
             mergeDevConditions(labVessel);
             mercurySamples.addAll(labVessel.getMercurySamples());
@@ -875,6 +877,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     public Integer getIndexLength2() {
         return indexLength2;
+    }
+
+    public String getBaitNameOverride() {
+        return baitNameOverride;
     }
 
     @Override

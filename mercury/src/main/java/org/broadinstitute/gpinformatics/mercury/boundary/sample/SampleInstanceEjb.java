@@ -327,12 +327,14 @@ public class SampleInstanceEjb {
         }
 
         ReagentDesign baitSet = null;
+        String baitName = null;
         if (StringUtils.isNotBlank(walkUpSequencing.getBaitSetName())) {
             baitSet = reagentDesignDao.findByBusinessKey(walkUpSequencing.getBaitSetName());
             if (baitSet == null) {
-                messages.addError("Unknown Bait Reagent '" + walkUpSequencing.getBaitSetName() + "'");
-            }
-            if (CollectionUtils.isEmpty(baitSet.getDesignedReagents())) {
+                // Assumes this is a one-off bait that mercury doesn't know about. The walkup app
+                // should have validated the name so it will just be used as-is in the pipeline query.
+                baitName = walkUpSequencing.getBaitSetName();
+            } else if (CollectionUtils.isEmpty(baitSet.getDesignedReagents())) {
                 messages.addError("Unusable Bait Reagent '" + walkUpSequencing.getBaitSetName() +
                         "' has no Mercury Reagent components.");
             }
@@ -399,6 +401,7 @@ public class SampleInstanceEjb {
             sampleInstanceEntity.setNumberLanes(ExternalLibraryProcessor.asInteger(walkUpSequencing.getLaneQuantity()));
             sampleInstanceEntity.setComments(walkUpSequencing.getComments());
             sampleInstanceEntity.setReagentDesign(baitSet);
+            sampleInstanceEntity.setBaitName(baitName);
             sampleInstanceEntity.setLabVessel(labVessel);
             sampleInstanceEntity.setMercurySample(mercurySample);
             sampleInstanceEntity.setSequencerModel(sequencerModel);

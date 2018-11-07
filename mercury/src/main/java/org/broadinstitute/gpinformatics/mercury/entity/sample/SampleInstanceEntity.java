@@ -109,6 +109,7 @@ public class SampleInstanceEntity {
     private String aggregationParticle;
     private String insertSize;
     private Boolean umisPresent;
+    private String baitName;
 
     @Enumerated(EnumType.STRING)
     private FlowcellDesignation.IndexType indexType;
@@ -340,5 +341,13 @@ public class SampleInstanceEntity {
 
     public void setIndexLength2(Integer indexLength2) {
         this.indexLength2 = indexLength2;
+    }
+
+    public String getBaitName() {
+        return baitName;
+    }
+
+    public void setBaitName(String baitName) {
+        this.baitName = baitName;
     }
 }

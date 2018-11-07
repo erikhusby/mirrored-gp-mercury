@@ -371,6 +371,17 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                         "Concentration", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
                         found.getBarcode()));
             }
+            // Issues warnings for mixed values that may be technically possible in a pooled tube.
+            if (found.getInsertSize() != null && !Objects.equals(found.getInsertSize(), expected.getInsertSize())) {
+                messages.addWarning(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        "Insert Size", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
+                        found.getBarcode()));
+            }
+            if (found.getReadLength() != null && !Objects.equals(found.getReadLength(), expected.getReadLength())) {
+                messages.addWarning(String.format(SampleInstanceEjb.INCONSISTENT_TUBE, found.getRowNumber(),
+                        "Read Length", mapBarcodeToFirstRow.get(found.getBarcode()).getRowNumber(),
+                        found.getBarcode()));
+            }
         }
     }
 

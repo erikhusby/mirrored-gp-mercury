@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchety
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
@@ -506,11 +507,9 @@ public class ZimsIlluminaRunFactory {
         String referenceSequenceVersion = null;
         String aggregationDataType = null;
         String species = null;
-        String lsid = null;
         if (sampleData != null && productOrder == null) {
             Control control = mapNameToControl.get(sampleData.getCollaboratorParticipantId());
             species = sampleData.getOrganism();
-            lsid = sampleData.getSampleLsid();
             if (control != null) {
                 switch (control.getType()) {
                 case POSITIVE:
@@ -522,10 +521,6 @@ public class ZimsIlluminaRunFactory {
                         String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
                         referenceSequence = referenceSequenceValues[0];
                         referenceSequenceVersion = referenceSequenceValues[1];
-                        if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
-                            referenceSequence = null;
-                            referenceSequenceVersion = null;
-                        }
                         aggregationDataType = aggregationDataTypes.iterator().next();
                         if (positiveControlProjects.size() == 1) {
                             positiveControlProject = positiveControlProjects.iterator().next();
@@ -550,7 +545,9 @@ public class ZimsIlluminaRunFactory {
         }
 
         // insert size is a  range consisting of two integers with a hyphen in between, e.g. "225-350".
-        expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
+        if (expectedInsertSize == null) {
+            expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
+        }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
          if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
             referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();
@@ -559,7 +556,8 @@ public class ZimsIlluminaRunFactory {
 
         // Uses the bait found in the workflow reagents or from the uploaded library.
         // If none, takes the one defined on the product order.
-        String bait = baitName;
+        String bait = StringUtils.isNotBlank(sampleInstanceDto.sampleInstance.getBaitNameOverride()) ?
+                sampleInstanceDto.sampleInstance.getBaitNameOverride() : baitName;
 
         if (productOrder != null) {
             Product product = productOrder.getProduct();
@@ -592,6 +590,9 @@ public class ZimsIlluminaRunFactory {
         if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
             referenceSequence = null;
             referenceSequenceVersion = null;
+        }
+        if (AnalysisType.NO_ANALYSIS.equals(analysisType)) {
+            analysisType = null;
         }
 
         List<SubmissionMetadata> submissionMetadataList = new ArrayList<>();
