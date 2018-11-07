@@ -15,6 +15,11 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderS
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -23,7 +28,10 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -45,7 +53,13 @@ public class ProductOrderContainerTest extends Arquillian {
     private ProductDao productDao;
 
     @Inject
+    private LabVesselDao labVesselDao;
+
+    @Inject
     JiraService jiraService;
+
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -53,11 +67,12 @@ public class ProductOrderContainerTest extends Arquillian {
     }
 
     public static ProductOrder createSimpleProductOrder(ResearchProjectEjb researchProjectEjb,
-                                                        BSPUserList userList) throws Exception {
+            BSPUserList userList) throws Exception {
         return new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
                 ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
                 "newQuote", ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber"),
-                ResearchProjectTestFactory.createDummyResearchProject(researchProjectEjb, userList, "Test Research Project"));
+                ResearchProjectTestFactory
+                        .createDummyResearchProject(researchProjectEjb, userList, "Test Research Project"));
     }
 
     public void testSimpleProductOrder() throws Exception {
@@ -87,7 +102,7 @@ public class ProductOrderContainerTest extends Arquillian {
     }
 
     public void testSimpleProductOrderWithConsent() throws Exception {
-        ProductOrder testOrder =  ProductOrderDBTestFactory.createTestExExProductOrder(researchProjectDao, productDao);
+        ProductOrder testOrder = ProductOrderDBTestFactory.createTestExExProductOrder(researchProjectDao, productDao);
         testOrder.setCreatedBy(10950L);
 
         Collection<RegulatoryInfo> availableRegulatoryInfos = testOrder.findAvailableRegulatoryInfos();
@@ -99,7 +114,7 @@ public class ProductOrderContainerTest extends Arquillian {
         testOrder.prepareToSave(bspUser, ProductOrder.SaveType.CREATING);
         productOrderDao.persist(testOrder.getProduct());
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
-}
+    }
 
     public void testSimpleNonBspProductOrder() throws Exception {
         ProductOrder testOrder =
@@ -108,7 +123,8 @@ public class ProductOrderContainerTest extends Arquillian {
                                 "SM_1P3XN"),
                         "newQuote",
                         ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber"),
-                        ResearchProjectTestFactory.createDummyResearchProject(researchProjectEjb, userList, "Test Research Project"));
+                        ResearchProjectTestFactory
+                                .createDummyResearchProject(researchProjectEjb, userList, "Test Research Project"));
 
         Assert.assertEquals(testOrder.getUniqueSampleCount(), 3);
 
@@ -117,4 +133,78 @@ public class ProductOrderContainerTest extends Arquillian {
         Assert.assertEquals(testOrder.getSampleCount(), 0);
     }
 
+    public void testProductOrderSampleBarcode() throws Exception {
+        if (utx == null) {
+            return;
+        }
+        utx.begin();
+        String uniqueId = System.currentTimeMillis() + "T";
+        final int numSamples = 4;
+        String[] sampleIds = new String[numSamples];
+        for (int i = 0; i < numSamples; ++i) {
+            sampleIds[i] = uniqueId + i;
+            String tubeBarcode = "A" + sampleIds[i];
+            MercurySample mercurySample = new MercurySample(sampleIds[i], MercurySample.MetadataSource.MERCURY);
+            LabVessel tube = new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075);
+            tube.setReceiptEvent(new BSPUserList.QADudeUser("LU", i), new Date(), (long) i, LabEvent.UI_EVENT_LOCATION);
+            mercurySample.addLabVessel(tube);
+            labVesselDao.persist(tube);
+            labVesselDao.flush();
+        }
+        ProductOrder testOrder = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, uniqueId + "test",
+                // Mix of sample names and tube barcodes.
+                Arrays.asList(new ProductOrderSample(sampleIds[0]), new ProductOrderSample("A" + sampleIds[1]),
+                        new ProductOrderSample(sampleIds[2]), new ProductOrderSample("A" + sampleIds[3])),
+                "newQuote", ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber"),
+                ResearchProjectTestFactory.createDummyResearchProject(researchProjectEjb, userList, uniqueId));
+
+        Assert.assertEquals(testOrder.getUniqueSampleCount(), numSamples);
+        Assert.assertEquals(testOrder.getTotalSampleCount(), numSamples);
+        // Product order samples should all be linked to mercury samples.
+        testOrder.getSamples().stream().
+                filter(productOrderSample -> productOrderSample.getMercurySample() == null).
+                findAny().ifPresent(productOrderSample ->
+                Assert.fail("Missing mercury sample on " + productOrderSample.getBusinessKey()));
+        utx.rollback();
+    }
+
+    /**
+     * A pdo sample name refers to both a tube barcode and a mercury sample name. This is a contrived
+     * test case but External Library uploads can have arbitrary tube barcodes and sample names.
+     */
+    public void testAmbiguousProductOrderSample() throws Exception {
+        if (utx == null) {
+            return;
+        }
+        try {
+            utx.begin();
+            String uniqueId = System.currentTimeMillis() + "V";
+            String ambiguousName = uniqueId + 1;
+            for (int i = 0; i < 2; ++i) {
+                String sampleId = uniqueId + i;
+                String tubeBarcode = i == 0 ? ambiguousName : ("B" + sampleId);
+                MercurySample mercurySample = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
+                LabVessel tube = new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075);
+                tube.setReceiptEvent(new BSPUserList.QADudeUser("LU", i), new Date(), (long) i,
+                        LabEvent.UI_EVENT_LOCATION);
+                mercurySample.addLabVessel(tube);
+                labVesselDao.persist(tube);
+                labVesselDao.flush();
+            }
+            try {
+                ProductOrder testOrder = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, uniqueId + "test",
+                        Arrays.asList(new ProductOrderSample(uniqueId + 0), new ProductOrderSample(ambiguousName)),
+                        "newQuote", ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber"),
+                        ResearchProjectTestFactory.createDummyResearchProject(researchProjectEjb, userList, uniqueId));
+                // getUniqueSampleCount() should invoke ProductOrder.loadSampleData()
+                // which should throw due to the ambiguous pdo sample name.
+                Assert.assertEquals(testOrder.getUniqueSampleCount(), 2);
+                Assert.fail("Should have thrown when given an ambiguous pdo sample name.");
+            } catch (Exception e) {
+                Assert.assertEquals(e.getMessage(), String.format(ProductOrder.AMBIGUOUS_PDO_SAMPLE, ambiguousName));
+            }
+        } finally {
+            utx.rollback();
+        }
+    }
 }
