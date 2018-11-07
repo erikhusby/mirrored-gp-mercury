@@ -336,34 +336,16 @@ public class ProductOrderEjb {
      *
      * @throws SAPInterfaceException
      */
-    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
-                                         boolean allowCreateOrder) throws SAPInterfaceException {
-         publishProductOrderToSAP(editedProductOrder, messageCollection, allowCreateOrder, new Date());
-    }
-
-    /**
-     * Takes care of the logic to publish the Product Order to SAP for the purposes of either creating or updating
-     * an SAP order.  This must be done in order to directly bill to SAP from mercury
-     *
-     * @param editedProductOrder Product order entity which intends to be reflected in SAP
-     * @param messageCollection  Storage for error/success messages that happens during the publishing process
-     * @param allowCreateOrder   Helper flag to know indicate if the scenario by which the method is called intends to
-     *                           allow a new order to be replaced (e.g. an order previously was associated with an SAP
-     *                           order but needs a new one)
-     * @param effectiveDate
-     *
-     * @throws SAPInterfaceException
-     */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
-                                         boolean allowCreateOrder, Date effectiveDate) throws SAPInterfaceException {
+                                         boolean allowCreateOrder) throws SAPInterfaceException {
         ProductOrder orderToPublish = editedProductOrder;
 
         final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
         if(editedProductOrder.getParentOrder() != null && editedProductOrder.getSapOrderNumber() != null) {
             orderToPublish = editedProductOrder.getParentOrder();
         }
-        if (!areProductsOnOrderBlocked(orderToPublish)) {
+        if ((!areProductsOnOrderBlocked(orderToPublish)) && accessController.getCurrentControlDefinitions().isEnabled()) {
             try {
                 if (isOrderEligibleForSAP(orderToPublish)
                     && !orderToPublish.getOrderStatus().canPlace()) {
@@ -518,26 +500,21 @@ public class ProductOrderEjb {
      * @return Boolean indicator identifying SAP eligibility
      */
     public boolean isOrderEligibleForSAP(ProductOrder productOrder)
-        throws QuoteServerException, QuoteNotFoundException, InvalidProductException, SAPInterfaceException {
+        throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
         Quote orderQuote = productOrder.getQuote(quoteService);
-        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         Set<AccessItem> priceItemNameList = new HashSet<>();
         boolean priceItemsValid = areProductPricesValid(productOrder, priceItemNameList, orderQuote);
 
-        boolean eligibilityResult = false;
-        if (accessControl.isEnabled()) {
-            eligibilityResult =
-                productOrder.getProduct() != null && productOrder.getProduct().getPrimaryPriceItem() != null
-                && orderQuote != null && orderQuote.isEligibleForSAP()
-                && !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList);
-        }
+        boolean isEligible = productOrder.getProduct() != null &&
+                             productOrder.getProduct().getPrimaryPriceItem() != null && orderQuote != null
+                             && orderQuote.isEligibleForSAP();
 
-        if(eligibilityResult && !priceItemsValid) {
+        if (isEligible && !priceItemsValid) {
             throw new InvalidProductException("One of the Price items associated with " +
                                               productOrder.getBusinessKey() + ": " +
                                               productOrder.getName() + " is invalid");
         }
-        return eligibilityResult;
+        return isEligible;
     }
 
     public boolean isOrderFunded(ProductOrder productOrder) throws QuoteNotFoundException, QuoteServerException {
@@ -561,6 +538,10 @@ public class ProductOrderEjb {
 
         return areProductsBlocked(priceItemNameList);
 
+    }
+
+    public boolean areProductsBlocked(String priceItemName) {
+        return areProductsBlocked(Collections.singleton(new AccessItem(priceItemName)));
     }
 
     public boolean areProductsBlocked(Set<AccessItem> priceItemNameList) {

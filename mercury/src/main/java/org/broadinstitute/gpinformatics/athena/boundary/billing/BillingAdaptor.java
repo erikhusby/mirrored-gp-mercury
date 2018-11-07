@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -187,7 +186,7 @@ public class BillingAdaptor implements Serializable {
                     // 2 Prices are valid and products are not black listed
                     // 3 order is in sap
                     // ?? does funding matter here ??
-                    if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(itemForPriceUpdate.getPriceItem().getName())))
+                    if(!productOrderEjb.areProductsBlocked(itemForPriceUpdate.getPriceItem().getName())
                        && productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder()) &&
                        itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
                         MessageCollection messageCollection = new MessageCollection();
@@ -298,8 +297,7 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    boolean areProductsBlocked = productOrderEjb
-                        .areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName())));
+                    boolean areProductsBlocked = productOrderEjb.areProductsBlocked(priceItemBeingBilled.getName());
                     boolean orderEligibleForSAP =
                         !areProductsBlocked && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder());
                     boolean canBeBilledInSap = !item.getProductOrder().getOrderStatus().canPlace() &&
