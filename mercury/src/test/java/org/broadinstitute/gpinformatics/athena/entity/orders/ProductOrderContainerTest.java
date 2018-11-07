@@ -149,6 +149,7 @@ public class ProductOrderContainerTest extends Arquillian {
             tube.setReceiptEvent(new BSPUserList.QADudeUser("LU", i), new Date(), (long) i, LabEvent.UI_EVENT_LOCATION);
             mercurySample.addLabVessel(tube);
             labVesselDao.persist(tube);
+            labVesselDao.flush();
         }
         ProductOrder testOrder = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, uniqueId + "test",
                 // Mix of sample names and tube barcodes.
@@ -159,6 +160,11 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Assert.assertEquals(testOrder.getUniqueSampleCount(), numSamples);
         Assert.assertEquals(testOrder.getTotalSampleCount(), numSamples);
+        // Product order samples should all be linked to mercury samples.
+        testOrder.getSamples().stream().
+                filter(productOrderSample -> productOrderSample.getMercurySample() == null).
+                findAny().ifPresent(productOrderSample ->
+                Assert.fail("Missing mercury sample on " + productOrderSample.getBusinessKey()));
         utx.rollback();
     }
 
