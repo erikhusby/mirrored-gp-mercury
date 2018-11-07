@@ -186,9 +186,8 @@ public class BillingAdaptor implements Serializable {
                     // 2 Prices are valid and products are not black listed
                     // 3 order is in sap
                     // ?? does funding matter here ??
-                    if(!productOrderEjb.areProductsBlocked(itemForPriceUpdate.getPriceItem().getName())
-                       && productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder()) &&
-                       itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
+                    if (productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder())
+                        && itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
                         MessageCollection messageCollection = new MessageCollection();
                         effectivePricesForProducts = getEffectivePricesForProducts(allProductsOrdered, quote, priceItemsForDate,
                                 itemForPriceUpdate.getProductOrder());
@@ -297,9 +296,7 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    boolean areProductsBlocked = productOrderEjb.areProductsBlocked(priceItemBeingBilled.getName());
-                    boolean orderEligibleForSAP =
-                        !areProductsBlocked && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder());
+                    boolean orderEligibleForSAP = productOrderEjb.isOrderEligibleForSAP(item.getProductOrder());
                     boolean canBeBilledInSap = !item.getProductOrder().getOrderStatus().canPlace() &&
                                    StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber()) &&
                                    StringUtils.isBlank(item.getSapItems());

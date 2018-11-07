@@ -345,7 +345,7 @@ public class ProductOrderEjb {
         if(editedProductOrder.getParentOrder() != null && editedProductOrder.getSapOrderNumber() != null) {
             orderToPublish = editedProductOrder.getParentOrder();
         }
-        if ((!areProductsOnOrderBlocked(orderToPublish)) && accessController.getCurrentControlDefinitions().isEnabled()) {
+        if (!areProductsOnOrderBlocked(orderToPublish)) {
             try {
                 if (isOrderEligibleForSAP(orderToPublish)
                     && !orderToPublish.getOrderStatus().canPlace()) {
@@ -502,19 +502,24 @@ public class ProductOrderEjb {
     public boolean isOrderEligibleForSAP(ProductOrder productOrder)
         throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
         Quote orderQuote = productOrder.getQuote(quoteService);
+        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         Set<AccessItem> priceItemNameList = new HashSet<>();
         boolean priceItemsValid = areProductPricesValid(productOrder, priceItemNameList, orderQuote);
 
-        boolean isEligible = productOrder.getProduct() != null &&
-                             productOrder.getProduct().getPrimaryPriceItem() != null && orderQuote != null
-                             && orderQuote.isEligibleForSAP();
+        boolean eligibilityResult = false;
+        if (accessControl.isEnabled()) {
+            eligibilityResult =
+                productOrder.getProduct() != null && productOrder.getProduct().getPrimaryPriceItem() != null
+                && orderQuote != null && orderQuote.isEligibleForSAP()
+                && !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList);
+        }
 
-        if (isEligible && !priceItemsValid) {
+        if(eligibilityResult && !priceItemsValid) {
             throw new InvalidProductException("One of the Price items associated with " +
                                               productOrder.getBusinessKey() + ": " +
                                               productOrder.getName() + " is invalid");
         }
-        return isEligible;
+        return eligibilityResult;
     }
 
     public boolean isOrderFunded(ProductOrder productOrder) throws QuoteNotFoundException, QuoteServerException {
