@@ -85,6 +85,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -1827,23 +1828,22 @@ public class LabBatchFixUpTest extends Arquillian {
      */
     @Test(enabled = true)
     public void consolidateLcsets() {
-        // get lab event
-        /*
-        Options for input
-            eventId, primary LCSET
-            source LCSET, dest LCSET
-        */
-//        List<LabEvent> labEvents = labEventDao.findByDateAndType(
-//                new GregorianCalendar(2018, Calendar.SEPTEMBER, 1).getTime(), new Date(), LabEventType.SHEARING_TRANSFER);
-//        for (LabEvent labEvent : labEvents) {
-            LabEvent labEvent = labEventDao.findById(LabEvent.class, 2814820L);
+        List<LabEvent> labEvents = labEventDao.findByDateAndType(
+                new GregorianCalendar(2018, Calendar.JANUARY, 1).getTime(), new Date(), LabEventType.SHEARING_TRANSFER);
+        List<Long> eventIds = labEvents.stream().map(LabEvent::getLabEventId).collect(Collectors.toList());
+        labEventDao.clear();
+        for (Long eventId : eventIds) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, eventId); // 2814820L
             Set<LabBatch> computedLcSets = labEvent.getComputedLcSets();
-            if (computedLcSets.size() == 0) {
-//                System.out.println(labEvent.getLabEventId() + ": " +
-//                        computedLcSets.stream().map(LabBatch::getBatchName).collect(Collectors.joining(",")));
+            if (computedLcSets.isEmpty()) {
                 LabVessel labVessel = labEvent.getTargetLabVessels().iterator().next();
-                System.out.println(labVessel.getSampleInstancesV2().stream().flatMap(si -> si.getAllWorkflowBatches().stream()).map(LabBatch::getBatchName).collect(Collectors.toSet()).stream().collect(Collectors.joining(",")));
+                System.out.println(labEvent.getLabEventId() + " " + labVessel.getSampleInstancesV2().stream().
+                        flatMap(si -> si.getAllWorkflowBatches().stream()).
+                        map(lb -> lb.getBatchName() + " " + lb.getCreatedOn()).
+                        collect(Collectors.toSet()).stream().sorted().
+                        collect(Collectors.joining(",")));
             }
-//        }
+            labEventDao.clear();
+        }
     }
 }
