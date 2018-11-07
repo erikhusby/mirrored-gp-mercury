@@ -197,7 +197,7 @@ public class BillingAdaptor implements Serializable {
                             // price and effective prices differ
                             if (!StringUtils.equals(itemForPriceUpdate.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
                                     TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))) {
-                                productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true, itemForPriceUpdate.getWorkCompleteDate());
+                                productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true);
                             }
                         } else {
                             final String price =
@@ -213,7 +213,7 @@ public class BillingAdaptor implements Serializable {
                                && !itemForPriceUpdate.needsCustomization() && listPrice.compareTo(effectivePrice) != 0) {
                                 itemForPriceUpdate.getProductOrder().addQuoteAdjustment(itemForPriceUpdate.getProduct(), effectivePrice, listPrice);
                             }
-                            productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, false, itemForPriceUpdate.getWorkCompleteDate());
+                            productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, false);
                         }
                     }
                 } catch (QuoteServerException|QuoteNotFoundException|InvalidProductException|SAPInterfaceException e) {
