@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -139,6 +140,9 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private SystemRouter systemRouter;
+
+    @Inject
+    private LabEventDao labEventDao;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -1815,5 +1819,31 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.persist(new FixupCommentary(lines.get(0) + " Removed samples from " + lcsetName));
         labBatchDao.flush();
         userTransaction.commit();
+    }
+
+    /**
+     * This test reads its input from a file.
+     * Mercury requires one LCSET per ShearingTransfer, but the users have been creating up to five.
+     */
+    @Test(enabled = true)
+    public void consolidateLcsets() {
+        // get lab event
+        /*
+        Options for input
+            eventId, primary LCSET
+            source LCSET, dest LCSET
+        */
+//        List<LabEvent> labEvents = labEventDao.findByDateAndType(
+//                new GregorianCalendar(2018, Calendar.SEPTEMBER, 1).getTime(), new Date(), LabEventType.SHEARING_TRANSFER);
+//        for (LabEvent labEvent : labEvents) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, 2814820L);
+            Set<LabBatch> computedLcSets = labEvent.getComputedLcSets();
+            if (computedLcSets.size() == 0) {
+//                System.out.println(labEvent.getLabEventId() + ": " +
+//                        computedLcSets.stream().map(LabBatch::getBatchName).collect(Collectors.joining(",")));
+                LabVessel labVessel = labEvent.getTargetLabVessels().iterator().next();
+                System.out.println(labVessel.getSampleInstancesV2().stream().flatMap(si -> si.getAllWorkflowBatches().stream()).map(LabBatch::getBatchName).collect(Collectors.toSet()).stream().collect(Collectors.joining(",")));
+            }
+//        }
     }
 }
