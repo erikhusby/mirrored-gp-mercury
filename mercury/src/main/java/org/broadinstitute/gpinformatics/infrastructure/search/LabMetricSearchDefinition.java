@@ -660,16 +660,22 @@ public class LabMetricSearchDefinition {
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> products = new HashSet<>();
                 LabMetric labMetric = (LabMetric) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
-                    BucketEntry singleBucketEntry = sampleInstanceV2.getSingleBucketEntry();
-                    if (singleBucketEntry != null) {
-                        products.add(singleBucketEntry.getProductOrder().getProduct().getName());
+                Set <String> results = new HashSet<>();
+                for (SampleInstanceV2 sampleInstanceV2: labMetric.getLabVessel().getSampleInstancesV2()) {
+                    ProductOrderSample pdoSampleForSingleBucket =
+                            sampleInstanceV2.getProductOrderSampleForSingleBucket();
+                    if (pdoSampleForSingleBucket == null) {
+                        for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                            if (productOrderSample.getProductOrder().getProduct() != null) {
+                                results.add(productOrderSample.getProductOrder().getProduct().getName());
+                            }
+                        }
+                    } else {
+                        results.add(pdoSampleForSingleBucket.getProductOrder().getProduct().getName());
                     }
                 }
-
-                return products;
+                return results;
             }
         });
         searchTerms.add(searchTerm);
