@@ -85,7 +85,6 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -1828,20 +1827,33 @@ public class LabBatchFixUpTest extends Arquillian {
      */
     @Test(enabled = true)
     public void consolidateLcsets() {
-        List<LabEvent> labEvents = labEventDao.findByDateAndType(
-                new GregorianCalendar(2018, Calendar.JANUARY, 1).getTime(), new Date(), LabEventType.SHEARING_TRANSFER);
-        List<Long> eventIds = labEvents.stream().map(LabEvent::getLabEventId).collect(Collectors.toList());
+//        List<LabEvent> labEvents = labEventDao.findByDateAndType(
+//                new GregorianCalendar(2018, Calendar.JANUARY, 1).getTime(), new Date(), LabEventType.SHEARING_TRANSFER);
+        List<Long> eventIds = Arrays.asList(2814820L); //labEvents.stream().map(LabEvent::getLabEventId).collect(Collectors.toList());
         labEventDao.clear();
         for (Long eventId : eventIds) {
             LabEvent labEvent = labEventDao.findById(LabEvent.class, eventId); // 2814820L
             Set<LabBatch> computedLcSets = labEvent.getComputedLcSets();
             if (computedLcSets.isEmpty()) {
+                System.out.print(labEvent.getLabEventId() + " ");
+                Set<String> batchNames = new HashSet<>();
+                Set<String> controlBatchNames = new HashSet<>();
                 LabVessel labVessel = labEvent.getTargetLabVessels().iterator().next();
-                System.out.println(labEvent.getLabEventId() + " " + labVessel.getSampleInstancesV2().stream().
-                        flatMap(si -> si.getAllWorkflowBatches().stream()).
-                        map(lb -> lb.getBatchName() + " " + lb.getCreatedOn()).
-                        collect(Collectors.toSet()).stream().sorted().
-                        collect(Collectors.joining(",")));
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    List<BucketEntry> bucketEntries = sampleInstanceV2.getAllBucketEntries();
+                    if (bucketEntries.isEmpty()) {
+                        for (LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches()) {
+                            controlBatchNames.add(labBatch.getBatchName());
+                        }
+                    } else {
+                        for (BucketEntry bucketEntry : bucketEntries) {
+                            batchNames.add(bucketEntry.getLabBatch().getBatchName() + " " +
+                                    bucketEntry.getLabBatch().getCreatedOn());
+                        }
+                    }
+                }
+                System.out.print("control " + StringUtils.join(controlBatchNames, ", ") + " ");
+                System.out.println("others " + batchNames.stream().sorted().collect(Collectors.joining(",")));
             }
             labEventDao.clear();
         }
