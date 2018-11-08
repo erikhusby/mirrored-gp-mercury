@@ -1826,10 +1826,31 @@ public class LabBatchFixUpTest extends Arquillian {
      * Mercury requires one LCSET per ShearingTransfer, but the users have been creating up to five.
      */
     @Test(enabled = true)
-    public void consolidateLcsets() {
+    public void findAmbiguousEvents() {
 //        List<LabEvent> labEvents = labEventDao.findByDateAndType(
 //                new GregorianCalendar(2018, Calendar.JANUARY, 1).getTime(), new Date(), LabEventType.SHEARING_TRANSFER);
-        List<Long> eventIds = Arrays.asList(2814820L); //labEvents.stream().map(LabEvent::getLabEventId).collect(Collectors.toList());
+        List<Long> eventIds = Arrays.asList(
+                2495336L,
+                2510393L,
+                2523670L,
+                2499545L,
+                2536682L,
+                2535822L,
+                2550827L,
+                2571352L,
+                2584128L,
+                2585300L,
+                2600695L,
+                2610178L,
+                2630273L,
+                2639731L,
+                2655451L,
+                2686917L,
+                2705223L,
+                2698311L,
+                2814820L,
+                3129094L
+        ); //labEvents.stream().map(LabEvent::getLabEventId).collect(Collectors.toList());
         labEventDao.clear();
         for (Long eventId : eventIds) {
             LabEvent labEvent = labEventDao.findById(LabEvent.class, eventId); // 2814820L
@@ -1858,4 +1879,5 @@ public class LabBatchFixUpTest extends Arquillian {
             labEventDao.clear();
         }
     }
+
 }
