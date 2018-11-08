@@ -195,9 +195,12 @@ public class FingerprintResource {
                                 gender = fingerprint.getGender().getAbbreviation();
                             }
                         }
+                        String aliquotLsid = mapSmidToLsid.get(fingerprint.getMercurySample().getSampleKey());
+                        if (aliquotLsid == null) {
+                            aliquotLsid = lsid;
+                        }
                         fingerprints.add(new FingerprintBean(lsid,
-                                fingerprint.getDisposition().getAbbreviation(),
-                                mapSmidToLsid.get(fingerprint.getMercurySample().getSampleKey()),
+                                fingerprint.getDisposition().getAbbreviation(), aliquotLsid,
                                 fingerprint.getPlatform().name(), fingerprint.getGenomeBuild().name(),
                                 fingerprint.getSnpList().getName(), fingerprint.getDateGenerated(),
                                 gender, calls));
