@@ -44,6 +44,9 @@ public class InfniumArchiverFixupTest extends Arquillian {
     }
 
     /**
+     * This test reads its parameters from file mercury/src/test/resources/testdata/ArchiveInfiniumChips.txt .
+     * Each line is a chip barcode, which can be preceded by # to skip over previously archived chips when restarting
+     * a failed run.
      * To get reasonable performance, this test must be run on a Linux host (the copying and zipping is much slower
      * through a Windows share).  Modify src\test\resources-dev\arquillian.xml as follows:
      * 	<defaultProtocol type="Servlet 3.0">
