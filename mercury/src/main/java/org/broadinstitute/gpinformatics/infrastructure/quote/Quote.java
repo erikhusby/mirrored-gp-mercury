@@ -205,11 +205,10 @@ public class Quote {
 
     /**
      * Helper method to support SAP transition.  If there is only one funding level, this will return it.  Otherwise
-     * Null will be returned
+     * Null will be returned. This method should only be used for testing if funding is valid for SAP.
      *
      * @return Single funding level for the quote, or null if there is either more than one level or no level.
      */
-    // todo: should this condider only active sources?
     public FundingLevel getFirstRelevantFundingLevel() {
         FundingLevel singleLevel = null;
 

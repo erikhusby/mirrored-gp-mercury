@@ -37,6 +37,7 @@ public class QuoteTest {
         assertThat(testQuote.getExpirationDate(), is(notNullValue()));
 
         assertThat(testQuote.isFunded(), is(true));
+        assertThat(testQuote.isEligibleForSAP(), is(true));
 
     }
 
@@ -62,6 +63,7 @@ public class QuoteTest {
         assertThat(testQuote.getExpirationDate(), is(notNullValue()));
 
         assertThat(testQuote.isFunded(), is(false));
+        assertThat(testQuote.isEligibleForSAP(), is(true));
 
         Calendar cal = Calendar.getInstance();
         cal.set(2013, Calendar.JANUARY, 9); //Year, month, day of month
@@ -84,6 +86,10 @@ public class QuoteTest {
         try {
             quoteEligibility = gp87Uquote.isFunded();
             Assert.assertFalse(quoteEligibility);
+
+            // This quote has multiple funding levels so it is not eligible for SAP
+            quoteEligibility = gp87Uquote.isEligibleForSAP();
+            Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
         }
@@ -101,6 +107,10 @@ public class QuoteTest {
         try {
             quoteEligibility = splitFundedQuote.isFunded();
             Assert.assertFalse(quoteEligibility);
+
+            // This quote has multiple funding levels so it is not eligible for SAP
+            quoteEligibility = splitFundedQuote.isEligibleForSAP();
+            Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
         }
@@ -116,6 +126,8 @@ public class QuoteTest {
         try {
             quoteEligibility = splitCostObjectQuote.isFunded();
             Assert.assertFalse(quoteEligibility);
+            quoteEligibility = splitCostObjectQuote.isEligibleForSAP();
+            Assert.assertTrue(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
         }
@@ -131,6 +143,24 @@ public class QuoteTest {
         try {
             quoteEligibility = eligibleQuote.isFunded();
             Assert.assertTrue(quoteEligibility);
+            quoteEligibility = eligibleQuote.isEligibleForSAP();
+            Assert.assertTrue(quoteEligibility);
+        } catch (Exception shouldNotHappen) {
+            Assert.fail(shouldNotHappen.toString());
+        }
+    }
+
+    public void testUnFundedQuote() throws Exception {
+
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote eligibleQuote = stubbedQuoteService.getQuoteByAlphaId("STC3ZW");
+        FundingLevel fundingLevel = eligibleQuote.getQuoteFunding().getFundingLevel().iterator().next();
+        fundingLevel.setPercent("0");
+
+        try {
+            Assert.assertFalse(eligibleQuote.isFunded());
+            Assert.assertFalse(eligibleQuote.isEligibleForSAP());
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
         }
@@ -147,6 +177,8 @@ public class QuoteTest {
         try {
             quoteEligibility = eligibleQuote.isFunded();
             Assert.assertFalse(quoteEligibility);
+            quoteEligibility = eligibleQuote.isEligibleForSAP();
+            Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
         }
@@ -161,6 +193,8 @@ public class QuoteTest {
 
         try {
             quoteEligibility = eligibleQuote.isFunded();
+            Assert.assertFalse(quoteEligibility);
+            quoteEligibility = eligibleQuote.isEligibleForSAP();
             Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());

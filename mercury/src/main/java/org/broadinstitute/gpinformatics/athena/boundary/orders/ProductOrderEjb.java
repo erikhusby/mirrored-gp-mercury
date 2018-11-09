@@ -372,7 +372,7 @@ public class ProductOrderEjb {
                     } else if (orderToPublish.isSavedInSAP()) {
 
                         updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts,
-                            messageCollection, orderToPublish.getOrderStatus().canBill()
+                            messageCollection, orderToPublish.getOrderStatus().canClose()
                                                && !orderToPublish.isPriorToSAP1_5());
 
                         for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
@@ -382,7 +382,7 @@ public class ProductOrderEjb {
                                     orderToPublish.getSapOrderNumber())) {
 
                                 updateOrderInSap(childProductOrder, allProductsOrdered, effectivePricesForProducts,
-                                    messageCollection, orderToPublish.getOrderStatus().canBill()
+                                    messageCollection, orderToPublish.getOrderStatus().canClose()
                                                        && !orderToPublish.isPriorToSAP1_5());
                             }
                         }

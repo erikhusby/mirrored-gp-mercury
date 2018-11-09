@@ -1589,6 +1589,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public boolean canBill() {
             return EnumSet.of(Submitted, Abandoned, Completed).contains(this);
         }
+
+        /**
+         * @return true if an order can be closed from this state.
+         */
+        public boolean canClose() {
+            return EnumSet.of(Abandoned, Completed).contains(this);
+        }
         /**
          * @return true if an order can be billed from this state.
          */
