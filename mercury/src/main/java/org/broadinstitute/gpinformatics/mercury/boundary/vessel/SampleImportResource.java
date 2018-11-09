@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
@@ -113,7 +114,7 @@ public class SampleImportResource {
                     Response.Status.UNAUTHORIZED);
         }
 
-        List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleImportBean.getUserName(),
+        Pair<List<LabVessel>,List<LabVessel>> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleImportBean.getUserName(),
                 sampleImportBean.getExportDate(), LabEventType.SAMPLE_IMPORT, MercurySample.MetadataSource.BSP);
 
         LabBatch labBatch = labBatchDao.findByName(sampleImportBean.getSourceSystemExportId());
@@ -121,9 +122,12 @@ public class SampleImportResource {
             throw new RuntimeException(
                     "Export has already been received " + sampleImportBean.getSourceSystemExportId());
         }
+
+        labBatchDao.persistAll(labVessels.getRight());
+
         String batchName = sampleImportBean.getSourceSystemExportId();
-        labBatchDao.persist(new LabBatch(batchName, new HashSet<>(labVessels),
-                LabBatch.LabBatchType.SAMPLES_IMPORT));
+        labBatchDao.persist(new LabBatch(batchName, new HashSet<>(labVessels.getLeft()),
+                LabBatch.LabBatchType.SAMPLES_IMPORT, sampleImportBean.getExportDate()));
         return "Samples imported: " + batchName;
     }
 

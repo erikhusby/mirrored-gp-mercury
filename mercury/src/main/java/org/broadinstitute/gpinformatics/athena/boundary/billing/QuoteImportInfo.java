@@ -196,8 +196,12 @@ public class QuoteImportInfo {
         }
 
         // No quote, so calculate what it would be given the state of things now.
+        final Product product = ledger.getProductOrderSample().getProductOrder().getProduct();
+
+        final PriceItem priceItem =
+                ledger.getProductOrderSample().getProductOrder().determinePriceItemByCompanyCode(product);
         Collection<QuotePriceItem> quotePriceItems =
-            priceListCache.getReplacementPriceItems(ledger.getProductOrderSample().getProductOrder().getProduct());
+            priceListCache.getReplacementPriceItems(priceItem);
 
         for (QuotePriceItem quotePriceItem : quotePriceItems) {
             if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {

@@ -8,10 +8,9 @@ import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_.product;
 
 /**
  * Represents a table row in Create FCT page.
@@ -209,6 +208,15 @@ public class CreateFctDto implements FctDto, Cloneable {
         }
     };
 
+    /**
+     * Returns true if designation may be combined with others on a flowcell.
+     * @param groupDtos the dtos to test against.
+     */
+    @Override
+    public <DTO_TYPE extends FctDto> boolean isCompatible(Collection<DTO_TYPE> groupDtos) {
+        return true;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -218,31 +226,27 @@ public class CreateFctDto implements FctDto, Cloneable {
             return false;
         }
 
-        CreateFctDto createFctDto = (CreateFctDto) o;
+        CreateFctDto that = (CreateFctDto) o;
 
-        if (!barcode.equals(createFctDto.barcode)) {
+        if (!getBarcode().equals(that.getBarcode())) {
             return false;
         }
-        if (!lcset.equals(createFctDto.lcset)) {
+        if (getLcset() != null ? !getLcset().equals(that.getLcset()) : that.getLcset() != null) {
             return false;
         }
-        if (!eventDate.equals(createFctDto.eventDate)) {
+        if (getEventDate() != null ? !getEventDate().equals(that.getEventDate()) : that.getEventDate() != null) {
             return false;
         }
-        if (!tubeType.equals(createFctDto.tubeType)) {
-            return false;
-        }
-        return getProduct().equals(createFctDto.getProduct());
+        return getTubeType() != null ? getTubeType().equals(that.getTubeType()) : that.getTubeType() == null;
 
     }
 
     @Override
     public int hashCode() {
-        int result = barcode.hashCode();
-        result = 31 * result + lcset.hashCode();
-        result = 31 * result + eventDate.hashCode();
-        result = 31 * result + tubeType.hashCode();
-        result = 31 * result + product.hashCode();
+        int result = getBarcode().hashCode();
+        result = 31 * result + (getLcset() != null ? getLcset().hashCode() : 0);
+        result = 31 * result + (getEventDate() != null ? getEventDate().hashCode() : 0);
+        result = 31 * result + (getTubeType() != null ? getTubeType().hashCode() : 0);
         return result;
     }
 }

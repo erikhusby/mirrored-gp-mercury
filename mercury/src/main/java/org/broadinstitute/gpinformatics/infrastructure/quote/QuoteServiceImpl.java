@@ -13,25 +13,44 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.owasp.encoder.Encode;
 import org.w3c.dom.Document;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.text.Format;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
-@Impl
+@ApplicationScoped
+@Default
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
+
     public static final String COMMUNICATION_ERROR = "Could not communicate with quote server at %s: %s";
+
+    public static final String EXTERNAL_PRICE_LIST_NAME = "GP External Price List";
+    public static final String CRSP_PRICE_LIST_NAME = "CRSP";
+    public static final String SSF_PRICE_LIST_NAME = "SSF Price List";
+
+    public static final String EFFECTIVE_DATE_FORMAT = "dd/MMM/yyyy";
+
     private static final long serialVersionUID = 8458283723746937096L;
+
     @Inject
     private QuoteConfig quoteConfig;
 
@@ -44,7 +63,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     public QuoteServiceImpl() {
     }
 
-    /**\
+    /**
      * Non CDI constructor, all dependencies must be explicitly initialized!
      *
      * @param quoteConfig The configuration.
@@ -60,13 +79,13 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         ALL_SSF_PRICE_ITEMS("/quotes/rest/price_list/10/true"),
         ALL_CRSP_PRICE_ITEMS("/quotes/rest/price_list/50/true"),
         ALL_GP_EXTERNAL_PRICE_ITEMS("/quotes/rest/price_list/60/true"),
-        ALL_GENOMICS_CP_PRICE_ITEMS("/quotes/rest/price_list/90/true"),
         ALL_FUNDINGS("/quotes/rest/sql_report/41"),
         REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
         ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
         //TODO this next enum value will be removed soon.
         SINGLE_NUMERIC_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_ids="),
-        REGISTER_BLOCKED_WORK("/quotes/rest/create_blocked_work");
+        REGISTER_BLOCKED_WORK("/quotes/rest/create_blocked_work"),
+        PRICE_ITEM_DETAILS("/quotes/rest/getPriceitem");
 
         String suffixUrl;
 
@@ -76,33 +95,37 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     private String url(Endpoint endpoint) {
-        return quoteConfig.getUrl() + endpoint.suffixUrl;
+        final StringBuilder constructedUrl = new StringBuilder(quoteConfig.getUrl() + endpoint.suffixUrl);
+
+        return constructedUrl.toString();
     }
 
     @Override
     public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                   Date reportedCompletionDate, double numWorkUnits,
-                                  String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+                                  String callbackUrl, String callbackParameterName, String callbackParameterValue,
+                                  BigDecimal priceAdjustment) {
 
         return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
                 callbackUrl,
-                callbackParameterName, callbackParameterValue, Endpoint.REGISTER_WORK);
+                callbackParameterName, callbackParameterValue,priceAdjustment, Endpoint.REGISTER_WORK);
     }
 
     @Override
     public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                  Date reportedCompletionDate, double numWorkUnits,
-                                  String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+                                     Date reportedCompletionDate, double numWorkUnits,
+                                     String callbackUrl, String callbackParameterName, String callbackParameterValue,
+                                     BigDecimal priceAdjustment) {
 
         return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
                 callbackUrl,
-                callbackParameterName, callbackParameterValue, Endpoint.REGISTER_BLOCKED_WORK);
+                callbackParameterName, callbackParameterValue, priceAdjustment, Endpoint.REGISTER_BLOCKED_WORK);
     }
 
     private String registerWorkHelper(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
                                       String callbackParameterName, String callbackParameterValue,
-                                      Endpoint endpoint) {
+                                      BigDecimal priceAdjustment, Endpoint endpoint) {
         Format dateFormat = FastDateFormat.getInstance("MM/dd/yyyy");
 
         // see https://iwww.broadinstitute.org/blogs/quote/?page_id=272 for details.
@@ -131,6 +154,9 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         params.add("url", callbackUrl);
         params.add("object_type", callbackParameterName);
         params.add("object_value", callbackParameterValue);
+        if(priceAdjustment != null) {
+            params.add("price_adjustment", String.valueOf(priceAdjustment));
+        }
 
         WebResource resource = getJerseyClient().resource(url);
         resource.accept(MediaType.TEXT_PLAIN);
@@ -207,7 +233,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         PriceList allPriceItems = getPriceItemsByList(Endpoint.ALL_SSF_PRICE_ITEMS);
         allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_CRSP_PRICE_ITEMS).getQuotePriceItems());
         allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_GP_EXTERNAL_PRICE_ITEMS).getQuotePriceItems());
-        allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_GENOMICS_CP_PRICE_ITEMS).getQuotePriceItems());
         return allPriceItems;
     }
 
@@ -290,10 +315,10 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
-                throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
+                throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
             }
         } catch (UniformInterfaceException e) {
-            throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
+            throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
         } catch (ClientHandlerException e) {
             throw new QuoteServerException(String.format(COMMUNICATION_ERROR, url, e.getLocalizedMessage()));
         } catch (UnsupportedEncodingException e) {
@@ -359,5 +384,70 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
                     e.getLocalizedMessage()));
         }
 
+    }
+
+    @Override
+    public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+            throws QuoteServerException, QuoteNotFoundException {
+
+        List<String> orderedPriceItemNames = new ArrayList<>();
+        List<String> orderedCategoryNames = new ArrayList<>();
+        List<String> orderedPlatformNames = new ArrayList<>();
+        List<String> orderedEffectiveDates = new ArrayList<>();
+        MultivaluedMap<String, String> params = new MultivaluedMapImpl();
+
+        for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
+
+            orderedPriceItemNames.add(targetedPriceItemCriterion.getPriceItem().getName());
+            orderedCategoryNames.add(targetedPriceItemCriterion.getPriceItem().getCategory());
+            orderedPlatformNames.add(targetedPriceItemCriterion.getPriceItem().getPlatform());
+            orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
+
+            final PriceItem primaryPriceItem =
+                    targetedPriceItemCriterion.getProductOrder().determinePriceItemByCompanyCode(targetedPriceItemCriterion.getProductOrder().getProduct());
+            orderedPriceItemNames.add(primaryPriceItem.getName());
+            orderedCategoryNames.add(primaryPriceItem.getCategory());
+            orderedPlatformNames.add(primaryPriceItem.getPlatform());
+            orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
+
+            for (ProductOrderAddOn productOrderAddOn : targetedPriceItemCriterion.getProductOrder().getAddOns()) {
+                final PriceItem addonPriceItem =
+                        targetedPriceItemCriterion.getProductOrder().determinePriceItemByCompanyCode(productOrderAddOn.getAddOn());
+                orderedPriceItemNames.add(addonPriceItem.getName());
+                orderedCategoryNames.add(addonPriceItem.getCategory());
+                orderedPlatformNames.add(addonPriceItem.getPlatform());
+                orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
+            }
+        }
+
+        final PriceList priceList;
+
+        params.add("effective_date", StringUtils.join(orderedEffectiveDates, ";;"));
+        params.add("priceitem_name", StringUtils.join(orderedPriceItemNames, ";;"));
+        params.add("platform_name", StringUtils.join(orderedPlatformNames, ";;"));
+        params.add("category_name", StringUtils.join(orderedCategoryNames, ";;"));
+
+        final String urlString = url(Endpoint.PRICE_ITEM_DETAILS);
+
+        WebResource resource = getJerseyClient().resource( urlString);
+
+        try {
+            resource.accept(MediaType.APPLICATION_XML);
+            final ClientResponse clientResponse = resource.queryParams(params).get(ClientResponse.class);
+            priceList = clientResponse.getEntity(PriceList.class);
+
+            if(priceList == null) {
+                throw new QuoteServerException("No results returned when looking for price items :" + orderedPriceItemNames);
+            }
+        } catch (UniformInterfaceException e) {
+            final String priceFindErrorMessage = "Could not find specific billing prices for the given work complete dates::";
+            log.error(priceFindErrorMessage+urlString, e);
+            throw new QuoteServerException(priceFindErrorMessage);
+        } catch (ClientHandlerException e) {
+            log.error("Communication error atempting to retrieve billing prices::" + urlString);
+            throw new QuoteServerException(String.format(COMMUNICATION_ERROR, urlString, e.getLocalizedMessage()));
+        }
+
+        return priceList;
     }
 }

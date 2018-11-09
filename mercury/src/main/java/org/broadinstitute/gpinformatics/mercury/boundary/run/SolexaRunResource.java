@@ -129,7 +129,7 @@ public class SolexaRunResource {
             SquidConnector.SquidResponse connectorRun = connector.createRun(solexaRunBean);
 
             /**
-             * TODO SGM  To get past the demo and pre ExExV2 release, we will not forcibly return if there is an error with
+             * TODO  To get past the demo and pre ExExV2 release, we will not forcibly return if there is an error with
              * the Squid call.  For now, we will run, call mercury and return the Squid response if there was an error.
              *
              * In the future, this will be encompassed by MercuryOrSquidRouter tests.

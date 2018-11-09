@@ -11,22 +11,20 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationAlignment;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -37,13 +35,16 @@ import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
@@ -53,6 +54,7 @@ public class SubmissionDtoFetcherTest {
     private static final String TEST_SAMPLE = "SM-35BDA";
     private static final String COLLABORATOR_SAMPLE_ID = "BOT2365_T";
     private static final String RESEARCH_PROJECT_ID = "RP-YOMAMA";
+    private static final String PRODUCT_ORDER_ID = "PD0-1EE";
     private static final String DATA_TYPE = "Exome";
     private static final String NCBI_ERROR = "And error was returned from NCBI";
     private static final Double QUALITY_METRIC = 1.2;
@@ -69,22 +71,18 @@ public class SubmissionDtoFetcherTest {
     // Test doubles
     private SubmissionsService submissionService = new SubmissionsServiceStub();
     private AggregationMetricsFetcher aggregationMetricsFetcher = Mockito.mock(AggregationMetricsFetcher.class);
-    private BassSearchService bassSearchService = Mockito.mock(BassSearchServiceImpl.class);
     private ProductOrderSampleDao productOrderSampleDao = Mockito.mock(ProductOrderSampleDao.class);
 
     // Collections returned from mocks
-    private List<BassDTO> bassDTOs;
     private List<Aggregation> aggregations;
 
     @BeforeMethod
     public void setUp() {
         // Prepare mocks
-        bassDTOs = new ArrayList<>();
-        Mockito.when(bassSearchService.runSearch(Mockito.anyString(), Mockito.<String>anyVararg()))
-                .thenReturn(bassDTOs);
         aggregations = new ArrayList<>();
-        Mockito.when(aggregationMetricsFetcher.fetch(Mockito.anyListOf(SubmissionTuple.class)))
-                .thenReturn(aggregations);
+        Mockito
+            .when(aggregationMetricsFetcher.fetch(Mockito.anyCollectionOf(SubmissionTuple.class)))
+            .thenReturn(aggregations);
 
         // Create Mercury RP and PDO with one sample
         researchProject = ResearchProjectTestFactory.createTestResearchProject(RESEARCH_PROJECT_ID);
@@ -96,12 +94,12 @@ public class SubmissionDtoFetcherTest {
         }}));
         productOrder.addSample(productOrderSample);
         researchProject.addProductOrder(productOrder);
-        Mockito.when(productOrderSampleDao.findByResearchProject(Mockito.anyString())).thenReturn(
+        Mockito.when(productOrderSampleDao.findSubmissionSamples(Mockito.anyString())).thenReturn(
                 Collections.singletonList(productOrderSample)
         );
 
         // Create unit under test
-        submissionDtoFetcher = new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, submissionService,
+        submissionDtoFetcher = new SubmissionDtoFetcher(aggregationMetricsFetcher, submissionService,
                 productOrderSampleDao);
     }
 
@@ -121,10 +119,13 @@ public class SubmissionDtoFetcherTest {
      * @throws Exception
      */
     public void testFetch() throws Exception {
-        addBassFile(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1);
         researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, RESEARCH_PROJECT_ID,
-                COLLABORATOR_SAMPLE_ID, "1", BassFileType.BAM));
+                COLLABORATOR_SAMPLE_ID, "1", FileType.BAM, SubmissionBioSampleBean.ON_PREM));
 
+        Aggregation aggregation = AggregationTestFactory
+                .buildAggregation(RESEARCH_PROJECT_ID, PRODUCT_ORDER_ID, COLLABORATOR_SAMPLE_ID, 1, CONTAMINATION, FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC,
+                        null, null, SubmissionBioSampleBean.ON_PREM);
+        aggregations.add(aggregation);
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
 
         assertThat(submissionDtoList, hasSize(1));
@@ -133,79 +134,81 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getAggregationProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(submissionDto.getResearchProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(submissionDto.getFingerprintLOD(), equalTo(FINGERPRINT_LOD));
-            assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder));
+            assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder.getJiraTicketKey()));
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
             assertThat(submissionDto.getSubmittedStatus(),
                     Matchers.equalTo(SubmissionStatusDetailBean.Status.FAILURE.getKey()));
-            assertThat(submissionDto.getSubmissionLibraryDescriptor(), equalTo(SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION));
+            assertThat(submissionDto.getSubmissionLibraryDescriptor(), equalTo(SubmissionLibraryDescriptor.WHOLE_EXOME.getName()));
             assertThat(submissionDto.getSubmissionRepositoryName(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR));
 
             assertThat(submissionDto.getStatusDate(), Matchers.notNullValue());
             assertThat(submissionDto.getSubmittedErrors(), Matchers.contains(NCBI_ERROR));
         }
-
     }
 
-    public void testFetchWithMultipleBamsForSameSample() {
-        // Add BAMs to Bass
-        String submittedAggregationProjectId = "P123";
-        BassDTO bassDTO1 = addBassFile(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1);
-        BassDTO bassDTO2 = addBassFile(submittedAggregationProjectId, COLLABORATOR_SAMPLE_ID, 1);
+    public void testFetchAggregationDtos() {
+        ProductOrder productOrder = ProductOrderTestFactory.createProductOrder("SM-1", "SM-2");
+        List<ProductOrderSample> samples = productOrder.getSamples();
+        ProductOrderSample sample1 = samples.get(0);
+        ProductOrderSample sample2 = samples.get(1);
 
-        // Record submission of one of the BAMs
-        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L,
-                submittedAggregationProjectId, COLLABORATOR_SAMPLE_ID, "1", BassFileType.BAM));
+        sample1.setSampleData(new BspSampleData(
+            ImmutableMap.of(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "COLAB-" + sample1.getSampleKey())));
+        sample2.setSampleData(new BspSampleData(
+            ImmutableMap.of(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "COLAB-" + sample2.getSampleKey())));
 
-        // Finally actually exercising the code under test
-        List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
+        String rpId = productOrder.getResearchProject().getBusinessKey();
 
-        assertThat(submissionDtoList, hasSize(2));
-        for (SubmissionDto submissionDto : submissionDtoList) {
-            assertThat(submissionDto.getSampleName(), equalTo(COLLABORATOR_SAMPLE_ID));
-            assertThat(submissionDto.getResearchProject(), equalTo(RESEARCH_PROJECT_ID));
-            assertThat(submissionDto.getFingerprintLOD(), equalTo(FINGERPRINT_LOD));
-            assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder));
-            assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
-        }
+        Aggregation testAggregation1 = getTestAggregation(rpId, productOrder.getBusinessKey(),
+            sample1.getSampleData().getCollaboratorsSampleName(),
+            SubmissionLibraryDescriptor.WHOLE_EXOME, SubmissionBioSampleBean.GCP);
+        String pdoKey = String.format("%s,%s", productOrder.getBusinessKey(), "PDO-2");
+        Aggregation testAggregation2 = getTestAggregation(rpId, pdoKey,
+            sample2.getSampleData().getCollaboratorsSampleName(),
+            SubmissionLibraryDescriptor.RNA_SEQ, SubmissionBioSampleBean.ON_PREM);
 
-        Map<SubmissionTuple, SubmissionDto> submissionDtoByTuple = new HashMap<>();
-        for (SubmissionDto submissionDto : submissionDtoList) {
-            submissionDtoByTuple.put(submissionDto.getSubmissionTuple(), submissionDto);
-        }
-        SubmissionDto submissionDto1 = submissionDtoByTuple.get(bassDTO1.getTuple());
-        assertThat(submissionDto1.getAggregationProject(), equalTo(bassDTO1.getProject()));
-        assertThat(submissionDto1.getSubmittedStatus(), equalTo(""));
-        assertThat(submissionDto1.getSubmissionLibraryDescriptor(), equalTo(""));
-        assertThat(submissionDto1.getSubmissionRepositoryName(), equalTo(""));
-        assertThat(submissionDto1.getStatusDate(), equalTo(""));
-        assertThat(submissionDto1.getSubmittedErrors(), Matchers.<String>empty());
+        aggregations = Arrays.asList(testAggregation1, testAggregation2);
 
-        SubmissionDto submissionDto2 = submissionDtoByTuple.get(bassDTO2.getTuple());
-        assertThat(submissionDto2.getAggregationProject(), equalTo(bassDTO2.getProject()));
-        assertThat(submissionDto2.getSubmittedStatus(), equalTo(SubmissionStatusDetailBean.Status.FAILURE.getKey()));
-        assertThat(submissionDto2.getSubmissionLibraryDescriptor(),
-                equalTo(SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION));
-        assertThat(submissionDto2.getSubmissionRepositoryName(),
-                equalTo(SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR));
-        assertThat(submissionDto2.getStatusDate(), equalTo(SubmissionsServiceStub.STUB_UPDATE_DATE));
-        assertThat(submissionDto2.getSubmittedErrors(), Matchers.contains(NCBI_ERROR));
+        Mockito
+            .when(aggregationMetricsFetcher.fetch(Mockito.anyCollectionOf(SubmissionTuple.class)))
+            .thenReturn(aggregations);
+
+        Map<SubmissionTuple, Aggregation> tupleMap =
+            submissionDtoFetcher.fetchAggregationDtos(productOrder.getSamples());
+
+        assertThat(tupleMap.size(), is(2));
+        verifyTuple(tupleMap, testAggregation1, sample1);
+        verifyTuple(tupleMap, testAggregation2, sample2);
+    }
+
+    private void verifyTuple(Map<SubmissionTuple, Aggregation> tupleMap, Aggregation aggregation,
+                             ProductOrderSample productOrderSample) {
+        SubmissionTuple tuple = aggregation.getSubmissionTuple();
+        assertThat(tupleMap.get(tuple), is(aggregation));
+        assertThat(tuple.getSampleName(), is(productOrderSample.getSampleData().getCollaboratorsSampleName()));
+    }
+
+    private Aggregation getTestAggregation(String project, String productOrder, String sample, SubmissionLibraryDescriptor libraryDescriptor,
+                                           String processingLocation) {
+        return new Aggregation(project, sample, null, 1, 1, libraryDescriptor.getName(),
+            Collections.<AggregationAlignment>emptySet(), null, null,
+            null, null, null, new PicardAggregationSample(project, project, productOrder, sample, libraryDescriptor.getName()), processingLocation);
     }
 
     /**
-     * Create a BassDTO and Aggregation that will be returned by mock services in this test.
-     *
-     * @param project   the aggregation project
-     * @param sample    the collaborator sample ID
-     * @param version   the file version
-     * @return the new BassDTO
+     * A MessageReporter that records its messages. This is useful for testing.
      */
-    private BassDTO addBassFile(String project, String sample, Integer version) {
-        BassDTO bassDTO = BassDtoTestFactory.buildBassResults(project, sample, version.toString(), RESEARCH_PROJECT_ID);
-        bassDTOs.add(bassDTO);
-        Aggregation aggregation = AggregationTestFactory
-                .buildAggregation(project, sample, version, CONTAMINATION, FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC,
-                        null, null);
-        aggregations.add(aggregation);
-        return bassDTO;
+    class StringReporter implements MessageReporter {
+        private List<String> messages = new ArrayList<>();
+
+        @Override
+        public String addMessage(String message, Object... arguments) {
+            messages.add(MessageFormat.format(message, arguments));
+            return message;
+        }
+
+        public List<String> getMessages() {
+            return messages;
+        }
     }
 }

@@ -43,16 +43,18 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Fundi
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
@@ -215,6 +217,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             new TypeReference<List<SubmissionDto>>() {
             };
     private Boolean submissionsServiceAvailable=null;
+
+    private QuoteService quoteService;
 
     public Map<String, String> getBioSamples() {
         return bioSamples;
@@ -449,6 +453,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
 
         validateQuoteId(collaborationQuoteId);
+    }
+
+    private void validateQuoteId(String quoteId) {
+        try {
+            quoteService.getQuoteByAlphaId(quoteId);
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+        }
     }
 
     public Map<String, Long> getResearchProjectCounts() {
@@ -712,7 +726,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     public boolean isRegulatoryInfoEditAllowed(RegulatoryInfo regulatoryInfo) {
         OrspProject orspProject = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
-        return !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
+        return !getUserBean().isViewer() && !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
     }
 
     /**
@@ -854,13 +868,14 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
         // Test both the user's role and whether or not they are listed as a project manager in the project. This
         // protects from the case where the user's role has been revoked, but the project people haven't been updated.
-        boolean isPm = getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
+        boolean isPm = (getUserBean().isPMUser() || getUserBean().isGPPMUser()) && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
         if (!isPm) {
             accessRestriction.add(String.format("Project Managers of %s", researchProject));
         }
         if (accessRestriction.isEmpty()) {
             return true;
         }
+
         if (!supressValidationErrors) {
             addGlobalValidationError(
                     String.format("Data submissions are available for %s.", StringUtils.join(accessRestriction, " and ")));
@@ -875,6 +890,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 populateSubmissionSamples(true);
             } catch (SessionCacheException e) {
                 log.error("Error retrieving samples from cache", e);
+            } catch (Exception e) {
+                log.error("Error retrieving samples data", e);
+                addMessage(e.getLocalizedMessage());
             }
         }
     }
@@ -944,33 +962,41 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             addGlobalValidationError("You must select a submission site in order to post for submissions.");
             errors = true;
         }
+        List<SubmissionDto> selectedSubmissions = new ArrayList<>();
         if (!errors) {
-            List<SubmissionDto> selectedSubmissions = new ArrayList<>();
-            Map<SubmissionTuple, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(
-                    editResearchProject.getBusinessKey(),
-                    tupleToSampleMap.values().toArray(new String[tupleToSampleMap.values().size()]));
-            for (BassDTO bassDTO : bassDtoMap.values()) {
-                if (tupleToSampleMap.containsKey(bassDTO.getTuple())) {
-                    // All required data are in the bassDTO
-                    selectedSubmissions
-                            .add(new SubmissionDto(bassDTO, null, editResearchProject.getProductOrders(), null));
+            populateSubmissionSamples(false);
+            for (SubmissionDto submissionDto : submissionSamples) {
+                if (tupleToSampleMap.containsKey(submissionDto.getSubmissionTuple())) {
+                    // All required data are in the submissionDto
+                    selectedSubmissions.add(submissionDto);
+
+                    if (!Arrays.asList(selectedSubmissionLibraryDescriptor, "N/A")
+                        .contains(submissionDto.getDataType())) {
+                        addGlobalValidationError(
+                            "Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
+                            submissionDto.getSampleName(), submissionDto.getDataType(),
+                            selectedSubmissionLibraryDescriptor);
+                        errors = true;
+                    }
                 }
             }
-
+        }
+        if (!errors){
             try {
                 Collection<SubmissionStatusDetailBean> submissionStatuses =
                         researchProjectEjb
                                 .processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
                                         selectedSubmissions, submissionRepository, submissionLibraryDescriptor);
-                updateUuid(selectedSubmissions);
-                addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
-                           "Submission Requests tab for further details");
+                addMessage("The selected samples for submission have been successfully posted to ''{0}''. " +
+                           "See the Submission Requests tab for further details",
+                    submissionsService.findRepositoryByKey(selectedSubmissionRepository).getDescription());
             } catch (InformaticsServiceException | ValidationException e) {
                 log.error(e.getMessage(), e);
                 addGlobalValidationError(e.getMessage());
             } catch (SessionCacheException e) {
                 log.error("Error accessing cache", e);
             }
+            updateUuid(selectedSubmissions);
         }
         return new ForwardResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject)
@@ -982,7 +1008,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     /**
-     * Update the actionBean's UUIDs with values in provided selectedSubmissons
+     * Update the actionBean's UUIDs with values in provided selectedSubmissions
      */
     private void updateUuid(List<SubmissionDto> selectedSubmissions) {
         populateSubmissionSamples(false);
@@ -1179,7 +1205,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     public static boolean isEditAllowed(UserBean userBean) {
-        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser();
+        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser() || userBean.isGPPMUser();
     }
 
     public CollaborationData getCollaborationData() {
@@ -1270,7 +1296,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     public boolean isCanBeginCollaborations() {
         if (isResearchOnly()) {
-            return getUserBean().isDeveloperUser() || getUserBean().isPMUser();
+            return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isGPPMUser();
         }
         return false;
     }
@@ -1452,4 +1478,12 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         this.bioProjectList = bioProjectList;
     }
 
+    public QuoteService getQuoteService() {
+        return quoteService;
+    }
+
+    @Inject
+    public void setQuoteService(QuoteService quoteService) {
+        this.quoteService = quoteService;
+    }
 }

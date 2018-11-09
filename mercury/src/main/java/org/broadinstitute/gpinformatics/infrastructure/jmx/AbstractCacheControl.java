@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.inject.Inject;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
@@ -20,8 +20,7 @@ import java.lang.management.ManagementFactory;
  */
 public abstract class AbstractCacheControl implements CacheControlMXBean {
 
-    @Inject
-    private Log log;
+    private Log log = LogFactory.getLog(this.getClass());
 
     private MBeanServer platformMBeanServer;
 

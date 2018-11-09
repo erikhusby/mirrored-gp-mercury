@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import com.google.common.collect.Multimap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -29,8 +30,9 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -39,11 +41,13 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -69,7 +73,17 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+@Dependent
 public class BillingEjbPartialSuccessTest extends Arquillian {
+
+    public BillingEjbPartialSuccessTest() {
+        super();
+        Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
+        billingAdaptorLogger.setLevel(Level.ALL);
+        testLogHandler = new TestLogHandler();
+        billingAdaptorLogger.addHandler(testLogHandler);
+        testLogHandler.setLevel(Level.ALL);
+    }
 
     @Inject
     ProductOrderDao productOrderDao;
@@ -81,8 +95,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     private PriceListCache priceListCache;
 
     public static final String GOOD_WORK_ID = "workItemId\t1000";
-    public static final String SM_1234 = "SM-1234";
-    public static final String SM_5678 = "SM-5678";
+    final long time = (new Date()).getTime();
+
+    public static final String SM_1234 = "SM-"+(new Date()).getTime();
+    public static final String SM_5678 = "SM-"+(new Date()).getTime()+1;
     private static String FAILING_PRICE_ITEM_NAME = "";
     private static String FAILING_PRICE_ITEM_SAMPLE = "";
 
@@ -101,7 +117,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Inject
     private BillingSessionAccessEjb billingSessionAccessEjb;
 
-    private SapIntegrationService sapService;
+    // Stub implementation
+    private SapIntegrationService sapService = new SapIntegrationServiceStub();
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -110,22 +127,19 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     private org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment deployment;
 
     private BillingAdaptor billingAdaptor;
+
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private SAPAccessControlEjb accessControlEjb;
+
     public enum Result {FAIL, SUCCESS}
 
     public static final Log log = LogFactory.getLog(BillingEjbPartialSuccessTest.class);
     protected static final Object lockBox = new Object();
 
-
     private TestLogHandler testLogHandler;
-
-    @BeforeTest
-    public void setUpTestLogger() {
-        Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
-        billingAdaptorLogger.setLevel(Level.ALL);
-        testLogHandler = new TestLogHandler();
-        billingAdaptorLogger.addHandler(testLogHandler);
-        testLogHandler.setLevel(Level.ALL);
-    }
 
     private void setBillingAdaptor(Collection<PriceItem> primaryPriceItems) {
         final Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
@@ -136,11 +150,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         }
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
-
-        sapService = SapIntegrationServiceProducer.stubInstance();
-
-        billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
-                billingSessionAccessEjb, sapService);
+        billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
+                billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
     }
 
@@ -149,9 +160,14 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * expect.
      */
     @Alternative
+    @ApplicationScoped
     protected static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
+
+        public PartiallySuccessfulQuoteServiceStub(){}
+
         private static final long serialVersionUID = 6093273925949722169L;
         private Log log = LogFactory.getLog(QuoteFundingList.class);
+
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
             return new PriceList();
@@ -168,7 +184,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                                       QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate,
                                       double numWorkUnits,
-                                      String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+                                      String callbackUrl, String callbackParameterName, String callbackParameterValue,
+                                      BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
             log.debug("In register New work");
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
@@ -200,7 +217,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         @Override
         public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                          Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                         String callbackParameterName, String callbackParameterValue) {
+                                         String callbackParameterName, String callbackParameterValue,
+                                         BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
             log.debug("In register New work");
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
@@ -255,6 +273,21 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         @Override
         public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
             return null;
+        }
+
+        @Override
+        public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+                throws QuoteServerException, QuoteNotFoundException {
+            PriceList testPriceList = new PriceList();
+
+            for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
+                final QuotePriceItem quotePriceItem =
+                        QuotePriceItem.convertMercuryPriceItem(targetedPriceItemCriterion.getPriceItem());
+                quotePriceItem.setPrice("50.00");
+                testPriceList.add(quotePriceItem);
+            }
+
+            return testPriceList;
         }
 
         @Override
@@ -440,8 +473,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testMultipleFailure() throws Exception{
 
-        String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
-                "SM-4488"};
+        final long time = (new Date()).getTime();
+        String[] sampleNameList = {"SM-"+time, "SM-"+time+1, "SM-"+time+2, "SM-"+time+3, "SM-"+time+4, "SM-"+time+5, "SM-"+time+6,
+                "SM-"+time+7};
         cycleFails = true;
         lastResult = Result.FAIL;
         quoteCount = 0;
@@ -489,8 +523,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         log.debug("Running no forced failures threaded");
 
-        String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
-                "SM-4488"};
+        final long time = (new Date()).getTime();
+        String[] sampleNameList = {"SM-"+time, "SM-9291"+time+1, "SM-"+time+2, "SM-"+time+3, "SM-"+time+4, "SM-"+time+5, "SM-"+time+6,
+                "SM-"+time+7};
         cycleFails = false;
         lastResult = Result.FAIL;
         quoteCount = 0;

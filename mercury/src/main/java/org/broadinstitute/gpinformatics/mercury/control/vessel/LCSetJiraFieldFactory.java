@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.jvnet.inflector.Noun;
 
@@ -30,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Concrete factory implementation specific to creating the custom and required fields for creating an LCSET ticket.
+ * Factory for custom and required fields when creating a LCSET ticket.
  */
 public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
@@ -51,14 +52,14 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
 
     /**
-     * LCSet Field constructor.  Extracts information that is used by each of the provided factory fields so that the
-     * work is only done once.
+     * Constructs a JIRA field factory based on the the LabBatch.
      *
-     * @param batch               instance of the Lab Batch entity for which a new LCSetT Ticket is to be created
-     * @param productOrderDao
+     * @param batch  the lab batch corresponding to the new JIRA ticket.
      */
-    public LCSetJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
-        super(batch, CreateFields.ProjectType.LCSET_PROJECT);
+    public LCSetJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao,
+            WorkflowConfig workflowConfig) {
+        super(batch, CreateFields.ProjectType.LCSET_PROJECT, productOrderDao, workflowConfig);
+        String bucketName = null;
 
         if (!batch.getBucketEntries().isEmpty()) {
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
@@ -67,10 +68,15 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                     pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
                 }
                 pdoToVesselMap.get(pdoKey).add(bucketEntry.getLabVessel());
+                bucketName = bucketEntry.getBucket().getBucketDefinitionName();
             }
             for (LabVessel rework : batch.getReworks()) {
                 for (SampleInstanceV2 sampleInstance : rework.getSampleInstancesV2()) {
-                    String pdoKey = sampleInstance.getSingleProductOrderSample().getProductOrder().getBusinessKey();
+                    ProductOrderSample pdoSample = sampleInstance.getSingleProductOrderSample();
+                    if( pdoSample == null ) {
+                        continue;
+                    }
+                    String pdoKey = pdoSample.getProductOrder().getBusinessKey();
                     if (!pdoToVesselMap.containsKey(pdoKey)) {
                         pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
                     }
@@ -83,11 +89,16 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         for (String currPdo : pdoToVesselMap.keySet()) {
             ProductOrder pdo = productOrderDao.findByBusinessKey(currPdo);
-
+            if (bucketName != null) {
+                WorkflowBucketDef workflowBucketDef = workflowConfig.findWorkflowBucketDef(pdo, bucketName);
+                if (workflowBucketDef != null) {
+                    jiraSampleFromNearest = workflowBucketDef.isJiraSampleFromNearest();
+                }
+            }
             if (pdo != null) {
                 foundResearchProjectList.put(currPdo, pdo.getResearchProject());
             } else {
-                //TODO SGM: Throw an exception here (?)
+                //TODO Throw an exception here (?)
                 log.error("Unable to find a PDO for the business key of " + currPdo);
             }
             if (batch.getWorkflowName() != null) {
@@ -100,7 +111,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
-        //TODO SGM: Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
+        //TODO Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
 
         Set<CustomField> customFields = new HashSet<>();
 
@@ -119,7 +130,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         int sampleCount = batch.getBucketEntries().size();
 
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-                buildSamplesListString(batch)));
+                buildSamplesListString()));
 
         customFields.add(new CustomField(
                 submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName()), sampleCount));
@@ -252,5 +263,16 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         }
 
         return riskResults;
+    }
+
+    /**
+     * Returns the unique list of sample names referenced by the given collection of vessels.
+     */
+    private Set<String> getUniqueSampleNames(Collection<LabVessel> labVessels) {
+        Set<String> sampleNames = new HashSet<>();
+        for (LabVessel labVessel : labVessels) {
+            sampleNames.addAll(labVessel.getSampleNames(jiraSampleFromNearest));
+        }
+        return sampleNames;
     }
 }

@@ -31,6 +31,9 @@ public class ZimsIlluminaChamber {
     @JsonProperty("actualReadStructure")
     private String actualReadStructure;
 
+    @JsonProperty("setupReadStructure")
+    private String setupReadStructure;
+
     private static FastDateFormat creationTimeDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss");
 
     public ZimsIlluminaChamber() {}
@@ -59,9 +62,29 @@ public class ZimsIlluminaChamber {
             final String sequencedLibraryName,
             final Date creationTime,
             Double loadingConcentration,
-            String actualReadStructure) {
+            String actualReadStructure,
+            String setupReadStructure) {
         this(chamberName, libraries, primer, sequencedLibraryName, creationTimeDateFormat.format(creationTime),
-                loadingConcentration, actualReadStructure);
+                loadingConcentration, actualReadStructure, setupReadStructure);
+    }
+
+    public ZimsIlluminaChamber(
+            short chamberName,
+            final List<LibraryBean> libraries,
+            final String primer,
+            final String sequencedLibraryName,
+            final String creationTime,
+            Double loadingConcentration,
+            String actualReadStructure,
+            String setupReadStructure) {
+        this.chamberName = Short.toString(chamberName);
+        this.libraries = libraries;
+        this.primer = primer;
+        this.sequencedLibraryName = sequencedLibraryName;
+        this.creationTime = creationTime;
+        this.loadingConcentration = loadingConcentration;
+        this.actualReadStructure = actualReadStructure;
+        this.setupReadStructure = setupReadStructure;
     }
     
     public String getPrimer() {
@@ -90,5 +113,9 @@ public class ZimsIlluminaChamber {
 
     public String getActualReadStructure() {
         return actualReadStructure;
+    }
+
+    public String getSetupReadStructure() {
+        return setupReadStructure;
     }
 }

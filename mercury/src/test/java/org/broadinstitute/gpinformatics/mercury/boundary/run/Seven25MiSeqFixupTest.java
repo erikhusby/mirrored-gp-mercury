@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.easymock.EasyMock;
@@ -16,7 +16,7 @@ import java.util.Date;
  * for testing the pipeline API.
  */
 @Test(groups = TestGroups.FIXUP)
-public class Seven25MiSeqFixupTest extends ContainerTest {
+public class Seven25MiSeqFixupTest extends StubbyContainerTest {
 
     @Inject
     SolexaRunResource runResource;

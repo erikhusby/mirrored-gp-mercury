@@ -5,6 +5,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
@@ -14,8 +16,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMap
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -28,6 +33,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -49,6 +55,9 @@ import java.util.TreeSet;
  */
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductEjb {
+
+    private static final Log log = LogFactory.getLog(ProductActionBean.class);
+
     private ProductDao productDao;
 
     // EJBs require a no arg constructor.
@@ -64,14 +73,18 @@ public class ProductEjb {
 
     private SAPAccessControlEjb accessController;
 
+    private SAPProductPriceCache productPriceCache;
+
     @Inject
     public ProductEjb(ProductDao productDao, SapIntegrationService sapService, AuditReaderDao auditReaderDao,
-                      AttributeArchetypeDao attributeArchetypeDao, SAPAccessControlEjb accessController) {
+                      AttributeArchetypeDao attributeArchetypeDao, SAPAccessControlEjb accessController,
+                      SAPProductPriceCache productPriceCache) {
         this.productDao = productDao;
         this.attributeArchetypeDao = attributeArchetypeDao;
         this.auditReaderDao = auditReaderDao;
         this.sapService = sapService;
         this.accessController = accessController;
+        this.productPriceCache = productPriceCache;
     }
 
     /**
@@ -90,9 +103,9 @@ public class ProductEjb {
     public void saveProduct(
             Product product, ProductTokenInput addOnTokenInput, PriceItemTokenInput priceItemTokenInput,
             boolean allLengthsMatch, String[] criteria, String[] operators, String[] values,
-            List<Triple<String, String, String>> genotypingChipInfo) {
+            List<Triple<String, String, String>> genotypingChipInfo, PriceItemTokenInput externalPriceItemTokenInput) {
 
-        populateTokenListFields(product, addOnTokenInput, priceItemTokenInput);
+        populateTokenListFields(product, addOnTokenInput, priceItemTokenInput, externalPriceItemTokenInput);
         // If all lengths match, just send it.
         if (allLengthsMatch) {
             product.updateRiskCriteria(criteria, operators, values);
@@ -132,10 +145,12 @@ public class ProductEjb {
     }
 
     private void populateTokenListFields(Product product, ProductTokenInput addOnTokenInput,
-                                         PriceItemTokenInput priceItemTokenInput) {
+                                         PriceItemTokenInput priceItemTokenInput,
+                                         PriceItemTokenInput externalPriceItemTokenInput) {
         product.getAddOns().clear();
         product.getAddOns().addAll(addOnTokenInput.getTokenObjects());
         product.setPrimaryPriceItem(priceItemTokenInput.getItem());
+        product.setExternalPriceItem(externalPriceItemTokenInput.getItem());
     }
 
 
@@ -308,7 +323,26 @@ public class ProductEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
-        publishProductsToSAP(Collections.singleton(productToPublish));
+        SAPAccessControl control = accessController.getCurrentControlDefinitions();
+        List<AccessItem> accessItemList = new ArrayList<>();
+        accessItemList.add(new AccessItem(productToPublish.getPrimaryPriceItem().getName()));
+        if(productToPublish.getExternalPriceItem() != null) {
+            accessItemList.add(new AccessItem(productToPublish.getExternalPriceItem().getName()));
+        }
+        if (!CollectionUtils.containsAll(control.getDisabledItems(), accessItemList)
+            && control.isEnabled()) {
+            try {
+                sapService.publishProductInSAP(productToPublish);
+                productToPublish.setSavedInSAP(true);
+
+            } catch (SAPIntegrationException e) {
+                throw new SAPIntegrationException(e.getMessage());
+            }
+        } else {
+            throw new SAPIntegrationException(productToPublish.getName() +
+                              " has a price item that makes it ineligible to be reflected in SAP.");
+        }
+
     }
 
     /**
@@ -318,36 +352,19 @@ public class ProductEjb {
      * @throws SAPIntegrationException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void publishProductsToSAP(Collection<Product> productsToPublish) throws SAPIntegrationException {
-        Set<String> errorMessages = new HashSet<>();
-        SAPAccessControl control = accessController.getCurrentControlDefinitions();
+    public void publishProductsToSAP(Collection<Product> productsToPublish) throws ValidationException {
+        List<String> errorMessages = new ArrayList<>();
         for (Product productToPublish : productsToPublish) {
-            if(!CollectionUtils.containsAll(control.getDisabledItems(),
-                                            Collections.singleton(new AccessItem(productToPublish.getPrimaryPriceItem().getName())))
-                    && control.isEnabled()) {
-                if (!productToPublish.isExternalOnlyProduct()) {
-                    try {
-                        if (productToPublish.isSavedInSAP()) {
-                            sapService.changeProductInSAP(productToPublish);
-                        } else {
-                            sapService.createProductInSAP(productToPublish);
-                        }
-                        productToPublish.setSavedInSAP(true);
-
-                    } catch (SAPIntegrationException e) {
-                        errorMessages.add(e.getMessage());
-                    }
-                } else {
-                    errorMessages.add(productToPublish.getName() + " Cannot be published to SAP since it is either a "
-                                      + "Clinical or Commercial product");
-                }
-            } else {
-                errorMessages.add(productToPublish.getName() +
-                                  " has a price item that makes it ineligible to be reflected in SAP.");
+            try {
+                publishProductToSAP(productToPublish);
+            } catch (SAPIntegrationException e) {
+                errorMessages.add(e.getMessage());
+                log.error(e.getMessage());
             }
         }
         if (CollectionUtils.isNotEmpty(errorMessages)) {
-            throw new SAPIntegrationException(errorMessages);
+            throw new ValidationException("Some errors were found pushing products", errorMessages);
         }
+        productPriceCache.refreshCache();
     }
 }

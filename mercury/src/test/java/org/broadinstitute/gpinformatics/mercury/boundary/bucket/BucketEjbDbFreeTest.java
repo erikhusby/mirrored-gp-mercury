@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -10,7 +12,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
@@ -34,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.mockito.Mockito;
@@ -53,6 +55,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import static org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow.AGILENT_EXOME_EXPRESS;
+import static org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow.ICE;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.createNiceMock;
@@ -76,7 +80,7 @@ public class BucketEjbDbFreeTest {
     private ProductOrder pdo;
     private List<LabVessel> mockVessels;
     private LabBatch labBatch;
-    private WorkflowConfig workflowConfig = new WorkflowLoader().load();
+    private WorkflowLoader workflowLoader = new WorkflowLoader();
     private BSPUserList bspUserList;
     private Bucket bucket;
     private String pdoCreator;
@@ -90,7 +94,7 @@ public class BucketEjbDbFreeTest {
     private BucketDao bucketDao = createNiceMock(BucketDao.class);
     private BucketEntryDao bucketEntryDao = createMock(BucketEntryDao.class);
     private LabVesselDao labVesselDao = createNiceMock(LabVesselDao.class);
-    private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcher.class);
+    private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcherImpl.class);
     private LabVesselFactory labVesselFactory = createMock(LabVesselFactory.class);
 
     private Object[] mocks =
@@ -102,9 +106,10 @@ public class BucketEjbDbFreeTest {
     private void beforeClass() {
         bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         pdoCreator = bspUserList.getById(BSPManagerFactoryStub.QA_DUDE_USER_ID).getUsername();
+        workflowLoader.load();
     }
 
-    private void setUp(Workflow workflow) {
+    private void setUp(String workflow) {
         reset(mocks);
 
         switch (workflow) {
@@ -117,8 +122,17 @@ public class BucketEjbDbFreeTest {
             pdo = ProductOrderTestFactory.buildIceProductOrder(SAMPLE_SIZE);
             break;
         default:
-            throw new RuntimeException("Unsupported workflow type: " + workflow.name());
+            throw new RuntimeException("Unsupported workflow type: " + workflow);
         }
+
+        // Changes the name of the 4th pdo sample to be the vessel barcode.
+        Collection<ProductOrderSample> productOrderSamples = pdo.getSamples();
+        Collection<ProductOrderSample> revisedProductOrderSamples = new ArrayList();
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            revisedProductOrderSamples.add(productOrderSample.getName().startsWith("SM-3") ?
+                    new ProductOrderSample("R3", productOrderSample.getSampleData()) : productOrderSample);
+        }
+        pdo.setSamples(revisedProductOrderSamples);
 
         expectedSamples.clear();
         labVessels.clear();
@@ -126,9 +140,9 @@ public class BucketEjbDbFreeTest {
         pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
         setupMercurySamples(pdo, expectedSamples, labVessels);
 
-        bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao,
+        bucketEjb = new BucketEjb(labEventFactory, JiraServiceTestProducer.stubInstance(), bucketDao, bucketEntryDao,
                                   labVesselDao, labVesselFactory, bspSampleDataFetcher,
-                                  bspUserList, workflowConfig, createNiceMock(ProductOrderDao.class), mercurysampleDao);
+                                  bspUserList, workflowLoader, createNiceMock(ProductOrderDao.class), mercurysampleDao);
     }
 
     // Creates test samples and updates expectedSamples and labVessels.
@@ -196,16 +210,13 @@ public class BucketEjbDbFreeTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testSamplesToPicoBucket() throws Exception {
-        for (Workflow workflow : (new Workflow[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
-            if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
-                continue;
-            }
+        for (String workflow : (new String[]{AGILENT_EXOME_EXPRESS, ICE})) {
             setupCoreMocks(workflow, true);
 
             expect(labEventFactory
                     .buildFromBatchRequests(EasyMock.<List<BucketEntry>>anyObject(), EasyMock.<String>anyObject(),
                             EasyMock.<LabBatch>anyObject(), EasyMock.<String>anyObject(), EasyMock.<String>anyObject(),
-                            EasyMock.<LabEventType>anyObject()))
+                            EasyMock.<LabEventType>anyObject(), EasyMock.<Date>anyObject()))
                     .andReturn(Collections.<LabEvent>emptyList()).anyTimes();
 
             expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
@@ -215,6 +226,12 @@ public class BucketEjbDbFreeTest {
 
             Map<String, Collection<ProductOrderSample>> samplesByBucket = bucketEjb.addSamplesToBucket(pdo);
             Collection<ProductOrderSample> addedSamples = samplesByBucket.get("Pico/Plating Bucket");
+            if(addedSamples == null) {
+                System.out.println("added samples are null");
+            }
+            if(expectedSamples == null) {
+                System.out.println("expected samples are null");
+            }
             Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
 
             verify(mocks);
@@ -223,10 +240,7 @@ public class BucketEjbDbFreeTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE, dataProvider = "badLabelProvider")
     public void testBadLabelSamplesToPicoBucket(String badLabelResult) throws Exception {
-        for (Workflow workflow : (new Workflow[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
-            if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
-                continue;
-            }
+        for (String workflow : (new String[]{AGILENT_EXOME_EXPRESS, ICE})) {
             setupCoreMocks(workflow, false);
 
             for (BspSampleData sampleDTO : bspSampleDataMap.values()) {
@@ -260,25 +274,25 @@ public class BucketEjbDbFreeTest {
     }
 
     public void testApplyBucketCriteriaNoWorkflow(){
-        setupCoreMocks(Workflow.AGILENT_EXOME_EXPRESS, true);
-        pdo.getProduct().setWorkflow(Workflow.NONE);
+        setupCoreMocks(AGILENT_EXOME_EXPRESS, true);
+        pdo.getProduct().setWorkflowName(Workflow.NONE);
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                 bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever",
-                        ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+                        ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Collection<BucketEntry> bucketEntries = workflowBucketEntriesPair.getRight();
         Assert.assertTrue(bucketEntries.isEmpty());
     }
 
     public void testDuplicateSamplesToPicoBucket() throws Exception {
-        Workflow workflow = Workflow.AGILENT_EXOME_EXPRESS;
+        String workflow = AGILENT_EXOME_EXPRESS;
         setupCoreMocks(workflow, true);
 
         expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
                 .andReturn(bspSampleDataMap);
 
         replay(mocks);
-        ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflow(AGILENT_EXOME_EXPRESS);
 
         WorkflowBucketDef picoBucket = workflowDef.getEffectiveVersion().findBucketDefByName("Pico/Plating Bucket");
 
@@ -288,12 +302,12 @@ public class BucketEjbDbFreeTest {
 
         Collection<BucketEntry> bucketEntries = bucketEjb
                 .add(newBucketEntry, BucketEntry.BucketEntryType.PDO_ENTRY, LabEvent.UI_PROGRAM_NAME, "seinfeld",
-                        LabEvent.UI_EVENT_LOCATION, pdo);
+                        LabEvent.UI_EVENT_LOCATION, pdo, new Date());
         Assert.assertEquals(bucketEntries.size(), 1);
 
         bucketEntries = bucketEjb
                 .add(newBucketEntry, BucketEntry.BucketEntryType.PDO_ENTRY, LabEvent.UI_PROGRAM_NAME, "seinfeld",
-                        LabEvent.UI_EVENT_LOCATION, pdo);
+                        LabEvent.UI_EVENT_LOCATION, pdo, new Date());
         Assert.assertTrue(bucketEntries.isEmpty());
     }
 
@@ -301,30 +315,54 @@ public class BucketEjbDbFreeTest {
         return "R" + rackPosition;
     }
 
-    private void setupCoreMocks(Workflow workflow, boolean createVessels) {
+    private void setupCoreMocks(String workflow, boolean createVessels) {
         setUp(workflow);
+        mockVessels = new ArrayList<>();
+        final Multimap<String, LabVessel> sampleKeyToVessels = HashMultimap.create();
+        final Map<String, LabVessel> barcodeToVessel = new HashMap<>();
 
         // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th samples.
         // The 4th sample is in house so a standalone vessel/sample should be created.
-        mockVessels = new ArrayList<>();
-        ProductOrderSample pdoSample;
+        // The 3rd product order sample name is a vessel barcode.
         for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
-            pdoSample = pdo.getSamples().get(rackPosition - 1);
+            ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
+            LabVessel labVessel = labVessels.get(rackPosition - 1);
             if (rackPosition != 1 && rackPosition != 4) {
-                mockVessels.add(labVessels.get(rackPosition - 1));
+                mockVessels.add(labVessel);
+                if (rackPosition != 3) {
+                    sampleKeyToVessels.put(pdoSample.getName(), labVessel);
+                }
+                barcodeToVessel.put(labVessel.getLabel(), labVessel);
             }
             if (createVessels) {
                 if (rackPosition == 4) {
                     List<LabVessel> mockCreatedVessels = new ArrayList<>();
+                    List<LabVessel> secondaryVessels = new ArrayList<>();
+                    Pair<List<LabVessel>,List<LabVessel>> factoryVesselPair = Pair.of(mockCreatedVessels, secondaryVessels);
                     mockCreatedVessels.add(labVessels.get(rackPosition - 1));
                     expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getName()),
                             eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date) anyObject(),
                             eq(MercurySample.MetadataSource.BSP))).
-                                    andReturn(mockCreatedVessels);
+                                    andReturn(factoryVesselPair);
                 }
             }
         }
-        expect(labVesselDao.findBySampleKeyList(EasyMock.<Collection<String>>anyObject())).andReturn(mockVessels);
+
+        expect(labVesselDao.findBySampleKey(EasyMock.<String>anyObject())).andAnswer(new IAnswer<List<LabVessel>>() {
+            @Override
+            public List<LabVessel> answer() throws Throwable {
+                String sampleKey = (String) EasyMock.getCurrentArguments()[0];
+                return new ArrayList<>(sampleKeyToVessels.get(sampleKey));
+            }
+        }).anyTimes();
+
+        expect(labVesselDao.findByIdentifier(EasyMock.<String>anyObject())).andAnswer(new IAnswer<LabVessel>() {
+            @Override
+            public LabVessel answer() throws Throwable {
+                String barcode = (String) EasyMock.getCurrentArguments()[0];
+                return barcodeToVessel.get(barcode);
+            }
+        }).anyTimes();
 
         expect(bucketDao.findByName(EasyMock.<String>anyObject())).andAnswer(new IAnswer<Bucket>() {
             @Override

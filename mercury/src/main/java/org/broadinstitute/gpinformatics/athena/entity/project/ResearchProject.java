@@ -202,7 +202,8 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     @ManyToMany(cascade = {CascadeType.PERSIST})
     @JoinTable(schema = "athena", name = "RP_REGULATORY_INFOS",
-            joinColumns = {@JoinColumn(name="RESEARCH_PROJECT")})
+            joinColumns = {@JoinColumn(name="RESEARCH_PROJECT")},
+            inverseJoinColumns = {@JoinColumn(name="REGULATORY_INFOS")})
     private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
@@ -231,7 +232,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public SubmissionTracker getSubmissionTracker(SubmissionTuple submissionTuple) {
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
-            if (submissionTracker.getTuple().equals(submissionTuple)) {
+            if (submissionTracker.getSubmissionTuple().equals(submissionTuple)) {
                 if (!foundSubmissionTrackers.add(submissionTracker)){
                     throw new RuntimeException("More then one result found");
                 }

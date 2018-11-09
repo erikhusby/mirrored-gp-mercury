@@ -16,8 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.StringWriter;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -35,8 +33,8 @@ public class SubmissionSampleResultBeanTest {
     }
 
     public void testSerialize() throws Exception {
-           StringWriter writer = MercuryStringUtils.serializeJsonBean(resultBean);
-           assertThat(writer.toString().replaceAll("\\s+", ""), equalTo(testJson));
+           String serialized = MercuryStringUtils.serializeJsonBean(resultBean);
+           assertThat(serialized.replaceAll("\\s+", ""), equalTo(testJson));
        }
 
        public void testDeSerialize() throws Exception {

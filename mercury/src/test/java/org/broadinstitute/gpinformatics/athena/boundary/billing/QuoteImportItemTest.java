@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -12,6 +13,7 @@ import java.util.List;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -72,7 +74,11 @@ public class QuoteImportItemTest {
         PriceItem priceItem = new PriceItem();
         Product product = new Product();
         product.setPrimaryPriceItem(priceItem);
-        pdo.setProduct(product);
+        try {
+            pdo.setProduct(product);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         pdo.setJiraTicketKey(pdoJiraKey);
         updateProductOrderWithLedgerEntry(pdo, numSamples, amountPerLedgerEntry, workItem, priceItem);
         return pdo;
@@ -156,7 +162,11 @@ public class QuoteImportItemTest {
         ProductOrderSample blah = new ProductOrderSample("blah");
         ProductOrder pdo = new ProductOrder();
         Product product = new Product();
-        pdo.setProduct(product);
+        try {
+            pdo.setProduct(product);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         pdo.addSample(blah);
         PriceItem priceItem = new PriceItem();
         product.setPrimaryPriceItem(priceItem);

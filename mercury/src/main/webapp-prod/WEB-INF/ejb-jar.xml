@@ -23,8 +23,7 @@
                 -->
                 <activation-config-property>
                     <activation-config-property-name>connectorClassName</activation-config-property-name>
-                    <activation-config-property-value>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory
-                    </activation-config-property-value>
+                    <activation-config-property-value>org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory</activation-config-property-value>
                 </activation-config-property>
                 <activation-config-property>
                     <activation-config-property-name>connectionParameters</activation-config-property-name>
@@ -46,8 +45,7 @@
                 -->
                 <activation-config-property>
                     <activation-config-property-name>connectorClassName</activation-config-property-name>
-                    <activation-config-property-value>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory
-                    </activation-config-property-value>
+                    <activation-config-property-value>org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory</activation-config-property-value>
                 </activation-config-property>
                 <activation-config-property>
                     <activation-config-property-name>connectionParameters</activation-config-property-name>
@@ -69,8 +67,7 @@
                 -->
                 <activation-config-property>
                     <activation-config-property-name>connectorClassName</activation-config-property-name>
-                    <activation-config-property-value>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory
-                    </activation-config-property-value>
+                    <activation-config-property-value>org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory</activation-config-property-value>
                 </activation-config-property>
                 <activation-config-property>
                     <activation-config-property-name>connectionParameters</activation-config-property-name>

@@ -88,6 +88,16 @@ public class Metadata {
         }
     }
 
+    public static Metadata createMetadata(Key key, String stringValue) {
+        switch (key.getDataType()) {
+        case STRING:
+            return new Metadata(key, stringValue);
+        case NUMBER:
+            return new Metadata(key, new BigDecimal(stringValue));
+        }
+        throw new RuntimeException("Unhandled data type " + key.getDataType());
+    }
+
     @Nonnull
     public Key getKey() {
         return key;
@@ -101,6 +111,7 @@ public class Metadata {
             return numberValue.toString();
         case DATE:
             return DATE_FORMAT.format(dateValue);
+
         }
         throw new RuntimeException("Unhandled data type " + key.getDataType());
     }
@@ -167,10 +178,12 @@ public class Metadata {
     public enum DataType {
         STRING,
         NUMBER,
-        DATE
+        DATE,
+        BOOLEAN
     }
 
     public enum Category {
+        LIQUID_HANDLER_METRIC,
         SAMPLE,
         LAB_METRIC_RUN,
         LAB_METRIC,
@@ -181,6 +194,23 @@ public class Metadata {
         USER,
         SYSTEM,
         NONE
+    }
+
+    public enum YesNoUnknown implements Displayable {
+        YES("Yes"),
+        NO("No"),
+        UNKNOWN("Unknown");
+
+        private final String displayName;
+
+        YesNoUnknown(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     /**
@@ -269,8 +299,13 @@ public class Metadata {
         DV_200(Category.LAB_METRIC, DataType.NUMBER, "DV200", Visibility.USER),
         LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
         NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
-
-        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER);
+        FLOWRATE(Category.LIQUID_HANDLER_METRIC, DataType.NUMBER, "Flowrate", Visibility.USER),
+        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
+        DEPLETE_WELL(Category.SAMPLE, DataType.STRING, "Deplete Well", Visibility.USER),
+        CELL_TYPE(Category.SAMPLE, DataType.STRING, "Cell Type", Visibility.USER),
+        CELLS_PER_WELL(Category.SAMPLE, DataType.NUMBER, "Cells Per Well", Visibility.USER),
+        POSITIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Positive Control", Visibility.USER),
+        NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;

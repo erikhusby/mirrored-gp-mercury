@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -13,7 +14,7 @@ import java.util.Map;
 public class BSPSampleDataFetcherContainerTest {
     private BSPConfig bspConfig = BSPConfig.produce(Deployment.DEV);
     private BSPSampleDataFetcher bspSampleDataFetcher =
-            new BSPSampleDataFetcher(BSPSampleSearchServiceProducer.testInstance(), bspConfig);
+            new BSPSampleDataFetcherImpl(BSPSampleSearchServiceProducer.testInstance(), bspConfig);
     public void testFFPE() {
         BspSampleData ffpe = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
         BspSampleData paraffin = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");

@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
@@ -116,7 +116,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         test1RequestSMIds.add(sample3Kit1);
         test1RequestSMIds.add(sample4Kit1);
 
-        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPSampleReceiptService stubReceiptService = new BSPSampleReceiptServiceStub();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
         SampleManager mockSampManager = Mockito.mock(SampleManager.class);
         SampleReceiptResource sampleReceiptResource = Mockito.mock(SampleReceiptResource.class);
@@ -167,7 +167,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         test2RequestSMIds.add(sample2Kit1);
         test2RequestSMIds.add(sample3Kit1);
 
-        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPSampleReceiptService stubReceiptService = new BSPSampleReceiptServiceStub();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
         SampleManager mockSampManager = Mockito.mock(SampleManager.class);
         SampleReceiptResource sampleReceiptResource = Mockito.mock(SampleReceiptResource.class);
@@ -231,7 +231,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         test3RequestSMIds.add(sample4Kit1);
         test3RequestSMIds.add(sample5Kit1);
 
-        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPSampleReceiptService stubReceiptService = new BSPSampleReceiptServiceStub();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
         SampleManager mockSampManager = Mockito.mock(SampleManager.class);
         SampleReceiptResource sampleReceiptResource = Mockito.mock(SampleReceiptResource.class);
@@ -293,7 +293,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         test4RequestSMIds.add(sample3Kit2);
         test4RequestSMIds.add(sample4Kit2);
 
-        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPSampleReceiptService stubReceiptService = new BSPSampleReceiptServiceStub();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
         SampleManager mockSampManager = Mockito.mock(SampleManager.class);
         SampleReceiptResource sampleReceiptResource = Mockito.mock(SampleReceiptResource.class);
@@ -393,7 +393,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         test5RequestSMIds.add(sample2Kit2);
         test5RequestSMIds.add(sample4Kit2);
 
-        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPSampleReceiptService stubReceiptService = new BSPSampleReceiptServiceStub();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
         SampleManager mockSampManager = Mockito.mock(SampleManager.class);
         SampleReceiptResource sampleReceiptResource = Mockito.mock(SampleReceiptResource.class);

@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@Dependent
 public class BSPExportsService implements Serializable {
 
     private static Log log = LogFactory.getLog(BSPExportsService.class);

@@ -57,6 +57,8 @@ public class WorkflowTransitionTest extends Arquillian {
 
     private String crspJiraTicket = "LCSET-10359";
 
+    private String crspJiraTicket2 = "LCSET-11762";
+
     private String exexJiraTicket = "LCSET-10343";
 
     @Inject
@@ -71,6 +73,8 @@ public class WorkflowTransitionTest extends Arquillian {
     private JiraIssue genomeIssue;
 
     private JiraIssue crspIssue;
+
+    private JiraIssue crspIssue2;
 
     private JiraIssue exexIssue;
 
@@ -89,6 +93,7 @@ public class WorkflowTransitionTest extends Arquillian {
             genomeIssue = resetJiraTicketState(genomeJiraTicket);
             crspIssue = resetJiraTicketState(crspJiraTicket);
             exexIssue = resetJiraTicketState(exexJiraTicket);
+            crspIssue2 = resetJiraTicketState(crspJiraTicket2);
         }
         if (labEventFactory != null && mockBspHandler == null){
             mockBspHandler = mock(BSPRestSender.class);
@@ -342,6 +347,82 @@ public class WorkflowTransitionTest extends Arquillian {
         jiraCommentUtil.postUpdate(labEvent);
         genomeIssue = jiraService.getIssue(genomeJiraTicket);
         Assert.assertEquals(genomeIssue.getStatus(), "Norm and Pool");
+    }
+
+    @Test
+    public void testShearingAliquotTransitionsToInPlating() throws IOException {
+        Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
+        crspIssue.postTransition("Return to Open", null);
+
+        String sourceRackBarcode = "ShearingAliquotCrspTestSourceRack";
+        List<String> sourceTube = Collections.singletonList("1125699450");
+        String destRackBarcode = "ShearingAliquotCrspTest" + timestampFormat.format(new Date());
+        List<String> shearingAliquotTube = Arrays.asList("ShearingAliquotTubeCrspTest" +  timestampFormat.format(new Date()));
+
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory
+                .buildRackToRack(LabEventType.SHEARING_ALIQUOT.getName(), sourceRackBarcode, sourceTube,
+                        destRackBarcode, shearingAliquotTube);
+
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateTransferEvent().add(plateTransferEventType);
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        crspIssue = jiraService.getIssue(crspJiraTicket);
+        Assert.assertEquals(crspIssue.getStatus(), "In Plating");
+    }
+
+    /**
+     * Test condition where lab pools multiple LCSETs and one LCSET is a rework that they haven't
+     * Re-opened and transitioned properly. Should attempt that LCSET, fail with a log, but still
+     * transition the other LCSET.
+     * LCSET-11762 - Will be put to closed and it'll attempt to transition before LCSET-10359, but ensure
+     * that LCSET-10359 goes through.
+     * @throws IOException
+     */
+    @Test
+    public void testMultipleWhereFirstInWrongState() throws IOException {
+        Assert.assertEquals(crspIssue.getStatus(), "On Hold");
+        Assert.assertEquals(crspIssue2.getStatus(), "On Hold");
+
+        crspIssue.postTransition("In Library Construction", null);
+        crspIssue = jiraService.getIssue(crspJiraTicket);
+        Assert.assertEquals(crspIssue.getStatus(), "In LC");
+
+        crspIssue2.postTransition("Closed", null);
+        crspIssue2 = jiraService.getIssue(crspJiraTicket2);
+        Assert.assertEquals(crspIssue2.getStatus(), "Closed");
+
+        String sourceRackBarcode = "IcePoolingSource" + timestampFormat.format(new Date());
+        String targetRackBarcode = "IcePoolingDest" + timestampFormat.format(new Date());
+        String targetTubeBarcode = "IcePoolingTransfer" + timestampFormat.format(new Date());
+        String target2TubeBarcode = "IcePoolingTransfer2" + timestampFormat.format(new Date());
+
+        List<List<String>> sourceTubeBarcodes = new ArrayList<>();
+        sourceTubeBarcodes.add(Arrays.asList("0214238488", "0219064840"));
+
+        List<List<String>> targetTubeBarcodes = new ArrayList<>();
+        targetTubeBarcodes.add(Arrays.asList(targetTubeBarcode, target2TubeBarcode));
+
+        BettaLimsMessageTestFactory.CherryPick cherryPick = new BettaLimsMessageTestFactory.CherryPick(sourceRackBarcode,
+                "A01", targetRackBarcode, "A01");
+        BettaLimsMessageTestFactory.CherryPick cherryPick2 = new BettaLimsMessageTestFactory.CherryPick(sourceRackBarcode,
+                "A02", targetRackBarcode, "A02");
+        PlateCherryPickEvent plateCherryPickEvent =
+                bettaLimsMessageTestFactory.buildCherryPick(LabEventType.ICE_POOLING_TRANSFER.getName(),
+                        Arrays.asList(sourceRackBarcode), sourceTubeBarcodes, Arrays.asList(targetRackBarcode),
+                        targetTubeBarcodes, Arrays.asList(cherryPick, cherryPick2));
+
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateCherryPickEvent().add(plateCherryPickEvent);
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        crspIssue = jiraService.getIssue(crspJiraTicket);
+        Assert.assertEquals(crspIssue.getStatus(), "In Plex Pooling");
+
+        crspIssue2 = jiraService.getIssue(crspJiraTicket2);
+        Assert.assertEquals(crspIssue2.getStatus(), "Closed");
     }
 
     private JiraIssue resetJiraTicketState(String ticketKey) throws IOException {

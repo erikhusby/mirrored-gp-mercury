@@ -27,12 +27,12 @@ import java.util.Set;
  * Wrapper around {@link BSPSampleSearchService} that
  * does a bit more object-ifying and type-safety.
  */
-public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializable {
+public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Serializable {
     static final long serialVersionUID = -1432207534876411738L;
-    // Many versions of this service written only for tests are considered as options by IntelliJ.
-    @SuppressWarnings("CdiInjectionPointsInspection")
+
     @Inject
     BSPSampleSearchService service;
+
     static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
     static final String WS_DETAILS = "sample/getdetails";
     // Used for mapping Matrix barcodes to Sample short barcodes, forces xml output format.

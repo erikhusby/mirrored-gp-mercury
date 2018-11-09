@@ -38,6 +38,8 @@ public class ProductOrderListEntry implements Serializable {
 
     private final String productName;
 
+    private final ProductOrder.OrderAccessType orderType;
+
     private final Product product;
 
     private final String productFamilyName;
@@ -66,7 +68,7 @@ public class ProductOrderListEntry implements Serializable {
                                   ProductOrder.OrderStatus orderStatus, Product product, String researchProjectTitle,
                                   Long ownerId, Date placedDate, Integer laneCount, String quoteId,
                                   Long billingSessionId,
-                                  long constructedCount) {
+                                  long constructedCount, ProductOrder.OrderAccessType orderType) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
@@ -83,6 +85,7 @@ public class ProductOrderListEntry implements Serializable {
 
         // This count is used by the query that needs to populate one of the two other counts.
         this.constructedCount = constructedCount;
+        this.orderType = orderType;
     }
 
     /**
@@ -92,11 +95,11 @@ public class ProductOrderListEntry implements Serializable {
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  Product product, String researchProjectTitle, Long ownerId,
-                                 Date placedDate, Integer laneCount, String quoteId) {
+                                 Date placedDate, Integer laneCount, String quoteId, ProductOrder.OrderAccessType orderType) {
 
         // No billing session and a the constructed count is set to 0 because it is not used for this constructor.
         this(orderId, title, jiraTicketKey, orderStatus, product, researchProjectTitle, ownerId, placedDate,
-                laneCount, quoteId, null, 0);
+                laneCount, quoteId, null, 0, orderType);
     }
 
 
@@ -110,7 +113,7 @@ public class ProductOrderListEntry implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     public ProductOrderListEntry(Long orderId, String jiraTicketKey, Long billingSessionId, long constructedCount) {
         this(orderId, null, jiraTicketKey, null, null, null, null, null, null, null, billingSessionId,
-                constructedCount);
+                constructedCount, null);
     }
 
     private ProductOrderListEntry() {
@@ -202,6 +205,10 @@ public class ProductOrderListEntry implements Serializable {
 
     public Long getConstructedCount() {
         return constructedCount;
+    }
+
+    public ProductOrder.OrderAccessType getOrderType() {
+        return orderType;
     }
 
     /**

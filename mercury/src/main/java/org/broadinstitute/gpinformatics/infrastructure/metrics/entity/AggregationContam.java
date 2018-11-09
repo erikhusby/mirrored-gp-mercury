@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.hibernate.annotations.BatchSize;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -19,7 +21,9 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "AGGREGATION_CONTAM", schema = "METRICS")
+@BatchSize(size = 500)
 public class AggregationContam implements Serializable {
+    private static final long serialVersionUID = -4761300827083196585L;
     @Id
     @Column(name = "AGGREGATION_ID", nullable = false, insertable = false, updatable = false)
     private Integer aggregationId;

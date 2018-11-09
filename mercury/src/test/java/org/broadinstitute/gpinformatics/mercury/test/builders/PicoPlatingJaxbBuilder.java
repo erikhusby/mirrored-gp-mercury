@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Refer to {@link org.broadinstitute.gpinformatics.mercury.test.SamplesPicoEndToEndTest} for expanded version.
  * <p/>
- * TODO SGM:  Merge to lessen code duplication.
+ * TODO Merge to lessen code duplication.
  */
 public class PicoPlatingJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;

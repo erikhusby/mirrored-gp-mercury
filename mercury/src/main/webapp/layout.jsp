@@ -36,7 +36,6 @@
         <script src="${ctxpath}/resources/scripts/jquery-1.10.1.min.js"></script>
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
         <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
-
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
@@ -110,6 +109,8 @@
         <script src="${ctxpath}/resources/scripts/jquery.heatcolor.0.0.1.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.sparkline-2.1.2.min.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.headerPersist.1.0.js"></script>
+
+        <script src="${ctxpath}/Owasp.CsrfGuard/JavaScriptServlet"></script>
 
         <script src="https://gpinfojira.broadinstitute.org:8443/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
         <script>window.ATL_JQ_PAGE_PROPS = {

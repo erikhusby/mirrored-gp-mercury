@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -170,11 +172,15 @@ public enum DisplayExpression {
         public List<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
             List<String> results = new ArrayList<>();
-            // todo jmt try getSingleProductOrderSample first
-            for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                if (productOrderSample.getProductOrder().getProduct() != null) {
-                    results.add(productOrderSample.getProductOrder().getProduct().getDisplayName());
+            ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (pdoSampleForSingleBucket == null) {
+                for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                    if (productOrderSample.getProductOrder().getProduct() != null) {
+                        results.add(productOrderSample.getProductOrder().getProduct().getDisplayName());
+                    }
                 }
+            } else {
+                results.add(pdoSampleForSingleBucket.getProductOrder().getProduct().getDisplayName());
             }
             return results;
         }
@@ -185,6 +191,28 @@ public enum DisplayExpression {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
             MolecularIndexingScheme molecularIndexingScheme = sampleInstanceV2.getMolecularIndexingScheme();
             return molecularIndexingScheme == null ? null : molecularIndexingScheme.getName();
+        }
+    }),
+    UNIQUE_MOLECULAR_IDENTIFIER(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+        @Override
+        public List<String> evaluate(Object entity, SearchContext context) {
+            List<String> results = new ArrayList<>();
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            for (UMIReagent umiReagent: sampleInstanceV2.getUmiReagents()) {
+                results.add(umiReagent.getUniqueMolecularIdentifier().getDisplayName());
+            }
+            return results;
+        }
+    }),
+    BAIT_OR_CAT_NAME(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+        @Override
+        public List<String> evaluate(Object entity, SearchContext context) {
+            List<String> results = new ArrayList<>();
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            for (ReagentDesign reagentDesign: sampleInstanceV2.getReagentsDesigns()) {
+                results.add(reagentDesign.getName() + "(" + reagentDesign.getReagentType().toString() + ")");
+            }
+            return results;
         }
     }),
     METADATA(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
@@ -222,15 +250,25 @@ public enum DisplayExpression {
     COLLABORATOR_SAMPLE_ID(SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
+            
             SampleData sampleData = (SampleData) entity;
-            return sampleData.getCollaboratorsSampleName();
+            String collaboratorsSampleName = "";
+            if (!context.getUserBean().isViewer()) {
+                collaboratorsSampleName = sampleData.getCollaboratorsSampleName();
+            }
+            return collaboratorsSampleName;
         }
     }),
     COLLABORATOR_PARTICIPANT_ID(SampleData.class, new SearchTerm.Evaluator<String>() {
         @Override
         public String evaluate(Object entity, SearchContext context) {
+
             SampleData sampleData = (SampleData) entity;
-            return sampleData.getCollaboratorParticipantId();
+            String collaboratorParticipantId = "";
+            if (!context.getUserBean().isViewer()) {
+                collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
+            }
+            return collaboratorParticipantId;
         }
     }),
     SAMPLE_TYPE(SampleData.class, new SearchTerm.Evaluator<String>() {
@@ -253,8 +291,7 @@ public enum DisplayExpression {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getOriginalMaterialType();
         }
-    }),
-    ;
+    });
 
     private final Class<?> expressionClass;
     private final SearchTerm.Evaluator<?> evaluator;

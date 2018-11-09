@@ -25,12 +25,14 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Collections;
 
 /**
  * This class is responsible for managing a Portal collaboration for the project manager.
  */
+@Dependent
 public class CollaborationService {
 
     private final ResearchProjectEjb researchProjectEjb;

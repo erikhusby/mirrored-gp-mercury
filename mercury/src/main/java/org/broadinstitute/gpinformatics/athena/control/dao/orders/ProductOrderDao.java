@@ -11,12 +11,14 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.StandardBasicTypes;
 
@@ -29,6 +31,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
+import javax.persistence.criteria.CollectionJoin;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Fetch;
@@ -69,6 +72,17 @@ public class ProductOrderDao extends GenericDao {
         }
 
         return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR || hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
+    }
+
+    /**
+     * @return all product orders with ORSP having a given identifier
+     */
+    public List<ProductOrder> findOrdersByRegulatoryInfoIdentifier(String identifier) {
+        return findAll(ProductOrder.class, (criteriaQuery, root) -> {
+            CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+            CollectionJoin<ProductOrder, RegulatoryInfo> join = root.join(ProductOrder_.regulatoryInfos);
+            criteriaQuery.where(criteriaBuilder.equal(join.get(RegulatoryInfo_.identifier), identifier));
+        });
     }
 
     /**
@@ -216,7 +230,7 @@ public class ProductOrderDao extends GenericDao {
 
 
     // Used by tests only.
-    public List<ProductOrder> findByWorkflow(@Nonnull Workflow workflow) {
+    public List<ProductOrder> findByWorkflow(@Nonnull String workflowName) {
 
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -228,7 +242,7 @@ public class ProductOrderDao extends GenericDao {
         Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
         Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
 
-        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflow.getWorkflowName()));
+        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflowName));
 
         criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
 
@@ -460,6 +474,23 @@ public class ProductOrderDao extends GenericDao {
                     }
                 }
         );
+    }
+
+    public List<ProductOrder> findOrdersWithSAPOrdersAndBilledSamples() {
+        return findAll(ProductOrder.class,new ProductOrderDaoCallback(FetchSpec.SAMPLES, FetchSpec.LEDGER_ITEMS,
+                FetchSpec.SAP_ORDER_INFO){
+            @Override
+            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrderRoot) {
+                super.callback(criteriaQuery, productOrderRoot);
+
+                criteriaQuery.distinct(true);
+
+                CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
+
+                final ListJoin<ProductOrder, SapOrderDetail> join =
+                        productOrderRoot.join(ProductOrder_.sapReferenceOrders);
+            }
+        }) ;
     }
 }
 

@@ -4,30 +4,38 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionBioSampleBean implements Serializable {
-
     private static final long serialVersionUID = -8865203109332598495L;
+    @JsonProperty
     private String sampleId;
-    private String filePath;
+    @JsonProperty
+    private String processingLocation;
+    @JsonProperty
     private SubmissionContactBean contact;
+
+    @JsonIgnore
+    public static final String GCP = "GCP";
+    @JsonIgnore
+    public static final String ON_PREM = "OnPrem";
 
     public SubmissionBioSampleBean() {
     }
 
-    public SubmissionBioSampleBean(String sampleId, String filePath) {
+    public SubmissionBioSampleBean(String sampleId, String processingLocation, SubmissionContactBean contact) {
         this.sampleId = sampleId;
-        this.filePath = filePath;
-    }
-
-    public SubmissionBioSampleBean(String sampleId, String filePath,
-                                   SubmissionContactBean contact) {
-        this(sampleId, filePath);
+        this.processingLocation = processingLocation;
         this.contact = contact;
     }
 
@@ -35,25 +43,22 @@ public class SubmissionBioSampleBean implements Serializable {
         return sampleId;
     }
 
-    @XmlElement
     public void setSampleId(String sampleId) {
         this.sampleId = sampleId;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public String getProcessingLocation() {
+        return processingLocation;
     }
 
-    @XmlElement
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
+    public void setProcessingLocation(String processingLocation) {
+        this.processingLocation = processingLocation;
     }
 
     public SubmissionContactBean getContact() {
         return contact;
     }
 
-    @XmlElement
     public void setContact(SubmissionContactBean contact) {
         this.contact = contact;
     }
@@ -71,13 +76,13 @@ public class SubmissionBioSampleBean implements Serializable {
         SubmissionBioSampleBean castOther = OrmUtil.proxySafeCast(other, SubmissionBioSampleBean.class);
 
         return new EqualsBuilder().append(getSampleId(), castOther.getSampleId())
-                                  .append(getFilePath(), castOther.getFilePath())
+                                  .append(getProcessingLocation(), castOther.getProcessingLocation())
                                   .append(getContact(), castOther.getContact()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getSampleId()).append(getFilePath()).append(getContact()).toHashCode();
+        return new HashCodeBuilder().append(getSampleId()).append(getProcessingLocation()).append(getContact()).toHashCode();
     }
 
 }

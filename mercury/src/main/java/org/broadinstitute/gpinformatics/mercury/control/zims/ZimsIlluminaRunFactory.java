@@ -16,13 +16,14 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
@@ -34,11 +35,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.WorkflowMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -48,18 +51,21 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.SubmissionMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -77,6 +83,7 @@ import java.util.TreeSet;
  * @author breilly
  */
 @SuppressWarnings("FeatureEnvy")
+@Dependent
 public class ZimsIlluminaRunFactory {
 
     private SampleDataFetcher sampleDataFetcher;
@@ -85,7 +92,7 @@ public class ZimsIlluminaRunFactory {
     private ProductOrderDao productOrderDao;
     private final CrspPipelineUtils crspPipelineUtils;
     private FlowcellDesignationEjb flowcellDesignationEjb;
-
+    private AttributeArchetypeDao attributeArchetypeDao;
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
     @Inject
@@ -96,13 +103,15 @@ public class ZimsIlluminaRunFactory {
                                   ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory,
                                   ProductOrderDao productOrderDao,
                                   CrspPipelineUtils crspPipelineUtils,
-                                  FlowcellDesignationEjb flowcellDesignationEjb) {
+                                  FlowcellDesignationEjb flowcellDesignationEjb,
+                                  AttributeArchetypeDao attributeArchetypeDao) {
         this.sampleDataFetcher = sampleDataFetcher;
         this.controlDao = controlDao;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.productOrderDao = productOrderDao;
         this.crspPipelineUtils = crspPipelineUtils;
         this.flowcellDesignationEjb = flowcellDesignationEjb;
+        this.attributeArchetypeDao = attributeArchetypeDao;
     }
 
     private LabVessel getContextVessel(SampleInstanceV2 sampleInstance) {
@@ -146,7 +155,7 @@ public class ZimsIlluminaRunFactory {
                 BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                 if (singleBucketEntry != null) {
                     if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
-                            BassDTO.DATA_TYPE_WGS)) {
+                        Aggregation.DATA_TYPE_WGS)) {
                         mixedLaneOk = true;
                         break;
                     }
@@ -242,25 +251,43 @@ public class ZimsIlluminaRunFactory {
         List<SequencingTemplateLaneType> sequencingTemplateLanes = null;
         try {
             SequencingTemplateType sequencingTemplate = sequencingTemplateFactory.getSequencingTemplate(
-                    illuminaFlowcell, loadedVesselsAndPositions, true);
+                    illuminaFlowcell, loadedVesselsAndPositions, false);
             sequencingTemplateLanes = sequencingTemplate.getLanes();
+            if (sequencingTemplateLanes != null) {
+                Collections.sort(sequencingTemplateLanes, new Comparator<SequencingTemplateLaneType>() {
+                    @Override
+                    public int compare(SequencingTemplateLaneType lane1, SequencingTemplateLaneType lane2) {
+                        return lane1.getLaneName().compareTo(lane2.getLaneName());
+                    }
+                });
+            }
         } catch (Exception e) {
             log.error("Failed to get sequencingTemplate.", e);
-            // don't rethrow, failing to get loading concentration is not fatal.
+            throw e;
         }
+        Map<String, WorkflowMetadata> mapWorkflowToMetadata = new HashMap<>();
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
                 ArrayList<LibraryBean> libraryBeans = new ArrayList<>();
                 SampleInstanceDto sampleInstanceDto = sampleInstanceDtos.get(0);
                 short laneNumber = sampleInstanceDto.getLaneNumber();
+                String workflowName = sampleInstanceDto.getSampleInstance().getWorkflowName();
+                if (workflowName != null) {
+                    if (!mapWorkflowToMetadata.containsKey(workflowName)) {
+                        mapWorkflowToMetadata.put(workflowName, attributeArchetypeDao.findWorkflowMetadata(workflowName));
+                    }
+                }
                 libraryBeans.addAll(
-                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
+                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl,
+                                mapWorkflowToMetadata));
                 String sequencedLibraryName = sampleInstanceDto.getSequencedLibraryName();
                 Date sequencedLibraryDate = sampleInstanceDto.getSequencedLibraryDate();
 
+                String setupReadStructure = null;
                 BigDecimal loadingConcentration = null;
                 if (sequencingTemplateLanes != null && sequencingTemplateLanes.size() == numberOfLanes) {
                     loadingConcentration = sequencingTemplateLanes.get(laneNumber - 1).getLoadingConcentration();
+                    setupReadStructure = sequencingTemplateLanes.get(laneNumber - 1).getReadStructure();
                 }
                 IlluminaSequencingRunChamber sequencingRunChamber = illuminaRun.getSequencingRunChamber(laneNumber);
                 String actualReadStructure = null;
@@ -271,7 +298,7 @@ public class ZimsIlluminaRunFactory {
                                                                    sequencedLibraryDate,
                                                                    loadingConcentration == null ? null :
                                                                            loadingConcentration.doubleValue(),
-                                                                   actualReadStructure);
+                                                                   actualReadStructure, setupReadStructure);
                 run.addLane(lane);
             }
         }
@@ -283,7 +310,8 @@ public class ZimsIlluminaRunFactory {
     public List<LibraryBean> makeLibraryBeans(List<SampleInstanceDto> sampleInstanceDtos,
                                               Map<String, SampleData> mapSampleIdToDto,
                                               Map<String, ProductOrder> mapKeyToProductOrder,
-                                              Map<String, Control> mapNameToControl) {
+                                              Map<String, Control> mapNameToControl,
+                                              Map<String, WorkflowMetadata> mapWorkflowToMetadata) {
         List<LibraryBean> libraryBeans = new ArrayList<>();
 
         // Get distinct analysis types and reference sequences.  If there's only one distinct, it's used for the
@@ -397,13 +425,13 @@ public class ZimsIlluminaRunFactory {
                 mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
             }
             TZDevExperimentData devExperimentData = sampleInstance.getTzDevExperimentData();
-
+            WorkflowMetadata workflowMetadata = mapWorkflowToMetadata.get(sampleInstance.getWorkflowName());
             libraryBeans.add(createLibraryBean(sampleInstanceDto, productOrder, sampleData, lcSet,
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
                     referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes,
-                    devExperimentData, isPooledTube));
+                    devExperimentData, isPooledTube, workflowMetadata));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -442,7 +470,7 @@ public class ZimsIlluminaRunFactory {
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
             Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes, TZDevExperimentData devExperimentData,
-            boolean isPooledTube) {
+            boolean isPooledTube, WorkflowMetadata workflowMetadata) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -520,19 +548,35 @@ public class ZimsIlluminaRunFactory {
         // default to the passed in bait name, but override if there is product specified version.
         String bait = baitName;
 
-        // These items are pulled off the project or product.
+        // These items are pulled off the project, product, or SampleInstanceEntity.
         String aligner = null;
+        Boolean analyzeUmi = sampleInstanceDto.sampleInstance.getUmisPresent();
+        if (sampleInstanceDto.sampleInstance.getAnalysisType() != null) {
+            analysisType = sampleInstanceDto.sampleInstance.getAnalysisType().getBusinessKey();
+        }
+
+        // insert size is a  range consisting of two integers with a hyphen in between, e.g. "225-350".
+        expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
+        String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
+         if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
+            referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();
+            referenceSequenceVersion = sampleInstanceDto.sampleInstance.getReferenceSequence().getVersion();
+        }
+
         if (productOrder != null) {
-            // Product stuff.
             Product product = productOrder.getProduct();
-            if (product.getInsertSize() != null) {
+            if (StringUtils.isBlank(expectedInsertSize) && product.getInsertSize() != null) {
                 expectedInsertSize = product.getInsertSize().toString();
             }
-            analysisType = product.getAnalysisTypeKey();
-
-            // If there was no bait on the actual samples, use the one defined on the product.
+            if (analyzeUmi == null) {
+                analyzeUmi = productOrder.getAnalyzeUmiOverride();
+            }
+            if (analysisType == null) {
+                analysisType = product.getAnalysisTypeKey();
+            }
+            // If there was no bait on the actual samples, use the one defined on the product or pdo if unlocked.
             if (bait == null) {
-                bait = product.getReagentDesignKey();
+                bait = productOrder.getReagentDesignKey();
             }
 
             // Project stuff.
@@ -542,17 +586,26 @@ public class ZimsIlluminaRunFactory {
                 aligner = null;
             }
             // If there is a reference sequence value on the project, then populate the name and version.
-            if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
+            if (StringUtils.isBlank(referenceSequence) && !StringUtils.isBlank(project.getReferenceSequenceKey())) {
                 String[] referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
                 referenceSequence = referenceSequenceValues[0];
                 referenceSequenceVersion = referenceSequenceValues[1];
             }
-            if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
-                referenceSequence = null;
-                referenceSequenceVersion = null;
-            }
+        }
+        if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
+            referenceSequence = null;
+            referenceSequenceVersion = null;
         }
 
+        List<SubmissionMetadata> submissionMetadataList = new ArrayList<>();
+            if (workflowMetadata != null) {
+            Set<ArchetypeAttribute> attributes = workflowMetadata.getAttributes();
+            for (ArchetypeAttribute archetypeAttribute: attributes) {
+                SubmissionMetadata metadata = new SubmissionMetadata(archetypeAttribute.getAttributeName(),
+                        archetypeAttribute.getAttributeValue());
+                submissionMetadataList.add(metadata);
+            }
+        }
 
         LibraryBean libraryBean = new LibraryBean(
                 library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
@@ -560,7 +613,8 @@ public class ZimsIlluminaRunFactory {
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
-                metadataSourceForPipelineAPI, aggregationDataType, jiraService);
+                metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList,
+                Boolean.TRUE.equals(analyzeUmi), aggregationParticle);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }
@@ -577,6 +631,11 @@ public class ZimsIlluminaRunFactory {
         }
 
         return libraryBean;
+    }
+
+    public void setSequencingTemplateFactory(
+            SequencingTemplateFactory sequencingTemplateFactory) {
+        this.sequencingTemplateFactory = sequencingTemplateFactory;
     }
 
     /**

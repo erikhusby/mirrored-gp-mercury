@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -13,7 +13,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 @Test(groups = EXTERNAL_INTEGRATION)
 public class JiraIssuesTest {
 
-    private JiraService jiraService = JiraServiceProducer.testInstance();
+    private JiraService jiraService = JiraServiceTestProducer.testInstance();
 
     @Test(enabled = true)
     public void testSubTasks() throws Exception {

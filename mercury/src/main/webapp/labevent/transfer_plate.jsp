@@ -14,6 +14,7 @@ plate / rack.
 <%--@elvariable id="section" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"--%>
 <%--@elvariable id="stationEventIndex" type="java.lang.Integer"--%>
 <%--@elvariable id="source" type="java.lang.Boolean"--%>
+<c:set var="sourceMassRemove" value="${source and actionBean.labEventType.manualTransferDetails.sourceMassRemoved()}"/>
 <div class="control-group" id="container0">
     <label>Type </label>${plate.physType}
     <input type="hidden" name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate' : 'plate'}.physType"
@@ -41,8 +42,15 @@ plate / rack.
                 </stripes:select>
             </c:otherwise>
         </c:choose>
+        <c:if test="${sourceMassRemove eq 'true'}">
+            <stripes:label for="srcDepleteAll">Deplete All</stripes:label>
+            <input type="checkbox" id="srcDepleteAll${stationEventIndex}"
+                   name="depleteAll[${stationEventIndex}]"
+                   class="clearable smalltext" autocomplete="off"
+                    <c:if test="${actionBean.depleteAll[stationEventIndex]}"> checked="checked" </c:if>/>
+        </c:if>
     </c:if>
-    <c:if test="${not empty positionMap}">
+    <c:if test="${not empty positionMap and vesselTypeGeometry.class.simpleName != 'PlateType'}">
         <c:set var="geometry" value="${vesselTypeGeometry.vesselGeometry}"/>
         <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
         <c:if test="${vesselTypeGeometry.displayName.startsWith('Matrix96')}">
@@ -66,11 +74,12 @@ plate / rack.
                     </tr>
                 </c:if>
                 <tr>
-                    <td>${rowName}</td>
+                    <c:set var="paddingStyle" value="${(sourceMassRemove eq 'true') ? 'style=\"padding-top: 10px\"' : ''}" />
+                    <td ${paddingStyle}>${rowName}</td>
                     <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
                         <c:set var="receptacleIndex"
                                 value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
-                        <td align="right">
+                        <td align="left" ${paddingStyle}>
                             <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
                             <input type="text" id="${source ? 'src' : 'dest'}RcpBcd${stationEventIndex}_${receptacleIndex}"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].barcode"
@@ -84,8 +93,19 @@ plate / rack.
                                     value="${source ? actionBean.labEventType.manualTransferDetails.sourceBarcodedTubeType : actionBean.labEventType.manualTransferDetails.targetBarcodedTubeType}"/>
                             <input type="${(source && actionBean.labEventType.manualTransferDetails.sourceVolume()) || (!source && actionBean.labEventType.manualTransferDetails.targetVolume()) ? 'text' : 'hidden'}"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].volume"
+                                    id="${source ? 'src' : 'dest'}RcpVol${stationEventIndex}_${receptacleIndex}"
                                     value="${actionBean.findReceptacleAtPosition(positionMap, geometry.vesselPositions[receptacleIndex]).volume}"
                                     class="clearable smalltext" autocomplete="off" placeholder="volume"/>
+                            <input type="${(sourceMassRemove eq 'true') ? 'text' : 'hidden'}"
+                                   name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].mass"
+                                   id="${source ? 'src' : 'dest'}RcpMass${stationEventIndex}_${receptacleIndex}"
+                                   value="${actionBean.findReceptacleAtPosition(positionMap, geometry.vesselPositions[receptacleIndex]).mass}"
+                                   class="clearable smalltext" autocomplete="off" placeholder="mass removed"/>
+                            <input type="${(sourceMassRemove eq 'true') ? 'checkbox' : 'hidden'}"
+                                   id="${source ? 'src' : 'dest'}RcpMassChk${stationEventIndex}_${receptacleIndex}"
+                                   name="mapPositionToDepleteFlag[${geometry.vesselPositions[receptacleIndex]}]"
+                                   class="clearable smalltext" autocomplete="off"
+                                    <c:if test="${source && actionBean.mapPositionToDepleteFlag[geometry.vesselPositions[receptacleIndex]]}"> checked="checked" </c:if>/>
                             <c:if test="${not empty actionBean.labEventType.resultingMaterialType && !source}">
                                 <%-- This is primarily for messages forwarded to BSP --%>
                                 <input type="hidden"

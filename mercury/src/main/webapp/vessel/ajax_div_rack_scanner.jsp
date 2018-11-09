@@ -2,9 +2,7 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <%-- Reusable layout-definition used for ajax overlay rack scan functionality.
      Parent page must include (in order):
-       1:  JavaScript declaration for the source element initiating the process
-        var rackScanSrcBtn = null;
-       2:  JavaScript rackScanComplete() function implementation to handle scan results
+       1:  JavaScript rackScanComplete() function implementation to handle scan results
         function rackScanComplete() {
             var barcodes = $j("#rack_scan_overlay").data("results");
             if( barcodes != null ) {
@@ -14,10 +12,12 @@
             $j("#rack_scan_overlay").dialog("close");
             $j("#rack_scan_inputs").html("");
         }
-       3:  HTML div element to hold the modal dialog overlay
+       2:  HTML div element to hold the modal dialog overlay - outside of the working form on the page
         <div id="rack_scan_overlay">
             <%@include file="/vessel/ajax_div_rack_scanner.jsp"%>
         </div>
+       3:  A button to initiate the scan:
+       <input type="button" id="rackScanBtn" name="rackScanBtn" class="btn btn-primary" value="Scan" onclick="startRackScan(this)" />
 
    (Use /vessel/rack_scanner_list_with_sim_part1.jsp and /vessel/rack_scanner_list_with_sim_part2.jsp
      for a more static implementation UI)
@@ -34,7 +34,7 @@
             close: cancelRackScan,
             open: function(){
                 $j.ajax({
-                    url: '${ctxpath}/search/ConfigurableSearch.action?ajaxLabSelect=',
+                    url: '${ctxpath}/vessel/AjaxRackScan.action?ajaxLabSelect=',
                     type: 'get',
                     dataType: 'html',
                     success: function (returnData) {
@@ -60,7 +60,7 @@
         } else {
             // Call the action bean event to get the scanner devices, using these params.
             actionBeanParams = { ajaxLabSelect : '', labToFilterBy : $j('#selectLab').val() };
-            $j.post("${ctxpath}/search/ConfigurableSearch.action", actionBeanParams, function (data) {
+            $j.post("${ctxpath}/vessel/AjaxRackScan.action", actionBeanParams, function (data) {
                 // Overwrites the option tags in the selectScanner dropdown.
                 $j('#rack_scan_inputs').html(data);
             });
@@ -73,7 +73,7 @@
         } else {
             // Call the action bean event to get the scanner devices, using these params.
             actionBeanParams = { ajaxLabSelect : '', labToFilterBy : $j('#selectLab').val(), rackScanner : $j('#selectScanner').val() };
-            $j.post("${ctxpath}/search/ConfigurableSearch.action", actionBeanParams, function (data) {
+            $j.post("${ctxpath}/vessel/AjaxRackScan.action", actionBeanParams, function (data) {
                 // Overwrites the option tags in the selectScanner dropdown.
                 $j('#rack_scan_inputs').html(data);
             });
@@ -100,7 +100,7 @@
         $j("#rack_scan_overlay").removeData("results");
 
         $j.ajax({
-            url: "${ctxpath}/search/ConfigurableSearch.action",
+            url: "${ctxpath}/vessel/AjaxRackScan.action",
             type: 'POST',
             data: formData,
             async: true,
@@ -139,7 +139,8 @@
 
 <div id="rack_scan_inputs">
     <div id="rackScanError" style="color:red"/>
-    <stripes:form method="post" id="ajaxScanForm" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean">
+    <stripes:form method="post" id="ajaxScanForm" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.AjaxRackScanActionBean">
+    <c:if test="${actionBean['class'].simpleName eq 'AjaxRackScanActionBean'}">
     <%-- Selects the lab, which then populates the scanner device list. --%>
     <div class="control-group">
         <label for="selectLab" class="control-label">Lab</label>
@@ -178,11 +179,12 @@
     </div>
 </c:if>
 <div class="control-group">
-    <input type="button" value="Cancel" name="scanCancelBtn" id="scanCancelBtn" class="btn btn-primary" onclick="$j('#rack_scan_overlay').dialog('close');"/>&nbsp;&nbsp;
+        <input type="button" value="Cancel" name="scanCancelBtn" id="scanCancelBtn" class="btn btn-primary" onclick="$j('#rack_scan_overlay').dialog('close');"/>&nbsp;&nbsp;
         <c:if test="${not empty actionBean.labToFilterBy and not empty actionBean.rackScanner}">
             <input type="submit" value="Scan" name="ajaxScan" id="doScanBtn" class="btn btn-primary"/>
         </c:if>
-</div>
+    </div>
+</c:if>
 </stripes:form>
 </div>
 

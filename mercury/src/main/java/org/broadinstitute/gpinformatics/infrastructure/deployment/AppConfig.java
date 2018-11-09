@@ -3,8 +3,10 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.util.Set;
 
 /**
  * The class contains the config settings for the app itself. Use this to generate external links that refer back to
@@ -12,6 +14,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("app")
+@ApplicationScoped
 public class AppConfig extends AbstractConfig implements Serializable {
 
     // Force the JVM into headless mode. This avoids creating a visible icon when running the server locally,
@@ -19,6 +22,8 @@ public class AppConfig extends AbstractConfig implements Serializable {
     static {
         System.setProperty("java.awt.headless", "true");
     }
+
+    public AppConfig(){}
 
     @Inject
     public AppConfig(@Nonnull Deployment deploymentConfig) {
@@ -33,6 +38,8 @@ public class AppConfig extends AbstractConfig implements Serializable {
     private int jmsPort;
 
     private String workflowValidationEmail;
+
+    private Set<String> gpBillingManagers;
 
     public String getUrl() {
         return "https://" + host + ":" + port + "/Mercury/";
@@ -77,6 +84,14 @@ public class AppConfig extends AbstractConfig implements Serializable {
 
     public void setWorkflowValidationEmail(String workflowValidationEmail) {
         this.workflowValidationEmail = workflowValidationEmail;
+    }
+
+    public void setGpBillingManagers(Set<String> gpBillingManagers) {
+        this.gpBillingManagers = gpBillingManagers;
+    }
+
+    public Set<String> getGpBillingManagers() {
+        return gpBillingManagers;
     }
 
     public static AppConfig produce(Deployment deployment) {

@@ -11,16 +11,10 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.jersey.api.json.JSONMarshaller;
-import com.sun.jersey.api.json.JSONUnmarshaller;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
 
-import javax.xml.bind.JAXBException;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.IOException;
 import java.util.UUID;
 import java.util.zip.CRC32;
 
@@ -39,29 +33,15 @@ public class MercuryStringUtils {
         );
     }
 
-    public static StringWriter serializeJsonBean(Object requestedBean) throws JAXBException {
-        JSONJAXBContext context =
-                new JSONJAXBContext(JSONConfiguration.natural().humanReadableFormatting(true).build(),
-                        requestedBean.getClass());
-        JSONMarshaller marshaller = context.createJSONMarshaller();
-
-        StringWriter writer = new StringWriter();
-
-        marshaller.marshallToJSON(requestedBean, writer);
-        return writer;
+    public static <T> String serializeJsonBean(T beanClass) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(SerializationConfig.Feature.WRITE_DATES_AS_TIMESTAMPS, false);
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(beanClass);
     }
 
-    public static <T> T deSerializeJsonBean(String testJson1,
-                                            Class<T> submissionRequestBeanClass) throws JAXBException {
-        JSONJAXBContext context =
-                new JSONJAXBContext(JSONConfiguration.natural().humanReadableFormatting(true).build(),
-                        submissionRequestBeanClass);
-
-        JSONUnmarshaller unmarshaller = context.createJSONUnmarshaller();
-
-        InputStream input = new ByteArrayInputStream(testJson1.getBytes());
-
-        return unmarshaller.unmarshalFromJSON(input, submissionRequestBeanClass);
+    public static <T> T deSerializeJsonBean(String jsonString, Class<T> beanClass) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(jsonString, beanClass);
     }
 
     public String generateGUID(String value, String aVersion) {

@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselFixupTest;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -15,6 +16,9 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,8 +31,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -42,6 +46,10 @@ public class SequencingRunFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -345,5 +353,48 @@ public class SequencingRunFixupTest extends Arquillian {
         System.out.println("Prepending x to duplicate run barcode " + illuminaSequencingRun.getRunBarcode());
         illuminaSequencingRun.setRunBarcode("x" + illuminaSequencingRun.getRunBarcode());
         illuminaSequencingRunDao.persist(new FixupCommentary(jiraTicket + " add x to duplicate run barcode"));
+    }
+
+    @Test(enabled = false)
+    public void fixupPo11040() throws Exception{
+        userBean.loginOSUser();
+        utx.begin();
+        updateRunDirectory("171211_SL-HDE_0957_AHYHGVBCXY", "/seq/illumina/proc/SL-HDE/171211_SL-HDE_0957_AHYHGVBCXY",
+                "/crsp/illumina2/proc/SL-HDE/171211_SL-HDE_0957_AHYHGVBCXY");
+        FixupCommentary fixupCommentary =
+                new FixupCommentary("PO-11040 updating run directory for 171211_SL-HDE_0957_AHYHGVBCXY to CRSP folder");
+        illuminaSequencingRunDao.persist(fixupCommentary);
+        illuminaSequencingRunDao.flush();
+
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateRunFolder.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * PO-136444 run folder moved after registration
+     * 180721_SL-MAC_0453_FC000000000-BV4PM /crsp/illumina2/proc/SL-HDD/run_transfers/BV4PM
+     */
+    @Test(enabled = false)
+    public void fixupPo13644ChangeRunFolder() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> sampleUpdateLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateRunFolder.txt"));
+
+        for(int i = 1; i < sampleUpdateLines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(sampleUpdateLines.get(i));
+            if(fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + sampleUpdateLines.get(i));
+            }
+            IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(fields[0]);
+
+            Assert.assertNotNull(run, fields[0] + " not found");
+            final String newRunFolder = fields[1];
+            System.out.println("Changing " + run.getRunDirectory() + " to " + newRunFolder);
+            run.setRunDirectory(newRunFolder);
+        }
+
+        illuminaSequencingRunDao.persist(new FixupCommentary(sampleUpdateLines.get(0)));
+        illuminaSequencingRunDao.flush();
     }
 }

@@ -17,6 +17,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -31,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, SequencingRun> {
     private Collection<SequencingRunDto> loggingDtos = new ArrayList<>();
     public static final String NONE = "NONE";
@@ -54,6 +57,16 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         return root.get(SequencingRun_.sequencingRunId);
     }
 
+    /**
+     * Scope relaxed from protected to public to allow a backfill service hook
+     */
+    @Override
+    public int writeRecords(Collection<SequencingRun> entities,
+                            Collection<Long>deletedEntityIds,
+                            String etlDateStr) throws Exception {
+        return super.writeRecords(entities, deletedEntityIds, etlDateStr);
+    }
+
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId) {
         return dataRecords(etlDateStr, isDelete, dao.findById(SequencingRun.class, entityId));
@@ -65,7 +78,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
     }
 
     @Override
-    Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
+    public Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
         try {
             return dataRecords(etlDateStr, isDelete, entity.getSequencingRunId(), makeSequencingRunDtos(entity));
         } catch (Exception e) {

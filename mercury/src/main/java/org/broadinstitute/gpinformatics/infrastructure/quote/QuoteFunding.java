@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -33,6 +35,12 @@ public class QuoteFunding {
         this.fundingLevel = fundLevel;
     }
 
+    public QuoteFunding(String fundsRemaining,
+                        Collection<FundingLevel> fundingLevel) {
+        this.fundsRemaining = fundsRemaining;
+        this.fundingLevel = fundingLevel;
+    }
+
     public Collection<FundingLevel> getFundingLevel() {
         return fundingLevel;
     }
@@ -40,11 +48,13 @@ public class QuoteFunding {
     public Collection<FundingLevel> getFundingLevel(boolean excludeInactiveSources) {
         List<FundingLevel> condensedFundingLevles = new ArrayList<>();
 
-        for (FundingLevel level : fundingLevel) {
-            if(excludeInactiveSources && Integer.valueOf(level.getPercent()) == 0)  {
-                continue;
-            } else {
-                condensedFundingLevles.add(level);
+        if (CollectionUtils.isNotEmpty(fundingLevel)) {
+            for (FundingLevel level : fundingLevel) {
+                if(excludeInactiveSources && Integer.valueOf(level.getPercent()) == 0)  {
+                    continue;
+                } else {
+                    condensedFundingLevles.add(level);
+                }
             }
         }
         return condensedFundingLevles;

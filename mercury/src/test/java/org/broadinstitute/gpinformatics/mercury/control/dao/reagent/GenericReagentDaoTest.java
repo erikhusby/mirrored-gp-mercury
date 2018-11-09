@@ -1,11 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -14,7 +15,10 @@ import java.util.Date;
  * Test retrieval of entities
  */
 @Test(groups = TestGroups.STUBBY)
-public class GenericReagentDaoTest extends ContainerTest {
+@Dependent
+public class GenericReagentDaoTest extends StubbyContainerTest {
+
+    public GenericReagentDaoTest(){}
 
     @Inject
     private GenericReagentDao genericReagentDao;

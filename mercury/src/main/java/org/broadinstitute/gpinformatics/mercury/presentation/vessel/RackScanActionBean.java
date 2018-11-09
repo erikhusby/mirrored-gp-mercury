@@ -8,7 +8,9 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.ValidationError;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.RackScanner;
@@ -17,15 +19,23 @@ import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.rackscan.geometry.Dimension;
 import org.broadinstitute.bsp.client.rackscan.geometry.Geometry;
 import org.broadinstitute.bsp.client.rackscan.geometry.index.AlphaNumeric;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -37,7 +47,7 @@ import java.util.TreeSet;
  * that as your results.  Or you can ignore that resolution and return your own (as the ReceiveSamplesActionBean does).
  */
 public abstract class RackScanActionBean extends CoreActionBean {
-    private static final Log log = LogFactory.getLog(CoreActionBean.class);
+    protected static final Log log = LogFactory.getLog(CoreActionBean.class);
 
     public static final String SHOW_SCANNER_SELECTION_JSP = "/vessel/rack_scanner_list.jsp";
     public static final String SCAN_RESULTS_JSP = "/vessel/rack_scan_results.jsp";
@@ -45,6 +55,13 @@ public abstract class RackScanActionBean extends CoreActionBean {
     public static final String SCAN_EVENT = "scan";
     public static final String SHOW_SCAN_SELECTION_EVENT = "showScanSelection";
     public static final String SHOW_LAB_SELECTION_EVENT = "showLabSelection";
+
+    public RackScanActionBean() {
+    }
+
+    public RackScanActionBean(String createTitle, String editTitle, String editBusinessKeyName) {
+        super(createTitle, editTitle, editBusinessKeyName);
+    }
 
     /**
      * Loads the rack scanners based upon the lab to filter by.

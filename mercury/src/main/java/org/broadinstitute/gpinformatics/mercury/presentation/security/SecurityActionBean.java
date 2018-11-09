@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -95,12 +99,12 @@ public class SecurityActionBean extends CoreActionBean {
             UserRole role = UserRole.fromUserBean(userBean);
             targetPage = role.landingPage;
 
-            if (!userBean.isValidBspUser()) {
+            if (!userBean.isValidBspUser() && !userBean.isViewer()) {
                 logger.error(userBean.getBspStatus() + ": " + username);
 
                 addGlobalValidationError(userBean.getBspMessage());
             }
-            if (!userBean.isValidJiraUser()) {
+            if (!userBean.isValidJiraUser() && !userBean.isViewer()) {
                 logger.error(userBean.getJiraStatus() + ": " + username);
                 addGlobalValidationError(userBean.getJiraMessage());
             }
@@ -140,6 +144,7 @@ public class SecurityActionBean extends CoreActionBean {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
         PDM("/orders/order.action?list", Role.PDM),
         PM(ResearchProjectActionBean.PROJECT_LIST_PAGE, Role.PM),
+        GPPM(ResearchProjectActionBean.PROJECT_LIST_PAGE, Role.GPProjectManager),
         OTHER("/index.jsp", null);
 
         private static final String APP_CONTEXT = "/Mercury"; // getContext().getRequest().getContextPath();

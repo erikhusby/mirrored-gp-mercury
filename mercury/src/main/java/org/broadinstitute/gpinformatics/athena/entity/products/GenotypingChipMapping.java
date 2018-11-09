@@ -85,9 +85,4 @@ public class GenotypingChipMapping extends AttributeArchetype {
         getAttribute(INACTIVE_DATE).setDate(date);
     }
 
-    /** Returns true if active on or before effective date, and inactive after effective date. */
-    public boolean isActiveOn(Date effectiveDate) {
-        return effectiveDate != null && getActiveDate() != null && !getActiveDate().after(effectiveDate) &&
-               (getInactiveDate() == null || getInactiveDate().after(effectiveDate));
-    }
 }

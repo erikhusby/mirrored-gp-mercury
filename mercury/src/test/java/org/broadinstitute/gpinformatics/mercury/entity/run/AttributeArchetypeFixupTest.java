@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -17,12 +19,14 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -37,6 +41,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Data fixups AttributeArchetype.
  */
 @Test(groups = TestGroups.FIXUP)
+@RequestScoped
 public class AttributeArchetypeFixupTest extends Arquillian {
 
     @Inject
@@ -491,4 +496,316 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         }
     }
 
+    /**
+     * This test deletes attribute archetypes and/or archetype attributes. It reads its parameters
+     * from the file mercury/src/test/resources/testdata/FixupAttributeArchetype.txt
+     * so that it can be used for other similar fixups without writing a new test.
+     * The format of the file is:
+     *   one line with the ticket for the FixupCommentary
+     *   one or more lines with either "archetypeId" and the archetypeId, or "attributeId" and the attributeId
+     *
+     * For example:
+     * SUPPORT-3620
+     * attributeId,25318
+     * archetypeId,29233
+     *
+     */
+    @Test(enabled = false)
+    public void fixupSupport3620() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("FixupAttributeArchetype.txt"));
+        String ticketId = lines.get(0);
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = lines.get(i).split(",");
+            Assert.assertEquals(fields.length, 2);
+            Long id = Long.parseLong(fields[1]);
+            if (fields[0].equalsIgnoreCase("archetypeId")) {
+                AttributeArchetype archetype = attributeArchetypeDao.findById(AttributeArchetype.class, id);
+                Assert.assertNotNull(archetype);
+                System.out.println("Deleting " + archetype.getGroup() + " archetype for " +
+                        archetype.getArchetypeName() + " (id " + archetype.getArchetypeId() + ").");
+                // Hibernate orphan removal should cause any archetype attributes to be deleted also.
+                archetype.getAttributes().clear();
+                attributeArchetypeDao.remove(archetype);
+            } else {
+                Assert.assertTrue(fields[0].equalsIgnoreCase("attributeId"), "unknown param " + fields[0]);
+                ArchetypeAttribute attribute = attributeArchetypeDao.findById(ArchetypeAttribute.class, id);
+                Assert.assertNotNull(attribute);
+                System.out.println("Deleting " + attribute.getAttributeName() + " attribute (id " +
+                        attribute.getAttributeId() + ").");
+                attributeArchetypeDao.remove(attribute);
+            }
+        }
+        attributeArchetypeDao.persist(new FixupCommentary(ticketId + " fixup Attribute Archetypes"));
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim5268GdcMetadata() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String attributeDefinitionGroup = "workflowMetadata";
+        Collection<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "library_preparation_kit_catalog_number", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "library_preparation_kit_name", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "library_preparation_kit_vendor", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "library_preparation_kit_version", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "target_capture_kit_catalog_number", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "target_capture_kit_name", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "target_capture_kit_target_region", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "target_capture_kit_vendor", true));
+
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.WORKFLOW_METADATA,
+                    attributeDefinitionGroup, "target_capture_kit_version", true));
+        }};
+
+        String[] initialAttributes = {
+                "workflow_name", "Hyper Prep ICE Exome Express",
+                "library_preparation_kit_catalog_number", "KK8504",
+                "library_preparation_kit_name", "KAPA Hyper Prep Kit with KAPA Library Amplification Primer Mix (10X).",
+                "library_preparation_kit_vendor", "Kapa BioSystems",
+                "library_preparation_kit_version", "v1.1",
+                "target_capture_kit_catalog_number", "FC-144-1004",
+                "target_capture_kit_name", "Illumina TruSeq Rapid Exome Library Prep kit",
+                "target_capture_kit_target_region", "http://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions_v1.2.bed",
+                "target_capture_kit_vendor", "Illumina",
+                "target_capture_kit_version", "v1.2",
+
+                "workflow_name", "Whole Genome PCR Free HyperPrep",
+                "library_preparation_kit_catalog_number", "KK8505",
+                "library_preparation_kit_name", "KAPA HyperPrep Kit (no amp)",
+                "library_preparation_kit_vendor", "Kapa BioSystems",
+                "library_preparation_kit_version", "v1.1",
+
+                "workflow_name", "Whole Genome PCR Plus HyperPrep",
+                "library_preparation_kit_catalog_number", "KK8504",
+                "library_preparation_kit_name", "KAPA Hyper Prep Kit with KAPA Library Amplification Primer Mix (10X)",
+                "library_preparation_kit_vendor", "Kapa BioSystems",
+                "library_preparation_kit_version", "v1.1",
+
+                "workflow_name", "Cell Free HyperPrep",
+                "library_preparation_kit_catalog_number", "KK8504",
+                "library_preparation_kit_name", "KAPA Hyper Prep Kit with KAPA Library Amplification Primer Mix (10X)",
+                "library_preparation_kit_vendor", "Kapa BioSystems",
+                "library_preparation_kit_version", "v1.1",
+        };
+        final int fieldCount = 2;
+
+        List<WorkflowMetadata> workflowMetadataList = new ArrayList<>();
+        WorkflowMetadata workflowMetadata = null;
+        for (int i = 0; i < initialAttributes.length; i += fieldCount) {
+            String key = initialAttributes[i];
+            String value = initialAttributes[i + 1];
+
+            if (key.equals("workflow_name")) {
+                workflowMetadata = new WorkflowMetadata(value, definitions);
+                workflowMetadataList.add(workflowMetadata);
+            } else {
+                workflowMetadata.addOrSetAttribute(key, value);
+                System.out.println("Adding attribute (" + key + ", " + value + ") to " + workflowMetadata.getWorkflowName());
+            }
+        }
+
+        attributeArchetypeDao.persist(new FixupCommentary("GPLIM-5268 GDC Metadata fixup Attribute Archetypes"));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(workflowMetadataList);
+        attributeArchetypeDao.flush();
+        utx.commit();
+
+    }
+
+    /**
+     * Adds key-value archetypes, attributes, and attribute definitions. The key-values must have the same
+     * key-value mapping name (a.k.a. the archetype group). An input file is used, and needs this content:
+     *   The first line has the Fixup Commentary.
+     *   The second line starts with "mappingName" followed by the mapping name
+     *   Attribute definitions are in lines that start with "definition" followed by the attribute name.
+     *   Archetypes are in lines that starts with "archetype" followed by the key (a.k.a. archetype name).
+     *   Attribute lines starts with "attribute" followed by the key, '|', the attribute name, '|', the attribute value.
+     *
+     * For example:
+     *   GPLIM-4205 add initial bait to product part number mapping
+     *   mappingName BaitToProductMapping
+     *   definition theValue
+     *   archetype Buick_v6_0_2014
+     *   attribute Buick_v6_0_2014|theValue|P-EX-0011
+     *
+     * This method can also change an existing attribute value to a new value. The definition lines can be omitted.
+     */
+    @Test(enabled = false)
+    public void addKeyValueMappings() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("keyValueArchetypes.txt"));
+        Assert.assertTrue(lines.size() >= 3);
+
+        String fixupCommentary = lines.get(0);
+        String mappingName = StringUtils.substringAfter(lines.get(1), "mappingName ");
+
+        List<AttributeArchetype> archetypes = new ArrayList<>();
+        List<AttributeDefinition> definitions = new ArrayList<>();
+
+        // Parses input for definitions first, then archetypes, then attributes.
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("definition")) {
+                String attributeName = StringUtils.substringAfter(line, " ");
+                final boolean IS_DISPLAYABLE = true;
+                definitions.add(new AttributeDefinition(AttributeDefinition.DefinitionType.KEY_VALUE_MAPPING,
+                        mappingName, attributeName, IS_DISPLAYABLE));
+            }
+        }
+
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("archetype")) {
+                String key = StringUtils.substringAfter(line, " ");
+                AttributeArchetype archetype = attributeArchetypeDao.findKeyValueByKeyAndMappingName(key, mappingName);
+                if (archetype == null) {
+                    System.out.println("Adding new " + mappingName + " key " + key);
+                    archetype = new KeyValueMapping(mappingName, key, definitions);
+                }
+                archetypes.add(archetype);
+            }
+        }
+
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("attribute")) {
+                String tokens[] = StringUtils.substringAfter(line, " ").split("\\|");
+                Assert.assertEquals(tokens.length, 3,  "at line " + rowIndex);
+                String key = tokens[0];
+                String attributeName = tokens[1];
+                String attributeValue = tokens[2];
+                boolean found = false;
+                for (AttributeArchetype archetype : archetypes) {
+                    if (archetype.getGroup().equals(mappingName) && archetype.getArchetypeName().equals(key)) {
+                        found = true;
+                        System.out.println("Adding " + mappingName + " key-value (" + key + ", " + attributeValue + ")");
+                        archetype.addOrSetAttribute(attributeName, attributeValue);
+                    }
+                }
+                Assert.assertTrue(found, "No archetype found at line " + rowIndex);
+            }
+        }
+        attributeArchetypeDao.persist(new FixupCommentary(fixupCommentary));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(archetypes);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * Deletes key-value archetypes and attributes. All must have the same key-value mapping name.
+     * Uses an input file that has the same format shown above for adding key-value mappings.
+     * The attribute value need not be given in the file.
+     */
+    @Test(enabled = false)
+    public void deleteKeyValueMappings() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("keyValueArchetypeDeletes.txt"));
+        Assert.assertTrue(lines.size() >= 3);
+        String fixupCommentary = lines.get(0);
+        String mappingName = StringUtils.substringAfter(lines.get(1), "mappingName ");
+
+        // Parses the file for attributes first, then definitions, then archetypes.
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("attribute")) {
+                String tokens[] = StringUtils.substringAfter(line, " ").split("\\|");
+                Assert.assertTrue(tokens.length >= 2, " at line " + rowIndex);
+                String key = tokens[0];
+                String attributeName = tokens[1];
+                AttributeArchetype archetype = attributeArchetypeDao.findKeyValueByKeyAndMappingName(key, mappingName);
+                Assert.assertNotNull(archetype, "Cannot find archetype at line " + rowIndex);
+                ArchetypeAttribute attribute = archetype.getAttribute(attributeName);
+                Assert.assertNotNull(attribute, "Cannot find attribute at line " + rowIndex);
+                System.out.println("Removing " + attributeName + " from " + key);
+                archetype.getAttributes().remove(attribute);
+                attributeArchetypeDao.remove(attribute);
+            }
+        }
+
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("definition")) {
+                String attributeName = StringUtils.substringAfter(line, " ");
+                Map<String, AttributeDefinition> nameAndDefinition =
+                        attributeArchetypeDao.findAttributeNamesByTypeAndGroup(
+                                AttributeDefinition.DefinitionType.KEY_VALUE_MAPPING, mappingName);
+                Assert.assertTrue(nameAndDefinition != null && !nameAndDefinition.isEmpty(), " at line " + rowIndex);
+                AttributeDefinition definition = nameAndDefinition.get(attributeName);
+                Assert.assertNotNull(definition, " at line rowIndex");
+                attributeArchetypeDao.remove(definition);
+            }
+        }
+
+        for (int rowIndex = 2; rowIndex < lines.size(); ++rowIndex) {
+            String line = lines.get(rowIndex);
+            if (line.startsWith("archetype")) {
+                String key = StringUtils.substringAfter(line, " ");
+                AttributeArchetype archetype = attributeArchetypeDao.findKeyValueByKeyAndMappingName(key, mappingName);
+                Assert.assertNotNull(archetype, " at line " + rowIndex);
+                System.out.println("Deleting " + mappingName + " key " + key);
+                attributeArchetypeDao.remove(archetype);
+            }
+        }
+        attributeArchetypeDao.persist(new FixupCommentary(fixupCommentary));
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/keyValueArchetypeUpdates.txt,
+     * so it can be used for other similar fixups, without writing a new test.  This is used to update key-value
+     * ArchetypeAttribute's.  Example contents of the file are (first line is the fixup commentary,
+     * subsequent lines are comma separated archetype id, old value, new value):
+     * SUPPORT-4632 update hyperprep capture kit
+     * 57760,Illumina TruSeq Rapid Exome Library Prep kit,Nextera Exome Kit (96 Spl)
+     * 57754,FC-144-1004,20020617
+     */
+    @Test(enabled = false)
+    public void fixupSupport4632() throws IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("keyValueArchetypeUpdates.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = lines.get(i).split(",");
+            if (fields.length != 3) {
+                throw new RuntimeException("Expected three comma separated fields in " + lines.get(i));
+            }
+            long attributeId = Long.parseLong(fields[0]);
+            ArchetypeAttribute archetypeAttribute = attributeArchetypeDao.findById(ArchetypeAttribute.class, attributeId);
+            Assert.assertNotNull(archetypeAttribute, attributeId + " not found");
+            String oldValue = fields[1].trim();
+            String newValue = fields[2].trim();
+            Assert.assertEquals(oldValue, archetypeAttribute.getAttributeValue());
+            System.out.println("Updating " + attributeId + " from " + oldValue + " to " + newValue);
+            archetypeAttribute.setAttributeValue(newValue);
+        }
+
+        attributeArchetypeDao.persist(new FixupCommentary(lines.get(0)));
+        attributeArchetypeDao.flush();
+    }
 }

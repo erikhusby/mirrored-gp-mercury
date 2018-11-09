@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
-<!DOCTYPE jboss-web PUBLIC
-   "-//JBoss//DTD Web Application 5.0//EN"
-   "http://www.jboss.org/j2ee/dtd/jboss-web_5_0.dtd">
-<jboss-web>
+<jboss-web xmlns="http://www.jboss.com/xml/ns/javaee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.jboss.com/xml/ns/javaee http://www.jboss.org/j2ee/schema/jboss-web_7_1.xsd"
+        version="7.1">
     <context-root>/Mercury</context-root>
-    <security-domain>crowd_custom_realm</security-domain>
     <session-config>
         <session-timeout>20</session-timeout>
     </session-config>
+    <security-domain>crowd_custom_realm</security-domain>
 </jboss-web>

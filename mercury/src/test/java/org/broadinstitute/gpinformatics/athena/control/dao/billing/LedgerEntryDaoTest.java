@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
@@ -17,6 +17,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Date;
@@ -24,7 +25,10 @@ import java.util.Set;
 
 
 @Test(groups = TestGroups.STUBBY)
-public class LedgerEntryDaoTest extends ContainerTest {
+@Dependent
+public class LedgerEntryDaoTest extends StubbyContainerTest {
+
+    public LedgerEntryDaoTest(){}
 
     @Inject
     private LedgerEntryDao ledgerEntryDao;

@@ -99,6 +99,25 @@ public class ReagentSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("First Use Date");
+        searchTerm.setDbSortPath("firstUse");
+        searchTerm.setValueType(ColumnValueType.DATE_TIME);
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("ReagentID"));
+        criteriaPath.setPropertyName("firstUse");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Date evaluate(Object entity, SearchContext context) {
+                Reagent reagent = (Reagent) entity;
+                return reagent.getFirstUse();
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 

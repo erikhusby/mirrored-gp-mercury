@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -14,6 +16,7 @@ import java.util.Collection;
  * ETL AbandonVessel entity into denormalized DW table ABANDON_VESSEL
  */
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class AbandonVesselEtl extends GenericEntityEtl<AbandonVessel, AbandonVessel> {
 
     public AbandonVesselEtl(){}
@@ -43,10 +46,10 @@ public class AbandonVesselEtl extends GenericEntityEtl<AbandonVessel, AbandonVes
     String dataRecord(String etlDateStr, boolean isDelete, AbandonVessel entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getAbandonVesselId(),
-                "AbandonVessel",
                 format(entity.getLabVessel().getLabVesselId()),
                 format(entity.getReason()==null?"":entity.getReason().toString()),
-                format(entity.getAbandonedOn())
+                format(entity.getAbandonedOn()),
+                format(entity.getVesselPosition()==null?"":entity.getVesselPosition().name())
         );
     }
 }

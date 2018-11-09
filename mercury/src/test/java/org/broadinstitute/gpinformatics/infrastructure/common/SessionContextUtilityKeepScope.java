@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.jboss.weld.context.bound.BoundSessionContext;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
@@ -14,6 +15,7 @@ import java.util.HashMap;
  */
 
 @Alternative
+@Dependent
 public class SessionContextUtilityKeepScope extends SessionContextUtility implements Serializable {
     private static final long serialVersionUID = 20130517L;
 

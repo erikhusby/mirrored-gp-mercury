@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
 /**
  * Token Input support for users.
  */
+@Dependent
 public class UserTokenInput extends TokenInput<BspUser> {
     private BSPUserList bspUserList;
 

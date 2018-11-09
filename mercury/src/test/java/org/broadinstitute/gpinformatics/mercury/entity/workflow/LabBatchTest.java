@@ -5,12 +5,12 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -37,7 +37,7 @@ public class LabBatchTest {
     private String testLCSetTicketKey;
     private String pdoBusinessName;
     private List<String> pdoNames;
-    private Workflow workflow;
+    private String workflow;
     private Map<String, BarcodedTube> mapBarcodeToTube;
 
     @BeforeMethod
@@ -113,7 +113,7 @@ public class LabBatchTest {
 
 
         Assert.assertNotNull(testBatch.getBatchName());
-        Assert.assertEquals(workflow.getWorkflowName() + ": " + pdoBusinessName, testBatch.getBatchName());
+        Assert.assertEquals(workflow + ": " + pdoBusinessName, testBatch.getBatchName());
 
         Assert.assertNotNull(testBatch.getStartingBatchLabVessels());
         Assert.assertEquals(6, testBatch.getStartingBatchLabVessels().size());
@@ -130,7 +130,7 @@ public class LabBatchTest {
         Assert.assertNotNull(testBatch.getCreatedOn());
         Assert.assertEquals(formatter.format(new Date()), formatter.format(testBatch.getCreatedOn()));
 
-        testBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), testLCSetTicketKey));
+        testBatch.setJiraTicket(new JiraTicket(JiraServiceTestProducer.stubInstance(), testLCSetTicketKey));
 
         Assert.assertNotNull(testBatch.getJiraTicket());
 

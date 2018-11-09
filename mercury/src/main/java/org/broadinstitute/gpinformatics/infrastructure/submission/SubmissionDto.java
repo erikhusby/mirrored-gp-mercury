@@ -12,32 +12,31 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.FastDateFormat;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationContam;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.Serializable;
 import java.text.NumberFormat;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SubmissionDto implements Serializable {
+public class SubmissionDto implements ISubmissionTuple {
     private static final long serialVersionUID = 8359394045710346776L;
 
     @JsonIgnore
@@ -47,13 +46,7 @@ public class SubmissionDto implements Serializable {
             FastDateFormat.getDateTimeInstance(FastDateFormat.MEDIUM, FastDateFormat.SHORT);
 
     @JsonIgnore
-    private Collection<ProductOrder> productOrders;
-
-    @JsonIgnore
     private SubmissionStatusDetailBean statusDetailBean;
-
-    @JsonIgnore
-    private BassDTO bassDTO;
 
     @JsonIgnore
     private Aggregation aggregation;
@@ -71,13 +64,21 @@ public class SubmissionDto implements Serializable {
     private LevelOfDetection levelOfDetection;
 
     @JsonIgnore
-    private String filePath;
-
-    @JsonIgnore
     private String[] submittedErrorsArray;
 
-    @JsonProperty(value = SubmissionDto.SubmissionField.BASS_TUPLE)
-    private String bassTupleString="";
+    @JsonProperty
+    private SubmissionTuple submissionTuple;
+
+    @JsonProperty(value = SubmissionDto.SubmissionField.PRODUCT_ORDERS)
+    private Set<String> productOrders = new HashSet<>();
+
+    String getSubmissionTupleString() {
+        String value = "";
+        if (submissionTuple != null) {
+            value = submissionTuple.toString();
+        }
+        return value;
+    }
 
     @JsonProperty(value = SubmissionDto.SubmissionField.UUID)
     private String uuid="";
@@ -88,14 +89,14 @@ public class SubmissionDto implements Serializable {
     @JsonProperty(value = SubmissionDto.SubmissionField.DATA_TYPE)
     private String datatype="";
 
-    @JsonProperty(value = SubmissionDto.SubmissionField.PRODUCT_ORDERS)
-    private Collection<String> productOrdersString;
-
     @JsonProperty(value = SubmissionDto.SubmissionField.AGGREGATION_PROJECT)
     private String project="";
 
     @JsonProperty(value = SubmissionDto.SubmissionField.FILE_TYPE)
-    private String fileTypeString="";
+    private String fileTypeString = "";
+
+    @JsonIgnore
+    private FileType fileType=null;
 
     @JsonProperty(value = SubmissionDto.SubmissionField.VERSION)
     private Integer version;
@@ -114,6 +115,9 @@ public class SubmissionDto implements Serializable {
 
     @JsonProperty(value = SubmissionDto.SubmissionField.FILE_NAME)
     private String fileName="";
+
+    @JsonProperty(value = SubmissionDto.SubmissionField.PROCESSING_LOCATION)
+    private String processingLocation = "";
 
     @JsonProperty(value = SubmissionDto.SubmissionField.SUBMITTED_VERSION)
     private Integer submittedVersion;
@@ -145,12 +149,8 @@ public class SubmissionDto implements Serializable {
     public SubmissionDto() {
     }
 
-    public SubmissionDto(@Nonnull BassDTO bassDTO, Aggregation aggregation,
-                         @Nonnull Collection<ProductOrder> productOrders,
-                         @Nullable SubmissionStatusDetailBean statusDetailBean) {
-        this.bassDTO = bassDTO;
+    public SubmissionDto(Aggregation aggregation, @Nullable SubmissionStatusDetailBean statusDetailBean) {
         this.aggregation = aggregation;
-        this.productOrders = productOrders;
         this.statusDetailBean = statusDetailBean;
 
         numberFormat.setMinimumFractionDigits(2);
@@ -161,24 +161,24 @@ public class SubmissionDto implements Serializable {
 
     private void initializeFieldValues() {
         dateCompleted = null;
-        if (bassDTO != null) {
-            sample = bassDTO.getSample();
-            datatype = bassDTO.getDatatype();
-            project = bassDTO.getProject();
-            fileTypeString = bassDTO.getFileType();
-            version = bassDTO.getVersion();
-            rpid = bassDTO.getRpid();
-            fileName = bassDTO.getFileName();
-            filePath = bassDTO.getPath();
-            bassTupleString = bassDTO.getTuple().toString();
-        }
         if (aggregation != null) {
-            String datatype = bassDTO.getDatatype();
+            sample = aggregation.getSample();
+            datatype = SubmissionLibraryDescriptor.getNormalizedLibraryName(aggregation.getDataType());
+            project = aggregation.getProject();
+            version = aggregation.getVersion();
+            rpid = aggregation.getMercuryProject();
+            processingLocation = aggregation.getProcessingLocation();
+            submissionTuple = aggregation.getSubmissionTuple();
+            fileType = submissionTuple.getFileType();
+            fileTypeString = fileType.toString();
             if (StringUtils.isNotBlank(datatype)) {
-                qualityMetric = aggregation.getQualityMetric(datatype);
+                qualityMetric = aggregation.getQualityMetric();
             }
-            qualityMetricString = aggregation.getQualityMetricString(bassDTO.getDatatype());
-            pctContamination = aggregation.getAggregationContam().getPctContamination();
+            qualityMetricString = aggregation.getQualityMetricString();
+            AggregationContam aggregationContam = aggregation.getAggregationContam();
+            if (aggregationContam != null) {
+                pctContamination = aggregationContam.getPctContamination();
+            }
             levelOfDetection = aggregation.getLevelOfDetection();
             if (levelOfDetection != null) {
                 fingerprintLodMin = numberFormat.format(levelOfDetection.getMin());
@@ -186,17 +186,10 @@ public class SubmissionDto implements Serializable {
             }
             readGroupCount = aggregation.getReadGroupCount();
             contaminationString = aggregation.getContaminationString();
+            productOrders.addAll(aggregation.getPicardAggregationSample().getProductOrderList());
         }
         initializeStatusDetailBean(statusDetailBean);
         submittedErrorsArray = submittedErrors.toArray(new String[submittedErrors.size()]);
-
-        productOrdersString = new HashSet<>();
-        if (productOrders != null) {
-            for (ProductOrder productOrder : productOrders) {
-                productOrdersString
-                        .add(String.format("%s: %s", productOrder.getJiraTicketKey(), productOrder.getTitle()));
-            }
-        }
     }
 
     private void initializeStatusDetailBean(SubmissionStatusDetailBean statusDetail) {
@@ -209,7 +202,7 @@ public class SubmissionDto implements Serializable {
                     submittedVersion = Integer.parseInt(submittedVersionString);
                 }
             submittedErrors = statusDetail.getErrors();
-            submittedStatus = statusDetail.getStatus();
+            submittedStatus = statusDetail.getStatusString();
             if (statusDetail.getLastStatusUpdate() != null) {
                 statusDate = DATE_FORMAT.format(statusDetail.getLastStatusUpdate());
             }
@@ -217,7 +210,7 @@ public class SubmissionDto implements Serializable {
             if (project != null) {
                 bioProject = String.format("%s %s", project.getAccession(), project.getAlias());
             }
-            libraryDescriptor = statusDetail.getSubmissiondatatype();
+            libraryDescriptor = statusDetail.getSubmissionDatatype();
             submissionSite = statusDetail.getSite();
 
         } else {
@@ -229,41 +222,32 @@ public class SubmissionDto implements Serializable {
         return uuid;
     }
 
-    public BassDTO getBassDTO() {
-        return bassDTO;
-    }
-
     public Aggregation getAggregation() {
         return aggregation;
     }
 
+    @Override
     public String getSampleName() {
         return sample;
     }
 
+    @Override
     public String getDataType() {
         return datatype;
-    }
-
-    public Collection<String> getProductOrdersString() {
-        return productOrdersString;
-    }
-
-    public Collection<ProductOrder> getProductOrders() {
-        return productOrders;
     }
 
     public String getAggregationProject() {
         return project;
     }
 
-    public String getFileTypeString(){
-        return fileTypeString;
+    @Override
+    public FileType getFileType() {
+        return fileType;
     }
 
-    @JsonIgnore
-    public BassFileType getFileType() {
-        return BassFileType.byBassValue(fileTypeString);
+    @Override
+    public String getVersionString(){
+        return String.valueOf(version);
     }
 
     public Integer getVersion() {
@@ -306,6 +290,11 @@ public class SubmissionDto implements Serializable {
         return rpid;
     }
 
+    @Override @JsonIgnore
+    public String getProject() {
+        return rpid;
+    }
+
     int getLanesInAggregation() {
         return readGroupCount;
     }
@@ -314,8 +303,9 @@ public class SubmissionDto implements Serializable {
         return fileName;
     }
 
-    public String getFilePath() {
-        return filePath;
+    @Override
+    public String getProcessingLocation() {
+        return processingLocation;
     }
 
     public Integer getSubmittedVersion() {
@@ -350,13 +340,9 @@ public class SubmissionDto implements Serializable {
         return submissionSite;
     }
 
-    public String getBassTupleString() {
-        return bassTupleString;
-    }
-
-    @JsonIgnore
+    @Override
     public SubmissionTuple getSubmissionTuple() {
-        return new SubmissionTuple(project, sample, String.valueOf(version), getFileType());
+        return submissionTuple;
     }
 
     public void setStatusDetailBean(SubmissionStatusDetailBean statusDetailBean) {
@@ -371,8 +357,16 @@ public class SubmissionDto implements Serializable {
         this.uuid = uuid;
     }
 
+    public SubmissionTracker buildSubmissionTracker() {
+        return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM, processingLocation, datatype);
+    }
+
+    public Set<String> getProductOrders() {
+        return productOrders;
+    }
+
     public class SubmissionField {
-        public static final String BASS_TUPLE = "bassDtoTuple";
+        public static final String SUBMISSION_TUPLE = "submissionTuple";
         public static final String SAMPLE_NAME = "sampleName";
         public static final String DATA_TYPE = "dataType";
         public static final String RESEARCH_PROJECT = "researchProject";
@@ -395,5 +389,78 @@ public class SubmissionDto implements Serializable {
         public static final String LIBRARY_DESCRIPTOR = "libraryDescriptor";
         public static final String SUBMISSION_SITE = "site";
         public static final String UUID = "uuid";
+        public static final String PROCESSING_LOCATION = "processingLocation";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        SubmissionDto that = (SubmissionDto) o;
+
+        return new EqualsBuilder()
+            .append(numberFormat, that.numberFormat)
+            .append(statusDetailBean, that.statusDetailBean)
+            .append(aggregation, that.aggregation)
+            .append(qualityMetric, that.qualityMetric)
+            .append(pctContamination, that.pctContamination)
+            .append(dateCompleted, that.dateCompleted)
+            .append(levelOfDetection, that.levelOfDetection)
+            .append(submittedErrorsArray, that.submittedErrorsArray)
+            .append(submissionTuple, that.submissionTuple)
+            .append(uuid, that.uuid)
+            .append(fileTypeString, that.fileTypeString)
+            .append(qualityMetricString, that.qualityMetricString)
+            .append(contaminationString, that.contaminationString)
+            .append(readGroupCount, that.readGroupCount)
+            .append(fileName, that.fileName)
+            .append(processingLocation, that.processingLocation)
+            .append(submittedVersion, that.submittedVersion)
+            .append(submittedErrors, that.submittedErrors)
+            .append(submittedStatus, that.submittedStatus)
+            .append(statusDate, that.statusDate)
+            .append(bioProject, that.bioProject)
+            .append(libraryDescriptor, that.libraryDescriptor)
+            .append(submissionSite, that.submissionSite)
+            .append(fingerprintLodMin, that.fingerprintLodMin)
+            .append(fingerprintLodMax, that.fingerprintLodMax)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(numberFormat)
+            .append(statusDetailBean)
+            .append(aggregation)
+            .append(qualityMetric)
+            .append(pctContamination)
+            .append(dateCompleted)
+            .append(levelOfDetection)
+            .append(submittedErrorsArray)
+            .append(submissionTuple)
+            .append(uuid)
+            .append(fileTypeString)
+            .append(qualityMetricString)
+            .append(contaminationString)
+            .append(readGroupCount)
+            .append(fileName)
+            .append(processingLocation)
+            .append(submittedVersion)
+            .append(submittedErrors)
+            .append(submittedStatus)
+            .append(statusDate)
+            .append(bioProject)
+            .append(libraryDescriptor)
+            .append(submissionSite)
+            .append(fingerprintLodMin)
+            .append(fingerprintLodMax)
+            .toHashCode();
     }
 }

@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
@@ -19,8 +18,8 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,7 +30,10 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class ProductOrderEjbJiraTransitionTest extends Arquillian {
+
+    public ProductOrderEjbJiraTransitionTest(){}
 
     private String PDO;
     private static final String OLD_PDO = "PDO-4458";
