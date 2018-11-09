@@ -116,6 +116,7 @@ public class BucketEjb {
                                        @Nonnull String operator, @Nonnull String eventLocation,
                                        @Nonnull ProductOrder pdo, @Nonnull Date date) {
         List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
+        long disambiguatorOffset = 0;
         for (Map.Entry<WorkflowBucketDef, Collection<LabVessel>> bucketVesselsEntry : entriesToAdd.entrySet()) {
             Collection<LabVessel> bucketVessels = bucketVesselsEntry.getValue();
             WorkflowBucketDef bucketDef = bucketVesselsEntry.getKey();
@@ -127,8 +128,9 @@ public class BucketEjb {
                     listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, date));
                 }
             }
-            labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, eventLocation, programName,
-                    bucketEventType, date);
+            long eventCount = CollectionUtils.emptyIfNull(labEventFactory.buildFromBatchRequests(listOfNewEntries,
+                    operator, null, eventLocation, programName, bucketEventType, date, disambiguatorOffset)).size();
+            disambiguatorOffset += eventCount;
         }
 
         return listOfNewEntries;
