@@ -78,6 +78,17 @@ public enum PreferenceType {
             new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
     PRODUCT_ORDER_PREFERENCES("ProductOrder PagePreference", PreferenceScope.USER, 1,
             new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
+
+    GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES("Global Product Order Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    GLOBAL_PRODUCT_ORDER_COLUMN_SETS("Global Product Order Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_PRODUCT_ORDER_SEARCH_INSTANCES("User Product Order Search Instances", PreferenceScope.USER, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_PRODUCT_ORDER_COLUMN_SETS("User Product Order Column Sets", PreferenceScope.USER, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+
+
     ;
 
     private final String preferenceTypeName;

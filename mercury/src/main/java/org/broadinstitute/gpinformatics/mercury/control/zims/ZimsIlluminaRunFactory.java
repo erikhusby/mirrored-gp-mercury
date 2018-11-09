@@ -548,21 +548,35 @@ public class ZimsIlluminaRunFactory {
         // default to the passed in bait name, but override if there is product specified version.
         String bait = baitName;
 
-        // These items are pulled off the project or product.
+        // These items are pulled off the project, product, or SampleInstanceEntity.
         String aligner = null;
-        boolean analyzeUmi = false;
-        String aggregationParticle;
+        Boolean analyzeUmi = sampleInstanceDto.sampleInstance.getUmisPresent();
+        if (sampleInstanceDto.sampleInstance.getAnalysisType() != null) {
+            analysisType = sampleInstanceDto.sampleInstance.getAnalysisType().getBusinessKey();
+        }
+
+        // insert size is a  range consisting of two integers with a hyphen in between, e.g. "225-350".
+        expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
+        String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
+         if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
+            referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();
+            referenceSequenceVersion = sampleInstanceDto.sampleInstance.getReferenceSequence().getVersion();
+        }
+
         if (productOrder != null) {
-            // Product stuff.
             Product product = productOrder.getProduct();
-            if (product.getInsertSize() != null) {
+            if (StringUtils.isBlank(expectedInsertSize) && product.getInsertSize() != null) {
                 expectedInsertSize = product.getInsertSize().toString();
             }
-            analysisType = product.getAnalysisTypeKey();
-
-            // If there was no bait on the actual samples, use the one defined on the product.
+            if (analyzeUmi == null) {
+                analyzeUmi = productOrder.getAnalyzeUmiOverride();
+            }
+            if (analysisType == null) {
+                analysisType = product.getAnalysisTypeKey();
+            }
+            // If there was no bait on the actual samples, use the one defined on the product or pdo if unlocked.
             if (bait == null) {
-                bait = product.getReagentDesignKey();
+                bait = productOrder.getReagentDesignKey();
             }
 
             // Project stuff.
@@ -572,17 +586,15 @@ public class ZimsIlluminaRunFactory {
                 aligner = null;
             }
             // If there is a reference sequence value on the project, then populate the name and version.
-            if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
+            if (StringUtils.isBlank(referenceSequence) && !StringUtils.isBlank(project.getReferenceSequenceKey())) {
                 String[] referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
                 referenceSequence = referenceSequenceValues[0];
                 referenceSequenceVersion = referenceSequenceValues[1];
             }
-            if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
-                referenceSequence = null;
-                referenceSequenceVersion = null;
-            }
-
-            analyzeUmi = productOrder.getAnalyzeUmiOverride();
+        }
+        if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
+            referenceSequence = null;
+            referenceSequenceVersion = null;
         }
 
         List<SubmissionMetadata> submissionMetadataList = new ArrayList<>();
@@ -594,7 +606,6 @@ public class ZimsIlluminaRunFactory {
                 submissionMetadataList.add(metadata);
             }
         }
-        aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
 
         LibraryBean libraryBean = new LibraryBean(
                 library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
@@ -602,8 +613,8 @@ public class ZimsIlluminaRunFactory {
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
-                metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList, analyzeUmi,
-                aggregationParticle);
+                metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList,
+                Boolean.TRUE.equals(analyzeUmi), aggregationParticle);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }

@@ -312,7 +312,9 @@
     <stripes:layout-component name="content">
         <stripes:form action="/workflow/TagVessel.action" id="orderForm" class="form-horizontal">
 
+            <enhance:out escapeXml="false">
             <stripes:hidden id="jsonData" name="jsonData" value="${actionBean.tagVesselJsonData}"/>
+            </enhance:out>
             <input type="hidden" name="scanSource" value="">
 
             <div id="searchInpuTicket">

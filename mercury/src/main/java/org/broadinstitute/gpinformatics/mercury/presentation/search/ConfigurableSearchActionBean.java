@@ -22,12 +22,15 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInstanceNameCache;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
@@ -227,6 +230,15 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     @Inject
     private ConstrainedValueDao constrainedValueDao;
+
+    @Inject
+    private JiraConfig jiraConfig;
+
+    @Inject
+    private PriceListCache priceListCache;
+
+    @Inject
+    private QuoteLink quoteLink;
 
     /**
      * Called from the search menu selection link.
@@ -527,6 +539,10 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         searchInstance.getEvalContext().setSearchInstance(searchInstance);
         searchInstance.getEvalContext().setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.WEB);
         searchInstance.getEvalContext().setBaseSearchURL(getContext().getRequest().getRequestURL());
+        searchInstance.getEvalContext().setUserBean(userBean);
+        searchInstance.getEvalContext().setJiraConfig(jiraConfig);
+        searchInstance.getEvalContext().setPriceListCache(priceListCache);
+        searchInstance.getEvalContext().setQuoteLink(quoteLink);
     }
 
     /**

@@ -90,7 +90,7 @@ public class LabMetricSearchDefinition {
         metadataDisplayKeyMap = new HashMap<>();
         for( Metadata.Key key : Metadata.Key.values() ) {
             if (key.getCategory() == Metadata.Category.LAB_METRIC
-                    || key.getCategory() == Metadata.Category.LAB_METRIC_RUN) {
+                    || key.getCategory() == Metadata.Category.LAB_METRIC_RUN || key.getCategory() == Metadata.Category.LIQUID_HANDLER_METRIC) {
                 metadataDisplayKeyMap.put(key.getDisplayName(), key);
             }
         }
@@ -330,17 +330,22 @@ public class LabMetricSearchDefinition {
                 @Override
                 public String evaluate(Object entity, SearchContext context) {
                     LabMetric labMetric = (LabMetric) entity;
-                    if (labMetric.getLabMetricRun().getMetadata().isEmpty()) {
-                        return "";
-                    } else {
-                        Metadata.Key key = metadataDisplayKeyMap.get(context.getSearchTerm().getName());
+                    Metadata.Key key = metadataDisplayKeyMap.get(context.getSearchTerm().getName());
+                    // Check metric metadata
+                    for (Metadata metadata : labMetric.getMetadataSet()) {
+                        if (metadata.getKey() == key) {
+                            return metadata.getValue();
+                        }
+                    }
+                    // Still here? Check run metadata
+                    if (labMetric.getLabMetricRun() != null) {
                         for (Metadata metadata : labMetric.getLabMetricRun().getMetadata()) {
-                            if( metadata.getKey() == key ) {
+                            if (metadata.getKey() == key) {
                                 return metadata.getValue();
                             }
                         }
-                        return "";
                     }
+                    return "";
                 }
             });
 

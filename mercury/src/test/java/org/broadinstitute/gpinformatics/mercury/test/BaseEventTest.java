@@ -727,9 +727,9 @@ public class BaseEventTest {
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
                                                                       String fctTicket,
                                                                       ProductionFlowcellPath productionFlowcellPath,
-                                                                      String designationName, Workflow workflow) {
+                                                                      String designationName, String workflow) {
         int flowcellLanes = 8;
-        if (workflow == Workflow.AGILENT_EXOME_EXPRESS) {
+        if (workflow.equals(Workflow.AGILENT_EXOME_EXPRESS)) {
             flowcellLanes = 2;
         }
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
@@ -1128,7 +1128,7 @@ public class BaseEventTest {
         }
     }
 
-    ZimsIlluminaRunFactory constructZimsIlluminaRunFactory(final ProductOrder productOrder,
+    public ZimsIlluminaRunFactory constructZimsIlluminaRunFactory(final ProductOrder productOrder,
                                                            List<FlowcellDesignation> flowcellDesignations) {
         ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
         FlowcellDesignationEjb flowcellDesignationEjb = Mockito.mock(FlowcellDesignationEjb.class);
