@@ -581,4 +581,42 @@ public class MercurySampleFixupTest extends Arquillian {
         labVesselDao.persist(new FixupCommentary(lines.get(0)));
         labVesselDao.flush();
     }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ReplaceSampleInVessel.txt,
+     * so it can be used for other similar fixups, without writing a new test.  It is used to replace samples in
+     * specified vessels.  Example contents of the file are (first line is the fixup commentary,
+     * subsequent lines are whitespace separated vessel barcode, old sample ID, new sample ID):
+     * SUPPORT-4271 reflect changes to array plates
+     * CO-26671753A01 SM-H5GZC SM-HK74N
+     * CO-26671756A01 SM-H5GZI SM-HK74M
+     */
+    @Test(enabled = false)
+    public void fixupSupport4271() throws IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ReplaceSampleInVessel.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 3) {
+                throw new RuntimeException("Expected three white-space separated fields in " + lines.get(i));
+            }
+            String barcode = fields[0];
+            LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+            Assert.assertNotNull(labVessel, barcode + " not found");
+
+            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(
+                    Arrays.asList(fields[1], fields[2]));
+            MercurySample oldSample = mapIdToMercurySample.get(fields[1]);
+            Assert.assertNotNull(oldSample);
+            MercurySample newSample = mapIdToMercurySample.get(fields[2]);
+            Assert.assertNotNull(newSample);
+            labVessel.getMercurySamples().remove(oldSample);
+            System.out.println("Adding " + newSample.getSampleKey() + " to " + labVessel.getLabel());
+            labVessel.addSample(newSample);
+        }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
 }
