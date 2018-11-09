@@ -294,7 +294,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private SampleDataSourceResolver sampleDataSourceResolver;
 
-    @Inject
     private QuoteService quoteService;
 
     private PriceListCache priceListCache;
@@ -1387,6 +1386,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getQuoteFunding")
     public Resolution getQuoteFunding() {
+        JSONObject item = getQuoteFundingJson();
+
+        return createTextResolution(item.toString());
+    }
+
+    public JSONObject getQuoteFundingJson() {
         JSONObject item = new JSONObject();
 
         try {
@@ -1404,7 +1409,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONArray fundingDetails = new JSONArray();
 
                 final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
-                Funding funding = quote.getFunding().stream().findFirst().orElse(null);
+                Funding funding = null;
+                if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
+                    funding = quote.getFunding().stream().findFirst().orElse(null);
+                }
+
                 if (funding == null) {
                     item.put("error", "This quote has no active Funding Sources.");
                 } else {
@@ -1436,8 +1445,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 // Don't really care if this gets an exception.
             }
         }
-
-        return createTextResolution(item.toString());
+        return item;
     }
 
     @DefaultHandler
@@ -3664,6 +3672,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     protected void setSapService(SapIntegrationService sapService) {
         this.sapService = sapService;
+    }
+
+    @Inject
+    protected void setQuoteService(QuoteService quoteService) {
+        this.quoteService = quoteService;
     }
 
     @HandlesEvent(SAVE_SEARCH_DATA)
