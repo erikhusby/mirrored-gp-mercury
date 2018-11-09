@@ -4138,12 +4138,12 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                     <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
-                    <materialTypes>RNA</materialTypes>
-                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
         </workflowProcessDefVersions>
