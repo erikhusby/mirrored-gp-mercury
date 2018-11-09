@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -85,6 +86,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -143,6 +145,12 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private LabEventDao labEventDao;
+
+    @Inject
+    private JiraService jiraService;
+
+    @Inject
+    private UserTransaction utx;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -1822,38 +1830,19 @@ public class LabBatchFixUpTest extends Arquillian {
     }
 
     /**
-     * This test reads its input from a file.
-     * Mercury requires one LCSET per ShearingTransfer, but the users have been creating up to five.
+     * This test is used to find LabEvents that have more than one LabBatch.  The output is used to create input files
+     * for {@link #consolidateLabBatches()}.
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void findAmbiguousEvents() {
-//        List<LabEvent> labEvents = labEventDao.findByDateAndType(
-//                new GregorianCalendar(2018, Calendar.JANUARY, 1).getTime(), new Date(), LabEventType.SHEARING_TRANSFER);
-        List<Long> eventIds = Arrays.asList(
-                2495336L,
-                2510393L,
-                2523670L,
-                2499545L,
-                2536682L,
-                2535822L,
-                2550827L,
-                2571352L,
-                2584128L,
-                2585300L,
-                2600695L,
-                2610178L,
-                2630273L,
-                2639731L,
-                2655451L,
-                2686917L,
-                2705223L,
-                2698311L,
-                2814820L,
-                3129094L
-        ); //labEvents.stream().map(LabEvent::getLabEventId).collect(Collectors.toList());
+        List<LabEvent> labEvents = labEventDao.findByDateAndType(
+                new GregorianCalendar(2018, Calendar.JANUARY, 1).getTime(), new Date(), LabEventType.SHEARING_TRANSFER);
+        List<Long> eventIds = labEvents.stream().map(LabEvent::getLabEventId).collect(Collectors.toList());
+
+        // Clear the session and refetch each event individually, to avoid running out of memory during event traversal
         labEventDao.clear();
         for (Long eventId : eventIds) {
-            LabEvent labEvent = labEventDao.findById(LabEvent.class, eventId); // 2814820L
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, eventId);
             Set<LabBatch> computedLcSets = labEvent.getComputedLcSets();
             if (computedLcSets.isEmpty()) {
                 System.out.print(labEvent.getLabEventId() + " ");
@@ -1880,4 +1869,45 @@ public class LabBatchFixUpTest extends Arquillian {
         }
     }
 
+    /**
+     * This test is used to consolidate LabBatches.  For example, some ShearingTransfers have multiple LCSETs; Mercury
+     * cannot infer original vs rework LCSET in the presence of multiple LCSETs, so this test is used to move samples
+     * to a single LCSET.  The samples are not removed from the JIRA ticket, because that would make meaningless any
+     * comments that were made on the ticket.  The test adds to each source ticket a comment with the name of the
+     * destination ticket.
+     * The test reads its input from file mercury/src/test/resources/testdata/UpdateSampleMetadata.txt.
+     * The first line is the fixup commentary.  The second line is the destination LabBatch.  The third and
+     * subsequent lines are the source LabBatches.
+     */
+    @Test(enabled = false)
+    public void consolidateLabBatches() throws IOException, SystemException, NotSupportedException,
+            HeuristicRollbackException, HeuristicMixedException, RollbackException {
+        userBean.loginOSUser();
+        utx.begin();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ConsolidateLabBatches.txt"));
+        String destBatchName = lines.get(1);
+        LabBatch destLabBatch = labBatchDao.findByName(destBatchName);
+        Assert.assertNotNull(destLabBatch, "Failed to find " + destBatchName);
+
+        for (String sourceBatchName : lines.subList(2, lines.size())) {
+            LabBatch sourceLabBatch = labBatchDao.findByName(sourceBatchName);
+            Assert.assertNotNull(sourceLabBatch, "Failed to find " + sourceBatchName);
+            System.out.println("Moving entries from " + sourceLabBatch.getBusinessKey() + " to " +
+                    destLabBatch.getBusinessKey());
+            for (BucketEntry bucketEntry : sourceLabBatch.getBucketEntries()) {
+                destLabBatch.addBucketEntry(bucketEntry);
+            }
+            for (LabBatchStartingVessel labBatchStartingVessel : sourceLabBatch.getLabBatchStartingVessels()) {
+                labBatchStartingVessel.setLabBatch(destLabBatch);
+            }
+        }
+        labBatchDao.persist(new FixupCommentary(lines.get(0)));
+        labBatchDao.flush();
+
+        for (String sourceBatchName : lines.subList(2, lines.size())) {
+            jiraService.addComment(sourceBatchName, "In Mercury database, moved samples to " +
+                    destLabBatch.getBusinessKey() + " to get a single LCSET for the first event.");
+        }
+        utx.commit();
+    }
 }
