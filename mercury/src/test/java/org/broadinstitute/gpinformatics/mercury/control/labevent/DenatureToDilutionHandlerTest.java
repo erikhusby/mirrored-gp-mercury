@@ -27,11 +27,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @Test(groups = {TestGroups.DATABASE_FREE})
 public class DenatureToDilutionHandlerTest extends BaseEventTest {
@@ -48,11 +50,10 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         expectedRouting = SystemRouter.System.MERCURY;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
-        Long pdoId = 9202938094820L;
         runDate = new Date();
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
-                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                                              new HashSet<>(mapBarcodeToTube.values()),
                                               LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
@@ -209,5 +210,48 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
                     }});
             return this;
         }
+    }
+
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testNovaSeqMultipleFcts() throws Exception {
+        final int numberFcts = 3;
+        final int numberLanesPerSample = 2;
+
+        // This test verifies that the handler can find the starting tube for a NovaSeq dilution tube
+        // when the FCT was booked using the pool tube, so that there are three transfers to traverse
+        // from source to dilution instead of two.
+        Assert.assertEquals(qtpEntityBuilder.getPoolTubes().size(), 1);
+        BarcodedTube poolSource = qtpEntityBuilder.getPoolTubes().iterator().next();
+        Set<LabBatchStartingVessel> startingVessels = new HashSet<>();
+        Set<String> dilutionTubeBarcodes = new HashSet<>();
+
+        // To simulate the actual nova seq protocol, multiple flowcells are made.
+        // Each FCT booking uses the same starting tube and draws sample from the same denature tube.
+        for (int i = 0; i < numberFcts; ++i) {
+            String fctBatchName = "FCT-Test5" + i;
+            LabBatch fctBatch = new LabBatch(fctBatchName, LabBatch.LabBatchType.FCT,
+                    IlluminaFlowcell.FlowcellType.NovaSeqFlowcell, poolSource, BigDecimal.TEN);
+            startingVessels.addAll(fctBatch.getLabBatchStartingVessels());
+
+            // Setting DILUTION_TO_FLOWCELL causes the builder to put the FCT metadata tag on the lab event.
+            HiSeq2500JaxbBuilder builder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
+                    i + "_" + runDate.getTime(), Collections.singletonList(denatureSource.getLabel()),
+                    qtpEntityBuilder.getDenatureRack().getRacksOfTubes().iterator().next().getLabel(),
+                    fctBatch.getBatchName(), ProductionFlowcellPath.DILUTION_TO_FLOWCELL,
+                    denatureSource.getSampleInstanceCount(), null, numberLanesPerSample).invoke();
+            Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+            mapBarcodeToVessel.put(denatureSource.getLabel(), denatureSource);
+            mapBarcodeToVessel.put(qtpEntityBuilder.getDenatureRack().getLabel(), qtpEntityBuilder.getDenatureRack());
+            LabEvent event = getLabEventFactory().buildFromBettaLims(builder.getDilutionJaxb(), mapBarcodeToVessel);
+            LabVessel dilutionTube = event.getTargetVesselTubes().iterator().next();
+            dilutionTubeBarcodes.add(dilutionTube.getLabel());
+            fctBatch.getLabBatchStartingVessels().iterator().next().setDilutionVessel(dilutionTube);
+            getLabEventFactory().getEventHandlerSelector()
+                    .applyEventSpecificHandling(event, builder.getDilutionJaxb());
+        }
+        Assert.assertEquals(dilutionTubeBarcodes.size(), numberFcts);
+        Assert.assertEquals(startingVessels.size(), numberFcts * numberLanesPerSample);
+        Assert.assertTrue(startingVessels.stream().
+                allMatch(startingVessel -> startingVessel.getLabVessel().getLabel().equals(poolSource.getLabel())));
     }
 }

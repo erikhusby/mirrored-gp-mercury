@@ -79,20 +79,24 @@
             Run Date: <fmt:formatDate value="${actionBean.labMetricRun.runDate}" pattern="${actionBean.dateTimePattern}"/>
             <br/>
             Run Name: ${actionBean.labMetricRun.runName}
-            <table class="table simple" id="runTable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <c:forEach items="${actionBean.labMetricRun.metadata}" var="metadata">
-                    <tr>
-                        <td>${metadata.key}</td>
-                        <td>${metadata.value}</td>
-                    </tr>
-                </c:forEach>
-            </table>
+            <c:if test="${not empty actionBean.labMetricRun.metadata}">
+                <table class="table simple" id="runTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+
+
+                        <c:forEach items="${actionBean.labMetricRun.metadata}" var="metadata">
+                            <tr>
+                                <td>${metadata.key}</td>
+                                <td>${metadata.value}</td>
+                            </tr>
+                        </c:forEach>
+                    </table>
+            </c:if>
             <stripes:form beanclass="${actionBean.class.name}" id="metricsForm" class="form-horizontal">
 
                 <stripes:layout-render name="/columns/configurable_list.jsp"

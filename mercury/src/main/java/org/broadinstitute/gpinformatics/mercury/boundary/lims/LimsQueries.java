@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
@@ -25,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReagentDesignType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
@@ -439,5 +441,52 @@ public class LimsQueries {
             concentrationAndVolumeAndWeightTypeMap.put(tubeBarcode, concentrationAndVolumeAndWeightType);
         }
         return concentrationAndVolumeAndWeightTypeMap;
+    }
+
+    public List<ReagentDesignType> fetchExpectedReagentDesignsForTubeBarcodes(List<String> tubeBarcodes) {
+        List<ReagentDesignType> reagentDesignTypes = new ArrayList<>();
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
+        for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
+            ReagentDesignType reagentDesignType = new ReagentDesignType();
+            reagentDesignTypes.add(reagentDesignType);
+            LabVessel labVessel = entry.getValue();
+            reagentDesignType.setTubeBarcode(entry.getKey());
+            if (labVessel == null) {
+                reagentDesignType.setError("Failed to find tube " + entry.getKey());
+                reagentDesignType.setHasErrors(true);
+                reagentDesignType.setWasFound(false);
+                continue;
+            }
+            reagentDesignType.setWasFound(true);
+            Set<String> reagentDesigns = new HashSet<>();
+            for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
+                ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+                if (pdoSampleForSingleBucket == null) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                        if (productOrderSample.getProductOrder().getProduct() != null) {
+                            String reagentDesignKey = productOrderSample.getProductOrder().getReagentDesignKey();
+                            if (StringUtils.isNotBlank(reagentDesignKey)) {
+                                reagentDesigns.add(reagentDesignKey);
+                            }
+                        }
+                    }
+                } else {
+                    String reagentDesignKey = pdoSampleForSingleBucket.getProductOrder().getReagentDesignKey();
+                    if (StringUtils.isNotBlank(reagentDesignKey)) {
+                        reagentDesigns.add(reagentDesignKey);
+                    }
+                }
+            }
+            if (reagentDesigns.size() == 0) {
+                reagentDesignType.setHasErrors(true);
+                reagentDesignType.setError("Found no reagent designs.");
+            } else if (reagentDesigns.size() > 1) {
+                reagentDesignType.setHasErrors(true);
+                reagentDesignType.setError("Found multiple reagent designs: " + StringUtils.join(reagentDesigns, ","));
+            } else {
+                reagentDesignType.setReagentDesignName(reagentDesigns.iterator().next());
+            }
+        }
+        return reagentDesignTypes;
     }
 }

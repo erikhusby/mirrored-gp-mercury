@@ -150,8 +150,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         }
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
-
-        billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
+        billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
     }

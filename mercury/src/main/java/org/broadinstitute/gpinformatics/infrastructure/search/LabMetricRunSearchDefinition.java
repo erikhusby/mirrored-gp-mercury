@@ -386,6 +386,7 @@ public class LabMetricRunSearchDefinition {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Run Drill Down");
         searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
+        searchTerm.setMustEscape(false);
 
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
 

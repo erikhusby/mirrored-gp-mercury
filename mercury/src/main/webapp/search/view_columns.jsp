@@ -10,177 +10,6 @@ buttons to move columns from one to the other --%>
 <%--@elvariable id="viewColumnParamMap" type="java.util.Map<java.lang.Integer,SearchTerm.ResultParams>"--%>
 <stripes:layout-definition>
     <script type="text/javascript">
-        /**
-         * Add column to chosen list, and make it invisible in available list (so it can't
-         * be chosen again)
-         * @param available multi-select of available columns
-         * @param chosen multi-select of chosen columns
-         */
-        chooseColumns = function (available, chosen) {
-            for (var i = 0; i < available.options.length; i++) {
-                var option = available.options[i];
-                if (option.selected && (option.style.display == "" || option.style.display == 'block')) {
-                    if (jQuery.data(option, "hasParams") ) {
-                        showColumnOptions(available, chosen, option);
-                        // Do NOT hide this column
-                        return;
-                    } else {
-                        var newOption = document.createElement('option');
-                        newOption.text = option.text;
-                        newOption.value = option.value;
-                        chosen.options[chosen.options.length] = newOption;
-                    }
-                }
-            }
-            for (i = available.options.length - 1; i >= 0; i--) {
-                if (available.options[i].selected) {
-                    if (!option.value.endsWith(":")) {
-                        available.options[i].style.display = 'none';
-                    }
-                }
-            }
-        };
-
-        /**
-         * Show child options for result columns to select from to add column to chosen list
-         * @param available multi-select of available columns
-         * @param chosen multi-select of chosen columns
-         */
-        showColumnOptions = function (available, chosen, option) {
-            if (!jQuery.data(option, "hasParams") ) {
-                return;
-            }
-            var overlayDiv = $j( "#resultParamsOverlay" );
-            overlayDiv.dialog("option","searchTermName", option.value);
-            overlayDiv.dialog("option","entityName", $j("#entityName").val());
-            overlayDiv.dialog("open");
-
-        };
-
-        initResultParamOverlay = function(){ <%-- Dialog div element at bottom of configurable_search.jsp --%>
-            var dialog = $j( "#resultParamsOverlay" ).dialog({
-                title: "Select Result Parameters",
-                searchTermName:"",
-                entityName:"",
-                autoOpen: false,
-                height: 500,
-                width: 320,
-                modal: true,
-                open: function(){
-                    var entityName = $j( this ).dialog("option","entityName");
-                    var searchTermName = $j( this ).dialog("option","searchTermName");
-                    $j("#resultParamsPrompt").text("Column '" + searchTermName + "' options:");
-                    dialog.dialog("option", "reset")();
-                    $j.ajax({
-                        url: '${ctxpath}/search/ResultParams.action',
-                        data: { "paramsFetch":""
-                            , "searchTermName":searchTermName
-                            , "entityName":entityName},
-                        type: 'get',
-                        dataType: 'html',
-                        cache: true,
-                        complete: function (returnData, status) {
-                            if( status === "success" ) {
-                                $j("#resultParamsInputs")[0].innerHTML = returnData.responseText;
-                            } else {
-                                var errDiv = $j("#resultParamsError");
-                                var message = status + ": " + returnData.responseText;
-                                errDiv.text(message);
-                                errDiv.css('display','block');
-                            }
-                        },
-                    })
-                },
-                // Clears out any previous error message state
-                reset: function(){
-                    $j("#resultParamsError").text("").css('display','none');
-                },
-                error: function(msg){
-                    $j("#resultParamsError").text(msg).css('display','block');
-                }
-            });
-            dialog.find( "form" ).on( "submit", function( event ) {
-                event.preventDefault();
-                dialog.dialog("option", "reset")();
-
-                var userColumnName = $( this ).find( "#userColumnName" ).val();
-                if( userColumnName.trim().length == 0 ) {
-                    dialog.dialog("option", "error")("User column name is required.");
-                    return;
-                }
-
-                // TODO: Dynamic validation
-
-                var rsltParamVal = {searchTermName:null,userColumnName:null,paramValues:[]};
-                rsltParamVal.searchTermName = dialog.dialog("option", "searchTermName");
-                rsltParamVal.userColumnName = userColumnName;
-                var params = $( this ).serializeArray();
-                rsltParamVal.paramValues = params;
-
-                var chosenColumns = $j('#selectedColumnDefNames')[0];
-                var newOption = document.createElement('option');
-                newOption.text = userColumnName;
-                newOption.value = JSON.stringify(rsltParamVal);
-                chosenColumns.options[chosenColumns.options.length] = newOption;
-                dialog.dialog("close");
-            });
-            dialog.find( "#resultParamsCancelBtn" ).on( "click", function(event){
-                dialog.dialog("close");
-            });
-        };
-
-        /**
-         * Remove column from chosen, and make it visible in available
-         * @param chosen multi-select of chosen columns
-         * @param available multi-select of available columns
-         */
-        removeColumns = function (chosen, available) {
-            for (var i = 0; i < chosen.options.length; i++) {
-                var option = chosen.options[i];
-                if (option.selected) {
-                    for (var j = 0; j < available.options.length; j++) {
-                        if (available.options[j].text == option.text) {
-                            available.options[j].style.display = 'block';
-                        }
-                    }
-                }
-            }
-            for (i = chosen.options.length - 1; i >= 0; i--) {
-                if (chosen.options[i].selected) {
-                    chosen.remove(i);
-                }
-            }
-        };
-
-        /*
-         Change order of items in select
-         */
-        moveOptionsUp = function (selectList) {
-            var selectOptions = selectList.getElementsByTagName('option');
-            for (var i = 1; i < selectOptions.length; i++) {
-                var opt = selectOptions[i];
-                if (opt.selected) {
-                    selectList.removeChild(opt);
-                    selectList.insertBefore(opt, selectOptions[i - 1]);
-                }
-            }
-        };
-
-        /*
-         Change order of items in select
-         */
-        moveOptionsDown = function (selectList) {
-            var selectOptions = selectList.getElementsByTagName('option');
-            for (var i = selectOptions.length - 2; i >= 0; i--) {
-                var opt = selectOptions[i];
-                if (opt.selected) {
-                    var nextOpt = selectOptions[i + 1];
-                    opt = selectList.removeChild(opt);
-                    nextOpt = selectList.replaceChild(opt, nextOpt);
-                    selectList.insertBefore(nextOpt, opt);
-                }
-            }
-        };
 
         /**
          * After the page is rendered, any columns in the chosen list must be made invisible in
@@ -200,83 +29,6 @@ buttons to move columns from one to the other --%>
             ></c:forEach
         ></c:forEach>];
 
-        syncChosenAvailable = function () {
-            var available = $j('#sourceColumnDefNames')[0];
-            var chosen = $j('#selectedColumnDefNames')[0];
-            for (var i = 0; i < chosen.options.length; i++) {
-                var option = chosen.options[i];
-                for (var j = 0; j < available.options.length; j++) {
-                    if (available.options[j].text == option.text) {
-                        available.options[j].style.display = 'none';
-                    }
-                }
-            }
-
-            if(chosen.options.length == 0){
-               for (var i = 0; i < searchDefaultColumns.length; i++) {
-                    for (var j = 0; j < available.options.length; j++) {
-                        if (available.options[j].text == searchDefaultColumns[i]) {
-                            var newOption = document.createElement('option');
-                            newOption.text = searchDefaultColumns[i];
-                            newOption.value = searchDefaultColumns[i];
-                            chosen.options[chosen.options.length] = newOption;
-                            available.options[j].style.display = 'none';
-                        }
-                    }
-                }
-            }
-        };
-
-        /*
-         * Result columns with parameters need to be flagged as such by attaching data
-         */
-        var columnsWithParams = [<c:set var="listDelim" value=""
-        /><c:forEach items="${availableMapGroupToColumnNames}" var="entry"
-            ><c:forEach items="${entry.value}" var="columnConfig"
-            ><c:if test="${not columnConfig.isExcludedFromResultColumns() and not empty columnConfig.resultParamConfigurationExpression}"><c:out value ="${listDelim}"/><c:set var="listDelim" value=","
-        />"${columnConfig.name}"</c:if
-        ></c:forEach
-        ></c:forEach>];
-
-        flagResultColsWithParams = function(){
-            if( columnsWithParams.length === 0 ) {
-                return;
-            }
-            var colSelect = $j('#sourceColumnDefNames')[0];
-            for (var i = 0; i < colSelect.options.length; i++) {
-                var option = colSelect.options[i];
-                jQuery.data(option,"hasParams", false);
-                for( j = 0; j < columnsWithParams.length; j++ ) {
-                    if( option.value === columnsWithParams[j] ) {
-                        jQuery.data(option,"hasParams", true);
-                        break;
-                    }
-                }
-            }
-        };
-
-
-        /**
-         * Remove options in a select, that don't match what the user typed in a text box
-         * @param select from which to remove options
-         * @param text box in which user typed filtering characters
-         */
-        filterSelect = function (select, text) {
-            var firstOption = true;
-            for (var i = 0; i < select.options.length; i++) {
-                if (select.options[i].text.toLowerCase().indexOf(text.value.toLowerCase()) >= 0) {
-                    select.options[i].style.display = 'block';
-                    if (firstOption) {
-                        select.selectedIndex = i;
-                    }
-                    firstOption = false;
-                } else {
-                    select.options[i].style.display = 'none';
-                }
-            }
-        };
-
-        $j( document ).ready( syncChosenAvailable );
         $j( document ).ready( function() {
             $j( "#pageSizeSlider" ).slider({
                 value:${actionBean.searchInstance.pageSize},
@@ -290,9 +42,8 @@ buttons to move columns from one to the other --%>
             });
             $j( "#userPageSize" ).val( $j( "#pageSizeSlider" ).slider( "value" ) );
             $j( "#userPageSizeDisplay" ).html( $j( "#pageSizeSlider" ).slider( "value" ) );
-        } );
-        $j( document ).ready( flagResultColsWithParams );
-        $j( document ).ready( initResultParamOverlay );
+        });
+
     </script>
     <br/>
     <!-- Allow user to choose individual result columns -->
@@ -308,8 +59,8 @@ buttons to move columns from one to the other --%>
             &nbsp;</td>
         </c:if>
         </tr>
-        <tr>
-            <td rowspan="2" style="padding-left: 5px">
+        <tr style="width: 90%">
+            <td style="padding-left: 5px">
                 <select name="sourceColumnDefNames" id="sourceColumnDefNames"
                         multiple="true" size="10">
                     <c:forEach items="${availableMapGroupToColumnNames}" var="entry" varStatus="iter">
@@ -319,6 +70,8 @@ buttons to move columns from one to the other --%>
                                 <c:if test="${not columnConfig.isExcludedFromResultColumns()}">
                                     <option id="${columnConfig.uiId}_col" value="${columnConfig.name}"
                                             <c:if test="${not empty columnConfig.helpText}"> class="help-option"</c:if>
+                                            <c:if test="${not empty columnConfig.resultParamConfigurationExpression}"> data-has-params="true" data-element-name="${columnConfig.name}" </c:if>
+                                            <c:if test="${empty columnConfig.resultParamConfigurationExpression}"> data-has-params="false" </c:if>
                                             ondblclick="chooseColumns($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]);">${columnConfig.name}</option>
                                 </c:if>
                             </c:forEach>
@@ -326,59 +79,55 @@ buttons to move columns from one to the other --%>
                     </c:forEach>
                 </select>
             </td>
-            <td valign="bottom">
+            <td valign="middle">
                 <a href="javascript:chooseColumns($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]);">
                     <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/start.png" alt="Choose Column"
-                         title="Choose Column"/>
-                </a>
-
+                         title="Choose Column"/></a><br/>
+                <a href="javascript:removeColumns($j('#selectedColumnDefNames')[0], $j('#sourceColumnDefNames')[0]);">
+                    <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/left.png" alt="Remove Column"
+                         title="Remove Column"/></a>
             </td>
-            <td rowspan="2" style="padding-left: 5px">
+            <td style="padding-left: 5px">
                 <select name="searchInstance.predefinedViewColumns" id="selectedColumnDefNames"
                         multiple="true" size="10" style="width: 280px">
                     <c:if test="${not empty predefinedViewColumns}">
                         <c:forEach items="${predefinedViewColumns}" var="entry" varStatus="iter">
-                            <c:if test="${not empty viewColumnParamMap[iter.index]}"><option value='${fn:escapeXml( viewColumnParamMap[iter.index] )}'>${viewColumnParamMap[iter.index].userColumnName}</option></c:if>
-                            <c:if test="${empty viewColumnParamMap[iter.index]}"><option>${entry}</option></c:if>
+                            <c:if test="${not empty viewColumnParamMap[iter.index]}"><option data-has-params="true" data-element-name="${viewColumnParamMap[iter.index].getElementName()}" ondblclick="var evt=$j.Event('dblclick');evt.delegateTarget=this;editColumnParams(evt);" value='${fn:escapeXml( viewColumnParamMap[iter.index] )}'>${viewColumnParamMap[iter.index].getSingleValue("userColumnName")}</option></c:if>
+                            <c:if test="${empty viewColumnParamMap[iter.index]}"><option data-has-params="false">${entry}</option></c:if>
                         </c:forEach>
                     </c:if>
                 </select>
             </td>
-            <td valign="bottom">
+            <td valign="middle">
                 <a href="javascript:moveOptionsUp($j('#selectedColumnDefNames')[0]);">
                     <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/up.png" alt="Move Up"
-                         title="Move Up"/>
-                </a>
+                         title="Move Up"/></a><br/>
+                <a href="javascript:moveOptionsDown($j('#selectedColumnDefNames')[0]);">
+                    <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/down.png" alt="Move Down"
+                         title="Move Down"/></a>
             </td>
-            <td rowspan="2" style="padding-left: 30px;vertical-align: top">
+            <td style="padding-left: 30px;vertical-align: top;display: inline-block;min-width: 350px">
                 <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
                     <c:if test="${actionBean.configurableSearchDef.customTraversalOptions  != null}">
                         <label>Apply Custom Traversal Logic:  (Exclude initial entities <input type="checkbox" id="excludeInitialEntitiesFromResults" name="searchInstance.excludeInitialEntitiesFromResults" <c:if test="${actionBean.searchInstance.excludeInitialEntitiesFromResults}">checked='true'</c:if>/>)</label><br />
-                        <select id="customTraversalOptionName" name="searchInstance.customTraversalOptionName" style="width:240px">
+                        <select id="customTraversalOptionConfig" name="searchInstance.customTraversalOptionConfig" style="width:240px;display: inline-block">
                             <option value="none">None</option>
                             <c:forEach items="${actionBean.configurableSearchDef.customTraversalOptions}" var="customTraversalOption">
-                                <option value="${customTraversalOption.key}" <c:if test="${actionBean.searchInstance.customTraversalOptionName eq customTraversalOption.key}">selected="true"</c:if> >${customTraversalOption.value.label}</option>
+                                <c:if test="${actionBean.searchInstance.customTraversalOptionName eq customTraversalOption.key}">
+                                    <option <c:if test='${empty actionBean.searchInstance.customTraversalOptionParams}'>
+                                        value="${customTraversalOption.key}"</c:if><c:if test='${not empty actionBean.searchInstance.customTraversalOptionParams}'>
+                                        value="${fn:escapeXml( actionBean.searchInstance.customTraversalOptionParams )}"</c:if> data-element-name="${customTraversalOption.key}" data-has-user-customization="${customTraversalOption.value.userConfigurable}" selected="true" >${customTraversalOption.value.label}</option>
+                                </c:if>
+                                <c:if test="${actionBean.searchInstance.customTraversalOptionName ne customTraversalOption.key}">
+                                    <option value="${customTraversalOption.key}" data-element-name="${customTraversalOption.key}" data-has-user-customization="${customTraversalOption.value.userConfigurable}">${customTraversalOption.value.label}</option>
+                                </c:if>
                             </c:forEach>
-                        </select> <br />
+                        </select> <div id="customTraversalOptionEdit" style="display: inline-block; min-width: 18px; max-width: 18px; min-height:18px; max-height:18px; padding: 0px; border-width:0px; background-image: url('/Mercury/images/ui-icons_2e83ff_256x240.png'); background-repeat: no-repeat; background-position: -640px 0px;"> </div><br />
                     </c:if>
                     <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
                         <input type="checkbox" id="${traversalMapEntry.key}" name="searchInstance.traversalEvaluatorValues['${traversalMapEntry.key}']" <c:if test="${actionBean.searchInstance.traversalEvaluatorValues[traversalMapEntry.key]}">checked='true'</c:if>/> ${traversalMapEntry.value.label}<br />
                     </c:forEach>
-                </c:if><br />
-            </td>
-        </tr>
-        <tr>
-            <td valign="top">
-                <a href="javascript:removeColumns($j('#selectedColumnDefNames')[0], $j('#sourceColumnDefNames')[0]);">
-                    <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/left.png" alt="Remove Column"
-                         title="Remove Column"/>
-                </a>
-            </td>
-            <td valign="top">
-                <a href="javascript:moveOptionsDown($j('#selectedColumnDefNames')[0]);">
-                    <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/down.png" alt="Move Down"
-                         title="Move Down"/>
-                </a>
+                </c:if>
             </td>
         </tr>
         <tr>

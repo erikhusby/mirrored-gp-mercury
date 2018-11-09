@@ -444,7 +444,7 @@ public class ProductOrderEjb {
      * @param closingOrder
      * @throws SAPIntegrationException
      */
-    private void updateOrderInSap(ProductOrder orderToUpdate, List<Product> allProductsOrdered,
+    public void updateOrderInSap(ProductOrder orderToUpdate, List<Product> allProductsOrdered,
                                   List<String> effectivePricesForProducts, MessageCollection messageCollection,
                                   boolean closingOrder)
             throws SAPIntegrationException {
@@ -1057,7 +1057,7 @@ public class ProductOrderEjb {
      *
      * @throws SampleDeliveryStatusChangeException Thrown if any samples are found to not be in an acceptable starting status.
      */
-    private void transitionSamples(ProductOrder order,
+    public void transitionSamples(ProductOrder order,
                                    Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
                                    DeliveryStatus targetStatus,
                                    Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
@@ -1129,7 +1129,7 @@ public class ProductOrderEjb {
     /**
      * @return The name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context).
      */
-    private String getUserName() {
+    public String getUserName() {
         String user = userBean.getLoginUserName();
         return user == null ? "Mercury" : user;
     }
@@ -1300,8 +1300,8 @@ public class ProductOrderEjb {
             ccAddrdesses .addAll(currentUserForCC);
         }
 
-        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapShortCloseRecipientEmail(), ccAddrdesses,
-                sapConfig.getSapShortCloseEmailSubject(), body, !isProduction);
+        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapSupportEmail(), ccAddrdesses,
+                sapConfig.getSapShortCloseEmailSubject(), body, !isProduction, true);
     }
 
     /**
