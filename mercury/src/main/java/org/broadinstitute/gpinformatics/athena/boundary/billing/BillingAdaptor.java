@@ -179,7 +179,11 @@ public class BillingAdaptor implements Serializable {
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
                     quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     itemForPriceUpdate.setQuote(quote);
-                    ProductOrder.checkQuoteValidity(quote);
+
+                    // Test if quote is valid only if we are billing a positive amount
+                    if (!itemForPriceUpdate.isBillingCredit()) {
+                        ProductOrder.checkQuoteValidity(quote);
+                    }
 
                     // publish order to SAP if ...
                     // 1 products are not blacklisted
@@ -365,7 +369,7 @@ public class BillingAdaptor implements Serializable {
                                 BillingSession.BILLED_FOR_QUOTES);
                     }
 
-                    if (orderEligibleForSAP && canBeBilledInSap  && quote.isFunded(item.getWorkCompleteDate())) {
+                    if (orderEligibleForSAP && canBeBilledInSap  && (quote.isFunded(item.getWorkCompleteDate()) || item.isBillingCredit())) {
                         if (quantityForSAP > 0) {
                             sapBillingId = sapService.billOrder(item, replacementMultiplier, new Date());
                             result.setSAPBillingId(sapBillingId);
@@ -390,7 +394,7 @@ public class BillingAdaptor implements Serializable {
                             if (quantityForSAP + previouslyBilledQty < 0) {
                                 result.setErrorMessage(NEGATIVE_BILL_ERROR);
                                 throw new BillingException(NEGATIVE_BILL_ERROR);
-                            } else if (quantityForSAP < 0) {
+                            } else if (item.isBillingCredit()) {
                                 billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings, billingSession.getCreatedBy());
                                 item.setBillingMessages(BillingSession.BILLING_CREDIT);
                                 sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;

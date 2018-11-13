@@ -85,7 +85,7 @@ public class QuoteTest {
 
         try {
             quoteEligibility = gp87Uquote.isFunded();
-            Assert.assertFalse(quoteEligibility);
+            Assert.assertTrue(quoteEligibility);
 
             // This quote has multiple funding levels so it is not eligible for SAP
             quoteEligibility = gp87Uquote.isEligibleForSAP();
@@ -106,7 +106,7 @@ public class QuoteTest {
 
         try {
             quoteEligibility = splitFundedQuote.isFunded();
-            Assert.assertFalse(quoteEligibility);
+            Assert.assertTrue(quoteEligibility);
 
             // This quote has multiple funding levels so it is not eligible for SAP
             quoteEligibility = splitFundedQuote.isEligibleForSAP();
@@ -160,7 +160,7 @@ public class QuoteTest {
 
         try {
             Assert.assertFalse(eligibleQuote.isFunded());
-            Assert.assertFalse(eligibleQuote.isEligibleForSAP());
+            Assert.assertTrue(eligibleQuote.isEligibleForSAP());
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
         }

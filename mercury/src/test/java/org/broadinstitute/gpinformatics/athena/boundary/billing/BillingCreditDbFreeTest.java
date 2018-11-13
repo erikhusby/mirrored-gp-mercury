@@ -54,6 +54,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -167,6 +169,35 @@ public class BillingCreditDbFreeTest {
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
+
+        billingMap.clear();
+        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        billingResults = bill(billingMap);
+        validateBillingResults(pdoSample, billingResults, 0);
+
+        Mockito.verify(mockEmailSender, Mockito.times(1))
+            .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyBoolean(), Mockito.anyBoolean());
+
+    }
+
+    public void testCreateBillingCreditRequestNoFunding() throws QuoteNotFoundException, QuoteServerException {
+        ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+
+        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
+
+        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
+        validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
+
+        Quote quote = pdo.getQuote(quoteService);
+        java.sql.Date expirationDate = java.sql.Date.valueOf(LocalDate.now().minus(1, ChronoUnit.MONTHS));
+        quote.getFunding().forEach(funding -> {
+            funding.setFundingType(Funding.FUNDS_RESERVATION);
+            funding.setGrantEndDate(expirationDate);
+        });
+
+        assertThat(quote.isFunded(), is(false));
 
         billingMap.clear();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
