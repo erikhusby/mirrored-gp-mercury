@@ -182,25 +182,20 @@ public class Quote {
 
     public boolean isFunded(Date effectiveDate) {
 
-        int[] fundsCount = {0};
-        int[] purchaseOrderCount = {0};
-        Optional.ofNullable(getFirstRelevantFundingLevel())
-            .ifPresent(singleLevel -> Optional.ofNullable(singleLevel.getFunding())
-                .ifPresent(fundingList -> {
-                    Map<String, List<Funding>> fundingByType =
-                        fundingList.stream().collect(Collectors.groupingBy(Funding::getFundingType));
+        int fundsCount = 0;
+        int purchaseOrderCount = 0;
+        Map<String, List<Funding>> fundingByType =
+            getFunding().stream().collect(Collectors.groupingBy(Funding::getFundingType));
 
-                    fundsCount[0] = Optional.ofNullable(fundingByType.get(Funding.FUNDS_RESERVATION))
-                        .orElse(Collections.emptyList()).stream()
-                        .filter(funding -> funding.isGrantActiveForDate(effectiveDate)).collect(Collectors.toSet())
-                        .size();
+        fundsCount = Optional.ofNullable(fundingByType.get(Funding.FUNDS_RESERVATION))
+            .orElse(Collections.emptyList()).stream()
+            .filter(funding -> funding.isGrantActiveForDate(effectiveDate)).collect(Collectors.toSet())
+            .size();
 
-                    purchaseOrderCount[0] = Optional.ofNullable(fundingByType.get(Funding.PURCHASE_ORDER))
-                        .orElse(Collections.emptyList()).size();
+        purchaseOrderCount = Optional.ofNullable(fundingByType.get(Funding.PURCHASE_ORDER))
+            .orElse(Collections.emptyList()).size();
 
-                }));
-
-        return (fundsCount[0] != 0 || purchaseOrderCount[0] != 0) ;
+        return (fundsCount != 0 || purchaseOrderCount != 0) ;
     }
 
     /**
@@ -272,8 +267,10 @@ public class Quote {
     public Collection<Funding> getFunding() {
         if (CollectionUtils.isEmpty(cachedFunding)) {
             cachedFunding = new HashSet<>();
-            getQuoteFunding().getActiveFundingLevel().stream().filter(Objects::nonNull).
-                forEach(fundingLevel -> cachedFunding.addAll(fundingLevel.getFunding()));
+            getQuoteFunding().getActiveFundingLevel().stream().filter(Objects::nonNull)
+                .filter(fundingLevel -> Objects.nonNull(fundingLevel.getFunding()))
+                .forEach(fundingLevel -> cachedFunding.addAll(fundingLevel.getFunding()));
+
         }
         return cachedFunding;
     }

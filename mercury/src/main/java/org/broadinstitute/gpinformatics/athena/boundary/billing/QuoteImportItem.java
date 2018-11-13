@@ -346,4 +346,8 @@ public class QuoteImportItem {
     public boolean needsCustomization() {
         return productOrder.needsCustomization(product);
     }
+
+    public boolean isBillingCredit() {
+        return getQuantity() < 0;
+    }
 }
