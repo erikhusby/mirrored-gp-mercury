@@ -394,7 +394,7 @@ public class BillingAdaptor implements Serializable {
                             if (quantityForSAP + previouslyBilledQty < 0) {
                                 result.setErrorMessage(NEGATIVE_BILL_ERROR);
                                 throw new BillingException(NEGATIVE_BILL_ERROR);
-                            } else if (quantityForSAP < 0) {
+                            } else if (item.isBillingCredit()) {
                                 billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings, billingSession.getCreatedBy());
                                 item.setBillingMessages(BillingSession.BILLING_CREDIT);
                                 sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
