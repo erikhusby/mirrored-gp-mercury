@@ -1582,9 +1582,9 @@ public class LabEventFactory implements Serializable {
     public Collection<LabEvent> buildFromBatchRequests(@Nonnull Collection<BucketEntry> entryCollection,
                                                        String operator, LabBatch batchIn, @Nonnull String eventLocation,
                                                        @Nonnull String programName, @Nonnull LabEventType eventType,
-                                                       Date date) {
+                                                       Date date, long disambiguatorOffset) {
 
-        long workCounter = 1L;
+        long workCounter = 1 + disambiguatorOffset;
 
         List<LabEvent> fullEventList = new LinkedList<>();
 
