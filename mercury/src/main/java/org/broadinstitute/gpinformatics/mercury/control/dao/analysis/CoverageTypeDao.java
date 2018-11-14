@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.analysis.CoverageType_;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import java.util.List;
 
@@ -16,6 +18,7 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class CoverageTypeDao extends GenericDao implements BusinessObjectFinder<CoverageType> {
     public List<CoverageType> findAll() {
         return findAll(CoverageType.class);
