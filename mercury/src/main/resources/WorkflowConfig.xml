@@ -4521,7 +4521,7 @@
     <productWorkflowDefs>
         <name>Lasso</name>
         <productWorkflowDefVersions>
-            <version>1.0</version>
+            <version>1.1</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
             <batchJiraIssueType>CDNA_LASSO</batchJiraIssueType>
             <effectiveDate>2018-04-10T10:03:24.085-04:00</effectiveDate>
