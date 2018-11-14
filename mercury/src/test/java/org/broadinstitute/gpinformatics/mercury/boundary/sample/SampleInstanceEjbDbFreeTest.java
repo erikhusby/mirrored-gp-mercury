@@ -479,7 +479,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         // Runs the workflow: PDO creation, LCSET creation, bucketing, pico plating, shearing, LC,
         // HybSelect, QTP, sequencing.
-        Workflow workflow = Workflow.ICE_EXOME_EXPRESS;
+        String workflow = Workflow.ICE_EXOME_EXPRESS;
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(0, "PDO-TEST123");
         Assert.assertTrue(entities.size() <= NUM_POSITIONS_IN_RACK,
                 entities.size() + " samples is more than a single rack " + NUM_POSITIONS_IN_RACK);
@@ -489,7 +489,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         }
         productOrder.setJiraTicketKey(productOrder.getJiraTicketKey());
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        productOrder.getProduct().setWorkflow(workflow);
+        productOrder.getProduct().setWorkflowName(workflow);
         expectedRouting = SystemRouter.System.MERCURY;
 
         LabBatch workflowBatch = new LabBatch("a batch", new HashSet<LabVessel>(mapBarcodeToTube.values()),

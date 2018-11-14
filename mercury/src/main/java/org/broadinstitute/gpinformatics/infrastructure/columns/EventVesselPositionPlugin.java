@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -244,10 +245,12 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
                 int rowIndex = 0;
                 for (Object object : objects) {
                     if (cellIndex == 0) {
-                        resultRows.add(new ConfigurableList.ResultRow(emptySortableCells, new ArrayList<String>(), null));
+                        resultRows.add(new ConfigurableList.ResultRow(emptySortableCells, new ArrayList<>(), null));
                     }
-                    resultRows.get(rowIndex).getRenderableCells().add(parentTerm.evalPlainTextOutputExpression(
-                            parentTerm.getDisplayExpression().getEvaluator().evaluate(object, context), context));
+                    String output = parentTerm.evalPlainTextOutputExpression(
+                            parentTerm.getDisplayExpression().getEvaluator().evaluate(object, context), context);
+                    resultRows.get(rowIndex).getRenderableCells().add(parentTerm.mustEscape() ?
+                            Encode.forHtml(output) : output);
                     rowIndex++;
                 }
                 cellIndex++;

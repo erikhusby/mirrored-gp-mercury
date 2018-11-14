@@ -1136,7 +1136,7 @@ public class SystemRouterTest extends BaseEventTest {
             }
             LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, tubes,
                                              LabBatch.LabBatchType.WORKFLOW);
-            labBatch.setWorkflow(product.getWorkflow());
+            labBatch.setWorkflow(product.getWorkflowName());
             for (BucketEntry bucketEntry : bucketEntries) {
                 bucketEntry.setLabBatch(labBatch);
             }

@@ -54,7 +54,7 @@ public class LibraryBeanTest {
 
         // send in some GSSR sample attributes in addition to bsp sample data to verify GSSR override.
         LibraryBean libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism,
-                gssrSpecies, gssrStrain, gssrParticipant, sampleData, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
+                gssrSpecies, gssrStrain, gssrParticipant, sampleData, Workflow.AGILENT_EXOME_EXPRESS,
                 LibraryBean.NO_PDO_SAMPLE, libraryCreationDate);
 
         assertEquals(libraryBean.getPrimaryDisease(), sampleData.getPrimaryDisease());
@@ -68,7 +68,7 @@ public class LibraryBeanTest {
 
         // new up sans bspSampleData to confirm gssr fields work.
         libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism, gssrSpecies,
-                gssrStrain, gssrParticipant, null, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
+                gssrStrain, gssrParticipant, null, Workflow.AGILENT_EXOME_EXPRESS,
                 LibraryBean.NO_PDO_SAMPLE, libraryCreationDate);
         assertEquals(libraryBean.getLsid(),gssrLsid);
         assertTrue(libraryBean.getIsGssrSample());
