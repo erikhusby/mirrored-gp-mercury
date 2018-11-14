@@ -28,6 +28,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Date;
@@ -35,7 +36,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+@Dependent
 public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
+
+    public BillingWorkItemPersistenceTest(){}
 
     @Inject
     ProductOrderDao pdoDao;
@@ -129,8 +133,7 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
         }
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
-
-        billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
+        billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
 

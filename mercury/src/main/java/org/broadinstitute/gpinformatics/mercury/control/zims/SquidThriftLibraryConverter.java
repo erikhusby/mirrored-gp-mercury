@@ -56,6 +56,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 null,
                 null,
                 null,
-                false);
+                false,
+                null);
     }
 }

@@ -10,6 +10,8 @@ import javax.enterprise.inject.Alternative;
 @Dependent
 public class AlternativeSimpleServiceImpl implements SimpleService {
 
+    public AlternativeSimpleServiceImpl(){}
+
     @Override
     public String getName() {
         return "AlternativeSimpleServiceImpl";

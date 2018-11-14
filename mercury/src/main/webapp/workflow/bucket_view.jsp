@@ -9,9 +9,14 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
 <c:set var="addToBatchText" value="Enter if you are adding to an existing batch"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" dataTablesVersion="1.10" withColVis="true"
-                       sectionTitle="Select Bucket">
+                       sectionTitle="Create and Update Batches">
 <stripes:layout-component name="extraHead">
     <style type="text/css">
+        .search-button {
+            background: url("${ctxpath}/images/search.png") no-repeat left;
+            padding-left: 20px;;
+        }
+
         .editable {
             white-space: nowrap;
         }
@@ -333,7 +338,9 @@
                 });
 
                 // define columns which cause the page to render slowly.
+                <enhance:out escapeXml="false">
                 var slowColumns = ${actionBean.slowColumns}
+                </enhance:out>
 
                 // When the "Show or Hide" button is clicked
                 $j(document.body).on("click", "a.buttons-colvis", function (event) {
@@ -543,7 +550,9 @@
             });
             $j("#watchers").tokenInput(
                 "${ctxpath}/workflow/bucketView.action?watchersAutoComplete=", {
+                    <enhance:out escapeXml="false">
                     prePopulate: ${actionBean.ensureStringResult(actionBean.jiraUserTokenInput.completeData)},
+                    </enhance:out>
                     tokenDelimiter: "${actionBean.jiraUserTokenInput.separator}",
                     preventDuplicates: true,
                     queryParam: 'jiraUserQuery',
@@ -571,28 +580,16 @@
 </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <stripes:form style="margin-bottom: 10px" id="bucketForm" beanclass="${actionBean.class}">
-            <div class="form-horizontal">
-                <div class="control-group">
-                    <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
-                    <div class="controls">
-                        <stripes:select id="bucketSelect" name="selectedBucket" onchange="this.form.submit()">
-                            <stripes:option value="">Select a Bucket</stripes:option>
-                            <c:forEach items="${actionBean.mapBucketToBucketEntryCount.keySet()}" var="bucketName">
-                            <c:set var="bucketCount" value="${actionBean.mapBucketToBucketEntryCount.get(bucketName)}"/>
-                                <stripes:option value="${bucketName}"
-                                                label="${bucketName} (${bucketCount.bucketEntryCount + bucketCount.reworkEntryCount} vessels)"/>
-                            </c:forEach>
-                        </stripes:select>
-                        <img id="spinner" src="${ctxpath}/images/spinner.gif" style="display: none;" alt=""/>
-                    </div>
-                </div>
-            </div>
-        </stripes:form>
         <stripes:form beanclass="${actionBean.class.name}" id="bucketEntryForm" class="form-horizontal">
             <div class="form-horizontal">
-                <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-                <stripes:hidden name="projectType" id="projectType" value="${actionBean.projectType}"/>
+                <stripes:submit name="<%=BucketViewActionBean.SEARCH_BUCKET_ACTION%>"
+                                value="Return to Bucket Search Page" class="btn-link btn-large search-button"/>
+
+                <stripes:hidden class="actionControls" name="selectedBucket" value="${actionBean.selectedBucket}"/>
+                <stripes:hidden class="actionControls" name="projectType" id="projectType" value="${actionBean.projectType}"/>
+                <stripes:hidden class="actionControls" name="searchString"/>
+                <stripes:hidden class="actionControls" name="productOrderTokenInput.listOfKeys"/>
+                <stripes:hidden class="actionControls" name="materialTypeTokenInput.listOfKeys"/>
                 <div class="control-group batch-create" style="display: none;">
                     <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
                     <div class="controls">
@@ -642,12 +639,14 @@
                 <div class="control-group batch-create" style="display: none;">
                     <stripes:label for="dueDate" name="Due Date" class="control-label"/>
                     <div class="controls">
+                        <enhance:out escapeXml="false">
                         <stripes:text id="dueDate" name="dueDate" class="defaultText"
                                       title="enter date (MM/dd/yyyy)"
                                       value="${actionBean.dueDate}"
                                       formatPattern="MM/dd/yyyy"><fmt:formatDate
                                 value="${actionBean.dueDate}"
                                 dateStyle="short"/></stripes:text>
+                        </enhance:out>
                     </div>
                 </div>
                 <div class="control-group batch-create batch-append" style="display: none;">

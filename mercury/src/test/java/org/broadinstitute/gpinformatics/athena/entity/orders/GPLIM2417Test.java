@@ -7,10 +7,14 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 @Test(groups = {TestGroups.STUBBY})
+@Dependent
 public class GPLIM2417Test extends StubbyContainerTest {
+
+    public GPLIM2417Test(){}
 
     @Inject
     ProductOrderDao pdoDao;

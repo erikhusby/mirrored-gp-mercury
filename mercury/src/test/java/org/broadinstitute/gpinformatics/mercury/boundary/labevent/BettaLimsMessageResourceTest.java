@@ -88,6 +88,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
@@ -106,7 +107,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -121,10 +122,14 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @SuppressWarnings("OverlyCoupledClass")
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class BettaLimsMessageResourceTest extends Arquillian {
+
+    public BettaLimsMessageResourceTest(){}
 
     public static final String PICO_PLATING_BUCKET = "Pico/Plating Bucket";
     public static final String ICE_BUCKET = "ICE Bucket";
+
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
 
@@ -193,7 +198,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    public static final Map<Workflow, String> mapWorkflowToPartNum = new EnumMap<Workflow, String>(Workflow.class) {{
+    public static final Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>() {{
         put(Workflow.WHOLE_GENOME, "P-WG-0002");
         put(Workflow.AGILENT_EXOME_EXPRESS, "P-EX-0002");
         put(Workflow.ICE_EXOME_EXPRESS, "P-EX-0012");
@@ -329,7 +334,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         }
 
         labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, reworkBucketIds, batchName, "", new Date(),
+                Workflow.AGILENT_EXOME_EXPRESS, bucketIds, reworkBucketIds, batchName, "", new Date(),
                 "", "jowalsh", PICO_PLATING_BUCKET);
         // message
         hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix, mapBarcodeToTube2, bettaLimsMessageFactory,
@@ -536,18 +541,19 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         String testPrefix = testPrefixDateFormat.format(new Date());
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
         List<BettaLIMSMessage> messages = new ArrayList<>();
-        // Uses these tubes from BSP rack CO-11200063
-        // A01  0109784754  SM-1Z8XY
-        // A02  0109784741  SM-1Z8XN
-        // A03  0109784822  SM-1Z8XB
-        String[] barcodes = new String[]{"0109784754", "0109784741", "0109784822"};
-        String[] sampleNames = new String[]{"SM-1Z8XY", "SM-1Z8XN", "SM-1Z8XB"};
+        // Uses these tubes from BSP rack CO-9153199
+        // SM-1NO68 - 1036273087
+        // SM-1NO61 - 0097414383
+        // SM-1NWD9 - 1035642036
+
+        String[] barcodes = new String[]{"1036273087", "0097414383", "1035642036"};
+        String[] sampleNames = new String[]{"SM-1NO68", "SM-1NO61", "SM-1NWD9"};
         // Verify none of the samples are known to mercury.  It's not really a code failure if for some reason
         // Mercury dev gains awareness of these samples, but the test cannot continue.
         Assert.assertTrue(CollectionUtils.isEmpty(barcodedTubeDao.findListByList(MercurySample.class,
                 MercurySample_.sampleKey, Arrays.asList(sampleNames))));
         PlateEventType plateEvent = bettaLimsMessageFactory.buildRackEvent("SeqPlatingNormalization",
-                "CO-11200063" + testPrefix, Arrays.asList(barcodes));
+                "CO-9153199" + testPrefix, Arrays.asList(barcodes));
         BettaLIMSMessage bettaLIMSMessage = bettaLimsMessageFactory.addMessage(new ArrayList<BettaLIMSMessage>(),
                 plateEvent);
         // Override routing to prevent this message from going to Squid, where it could fail.
@@ -626,14 +632,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     public static HybridSelectionJaxbBuilder sendMessagesUptoCatch(String testPrefix,
                                                                    Map<String, BarcodedTube> mapBarcodeToTube,
                                                                    BettaLimsMessageTestFactory bettaLimsMessageFactory,
-                                                                   Workflow workflow,
+                                                                   String workflow,
                                                                    BettaLimsMessageResource bettalimsMessageResource,
                                                                    ReagentDesignDao reagentDesignDao,
                                                                    BarcodedTubeDao barcodedTubeDao,
                                                                    String testMercuryUrl, int numPositionsInRack) {
 
         String shearingRackBarcode;
-        if (workflow == Workflow.AGILENT_EXOME_EXPRESS) {
+        if (workflow.equals(Workflow.AGILENT_EXOME_EXPRESS)) {
             shearingRackBarcode = "ShearRack" + testPrefix;
         } else {
             PreFlightJaxbBuilder preFlightJaxbBuilder = new PreFlightJaxbBuilder(
@@ -700,10 +706,10 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      * @return map from tube barcode to sample tube
      */
     private Map<String, BarcodedTube> buildSamplesInPdo(String testPrefix, int numberOfSamples,
-                                                        Workflow workflow) throws ValidationException {
+                                                        String workflow) throws ValidationException {
         ProductOrder productOrder = buildProductOrder(testPrefix, numberOfSamples, workflow);
         Map<String, BarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix, numberOfSamples,
-                barcodedTubeDao, workflow == Workflow.ICE_CRSP ? MercurySample.MetadataSource.MERCURY :
+                barcodedTubeDao, workflow.equals(Workflow.ICE_CRSP) ? MercurySample.MetadataSource.MERCURY :
                         MercurySample.MetadataSource.BSP, productOrder);
         bucketAndBatch(testPrefix, productOrder, mapBarcodeToTube);
         return mapBarcodeToTube;
@@ -717,7 +723,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      *
      * @return product order
      */
-    private ProductOrder buildProductOrder(String testPrefix, int numberOfSamples, Workflow workflow) {
+    private ProductOrder buildProductOrder(String testPrefix, int numberOfSamples, String workflow) {
         String partNumber = mapWorkflowToPartNum.get(workflow);
         Product product = productDao.findByPartNumber(partNumber);
         if (product == null) {
@@ -730,7 +736,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             productDao.persist(product);
         }
 
-        String researchProjectKey = workflow == Workflow.ICE_CRSP ? "RP-926" : "RP-19";
+        String researchProjectKey = workflow.equals(Workflow.ICE_CRSP) ? "RP-926" : "RP-19";
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         if (researchProject == null) {
             researchProject = new ResearchProject(10950L, "SIGMA Sarcoma", "SIGMA Sarcoma", false,
@@ -813,7 +819,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
 
         labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(), batchName,
+                Workflow.AGILENT_EXOME_EXPRESS, bucketIds, Collections.<Long>emptyList(), batchName,
                 "", new Date(), "", "jowalsh", bucketName);
 
     }
@@ -1004,7 +1010,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         }
 
         LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.ICE_CRSP.getWorkflowName(), Collections.<Long>emptyList(), reworkBucketEntryIds, batchName,
+                Workflow.ICE_CRSP, Collections.<Long>emptyList(), reworkBucketEntryIds, batchName,
                 "", new Date(), "", "thompson", ICE_BUCKET);
 
         return labBatch;
@@ -1079,7 +1085,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     @Nonnull
     private Pair<LibraryConstructionJaxbBuilder, Map<String, BarcodedTube>> libraryConstruction(String testPrefix,
                                                                                                 BettaLimsMessageTestFactory bettaLimsMessageFactory,
-                                                                                                Workflow workflow)
+                                                                                                String workflow)
             throws ValidationException {
         Map<String, BarcodedTube> mapBarcodeToTube = buildSamplesInPdo(testPrefix,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, workflow);

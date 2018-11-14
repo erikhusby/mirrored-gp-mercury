@@ -85,7 +85,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     /**
      * Helper method to initialize the common client this service will utilize in order to communicate to SAP
      */
-    protected void initializeClient() {
+    private void initializeClient() {
 
         SapIntegrationClientImpl.SAPEnvironment environment;
 
@@ -93,19 +93,19 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         case PROD:
             environment = SapIntegrationClientImpl.SAPEnvironment.PRODUCTION;
             break;
-        case DEV:
-            environment = SapIntegrationClientImpl.SAPEnvironment.DEV;
-            break;
-        case TEST:
-            environment = SapIntegrationClientImpl.SAPEnvironment.DEV_400;
-            break;
-        case RC:
-            environment = SapIntegrationClientImpl.SAPEnvironment.QA_400;
-            break;
-        case QA:
-        default:
-            environment = SapIntegrationClientImpl.SAPEnvironment.QA;
-            break;
+            case DEV:
+                environment = SapIntegrationClientImpl.SAPEnvironment.DEV;
+                break;
+            case TEST:
+                environment = SapIntegrationClientImpl.SAPEnvironment.DEV_400;
+                break;
+            case RC:
+                environment = SapIntegrationClientImpl.SAPEnvironment.QA2_400;
+                break;
+            case QA:
+            default:
+                environment = SapIntegrationClientImpl.SAPEnvironment.QA;
+                break;
         }
 
         log.debug("Config environment is: " + sapConfig.getExternalDeployment().name());
@@ -159,11 +159,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      */
     protected SAPOrder initializeSAPOrder(ProductOrder placedOrder, boolean creatingOrder, boolean closingOrder) throws SAPIntegrationException {
 
-        ProductOrder orderToUpdate = (placedOrder.isChildOrder() && placedOrder.getParentOrder().getSapOrderNumber().equals(placedOrder.getSapOrderNumber()))?placedOrder.getParentOrder():placedOrder;
+        ProductOrder orderToUpdate = placedOrder;
 
         Quote foundQuote = null;
         try {
-            foundQuote = quoteService.getQuoteByAlphaId(orderToUpdate.getQuoteId());
+            foundQuote = orderToUpdate.getQuote(quoteService);
         } catch (QuoteServerException | QuoteNotFoundException e) {
             throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
         }
@@ -232,8 +232,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             String price = priceListCache.getEffectivePrice(placedOrder.determinePriceItemByCompanyCode(product),
                     quote);
 
-            final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
-                    getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder));
+            BigDecimal sampleCount =
+                getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder);
+
+            final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(), sampleCount);
 
             if(placedOrder.isPriorToSAP1_5()) {
                 sapOrderItem.addCondition(Condition.MATERIAL_PRICE, new BigDecimal(price));
@@ -354,7 +356,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         } else  if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
             sampleCount += (adjustmentQuantity != null) ?adjustmentQuantity :placedOrder.getLaneCount();
         } else {
-            ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(placedOrder);
+            ProductOrder targetSapPdo = placedOrder;
             sampleCount += (adjustmentQuantity != null)?adjustmentQuantity:targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) + additionalSampleCount;
         }
         return BigDecimal.valueOf(sampleCount-previousBilledCount);
@@ -538,7 +540,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         if (!forOrderValueQuery) {
             Quote foundQuote = null;
             try {
-                foundQuote = quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+                foundQuote = productOrder.getQuote(quoteService);
             } catch (QuoteServerException | QuoteNotFoundException e) {
                 throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
             }

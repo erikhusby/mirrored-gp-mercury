@@ -1958,6 +1958,31 @@ public class LabEventFixupTest extends Arquillian {
     }
 
     /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ClearManualOverrideLabEvents.txt,
+     * so it can be used for other similar fixups, without writing a new test.  It is used to clear previous LabBatch
+     * manual overrides of LabEvents.  Example contents of the file are:
+     * GPLIM-5906
+     * 3117214
+     */
+    @Test(enabled = false)
+    public void fixupGplim5906() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ClearManualOverrideLabEvents.txt"));
+        String jiraTicket = lines.get(0);
+        for (String id : lines.subList(1, lines.size())) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
+            labEvent.setManualOverrideLcSet(null);
+            System.out.println("Lab event " + labEvent.getLabEventId() + " clear manual override");
+        }
+
+        labEventDao.persist(new FixupCommentary(jiraTicket + " clear manual override"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    /**
      * A Pond Registration in PCR Plus workflow must be PCR Plus Pond Registration in order to ETL the library name <br/>
      * ETL refresh events 1982110 and 1983690 after ticket deployed and this test is run
      */
@@ -2121,6 +2146,49 @@ public class LabEventFixupTest extends Arquillian {
 
         labEventDao.persist(new FixupCommentary("GPLIM-5438 change event type from AUTO_DAUGHTER_PLATE_CREATION to ARRAY_PLATING_DILUTION"));
         labEventDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport4140() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long[] ids =
+                { 2785453L, 2785461L, 2785475L, 2785488L, 2785494L, 2785498L, 2785512L, 2785520L, 2785536L, 2785539L,
+                        2785542L,2785551L,2785556L,2785566L};
+
+        Reagent undesired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-14921", null);
+        Reagent desired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-15500", null);
+
+        // It is unclear if the lab will have done another round of pico with the new reagent, so check for existence or
+        // create if need be.
+        if (desired == null) {
+            desired = new GenericReagent("HS buffer", "RG-15500", null);
+        }
+        Assert.assertNotNull(undesired);
+        Assert.assertNotNull(desired);
+
+        for (long id : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.PICO_DILUTION_TRANSFER) {
+                throw new RuntimeException("cannot find " + id + " or is not PICO_DILUTION_TRANSFER");
+            }
+            for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+                if (labEventReagent.getReagent().equals(undesired)) {
+                    System.out.println("Removing " + undesired.getName() + " on event " + labEvent.getLabEventId());
+                    labEvent.getLabEventReagents().remove(labEventReagent);
+                    genericReagentDao.remove(labEventReagent);
+                }
+            }
+            System.out.println("Adding " + desired.getName() + " on event " + labEvent.getLabEventId());
+            labEvent.addReagent(desired);
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary(
+                "SUPPORT-4140 - Removing expired reagent for new one");
+        labEventDao.persist(fixupCommentary);
+        labEventDao.flush();
+
         utx.commit();
     }
 

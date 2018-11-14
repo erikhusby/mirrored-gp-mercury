@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -32,13 +33,15 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -94,6 +97,8 @@ import java.util.Set;
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
+    public static final String AMBIGUOUS_PDO_SAMPLE =
+            "PDO Sample name %s identifies both a tube barcode and a mercury sample name.";
 
     // for clarity in jira, we use this string in the quote field when there is no quote
     public static final String QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY = "no quote";
@@ -103,6 +108,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final String REQUISITION_PREFIX = "REQ-";
 
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
+
+    public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
+        if (cachedQuote == null) {
+            cachedQuote = quoteService.getQuoteByAlphaId(quoteId);
+        }
+        return cachedQuote;
+    }
 
     public enum SaveType {CREATING, UPDATING}
 
@@ -202,7 +214,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS"
             , joinColumns = {@JoinColumn(name = "PRODUCT_ORDER", referencedColumnName = "PRODUCT_ORDER_ID")}
-            , inverseJoinColumns = {@JoinColumn(name = "REGULATORY_INFOS", referencedColumnName = "REGULATORY_INFO_ID")})
+            , inverseJoinColumns = {
+            @JoinColumn(name = "REGULATORY_INFOS", referencedColumnName = "REGULATORY_INFO_ID")})
     private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
@@ -236,21 +249,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "athena", name = "product_order_sap_orders"
             , joinColumns = {@JoinColumn(name = "REFERENCE_PRODUCT_ORDER", referencedColumnName = "PRODUCT_ORDER_ID")}
-            , inverseJoinColumns = {@JoinColumn(name = "SAP_REFERENCE_ORDERS", referencedColumnName = "SAP_ORDER_DETAIL_ID")})
+            , inverseJoinColumns = {
+            @JoinColumn(name = "SAP_REFERENCE_ORDERS", referencedColumnName = "SAP_ORDER_DETAIL_ID")})
     private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
 
     @OneToMany(mappedBy = "parentOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<ProductOrder> childOrders = new HashSet<>();
 
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.EAGER)
-    @JoinColumn(name="PARENT_PRODUCT_ORDER")
+    @JoinColumn(name = "PARENT_PRODUCT_ORDER")
     private ProductOrder parentOrder;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "PIPELINE_LOCATION", nullable = true)
     private PipelineLocation pipelineLocation;
 
-    @OneToMany(mappedBy = "productOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "productOrder", cascade = {CascadeType.PERSIST,
+            CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ProductOrderPriceAdjustment> customPriceAdjustments = new HashSet<>();
 
     @Transient
@@ -268,6 +283,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "ANALYZE_UMI_OVERRIDE")
     private Boolean analyzeUmiOverride;
+
+    @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
+    private String reagentDesignKey;
+
+    @Transient
+    private Quote cachedQuote;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -293,8 +314,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     /**
      * Helper method to take specific basic elements of a Product Order for the purposes of creating a new cloned order
-     * @param toClone Original order to be cloned AND set as the parent of the cloned order
+     *
+     * @param toClone       Original order to be cloned AND set as the parent of the cloned order
      * @param shareSapOrder Indicates whether the cloned order will refer to the original orders SAP order reference
+     *
      * @return A new Product Order which has certain elements copied from the original order
      */
     public static ProductOrder cloneProductOrder(ProductOrder toClone, boolean shareSapOrder) {
@@ -305,17 +328,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 toClone.getResearchProject());
         List<Product> potentialAddons = new ArrayList<>();
 
-        for(ProductOrderAddOn cloneAddon : toClone.getAddOns()) {
+        for (ProductOrderAddOn cloneAddon : toClone.getAddOns()) {
             potentialAddons.add(cloneAddon.getAddOn());
         }
-        if(CollectionUtils.isNotEmpty(potentialAddons)) {
+        if (CollectionUtils.isNotEmpty(potentialAddons)) {
             cloned.updateAddOnProducts(potentialAddons);
         }
 
         if (shareSapOrder & toClone.isSavedInSAP()) {
             cloned.addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
                     toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
-                    toClone.latestSapOrderDetail().getCompanyCode(), toClone.latestSapOrderDetail().getOrderProductsHash(),toClone.latestSapOrderDetail().getOrderPricesHash()));
+                    toClone.latestSapOrderDetail().getCompanyCode(),
+                    toClone.latestSapOrderDetail().getOrderProductsHash(),
+                    toClone.latestSapOrderDetail().getOrderPricesHash()));
         }
 
         toClone.addChildOrder(cloned);
@@ -323,7 +348,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return cloned;
     }
 
-    public static List<Product> getAllProductsOrdered(ProductOrder order ) {
+    public static List<Product> getAllProductsOrdered(ProductOrder order) {
         List<Product> orderedListOfProducts = new ArrayList<>();
         orderedListOfProducts.add(order.getProduct());
         for (ProductOrderAddOn addOn : order.getAddOns()) {
@@ -336,6 +361,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     /**
      * helper method to see if at least one ledger entries across the collection of product order samples is marked
      * as having completed billing.
+     *
      * @return
      */
     public boolean hasAtLeastOneBilledLedgerEntry() {
@@ -355,8 +381,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * Used for test purposes only.
      */
     public ProductOrder(@Nonnull Long creatorId, @Nonnull String title,
-                        @Nonnull List<ProductOrderSample> samples, String quoteId,
-                        Product product, ResearchProject researchProject) {
+            @Nonnull List<ProductOrderSample> samples, String quoteId,
+            Product product, ResearchProject researchProject) {
 
         // Set the dates and modified values so that tests don't have to call prepare and will never create bogus
         // data. Before adding this, tests were being created with null values, which caused problems, so taking out
@@ -469,41 +495,77 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @see SampleDataFetcher
      */
     public static void loadSampleData(List<ProductOrderSample> samples,
-                                      BSPSampleSearchColumn... bspSampleSearchColumns) {
+            BSPSampleSearchColumn... bspSampleSearchColumns) {
 
-        // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
-        Set<String> sampleNames = new HashSet<>(samples.size());
+        // If sample data has already been looked up, avoids a call to BSP for sample data.
+        // Also skips the associated injections which could cause DB Free tests to fail.
+        boolean hasUninitializedSampleData = false;
+        Multimap<String, ProductOrderSample> mercurySampleLookups = HashMultimap.create();
         for (ProductOrderSample productOrderSample : samples) {
             if (!productOrderSample.isHasBspSampleDataBeenInitialized()) {
-                sampleNames.add(productOrderSample.getName());
+                hasUninitializedSampleData = true;
+                if (productOrderSample.getMercurySample() == null) {
+                    mercurySampleLookups.put(productOrderSample.getName(), productOrderSample);
+                }
             }
         }
-        if (sampleNames.isEmpty()) {
-            // This early return is needed to avoid making a unnecessary injection, which could cause
-            // DB Free automated tests to fail.
+        if (!hasUninitializedSampleData) {
             return;
         }
+        // Puts a mercury sample link on the PDO samples that don't have one.
+        if (!mercurySampleLookups.isEmpty()) {
+            // Lookup mercury samples using pdo sample names.
+            MercurySampleDao mercurySampleDao = ServiceAccessUtility.getBean(MercurySampleDao.class);
+            Map<String, MercurySample> mercurySamples = mercurySampleDao.findMapIdToMercurySample(
+                    mercurySampleLookups.keySet());
+            for (String sampleName : mercurySamples.keySet()) {
+                MercurySample mercurySample = mercurySamples.get(sampleName);
+                for (ProductOrderSample productOrderSample : mercurySampleLookups.get(sampleName)) {
+                    mercurySample.addProductOrderSample(productOrderSample);
+                }
+            }
 
-        // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
-        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> sampleDataMap = Collections.emptyMap();
-
-        try {
-            sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(samples, bspSampleSearchColumns);
-        } catch (BSPLookupException ignored) {
-            // not a bsp sample?
+            // Lookup lab vessels using pdo sample names.
+            LabVesselDao labVesselDao = ServiceAccessUtility.getBean(LabVesselDao.class);
+            for (LabVessel vessel : labVesselDao.findByListIdentifiers(
+                    new ArrayList<>(mercurySampleLookups.keySet()))) {
+                String barcode = vessel.getLabel();
+                // Check if pdo sample name refers to both a tube barcode and a mercury sample name. If the tube and
+                // sample are unrelated, throw an exception since Mercury cannot figure out which one is intended.
+                if (mercurySamples.containsKey(barcode)) {
+                    MercurySample mercurySample = mercurySamples.get(barcode);
+                    if (!vessel.getMercurySamples().contains(mercurySample)) {
+                        throw new RuntimeException(String.format(AMBIGUOUS_PDO_SAMPLE, barcode));
+                    }
+                } else {
+                    // If the tube contains multiple samples, the pdo sample should not have a mercury sample link.
+                    // Ordering, bucketing, and billing must be done as one item.
+                    if (vessel.getMercurySamples() != null && vessel.getMercurySamples().size() == 1) {
+                        MercurySample mercurySample = vessel.getMercurySamples().iterator().next();
+                        for (ProductOrderSample productOrderSample : mercurySampleLookups.get(vessel.getLabel())) {
+                            mercurySample.addProductOrderSample(productOrderSample);
+                        }
+                    }
+                }
+            }
         }
 
-        // Collect SampleData which we will then use to look up FFPE status.
+        // Fetches sample data for BSP and Mercury samples.
+        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(samples,
+                bspSampleSearchColumns);
+
         List<SampleData> nonNullSampleData = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
-            SampleData sampleData = sampleDataMap.get(sample.getName());
-
-            // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
+            MercurySample mercurySample = sample.getMercurySample();
+            SampleData sampleData = sampleDataMap.containsKey(sample.getSampleKey()) ?
+                    sampleDataMap.get(sample.getSampleKey()) : mercurySample != null ?
+                    sampleDataMap.get(mercurySample.getSampleKey()) : null;
             if (sampleData != null) {
                 sample.setSampleData(sampleData);
                 nonNullSampleData.add(sampleData);
             } else {
+                // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
                 sample.setSampleData(sample.makeSampleData());
             }
         }
@@ -552,7 +614,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public int getLaneCount() {
-        return (isChildOrder())?parentOrder.getLaneCount():laneCount;
+        return laneCount;
     }
 
     public void setLaneCount(int laneCount) {
@@ -578,18 +640,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
                            List<ProductOrderSample> samples) throws InvalidProductException {
         updateAddOnProducts(addOnProducts);
-        if(product != null && !product.equals(this.product)) {
-            this.clearCustomPriceAdjustment();
-            if(product.getSapMaterial() != null) {
-                if(product.isExternalOnlyProduct() || product.isClinicalProduct()) {
-                    final ProductOrderPriceAdjustment priceAdjustment = new ProductOrderPriceAdjustment();
-                    priceAdjustment.setAdjustmentValue(new BigDecimal(product.getSapMaterial().getBasePrice()));
-                    this.addCustomPriceAdjustment(priceAdjustment);
-                }
-            }
-        } else if (product == null) {
-            this.clearCustomPriceAdjustment();
-        }
+        this.clearCustomPriceAdjustment();
         setProduct(product);
         setResearchProject(researchProject);
         setSamples(samples);
@@ -601,7 +652,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @return The number of samples calculated to be on risk.
      */
     public int calculateRisk(List<ProductOrderSample> selectedSamples) {
-        // Load the bsp data for the selected samples
+        // Load the sample data for the selected samples
         loadSampleData(selectedSamples);
 
         Set<String> uniqueSampleNamesOnRisk = new HashSet<>();
@@ -693,7 +744,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public List<ProductOrderAddOn> getAddOns() {
-        return isChildOrder()?parentOrder.getAddOns():ImmutableList.copyOf(addOns);
+        return ImmutableList.copyOf(addOns);
     }
 
     public void updateAddOnProducts(List<Product> addOnList) {
@@ -734,7 +785,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public ResearchProject getResearchProject() {
-        return isChildOrder()?parentOrder.getResearchProject():researchProject;
+        return researchProject;
     }
 
     public void setResearchProject(ResearchProject researchProject) {
@@ -748,7 +799,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public Product getProduct() {
-        return isChildOrder()?parentOrder.getProduct():product;
+        return product;
     }
 
     public void setProduct(Product product) throws InvalidProductException {
@@ -761,10 +812,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getQuoteId() {
-        return isChildOrder()?parentOrder.getQuoteId():quoteId;
+        return quoteId;
     }
 
     public void setQuoteId(String quoteId) {
+        if (!StringUtils.equals(this.quoteId, quoteId)) {
+            cachedQuote = null;
+        }
         this.quoteId = quoteId;
     }
 
@@ -979,7 +1033,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
-     * Use the BSP Manager to load the bsp data for every sample in this product order.
+     * Fetches sample data for every sample in this product order.
      */
     public void loadSampleData() {
         loadSampleData(samples);
@@ -1166,7 +1220,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
 
     public Collection<RegulatoryInfo> getRegulatoryInfos() {
-        return isChildOrder()?parentOrder.getRegulatoryInfos():regulatoryInfos;
+        return regulatoryInfos;
     }
 
     /**
@@ -1235,7 +1289,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getSkipQuoteReason() {
-        return isChildOrder()?parentOrder.getSkipQuoteReason():skipQuoteReason;
+        return skipQuoteReason;
     }
 
     public void setSkipQuoteReason(String skipQuoteReason) {
@@ -1243,7 +1297,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getSkipRegulatoryReason() {
-        return isChildOrder()?parentOrder.getSkipRegulatoryReason():skipRegulatoryReason;
+        return skipRegulatoryReason;
     }
 
     public void setSkipRegulatoryReason(String skipRegulatoryReason) {
@@ -1656,7 +1710,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 return;
             }
 
-            // This gets the BSP data for every sample in the order.
+            // This gets the sample data for every sample in the order.
             loadSampleData();
 
             // Initialize all counts.
@@ -1925,7 +1979,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
 
     public Boolean isAttestationConfirmed() {
-        return isChildOrder()?parentOrder.getAttestationConfirmed():getAttestationConfirmed();
+        return getAttestationConfirmed();
     }
 
     public Boolean getAttestationConfirmed() {
@@ -2002,17 +2056,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      *
      * @return List of all Workflows associated with the ProductOrder
      */
-    public List<Workflow> getProductWorkflows() {
-        List<Workflow> workflows = new ArrayList<>();
+    public List<String> getProductWorkflows() {
+        List<String> workflows = new ArrayList<>();
         for (ProductOrderAddOn addOn : getAddOns()) {
-            Workflow addOnWorkflow = addOn.getAddOn().getWorkflow();
-            if (addOnWorkflow != Workflow.NONE) {
+            String addOnWorkflow = addOn.getAddOn().getWorkflowName();
+            if (addOnWorkflow != null) {
                 workflows.add(addOnWorkflow);
             }
         }
 
-        Workflow workflow = getProduct().getWorkflow();
-        if (workflow != Workflow.NONE) {
+        String workflow = getProduct().getWorkflowName();
+        if (workflow != null) {
             workflows.add(workflow);
         }
         return workflows;
@@ -2182,13 +2236,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public OrderAccessType getOrderType() {
-        return isChildOrder() ? getParentOrder().orderType: orderType;
+        return orderType;
     }
 
     public void setOrderType(OrderAccessType orderType) {
-        if (!isChildOrder()) {
             this.orderType = orderType;
-        }
     }
 
     public String getOrderTypeDisplay() {
@@ -2203,7 +2255,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public Boolean isClinicalAttestationConfirmed() {
-        return isChildOrder() ? parentOrder.getClinicalAttestationConfirmed() : getClinicalAttestationConfirmed();
+        return getClinicalAttestationConfirmed();
     }
 
     public Boolean getClinicalAttestationConfirmed() {
@@ -2226,6 +2278,25 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setAnalyzeUmiOverride(boolean analyzeUmiOverride) {
         this.analyzeUmiOverride = analyzeUmiOverride;
+    }
+
+    /**
+     * @return - Reagent Design set on Product if its 'Bait Locked', otherwise check the PDO for override else default
+     * back to whatever the product says.
+     */
+    public String getReagentDesignKey() {
+        if (product != null) {
+            if (product.getBaitLocked()) {
+                return product.getReagentDesignKey();
+            } else {
+                return reagentDesignKey != null ? reagentDesignKey : product.getReagentDesignKey();
+            }
+        }
+        return reagentDesignKey;
+    }
+
+    public void setReagentDesignKey(String reagentDesignKey) {
+        this.reagentDesignKey = reagentDesignKey;
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
@@ -2259,9 +2330,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public boolean allOrdersAreComplete() {
 
         boolean completeFlag = false;
-        if (isChildOrder() && StringUtils.equals(getParentOrder().getSapOrderNumber(), getSapOrderNumber())) {
-            completeFlag = getParentOrder().allOrdersAreComplete();
-        } else {
             completeFlag = getOrderStatus() == OrderStatus.Completed;
 
             for (ProductOrder childProductOrder : getChildOrders()) {
@@ -2273,7 +2341,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     }
                 }
             }
-        }
         return completeFlag;
     }
 
@@ -2287,16 +2354,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public static ProductOrder getTargetSAPProductOrder(ProductOrder productOrder) {
         ProductOrder returnOrder;
-        if(productOrder.isChildOrder()) {
-            final ProductOrder parentOrder = productOrder.getParentOrder();
-
-            final String sapOrderNumber = parentOrder.getSapOrderNumber();
-
-            boolean sameSAPOrderAsParent = sharesSAPOrderWithParent(productOrder, sapOrderNumber);
-            returnOrder = sameSAPOrderAsParent ? parentOrder : productOrder;
-        } else {
             returnOrder = productOrder;
-        }
         return returnOrder;
     }
 
@@ -2367,19 +2425,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
         }
     }
-
-    /**
-     * Encapsulates the conditional logic to determine if a given product order not only has a parent order but also if
-     * that parent order shares an sap order with the given product order
-     * @param childOrder            target order to determine if its parent shares the same sap number
-     * @param parentSAPOrderNumber  SAP number to compare between PDOs
-     * @return
-     */
-    public static boolean sharesSAPOrderWithParent(ProductOrder childOrder, String parentSAPOrderNumber) {
-        return childOrder.isChildOrder() && StringUtils
-                .equals(childOrder.getSapOrderNumber(), parentSAPOrderNumber);
-    }
-
 
     public void updateSapDetails(int sampleCount, String productListHash, String pricesForProducts) {
         final SapOrderDetail sapOrderDetail = latestSapOrderDetail();

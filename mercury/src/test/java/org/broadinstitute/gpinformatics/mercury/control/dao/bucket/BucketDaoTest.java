@@ -18,6 +18,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Collections;
@@ -31,7 +32,10 @@ import java.util.List;
  *         Time: 1:05 PM
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class BucketDaoTest extends StubbyContainerTest {
+
+    public BucketDaoTest(){}
 
     public static final String EXTRACTION_BUCKET_NAME = "Extraction Bucket";
     @Inject

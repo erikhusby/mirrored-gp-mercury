@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselFixupTest;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -366,5 +367,34 @@ public class SequencingRunFixupTest extends Arquillian {
         illuminaSequencingRunDao.flush();
 
         utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateRunFolder.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * PO-136444 run folder moved after registration
+     * 180721_SL-MAC_0453_FC000000000-BV4PM /crsp/illumina2/proc/SL-HDD/run_transfers/BV4PM
+     */
+    @Test(enabled = false)
+    public void fixupPo13644ChangeRunFolder() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> sampleUpdateLines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateRunFolder.txt"));
+
+        for(int i = 1; i < sampleUpdateLines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(sampleUpdateLines.get(i));
+            if(fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + sampleUpdateLines.get(i));
+            }
+            IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(fields[0]);
+
+            Assert.assertNotNull(run, fields[0] + " not found");
+            final String newRunFolder = fields[1];
+            System.out.println("Changing " + run.getRunDirectory() + " to " + newRunFolder);
+            run.setRunDirectory(newRunFolder);
+        }
+
+        illuminaSequencingRunDao.persist(new FixupCommentary(sampleUpdateLines.get(0)));
+        illuminaSequencingRunDao.flush();
     }
 }

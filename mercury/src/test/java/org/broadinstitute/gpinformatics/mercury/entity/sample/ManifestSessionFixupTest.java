@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
@@ -35,7 +34,9 @@ import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -56,9 +57,6 @@ public class ManifestSessionFixupTest extends Arquillian {
 
     @Inject
     private MercurySampleDao mercurySampleDao;
-
-    @Inject
-    private LabEventDao labEventDao;
 
     @Inject
     private ManifestSessionEjb manifestSessionEjb;
@@ -219,6 +217,7 @@ public class ManifestSessionFixupTest extends Arquillian {
     }
 
     /**
+     * @deprecated use fixupCrsp616, it can handle more cases
      * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateManifestSession.txt, so
      * it can be used for other similar fixups, without writing a new test.
      * Line 1 is the fixup commentary.
@@ -230,6 +229,7 @@ public class ManifestSessionFixupTest extends Arquillian {
      * 1125699613	TUMOR_NORMAL	Normal
      * 1125699614	TUMOR_NORMAL	Normal
      */
+    @Deprecated
     @Test(enabled = false)
     public void fixupCrsp538() throws IOException {
         userBean.loginOSUser();
@@ -255,6 +255,59 @@ public class ManifestSessionFixupTest extends Arquillian {
             }
         }
         Assert.assertTrue(found);
+
+        manifestSessionDao.persist(new FixupCommentary(fixupComment));
+        manifestSessionDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateManifestSession.txt, so
+     * it can be used for other similar fixups, without writing a new test.
+     * Line 1 is the fixup commentary.
+     * Line 2 is the session prefix.
+     * Line 3 and subsequent are SAMPLE_ID or BROAD_SAMPLE_ID\tMetadata.Key\tvalue.
+     * Example contents of the file are:
+     * CRSP-616
+     * ORDER-15598
+     * SM-DPE8N	BROAD_SAMPLE_ID	SM-H24UB
+     * SM-H24UB	BROAD_SAMPLE_ID	SM-DPE8N
+     */
+    @Test(enabled = false)
+    public void fixupCrsp616() throws IOException {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateManifestSession.txt"));
+        String fixupComment = lines.get(0);
+        String sessionPrefix = lines.get(1);
+
+        boolean found = false;
+        Map<String, ManifestRecord> mapSampleIdToRecord = new HashMap<>();
+        for (ManifestSession manifestSession : manifestSessionDao.findOpenSessions()) {
+            if (manifestSession.getSessionName().startsWith(sessionPrefix)) {
+                found = true;
+                for (String line : lines.subList(2, lines.size())) {
+                    String[] fields = TAB_PATTERN.split(line);
+                    if (fields.length != 3) {
+                        throw new RuntimeException("Expected three tab separated fields in " + line);
+                    }
+                    String sampleId = fields[0];
+                    ManifestRecord manifestRecord = manifestSession.getRecordWithMatchingValueForKey(
+                            Metadata.Key.SAMPLE_ID, sampleId);
+                    if (manifestRecord == null) {
+                        manifestRecord = manifestSession.getRecordWithMatchingValueForKey(
+                                Metadata.Key.BROAD_SAMPLE_ID, sampleId);
+                    }
+                    Assert.assertNotNull(manifestRecord, sampleId);
+                    mapSampleIdToRecord.put(sampleId, manifestRecord);
+                }
+                break;
+            }
+        }
+        Assert.assertTrue(found);
+        for (String line : lines.subList(2, lines.size())) {
+            String[] fields = TAB_PATTERN.split(line);
+            ManifestRecord manifestRecord = mapSampleIdToRecord.get(fields[0]);
+            manifestRecord.getMetadataByKey(Metadata.Key.valueOf(fields[1])).setStringValue(fields[2]);
+        }
 
         manifestSessionDao.persist(new FixupCommentary(fixupComment));
         manifestSessionDao.flush();

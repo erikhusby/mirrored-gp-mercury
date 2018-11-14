@@ -71,6 +71,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.SquidLink;
@@ -88,9 +89,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -116,6 +117,7 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRang
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
@@ -138,6 +140,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -307,6 +310,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private OrspProjectDao orspProjectDao;
+
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
 
     private SapIntegrationService sapService;
 
@@ -762,9 +768,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
+        Quote quote = validateQuote(editOrder);
 
-        String quoteId = editOrder.getQuoteId();
-        Quote quote = validateQuoteId(quoteId);
         try {
             if (quote != null) {
                 ProductOrder.checkQuoteValidity(quote);
@@ -788,33 +793,36 @@ public class ProductOrderActionBean extends CoreActionBean {
                 validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
         } catch (QuoteServerException e) {
-            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
         } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " +
-                                     quoteId +": " +e.getMessage());
+                                     editOrder.getQuoteId() +": " +e.getMessage());
             logger.error(e);
         }
 
         if (editOrder != null) {
             validateRinScores(editOrder);
+
+            if (editOrder.getProduct() != null) {
+                if (editOrder.getProduct().getBaitLocked() == null || !editOrder.getProduct().getBaitLocked()) {
+                    requireField(editOrder.getReagentDesignKey(), "a reagent design", action);
+                }
+            }
         }
     }
 
     /**
      * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
      * remaining on the quote
-     *
-     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *  @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
      *                  collection of orders to include in evaluating and the funds remaining
      * @param errorLevel indicator for if the user should see a validation error or just a warning
-     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
-     *                        Pending
      */
-    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders)
+    private void validateQuoteDetails(ProductOrder productOrder, final ErrorLevel errorLevel, boolean countOpenOrders)
             throws InvalidProductException, SAPIntegrationException {
-        Quote quote = validateQuoteId(quoteId);
+        Quote quote = validateQuote(productOrder);
 
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, 0);
@@ -827,18 +835,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      * refelcted on the order.
      *
      * The scenario for this is when the user clicks on the "Add Samples" button of a placed order
-     *
-     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *  @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
      *                  collection of orders to include in evaluating and the funds remaining
      * @param errorLevel indicator for if the user should see a validation error or just a warning
      * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
-     *                        Pending
+ *                        Pending
      * @param additionalSamplesCount Number of extra samples to be considered which are not currently
      */
-    private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
+    private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder, final ErrorLevel errorLevel,
                                                       boolean countOpenOrders, int additionalSamplesCount)
             throws InvalidProductException, QuoteServerException, SAPIntegrationException {
-        Quote quote = validateQuoteId(quoteId);
+        Quote quote = validateQuote(productOrder);
         ProductOrder.checkQuoteValidity(quote);
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
@@ -865,7 +872,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, (editOrder.isChildOrder())?editOrder.getParentOrder():editOrder);
+        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
         double valueOfCurrentOrder = 0;
 
         if (fundsRemaining <= 0d ||
@@ -944,19 +951,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         Set<ProductOrder> justParents = new HashSet<>();
         for (ProductOrder order : ordersWithCommonQuote) {
-            if(order.isChildOrder()) {
-                if((order.getParentOrder().isSavedInSAP() && exclusionSapOrders.contains(order.getParentOrder().getSapOrderNumber())) ||
-                   (order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber()))) {
-                    continue;
-                }
-                justParents.add(order.getParentOrder());
-
-            } else {
-                if(order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber())) {
-                    continue;
-                }
-                justParents.add(order);
+            if(order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber())) {
+                continue;
             }
+            justParents.add(order);
         }
 
         for (ProductOrder testOrder : justParents) {
@@ -1335,13 +1333,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             populateAttributes(editOrder.getProductOrderId());
 
-            try {
-                buildJsonCustomizationsFromProductOrder(editOrder);
-            } catch (JSONException e) {
-                if(userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
-                    addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
-                }
-            }
+            buildCustomizationHelper();
 
             QuotePriceItem priceItemByKeyFields = null;
             if (editOrder.getProduct() != null) {
@@ -1357,6 +1349,21 @@ public class ProductOrderActionBean extends CoreActionBean {
                 if (addOnPriceItemByKeyFields != null ) {
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
                 }
+            }
+        }
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    public void viewPageInit() {
+        buildCustomizationHelper();
+    }
+
+    public void buildCustomizationHelper() {
+        try {
+            buildJsonCustomizationsFromProductOrder(editOrder);
+        } catch (JSONException e) {
+            if (userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
+                addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
             }
         }
     }
@@ -1477,7 +1484,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         if (editOrder == null) {
-            addGlobalValidationError("A PDO named '" + productOrder + "' could not be found.");
+            addGlobalValidationError("A PDO named '" + Encode.forHtml(productOrder) +
+                    "' could not be found.");
             Resolution errorResolution;
 
             try {
@@ -1776,7 +1784,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             there is an issue
             */
             if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
+                validateQuoteDetails(editOrder, ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
             }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
@@ -2055,7 +2063,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray jsonResults = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
-        if (!getSampleList().isEmpty() && !editOrder.isChildOrder()) {
+        if (!getSampleList().isEmpty()) {
             List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
             // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
             ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
@@ -2404,6 +2412,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             productInfo.put("clinicalProduct", productEntity.isClinicalProduct());
             productInfo.put("externalProduct", productEntity.isExternalOnlyProduct());
             productInfo.put("productName", productEntity.getName());
+            productInfo.put("baitLocked", productEntity.getBaitLocked());
             String priceTitle = "researchListPrice";
 
             if(productEntity.isExternalOnlyProduct()) {
@@ -2624,6 +2633,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
 
             addMessages(abandonSamplesMessageCollection);
+        } else {
+            addMessage("You cannot abandon samples since have not selected any samples that are eligible to abandon");
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
@@ -2654,7 +2665,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void addSampleExtraValidations() throws Exception {
         try {
             if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetailsWithAddedSamples(editOrder.getQuoteId(), ErrorLevel.ERROR,
+                validateQuoteDetailsWithAddedSamples(editOrder, ErrorLevel.ERROR,
                         !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());
             }
         } catch (QuoteServerException e) {
@@ -3625,7 +3636,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private Map<String, AttributeDefinition> getPdoAttributeDefinitions() {
         if (pdoSpecificDefinitions == null) {
-            pdoSpecificDefinitions = attributeArchetypeDao.findAttributeGroupByTypeAndName(
+            pdoSpecificDefinitions = attributeArchetypeDao.findAttributeNamesByTypeAndGroup(
                     AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
                     GenotypingProductOrderMapping.ATTRIBUTES_GROUP);
         }
@@ -3791,5 +3802,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public Boolean canEditPrice(String units) {
         return StringUtils.equalsIgnoreCase(units, "Sample") && (userBean.isPDMUser() || userBean.isDeveloperUser()) || !StringUtils.equalsIgnoreCase(units, "Sample") ;
+    }
+
+    /**
+     * Get the list of available reagent designs.
+     *
+     * @return List of strings representing the reagent designs
+     */
+    public Collection<DisplayableItem> getReagentDesigns() {
+        return makeDisplayableItemCollection(reagentDesignDao.findAll());
     }
 }

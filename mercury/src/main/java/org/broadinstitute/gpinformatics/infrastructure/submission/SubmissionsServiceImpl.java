@@ -1,14 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.common.QueryStringSplitter;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.Dependent;
@@ -162,7 +165,8 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             return JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
                     MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
         } catch (Exception e) {
-            throw new InformaticsServiceException("Error communicating with Submissions server. Please contact support using the <span class='badge'>Feedback</span> link above", e);
+            throw new InformaticsServiceException(
+                "Error communicating with Submissions server. " + CoreActionBean.ERROR_CONTACT_SUPPORT, e);
         }
     }
 
@@ -198,4 +202,26 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             throw new InformaticsServiceException(errorMessage);
         }
     }
+
+    /**
+     * Queries the SubmissionService to determine if a UUID has been submitted.
+     */
+    @Override
+    public List<SubmissionTracker> findOrphans(Map<String, SubmissionTracker> submissionTrackerMap) {
+        List<SubmissionTracker> orphans = new ArrayList<>();
+
+        // Since the SubmissionService does not return the submitted sample name in it's response it is necessary to
+        // look up all the submission statuses to find if the submission exists on the Epsilon 9.
+        if (CollectionUtils.isNotEmpty(submissionTrackerMap.keySet())) {
+            Collection<SubmissionStatusDetailBean> submissionStatus =
+                getSubmissionStatus(submissionTrackerMap.keySet().toArray(new String[0]));
+            for (SubmissionStatusDetailBean status : submissionStatus) {
+                if (!status.submissionServiceHasRequest()) {
+                    orphans.add(submissionTrackerMap.get(status.uuid));
+                }
+            }
+        }
+        return orphans;
+    }
+
 }

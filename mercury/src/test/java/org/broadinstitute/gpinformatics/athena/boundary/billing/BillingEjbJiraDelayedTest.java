@@ -55,7 +55,11 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class BillingEjbJiraDelayedTest extends Arquillian {
+
+    public BillingEjbJiraDelayedTest(){}
+
     private static boolean failQuoteCall = false;
     private static boolean inContainer = true;
     @Inject
@@ -92,6 +96,9 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     @Dependent
     protected static class DelayedJiraService extends
             ConcurrentProductOrderDoubleCreateTest.ControlBusinessKeyJiraService {
+
+        public DelayedJiraService(){}
+
         @Override
         public JiraIssue getIssue(String key) throws IOException {
             try {
@@ -111,6 +118,8 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     @Alternative
     @ApplicationScoped
     protected static class QuoteServiceStubWithWait implements QuoteService {
+
+        public QuoteServiceStubWithWait(){}
 
         private static final long serialVersionUID = 6093273925949722169L;
 

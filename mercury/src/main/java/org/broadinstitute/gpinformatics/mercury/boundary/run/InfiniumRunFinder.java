@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -36,6 +35,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Finds pending infinium chip runs and forwards them on to analysis.
@@ -48,9 +48,6 @@ public class InfiniumRunFinder implements Serializable {
 
     @Inject
     private InfiniumRunProcessor infiniumRunProcessor;
-
-    @Inject
-    private BettaLimsMessageResource bettaLimsMessageResource;
 
     @Inject
     private InfiniumPipelineClient infiniumPipelineClient;
@@ -87,14 +84,21 @@ public class InfiniumRunFinder implements Serializable {
             userBean.login("seqsystem");
             List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
                     LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
-            for (LabVessel labVessel : infiniumChips) {
+            List<String> barcodes = infiniumChips.stream().map(LabVessel::getLabel).collect(Collectors.toList());
+            for (String barcode : barcodes) {
                 if (labEventDao != null && labEventDao.getEntityManager() != null &&
-                    labEventDao.getEntityManager().isOpen()) {
+                        labEventDao.getEntityManager().isOpen()) {
                     UserTransaction utx = ejbContext.getUserTransaction();
                     try {
+                        // Clear the session, then fetch each chip individually, otherwise many chips will accumulate.
+                        // This accumulation would take progressively longer to dirty check during the flush after
+                        // each chip.  For 75 chips, the overall time is reduced from 1m20s to 15s.
+                        labVesselDao.clear();
+                        LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
                         if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
                             StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
                             utx.begin();
+                            log.debug("Processing " + staticPlate.getLabel());
                             processChip(staticPlate);
                             // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
                             labEventDao.flush();
@@ -102,12 +106,11 @@ public class InfiniumRunFinder implements Serializable {
                         }
                     } catch (Exception e) {
                         utx.rollback();
-                        log.error("Failed to process chip " + labVessel.getLabel(), e);
+                        log.error("Failed to process chip " + barcode, e);
                         emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                                Collections.<String>emptyList(),
-                                "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
-                                                                             " with error: " + e.getMessage(),
-                                false);
+                                Collections.emptyList(), "[Mercury] Failed to process infinium chip",
+                                "For " + barcode + " with error: " + e.getMessage(),
+                                false, true);
                     }
                 }
             }
@@ -224,9 +227,9 @@ public class InfiniumRunFinder implements Serializable {
         String subject = "[Mercury] Failed to find scanner name for infinium chip " + staticPlate.getLabel();
         String body = "Defaulted scanner name to be " + staticPlate.getLabel() + " for starter events";
         emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                Collections.<String>emptyList(),
+                Collections.emptyList(),
                 subject, body,
-                false);
+                false, true);
     }
 
     /**

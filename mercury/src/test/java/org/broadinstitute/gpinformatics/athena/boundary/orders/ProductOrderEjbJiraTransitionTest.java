@@ -18,6 +18,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,7 +30,10 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class ProductOrderEjbJiraTransitionTest extends Arquillian {
+
+    public ProductOrderEjbJiraTransitionTest(){}
 
     private String PDO;
     private static final String OLD_PDO = "PDO-4458";

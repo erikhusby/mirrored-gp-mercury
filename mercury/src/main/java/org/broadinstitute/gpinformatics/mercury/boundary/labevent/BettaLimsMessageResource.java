@@ -61,6 +61,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -261,7 +262,7 @@ public class BettaLimsMessageResource {
                 log.error(e.getMessage());
             }
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                    Collections.<String>emptyList(), "[Mercury] Failed to process message", e.getMessage(), false);
+                    Collections.<String>emptyList(), "[Mercury] Failed to process message", e.getMessage(), false, true);
             throw e;
         }
     }
@@ -446,11 +447,13 @@ public class BettaLimsMessageResource {
         }
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
-            labEventHandler.processEvent(labEvent);
+            if (!Objects.equals(message.getMode(), LabEventFactory.MODE_BACKFILL)) {
+                labEventHandler.processEvent(labEvent);
+            }
             if (labEvent.hasAmbiguousLcsetProblem()) {
                 emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
                         "[Mercury] Vessels have ambiguous LCSET", "After " + labEvent.getLabEventType().getName() +
-                                                                  " (" + labEvent.getLabEventId() + ")", false);
+                                                                  " (" + labEvent.getLabEventId() + ")", false, true);
             }
         }
     }

@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.ws.rs.core.MediaType;
@@ -28,7 +29,10 @@ import java.util.List;
  * In preparation for testing Mercury by sending it BettaLIMS production messages, import data from BSP.
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class ImportFromBspTest extends StubbyContainerTest {
+
+    public ImportFromBspTest(){}
 
     //    @PersistenceContext(unitName = "gap_pu")
     private EntityManager entityManager;

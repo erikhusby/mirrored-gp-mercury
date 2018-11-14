@@ -116,6 +116,20 @@
                 );
             }
         }
+
+        function validateNumberOfLanes() {
+            var numberOfLanes = $j("#numberOfLanes");
+            var lanesFieldDiv = $j("#numberOfLanesDiv");
+            var productOrderKey = $j("input[name='productOrder']");
+
+            if (lanesFieldDiv.css('display') !== 'none' && lanesFieldDiv.css("visibility") !== 'hidden' &&
+                lanesFieldDiv.css('opacity') !== 0 && numberOfLanes.length && productOrderKey.val().includes("Draft")) {
+                return confirm(numberOfLanes.val() + " for the total number of lanes on the order\n\n" +
+                    "By Clicking 'OK' you are declaring that you wish to accept the entered number of lanes for the entire order.  Do you wish to continue?")
+            }
+            
+            return true;
+        }
         $j(document).ready(
 
                 function () {
@@ -284,7 +298,9 @@
                     $j("#owner").tokenInput(
                             "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                 hintText: "Type a name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                                </enhance:out>
                                 tokenLimit: 1,
                                 tokenDelimiter: "${actionBean.owner.separator}",
                                 resultsFormatter: formatInput,
@@ -292,21 +308,20 @@
                             }
                     );
 
-                    <c:if test="${!actionBean.editOrder.childOrder}">
                     $j("#researchProject").tokenInput(
                             "${ctxpath}/projects/project.action?projectAutocomplete=", {
                                 hintText: "Type a Research Project key or title",
                                 onAdd: updateUIForProjectChoice,
                                 onDelete: updateUIForProjectChoice,
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                                </enhance:out>
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.projectTokenInput.separator}",
                                 tokenLimit: 1,
                                 autoSelectFirstResult: true
                             }
                     );
-                    </c:if>
-                    <c:if test="${!actionBean.editOrder.childOrder}">
                     $j("#product").tokenInput(
                             "${ctxpath}/orders/order.action?productAutocomplete=", {
                                 hintText: "Type a Product name or Part Number   ",
@@ -314,17 +329,20 @@
                                 onDelete: updateUIForProductChoice,
                                 onChange: resetCustomizationChoices,
                                 resultsFormatter: formatInput,
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.productTokenInput.separator}",
                                 tokenLimit: 1,
                                 autoSelectFirstResult: true
                             }
                     );
-                    </c:if>
                     $j("#kitCollection").tokenInput(
                             "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
                                 hintText: "Search for group and collection",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.getCompleteData(!actionBean.editOrder.draft)) },
+                                </enhance:out>
                                 onAdd: updateUIForCollectionChoice,
                                 onDelete: updateUIForCollectionChoice,
                                 resultsFormatter: formatInput,
@@ -337,7 +355,9 @@
                     $j("#shippingLocation").tokenInput(
                             getShippingLocationURL, {
                                 hintText: "Search for shipping location",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.getCompleteData(!actionBean.editOrder.draft))},
+                                </enhance:out>
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
                                 tokenLimit: 1,
@@ -348,7 +368,9 @@
                     $j("#notificationList").tokenInput(
                             "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
                                 hintText: "Enter a user name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.getCompleteData(!actionBean.editOrder.draft))},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput,
@@ -493,6 +515,22 @@
                         initializeOrderCustomValues();
                         showCustomProductInfoDialog();
                     });
+
+                    <c:choose>
+                        <c:when test="${empty actionBean.editOrder.product}">
+                            $j('#reagentDesignGroup').hide();
+                        </c:when>
+                        <c:otherwise>
+                            <c:choose>
+                                <c:when test="${actionBean.editOrder.product.baitLocked}">
+                                    $j('#reagentDesignGroup').hide();
+                                </c:when>
+                                <c:otherwise>
+                                    $j('#reagentDesignGroup').show();
+                                </c:otherwise>
+                            </c:choose>
+                        </c:otherwise>
+                    </c:choose>
                 }
         );
 
@@ -874,6 +912,10 @@
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
                 $j("#primaryProductListPrice").show();
+            }
+
+            if (!data.baitLocked) {
+                $j('#reagentDesignGroup').show();
             }
             </security:authorizeBlock>
 
@@ -1426,35 +1468,12 @@
                                 Research Project
                             </stripes:label>
                             <div class="controls">
-                                <c:choose>
-                                    <c:when test="${actionBean.editOrder.childOrder}">
-                                        <div class="form-value">
-                                            <stripes:hidden id="researchProject" name="projectTokenInput.listOfKeys"
-                                                            value="${actionBean.editOrder.researchProject.jiraTicketKey}"/>
-                                            <stripes:link title="Research Project"
-                                                          beanclass="<%=ResearchProjectActionBean.class.getName()%>"
-                                                          event="view">
-                                                <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>"
-                                                               value="${actionBean.editOrder.researchProject.businessKey}"/>
-                                                ${actionBean.editOrder.researchProject.title}
-                                            </stripes:link>
-                                            (<a target="JIRA"
-                                                href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}"
-                                                class="external" target="JIRA">
-                                                ${actionBean.editOrder.researchProject.jiraTicketKey}
-                                        </a>)
-                                        </div>
-
-                                    </c:when>
-                                    <c:otherwise>
                                         <stripes:text
                                                 readonly="${not actionBean.editOrder.draft}"
                                                 id="researchProject" name="projectTokenInput.listOfKeys"
                                                 class="defaultText"
                                                 title="Enter the research project for this order"/>
 
-                                    </c:otherwise>
-                                </c:choose>
                             </div>
                         </div>
                     </c:when>
@@ -1484,76 +1503,63 @@
                         </div>
                     </c:otherwise>
                 </c:choose>
-                <c:choose>
-                    <c:when test="${actionBean.editOrder.childOrder}">
-                        <div class="controls">
-                            <div class="form-value">
-                                <jsp:include page="regulatory_info_view.jsp"/>
+                    <c:choose>
+                        <c:when test="${actionBean.editOrder.regulatoryInfoEditAllowed}">
+                            <div class="control-group">
+                                <stripes:label for="regulatoryInfo" class="control-label">
+                                    Regulatory Information
+                                </stripes:label>
+
+
+                                <div id="regulatoryActive" class="controls">
+                                    <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
+                                                      title="Click if no IRB/ORSP review is required."/>No IRB/ORSP
+                                    Review Required
+                                </div>
+                                <div id="skipRegulatoryDiv" class="controls controls-text">
+                                        ${actionBean.complianceStatement}<br/>
+                                    <stripes:text id="skipRegulatoryInfoReason"
+                                                  name="editOrder.skipRegulatoryReason"
+                                                  maxlength="255"/>
+                                </div>
+                                <div id="regulatorySelect" class="controls controls-text"></div>
+                                <div id="attestationDiv" class="controls controls-text">
+
+                                    <stripes:checkbox name="editOrder.attestationConfirmed"
+                                                      id="attestationConfirmed"/>
+                                        ${actionBean.attestationMessage}
+                                </div>
                             </div>
-                        </div>
-                    </c:when>
-                    <c:otherwise>
-                        <c:choose>
-                            <c:when test="${actionBean.editOrder.regulatoryInfoEditAllowed}">
-                                <div class="control-group">
-                                    <stripes:label for="regulatoryInfo" class="control-label">
-                                        Regulatory Information
-                                    </stripes:label>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="view-control-group control-group">
+                                <label class="control-label">Regulatory Information</label>
 
+                                <div class="controls">
+                                    <div class="form-value">
+                                        <c:choose>
+                                            <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
+                                                <c:forEach var="regulatoryInfo"
+                                                           items="${actionBean.editOrder.regulatoryInfos}">
+                                                    ${regulatoryInfo.displayText}<br/>
+                                                </c:forEach>
+                                            </c:when>
 
-                                    <div id="regulatoryActive" class="controls">
-                                        <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
-                                                          title="Click if no IRB/ORSP review is required."/>No IRB/ORSP
-                                        Review Required
-                                    </div>
-                                    <div id="skipRegulatoryDiv" class="controls controls-text">
-                                            ${actionBean.complianceStatement}<br/>
-                                        <stripes:text id="skipRegulatoryInfoReason"
-                                                      name="editOrder.skipRegulatoryReason"
-                                                      maxlength="255"/>
-                                    </div>
-                                    <div id="regulatorySelect" class="controls controls-text"></div>
-                                    <div id="attestationDiv" class="controls controls-text">
-
-                                        <stripes:checkbox name="editOrder.attestationConfirmed"
-                                                          id="attestationConfirmed"/>
-                                            ${actionBean.attestationMessage}
-                                    </div>
-                                </div>
-                            </c:when>
-                            <c:otherwise>
-                                <div class="view-control-group control-group">
-                                    <label class="control-label">Regulatory Information</label>
-
-                                    <div class="controls">
-                                        <div class="form-value">
-                                            <c:choose>
-                                                <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
-                                                    <c:forEach var="regulatoryInfo"
-                                                               items="${actionBean.editOrder.regulatoryInfos}">
-                                                        ${regulatoryInfo.displayText}<br/>
-                                                    </c:forEach>
+                                            <c:otherwise>
+                                                <c:choose><c:when
+                                                        test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
+                                                    Regulatory information not entered because: ${actionBean.editOrder.skipRegulatoryReason}
                                                 </c:when>
-
-                                                <c:otherwise>
-                                                    <c:choose><c:when
-                                                            test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
-                                                        Regulatory information not entered because: ${actionBean.editOrder.skipRegulatoryReason}
-                                                    </c:when>
-                                                        <c:otherwise>
-                                                            No regulatory information entered.
-                                                        </c:otherwise></c:choose>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </div>
+                                                    <c:otherwise>
+                                                        No regulatory information entered.
+                                                    </c:otherwise></c:choose>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
                                 </div>
-                            </c:otherwise>
-                        </c:choose>
-                    </c:otherwise>
-                </c:choose>
-
-
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 <div class="control-group">
                     <stripes:label for="fundingDeadline" class="control-label">
                         Funding Deadline
@@ -1580,23 +1586,19 @@
                         Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                    <c:choose>
-                        <c:when test="${actionBean.editOrder.childOrder}">
-                            <c:if test="${actionBean.editOrder.product != null}">
-                                <stripes:hidden id="product" name="productTokenInput.listOfKeys"
-                                                value="${actionBean.editOrder.product.partNumber}"/>
-                                <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
-                                    <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
-                                    ${actionBean.editOrder.product.productName}
-                                </stripes:link>
-                            </c:if>
-                        </c:when>
-                        <c:otherwise>
-                                <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
-                                              title="Enter the product name for this order"/>
-                        </c:otherwise>
-                    </c:choose>
+                        <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
+                                      title="Enter the product name for this order"/>
                         <div id="primaryProductListPrice" ></div>
+                    </div>
+                </div>
+
+                <div class="control-group" id="reagentDesignGroup">
+                    <stripes:label for="reagentDesignKey" class="control-label"><abbr title="aka Reagent Design">Bait Design *</abbr></stripes:label>
+                    <div class="controls">
+                        <stripes:select id="reagentDesignKey" name="editOrder.reagentDesignKey">
+                            <stripes:option value="">Select One</stripes:option>
+                            <stripes:options-collection collection="${actionBean.reagentDesigns}" label="displayName" value="businessKey"/>
+                        </stripes:select>
                     </div>
                 </div>
 
@@ -1618,17 +1620,7 @@
                     <stripes:label for="selectedAddOns" class="control-label">
                         Add-ons
                     </stripes:label>
-                    <c:choose>
-                        <c:when test="${actionBean.editOrder.childOrder}">
-                            <div class="controls">
-                                <div class="form-value">${actionBean.editOrder.addOnList}</div>
-                            </div>
-                        </c:when>
-                        <c:otherwise>
-
-                            <div id="addOnCheckboxes" class="controls controls-text"></div>
-                        </c:otherwise>
-                    </c:choose>
+                    <div id="addOnCheckboxes" class="controls controls-text"></div>
                 </div>
                 <security:authorizeBlock roles="<%= roles(GPProjectManager, PDM, Developer) %>">
                     <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
@@ -1648,19 +1640,11 @@
 
                 <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.requiresLaneCount() ? 'block' : 'none'};">
                     <stripes:label for="numberOfLanes" class="control-label">
-                        Number of Lanes Per Sample
+                        Number of Lanes For the Order
                     </stripes:label>
                     <div class="controls">
-                        <c:choose>
-                            <c:when test="${actionBean.editOrder.childOrder}">
-                                <div class="form-value">${actionBean.editOrder.laneCount}</div>
-
-                            </c:when>
-                            <c:otherwise>
-                                <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
-                                              title="Enter Number of Lanes"/>
-                            </c:otherwise>
-                        </c:choose>
+                        <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
+                                      title="Enter Number of Lanes"/>
                     </div>
                 </div>
 
@@ -1669,30 +1653,17 @@
                         Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                        <c:choose>
-                            <c:when test="${actionBean.editOrder.childOrder}">
-                                <div class="form-value">
-                                    <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                                            ${actionBean.editOrder.quoteId}
-                                    </a>
-                                    <span id="fundsRemaining" style="margin-left: 20px;"> </span>
-                                </div>
-
-                            </c:when>
-                            <c:otherwise>
-                                <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
-                                              onchange="updateFundsRemaining()"
-                                              title="Enter the Quote ID for this order"/>
-                                <div id="fundsRemaining"> </div>
-                                <div id="skipQuoteDiv">
-                                    <input type="checkbox" id="skipQuote" name="skipQuote" value="${actionBean.editOrder.canSkipQuote()}" title="Click to start a PDO without a quote" />No quote required
-                                    <div id="skipQuoteReasonDiv">
-                                        Please enter a reason for skipping the quote *
-                                        <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote" maxlength="255"/>
-                                    </div>
-                                </div>
-                            </c:otherwise>
-                        </c:choose>
+                        <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
+                                      onchange="updateFundsRemaining()"
+                                      title="Enter the Quote ID for this order"/>
+                        <div id="fundsRemaining"> </div>
+                        <div id="skipQuoteDiv">
+                            <input type="checkbox" id="skipQuote" name="skipQuote" value="${actionBean.editOrder.canSkipQuote()}" title="Click to start a PDO without a quote" />No quote required
+                            <div id="skipQuoteReasonDiv">
+                                Please enter a reason for skipping the quote *
+                                <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote" maxlength="255"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1753,7 +1724,8 @@
                     <div class="controls actionButtons">
                         <stripes:submit name="save" value="${actionBean.saveButtonText}"
                                         disabled="${!actionBean.canSave}"
-                                        style="margin-right: 10px;" class="btn btn-primary"/>
+                                        style="margin-right: 10px;" class="btn btn-primary"
+                                        onclick="return validateNumberOfLanes();"/>
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>

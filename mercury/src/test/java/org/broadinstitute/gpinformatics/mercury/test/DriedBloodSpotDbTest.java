@@ -12,6 +12,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,7 +23,10 @@ import java.util.List;
  * Tests Dried Blood Spot messaging, including persistence
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class DriedBloodSpotDbTest extends StubbyContainerTest {
+
+    public DriedBloodSpotDbTest(){}
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
 

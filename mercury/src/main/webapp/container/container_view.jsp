@@ -19,12 +19,12 @@
     }
     input[type="text"].smalltext {
         width: 70px;
-        font-size: 12px;
+        font-size: 9pt;
         padding: 2px 2px;
     }
     input[type='text'].barcode {
         width: 100px;
-        font-size: 12px;
+        font-size: 9pt;
     }
 
     .top-buffer { margin-top:20px; }
@@ -68,22 +68,22 @@
         </div>
     </c:if>
     <c:if test="${actionBean.showLayout and empty actionBean.staticPlate}">
-        <table>
+        <table style="border-collapse: collapse; border: 1px solid black;">
             <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
                 <c:if test="${rowStatus.first}">
                     <tr>
-                        <td></td>
+                        <td style="border: 1px solid black;"> </td>
                         <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                            <td>${columnName}</td>
+                            <td style="text-align:center;border: 1px solid black;">${columnName}</td>
                         </c:forEach>
                     </tr>
                 </c:if>
                 <tr>
-                    <td>${rowName}</td>
+                    <td style="text-align:center; padding: 2px 8px 2px 8px; border: 1px solid black;">${rowName}</td>
                     <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
                         <c:set var="receptacleIndex"
                                value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
-                        <td align="right">
+                        <td style="text-align:center; vertical-align: top; border: 1px solid #888888; width: 80px;">
                             <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
                             <input type="text"
                                    id="receptacleTypes[${receptacleIndex}].barcode"
@@ -91,7 +91,7 @@
                                    value="${actionBean.mapPositionToVessel[geometry.vesselPositions[receptacleIndex]].label}"
                                    class="clearable smalltext unique" autocomplete="off"
                                    <c:if test="${actionBean.editLayout}">placeholder="barcode"</c:if>
-                                   <c:if test="${not actionBean.editLayout or canRackScan}">readonly</c:if>/>
+                                   <c:if test="${not actionBean.editLayout or canRackScan}">readonly</c:if>/><c:if test="${not empty rowName}"><br/>${actionBean.mapPositionToSampleId[geometry.vesselPositions[receptacleIndex]]}</c:if>
                             <input type="hidden"
                                    id="receptacleTypes[${receptacleIndex}].position"
                                    name="receptacleTypes[${receptacleIndex}].position"
@@ -118,7 +118,8 @@
                 <div class="controls">
                     <stripes:hidden id="storageId" name="storageId"/>
                     <stripes:hidden id="containerBarcode" name="containerBarcode"/>
-                    <stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true" style="width:${empty actionBean.locationTrail ? 200 : actionBean.locationTrail.length() * 8}px"/>
+                    <input type="hidden" name="<csrf:tokenname/>" value="<csrf:tokenvalue/>"/>
+                    <enhance:out escapeXml='false'><stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true" style="width:${empty actionBean.locationTrail ? 200 : actionBean.locationTrail.length() * 8}px"/></enhance:out>
                     <c:if test="${not empty actionBean.staticPlate or (actionBean.showLayout && !actionBean.editLayout)}">
                         <stripes:submit name="browse" id="browse" value="Browse"
                                         class="btn"/>

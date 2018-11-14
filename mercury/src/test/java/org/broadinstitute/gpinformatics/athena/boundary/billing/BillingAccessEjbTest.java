@@ -8,6 +8,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Date;
 
@@ -15,7 +16,10 @@ import java.util.Date;
  * TODO scottmat fill in javadoc!!!
  */
 @Test(groups = TestGroups.STUBBY, enabled = true)
+@Dependent
 public class BillingAccessEjbTest extends StubbyContainerTest {
+
+    public BillingAccessEjbTest(){}
 
     @Inject
     private BillingSessionDao billingSessionDao;

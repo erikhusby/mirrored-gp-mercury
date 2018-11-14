@@ -12,9 +12,9 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -120,6 +120,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name="MERCURY_SAMPLE")
     private MercurySample mercurySample;
+
+    private String aggregationParticle;
 
     /**
      * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
@@ -360,6 +362,49 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         Map<PriceItem, Double> primaryAndReplacementQuantities = new HashMap<>();
         Map<PriceItem, Double> addOnQuantities = new HashMap<>();
+        collectLedgerEntryDetails(primaryAndReplacementQuantities, addOnQuantities);
+
+        for (Map.Entry<PriceItem, Double> entry : primaryAndReplacementQuantities.entrySet()) {
+            PriceItem priceItem = entry.getKey();
+            Double quantity = entry.getValue();
+
+            // Include add-on quantities if this price item was accidentally billed as an add-on as well as a primary.
+            if (addOnQuantities.containsKey(priceItem)) {
+                quantity += addOnQuantities.get(priceItem);
+            }
+            if (quantity > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<String> completelyBilledDetails() {
+
+        /*
+         * Gather the net quantity billed to each price item by price item type. Separate Maps are used because they
+         * contribute to this calculation in different ways. This is like {@link getLedgerQuantities}, but only counts
+         * quantities actually billed and also separates the quantities depending on price item type.
+         */
+        Map<PriceItem, Double> primaryAndReplacementQuantities = new HashMap<>();
+        Map<PriceItem, Double> addOnQuantities = new HashMap<>();
+
+        List<String> results = new ArrayList<>();
+
+        collectLedgerEntryDetails(primaryAndReplacementQuantities, addOnQuantities);
+        for (Map.Entry<PriceItem, Double> priceItemDoubleEntry : primaryAndReplacementQuantities.entrySet()) {
+            results.add("Billed "+priceItemDoubleEntry.getValue() + " samples for " + priceItemDoubleEntry.getKey().getDisplayName());
+        }
+
+        for (Map.Entry<PriceItem, Double> addOnPriceItemDoubleEntry : addOnQuantities.entrySet()) {
+            results.add("Billed "+addOnPriceItemDoubleEntry.getValue() + " samples for " + addOnPriceItemDoubleEntry.getKey().getDisplayName());
+        }
+
+        return results;
+    }
+
+    public void collectLedgerEntryDetails(Map<PriceItem, Double> primaryAndReplacementQuantities,
+                                          Map<PriceItem, Double> addOnQuantities) {
         for (LedgerEntry item : ledgerItems) {
             if (item.isBilled()) {
 
@@ -385,20 +430,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                 }
             }
         }
-
-        for (Map.Entry<PriceItem, Double> entry : primaryAndReplacementQuantities.entrySet()) {
-            PriceItem priceItem = entry.getKey();
-            Double quantity = entry.getValue();
-
-            // Include add-on quantities if this price item was accidentally billed as an add-on as well as a primary.
-            if (addOnQuantities.containsKey(priceItem)) {
-                quantity += addOnQuantities.get(priceItem);
-            }
-            if (quantity > 0) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -1324,5 +1355,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public boolean isToBeBilled() {
         return getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
         && !isCompletelyBilled();
+    }
+
+    public String getAggregationParticle() {
+        return aggregationParticle;
+    }
+
+    public void setAggregationParticle(String aggregationParticle) {
+        this.aggregationParticle = aggregationParticle;
     }
 }

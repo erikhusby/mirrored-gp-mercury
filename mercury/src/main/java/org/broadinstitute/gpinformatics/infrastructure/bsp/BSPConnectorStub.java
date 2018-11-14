@@ -16,6 +16,8 @@ import java.util.Collection;
 @Dependent
 public class BSPConnectorStub implements BSPConnector {
 
+    public BSPConnectorStub(){}
+
     @Inject
     private Log log;
 

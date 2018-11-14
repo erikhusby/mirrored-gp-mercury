@@ -257,6 +257,8 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     private Evaluator<String> uiDisplayOutputExpression;
 
+    private boolean mustEscape = true;
+
     /**
      * Header text (or expression to derive it) for displaying search results.
      * Null if same as name.
@@ -481,6 +483,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return displayExpression;
     }
 
+    /**
+     * Using an expression implementation pre-defined in the enum DisplayExpression, this method sets the
+     * implementation to extract value(s) from the base entity object to be used as the source of the result column
+     * value presented in UI or download.
+     *
+     * @param displayExpression
+     */
     public void setDisplayExpression(DisplayExpression displayExpression) {
         this.displayExpression = displayExpression;
     }
@@ -764,6 +773,15 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             return evalPlainTextOutputExpression(value, context);
         }
         return uiDisplayOutputExpression.evaluate(value, context);
+    }
+
+    @Override
+    public boolean mustEscape() {
+        return mustEscape;
+    }
+
+    public void setMustEscape(boolean mustEscape) {
+        this.mustEscape = mustEscape;
     }
 
     @Override

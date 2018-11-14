@@ -7,6 +7,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.servlet.Filter;
 
 /**
@@ -15,13 +16,13 @@ import javax.servlet.Filter;
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
 @Test(groups = {TestGroups.STUBBY})
+@Dependent
 public class ActionBeanBaseTest<T extends ActionBean> extends StubbyContainerTest {
     private TestCoreActionBeanContext ctx;
 
     private T bean;
 
-    public ActionBeanBaseTest() {
-    }
+    public ActionBeanBaseTest() {}
 
     public ActionBeanBaseTest(T actionBean) {
         this.bean = actionBean;

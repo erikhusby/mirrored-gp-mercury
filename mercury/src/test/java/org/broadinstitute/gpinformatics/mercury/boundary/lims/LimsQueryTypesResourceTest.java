@@ -11,6 +11,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +24,10 @@ import static org.hamcrest.Matchers.equalTo;
  * @author breilly
  */
 @Test(groups = TestGroups.STUBBY)
+@Dependent
 public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
+
+    public LimsQueryTypesResourceTest(){}
 
     public final String FLOWCELL_DESIGNATION_JSON =
             "{\"lanes\":[" +

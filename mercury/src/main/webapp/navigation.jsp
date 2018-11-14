@@ -201,14 +201,24 @@
                                     event="view">Arrays Reports</stripes:link>
                         </li>
                         <li>
-                            <stripes:link id="pooledTubeUpload"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PooledTubeUploadActionBean"
-                                          event="view">Pooled Tube Upload</stripes:link>
+                            <stripes:link id="externalLibraryUpload"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean"
+                                          event="view">Pooled Tube and External Library Upload</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="tagVessel"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.TagVesselActionBean"
                                           event="view">Add Dev Condition To Vessel</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="singleCellMetadataUpload"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PlateMetadataActionBean"
+                                          event="view">Single Cell Metadata Upload</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="molecularIndexNaming"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexNamingActionBean"
+                                          event="view">Make Molecular Index Names</stripes:link>
                         </li>
                     </ul>
                 </li>
@@ -249,38 +259,65 @@
                 </li>
             </security:authorizeBlock>
 
-            <li class="dropdown">
-                <a id="storageNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
-                class="icon-inbox"></span> Storage <b class="caret"></b></a>
-                <ul class="dropdown-menu" role="menu">
-                    <li>
-                        <stripes:link id="listStorage"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
-                                      event="list">List</stripes:link>
-                    </li>
-                    <security:authorizeBlock roles="<%= roles(LabManager,PDM, GPProjectManager, PM, Developer) %>">
-                        <li>
-                            <stripes:link id="createStorage"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
-                                          event="create">Create New Storage</stripes:link>
-                        </li>
-                    </security:authorizeBlock>
-                    <li class="divider"></li>
-                    <li>
-                        <stripes:link id="findContainer"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"
-                                      event="view">
-                            Check In / Search Container
-                        </stripes:link>
-                    </li>
-                    <li>
-                        <stripes:link id="createNewContainer"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"
-                                      event="create">
-                            Create New Container
-                        </stripes:link>
-                    </li>
-                </ul>
+            <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+
+                <li class="dropdown">
+                    <a id="storageNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                            class="icon-inbox"></span> Storage <b class="caret"></b></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <security:authorizeBlock
+                                roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+                            <li>
+
+                                <stripes:link id="listStorage"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
+                                              event="list">List</stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
+                            <li>
+                                <stripes:link id="createStorage"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
+                                              event="create">Create New Storage</stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+                        <li class="divider"></li>
+                        <security:authorizeBlock
+                                roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+
+                            <li>
+                                <stripes:link id="findContainer"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"
+                                              event="view">
+                                    Check In / Search Container
+                                </stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+
+                        <security:authorizeBlock
+                                roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+                            <li>
+                                <stripes:link id="createNewContainer"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"
+                                              event="create">
+                                    Create New Container
+                                </stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+                        <security:authorizeBlock
+                                roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer, LabUser) %>">
+
+                            <li>
+                                <stripes:link id="pickFromStorage"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PickerActionBean"
+                                              event="view">
+                                    Create Pick List From Storage
+                                </stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+                    </ul>
+                </li>
+            </security:authorizeBlock>
             <li class="dropdown">
                 <a id="receivingNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                         class="icon-envelope"></span> Receiving <b class="caret"></b></a>
@@ -307,7 +344,6 @@
                     </li>
                 </ul>
             </li>
-
         </ul>
         <ul class="nav pull-right global-search navbar-search">
             <li style="white-space:nowrap;">

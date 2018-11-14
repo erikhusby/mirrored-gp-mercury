@@ -65,6 +65,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -85,7 +86,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Tests the methods in the SolexaRunResource without any rest calls
  */
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class SolexaRunResourceNonRestTest extends Arquillian {
+
+    public SolexaRunResourceNonRestTest(){}
 
     @Inject
     private SquidConfig squidConfig;
@@ -553,7 +557,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         }
 
         LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds,
+                Workflow.AGILENT_EXOME_EXPRESS, bucketIds,
                 Collections.<Long>emptyList(), batchName, "", new Date(), "", "jowalsh", bucketName);
         labBatch.setValidationBatch(true);
     }

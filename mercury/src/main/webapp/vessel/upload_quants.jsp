@@ -79,20 +79,24 @@
             Run Date: <fmt:formatDate value="${actionBean.labMetricRun.runDate}" pattern="${actionBean.dateTimePattern}"/>
             <br/>
             Run Name: ${actionBean.labMetricRun.runName}
-            <table class="table simple" id="runTable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <c:forEach items="${actionBean.labMetricRun.metadata}" var="metadata">
-                    <tr>
-                        <td>${metadata.key}</td>
-                        <td>${metadata.value}</td>
-                    </tr>
-                </c:forEach>
-            </table>
+            <c:if test="${not empty actionBean.labMetricRun.metadata}">
+                <table class="table simple" id="runTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+
+
+                        <c:forEach items="${actionBean.labMetricRun.metadata}" var="metadata">
+                            <tr>
+                                <td>${metadata.key}</td>
+                                <td>${metadata.value}</td>
+                            </tr>
+                        </c:forEach>
+                    </table>
+            </c:if>
             <stripes:form beanclass="${actionBean.class.name}" id="metricsForm" class="form-horizontal">
 
                 <stripes:layout-render name="/columns/configurable_list.jsp"
@@ -108,7 +112,7 @@
                         dataTable="true"/>
 
                 <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
-                <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
+                <stripes:hidden name="tubeFormationLabels" value="${actionBean.tubeFormationLabels}"/>
                 <stripes:hidden name="quantType" value="${actionBean.quantType}"/>
                 <stripes:label for="overrideDecision" class="control-label">Override Decision</stripes:label>
                 <div class="controls">
@@ -126,7 +130,9 @@
 
             <c:if test="${actionBean.quantType == 'INITIAL_PICO'}">
                 <stripes:form action="${actionBean.picoDispositionActionBeanUrl}" id="nextStepsForm" class="form-horizontal">
-                    <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
+                    <c:forEach items="${actionBean.tubeFormationLabels}" var="item" varStatus="loop">
+                        <stripes:hidden name="tubeFormationLabels[${loop.index}]" value="${item}"/>
+                    </c:forEach>
                     <stripes:submit name="view" value="View Next Steps" class="btn btn-primary" id="viewNextStepsBtn"/>
                 </stripes:form>
             </c:if>

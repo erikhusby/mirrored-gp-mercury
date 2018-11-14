@@ -95,7 +95,7 @@ public class ArrayPlatingEntityBuilder {
                 LabEvent bucketEvent = new LabEvent(LabEventType.INFINIUM_BUCKET, new Date(),
                         "BSP", 1L, 1L, "BSP");
                 bucketEvent.setInPlaceLabVessel(well);
-                well.getInPlaceLabEvents().add(bucketEvent);
+                well.addInPlaceEvent(bucketEvent);
                 count++;
             } else {
                 break;

@@ -18,6 +18,10 @@
         <servlet-name>javax.ws.rs.core.Application</servlet-name>
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
+    <context-param>
+        <param-name>resteasy.role.based.security</param-name>
+        <param-value>true</param-value>
+    </context-param>
 
     <!-- Stripes -->
     <servlet>
@@ -36,6 +40,53 @@
         <url-pattern>*.xhtml</url-pattern>
     </servlet-mapping>
 
+
+    <servlet>
+        <servlet-name>JavaScriptServlet</servlet-name>
+        <servlet-class>org.owasp.csrfguard.servlet.JavaScriptServlet</servlet-class>
+        <init-param>
+            <param-name>source-file</param-name>
+            <param-value>WEB-INF/csrfguard.js</param-value>
+        </init-param>
+        <init-param>
+            <param-name>inject-into-forms</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <init-param>
+            <param-name>inject-into-attributes</param-name>
+            <param-value>false</param-value>
+        </init-param>
+        <init-param>
+            <param-name>domain-strict</param-name>
+            <param-value>false</param-value>
+        </init-param>
+        <init-param>
+            <param-name>referer-pattern</param-name>
+            <param-value>.*localhost.*|.*broadinstitute.*</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>JavaScriptServlet</servlet-name>
+        <url-pattern>/Owasp.CsrfGuard/JavaScriptServlet</url-pattern>
+    </servlet-mapping>
+
+    <listener>
+        <listener-class>com.github.pukkaone.jsp.EscapeXmlELResolverListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>org.owasp.csrfguard.CsrfGuardServletContextListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>org.owasp.csrfguard.CsrfGuardHttpSessionListener</listener-class>
+    </listener>
+    <context-param>
+        <param-name>Owasp.CsrfGuard.Config</param-name>
+        <param-value>WEB-INF/csrfguard.properties</param-value>
+    </context-param>
+    <context-param>
+        <param-name>Owasp.CsrfGuard.Config.Print</param-name>
+        <param-value>false</param-value>
+    </context-param>
     <!-- END for JBoss AS 7 -->
 
     <security-constraint>
@@ -184,8 +235,11 @@
 
     <filter-mapping>
         <filter-name>GZipFilter</filter-name>
-        <url-pattern>/orders/*</url-pattern>
         <url-pattern>/resources/scripts/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>GZipFilter</filter-name>
         <url-pattern>/resources/css/*</url-pattern>
     </filter-mapping>
 
@@ -209,6 +263,7 @@
     <filter-mapping>
         <filter-name>AuthorizationFilter</filter-name>
         <url-pattern>*.jsp</url-pattern>
+        <url-pattern>/rest/external/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
@@ -224,9 +279,20 @@
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
-    <session-config>
-        <session-timeout>1200</session-timeout>
-    </session-config>
+    <filter>
+        <filter-name>CSRFGuard</filter-name>
+        <filter-class>org.owasp.csrfguard.CsrfGuardFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CSRFGuard</filter-name>
+        <url-pattern>*.action</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CSRFGuard</filter-name>
+        <url-pattern>/</url-pattern>
+    </filter-mapping>
+
+    <!-- session-timeout is set in jboss-web.xml -->
 
     <error-page>
         <error-code>500</error-code>

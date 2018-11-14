@@ -117,7 +117,7 @@
                                                       class="external">${batch.batchName}</stripes:link>
                                     </c:forEach>
                                 </td>
-                                <td>${candidate.productOrder.product.workflow.workflowName}</td>
+                                <td>${candidate.productOrder.product.workflowName}</td>
                                 <td>${candidate.lastEventStep}</td>
                             </tr>
                         </c:forEach>

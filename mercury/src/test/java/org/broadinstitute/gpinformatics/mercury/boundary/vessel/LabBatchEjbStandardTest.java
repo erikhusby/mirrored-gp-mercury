@@ -5,16 +5,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.FCTJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraLaneInfo;
@@ -28,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
@@ -77,19 +74,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
     private LabBatchDao labBatchDao;
 
     @Inject
-    private BucketDao bucketDao;
-
-    @Inject
     private UserTransaction utx;
-
-    @Inject
-    private ProductDao productDao;
-
-    @Inject
-    private ResearchProjectDao researchProjectDao;
-
-    @Inject
-    private BarcodedTubeDao tubeDao;
 
     @Inject
     private JiraService jiraService;
@@ -99,6 +84,13 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
     @Inject
     private FlowcellDesignationEjb flowcellDesignationEjb;
+
+    /**
+     * Need this here because Arquillian CDI enricher does something strange with scopes <br/>
+     * See note in BatchToJiraTest
+     */
+    @Inject
+    private WorkflowConfig workflowConfig;
 
     private Bucket bucket;
     private boolean isClinical;
@@ -178,7 +170,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
         }
 
         LabBatch testBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.ICE_CRSP.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                Workflow.ICE_CRSP, bucketIds, Collections.<Long>emptyList(),
                 nameForBatch, "", new Date(), null, "scottmat", LabBatchEJBTest.BUCKET_NAME,
                 MessageReporter.UNUSED, Collections.<String>emptyList());
 
@@ -243,7 +235,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
         }
 
         LabBatch testBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS, bucketIds, Collections.<Long>emptyList(),
                 nameForBatch, "", new Date(), null, "scottmat", LabBatchEJBTest.EXTRACTION_BUCKET,
                 MessageReporter.UNUSED, Collections.<String>emptyList());
 
@@ -617,7 +609,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
             }
         }
         LabBatch labBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                Workflow.AGILENT_EXOME_EXPRESS, bucketIds, Collections.<Long>emptyList(),
                 "Batch_" + System.currentTimeMillis(), "", new Date(), null, "epolk",
                 LabBatchEJBTest.BUCKET_NAME, MessageReporter.UNUSED, Collections.<String>emptyList());
 
@@ -807,14 +799,14 @@ public class LabBatchEjbStandardTest extends Arquillian {
         messages.setLength(0);
         list = designationErrorHelper(messages, messageReporter,
                 Pair.of("CLIA PCR-Free Whole Genome", DesignationUtils.CLINICAL),
-                Pair.of("PCR-Free Human WGS - 30x v1.1", DesignationUtils.RESEARCH));
+                Pair.of("PCR-Free Human WGS - 30x v1", DesignationUtils.RESEARCH));
         Assert.assertEquals(list.size(), 1, messages.toString());
 
         // Validates a Genome mixed designation just fine.
         messages.setLength(0);
         list = designationErrorHelper(messages, messageReporter,
                 Pair.of("CLIA PCR-Free Whole Genome", DesignationUtils.MIXED),
-                Pair.of("PCR-Free Human WGS - 30x v1.1", DesignationUtils.MIXED));
+                Pair.of("PCR-Free Human WGS - 30x v1", DesignationUtils.MIXED));
         Assert.assertEquals(list.size(), 1, messages.toString());
         Assert.assertEquals(messages.length(), 0, messages.toString());
     }
@@ -887,7 +879,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
         }
 
         labBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                Workflow.AGILENT_EXOME_EXPRESS, bucketIds, Collections.<Long>emptyList(),
                 "Batch_" + System.currentTimeMillis(), "", new Date(), null, "epolk",
                 LabBatchEJBTest.BUCKET_NAME, MessageReporter.UNUSED, Collections.<String>emptyList());
 

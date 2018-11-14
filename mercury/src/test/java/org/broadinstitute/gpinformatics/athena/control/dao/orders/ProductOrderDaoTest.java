@@ -20,6 +20,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.PersistenceUnitUtil;
 import javax.transaction.UserTransaction;
@@ -35,14 +36,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 
 
-@Test(groups = TestGroups.STUBBY, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true, singleThreaded = true)
+@Dependent
 public class ProductOrderDaoTest extends StubbyContainerTest {
+
+    public ProductOrderDaoTest(){}
 
     @Inject
     private ThreadEntityManager entityManager;
@@ -290,4 +296,18 @@ public class ProductOrderDaoTest extends StubbyContainerTest {
         assertThat(status.getNumberAbandoned(), is(greaterThanOrEqualTo(2)));
         assertThat(status.getNumberInProgress(), is(equalTo(1)));
     }
+
+    public void testUpdateQuoteAfterOrderSaved() {
+        ProductOrder newOrder = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
+        newOrder.setQuoteId("");
+        productOrderDao.persist(newOrder);
+        productOrderDao.flush();
+        productOrderDao.clear();
+        newOrder = productOrderDao.findByBusinessKey(newOrder.getBusinessKey());
+
+        assertThat(newOrder.getQuoteId(), nullValue());
+        newOrder.setQuoteId("newquote");
+        assertThat(newOrder.getQuoteId(), not(nullValue()));
+    }
+
 }

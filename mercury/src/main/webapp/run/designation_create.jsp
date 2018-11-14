@@ -70,18 +70,8 @@
                 </div>
 
                 <div style="float: right; width: 33%;">
-                    <stripes:checkbox id="showQueued" name="showQueued"/>
-                    <stripes:label for="showQueued">Include Queued</stripes:label>
-                    <stripes:checkbox id="showProcessed" name="showProcessed"/>
-                    <stripes:label for="showProcessed">Include On FCT</stripes:label>
-                    <stripes:checkbox id="showAbandoned" name="showAbandoned"/>
-                    <stripes:label for="showAbandoned">Include Abandoned</stripes:label>
-                    <stripes:checkbox id="append" name="append"/>
-                    <stripes:label for="append" title="Controls whether the current list of designations is cleared
- or not when adding new designations to the display.">Append to the list</stripes:label>
-
-                    <stripes:submit id="pending" name="pending" value="Show Designations" class="btn btn-primary"
-                                    title="Shows previously saved designations."/>
+                    <stripes:submit id="pending" name="pending" value="Show Pending Designations" class="btn btn-primary"
+                                    title="The designations that are not on a flowcell yet."/>
                 </div>
             </div>
 

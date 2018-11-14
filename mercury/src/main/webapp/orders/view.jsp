@@ -29,7 +29,7 @@
     <c:set var="columnHeaderPicoRunDate" value="<%= ProductOrderSampleBean.PICO_RUN_DATE %>"/>
     <c:set var="columnHeaderConcentration" value="<%= ProductOrderSampleBean.CONCENTRATION %>"/>
     <c:set var="columnHeaderMaterialType" value="<%= ProductOrderSampleBean.MATERIAL_TYPE %>"/>
-    <c:set var="columnHeaderRackscanMismatch" value="<%= ProductOrderSampleBean.RACKSCAN_MISMATCH %>"/>
+    <c:set var="columnHeaderRackscanMismatch" value="<%= ProductOrderSampleBean.RACKSCAN_MISMATCH_DETAILS %>"/>
     <c:set var="columnHeaderOnRisk" value="<%= ProductOrderSampleBean.ON_RISK %>"/>
     <c:set var="columnHeaderYieldAmount" value="<%= ProductOrderSampleBean.YIELD_AMOUNT %>"/>
     <c:set var="columnHeaderRin" value="<%= ProductOrderSampleBean.RIN %>"/>
@@ -39,7 +39,7 @@
     <c:set var="columnHeaderOnRiskString" value="<%= ProductOrderSampleBean.RISK_STRING %>"/>
     <c:set var="columnHeaderProceedOutOfSpec" value="<%= ProductOrderSampleBean.PROCEED_OOS %>"/>
     <c:set var="columnHeaderStatus" value="<%= ProductOrderSampleBean.STATUS %>"/>
-    <c:set var="columnHeaderCompletelyBilled" value="<%= ProductOrderSampleBean.BILLED %>"/>
+    <c:set var="columnHeaderCompletelyBilled" value="<%= ProductOrderSampleBean.BILLED_DETAILS %>"/>
     <c:set var="columnHeaderComment" value="<%= ProductOrderSampleBean.COMMENT %>"/>
 
 
@@ -82,7 +82,9 @@ var kitDefinitionIndex = 0;
 
 $j(document).ready(function () {
     $j('body').popover({selector: '[rel=popover]'});
-//    if ($j("#sampleData tbody>tr").length > 0) {
+    $j(document).on('click', '#ledgerLink', function () {
+        window.stop();
+    });
     enableDefaultPagingOptions();
     function loadBspData(settings, refresh=false) {
         var api = new $j.fn.dataTable.Api(settings);
@@ -243,9 +245,12 @@ $j(document).ready(function () {
                 {"data": "${columnHeaderPDOSampleId}","orderable": false, 'class': 'no-min-width', render:renderCheckbox},
                 {"data": "${columnHeaderPosition}", "title": "${columnHeaderPosition}", 'class': 'no-min-width'},
                 {"data": "${columnHeaderSampleId}", "title": "${columnHeaderSampleId}", "class": "${fn:replace(columnHeaderSampleId,' ','').trim()}", "sType": "html", render: renderSampleLink},
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 {"data": "${columnHeaderCollaboratorSampleId}", "title": "${columnHeaderCollaboratorSampleId}", "class": "${fn:replace(columnHeaderCollaboratorSampleId,' ','').trim()}"},
                 {"data": "${columnHeaderParticipantId}", "title": "${columnHeaderParticipantId}"},
                 {"data": "${columnHeaderCollaboratorParticipantId}", "title": "${columnHeaderCollaboratorParticipantId}"},
+                </security:authorizeBlock>
+
                 {"data": "${columnHeaderShippedDate}", "title": "${columnHeaderShippedDate}"},
                 {"data": "${columnHeaderReceivedDate}", "title": "${columnHeaderReceivedDate}", "class": "${fn:replace(columnHeaderReceivedDate,' ','').trim()}"},
                 {"data": "${columnHeaderSampleType}", "title": "${columnHeaderSampleType}"},
@@ -265,11 +270,11 @@ $j(document).ready(function () {
                 },
                 </c:if>
                 {"data": "${columnHeaderYieldAmount}", "title": "${columnHeaderYieldAmount}"},
-                {"data": "${columnHeaderRackscanMismatch}", "title": "${columnHeaderRackscanMismatch}",render:renderRackscanMismatch},
+                {"data": "${columnHeaderRackscanMismatch}", "title": "${columnHeaderRackscanMismatch}"},
                 {"data": "${columnHeaderOnRiskString}", "title": "${columnHeaderOnRisk}"},
                 {"data": "${columnHeaderProceedOutOfSpec}", "title": "${columnHeaderProceedOutOfSpec}"},
                 {"data": "${columnHeaderStatus}", "title": "${columnHeaderStatus}"},
-                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "boolean", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
+                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}"}
             ],
             "stateSaveCallback": function (settings, data) {
                 var api = new $j.fn.dataTable.Api(settings);
@@ -299,7 +304,9 @@ $j(document).ready(function () {
                 });
             },
             "stateLoadCallback": function (settings, data) {
+                <enhance:out escapeXml="false">
                 var storedJson = '${actionBean.preferenceSaver.tableStateJson}';
+                </enhance:out>
                 var useLocalData = true;
                 if (storedJson && storedJson !== '{}') {
                     // if bad data was stored in the preferences it will cause problems here, so wrap
@@ -416,7 +423,9 @@ $j(document).ready(function () {
         });
         $sampleDataTable.on('init.dt', updateShowHideButton);
 
+        <enhance:out escapeXml="false">
         var slowColumns = ${actionBean.slowColumns}
+        </enhance:out>
 
             // When the "Show or Hide" button is clicked
             $j(document.body).on("click", "a.buttons-colvis", function (event) {
@@ -1172,15 +1181,15 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     <textarea id="abandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
-<%--<div id="unAbandonDialog" style="width:600px;display:none;">--%>
-    <%--<p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>--%>
+<div id="unAbandonDialog" style="width:600px;display:none;">
+    <p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>
 
-    <%--<p style="clear:both">--%>
-        <%--<label for="unAbandonSampleCommentId">Comment:</label>--%>
-    <%--</p>--%>
+    <p style="clear:both">
+        <label for="unAbandonSampleCommentId">Comment:</label>
+    </p>
 
-    <%--<textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>--%>
-<%--</div>--%>
+    <textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+</div>
 
 <div id="recalculateRiskDialog" style="width:600px;display:none;">
     <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
@@ -1238,7 +1247,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 <stripes:hidden id="proceedOos" name="proceedOos" value=""/>
 <stripes:hidden id="abandonComment" name="abandonComment" value=""/>
     <stripes:hidden name="replacementSampleList" id="replacementSampleList" value="" />
-<%--<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>--%>
+<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
 
@@ -1254,12 +1263,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <stripes:submit name="validate" value="Validate" style="margin-left: 3px;" class="btn"/>
             </security:authorizeBlock>
 
-            <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-                          beanclass="${actionBean.class.name}" event="edit" class="btn"
-                          style="text-decoration: none !important; margin-left: 10px;">
-                <%=ProductOrderActionBean.EDIT_ORDER%>
-                <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-            </stripes:link>
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
+                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                              beanclass="${actionBean.class.name}" event="edit" class="btn"
+                              style="text-decoration: none !important; margin-left: 10px;">
+                    <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                </stripes:link>
+            </security:authorizeBlock>
 
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
@@ -1675,6 +1686,16 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         </div>
     </div>
 </div>
+<c:if test="${not empty actionBean.editOrder.product and not actionBean.editOrder.product.baitLocked and not empty actionBean.editOrder.reagentDesignKey}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Bait Design</label>
+        <div class="controls">
+            <div class="form-value">
+                    ${actionBean.editOrder.reagentDesignKey}
+            </div>
+        </div>
+    </div>
+</c:if>
 <div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
@@ -1772,56 +1793,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <h4 style="display:inline">Replacement Sample Orders</h4>
     </div>
 
-    <table id="orderList" class="table simple display compact">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Order ID</th>
-                <th>Status</th>
-                <th>Updated</th>
-                <th width="80">%&nbsp;Complete</th>
-                <th>Replacement Sample Count</th>
-            </tr>
-            </thead>
-            <tbody>
-            <c:forEach items="${actionBean.editOrder.childOrders}" var="order">
-                <tr>
-                    <td>
-                        <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                event="view">
-                            <stripes:param name="productOrder" value="${order.businessKey}"/>
-                            ${order.title}
-                        </stripes:link>
-                    </td>
-                    <td>
-                        <c:choose>
-
-                            <%-- draft PDO --%>
-                            <c:when test="${order.draft}">
-                                <span title="DRAFT">&#160;</span>
-                            </c:when>
-                            <c:otherwise>
-                                <a class="external" target="JIRA" href="${actionBean.jiraUrl(order.jiraTicketKey)}"
-                                   class="external" target="JIRA">
-                                        ${order.jiraTicketKey}
-                                </a>
-                            </c:otherwise>
-                        </c:choose>
-                    </td>
-                    <td>${order.orderStatus}</td>
-                    <td>
-                        <fmt:formatDate value="${order.modifiedDate}" pattern="${actionBean.datePattern}"/>
-                    </td>
-                    <td align="center">
-                        <stripes:layout-render name="/orders/sample_progress_bar.jsp"
-                                               status="${actionBean.progressFetcher.getStatus(order.businessKey)}"/>
-                    </td>
-                    <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
-                </tr>
-            </c:forEach>
-            </tbody>
-        </table>
 <c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.sampleInitiation}">
 
     <div class="borderHeader">
@@ -1839,11 +1810,9 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                                         style="margin-left:15px;"
                                         onclick="showAbandonDialog()"/>
 
-                        <c:if test="${!actionBean.editOrder.childOrder}">
-                            <stripes:button name="replaceOrderSamples" id="replaceOrderSamples" value="Replace Abandoned Samples"
-                                            onclick="showSampleReplacementDialog()" class="btn padright"
-                                            title="Click to add replacement samples for abandoned samples" />
-                        </c:if>
+                        <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
+                                        style="margin-left:15px;"
+                                        onclick="showUnAbandonDialog()"/>
                     </c:if>
                     <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
                                     style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
@@ -1891,9 +1860,13 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 </th>
                 <th width="10">#</th>
                 <th width="90"></th>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
+
                 <th width="110"></th>
                 <th width="60"></th>
                 <th width="110"></th>
+                </security:authorizeBlock>
+
                 <th width="40"></th>
                 <th width="40"></th>
                 <th width="40"></th>

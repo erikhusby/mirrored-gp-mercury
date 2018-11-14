@@ -44,6 +44,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -72,7 +73,17 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+@Dependent
 public class BillingEjbPartialSuccessTest extends Arquillian {
+
+    public BillingEjbPartialSuccessTest() {
+        super();
+        Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
+        billingAdaptorLogger.setLevel(Level.ALL);
+        testLogHandler = new TestLogHandler();
+        billingAdaptorLogger.addHandler(testLogHandler);
+        testLogHandler.setLevel(Level.ALL);
+    }
 
     @Inject
     ProductOrderDao productOrderDao;
@@ -128,17 +139,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     public static final Log log = LogFactory.getLog(BillingEjbPartialSuccessTest.class);
     protected static final Object lockBox = new Object();
 
-
     private TestLogHandler testLogHandler;
-
-    public BillingEjbPartialSuccessTest() {
-        super();
-        Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
-        billingAdaptorLogger.setLevel(Level.ALL);
-        testLogHandler = new TestLogHandler();
-        billingAdaptorLogger.addHandler(testLogHandler);
-        testLogHandler.setLevel(Level.ALL);
-    }
 
     private void setBillingAdaptor(Collection<PriceItem> primaryPriceItems) {
         final Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
@@ -149,8 +150,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         }
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
-
-        billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
+        billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
     }
@@ -162,6 +162,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Alternative
     @ApplicationScoped
     protected static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
+
+        public PartiallySuccessfulQuoteServiceStub(){}
+
         private static final long serialVersionUID = 6093273925949722169L;
         private Log log = LogFactory.getLog(QuoteFundingList.class);
 
