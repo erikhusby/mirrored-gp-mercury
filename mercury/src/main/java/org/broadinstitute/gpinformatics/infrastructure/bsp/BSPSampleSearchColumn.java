@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 public enum BSPSampleSearchColumn {
     SAMPLE_ID("Sample ID"),
+    SAMPLE_KIT("Sample Kit"),
+    SAMPLE_STATUS("Sample Status"),
     PARTICIPANT_ID("Participant ID(s)"),
     COLLABORATOR_SAMPLE_ID("Collaborator Sample ID"),
     SPECIES("Species"),
