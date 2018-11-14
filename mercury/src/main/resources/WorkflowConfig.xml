@@ -4448,7 +4448,7 @@
     <productWorkflowDefs>
         <name>Whole Genome PCR Free HyperPrep</name>
         <productWorkflowDefVersions>
-            <version>1.0</version>
+            <version>1.2</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
             <batchJiraIssueType>HUMAN_PCR_FREE</batchJiraIssueType>
             <effectiveDate>2016-11-21T22:04:23.932-04:00</effectiveDate>
