@@ -1338,6 +1338,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>PostSelectionCaptureThermoCyclerLoaded</name>
+                <labEventTypes>POST_SELECTION_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>SelectionCatchPCR</name>
                 <labEventTypes>SELECTION_CATCH_PCR</labEventTypes>
                 <optional>false</optional>
