@@ -155,7 +155,7 @@ public class ZimsIlluminaRunFactory {
                 BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                 if (singleBucketEntry != null) {
                     if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
-                        Aggregation.DATA_TYPE_WGS)) {
+                            Aggregation.DATA_TYPE_WGS)) {
                         mixedLaneOk = true;
                         break;
                     }
@@ -363,47 +363,45 @@ public class ZimsIlluminaRunFactory {
                 lcSet = sampleInstance.getSingleBatch().getBatchName();
             }
 
-            // This loop goes through all the reagents and takes the last bait name (under the assumption that
-            // the lab would only ever have one for this sample instance. All cat names are collected and the
-            // last indexing scheme reagent.
-            MolecularIndexingScheme indexingSchemeEntity = null;
-            String baitName = null;
-            List<String> catNames = new ArrayList<>();
+            // Finds molecular barcode, bait, and CAT. There should be only one per sample instance but
+            // if multiple are found, takes the last one.
+            MolecularIndexingScheme indexingSchemeEntity = sampleInstance.getMolecularIndexingScheme();
+            String baitName = sampleInstance.getBaitName();
+            List<String> catNames = new ArrayList<String>() {{
+                if (sampleInstance.getCatName() != null) {
+                    add(sampleInstance.getCatName());
+                }
+            }};
 
-            // If this is an uploaded library, uses its reagent design.
-            if(!sampleInstance.getReagentsDesigns().isEmpty())            {
-                for (ReagentDesign reagentDesign : sampleInstance.getReagentsDesigns()) {
-                    indexingSchemeEntity = sampleInstance.getMolecularIndexingScheme();
-                    ReagentDesign.ReagentType reagentType = reagentDesign.getReagentType();
-                        if (reagentType == ReagentDesign.ReagentType.BAIT) {
-                            baitName = reagentDesign.getDesignName();
-                        } else if (reagentType == ReagentDesign.ReagentType.CAT) {
-                            catNames.add(reagentDesign.getDesignName());
-                        }
-                    }
+            for (ReagentDesign reagentDesign : sampleInstance.getReagentsDesigns()) {
+                ReagentDesign.ReagentType reagentType = reagentDesign.getReagentType();
+                if (reagentType == ReagentDesign.ReagentType.BAIT) {
+                    baitName = reagentDesign.getDesignName();
+                } else if (reagentType == ReagentDesign.ReagentType.CAT) {
+                    catNames.add(reagentDesign.getDesignName());
+                }
             }
-            else {
-                for (Reagent reagent : sampleInstance.getReagents()) {
-                    if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                        indexingSchemeEntity =
-                                OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).getMolecularIndexingScheme();
-                    } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
-                        DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
-                        ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
-                        if (reagentType == ReagentDesign.ReagentType.BAIT) {
-                            baitName = designedReagent.getReagentDesign().getDesignName();
-                        } else if (reagentType == ReagentDesign.ReagentType.CAT) {
-                            catNames.add(designedReagent.getReagentDesign().getDesignName());
-                        }
+
+            for (Reagent reagent : sampleInstance.getReagents()) {
+                if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                    indexingSchemeEntity = OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).
+                            getMolecularIndexingScheme();
+                } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                    DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
+                    ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
+                    if (reagentType == ReagentDesign.ReagentType.BAIT) {
+                        baitName = designedReagent.getReagentDesign().getDesignName();
+                    } else if (reagentType == ReagentDesign.ReagentType.CAT) {
+                        catNames.add(designedReagent.getReagentDesign().getDesignName());
                     }
                 }
             }
+
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto = null;
             if (indexingSchemeEntity != null) {
                 Map<IndexPosition, String> positionSequenceMap = new HashMap<>();
                 Set<Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex>> entries =
                         indexingSchemeEntity.getIndexes().entrySet();
-
                 for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexEntry : entries) {
                     String indexName = indexEntry.getKey().toString();
                     positionSequenceMap.put(
@@ -554,10 +552,7 @@ public class ZimsIlluminaRunFactory {
             referenceSequenceVersion = sampleInstanceDto.sampleInstance.getReferenceSequence().getVersion();
         }
 
-        // Uses the bait found in the workflow reagents or from the uploaded library.
-        // If none, takes the one defined on the product order.
-        String bait = StringUtils.isNotBlank(sampleInstanceDto.sampleInstance.getBaitNameOverride()) ?
-                sampleInstanceDto.sampleInstance.getBaitNameOverride() : baitName;
+        String bait = baitName;
 
         if (productOrder != null) {
             Product product = productOrder.getProduct();

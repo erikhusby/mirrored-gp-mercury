@@ -115,8 +115,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private MolecularIndexingScheme molecularIndexingScheme;
     private LabVessel firstPcrVessel;
     private MaterialType materialType;
-
-    private SampleInstanceEntity sampleInstanceEntity;
+    private String baitName;
+    private String catName;
     private int depth;
     private List<String> devConditions = new ArrayList<>();
     private TZDevExperimentData tzDevExperimentData;
@@ -124,7 +124,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private FlowcellDesignation.IndexType indexType;
     private Integer indexLength1;
     private Integer indexLength2;
-    private String baitNameOverride;
 
     /**
      * For a reagent-only sample instance.
@@ -208,14 +207,14 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         firstPcrVessel = other.firstPcrVessel;
         materialType = other.materialType;
         depth = other.depth + 1;
-        sampleInstanceEntity = other.getSampleInstanceEntity();
         tzDevExperimentData = other.getTzDevExperimentData();
         devConditions = other.getDevConditions();
         isPooledTube = other.getIsPooledTube();
         sampleLibraryName = other.getSampleLibraryName();
         readLength1 = other.getReadLength1();
         readLength2 = other.getReadLength2();
-
+        baitName = other.getBaitName();
+        catName = other.getCatName();
         aggregationParticle = other.getAggregationParticle();
         analysisType = other.getAnalysisType();
         referenceSequence = other.getReferenceSequence();
@@ -553,7 +552,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             setIsPooledTube(true);
             MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
             mergePooledTubeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
-            mergeReagents(sampleInstanceEntity.getReagentDesign());
             mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
             mergeRootSamples(sampleInstanceEntity.getRootSample());
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
@@ -563,6 +561,11 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             referenceSequence = sampleInstanceEntity.getReferenceSequence();
             umisPresent = sampleInstanceEntity.getUmisPresent();
             expectedInsertSize = sampleInstanceEntity.getInsertSize();
+            ReagentDesign reagentDesign = sampleInstanceEntity.getReagentDesign();
+            catName = (reagentDesign != null && reagentDesign.getReagentType() == ReagentDesign.ReagentType.CAT) ?
+                    reagentDesign.getDesignName() : null;
+            baitName = (reagentDesign != null && reagentDesign.getReagentType() == ReagentDesign.ReagentType.BAIT) ?
+                    reagentDesign.getDesignName() : sampleInstanceEntity.getBaitName();
             mercurySamples.add(mercurySample);
             pairedEndRead = sampleInstanceEntity.getPairedEndRead();
             indexType = sampleInstanceEntity.getIndexType();
@@ -570,7 +573,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             readLength2 = sampleInstanceEntity.getReadLength2();
             indexLength1 = sampleInstanceEntity.getIndexLength1();
             indexLength2 = sampleInstanceEntity.getIndexLength2();
-            baitNameOverride = sampleInstanceEntity.getBaitName();
         } else {
             mergeDevConditions(labVessel);
             mercurySamples.addAll(labVessel.getMercurySamples());
@@ -735,6 +737,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     /**
+<<<<<<< HEAD
      * Merges DesignedReagent into Reagents
      */
     private void mergeReagents(ReagentDesign reagentDesign) {
@@ -744,6 +747,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     /**
+=======
+>>>>>>> develop
      * Gets any ReagentDesign entities out of any DesignedReagent subclasses of Reagent on demand
      * to avoid the overhead of digesting Reagent into separate variables at SampleInstanceV2 creation
      * just to support a few use-cases
@@ -851,10 +856,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return true;
     }
 
-    private SampleInstanceEntity getSampleInstanceEntity() {
-        return sampleInstanceEntity;
-    }
-
     public ReferenceSequence getReferenceSequence() {
         return referenceSequence;
     }
@@ -879,8 +880,12 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return indexLength2;
     }
 
-    public String getBaitNameOverride() {
-        return baitNameOverride;
+    public String getBaitName() {
+        return baitName;
+    }
+
+    public String getCatName() {
+        return catName;
     }
 
     @Override
