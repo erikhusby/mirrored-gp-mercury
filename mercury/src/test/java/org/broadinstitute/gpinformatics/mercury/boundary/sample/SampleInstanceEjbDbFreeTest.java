@@ -120,7 +120,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
         Assert.assertTrue(CollectionUtils.isNotEmpty(entity.getLabVessel().getSampleInstancesV2()));
         for (SampleInstanceV2 sampleInstance : entity.getLabVessel().getSampleInstancesV2()) {
-            Assert.assertEquals(sampleInstance.getBaitNameOverride(), "TEST bait");
+            Assert.assertEquals(sampleInstance.getBaitName(), "TEST bait");
             Assert.assertEquals(sampleInstance.getAnalysisType().getName(), "No_Analysis");
             Assert.assertEquals(sampleInstance.getSampleLibraryName(), "TEST_LIBRARY");
             Assert.assertTrue(sampleInstance.getPairedEndRead());
