@@ -11,6 +11,7 @@ import org.hibernate.envers.Audited;
 /**
  * A ReagentDesign is an abstraction or categorization of DesignedReagent, which is an instance of Reagent.
  * ReagentDesign is used when the reagent is a bait or CAT. CAT stands for Custom Amplicon Tube.
+ * The design name is associated with a target list (or "manifest") registered in the pipeline.
  */
 @Entity
 @Audited
