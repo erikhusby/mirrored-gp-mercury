@@ -9,8 +9,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.envers.Audited;
 
 /**
- * A ReagentDesign is the name of magical elixirs, such as Baits and CATs, which are ordered from companies like IDT
- * or brewed in-house. A CAT is a Custom Amplicon Tube.
+ * A ReagentDesign is an abstraction or categorization of DesignedReagent, which is an instance of Reagent.
+ * ReagentDesign is used when the reagent is a bait or CAT. CAT stands for Custom Amplicon Tube.
  */
 @Entity
 @Audited
