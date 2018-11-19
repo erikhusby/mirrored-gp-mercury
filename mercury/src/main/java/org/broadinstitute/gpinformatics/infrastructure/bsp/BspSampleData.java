@@ -70,6 +70,7 @@ public class BspSampleData implements SampleData {
     public static final String JSON_DV200_KEY = "dv200";
     public static final String SAMPLE_TYPE = "sampleType";
     public static final String MATERIAL_TYPE = "materialType";
+    public static final String SAMPLE_KIT_ID = "sampleKitId";
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 
@@ -414,6 +415,16 @@ public class BspSampleData implements SampleData {
     @Override
     public String getSampleId() {
         return getValue(BSPSampleSearchColumn.SAMPLE_ID);
+    }
+
+    @Override
+    public String getSampleKitId() {
+        return getValue(BSPSampleSearchColumn.SAMPLE_KIT);
+    }
+
+    @Override
+    public String getSampleStatus() {
+        return getValue(BSPSampleSearchColumn.SAMPLE_STATUS);
     }
 
     @Override

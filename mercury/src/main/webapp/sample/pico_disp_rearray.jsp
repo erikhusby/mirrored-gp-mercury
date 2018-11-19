@@ -33,7 +33,7 @@
             <div class="control-label">&#160;</div>
             <div class="controls actionButtons">
                 <stripes:form beanclass="${actionBean.class.name}" id="confirmRearrayForm">
-                    <stripes:submit name="confirmRearray" value="Confirm Rarray" class="btn btn-mini"/>
+                    <stripes:submit name="confirmRearray" value="Confirm Rearray" class="btn btn-mini"/>
                 </stripes:form>
             </div>
         </div>

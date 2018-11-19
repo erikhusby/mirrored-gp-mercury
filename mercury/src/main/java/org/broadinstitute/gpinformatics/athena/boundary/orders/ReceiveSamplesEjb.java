@@ -17,8 +17,10 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtil
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceivedBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
@@ -37,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * EJB for receiving samples within BSP.
@@ -53,6 +56,7 @@ public class ReceiveSamplesEjb {
     private ProductOrderSampleDao productOrderSampleDao;
     private BSPUserList bspUserList;
     private SampleReceiptResource sampleReceiptResource;
+    private BSPRestService bspRestService;
     private LabVesselDao labVesselDao;
     private QueueEjb queueEjb;
 
@@ -64,6 +68,7 @@ public class ReceiveSamplesEjb {
                              BSPManagerFactory managerFactory,
                              ProductOrderSampleDao productOrderSampleDao,
                              BSPUserList bspUserList,
+                             BSPRestService bspRestService,
                              SampleReceiptResource sampleReceiptResource,
                              LabVesselDao labVesselDao,
                              QueueEjb queueEjb) {
@@ -72,6 +77,7 @@ public class ReceiveSamplesEjb {
         this.productOrderSampleDao = productOrderSampleDao;
         this.bspUserList = bspUserList;
         this.sampleReceiptResource = sampleReceiptResource;
+        this.bspRestService = bspRestService;
         this.labVesselDao = labVesselDao;
         this.queueEjb = queueEjb;
     }
@@ -135,6 +141,56 @@ public class ReceiveSamplesEjb {
         }
 
         return receiptResponse;
+    }
+
+    /**
+     * For samples that arrive in Non-Broad Tubes, e.g. Blood Spot Cards without SM-IDs but have a Collaborator
+     * Sample ID. Technician will link these Collaborator Sample IDs to newly created SM-IDs.
+     * @return SampleKitReceivedBean received from BSP.
+     */
+    public SampleKitReceivedBean receiveNonBroadTubes(Map<String, String> sampleToCollaborator,
+                                                      BspUser bspUser, MessageCollection messageCollection) {
+
+        SampleKitReceivedBean sampleKitReceivedBean = null;
+        // Validate first, if there are no errors receive first in BSP, then do the mercury receipt work.
+        validateForReceipt(sampleToCollaborator.keySet(), messageCollection, bspUser.getUsername());
+
+        if (!messageCollection.hasErrors()) {
+
+            sampleKitReceivedBean = bspRestService.receiveNonBroadSamples(sampleToCollaborator, bspUser.getUsername());
+
+            if (sampleKitReceivedBean.isSuccess()) {
+
+                for (SampleKitReceivedBean.KitInfo kit: sampleKitReceivedBean.getReceivedSamplesPerKit()) {
+
+                    Map<String, String> sampleToType = sampleKitReceivedBean.getTubeTypePerSample()
+                            .stream().collect(Collectors.toMap(SampleKitReceivedBean.TubeTypePerSample::getSampleId,
+                                    SampleKitReceivedBean.TubeTypePerSample::getTubeType));
+                    List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+                    for (String barcode : kit.getSamples()) {
+                        String tubeType = sampleToType.get(barcode);
+                        parentVesselBeans.add(new ParentVesselBean(null, barcode, tubeType,null));
+                    }
+
+                    List<LabVessel> vesselsForPico = new ArrayList<>();
+                    List<LabVessel> labVessels = labVesselDao.findByBarcodes(sampleIds);
+                    labVessels.addAll(labVesselDao.findByBarcodes(sampleIds).values());
+
+                    for (LabVessel labVessel : labVessels) {
+                        if (labVessel.isDNA()) {
+                            vesselsForPico.add(labVessel);
+                        }
+                    }
+                    queueEjb.enqueueLabVessels(vesselsForPico, QueueType.PICO,
+                            "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection);
+                    SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
+                            parentVesselBeans, bspUser.getUsername());
+                    sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
+                }
+            }
+        }
+
+        return sampleKitReceivedBean;
     }
 
     /**
@@ -283,8 +339,8 @@ public class ReceiveSamplesEjb {
             addValidation(messageCollection, operator, entry.getValue(),
                     SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                     SampleReceiptValidation.SampleValidationType.WARNING, String.format(
-                    "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS
-                            .getReasonMessage(), entry.getKey()));
+                            "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS
+                                    .getReasonMessage(), entry.getKey()));
         }
     }
 

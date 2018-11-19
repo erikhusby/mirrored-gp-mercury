@@ -20,12 +20,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.text.Format;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Generic metadata storage class with String keys and values.
@@ -161,16 +156,18 @@ public class Metadata {
     @Override
     public int hashCode() {
         HashCodeBuilder hashCodeBuilder = new HashCodeBuilder().append(key);
-        switch (key.getDataType()) {
-        case STRING:
-            hashCodeBuilder.append(stringValue);
-            break;
-        case NUMBER:
-            hashCodeBuilder.append(numberValue);
-            break;
-        case DATE:
-            hashCodeBuilder.append(dateValue);
-            break;
+        if (key != null) {
+            switch (key.getDataType()) {
+            case STRING:
+                hashCodeBuilder.append(stringValue);
+                break;
+            case NUMBER:
+                hashCodeBuilder.append(numberValue);
+                break;
+            case DATE:
+                hashCodeBuilder.append(dateValue);
+                break;
+            }
         }
         return hashCodeBuilder.hashCode();
     }

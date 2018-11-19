@@ -386,6 +386,11 @@ public class MercurySample extends AbstractSample {
         return fingerprints;
     }
 
+    // For fixup tests only.
+    void setRoot(Boolean root) {
+        isRoot = root;
+    }
+
     /**
      * Find the latest material type by first searching the event history then falling back on the sample's metadata.
      */

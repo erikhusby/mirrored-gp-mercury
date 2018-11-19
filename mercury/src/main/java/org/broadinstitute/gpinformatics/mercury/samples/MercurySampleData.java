@@ -451,4 +451,14 @@ public class MercurySampleData implements SampleData {
             }
         }
     }
+
+    @Override
+    public String getSampleKitId() {
+        return null;
+    }
+
+    @Override
+    public String getSampleStatus() {
+        return null;
+    }
 }

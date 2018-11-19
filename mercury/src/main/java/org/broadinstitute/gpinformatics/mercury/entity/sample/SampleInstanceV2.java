@@ -113,8 +113,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private MolecularIndexingScheme molecularIndexingScheme;
     private LabVessel firstPcrVessel;
     private MaterialType materialType;
-
-    private SampleInstanceEntity sampleInstanceEntity;
+    private String baitName;
+    private String catName;
     private int depth;
     private List<String> devConditions = new ArrayList<>();
     private TZDevExperimentData tzDevExperimentData;
@@ -200,13 +200,13 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         firstPcrVessel = other.firstPcrVessel;
         materialType = other.materialType;
         depth = other.depth + 1;
-        sampleInstanceEntity = other.getSampleInstanceEntity();
         tzDevExperimentData = other.getTzDevExperimentData();
         devConditions = other.getDevConditions();
         isPooledTube = other.getIsPooledTube();
         sampleLibraryName = other.getSampleLibraryName();
         readLength = other.getReadLength();
-
+        baitName = other.getBaitName();
+        catName = other.getCatName();
         aggregationParticle = other.getAggregationParticle();
         analysisType = other.getAnalysisType();
         referenceSequence = other.getReferenceSequence();
@@ -541,7 +541,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             setIsPooledTube(true);
             MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
             mergePooledTubeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
-            mergeReagents(sampleInstanceEntity.getReagentDesign());
             mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
             mergeRootSamples(sampleInstanceEntity.getRootSample());
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
@@ -551,6 +550,11 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             referenceSequence = sampleInstanceEntity.getReferenceSequence();
             umisPresent = sampleInstanceEntity.getUmisPresent();
             expectedInsertSize = sampleInstanceEntity.getInsertSize();
+            ReagentDesign reagentDesign = sampleInstanceEntity.getReagentDesign();
+            catName = (reagentDesign != null && reagentDesign.getReagentType() == ReagentDesign.ReagentType.CAT) ?
+                    reagentDesign.getDesignName() : null;
+            baitName = (reagentDesign != null && reagentDesign.getReagentType() == ReagentDesign.ReagentType.BAIT) ?
+                    reagentDesign.getDesignName() : null;
             mercurySamples.add(mercurySample);
         } else {
             mergeDevConditions(labVessel);
@@ -709,16 +713,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     /**
-     * Merges DesignedReagent into Reagents
-     *   - as of July 2018 only to support DEV Tagged pooled tubes upload
-     */
-    private void mergeReagents(ReagentDesign reagentDesign) {
-        if (reagentDesign != null) {
-            this.reagents.addAll(reagentDesign.getDesignedReagents());
-        }
-    }
-
-    /**
      * Gets any ReagentDesign entities out of any DesignedReagent subclasses of Reagent on demand
      * to avoid the overhead of digesting Reagent into separate variables at SampleInstanceV2 creation
      * just to support a few use-cases
@@ -826,16 +820,20 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return true;
     }
 
-    private SampleInstanceEntity getSampleInstanceEntity() {
-        return sampleInstanceEntity;
-    }
-
     public ReferenceSequence getReferenceSequence() {
         return referenceSequence;
     }
 
     public AnalysisType getAnalysisType() {
         return analysisType;
+    }
+
+    public String getBaitName() {
+        return baitName;
+    }
+
+    public String getCatName() {
+        return catName;
     }
 
     @Override

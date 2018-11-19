@@ -164,17 +164,18 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                         businessKey = billingKey.get().getBusinessKey();
                     }
 
-                    final List<String> cellList =
-                            new ArrayList(Arrays.asList(getBillingSessionLink(
-                                    businessKey, singleWorkItem.isPresent()?singleWorkItem.get():"", context),
-                                    billedDate.isPresent()?dateFormatter.format(billedDate.get()):"",
-                                    getQuoteLink(quoteImportItem.getQuoteId(), context),
-                                    getWorkItemLink(singleWorkItem.isPresent()?singleWorkItem.get():"", quoteImportItem.getQuoteId(), context),
-                                    sapItems.isPresent()?sapItems.get():"",
-                                    quoteImportItem.getProduct().getDisplayName(),
-                                    quoteImportItem.getRoundedQuantity(), quoteImportItem.getNumSamples(),
-                                    workCompleteDate.isPresent()?dateFormatter.format(workCompleteDate.get()):"",
-                                    quoteImportItem.getBillingMessage()));
+                    final List<String> cellList = new ArrayList(Arrays.asList(
+                            getBillingSessionLink(businessKey, singleWorkItem.isPresent()?singleWorkItem.get():"",
+                                    context),
+                            billedDate.isPresent()?dateFormatter.format(billedDate.get()):"",
+                            getQuoteLink(quoteImportItem.getQuoteId(), context),
+                            getWorkItemLink(singleWorkItem.isPresent()?singleWorkItem.get():"",
+                                    quoteImportItem.getQuoteId(), context),
+                            sapItems.isPresent()?sapItems.get():"",
+                            quoteImportItem.getProduct().getDisplayName(),
+                            quoteImportItem.getRoundedQuantity(), quoteImportItem.getNumSamples(),
+                            workCompleteDate.isPresent()?dateFormatter.format(workCompleteDate.get()):"",
+                            quoteImportItem.getBillingMessage()));
                     ConfigurableList.ResultRow row =
                             new ConfigurableList.ResultRow(null, cellList, String.valueOf(count));
                     billingRows.add(row);
