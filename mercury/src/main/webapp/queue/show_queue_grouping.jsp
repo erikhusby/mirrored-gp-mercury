@@ -11,19 +11,20 @@
     <stripes:layout-component name="content">
         <p>
             Queue: ${actionBean.queueType.textName}<br />
-            Queue Grouping: ${actionBean.queueGrouping.queueGroupingText}  (${actionBean.queueGrouping.containerVessel.label})
+            Queue Grouping: ${actionBean.queueGrouping.queueGroupingText}
         </p>
 
         <table class="table simple dataTable" id="queueGroupingTable">
             <thead>
             <tr>
-                <th>Vessel Barcode</th><th>Status</th><th>Completed On</th><th>Completed By</th>
+                <th>Vessel Barcode</th><th>Storage Location</th><th>Status</th><th>Completed On</th><th>Completed By</th>
             </tr>
             </thead>
             <tbody>
             <c:forEach items="${actionBean.queueGrouping.queuedEntities}" var="queueEntity">
                 <tr>
                     <td>${queueEntity.labVessel.label}</td>
+                    <td>${queueEntity.labVessel.storageLocation.buildLocationTrail()}</td>
                     <td>${queueEntity.queueStatus.name}</td>
                     <td>${queueEntity.completedOn}</td>
                     <td>${actionBean.userIdToUsername[queueEntity.completedBy].fullName}</td>

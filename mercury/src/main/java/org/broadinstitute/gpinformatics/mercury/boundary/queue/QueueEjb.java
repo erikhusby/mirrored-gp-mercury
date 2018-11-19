@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.bsp.client.queue.DequeueingOptions;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.QueueValidationHandler;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
@@ -17,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -25,6 +28,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -46,6 +50,9 @@ public class QueueEjb {
 
     @Inject
     private GenericQueueDao genericQueueDao;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     private QueueValidationHandler queueValidationHandler = new QueueValidationHandler();
 
@@ -69,10 +76,7 @@ public class QueueEjb {
         if (genericQueue.getQueueGroupings() == null) {
             genericQueue.setQueueGroupings(new TreeSet<>(QueueGrouping.BY_SORT_ORDER));
         }
-        Set<Long> vesselIds = new HashSet<>();
-        for (LabVessel labVessel : vesselList) {
-            vesselIds.add(labVessel.getLabVesselId());
-        }
+        List<Long> vesselIds = getApplicableLabVesselIds(vesselList);
 
         boolean isUniqueSetOfActiveVessels = true;
 
@@ -100,25 +104,34 @@ public class QueueEjb {
         }
 
         if (isUniqueSetOfActiveVessels) {
-            QueueGrouping queueGrouping = createGroupingAndSetInitialOrder(readableText, genericQueue);
+            QueueGrouping queueGrouping = createGroupingAndSetInitialOrder(readableText, genericQueue, vesselList);
 
-            queueGrouping.setAssociatedQueue(genericQueue);
             genericQueue.getQueueGroupings().add(queueGrouping);
             try {
                 queueValidationHandler.validate(vesselList, queueType, messageCollection);
             } catch (Exception e) {
                 messageCollection.addWarning("Internal error trying to validate: " + e.getMessage());
             }
-            for (LabVessel labVessel : vesselList) {
-
-                QueueEntity queueEntity = new QueueEntity(queueGrouping, labVessel);
-                queueGrouping.getQueuedEntities().add(queueEntity);
-                persist(queueEntity);
-            }
             return queueGrouping.getQueueGroupingId();
         }
 
         return null;
+    }
+
+    @NotNull
+    private List<Long> getApplicableLabVesselIds(@Nonnull Collection<LabVessel> vesselList) {
+        List<Long> vesselIds = new ArrayList<>();
+        for (LabVessel labVessel : vesselList) {
+
+            if (labVessel.getContainerRole() != null) {
+                for (LabVessel vessel : labVessel.getContainerRole().getMapPositionToVessel().values()) {
+                    vesselIds.add(vessel.getLabVesselId());
+                }
+            } else {
+                vesselIds.add(labVessel.getLabVesselId());
+            }
+        }
+        return vesselIds;
     }
 
     /**
@@ -130,13 +143,11 @@ public class QueueEjb {
      * @param messageCollection     Messages back to the user.
      * @param dequeueingOptions     Dequeueing Options
      */
+    @SuppressWarnings("WeakerAccess")
     public void dequeueLabVessels(Collection<LabVessel> labVessels, QueueType queueType,
                                   MessageCollection messageCollection, DequeueingOptions dequeueingOptions) {
 
-        List<Long> labVesselIds = new ArrayList<>();
-        for (LabVessel labVessel : labVessels) {
-            labVesselIds.add(labVessel.getLabVesselId());
-        }
+        List<Long> labVesselIds = getApplicableLabVesselIds(labVessels);
 
         // Finds all the Active entities by the vessel Ids
         List<QueueEntity> entitiesByVesselIds = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
@@ -145,8 +156,9 @@ public class QueueEjb {
         for (QueueEntity queueEntity : entitiesByVesselIds) {
             if (!queueValidationHandler.isComplete(queueEntity.getLabVessel(), queueType, messageCollection)
                             && dequeueingOptions == DequeueingOptions.DEFAULT_DEQUEUE_RULES) {
-                messageCollection.addWarning(queueEntity.getLabVessel().getLabel() + " has been denoted as not yet completed" +
-                        " from the " + queueType.getTextName() + " queue.");
+                messageCollection.addWarning(queueEntity.getLabVessel().getLabel()
+                        + " has been denoted as not yet completed"
+                        + " from the " + queueType.getTextName() + " queue.");
             } else {
                 updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Completed);
             }
@@ -200,7 +212,7 @@ public class QueueEjb {
         for (LabVessel labVessel : labVesselsToExclude) {
             for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {
                 for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
-                    if (queueEntity.getLabVessel().getLabVesselId().equals(labVessel.getLabVesselId())) {
+                    if (getApplicableLabVesselIds(Collections.singleton(queueEntity.getLabVessel())).contains(labVessel.getLabVesselId())) {
                         updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Excluded);
                     }
                 }
@@ -225,10 +237,19 @@ public class QueueEjb {
         }
     }
 
-    public QueueGrouping createGroupingAndSetInitialOrder(@Nullable String readableText, GenericQueue genericQueue) {
+    public QueueGrouping createGroupingAndSetInitialOrder(@Nullable String readableText, GenericQueue genericQueue, Collection<LabVessel> vesselList) {
         QueueGrouping queueGrouping = new QueueGrouping(readableText, genericQueue);
+
+        queueGrouping.setAssociatedQueue(genericQueue);
         persist(queueGrouping);
         genericQueueDao.flush();
+
+        for (LabVessel labVessel : vesselList) {
+
+            QueueEntity queueEntity = new QueueEntity(queueGrouping, labVessel);
+            queueGrouping.getQueuedEntities().add(queueEntity);
+            persist(queueEntity);
+        }
         setInitialOrder(queueGrouping);
         return queueGrouping;
     }
@@ -327,5 +348,14 @@ public class QueueEjb {
         }
 
         dequeueLabVessels(passingLabVessels, queueType, messageCollection, DequeueingOptions.OVERRIDE);
+    }
+
+    public void excludeItemsById(List<String> excludeVessels, QueueType queueType, MessageCollection messageCollection) {
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(excludeVessels);
+
+        vessels.addAll(labVesselDao.findByBarcodes(excludeVessels).values());
+        vessels.removeAll(Collections.singletonList(null));
+
+        excludeItems(vessels, queueType, messageCollection);
     }
 }

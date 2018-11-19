@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.queueType.textName} Queue" sectionTitle="${actionBean.queueType.textName} Queue" showCreate="true">
+<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.queueType.textName} Queue" sectionTitle="${actionBean.queueType.textName} Queue" showCreate="false">
 
     <stripes:layout-component name="extraHead">
 
@@ -47,11 +47,11 @@
     </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
+            <stripes:hidden name="queueType" />
             <table class="table simple dataTable" id="queueTable">
                 <thead>
                     <tr>
-                        <th>Readable Text</th><th>Vessel Container Barcode</th><th>Location</th>
-                        <th>PDO</th><th>Queue Status</th><th>Positioning</th>
+                        <th>Readable Text</th><th>Queue Status</th><th>Positioning</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,8 +65,6 @@
                                     ${queueGrouping.queueGroupingText}
                                 </stripes:link>
                             </td>
-                            <td>${queueGrouping.containerVessel.label}</td>
-                            <td>${queueGrouping.containerVessel.storageLocation.buildLocationTrail()}</td><td>PDO</td>
 
                             <c:set var="doNotNeedPico" value="${fn:length(queueGrouping.queuedEntities) - queueGrouping.remainingEntities}" />
                             <c:set var="needPico" value="${queueGrouping.remainingEntities}" />
@@ -101,6 +99,13 @@
 
             Position to move Selected Items to: <input type="text" name="positionToMoveTo" value="" />
             <stripes:submit name="updatePositions" value="Update Positions" />
+        </stripes:form>
+        <p>&#160;</p>
+        <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
+            <stripes:hidden name="queueType" />
+            Enter the barcodes of the vessels to remove. One per line.
+            <stripes:textarea name="excludeVessels" /><br />
+            <stripes:submit name="excludeLabVessels" value="Exclude Vessels" />
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>

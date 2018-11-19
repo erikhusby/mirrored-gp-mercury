@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
@@ -151,6 +152,7 @@ public class ManifestSessionEjbDBFreeTest {
             ImmutableMap.of("03101231193", 2, "03101254356", 3, "03101411324", 2);
     public JiraService jiraService;
     private BSPUserList bspUserList;
+    private QueueEjb queueEjb;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -161,6 +163,7 @@ public class ManifestSessionEjbDBFreeTest {
         mockUserBean = Mockito.mock(UserBean.class);
         jiraService = Mockito.mock(JiraService.class);
         bspUserList = Mockito.mock(BSPUserList.class);
+        queueEjb = Mockito.mock(QueueEjb.class);
 
         Mockito.when(mockUserBean.getBspUser()).thenReturn(testLabUser);
         Mockito.when(bspUserList.getByUsername(Mockito.anyString())).thenReturn(testLabUser);
@@ -227,7 +230,7 @@ public class ManifestSessionEjbDBFreeTest {
                 BarcodedTube.BarcodedTubeType.MatrixTube2mL);
         manifestSessionEjb =
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                        mockUserBean, bspUserList, jiraService);
+                        mockUserBean, bspUserList, jiraService, queueEjb);
     }
 
     /**
@@ -260,7 +263,7 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(researchProject);
 
         return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean, bspUserList, jiraService);
+                mockUserBean, bspUserList, jiraService, queueEjb);
     }
 
     /**
@@ -358,7 +361,7 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(testVesselAlreadyTransferred);
 
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean, bspUserList, jiraService);
+                mockUserBean, bspUserList, jiraService, queueEjb);
 
         return holder;
     }
@@ -369,7 +372,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void researchProjectNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao, mockUserBean, bspUserList, jiraService);
+                labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb);
         try {
             ejb.uploadManifest(null, null, null, false);
             Assert.fail();
@@ -648,7 +651,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void acceptUploadSessionNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao, mockUserBean, bspUserList, jiraService);
+                labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb);
         try {
             ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
             Assert.fail();

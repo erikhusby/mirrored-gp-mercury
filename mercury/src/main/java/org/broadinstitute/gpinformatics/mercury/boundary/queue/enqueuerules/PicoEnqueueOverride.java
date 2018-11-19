@@ -3,11 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.mercury.BSPRestClientImpl;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.jetbrains.annotations.NotNull;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,17 +18,18 @@ import java.util.List;
 /**
  * Logic for overriding default handling for enqueueing for the Pico Queue.
  */
+@RequestScoped
 public class PicoEnqueueOverride extends AbstractEnqueueOverride {
 
     public PicoEnqueueOverride() {
+        this(ServiceAccessUtility.getBean(BSPRestClient.class));
     }
 
-    @Inject
-    public PicoEnqueueOverride(BSPRestClientImpl bspRestClientImpl) {
+    public PicoEnqueueOverride(BSPRestClient bspRestClientImpl) {
         this.bspRestClientImpl = bspRestClientImpl;
     }
 
-    private BSPRestClientImpl bspRestClientImpl;
+    private BSPRestClient bspRestClientImpl;
 
     @NotNull
     @Override

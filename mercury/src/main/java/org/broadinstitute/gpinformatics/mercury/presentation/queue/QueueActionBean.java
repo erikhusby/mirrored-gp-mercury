@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class QueueActionBean extends CoreActionBean {
 
     private Long queueGroupingId;
     private Integer positionToMoveTo;
+    private String excludeVessels;
 
     private QueueGrouping queueGrouping;
 
@@ -47,6 +49,7 @@ public class QueueActionBean extends CoreActionBean {
 
     @Inject
     private BSPUserList userList;
+
 
     @DefaultHandler
     @HandlesEvent("showQueuePage")
@@ -109,6 +112,19 @@ public class QueueActionBean extends CoreActionBean {
         return showQueuePage();
     }
 
+    @HandlesEvent("excludeLabVessels")
+    public Resolution excludeLabVessels() {
+        MessageCollection messageCollection = new MessageCollection();
+
+        String[] barcodes = excludeVessels.trim().toUpperCase().split("\\n");
+
+        queueEjb.excludeItemsById(Arrays.asList(barcodes), queueType, messageCollection);
+
+        queue = queueEjb.findQueueByType(queueType);
+        addMessages(messageCollection);
+        return showQueuePage();
+    }
+
     public QueueType getQueueType() {
         return queueType;
     }
@@ -155,5 +171,13 @@ public class QueueActionBean extends CoreActionBean {
 
     public void setPositionToMoveTo(Integer positionToMoveTo) {
         this.positionToMoveTo = positionToMoveTo;
+    }
+
+    public String getExcludeVessels() {
+        return excludeVessels;
+    }
+
+    public void setExcludeVessels(String excludeVessels) {
+        this.excludeVessels = excludeVessels;
     }
 }

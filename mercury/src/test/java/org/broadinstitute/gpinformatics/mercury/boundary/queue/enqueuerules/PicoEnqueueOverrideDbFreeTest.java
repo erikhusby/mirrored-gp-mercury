@@ -4,7 +4,7 @@ import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.mercury.BSPRestClientImpl;
+import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
@@ -183,8 +183,8 @@ public class PicoEnqueueOverrideDbFreeTest extends AbstractEnqueueOverrideTest {
         return mercurySample;
     }
 
-    private BSPRestClientImpl generateBspRestClient(boolean containsExomeExpressReturnValue) {
-        BSPRestClientImpl restClient = Mockito.mock(BSPRestClientImpl.class);
+    private BSPRestClient generateBspRestClient(boolean containsExomeExpressReturnValue) {
+        BSPRestClient restClient = Mockito.mock(BSPRestClient.class);
 
         ExomeExpressCheckResponse response = Mockito.mock(ExomeExpressCheckResponse.class);
         Mockito.when(restClient.callExomeExpressCheck(Mockito.anyListOf(String.class))).thenReturn(response);

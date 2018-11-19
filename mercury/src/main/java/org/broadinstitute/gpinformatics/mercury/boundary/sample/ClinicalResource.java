@@ -115,6 +115,7 @@ public class ClinicalResource {
     private void updateMetadataSource(List<MercurySample> mercurySamples) {
         for (MercurySample mercurySample : mercurySamples) {
             mercurySample.changeMetadataSourceToCrspPortal();
+            mercurySampleDao.persist(mercurySample);
         }
     }
 

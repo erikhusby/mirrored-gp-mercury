@@ -18,6 +18,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Collection;
+import java.util.Collections;
 
 @Stateful
 @RequestScoped
@@ -41,6 +42,7 @@ public class QueueResource {
         QueueType queueType = QueueType.valueOf(QueueType.class, enqueueContents.getQueueType().name());
         Collection<LabVessel> labVessels = labVesselDao.findByBarcodes(enqueueContents.getTubeBarcodes()).values();
         labVessels.addAll(labVesselDao.findBySampleKeyList(enqueueContents.getTubeBarcodes()));
+        labVessels.removeAll(Collections.singletonList(null));
         Long queueGroupingId = queueEjb.enqueueLabVessels(labVessels, queueType, enqueueContents.getReadableName(), messageCollection);
 
         EnqueueResponse enqueueResponse = new EnqueueResponse(queueGroupingId, messageCollection);

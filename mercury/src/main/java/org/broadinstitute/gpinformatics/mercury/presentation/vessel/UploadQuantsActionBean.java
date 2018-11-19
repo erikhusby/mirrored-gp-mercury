@@ -226,6 +226,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
                         tubeFormationLabels = triple.getMiddle().stream()
                                 .map(r -> r.getTubeFormation().getLabel()).collect(Collectors.toList());
                     }
+
+                    queueEjb.dequeueLabVessels(labMetricRun, QueueType.PICO, messageCollection);
                 }
 
                 addMessages(messageCollection);

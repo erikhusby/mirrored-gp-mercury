@@ -44,7 +44,7 @@ public class GenericQueueDao extends GenericDao {
                 Path<LabVessel> labVesselPath = root.get(QueueEntity_.labVessel);
                 Path<QueueGrouping> queueGroupingPath = root.get(QueueEntity_.queueGrouping);
                 Path<GenericQueue> genericQueuePath = queueGroupingPath.get(QueueGrouping_.associatedQueue);
-                criteriaQuery.where(criteriaBuilder.in(labVesselPath.get(LabVessel_.labVesselId)).in(vesselIds),
+                criteriaQuery.where(labVesselPath.get(LabVessel_.labVesselId).in(vesselIds),
                         criteriaBuilder.equal(genericQueuePath.get(GenericQueue_.queueType), queueType),
                         criteriaBuilder.equal(root.get(QueueEntity_.queueStatus), QueueStatus.Active));
             }
@@ -62,7 +62,7 @@ public class GenericQueueDao extends GenericDao {
                 Path<LabVessel> labVesselPath = root.get(QueueEntity_.labVessel);
                 Path<QueueGrouping> queueGroupingPath = root.get(QueueEntity_.queueGrouping);
                 Path<GenericQueue> genericQueuePath = queueGroupingPath.get(QueueGrouping_.associatedQueue);
-                criteriaQuery.where(criteriaBuilder.in(labVesselPath.get(LabVessel_.labVesselId)).in(vesselIds),
+                criteriaQuery.where(labVesselPath.get(LabVessel_.labVesselId).in(vesselIds),
                         criteriaBuilder.equal(genericQueuePath.get(GenericQueue_.queueType), queueType));
             }
         });

@@ -13,17 +13,22 @@ package org.broadinstitute.gpinformatics.mercury;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
+import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 /**
  * This contains common code used by all clients of BSP rest, ie: non-broadcore) services.
  */
 @Dependent
 public class BSPRestClient extends AbstractJerseyClientService {
+
+    private static final String EXOMEEXPRESS_CHECK_IS_EXEX = "/exomeexpress/check_is_exex";
 
     private static final long serialVersionUID = 5472586820069306030L;
 
@@ -52,5 +57,11 @@ public class BSPRestClient extends AbstractJerseyClientService {
 
     public WebResource getWebResource(String urlString) {
         return getJerseyClient().resource(urlString);
+    }
+
+
+    public ExomeExpressCheckResponse callExomeExpressCheck(List<String> barcodes) {
+        WebResource webResource = getWebResource(EXOMEEXPRESS_CHECK_IS_EXEX);
+        return webResource.type(MediaType.APPLICATION_JSON).post(ExomeExpressCheckResponse.class, barcodes);
     }
 }

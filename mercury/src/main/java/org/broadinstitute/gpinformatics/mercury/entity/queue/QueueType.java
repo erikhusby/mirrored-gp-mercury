@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.PicoEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.AbstractQueueValidator;
