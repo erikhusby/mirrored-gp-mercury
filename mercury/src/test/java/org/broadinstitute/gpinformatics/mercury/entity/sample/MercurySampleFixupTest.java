@@ -552,7 +552,7 @@ public class MercurySampleFixupTest extends Arquillian {
 
     /**
      * This test reads its parameters from a file, mercury/src/test/resources/testdata/RemoveSampleFromVessel.txt,
-     * so it can be used for other similar fixups, without writing a new test.  It is used to remove BSP samples from
+     * so it can be used for other similar fixups, without writing a new test.  It is used to remove samples from
      * vessels that were added in error.  Example contents of the file are (first line is the fixup commentary,
      * subsequent lines are whitespace separated vessel barcode and sample ID):
      * SUPPORT-4760 disassociate dev sample
