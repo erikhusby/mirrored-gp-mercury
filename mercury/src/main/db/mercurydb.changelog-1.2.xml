@@ -1762,4 +1762,10 @@
             <column name="REWORKS"/>
         </createIndex>
     </changeSet>
+    <changeSet id="GPLIM-5849-11" author="thompson">
+        <createIndex tableName="BUCKET_ENTRY" indexName="IX_BE_LAB_BATCH">
+            <column name="LAB_BATCH"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
