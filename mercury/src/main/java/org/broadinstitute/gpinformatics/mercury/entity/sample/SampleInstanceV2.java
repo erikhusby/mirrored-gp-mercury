@@ -562,7 +562,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         }
 
         // order of assignments is same as order of fields
-        reagents.addAll(labVessel.getReagentContents());
+        for( Reagent reagent : labVessel.getReagentContents() ) {
+            addReagent(reagent);
+        }
 
         List<LabBatchStartingVessel> labBatchStartingVesselsByDate = labVessel.getLabBatchStartingVesselsByDate();
         allLabBatchStartingVessels.addAll(labBatchStartingVesselsByDate);
