@@ -2,7 +2,7 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"/>
-<stripes:layout-render name="/layout.jsp" pageTitle="Receiving" sectionTitle="Receiving">
+<stripes:layout-render name="/layout.jsp" pageTitle="Receive By Sample Scan" sectionTitle="Receive By Sample Scan">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -38,6 +38,7 @@
                 <div class="controls">
                     <stripes:textarea id="sampleIds" name="sampleIds"/>
                 </div>
+            </div>
             <div class="control-group">
                 <div class="controls">
                     <stripes:submit value="Search" id="scanBtn" class="btn btn-primary"
@@ -62,25 +63,21 @@
                     </tr>
                     </thead>
                     <tbody>
-                        <c:forEach items="${actionBean.sampleRows}" var="sampleData">
-                            <tr class="sample-row">
-                                <td>
+                    <c:forEach items="${actionBean.sampleRows}" var="sampleData">
+                        <tr class="sample-row">
+                            <td>
                                     <stripes:checkbox class="sample-checkbox" name="selectedSampleIds"
                                                       value="${sampleData.sampleId}"/>
-                                <td>${sampleData.sampleId}</td>
-                                <td>${sampleData.sampleKitId}</td>
-                                <td>${sampleData.sampleStatus}</td>
-                                <td>${sampleData.originalMaterialType}</td>
-                            </tr>
-                        </c:forEach>
+                            <td>${sampleData.sampleId}</td>
+                            <td>${sampleData.sampleKitId}</td>
+                            <td>${sampleData.sampleStatus}</td>
+                            <td>${sampleData.originalMaterialType}</td>
+                        </tr>
+                    </c:forEach>
                     </tbody>
                 </table>
-                <div class="control-group">
-                    <div class="controls">
-                        <stripes:submit id="receiveToBsp" name="receiveBySampleToBsp" value="Receive To BSP"
-                                        class="btn btn-primary"/>
-                    </div>
-                </div>
+                <stripes:submit id="receiveToBsp" name="receiveBySampleToBsp" value="Receive To BSP"
+                                class="btn btn-primary"/>
             </stripes:form>
         </c:if>
     </stripes:layout-component>
