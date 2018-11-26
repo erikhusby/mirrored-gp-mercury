@@ -2,7 +2,7 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"/>
-<stripes:layout-render name="/layout.jsp" pageTitle="Receive By SK" sectionTitle="Receive By SK">
+<stripes:layout-render name="/layout.jsp" pageTitle="Receive By SK-ID" sectionTitle="Receive By SK-ID">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -39,14 +39,13 @@
                     <input type="text" id="rackBarcode" autocomplete="off" name="rackBarcode" value="${actionBean.rackBarcode}"
                            class="clearable barcode unique" required="" aria-required="true">
                 </div>
-                <div class="control-group">
-                    <div class="controls">
-                        <stripes:submit value="Search" id="scanBtn" class="btn btn-primary"
-                                        name="findSkId"/>
-                    </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <stripes:submit value="Search" id="scanBtn" class="btn btn-primary"
+                                    name="findSkId"/>
                 </div>
             </div>
-
         </stripes:form>
         <c:if test="${actionBean.showLayout}">
             <stripes:form beanclass="${actionBean.class.name}"
@@ -70,8 +69,8 @@
                     <c:forEach items="${actionBean.sampleRows}" var="sampleData">
                         <tr class="sample-row">
                             <td>
-                                    <stripes:checkbox class="sample-checkbox" name="selectedSampleIds"
-                                                      value="${sampleData.sampleId}"/>
+                                <stripes:checkbox class="sample-checkbox" name="selectedSampleIds"
+                                                  value="${sampleData.sampleId}"/>
                             </td>
                             <td>${sampleData.sampleId}</td>
                             <td>${sampleData.sampleKitId}</td>
@@ -81,12 +80,8 @@
                     </c:forEach>
                     </tbody>
                 </table>
-                <div class="control-group">
-                    <div class="controls">
-                        <stripes:submit id="receiveToBsp" name="receiveBySkToBsp" value="Receive To BSP"
-                                        class="btn btn-primary"/>
-                    </div>
-                </div>
+                <stripes:submit id="receiveToBsp" name="receiveBySkToBsp" value="Receive To BSP"
+                                class="btn btn-primary"/>
             </stripes:form>
         </c:if>
     </stripes:layout-component>
