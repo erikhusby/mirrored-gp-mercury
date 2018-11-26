@@ -430,6 +430,15 @@
                                                 <c:set var="positionMap" value="${plateTransfer.positionMap}" scope="request"/>
                                                 <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
 
+                                                <c:if test="${not empty actionBean.selectableTargetTubeTypeOptions}">
+                                                    <stripes:label for="selectedTargetTubeType">Destination Tube Type </stripes:label>
+                                                    <stripes:select name="selectedTargetTubeType"
+                                                                    id="selectedTargetTubeType">
+                                                        <stripes:option value="">Select One</stripes:option>
+                                                        <stripes:options-collection collection="${actionBean.selectableTargetTubeTypeOptions}"/>
+                                                    </stripes:select>
+                                                </c:if>
+
                                                 <c:choose>
                                                     <c:when test="${not empty actionBean.selectedTargetGeometry}">
                                                         <c:set var="vesselTypeGeometry" value="${actionBean.selectedTargetGeometry}" scope="request"/>

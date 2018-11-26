@@ -177,17 +177,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     private VesselTypeGeometry selectedTargetGeometry;
 
-    public VesselTypeGeometry getSelectedSourceGeometry() {
-        return selectedSourceGeometry;
-    }
+    private BarcodedTube.BarcodedTubeType[] selectableTargetTubeTypeOptions;
 
-    public void setSelectedSourceGeometry(VesselTypeGeometry selectedSourceGeometry) { this.selectedSourceGeometry = selectedSourceGeometry; }
-
-    public VesselTypeGeometry getSelectedTargetGeometry() {
-        return selectedTargetGeometry;
-    }
-
-    public void setSelectedTargetGeometry(VesselTypeGeometry selectedTargetGeometry) { this.selectedTargetGeometry = selectedTargetGeometry; }
+    private String selectedTargetTubeType;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -274,6 +266,17 @@ public class ManualTransferActionBean extends RackScanActionBean {
         String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
         if (targetVesselTypeGeometryString != null) {
             selectedTargetGeometry = RackOfTubes.RackType.getByName(targetVesselTypeGeometryString);
+        }
+
+        // Ensure that we keep track of the selected target tube type.
+        if (selectedTargetGeometry != null) {
+            RackOfTubes.RackType selectedTargetRackType =
+                    RackOfTubes.RackType.getByName(selectedTargetGeometry.getDisplayName());
+            BarcodedTube.BarcodedTubeType[] allowedTargetBarcodedTubeTypes =
+                    selectedTargetRackType.getAllowedBarcodedTubeTypes();
+            if (allowedTargetBarcodedTubeTypes != null && allowedTargetBarcodedTubeTypes.length > 0) {
+                selectableTargetTubeTypeOptions = allowedTargetBarcodedTubeTypes;
+            }
         }
     }
 
@@ -397,6 +400,14 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     VesselTypeGeometry targetVesselTypeGeometryCp;
                     if (selectedTargetGeometry != null) {
                         targetVesselTypeGeometryCp = selectedTargetGeometry;
+
+                        RackOfTubes.RackType selectedTargetRackType =
+                                RackOfTubes.RackType.getByName(selectedTargetGeometry.getDisplayName());
+                        BarcodedTube.BarcodedTubeType[] allowedTargetBarcodedTubeTypes =
+                                selectedTargetRackType.getAllowedBarcodedTubeTypes();
+                        if (allowedTargetBarcodedTubeTypes != null && allowedTargetBarcodedTubeTypes.length > 0) {
+                            selectableTargetTubeTypeOptions = allowedTargetBarcodedTubeTypes;
+                        }
                     } else {
                         targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
                     }
@@ -1202,6 +1213,19 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 plateCherryPickEvent.getSourcePlate().get(0),
                                 manualTransferDetails.getSourceVesselTypeGeometry());
                     }
+
+                    // If there was a selected tube type, update the position map to use it (if the values are null).
+                    if (selectedTargetTubeType != null) {
+                        // Loop through destination types and set their tube type to the selected type
+
+                        PositionMapType positionMapType = plateCherryPickEvent.getPositionMap().get(0);
+                        for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                            if (receptacleType.getReceptacleType() == null) {
+                                receptacleType.setReceptacleType(selectedTargetTubeType);
+                            }
+                        }
+                    }
+
                     cleanupPositionMap(plateCherryPickEvent.getPositionMap().get(0), plateCherryPickEvent.getPlate().get(0),
                             manualTransferDetails.getTargetVesselTypeGeometry());
                     if (manualTransferDetails.getSecondaryEvent() != null && eventIndex > 0) {
@@ -1478,4 +1502,27 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public void setDepleteAll(Map<Integer, Boolean> depleteAll) {
         this.depleteAll = depleteAll;
     }
+
+    public VesselTypeGeometry getSelectedSourceGeometry() {
+        return selectedSourceGeometry;
+    }
+
+    public void setSelectedSourceGeometry(VesselTypeGeometry selectedSourceGeometry) { this.selectedSourceGeometry = selectedSourceGeometry; }
+
+    public VesselTypeGeometry getSelectedTargetGeometry() {
+        return selectedTargetGeometry;
+    }
+
+    public void setSelectedTargetGeometry(VesselTypeGeometry selectedTargetGeometry) { this.selectedTargetGeometry = selectedTargetGeometry; }
+
+    public BarcodedTube.BarcodedTubeType[] getSelectableTargetTubeTypeOptions() {
+        return selectableTargetTubeTypeOptions;
+    }
+
+    public String getSelectedTargetTubeType() {
+        return selectedTargetTubeType;
+    }
+
+    public void setSelectedTargetTubeType(String selectedTargetTubeType) { this.selectedTargetTubeType =
+            selectedTargetTubeType; }
 }

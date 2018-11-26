@@ -336,7 +336,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.BSP_AND_MERCURY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
-                    RackOfTubes.RackType.values()).build(),
+                    RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).build(),
             LibraryType.NONE_ASSIGNED),
 
     // Dev Samples
