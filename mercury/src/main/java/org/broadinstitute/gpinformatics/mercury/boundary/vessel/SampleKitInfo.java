@@ -14,14 +14,15 @@ import java.util.List;
  */
 @XmlRootElement(namespace = Namespaces.VESSEL)
 @XmlType(namespace = Namespaces.VESSEL)
-@XmlAccessorType
+@XmlAccessorType(XmlAccessType.FIELD)
 public class SampleKitInfo {
-    protected String kitId;
-    protected String containerId;
-    protected String status;
-    protected Boolean isPlate;
+    private String kitId;
+    private String containerId;
+    private String status;
+    private Boolean isPlate;
+
     @XmlElement(nillable = true)
-    protected List<SampleInfo> sampleInfos;
+    private List<SampleInfo> sampleInfos;
 
     /** No-arg constructor required for use by the JAX-RS framework. */
     @SuppressWarnings("UnusedDeclaration")
@@ -41,19 +42,39 @@ public class SampleKitInfo {
         return kitId;
     }
 
+    public void setKitId(String kitId) {
+        this.kitId = kitId;
+    }
+
     public String getContainerId() {
         return containerId;
+    }
+
+    public void setContainerId(String containerId) {
+        this.containerId = containerId;
     }
 
     public String getStatus() {
         return status;
     }
 
-    public Boolean isPlate() {
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Boolean getPlate() {
         return isPlate;
+    }
+
+    public void setPlate(Boolean plate) {
+        isPlate = plate;
     }
 
     public List<SampleInfo> getSampleInfos() {
         return sampleInfos;
+    }
+
+    public void setSampleInfos(List<SampleInfo> sampleInfos) {
+        this.sampleInfos = sampleInfos;
     }
 }
