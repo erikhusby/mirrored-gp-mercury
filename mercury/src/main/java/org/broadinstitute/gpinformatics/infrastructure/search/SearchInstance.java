@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.owasp.encoder.Encode;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -523,6 +524,11 @@ public class SearchInstance implements Serializable {
         }
 
         @Override
+        public boolean mustEscape() {
+            return getSearchTerm().mustEscape();
+        }
+
+        @Override
         public Object evalViewHeaderExpression(Object entity, SearchContext context) {
             return evalHeaderExpression(entity, context);
         }
@@ -786,7 +792,15 @@ public class SearchInstance implements Serializable {
     /**
      * Should a custom ancestor/descendant traversal be enlisted?
      */
+    private String customTraversalOptionConfig;
+
+    /**
+     * customTraversalOptionConfig has been digested into name and params
+     */
+    @XmlTransient
     private String customTraversalOptionName;
+    @XmlTransient
+    private ResultParamValues customTraversalOptionParams;
 
     private boolean excludeInitialEntitiesFromResults = false;
 
@@ -874,13 +888,14 @@ public class SearchInstance implements Serializable {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode root = mapper.readTree(nameAndParams);
                 ResultParamValues resultParams = new ResultParamValues(
-                        root.get("searchTermName").getTextValue(),
-                        root.get("userColumnName").getTextValue());
+                        root.get("paramType").getTextValue(),
+                        root.get("entityName").getTextValue(),
+                        root.get("elementName").getTextValue());
                 for(Iterator<JsonNode> iter = root.get("paramValues").getElements(); iter.hasNext(); ) {
                     JsonNode input = iter.next();
                     resultParams.addParamValue( input.get("name").getTextValue(), input.get("value").getTextValue() );
                 }
-                return Pair.of(resultParams.getSearchTermName(), resultParams);
+                return Pair.of(resultParams.getElementName(), resultParams);
             } catch( Exception je ) {
                 throw new RuntimeException( "Fail parsing result column options", je);
             }
@@ -1174,7 +1189,7 @@ public class SearchInstance implements Serializable {
             }
         }
         if (searchInstance == null) {
-            throw new RuntimeException("No saved search instance named '" + searchName + "' is available");
+            throw new RuntimeException("No saved search instance named '" + Encode.forHtml(searchName) + "' is available");
         }
         searchInstance.establishRelationships(configurableSearchDef);
         searchInstance.postLoad();
@@ -1203,6 +1218,10 @@ public class SearchInstance implements Serializable {
 
     public Map<Integer,ResultParamValues> getViewColumnParamMap() {
         return viewColumnParamMap;
+    }
+
+    public ResultParamValues getTraverserParams() {
+        return customTraversalOptionParams;
     }
 
     public List<String> getPredefinedDownloadColumns() {
@@ -1241,16 +1260,38 @@ public class SearchInstance implements Serializable {
         this.orderByList = orderByList;
     }
 
+    /**
+     * "ancestorOptionEnabled" --> TRUE/FALSE
+     * "descendantOptionEnabled" --> TRUE/FALSE
+     */
     public Map<String,Boolean> getTraversalEvaluatorValues(){
         return traversalEvaluatorValues;
     }
 
-    public String getCustomTraversalOptionName(){
-        return customTraversalOptionName==null?"none":customTraversalOptionName;
+    public void setCustomTraversalOptionConfig( String customTraversalOptionConfig ) {
+        this.customTraversalOptionConfig = customTraversalOptionConfig;
     }
 
-    public void setCustomTraversalOptionName(String name){
-        this.customTraversalOptionName = name;
+
+    public String getCustomTraversalOptionName(){
+        if( customTraversalOptionName == null ) {
+            if( customTraversalOptionConfig == null || customTraversalOptionConfig.isEmpty() ) {
+                customTraversalOptionName = "none";  // ConfigurableSearchDefinition returns null by name and quietly ignores
+            } else {
+                Pair<String,ResultParamValues> nameAndParams = splitTermAndParams(customTraversalOptionConfig);
+                customTraversalOptionName = nameAndParams.getLeft();
+                customTraversalOptionParams = nameAndParams.getRight();
+            }
+        }
+        return customTraversalOptionName;
+    }
+
+    public ResultParamValues getCustomTraversalOptionParams(){
+        if( customTraversalOptionName == null ) {
+           // Force a split of name and params
+            getCustomTraversalOptionName();
+        }
+        return customTraversalOptionParams;
     }
 
     public boolean getExcludeInitialEntitiesFromResults(){

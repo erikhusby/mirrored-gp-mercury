@@ -208,7 +208,7 @@ public class PicoToBspContainerTest extends Arquillian {
         // Zeros the value BSP has for concentration on our test samples and verifies the zero.
         for (String smId : bspTubeMap.values()) {
             String result = bspSetVolumeConcentration.setVolumeAndConcentration(smId, BIG_DECIMAL_60,
-                    BigDecimal.ZERO, null);
+                    BigDecimal.ZERO, null, BSPSetVolumeConcentration.TerminateAction.LEAVE_CURRENT_STATE);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
         }
         Map<String, BspSampleData> bspSampleDataMap = dataFetcher.fetchSampleData(bspTubeMap.values(),

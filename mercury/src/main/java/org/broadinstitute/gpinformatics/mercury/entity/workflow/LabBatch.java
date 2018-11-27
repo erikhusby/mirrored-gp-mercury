@@ -446,8 +446,8 @@ public class LabBatch {
         this.workflowName = workflowName;
     }
 
-    public void setWorkflow(@Nonnull Workflow workflow) {
-        workflowName = workflow.getWorkflowName();
+    public void setWorkflow(@Nonnull String workflow) {
+        workflowName = workflow;
     }
 
     public String getBatchDescription() {
@@ -480,11 +480,11 @@ public class LabBatch {
      * <p/>
      * {@code [Product name] [Product workflow Version]: [comma separated list of PDO names]}
      */
-    public static String generateBatchName(@Nonnull Workflow workflow, @Nonnull Collection<String> pdoNames) {
+    public static String generateBatchName(@Nonnull String workflow, @Nonnull Collection<String> pdoNames) {
 
         StringBuilder batchName = new StringBuilder();
 
-        batchName.append(workflow.getWorkflowName()).append(": ");
+        batchName.append(workflow).append(": ");
         boolean first = true;
 
         for (String currentPdo : pdoNames) {

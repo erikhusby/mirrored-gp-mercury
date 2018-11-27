@@ -59,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
@@ -92,6 +93,8 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCell10XEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellSmartSeqEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
@@ -298,6 +301,34 @@ public class BaseEventTest {
         return workingBucket;
     }
 
+    /**
+     * This method will create a bucket and populate the bucket with plates.
+     *
+     * @param mapBarcodeToPlate A map of barcode to plates that will be used to populate the bucket.
+     * @param productOrder     The product order to use for the bucket entry.
+     * @param bucketName       The name of the bucket to create.
+     *
+     * @return Returns a bucket populated with tubes.
+     */
+    protected Bucket createAndPopulatePlateBucket(Map<String, PlateWell> mapBarcodeToPlate, ProductOrder productOrder,
+                                             String bucketName) {
+        // Uses map of sample name to pdoSample for making the link between pdoSample to MercurySample.
+        Map<String, ProductOrderSample> mapSampleNameToPdoSample = new HashMap<>();
+        for (ProductOrderSample pdoSample : productOrder.getSamples()) {
+            mapSampleNameToPdoSample.put(pdoSample.getSampleKey(), pdoSample);
+        }
+        Bucket workingBucket = new Bucket(bucketName);
+        for (PlateWell plateWell : mapBarcodeToPlate.values()) {
+            workingBucket.addEntry(productOrder, plateWell, BucketEntry.BucketEntryType.PDO_ENTRY);
+            for (MercurySample mercurySample : plateWell.getMercurySamples()) {
+                if (mapSampleNameToPdoSample.containsKey(mercurySample.getSampleKey())) {
+                    mercurySample.addProductOrderSample(mapSampleNameToPdoSample.get(mercurySample.getSampleKey()));
+                }
+            }
+        }
+        return workingBucket;
+    }
+
 
     protected LabEventHandler getLabEventHandler() {
         return new LabEventHandler();
@@ -343,6 +374,58 @@ public class BaseEventTest {
 
         for (BarcodedTube barcodedTube : mapBarcodeToTube.values()) {
             for (BucketEntry bucketEntry : barcodedTube.getBucketEntries()) {
+                workflowBatch.addBucketEntry(bucketEntry);
+            }
+        }
+
+        labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
+        JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
+
+        drainBucket(workingBucket);
+        return workingBucket;
+    }
+
+    /**
+     * @param mapBarcodeToPlate A map of barcodes to tubes that will be added to the bucket and drained into the
+     *                         batch.
+     * @param productOrder     The product order to use for bucket entries.
+     * @param workflowBatch    The batch that will be used for this process.
+     * @param lcsetSuffix      Set this non-null to override the lcset id number.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public Bucket bucketPlateBatchAndDrain(Map<String, PlateWell> mapBarcodeToPlate, final ProductOrder productOrder,
+                                      LabBatch workflowBatch, String lcsetSuffix) {
+        for (PlateWell plate : mapBarcodeToPlate.values()) {
+            plate.clearCaches();
+        }
+
+        Bucket workingBucket = createAndPopulatePlateBucket(mapBarcodeToPlate, productOrder, "Pico/Plating Bucket");
+
+        // Controls what the created lcset id is by temporarily overriding the static variable.
+        String defaultLcsetSuffix = JiraServiceStub.getCreatedIssueSuffix();
+        if (lcsetSuffix != null) {
+            JiraServiceStub.setCreatedIssueSuffix(lcsetSuffix);
+        }
+        ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
+        Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                Object[] arguments = invocationOnMock.getArguments();
+
+                ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder((String) arguments[0]);
+                if((arguments[0]).equals(productOrder.getBusinessKey())) {
+                    dummyProductOrder = productOrder;
+                }
+                return dummyProductOrder;
+            }
+        });
+        labBatchEJB.setProductOrderDao(mockProductOrderDao);
+
+        for (PlateWell staticPlate : mapBarcodeToPlate.values()) {
+            for (BucketEntry bucketEntry : staticPlate.getBucketEntries()) {
                 workflowBatch.addBucketEntry(bucketEntry);
             }
         }
@@ -644,9 +727,9 @@ public class BaseEventTest {
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
                                                                       String fctTicket,
                                                                       ProductionFlowcellPath productionFlowcellPath,
-                                                                      String designationName, Workflow workflow) {
+                                                                      String designationName, String workflow) {
         int flowcellLanes = 8;
-        if (workflow == Workflow.AGILENT_EXOME_EXPRESS) {
+        if (workflow.equals(Workflow.AGILENT_EXOME_EXPRESS)) {
             flowcellLanes = 2;
         }
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
@@ -713,6 +796,16 @@ public class BaseEventTest {
     public FPEntityBuilder runFPProcess(List<StaticPlate> sourcePlates, int numSamples, String barcodeSuffix) {
         return new FPEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 sourcePlates, numSamples, barcodeSuffix).invoke();
+    }
+
+    public SingleCellSmartSeqEntityBuilder runSingleCellSmartSeqProcess(List<StaticPlate> sourcePlates, int numSamples, String barcodeSuffix) {
+        return new SingleCellSmartSeqEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                sourcePlates, numSamples, barcodeSuffix).invoke();
+    }
+
+    public SingleCell10XEntityBuilder runSingleCell10XProcess(StaticPlate sourcePlate, int numSamples, String barcodeSuffix) {
+        return new SingleCell10XEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                sourcePlate, numSamples, barcodeSuffix).invoke();
     }
 
     public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
@@ -1035,7 +1128,7 @@ public class BaseEventTest {
         }
     }
 
-    ZimsIlluminaRunFactory constructZimsIlluminaRunFactory(final ProductOrder productOrder,
+    public ZimsIlluminaRunFactory constructZimsIlluminaRunFactory(final ProductOrder productOrder,
                                                            List<FlowcellDesignation> flowcellDesignations) {
         ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
         FlowcellDesignationEjb flowcellDesignationEjb = Mockito.mock(FlowcellDesignationEjb.class);

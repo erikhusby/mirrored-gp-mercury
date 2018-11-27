@@ -1046,6 +1046,8 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
@@ -1332,6 +1334,13 @@
                 <name>SelectionCapture</name>
                 <labEventTypes>SELECTION_CAPTURE</labEventTypes>
                 <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostSelectionCaptureThermoCyclerLoaded</name>
+                <labEventTypes>POST_SELECTION_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -1646,7 +1655,7 @@
                     <materialTypes>FRESH_FROZEN_BLOOD</materialTypes>
                     <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FRESH</materialTypes>
                     <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FROZEN</materialTypes>
-                    <workflows>CLINICAL_WHOLE_BLOOD_EXTRACTION</workflows>
+                    <workflows>Clinical Whole Blood Extraction</workflows>  <!-- todo jmt why copy workflow name here? -->
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1883,7 +1892,7 @@
                     <materialTypes>CELLS_CELL_LINE_VIABLE</materialTypes>
                     <materialTypes>CELLS_PELLET_FROZEN_IN_X_MEDIA</materialTypes>
                     <materialTypes>CELL_SUSPENSION</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_CELL_PELLETS</workflows>
+                    <workflows>DNA and RNA from Cell Pellets</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1965,6 +1974,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1986,6 +1996,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2015,6 +2026,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2060,6 +2072,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2092,6 +2105,7 @@
                     <targetExpectedEmpty>false</targetExpectedEmpty>
                     <repeatedEvent>TRANSFER</repeatedEvent>
                     <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</repeatedWorkflowQualifier>
+                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2124,6 +2138,7 @@
                     <targetExpectedEmpty>false</targetExpectedEmpty>
                     <repeatedEvent>TRANSFER</repeatedEvent>
                     <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</repeatedWorkflowQualifier>
+                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2284,6 +2299,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2430,6 +2446,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2445,6 +2462,594 @@
                     <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
                     <targetSection>P96_ROWSAB</targetSection>
                     <targetExpectedToExist>true</targetExpectedToExist>
+                </manualTransferDetails>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA from Cell Pellets BSP</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA and RNA BSP</name>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET_BSP</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>CELLS_PELLET_FROZEN</materialTypes>
+                    <materialTypes>CELLS_CELL_LINE_VIABLE</materialTypes>
+                    <materialTypes>CELLS_PELLET_FROZEN_IN_X_MEDIA</materialTypes>
+                    <materialTypes>CELL_SUSPENSION</materialTypes>
+                    <workflows>DNA and RNA from Cell Pellets BSP</workflows>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Initial Scan</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>ALL_PREP_INITIAL_SCAN</workflowQualifier>
+                <instructions>Scan all parent source SM-IDs to cross check against samples in XTR ticket
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <buttonValue>Cross Check</buttonValue>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Prep Reagents</name>
+                <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Reagents</workflowQualifier>
+                <instructions>Before starting, confirm all reagents have been prepared: RLT+ w/B-ME, Proteinase K,
+                    Buffer RPE w/EtOH, Buffer RDD w/RNase-Free DNase I, Buffer FRN w/Isopropanol, Buffer AW1, and
+                    Buffer AW2 w/EtOH.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Wash PBS</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>PBS</workflowQualifier>
+                <reagentTypes>PBS</reagentTypes>
+                <instructions>Pellet in existing tube and wash w/PBS (x2)?
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Re-suspend</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>RESUSPEND</workflowQualifier>
+                <reagentTypes>PBS</reagentTypes>
+                <instructions>Re-suspend in PBS (3mL)
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer Cells to Cryovial</name>
+                <labEventTypes>ALL_PREP_TRANSFER_CRYOVIAL</labEventTypes>
+                <workflowQualifier>ALLPREP_CELLS_TO_CRYOVIAL</workflowQualifier>
+                <instructions>Transfer to 2mL Cryovial (half the volume, 1.5mL)
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge Cryovial</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>CRYOVIAL</workflowQualifier>
+                <instructions>Centrifuge (5 min @ 300g) and remove supernatant.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add RLT+ w/B-ME</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>RLT</workflowQualifier>
+                <reagentTypes>RLT+ w/B-ME</reagentTypes>
+                <instructions>Add 350uL or 600uL buffer RLT+ w/B-ME
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to QIAshredder</name>
+                <labEventTypes>ALLPREP_CRYOVIAL_TO_QIASHREDDER</labEventTypes>
+                <workflowQualifier>ALLPREP_CRYOVIAL_TO_QIASHREDDER</workflowQualifier>
+                <instructions>Transfer lysate directly into a QIAshredder spin column placed in a 2 ml collection tube.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge QIAshredder</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>QIASHREDDER</workflowQualifier>
+                <instructions>centrifuge for 2 min at maximum speed
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to DNA Spin Column</name>
+                <labEventTypes>ALLPREP_LYSATE_TO_DNA_SPIN</labEventTypes>
+                <workflowQualifier>ALLPREP_LYSATE_TO_DNA_SPIN</workflowQualifier>
+                <instructions>Transfer the homogenized lysate to an AllPrep DNA spin column placed in a 2 ml collection tube (supplied).
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge DNA Spin Column</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>DNA_SPIN</workflowQualifier>
+                <instructions>Centrifuge for 30 s at full speed (max 20,000 x g)
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move DNA Column</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>DNA</workflowQualifier>
+                <instructions>Place AllPrep DNA spin column in a new 2 ml collection tube (supplied), and set aside.
+                    Store at room temperature (15–25ºC) or at 4ºC for later DNA purification.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer Flow-through to 2 ml Tube</name>
+                <labEventTypes>ALLPREP_DNA_SPIN_TO_FLOWTHROUGH</labEventTypes>
+                <workflowQualifier>ALLPREP_DNA_SPIN_TO_FLOWTHROUGH</workflowQualifier>
+                <instructions>Transfer the flow-through to a new 2 ml microcentrifuge tube (not supplied) for RNA purification.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add Proteinase K</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>PROTEINASE_K</workflowQualifier>
+                <reagentTypes>Proteinase K</reagentTypes>
+                <instructions>Add 50uL or 80uL Proteinase K to flow-through.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add 100% ethanol</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>ETHANOL1</workflowQualifier>
+                <reagentTypes>100% Ethanol</reagentTypes>
+                <instructions>Add 200uL or 350uL 100% ethanol to the flowthrough
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Incubate</name>
+                <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>ETHANOL1</workflowQualifier>
+                <instructions>Incubate for 10 min at room temperature.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add 100% ethanol</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>ETHANOL2</workflowQualifier>
+                <reagentTypes>100% Ethanol</reagentTypes>
+                <instructions>Add 400uL or 750uL 100% ethanol to the flowthrough
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to RNA Spin Column 1</name>
+                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</labEventTypes>
+                <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</workflowQualifier>
+                <instructions>Transfer 700uL to RNA spin column.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge RNA Spin Column 1</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>RNA_SPIN1</workflowQualifier>
+                <instructions>centrifuge for 15 s at full speed (max 20,000 x g).
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After Transfer to RNA Spin Column 1</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>RNA_SPIN1</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to RNA Spin Column 2</name>
+                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</labEventTypes>
+                <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</workflowQualifier>
+                <instructions>Transfer 700uL to RNA spin column in 2 ml collection tube (supplied).
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <targetExpectedToExist>true</targetExpectedToExist>
+                    <targetExpectedEmpty>false</targetExpectedEmpty>
+                    <repeatedEvent>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</repeatedEvent>
+                    <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</repeatedWorkflowQualifier>
+                    <useWebCam>true</useWebCam>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge RNA Spin Column 2</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>RNA_SPIN2</workflowQualifier>
+                <instructions>centrifuge for 15 s at full speed (max 20,000 x g).
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After Transfer to RNA Spin Column 2</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>RNA_SPIN2</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to RNA Spin Column 3</name>
+                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN3</labEventTypes>
+                <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN3</workflowQualifier>
+                <instructions>Transfer remaining volume to RNA spin column in 2 ml collection tube (supplied).
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <targetExpectedToExist>true</targetExpectedToExist>
+                    <targetExpectedEmpty>false</targetExpectedEmpty>
+                    <repeatedEvent>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</repeatedEvent>
+                    <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</repeatedWorkflowQualifier>
+                    <useWebCam>true</useWebCam>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge RNA Spin Column 3</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>RNA_SPIN3</workflowQualifier>
+                <instructions>Centrifuge for 15 s at full speed (max 20,000 x g).
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After Transfer to RNA Spin Column 3</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>RNA_SPIN3</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add RPE 1</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>RPE1</workflowQualifier>
+                <reagentTypes>RPE</reagentTypes>
+                <instructions>Add 500uL Buffer RPE to the RNA spin column
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge RNA Spin Column RPE 1</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>RPE1</workflowQualifier>
+                <instructions>centrifuge for 15 s at full speed (max 20,000 x g).
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After RPE 1</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>RPE1</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add Buffer RDD w/DNase I</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>BUFFER_RDD</workflowQualifier>
+                <reagentTypes>Buffer RDD w/DNase I</reagentTypes>
+                <instructions>Add 80uL Buffer RDD w/DNase I to RNA spin column.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Incubate</name>
+                <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>BUFFER_RDD</workflowQualifier>
+                <instructions>Incubate on the benchtop (20-30ºC) for 15 min.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add Buffer FRN</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>BUFFER_FRN</workflowQualifier>
+                <reagentTypes>Buffer FRN</reagentTypes>
+                <instructions>Add 500uL Buffer FRN to RNA spin column.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge RNA Spin Column</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>BUFFER_FRN</workflowQualifier>
+                <instructions>centrifuge for 15 s at full speed (max 20,000 x g) and ***save flow-through***.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move RNA Column After FRN</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>BUFFER_FRN</workflowQualifier>
+                <instructions>Place AllPrep RNA spin column in a new 2ml collection tube (supplied).
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer Flow-through to RNA Column</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>FLOW_THROUGH</workflowQualifier>
+                <instructions>Transfer flow-through to RNA spin column.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge RNA Spin Column</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>BUFFER_FRN2</workflowQualifier>
+                <instructions>Centrifuge for 15 s at full speed (max 20,000 x g).
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add RPE 2</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>RPE2</workflowQualifier>
+                <reagentTypes>RPE</reagentTypes>
+                <instructions>Add 500uL Buffer RPE to the RNA spin column
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge RNA Spin Column RPE 2</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>RPE2</workflowQualifier>
+                <instructions>Centrifuge for 15 s at full speed (max 20,000 x g).
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After RPE 2</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>RPE2</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add 100% ethanol</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>ETHANOL3</workflowQualifier>
+                <reagentTypes>100% Ethanol</reagentTypes>
+                <instructions>Add 500uL 100% ethanol to the spin column
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge RNA Spin Column Dry</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>RNA_DRY</workflowQualifier>
+                <instructions>centrifuge for 2 minutes at full speed to dry membrane
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After Dry</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>RNA_DRY</workflowQualifier>
+                <instructions>Move RNA spin column to a new 1.5 ml collection tube
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add Water</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>WATER</workflowQualifier>
+                <reagentTypes>Water</reagentTypes>
+                <instructions>Add 50uL water directly to the spin column membrane
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge RNA Spin Column Water</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>WATER</workflowQualifier>
+                <instructions>centrifuge for 1 min at ≥8000g to elute
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer RNA To Microcentrifuge</name>
+                <labEventTypes>ALLPREP_RNA_TO_MICRO</labEventTypes>
+                <workflowQualifier>ALLPREP_RNA_TO_MICRO</workflowQualifier>
+                <instructions>Transfer RNA to microcentrifuge tube.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer RNA To Matrix</name>
+                <labEventTypes>ALLPREP_EXTRACT_TO_RNA</labEventTypes>
+                <workflowQualifier>ALLPREP_EXTRACT_TO_RNA</workflowQualifier>
+                <instructions>Transfer from microcentrifuge tube to 2D matrix tube
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
+                    <targetSection>P96_ROWSAB</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add AW1</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>AW1</workflowQualifier>
+                <reagentTypes>AW1</reagentTypes>
+                <instructions>Add 350uL AW1 to DNA spin column
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge DNA Spin Column AW1</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AW1</workflowQualifier>
+                <instructions>Centrifuge for 15 s at full speed (max 20,000 x g).
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After AW1</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>AW1</workflowQualifier>
+                <instructions>Move DNA spin column to a new 1.5 ml collection tube and discard flowthrough
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add Buffer AW1 w/Proteinase K</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>AW1_PROTEINASE_K</workflowQualifier>
+                <reagentTypes>AW1 w/Proteinase K</reagentTypes>
+                <instructions>Add 60uL Buffer AW1 w/ 20uL Proteinase K to DNA spin column
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Incubate</name>
+                <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>AW1_PROTEINASE_K</workflowQualifier>
+                <instructions>Incubate at room temperature for 5 min
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add AW1</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>AW1_2</workflowQualifier>
+                <reagentTypes>AW1</reagentTypes>
+                <instructions>Add 350uL AW1 to DNA spin column
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge DNA Spin Column AW1</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AW1_2</workflowQualifier>
+                <instructions>Centrifuge for 15 s at >=8000 x g
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After AW1</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>AW1_2</workflowQualifier>
+                <instructions>Move DNA spin column to a new 1.5 ml collection tube and discard flow-through
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add AW2</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>AW2</workflowQualifier>
+                <reagentTypes>AW2</reagentTypes>
+                <instructions>Add 500 μl Buffer AW2 to the DNA spin column
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge DNA Spin Column AW2</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AW2</workflowQualifier>
+                <instructions>centrifuge for 2 min at full speed
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After AW2</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>AW2</workflowQualifier>
+                <instructions>Move DNA spin column to a new 1.5 ml collection tube and discard flow-through
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Dry DNA Spin Column Membrane</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>DNA_DRY</workflowQualifier>
+                <instructions>Spin DNA spin column for 1 min at full speed (max 20,000 x g)
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After Dry</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>DNA_DRY</workflowQualifier>
+                <instructions>Move DNA spin column to a new 1.5 ml collection tube and discard flow-through
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add EB</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>EB</workflowQualifier>
+                <reagentTypes>EB</reagentTypes>
+                <instructions>Add 100uL Buffer EB to the spin column
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Incubate</name>
+                <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>AW2</workflowQualifier>
+                <instructions>Incubate at RT 1min
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge DNA Spin Column After Incubation</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>INCUBATE</workflowQualifier>
+                <instructions>centrifuge for 1 min at ≥8000 x g
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer DNA To Microcentrifuge</name>
+                <labEventTypes>ALLPREP_DNA_TO_MICRO</labEventTypes>
+                <workflowQualifier>ALLPREP_DNA_TO_MICRO</workflowQualifier>
+                <instructions>Transfer DNA to microcentrifuge tube
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <useWebCam>true</useWebCam>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer DNA Microcentrifuge to Matrix</name>
+                <labEventTypes>ALLPREP_EXTRACT_TO_DNA</labEventTypes>
+                <workflowQualifier>ALLPREP_DNA_MICRO_TO_MATRIX</workflowQualifier>
+                <instructions>Transfer from microcentrifuge tube to 2D matrix tube
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
+                    <targetSection>P96_ROWSAB</targetSection>
                 </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -2737,7 +3342,7 @@
                 <bucketEntryEvaluator>
                     <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
                     <materialTypes>TISSUE_OCT_EMBEDDED_TISSUE</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_FROZEN_TISSUE</workflows>
+                    <workflows>DNA and RNA for Frozen Tissue - AllPrep</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -3137,7 +3742,7 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>STOOL_STOOL</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_STOOL</workflows>
+                    <workflows>DNA and RNA from Stool</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -3354,6 +3959,357 @@
                     <targetVesselTypeGeometryString>RackType.Matrix96SlotRack075</targetVesselTypeGeometryString>
                     <targetSection>ALL96</targetSection>
                 </manualTransferDetails>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Single Cell SmartSeq</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-04-02T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Single Cell SmartSeq</name>
+                <labEventTypes>SINGLE_CELL_SMART_SEQ_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellSPRIAddition</name>
+                <labEventTypes>SINGLE_CELL_SPRI_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellPolyA</name>
+                <labEventTypes>SINGLE_CELL_POLY_A</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellRT</name>
+                <labEventTypes>SINGLE_CELL_RT</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellWTA</name>
+                <labEventTypes>SINGLE_CELL_WTA</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellWTASpri</name>
+                <labEventTypes>SINGLE_CELL_SPRI</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellElutionTransfer</name>
+                <labEventTypes>SINGLE_CELL_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Pico</name>
+                <labEventTypes>POND_PICO</labEventTypes>
+                <optional>true</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellNormalization</name>
+                <labEventTypes>SINGLE_CELL_NORMALIZATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellTagmentation</name>
+                <labEventTypes>SINGLE_CELL_TAGMENTATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellStopTagmentation</name>
+                <labEventTypes>SINGLE_CELL_STOP_TAGMENTATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellIndexAdapterLigation</name>
+                <labEventTypes>SINGLE_CELL_INDEX_ADAPTER_LIGATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellPooling</name>
+                <labEventTypes>SINGLE_CELL_POOLING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellBulkSPRICleanup</name>
+                <labEventTypes>SINGLE_CELL_BULK_SPRI_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Single Cell 10X</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-04-02T12:15:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Single Cell 10X</name>
+                <labEventTypes>SINGLE_CELL_10X_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellEndRepairABase</name>
+                <labEventTypes>SINGLE_CELL_END_REPAIR_ABASE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellATailCleanup</name>
+                <labEventTypes>SINGLE_CELL_ATAIL_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellAdapterLigation</name>
+                <labEventTypes>SINGLE_CELL_ADAPTER_LIGATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellLigationCleanup</name>
+                <labEventTypes>SINGLE_CELL_LIGATION_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellIndexAdapterPCR</name>
+                <labEventTypes>SINGLE_CELL_INDEX_ADAPTER_PCR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SingleCellDoubleSidedCleanup</name>
+                <labEventTypes>SINGLE_CELL_DOUBLE_SIDED_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Pico</name>
+                <labEventTypes>POND_PICO</labEventTypes>
+                <optional>true</optional>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Seq Only</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-09-13T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Seq Only</name>
+                <labEventTypes>SEQ_ONLY_BUCKET</labEventTypes>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
+                    <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>16S</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-10-18T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>16SPCRSetup</name>
+                <labEventTypes>ILLUMINA_16S_PCR_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>16SPrimerAddition</name>
+                <labEventTypes>ILLUMINA_16S_PRIMER_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Illumina16SPcrProductTransfer</name>
+                <labEventTypes>ILLUMINA_16S_PCR_PRODUCT_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>16SCaliperSetup</name>
+                <labEventTypes>ILLUMINA_16S_CALIPER_SETUP</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>16SPoolingTransfer</name>
+                <labEventTypes>ILLUMINA_16S_POOLING_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>16SColumnCleanup</name>
+                <labEventTypes>ILLUMINA_16S_COLUMN_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>TSCA</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-10-18T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>TSCAPostNormTransfer</name>
+                <labEventTypes>TSCA_POST_NORM_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAHybSetUp</name>
+                <labEventTypes>TSCA_HYB_SET_UP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCACATAddition</name>
+                <labEventTypes>TSCA_CAT_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAFLPPrep</name>
+                <labEventTypes>TSCA_FLP_PREP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAHybridizationCleanUp</name>
+                <labEventTypes>TSCA_HYBRIDIZATION_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCASW1Addition1</name>
+                <labEventTypes>TSCA_SW1_ADDITION1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCASW1Addition2</name>
+                <labEventTypes>TSCA_SW1_ADDITION2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAUB1Addition</name>
+                <labEventTypes>TSCA_UB1_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCASW1Addition1</name>
+                <labEventTypes>TSCA_SW1_ADDITION1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAExtensionLigationSetup</name>
+                <labEventTypes>TSCA_EXTENSION_LIGATION_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAIndexRegistration</name>
+                <labEventTypes>TSCA_INDEX_REGISTRATION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAIndexedAmpliconPCR</name>
+                <labEventTypes>TSCA_INDEXED_AMPLICON_PCR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAIndexAddition</name>
+                <labEventTypes>TSCA_INDEX_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAAmpliconRegistration</name>
+                <labEventTypes>TSCA_AMPLICON_REGISTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -3635,6 +4591,26 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
+        <name>gDNA Ultra Low Pass WGS</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>HUMAN_PCR_PLUS</batchJiraIssueType>
+            <effectiveDate>2018-09-22T12:04:23.932-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
+            <workflowProcessDefs>Cell Free Library Construction Hyper Prep UMI</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
         <name>Whole Genome PCR Free HyperPrep</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
@@ -3696,6 +4672,27 @@
             <effectiveDate>2015-08-13T10:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>CRSP Ribo/Plating</workflowProcessDefs>
             <workflowProcessDefs>TruSeq Strand Specific</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Lasso</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>CDNA_LASSO</batchJiraIssueType>
+            <effectiveDate>2018-04-10T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>CRSP Ribo/Plating</workflowProcessDefs>
+            <workflowProcessDefs>TruSeq Strand Specific</workflowProcessDefs>
+            <workflowProcessDefs>ICE</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
             <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
@@ -3793,6 +4790,46 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
+        <name>Single Cell SmartSeq</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <effectiveDate>2018-04-02T12:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell SmartSeq</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Single Cell 10X</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <effectiveDate>2018-04-02T12:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Single Cell 10X</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
         <name>DNA and RNA from Cell Pellets</name>
         <productWorkflowDefVersions>
             <version>01</version>
@@ -3800,6 +4837,17 @@
             <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>DNA and RNA from Cell Pellets</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA from Cell Pellets BSP</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA from Cell Pellets BSP</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
@@ -3829,6 +4877,56 @@
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Seq Only</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXTERNAL_QUANT_AND_SEQ</batchJiraIssueType>
+            <effectiveDate>2018-09-13T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Seq Only</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>16S</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>MISEQ_16S</batchJiraIssueType>
+            <effectiveDate>2018-08-15T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>16S</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>TSCA</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>TSCA</batchJiraIssueType>
+            <effectiveDate>2018-08-15T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>TSCA</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
             <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>

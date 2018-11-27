@@ -103,7 +103,9 @@
                 $materialTypesInput.tokenInput(
                     "${ctxpath}/workflow/bucketView.action?materialTypeAutoComplete=", {
                         hintText: "Type a material type",
+                        <enhance:out escapeXml="false">
                         prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
+                        </enhance:out>
                         resultsFormatter: formatInput,
                         tokenDelimiter: "${actionBean.materialTypeTokenInput.separator}",
                         autoSelectFirstResult: true,
@@ -127,7 +129,9 @@
                     "${ctxpath}/workflow/bucketView.action?productOrderAutoComplete=", {
                         hintText: "Type a Product Order",
                         resultsFormatter: formatInput,
+                        <enhance:out escapeXml="false">
                         prePopulate: ${actionBean.ensureStringResult(actionBean.productOrderTokenInput.completeData)},
+                        </enhance:out>
                         tokenDelimiter: "${actionBean.productOrderTokenInput.separator}",
                         minChars: 3,
                         searchDelay: 500,

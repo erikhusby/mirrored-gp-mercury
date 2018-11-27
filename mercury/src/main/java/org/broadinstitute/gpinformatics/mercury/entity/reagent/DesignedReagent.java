@@ -20,9 +20,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 /**
- * Reagent for BaitDesigns.
- * Ponds are then hybridized to RNA "Baits" which are complementary to genomic regions of interest.
- * These baits are single stranded and biotinylated.
+ * An instance of a Reagent that is a ReagentDesign (currently either a bait or a CAT).
  */
 @Entity
 @Audited

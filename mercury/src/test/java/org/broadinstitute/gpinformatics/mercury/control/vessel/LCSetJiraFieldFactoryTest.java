@@ -58,7 +58,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class LCSetJiraFieldFactoryTest {
 
     private List<String> pdoNames;
-    private Workflow workflow;
+    private String workflow;
     private Map<String, BarcodedTube> mapBarcodeToTube;
     private String rpSynopsis;
     private Map<String, CustomFieldDefinition> jiraFieldDefs;
@@ -198,7 +198,7 @@ public class LCSetJiraFieldFactoryTest {
             if (fieldDefinitionName.equals(LabBatch.TicketFields.PROTOCOL.getName())) {
 
                 ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(
-                        testProductOrder.getProduct().getWorkflow());
+                        testProductOrder.getProduct().getWorkflowName());
 
                 Assert.assertEquals(
                         workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn())

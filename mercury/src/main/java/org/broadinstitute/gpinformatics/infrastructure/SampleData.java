@@ -113,4 +113,8 @@ public interface SampleData {
     MercurySample.MetadataSource getMetadataSource();
 
     void overrideWithQuants(Collection<LabMetric> labMetrics);
+
+    String getSampleKitId();
+
+    String getSampleStatus();
 }

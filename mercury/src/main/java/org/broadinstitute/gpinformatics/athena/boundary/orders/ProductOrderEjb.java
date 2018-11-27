@@ -94,6 +94,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus;
@@ -444,7 +447,7 @@ public class ProductOrderEjb {
      * @param closingOrder
      * @throws SAPIntegrationException
      */
-    private void updateOrderInSap(ProductOrder orderToUpdate, List<Product> allProductsOrdered,
+    public void updateOrderInSap(ProductOrder orderToUpdate, List<Product> allProductsOrdered,
                                   List<String> effectivePricesForProducts, MessageCollection messageCollection,
                                   boolean closingOrder)
             throws SAPIntegrationException {
@@ -962,6 +965,23 @@ public class ProductOrderEjb {
 
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void addAndRemoveSamplesAndBucket(Map<ProductOrder, Set<ProductOrderSample>> mapPdoToSamplesToAdd,
+                                             Map<ProductOrder, Set<ProductOrderSample>> mapPdoToSamplesToRemove)
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
+        for (Map.Entry<ProductOrder, Set<ProductOrderSample>> entry: mapPdoToSamplesToRemove.entrySet()) {
+            ProductOrder productOrder = entry.getKey();
+            Set<ProductOrderSample> productOrderSamples = entry.getValue();
+            removeSamples(productOrder.getJiraTicketKey(), productOrderSamples, MessageReporter.UNUSED);
+        }
+
+        for (Map.Entry<ProductOrder, Set<ProductOrderSample>> entry: mapPdoToSamplesToAdd.entrySet()) {
+            ProductOrder productOrder = entry.getKey();
+            List<ProductOrderSample> productOrderSamples = new ArrayList<>(entry.getValue());
+            addSamples(productOrder.getJiraTicketKey(), productOrderSamples, MessageReporter.UNUSED);
+        }
+    }
+
     public static class NoSuchPDOException extends Exception {
         private static final long serialVersionUID = -5418019063691592665L;
 
@@ -1040,7 +1060,7 @@ public class ProductOrderEjb {
      *
      * @throws SampleDeliveryStatusChangeException Thrown if any samples are found to not be in an acceptable starting status.
      */
-    private void transitionSamples(ProductOrder order,
+    public void transitionSamples(ProductOrder order,
                                    Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
                                    DeliveryStatus targetStatus,
                                    Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
@@ -1059,6 +1079,14 @@ public class ProductOrderEjb {
                     sample.setDeliveryStatus(targetStatus);
                 }
             }
+        }
+
+        Predicate<ProductOrderSample> activeSampleFilter = pos -> pos.getDeliveryStatus() != DeliveryStatus.ABANDONED;
+        final List<ProductOrderSample> filteredSamples =
+                order.getSamples().stream().filter(activeSampleFilter).collect(Collectors.toList());
+
+        if(order.getOrderStatus() == OrderStatus.Completed && filteredSamples.size()>0) {
+            order.setOrderStatus(OrderStatus.Submitted);
         }
 
         if (!untransitionableSamples.isEmpty()) {
@@ -1112,7 +1140,7 @@ public class ProductOrderEjb {
     /**
      * @return The name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context).
      */
-    private String getUserName() {
+    public String getUserName() {
         String user = userBean.getLoginUserName();
         return user == null ? "Mercury" : user;
     }
@@ -1283,8 +1311,8 @@ public class ProductOrderEjb {
             ccAddrdesses .addAll(currentUserForCC);
         }
 
-        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapShortCloseRecipientEmail(), ccAddrdesses,
-                sapConfig.getSapShortCloseEmailSubject(), body, !isProduction);
+        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapSupportEmail(), ccAddrdesses,
+                sapConfig.getSapShortCloseEmailSubject(), body, !isProduction, true);
     }
 
     /**
@@ -1420,7 +1448,6 @@ public class ProductOrderEjb {
         List<ProductOrderSample> samples = productOrderSampleDao.findListByList(ProductOrderSample.class,
                 ProductOrderSample_.productOrderSampleId, sampleIds);
 
-        if (StringUtils.isNotBlank(comment)) {
             Iterator<ProductOrderSample> unAbandonedSamples = samples.iterator();
 
             while(unAbandonedSamples.hasNext()) {
@@ -1429,10 +1456,11 @@ public class ProductOrderEjb {
                 if(sample.getDeliveryStatus() != DeliveryStatus.ABANDONED) {
                     unAbandonedSamples.remove();
                 } else {
-                    sample.setSampleComment(comment);
+                    if(StringUtils.isNotBlank(comment)) {
+                        sample.setSampleComment(comment);
+                    }
                 }
             }
-        }
 
         if(CollectionUtils.isNotEmpty(samples)) {
             transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
@@ -1539,6 +1567,10 @@ public class ProductOrderEjb {
         order.addSamples(samples);
 
         attachMercurySamples(samples);
+
+        if(order.getOrderStatus() == OrderStatus.Completed) {
+            order.setOrderStatus(OrderStatus.Submitted);
+        }
 
         order.prepareToSave(userBean.getBspUser());
         productOrderDao.persist(order);

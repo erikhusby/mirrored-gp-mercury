@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJ
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
@@ -16,8 +15,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -153,6 +150,7 @@ public class CreateFields extends UpdateFields {
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS("Exome Express"),
         CDNA_TRUSEQ_SS("cDNA TruSeq Strand Specific Large Insert"),
+        CDNA_LASSO("Lasso"),
         PRODUCT_ORDER("Product Order"),
         RESEARCH_PROJECT("Research Project"),
         HISEQ_2000("HiSeq 2000"),
@@ -164,6 +162,8 @@ public class CreateFields extends UpdateFields {
         NOVASEQ_S4("NovaSeq S4"),
         NEXTSEQ("NextSeq"),
         MISEQ("MiSeq"),
+        MISEQ_16S("MiSeq16s"),
+        TSCA("TSCA"),
         SAMPLE_INITIATION("Sample Initiation"),
         RECEIPT("Receipt"),
         ALLPREP("AllPrep Extraction"),
@@ -172,7 +172,9 @@ public class CreateFields extends UpdateFields {
         RNA_EXTRACTION("RNA Extraction"),
         HUMAN_PCR_FREE("Human PCR-Free"),
         HUMAN_PCR_PLUS("Human PCR-Plus"),
-        INFINIUM_8("Infinium-8"); // todo jmt -12, -24
+        INFINIUM_8("Infinium-8"), // todo jmt -12, -24
+        EXTERNAL_QUANT_AND_SEQ("External Library (Quant & Seq Only)"),
+        ;
 
         private final String jiraName;
 
@@ -190,25 +192,6 @@ public class CreateFields extends UpdateFields {
             return jiraName;
         }
 
-        /** Contains the IssueType to use for a given workflow. */
-        public static final Map<String, IssueType> MAP_WORKFLOW_TO_ISSUE_TYPE = new HashMap<String, IssueType>() {{
-            put(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
-            put(Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
-            put(Workflow.ICE_CRSP.getWorkflowName(), EXOME_EXPRESS);
-            put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
-        }};
-
-        public static IssueType fromJiraName(String jiraName) {
-            IssueType foundValue = null;
-            for (IssueType issuetype : values()) {
-                if (issuetype.getJiraName().equals(jiraName)) {
-                    foundValue = issuetype;
-                    break;
-                }
-            }
-
-            return foundValue;
-        }
     }
 
 

@@ -890,7 +890,7 @@ public class AnalysisFixupTest extends Arquillian {
 
         List<Product> products = productDao.findAllWithAnalysisType();
         for (Product product : products) {
-            if (product.getWorkflow() == Workflow.NONE) {
+            if (product.getWorkflowName() == Workflow.NONE) { // small change when Workflow enum was removed
                 product.setAnalysisTypeKey(null);
             } else {
                 if (product.getAnalysisTypeKey().equals(oldAnalysisType)) {

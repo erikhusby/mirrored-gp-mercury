@@ -85,7 +85,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     /**
      * Helper method to initialize the common client this service will utilize in order to communicate to SAP
      */
-    protected void initializeClient() {
+    private void initializeClient() {
 
         SapIntegrationClientImpl.SAPEnvironment environment;
 
@@ -93,19 +93,19 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         case PROD:
             environment = SapIntegrationClientImpl.SAPEnvironment.PRODUCTION;
             break;
-        case DEV:
-            environment = SapIntegrationClientImpl.SAPEnvironment.DEV;
-            break;
-        case TEST:
-            environment = SapIntegrationClientImpl.SAPEnvironment.DEV_400;
-            break;
-        case RC:
-            environment = SapIntegrationClientImpl.SAPEnvironment.QA_400;
-            break;
-        case QA:
-        default:
-            environment = SapIntegrationClientImpl.SAPEnvironment.QA;
-            break;
+            case DEV:
+                environment = SapIntegrationClientImpl.SAPEnvironment.DEV;
+                break;
+            case TEST:
+                environment = SapIntegrationClientImpl.SAPEnvironment.DEV_400;
+                break;
+            case RC:
+                environment = SapIntegrationClientImpl.SAPEnvironment.QA2_400;
+                break;
+            case QA:
+            default:
+                environment = SapIntegrationClientImpl.SAPEnvironment.QA;
+                break;
         }
 
         log.debug("Config environment is: " + sapConfig.getExternalDeployment().name());
@@ -232,8 +232,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             String price = priceListCache.getEffectivePrice(placedOrder.determinePriceItemByCompanyCode(product),
                     quote);
 
-            final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
-                    getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder));
+            BigDecimal sampleCount =
+                getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder);
+
+            final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(), sampleCount);
 
             if(placedOrder.isPriorToSAP1_5()) {
                 sapOrderItem.addCondition(Condition.MATERIAL_PRICE, new BigDecimal(price));
