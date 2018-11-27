@@ -327,20 +327,6 @@ public class SampleInstanceEjb {
                             " version '" + walkUpSequencing.getReferenceVersion() + "'" : ""));
         }
 
-        ReagentDesign baitSet = null;
-        String baitName = null;
-        if (StringUtils.isNotBlank(walkUpSequencing.getBaitSetName())) {
-            baitSet = reagentDesignDao.findByBusinessKey(walkUpSequencing.getBaitSetName());
-            if (baitSet == null) {
-                // Assumes this is a one-off bait that mercury doesn't know about. The walkup app
-                // should have validated the name so it will just be used as-is in the pipeline query.
-                baitName = walkUpSequencing.getBaitSetName();
-            } else if (CollectionUtils.isEmpty(baitSet.getDesignedReagents())) {
-                messages.addError("Unusable Bait Reagent '" + walkUpSequencing.getBaitSetName() +
-                        "' has no Mercury Reagent components.");
-            }
-        }
-
         IlluminaFlowcell.FlowcellType sequencerModel = null;
         if (StringUtils.isNotBlank(walkUpSequencing.getIlluminaTech())) {
             sequencerModel = SampleInstanceEjb.findFlowcellType(walkUpSequencing.getIlluminaTech());
@@ -401,8 +387,8 @@ public class SampleInstanceEjb {
             sampleInstanceEntity.setIndexType(walkUpSequencing.getIndexType());
             sampleInstanceEntity.setNumberLanes(ExternalLibraryProcessor.asInteger(walkUpSequencing.getLaneQuantity()));
             sampleInstanceEntity.setComments(walkUpSequencing.getComments());
-            sampleInstanceEntity.setReagentDesign(baitSet);
-            sampleInstanceEntity.setBaitName(baitName);
+            // Assumes that bait set name has been validated by the walkup app and so any value is acceptable.
+            sampleInstanceEntity.setBaitName(walkUpSequencing.getBaitSetName());
             sampleInstanceEntity.setLabVessel(labVessel);
             sampleInstanceEntity.setMercurySample(mercurySample);
             sampleInstanceEntity.setSequencerModel(sequencerModel);
