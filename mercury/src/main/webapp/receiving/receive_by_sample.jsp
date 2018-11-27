@@ -17,6 +17,7 @@
                         {"bSortable": true} ,
                         {"bSortable": true} ,
                         {"bSortable": true} ,
+                        {"bSortable": true},
                         {"bSortable": true}
                     ]
                 });
@@ -60,6 +61,7 @@
                         <th>Sample Kit</th>
                         <th>Status</th>
                         <th>Material Type</th>
+                        <th>Original Material Type</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -71,6 +73,7 @@
                             <td>${sampleData.sampleId}</td>
                             <td>${sampleData.sampleKitId}</td>
                             <td>${sampleData.sampleStatus}</td>
+                            <td>${sampleData.materialType}</td>
                             <td>${sampleData.originalMaterialType}</td>
                         </tr>
                     </c:forEach>
