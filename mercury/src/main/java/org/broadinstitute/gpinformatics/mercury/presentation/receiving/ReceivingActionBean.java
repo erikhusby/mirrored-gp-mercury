@@ -203,8 +203,8 @@ public class ReceivingActionBean extends RackScanActionBean {
         showLayout = true;
         String[] splitSampleIds = sampleIds.trim().split("\\s+");
         Map<String, BspSampleData> mapIdToSampleData = bspSampleDataFetcher.fetchSampleData(Arrays.asList(splitSampleIds),
-                BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE, BSPSampleSearchColumn.SAMPLE_KIT,
-                BSPSampleSearchColumn.SAMPLE_STATUS);
+                BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE, BSPSampleSearchColumn.MATERIAL_TYPE,
+                BSPSampleSearchColumn.SAMPLE_KIT, BSPSampleSearchColumn.SAMPLE_STATUS);
         for (String sampleKey: splitSampleIds) {
             if (!mapIdToSampleData.containsKey(sampleKey)) {
                 messageCollection.addError("Failed to find sample: " + sampleKey);
@@ -254,8 +254,9 @@ public class ReceivingActionBean extends RackScanActionBean {
     public void validateFindCollaborator() {
         mapIdToSampleData = bspSampleDataFetcher.fetchSampleData(
                 Collections.singletonList(sampleIds),
-                BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE, BSPSampleSearchColumn.SAMPLE_KIT,
-                BSPSampleSearchColumn.SAMPLE_STATUS, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+                BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE, BSPSampleSearchColumn.MATERIAL_TYPE,
+                BSPSampleSearchColumn.SAMPLE_KIT, BSPSampleSearchColumn.SAMPLE_STATUS,
+                BSPSampleSearchColumn.RECEPTACLE_TYPE, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
         if (mapIdToSampleData == null || mapIdToSampleData.isEmpty()) {
             addValidationError("sampleId","Failed to find sample ID");
         } else {
@@ -265,12 +266,16 @@ public class ReceivingActionBean extends RackScanActionBean {
             }
         }
 
+        String receptacleType = mapIdToSampleData.get(sampleIds).getReceptacleType();
+        if (receptacleType == null) {
+            addValidationError("sampleId", "Unknown Receptacle Type");
+        } else if (receptacleType.startsWith("Matrix") || receptacleType.startsWith("Abgene")) {
+            addValidationError("sampleId", "Barcoded tubes should be received by rack scan: " + receptacleType);
+        }
+
         if (mapSampleToCollaborator != null) {
             if (mapSampleToCollaborator.containsKey(sampleIds)) {
                 addValidationError("sampleId", "Sample already added " + sampleIds);
-            }
-            if (mapSampleToCollaborator.containsValue(collaboratorSampleId)) {
-                addValidationError("collaboratorSampleId", "Collaborator Sample ID already added.");
             }
         }
     }
@@ -292,6 +297,7 @@ public class ReceivingActionBean extends RackScanActionBean {
             dataMap.put(BSPSampleSearchColumn.SAMPLE_STATUS.name(), sampleData.getSampleStatus());
             dataMap.put(BSPSampleSearchColumn.SAMPLE_KIT.name(), sampleData.getSampleKitId());
             dataMap.put(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE.name(), sampleData.getOriginalMaterialType());
+            dataMap.put(BSPSampleSearchColumn.MATERIAL_TYPE.name(), sampleData.getMaterialType());
             sampleCollaboratorRows.add(dataMap);
         }
         addMessages(messageCollection);
@@ -308,6 +314,12 @@ public class ReceivingActionBean extends RackScanActionBean {
         }
         receiveSamplesAndLink(selectedSampleToCollaborator, messageCollection);
         addMessages(messageCollection);
+
+        // Filter Selected Samples that have been processed.
+        sampleCollaboratorRows = sampleCollaboratorRows.stream()
+                .filter(dataMap -> !selectedSampleIds.contains(dataMap.get(BSPSampleSearchColumn.SAMPLE_ID.name())))
+                .collect(Collectors.toList());
+
         return new ForwardResolution(RECEIVE_BY_SCAN_AND_LINK_PAGE);
     }
 
@@ -436,8 +448,8 @@ public class ReceivingActionBean extends RackScanActionBean {
             Set<String> intersection = new HashSet<>(setOfSamplesInSK);
             intersection.retainAll(setOfSamplesInRackScan);
             Map<String, BspSampleData> mapIdToSampleData = bspSampleDataFetcher.fetchSampleData(intersection,
-                    BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE, BSPSampleSearchColumn.SAMPLE_KIT,
-                    BSPSampleSearchColumn.SAMPLE_STATUS);
+                    BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE,
+                    BSPSampleSearchColumn.SAMPLE_KIT, BSPSampleSearchColumn.SAMPLE_STATUS);
 
             sampleRows = checkStatusOfSamples(mapIdToSampleData.values());
         }

@@ -18,6 +18,7 @@
                         {"bSortable": true} ,
                         {"bSortable": true} ,
                         {"bSortable": true} ,
+                        {"bSortable": true},
                         {"bSortable": true}
                     ]
                 });
@@ -89,6 +90,7 @@
                         <th>Sample Kit</th>
                         <th>Status</th>
                         <th>Material Type</th>
+                        <th>Original Material Type</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -120,6 +122,11 @@
                                                         value="${sampleData['SAMPLE_STATUS']}"/>
                             </td>
                             <td>
+                                    ${sampleData['MATERIAL_TYPE']}
+                                    <stripes:hidden name="sampleCollaboratorRows[${status.index}]['MATERIAL_TYPE']"
+                                                value="${sampleData['MATERIAL_TYPE']}"/>
+                            </td>
+                            <td>
                                     ${sampleData['ORIGINAL_MATERIAL_TYPE']}
                                     <stripes:hidden name="sampleCollaboratorRows[${status.index}]['ORIGINAL_MATERIAL_TYPE']"
                                                         value="${sampleData['ORIGINAL_MATERIAL_TYPE']}"/>
@@ -128,12 +135,8 @@
                     </c:forEach>
                     </tbody>
                 </table>
-                <div class="control-group">
-                    <div class="controls">
-                        <stripes:submit id="receiveByScanAndLink" name="receiveByScanAndLink" value="Receive To BSP"
-                                        class="btn btn-primary"/>
-                    </div>
-                </div>
+                <stripes:submit id="receiveByScanAndLink" name="receiveByScanAndLink" value="Receive To BSP"
+                                class="btn btn-primary"/>
             </stripes:form>
         </c:if>
     </stripes:layout-component>
