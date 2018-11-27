@@ -144,7 +144,8 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         ReceiveSamplesEjb testEjb =
                 new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList,
-                        sampleReceiptResource,bspRestService, Mockito.mock(LabVesselDao.class), Mockito.mock(QueueEjb.class));
+                        bspRestService, sampleReceiptResource,
+                        Mockito.mock(LabVesselDao.class), Mockito.mock(QueueEjb.class));
 
         // TODO: Review this to msee what needs to be mocked on labVesselDao and QueueEjb
         MessageCollection validationResults = new MessageCollection();
@@ -198,7 +199,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
         QueueEjb queueEjb = Mockito.mock(QueueEjb.class);
         ReceiveSamplesEjb testEjb =
-                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, sampleReceiptResource, bspRestService, labVesselDao, queueEjb);
+                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, bspRestService, sampleReceiptResource, labVesselDao, queueEjb);
 // TODO: Review this to msee what needs to be mocked on labVesselDao and QueueEjb
         MessageCollection validationResults = new MessageCollection();
 
@@ -267,7 +268,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
         QueueEjb queueEjb = Mockito.mock(QueueEjb.class);
         ReceiveSamplesEjb testEjb =
-                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, sampleReceiptResource, bspRestService, labVesselDao, queueEjb);
+                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, bspRestService, sampleReceiptResource, labVesselDao, queueEjb);
 // TODO: Review this to msee what needs to be mocked on labVesselDao and QueueEjb
         MessageCollection validationResults = new MessageCollection();
 
@@ -339,7 +340,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
         QueueEjb queueEjb = Mockito.mock(QueueEjb.class);
         ReceiveSamplesEjb testEjb =
-                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, sampleReceiptResource, bspRestService, labVesselDao, queueEjb);
+                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, bspRestService, sampleReceiptResource, labVesselDao, queueEjb);
 // TODO: Review this to msee what needs to be mocked on labVesselDao and QueueEjb
         MessageCollection validationResults = new MessageCollection();
 
@@ -442,7 +443,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
         QueueEjb queueEjb = Mockito.mock(QueueEjb.class);
         ReceiveSamplesEjb testEjb =
-                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, sampleReceiptResource, bspRestService, labVesselDao, queueEjb);
+                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, bspRestService, sampleReceiptResource, labVesselDao, queueEjb);
 // TODO: Review this to msee what needs to be mocked on labVesselDao and QueueEjb
         MessageCollection validationResults = new MessageCollection();
 

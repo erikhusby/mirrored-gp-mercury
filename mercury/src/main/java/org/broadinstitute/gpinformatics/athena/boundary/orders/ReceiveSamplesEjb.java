@@ -173,8 +173,8 @@ public class ReceiveSamplesEjb {
                     }
 
                     List<LabVessel> vesselsForPico = new ArrayList<>();
-                    List<LabVessel> labVessels = labVesselDao.findByBarcodes(sampleIds);
-                    labVessels.addAll(labVesselDao.findByBarcodes(sampleIds).values());
+                    List<LabVessel> labVessels = labVesselDao.findBySampleKeyList(kit.getSamples());
+                    labVessels.addAll(labVesselDao.findByBarcodes(kit.getSamples()).values());
 
                     for (LabVessel labVessel : labVessels) {
                         if (labVessel.isDNA()) {
@@ -339,8 +339,8 @@ public class ReceiveSamplesEjb {
             addValidation(messageCollection, operator, entry.getValue(),
                     SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                     SampleReceiptValidation.SampleValidationType.WARNING, String.format(
-                            "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS
-                                    .getReasonMessage(), entry.getKey()));
+                    "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS
+                            .getReasonMessage(), entry.getKey()));
         }
     }
 
