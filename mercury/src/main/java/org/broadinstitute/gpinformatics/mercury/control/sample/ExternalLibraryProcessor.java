@@ -272,8 +272,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             dto.setCollaboratorSampleId(get(getCollaboratorSampleIds(), index));
             dto.setConcentration(asNonNegativeBigDecimal(get(getConcentrations(), index),
                     ExternalLibraryProcessorNewTech.Headers.CONCENTRATION.getText(), dto.getRowNumber(), messages));
-            dto.setConditions(get(getConditions(), index));
-            dto.setExperiment(get(getExperiments(), index));
             dto.setInsertSize(asIntegerRange(get(getInsertSizes(), index),
                     ExternalLibraryProcessorNewTech.Headers.INSERT_SIZE_RANGE.getText(), dto.getRowNumber(), messages));
             dto.setIrbNumber(get(getIrbNumbers(), index));
@@ -567,7 +565,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
                 ((StringUtils.isNotBlank(dto.getAdditionalSampleInformation()) &&
                         StringUtils.isNotBlank(dto.getAdditionalAssemblyInformation())) ? "; " : "") +
                 dto.getAdditionalAssemblyInformation());
-        sampleInstanceEntity.setExperiment(dto.getExperiment());
         sampleInstanceEntity.setInsertSize(dto.getInsertSize());
         sampleInstanceEntity.setLabVessel(labVessel);
         sampleInstanceEntity.setLibraryType(dto.getLibraryType());
@@ -874,14 +871,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     public List<String> getCats() {
-        return Collections.emptyList();
-    }
-
-    public List<String> getExperiments() {
-        return Collections.emptyList();
-    }
-
-    public List<List<String>> getConditions() {
         return Collections.emptyList();
     }
 
