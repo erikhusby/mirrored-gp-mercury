@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActi
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBException;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -105,8 +106,8 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
     private Resolution receiveSamples(String receiptJsp) throws JAXBException {
         MessageCollection messageCollection = new MessageCollection();
 
-        response = receiveSamplesEjb.receiveSamples(samplesToReceive,
-                        getUserBean().getBspUser(), messageCollection);
+        response = receiveSamplesEjb.receiveSamples(new HashMap<>(), samplesToReceive,
+                getUserBean().getBspUser(), messageCollection);
 
         for (String error : response.getMessages()) {
             addGlobalValidationError(error);
