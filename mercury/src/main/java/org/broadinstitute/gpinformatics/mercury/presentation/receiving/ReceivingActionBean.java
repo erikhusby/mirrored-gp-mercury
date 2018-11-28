@@ -145,7 +145,7 @@ public class ReceivingActionBean extends RackScanActionBean {
 
         if (!sampleKitInfo.getStatus().equalsIgnoreCase("SHIPPED") &&
             !sampleKitInfo.getStatus().equalsIgnoreCase("PARTIALLYRECEIVED")) {
-            addValidationError("rackBarcode", "Unexpected status found for SK found " + sampleKitInfo.getStatus());
+            addValidationError("rackBarcode", "Sample Kit not in status ready to be received.");
         }
     }
 
