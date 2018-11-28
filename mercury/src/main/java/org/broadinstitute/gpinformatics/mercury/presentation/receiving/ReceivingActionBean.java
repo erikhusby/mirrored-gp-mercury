@@ -233,21 +233,19 @@ public class ReceivingActionBean extends RackScanActionBean {
 
     @HandlesEvent(RECEIVE_BY_SAMPLE_TO_BSP)
     public Resolution receiveBySampleToBspSubmit() throws JAXBException {
-        receiveSamples(messageCollection);
+        receiveSamples(messageCollection, new HashMap<>());
         addMessages(messageCollection);
         return new ForwardResolution(RECEIVE_BY_SAMPLE_SCAN_PAGE);
     }
 
     @HandlesEvent(RECEIVE_BY_SK_TO_BSP)
     public Resolution receiveBySkToBspSubmit() throws JAXBException {
-        receiveSamples(messageCollection);
+        SampleKitInfo sampleKitDetails = bspRestService.getSampleKitDetails(rackBarcode);
+        Map<String, SampleKitInfo> sampleKitInfoMap = new HashMap<>();
+        sampleKitInfoMap.put(rackBarcode, sampleKitDetails);
+        receiveSamples(messageCollection, sampleKitInfoMap);
         addMessages(messageCollection);
-        if (!messageCollection.hasErrors()) {
-            validateFindSkId();
-            return findSampleKitInfo();
-        } else {
-            return new ForwardResolution(RECEIVE_BY_SK_PAGE);
-        }
+        return new ForwardResolution(RECEIVE_BY_SK_PAGE);
     }
 
     @ValidationMethod(on = FIND_COLLABORATOR_ACTION)
@@ -345,8 +343,9 @@ public class ReceivingActionBean extends RackScanActionBean {
         return false;
     }
 
-    private boolean receiveSamples(MessageCollection messageCollection) throws JAXBException {
-        SampleKitReceiptResponse response = receiveSamplesEjb.receiveSamples(selectedSampleIds,
+    private boolean receiveSamples(MessageCollection messageCollection, Map<String, SampleKitInfo> sampleKitInfoMap)
+            throws JAXBException {
+        SampleKitReceiptResponse response = receiveSamplesEjb.receiveSamples(sampleKitInfoMap, selectedSampleIds,
                 getUserBean().getBspUser(), messageCollection);
 
         for (String error : response.getMessages()) {
@@ -355,7 +354,7 @@ public class ReceivingActionBean extends RackScanActionBean {
 
         addMessages(messageCollection);
         if (!messageCollection.hasErrors() && response.isSuccess()) {
-            messageCollection.addInfo("Sucessfully received samples in BSP: " +
+            messageCollection.addInfo("Successfully received samples in BSP: " +
                                       StringUtils.join(selectedSampleIds, ","));
             return true;
         } else {
@@ -376,7 +375,7 @@ public class ReceivingActionBean extends RackScanActionBean {
 
         addMessages(messageCollection);
         if (!messageCollection.hasErrors() && response.isSuccess()) {
-            messageCollection.addInfo("Sucessfully received samples in BSP: " +
+            messageCollection.addInfo("Successfully received samples in BSP: " +
                                       StringUtils.join(selectedSampleIds, ","));
             return true;
         } else {
@@ -485,7 +484,11 @@ public class ReceivingActionBean extends RackScanActionBean {
                 .filter(sm -> selectedSampleIds.contains(sm))
                 .collect(Collectors.toList());
 
-        SampleKitReceiptResponse response = receiveSamplesEjb.receiveSamples(sampleIds,
+        SampleKitInfo sampleKitDetails = bspRestService.getSampleKitDetails(rackBarcode);
+        Map<String, SampleKitInfo> sampleKitInfoMap = new HashMap<>();
+        sampleKitInfoMap.put(rackBarcode, sampleKitDetails);
+
+        SampleKitReceiptResponse response = receiveSamplesEjb.receiveSamples(sampleKitInfoMap, sampleIds,
                 getUserBean().getBspUser(), messageCollection);
 
         for (String error : response.getMessages()) {

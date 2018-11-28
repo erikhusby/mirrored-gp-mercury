@@ -14,7 +14,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServi
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleInfo;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceivedBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
@@ -33,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -75,14 +79,14 @@ public class ReceiveSamplesEjb {
      * to make sure they have the correct BSP privileges to do the receipt.
      *
      *
-     * @param sampleIds         SampleIds of the samples to receive.
+     * @param mapSktoKitInfo    Map SampleIds to kits of the samples to receive.
      * @param bspUser           The currently logged in user.
      * @param messageCollection Messages to send back to the user.
      *
      * @return SampleKitReceiptResponse received from BSP.
      */
-    public SampleKitReceiptResponse receiveSamples(List<String> sampleIds, BspUser bspUser,
-                                                   MessageCollection messageCollection) throws JAXBException {
+    public SampleKitReceiptResponse receiveSamples(Map<String, SampleKitInfo> mapSktoKitInfo, List<String> sampleIds,
+                                                   BspUser bspUser, MessageCollection messageCollection) throws JAXBException {
 
         SampleKitReceiptResponse receiptResponse = null;
 
@@ -101,13 +105,27 @@ public class ReceiveSamplesEjb {
 
                 for (Map.Entry<String, Set<SampleKitReceiptResponse.Barcodes>> entry :
                         receiptResponse.getReceivedSamplesPerKit().entrySet()) {
-
+                    SampleKitInfo sampleKitInfo = mapSktoKitInfo.get(entry.getKey());
                     List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
-                    for (SampleKitReceiptResponse.Barcodes barcodes : entry.getValue()) {
-                        parentVesselBeans.add(new ParentVesselBean(barcodes.getExternalBarcode(),
-                                barcodes.getSampleBarcode(),
-                                receiptResponse.getTubeTypePerSample().get(barcodes.getSampleBarcode()),
-                                null));
+                    if (sampleKitInfo == null || !sampleKitInfo.getPlate()) {
+                        for (SampleKitReceiptResponse.Barcodes barcodes : entry.getValue()) {
+                            parentVesselBeans.add(new ParentVesselBean(barcodes.getExternalBarcode(),
+                                    barcodes.getSampleBarcode(),
+                                    receiptResponse.getTubeTypePerSample().get(barcodes.getSampleBarcode()),
+                                    null));
+                        }
+                    } else {
+                        Map<String, SampleInfo> mapSampleToInfo = sampleKitInfo.getSampleInfos().stream()
+                                .collect(Collectors.toMap(SampleInfo::getSampleId, Function.identity()));
+                        List<ChildVesselBean> childVesselBeans = new ArrayList<>();
+                        parentVesselBeans.add(new ParentVesselBean(entry.getKey(), null, sampleKitInfo.getReceptacleType(),
+                                childVesselBeans));
+                        for (SampleKitReceiptResponse.Barcodes barcodes : entry.getValue()) {
+                            childVesselBeans.add(new ChildVesselBean(barcodes.getExternalBarcode(),
+                                    barcodes.getSampleBarcode(),
+                                    receiptResponse.getTubeTypePerSample().get(barcodes.getSampleBarcode()),
+                                    mapSampleToInfo.get(barcodes.getSampleBarcode()).getPosition()));
+                        }
                     }
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), entry.getKey(),
                             parentVesselBeans, bspUser.getUsername());
