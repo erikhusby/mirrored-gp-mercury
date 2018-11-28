@@ -11,7 +11,9 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,7 +23,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Represents the definition of a term in a user-defined search. Intended to be XStreamed.
+ * Represents the definition of both a search criteria term (input) and a search result column (output) <br />
+ * To be displayed as user selectable input criteria, (basically) will have criteria path(s) assigned  <br />
+ * Output value as a result column will be generated via display expressions <br />
+ * Intended to be XStreamed.
  */
 public class SearchTerm implements Serializable, ColumnTabulation {
 
@@ -31,9 +36,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Attached to various search term expressions to dynamically generate required properties.
      * @param <T>
      */
-    public abstract static class Evaluator <T> {
-        public abstract T evaluate(Object entity, SearchContext context);
-    }
+     public abstract static class Evaluator <T> {
+
+         public abstract T evaluate(Object entity, SearchContext context);
+
+
+     }
 
     /**
      * Defines Hibernate path from search result entity to the property being searched.
@@ -66,6 +74,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
          * Note:  Nested criteria path and child search terms are mutually exclusive
          */
         private CriteriaPath nestedCriteriaPath;
+
+        /**
+         * Optional non user-editable criteria to be used as a global filter for user entered search term criteria
+         */
+        private List<ImmutableTermFilter> immutableTermFilters;
 
         public List<String> getCriteria() {
             return criteria;
@@ -106,6 +119,54 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         public void setNestedCriteriaPath( CriteriaPath nestedCriteriaPath ) {
             this.nestedCriteriaPath = nestedCriteriaPath;
         }
+
+        @Nullable
+        public List<ImmutableTermFilter> getImmutableTermFilters(){
+            return immutableTermFilters;
+        }
+
+        public void addImmutableTermFilter(ImmutableTermFilter immutableTermFilter){
+            if( immutableTermFilters == null ) {
+                immutableTermFilters = new ArrayList<>();
+            }
+            immutableTermFilters.add(immutableTermFilter);
+        }
+    }
+
+    /**
+     * Allow the case where one or more additional filters can be attached to a search term.
+     * Filters are not user editable so values must be type safe with entity values
+     */
+    public static class ImmutableTermFilter {
+        private String propertyName;
+        private SearchInstance.Operator operator;
+        private Object[] values;
+
+        /**
+         * Constructor for when one value is required to support operator
+         * @param propertyName A property of the search term entity to base the filter on
+         * @param operator Filter restriction operator
+         * @param values Filter values, 2 required for between operator, 1 or more for list operators
+         */
+        public ImmutableTermFilter(
+                String propertyName, SearchInstance.Operator operator, Object ... values ){
+            this.propertyName = propertyName;
+            this.operator     = operator;
+            this.values = values;
+        }
+
+        public String getPropertyName(){
+            return propertyName;
+        }
+
+        public SearchInstance.Operator getOperator(){
+            return operator;
+        }
+
+        public Object[] getValues() {
+            return values;
+        }
+
     }
 
     /**
@@ -159,6 +220,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Evaluator<List<ConstrainedValue>> constrainedValuesExpression;
 
     /**
+     * Expression that provides list of constrained result column values
+     * TODO JMS This might be better off as part of a list plugin as parameter configurations get more complicated
+     */
+    private Evaluator<ResultParamConfiguration> resultParamConfigurationExpression;
+
+    /**
      * Dynamic value type expression.
      * Required to handle String, Data, Number metadata
      */
@@ -179,6 +246,18 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Expression to navigate to the property to generate value for display and sorting
      */
     private Evaluator<Object> displayValueExpression;
+
+    /**
+     * Expression from enum (can be shared across entities)
+     */
+    private DisplayExpression displayExpression;
+
+    /**
+     * Optional expression to enhance UI presentation of result column value
+     */
+    private Evaluator<String> uiDisplayOutputExpression;
+
+    private boolean mustEscape = true;
 
     /**
      * Header text (or expression to derive it) for displaying search results.
@@ -202,6 +281,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * SearchTerms that depend on the value of this term
      */
     private List<SearchTerm> dependentSearchTerms;
+
+    /**
+     * Expression applied to results of traversal, to determine whether they should be included.  Allows a dependent
+     * search term (e.g lab event type) to be combined with a primary term (e.g. LCSET) and traversal results
+     * (e.g. descendants).
+     */
+    private Evaluator<Boolean> traversalFilterExpression;
 
     /**
      * Expression to convert HTML form input value from String to property data type
@@ -249,13 +335,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean isNestedParent = Boolean.FALSE;
 
     /**
-     * Handles cases where a display result column can be selected by user
-     *   , but can only be displayed in a nested child table plugin.
-     * This list holds columns that, if selected by user, will be handled by the child plugin display
-     */
-    private Set<String> parentTermsHandledByChild;
-
-    /**
      * Flag this for search criteria only, do not display as column option.
      * (Don't want parent term to show up in columns list)
      */
@@ -298,12 +377,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * Display using JSP expression
-     * @return
      */
     public List<ConstrainedValue> getConstrainedValues() {
         return getConstrainedValues(new SearchContext());
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -317,7 +396,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * Display this text in UI if not null or empty string.
-     * @param helpText
      */
     public void setHelpText( String helpText ) {
         this.helpText = helpText;
@@ -360,8 +438,18 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     /**
+     * Allow user selection of one or more logically related result columns
+     */
+    public Evaluator<ResultParamConfiguration> getResultParamConfigurationExpression() {
+        return resultParamConfigurationExpression;
+    }
+
+    public void setResultParamConfigurationExpression(Evaluator<ResultParamConfiguration> resultParamConfigurationExpression) {
+        this.resultParamConfigurationExpression = resultParamConfigurationExpression;
+    }
+
+    /**
      * Set a constant value type for this term
-     * @param valueType
      */
     public void setValueType( ColumnValueType valueType ) {
         this.valueType = valueType;
@@ -391,8 +479,40 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return displayValueExpression;
     }
 
+    public DisplayExpression getDisplayExpression() {
+        return displayExpression;
+    }
+
+    /**
+     * Using an expression implementation pre-defined in the enum DisplayExpression, this method sets the
+     * implementation to extract value(s) from the base entity object to be used as the source of the result column
+     * value presented in UI or download.
+     *
+     * @param displayExpression
+     */
+    public void setDisplayExpression(DisplayExpression displayExpression) {
+        this.displayExpression = displayExpression;
+    }
+
+    /**
+     * Sets the expression implementation to extract value(s) from base entity object
+     * to use as the source of the result column value presented in UI or download.
+     *
+     * @param displayValueExpression The expression implementation to extract the value(s) from base entity
+     */
     public void setDisplayValueExpression(Evaluator<Object> displayValueExpression) {
         this.displayValueExpression = displayValueExpression;
+    }
+
+    /**
+     * Sets the expression implementation used to convert result column value(s) returned from displayValueExpression
+     * into a format for custom formatted display in UI (e.g. HTML CSS, Hyperlink)<br />
+     * Display output defaults to plain text if expression not set.
+     *
+     * @param uiDisplayOutputExpression Custom expression implementation to enhance UI format of display value
+     */
+    public void setUiDisplayOutputExpression(Evaluator<String> uiDisplayOutputExpression) {
+        this.uiDisplayOutputExpression = uiDisplayOutputExpression;
     }
 
     @Override
@@ -405,23 +525,8 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         this.isNestedParent = isNestedParent;
     }
 
-    public void addParentTermHandledByChild( SearchTerm parentTermHandledByChild){
-        if( parentTermsHandledByChild == null ) {
-            parentTermsHandledByChild = new HashSet<>();
-        }
-        parentTermsHandledByChild.add(parentTermHandledByChild.getName());
-    }
-
-    public boolean isParentTermHandledByChild( SearchTerm searchTerm){
-        if( parentTermsHandledByChild == null ) {
-            return false;
-        }
-        return parentTermsHandledByChild.contains( searchTerm.getName() );
-    }
-
     /**
      * Handles cases where a search term cannot be combined with any others.
-     * @return
      */
     public Boolean isExclusive(){
         if( isExclusive ) {
@@ -442,7 +547,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * A traversal evaluator must be attached to the search with logic which will replace the returned entity list
      * with a new list of the proper entity type.
      * (Term should also be flagged as exclusive)
-     * @return
      */
     public void setAlternateSearchDefinition(ConfigurableSearchDefinition alternateSearchDefinition){
         this.alternateSearchDefinition = alternateSearchDefinition;
@@ -450,7 +554,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * In certain cases, terms usable as search criteria need to be excluded from result column list.
-     * @return
      */
     public Boolean isExcludedFromResultColumns(){
         return  isExcludedFromResultColumns;
@@ -462,7 +565,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * If user does not select any result columns, add any flagged as default to results
-     * @return
      */
     public Boolean isDefaultResultColumn(){
         return  isDefaultResultColumn && !isExcludedFromResultColumns;
@@ -523,6 +625,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public void setDependentSearchTerms(List<SearchTerm> dependentSearchTerms) {
         this.dependentSearchTerms = dependentSearchTerms;
+    }
+
+    public void setTraversalFilterExpression(Evaluator<Boolean> traversalFilterExpression) {
+        this.traversalFilterExpression = traversalFilterExpression;
+    }
+
+    public Evaluator<Boolean> getTraversalFilterExpression() {
+        return traversalFilterExpression;
     }
 
     public String getSqlRestriction() {
@@ -603,12 +713,41 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public Object evalValueExpression(Object entity, SearchContext context) {
         context = addTermToContext(context);
+        if (getDisplayValueExpression() == null) {
+            // todo jmt revisit this
+/*
+            // Don't show results for this term if they will also be displayed in a layout.
+            ConfigurableSearchDefinition configurableSearchDefinition = SearchDefinitionFactory.getForEntity(
+                    context.getColumnEntityType().getEntityName());
+            for (String columnName : context.getSearchInstance().getPredefinedViewColumns()) {
+                SearchTerm searchTerm = configurableSearchDefinition.getSearchTerm(columnName);
+                if (searchTerm.getPluginClass() != null &&
+                        EventVesselPositionPlugin.class.isAssignableFrom(searchTerm.getPluginClass())) {
+                    return null;
+                }
+            }
+*/
+
+            Set resultObjects = new HashSet<>();
+            Collection<?> expressionObjects = DisplayExpression.rowObjectToExpressionObject(
+                    entity,
+                    getDisplayExpression().getExpressionClass(),
+                    context);
+            for (Object object : expressionObjects) {
+                Object resultObject = getDisplayExpression().getEvaluator().evaluate(object, context);
+                if (resultObject instanceof Collection) {
+                    resultObjects.addAll((Collection) resultObject);
+                } else {
+                    resultObjects.add(resultObject);
+                }
+            }
+            return resultObjects;
+        }
         return getDisplayValueExpression().evaluate(entity, context);
     }
 
     /**
      * If a dynamic type expression has been explicitly set, use it, otherwise, use the default for the type
-     * @return
      */
     @Override
     public ColumnValueType evalValueTypeExpression( Object value, SearchContext context ) {
@@ -621,16 +760,38 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     @Override
-    public String evalFormattedExpression(Object value, SearchContext context) {
+    public String evalPlainTextOutputExpression(Object value, SearchContext context) {
         context = addTermToContext(context);
         String multiValueDelimiter = context.getMultiValueDelimiter();
         return evalValueTypeExpression(value, context).format(value, multiValueDelimiter);
     }
 
     @Override
+    public String evalUiDisplayOutputExpression(Object value, SearchContext context) {
+        context = addTermToContext(context);
+        if( uiDisplayOutputExpression == null ) {
+            return evalPlainTextOutputExpression(value, context);
+        }
+        return uiDisplayOutputExpression.evaluate(value, context);
+    }
+
+    @Override
+    public boolean mustEscape() {
+        return mustEscape;
+    }
+
+    public void setMustEscape(boolean mustEscape) {
+        this.mustEscape = mustEscape;
+    }
+
+    @Override
     public Object evalViewHeaderExpression(Object entity, SearchContext context) {
         if (getViewHeaderExpression() == null) {
-            return getName();
+            if( context.getColumnParams() == null ) {
+                return getName();
+            } else {
+                return context.getColumnParams().getUserColumnName();
+            }
         } else {
             context = addTermToContext(context);
             return getViewHeaderExpression().evaluate(entity, context);
@@ -639,7 +800,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * Get the collection of entities associated with parent row
-     * Convenience method to eliminate ambiguity of calling evalPlainTextExpression
+     * Convenience method to eliminate ambiguity of calling evalPlainTextOutputExpression
      * @param entity  root of object graph that expression navigates.
      * @param context Other objects which (may be) used in the expression.
      */

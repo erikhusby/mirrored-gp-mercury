@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
-import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.easymock.EasyMock;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;

@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -70,12 +69,9 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      * @param batch               instance of the Lab Batch entity for which a new LCSetT Ticket is to be created
      * @param productOrderDao
      */
-    public ExtractionJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao) {
-        super(batch, CreateFields.ProjectType.EXTRACTION_PROJECT);
-
-        WorkflowLoader wfLoader = new WorkflowLoader();
-        WorkflowConfig wfConfig = wfLoader.load();
-
+    public ExtractionJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao,
+            WorkflowConfig workflowConfig) {
+        super(batch, CreateFields.ProjectType.EXTRACTION_PROJECT, productOrderDao, workflowConfig);
 
         if (!batch.getBucketEntries().isEmpty()) {
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
@@ -104,11 +100,11 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             if (pdo != null) {
                 foundResearchProjectList.put(currPdo, pdo.getResearchProject());
             } else {
-                //TODO SGM: Throw an exception here (?)
+                //TODO Throw an exception here (?)
                 log.error("Unable to find a PDO for the business key of " + currPdo);
             }
             if (batch.getWorkflowName() != null) {
-                workflowDefs.put(currPdo, wfConfig.getWorkflowByName(batch.getWorkflowName()));
+                workflowDefs.put(currPdo, workflowConfig.getWorkflowByName(batch.getWorkflowName()));
             }
         }
 
@@ -117,13 +113,13 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
-        //TODO SGM: Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
+        //TODO Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
         Set<CustomField> customFields = new HashSet<>();
 
         customFields
                 .add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION, batch.getBatchDescription()));
 
-        int sampleCount = batch.getStartingBatchLabVessels().size();
+        int sampleCount = batch.getBucketEntries().size();
 
         customFields.add(new CustomField(
                 submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName()), sampleCount));
@@ -141,7 +137,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         if (CollectionUtils.isNotEmpty(batch.getStartingBatchLabVessels())) {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SAMPLE_IDS,
-                    buildSamplesListString(batch, null)));
+                    buildSamplesListString()));
         }
 
         try {
@@ -150,7 +146,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
                 MaterialType materialType = bucketEntry.getLabVessel().getLatestMaterialType();
                 if (materialType!=null) {
-                    CustomField materialTypeField = new CustomField(submissionFields, LabBatch.TicketFields.BATCH_TYPE,
+                    CustomField materialTypeField = new CustomField(submissionFields, LabBatch.TicketFields.MATERIAL_TYPE,
                                     new CustomField.ValueContainer(materialType.getDisplayName()));
                     customFields.add(materialTypeField);
                     // TODO: the batchtype field will be changed to a multi-select in the near future,

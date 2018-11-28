@@ -5,11 +5,28 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product: #{actionBean.editProduct.partNumber}"
-                       sectionTitle="View Product: #{actionBean.editProduct.partNumber}"
+<stripes:layout-render name="/layout.jsp" pageTitle="View Product: ${actionBean.editProduct.partNumber}"
+                       sectionTitle="View Product: ${actionBean.editProduct.partNumber}"
                        businessKeyValue="${actionBean.editProduct.businessKey}">
 
     <stripes:layout-component name="content">
+
+        <stripes:form action="/products/product.action" id="productViewForm" class="form-horizontal">
+            <stripes:hidden id="product" name="${actionBean.editBusinessKeyName}"
+                            value="${actionBean.editProduct.businessKey}"/>
+            <div class="actionButtons">
+
+                <security:authorizeBlock roles="<%= roles(PDM, GPProjectManager, PM, Developer) %>">
+
+                    <c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber, actionBean.editProduct.determineCompanyConfiguration())}">
+                        <stripes:submit name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}"
+                                        value="Publish Product to SAP"
+                                        class="btn padright" title="Click to Publish Product to SAP"/>
+                    </c:if>
+                </security:authorizeBlock>
+
+            </div>
+        </stripes:form>
 
         <div class="form-horizontal span7">
             <div class="view-control-group control-group">
@@ -26,11 +43,22 @@
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Product Name</label>
+                <label class="control-label label-form">Primary Product Name</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.productName}</div>
                 </div>
             </div>
+
+
+            <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
+            <%--<c:if test="${actionBean.editProduct.alternateExternalName != null}">--%>
+                <%--<div class="view-control-group control-group">--%>
+                    <%--<label class="control-label label-form">Alternate (External) Product Name</label>--%>
+                    <%--<div class="controls">--%>
+                        <%--<div class="form-value">${actionBean.editProduct.alternateExternalName}</div>--%>
+                    <%--</div>--%>
+                <%--</div>--%>
+            <%--</c:if>--%>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Product Family</label>
@@ -113,6 +141,16 @@
                 </div>
             </div>
 
+                <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
+            <%--<c:if test="${actionBean.editProduct.externalPriceItem != null}">--%>
+                <%--<div class="view-control-group control-group">--%>
+                    <%--<label class="control-label label-form">Alternate (External) Price Items</label>--%>
+                    <%--<div class="controls">--%>
+                        <%--<div class="form-value">${actionBean.editProduct.externalPriceItem.displayName}</div>--%>
+                    <%--</div>--%>
+                <%--</div>--%>
+            <%--</c:if>--%>
+
             <div class="view-control-group control-group">
                 <label class="control-label label-form">PDM Orderable Only</label>
                 <div class="controls">
@@ -134,6 +172,33 @@
                                 A sample is on risk if:<br/>
                                 <c:forEach items="${actionBean.editProduct.riskCriteria}" var="criterion">
                                     ${criterion.calculationString}<br/>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Genotyping Chip</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:choose>
+                            <c:when test="${empty actionBean.genotypingChipInfo}">
+                                None.
+                            </c:when>
+                            <c:otherwise>
+                                <c:forEach items="${actionBean.genotypingChipInfo}" var="iterator">
+                                    <c:if test="${not empty iterator.right}">
+                                        When product order name contains "${iterator.right}":<br/>
+                                        &nbsp; &nbsp;
+                                    </c:if>
+                                    <c:if test="${empty iterator.right and (actionBean.genotypingChipInfo.size() > 1)}">
+                                        Otherwise:<br/>
+                                        &nbsp; &nbsp;
+                                    </c:if>
+                                    ${iterator.left} ${iterator.middle}
+                                    <br/>
                                 </c:forEach>
                             </c:otherwise>
                         </c:choose>
@@ -166,6 +231,24 @@
 
             <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                 <div class="view-control-group control-group">
+                    <label class="control-label label-form">Only offered as Commercial Product?</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.externalOnlyProduct ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Clinical Product?</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.clinicalProduct ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
                     <label class="control-label label-form">Expect Initial Quant In Mercury</label>
                     <div class="controls">
                         <div class="form-value">
@@ -180,7 +263,7 @@
                     <label class="control-label label-form">Workflow</label>
                     <div class="controls">
                         <div class="form-value">
-                        ${actionBean.editProduct.workflow.workflowName}
+                        ${actionBean.editProduct.workflowName}
                         </div>
                     </div>
                 </div>
@@ -189,6 +272,7 @@
         </div>
 
         <div class="form-horizontal span5">
+
             <fieldset>
                 <legend><h4>Pipeline Analysis</h4></legend>
 
@@ -215,6 +299,15 @@
                 </div>
 
                 <div class="view-control-group control-group">
+                    <label class="control-label label-form">Bait Locked</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.baitLocked ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
                     <label class="control-label label-form"><abbr title="aka Reagent Design">Bait Design</abbr></label>
                     <div class="controls">
                         <div class="form-value">
@@ -233,6 +326,51 @@
                                 ${actionBean.editProduct.positiveControlResearchProject.businessKey} -
                                 ${actionBean.editProduct.positiveControlResearchProject.title}
                             </c:if>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Read Length</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.readLength}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Insert Size</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.insertSize}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Loading Concentration</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.loadingConcentration}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Paired End Read</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.pairedEndRead}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Analyze UMIs</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.analyzeUmi ? "Yes" : "No"}
                         </div>
                     </div>
                 </div>
@@ -265,6 +403,9 @@
                         <td>${addOnProduct.productFamily.name}</td>
                         <td>
                             ${addOnProduct.primaryPriceItem.displayName}
+                            <c:if test="${addOnProduct.externalPriceItem != null}">
+                                external price item ${addOnProduct.externalPriceItem.displayName}
+                            </c:if>
                         </td>
                     </tr>
                 </c:forEach>
@@ -291,6 +432,17 @@
                     </tr>
                 </c:forEach>
             </tbody>
+            <c:if test="${actionBean.externalReplacementPriceItems != null}">
+                <tbody>
+                <c:forEach items="${actionBean.externalReplacementPriceItems}" var="externalReplacementPriceItem">
+                    <tr>
+                        <td>${externalReplacementPriceItem.platformName}</td>
+                        <td>${externalReplacementPriceItem.categoryName}</td>
+                        <td>${externalReplacementPriceItem.name}</td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </c:if>
         </table>
     </stripes:layout-component>
 </stripes:layout-render>

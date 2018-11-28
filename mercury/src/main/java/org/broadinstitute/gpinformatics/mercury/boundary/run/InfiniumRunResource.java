@@ -1,16 +1,34 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.ejb.Stateful;
@@ -22,8 +40,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,10 +58,13 @@ import java.util.regex.Pattern;
 @RequestScoped
 public class InfiniumRunResource {
 
+    private static final Log log = LogFactory.getLog(InfiniumRunResource.class);
+
     /** Extract barcode, row and column from e.g. 3999595020_R12C02 */
-    private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)_(R\\d*)(C\\d*)");
-    // todo jmt move this to configuration
-    public static final String DATA_PATH = "/humgen/illumina_data";
+    private static final Pattern BARCODE_PATTERN = Pattern.compile("([a-zA-Z0-9]*)_(R\\d*)(C\\d*)");
+    /** This matches with attribute_definition.attribute_family in the database. */
+    public static final String INFINIUM_GROUP = "Infinium";
+    private static String DATA_PATH;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -57,6 +78,15 @@ public class InfiniumRunResource {
     @Inject
     private ControlDao controlDao;
 
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
+
+    @Inject
+    private ProductEjb productEjb;
+
+    @Inject
+    private InfiniumStarterConfig infiniumStarterConfig;
+
     @GET
     @Path("/query")
     @Produces(MediaType.APPLICATION_JSON)
@@ -69,63 +99,193 @@ public class InfiniumRunResource {
             String column = matcher.group(3);
             VesselPosition vesselPosition = VesselPosition.valueOf(row + column);
             LabVessel chip = labVesselDao.findByIdentifier(chipBarcode);
-            infiniumRunBean = buildRunBean(chip, vesselPosition);
+            if (chip == null) {
+                throw new ResourceException("No such chip: " + chipBarcode, Response.Status.INTERNAL_SERVER_ERROR);
+            }
+            infiniumRunBean = buildRunBean(chip, vesselPosition, runDate(chip));
+
         } else {
             throw new ResourceException("Barcode is not of expected format", Response.Status.INTERNAL_SERVER_ERROR);
         }
         return infiniumRunBean;
     }
 
+    private Date runDate(LabVessel chip) {
+        if (CollectionUtils.isEmpty(chip.getEvents())) {
+            throw new ResourceException("No chip events found", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        for (LabEvent event : chip.getEvents()) {
+            if (event.getLabEventType() == LabEventType.INFINIUM_XSTAIN) {
+                return event.getEventDate();
+            }
+        }
+        return chip.getLatestEvent().getEventDate();
+    }
+
     /**
      * Build a JAXB DTO from a chip and position (a single sample)
      */
-    private InfiniumRunBean buildRunBean(LabVessel chip, VesselPosition vesselPosition) {
+    private InfiniumRunBean buildRunBean(LabVessel chip, VesselPosition vesselPosition, Date effectiveDate) {
+        if (DATA_PATH == null) {
+            DATA_PATH = infiniumStarterConfig.getDataPath();
+        }
+        if (DATA_PATH == null) {
+            throw new ResourceException("No configuration for DataPath", Response.Status.INTERNAL_SERVER_ERROR);
+        }
         InfiniumRunBean infiniumRunBean;
         Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
                 chip.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
         if (sampleInstancesAtPositionV2.size() == 1) {
             SampleInstanceV2 sampleInstanceV2 = sampleInstancesAtPositionV2.iterator().next();
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
-                    sampleInstanceV2.getRootOrEarliestMercurySampleName());
-            // todo jmt determine why Arrays samples have no connection between MercurySample and ProductOrderSample
-            List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(
-                    Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
+                    sampleInstanceV2.getNearestMercurySampleName());
 
-            Set<String> chipTypes = new HashSet<>();
-            for (ProductOrderSample productOrderSample : productOrderSamples) {
-                String chipType = ProductOrder.genoChipTypeForPart(
-                        productOrderSample.getProductOrder().getProduct().getPartNumber());
-                if (chipType != null) {
-                    chipTypes.add(chipType);
+            // When the ARRAY batch is auto-created, all samples on the plate get BucketEntries, even controls (this
+            // is arguably a bug in BucketEjb), so the BucketEntry can be used to determine an unambiguous PDO, unless
+            // the sample pre-dates auto-creation of ARRAY batches.
+            // To determine whether the sample is a process control (as opposed to a HapMap sample added to a PDO for
+            // scientific purposes), we have to look for the absence of a ProductOrderSample.
+            ProductOrder productOrder;
+            BucketEntry singleBucketEntry = sampleInstanceV2.getSingleBucketEntry();
+            ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (singleBucketEntry == null) {
+                if (productOrderSample == null) {
+                    // Likely a control, look at all samples on imported plate to try to find common ProductOrder
+                    TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                            new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                    LabEventType.ARRAY_PLATING_DILUTION), true);
+                    chip.getContainerRole().applyCriteriaToAllPositions(vesselForEventTypeCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+                    Set<ProductOrder> productOrders = new HashSet<>();
+                    for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry :
+                            vesselForEventTypeCriteria.getVesselsForLabEventType().entrySet()) {
+                        for (LabVessel labVessel : labEventSetEntry.getValue()) {
+                            Set<SampleInstanceV2> sampleInstances = OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class) ?
+                                    labVessel.getContainers().iterator().next().getContainerRole().getSampleInstancesV2() :
+                                    labVessel.getSampleInstancesV2();
+                            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                                ProductOrderSample platedPdoSample = sampleInstance.getProductOrderSampleForSingleBucket();
+                                if (platedPdoSample != null) {
+                                    productOrders.add(platedPdoSample.getProductOrder());
+                                }
+                            }
+                            if (OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
+                                break;
+                            }
+                        }
+                    }
+
+                    if (productOrders.size() >= 1) {
+                        productOrder = productOrders.iterator().next();
+                    } else {
+                        throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
+                    }
+                } else {
+                    productOrder = productOrderSample.getProductOrder();
+                }
+            } else {
+                productOrder = singleBucketEntry.getProductOrder();
+            }
+
+            boolean positiveControl = false;
+            boolean negativeControl = false;
+            if (productOrderSample == null) {
+                Control processControl = evaluateAsControl(sampleData);
+                if (processControl != null) {
+                    if (processControl.getType() == Control.ControlType.POSITIVE) {
+                        positiveControl = true;
+                    } else if (processControl.getType() == Control.ControlType.NEGATIVE) {
+                        negativeControl = true;
+                    }
                 }
             }
-            if (chipTypes.isEmpty()) {
-                chipTypes = evaluateAsControl(chip, sampleData);
-            }
-            if (chipTypes.isEmpty()) {
-                throw new ResourceException("Found no chip types", Response.Status.INTERNAL_SERVER_ERROR);
-            }
-            if (chipTypes.size() != 1) {
-                throw new ResourceException("Found mix of chip types " + chipTypes, Response.Status.INTERNAL_SERVER_ERROR);
+
+            GenotypingChip chipType = findChipType(productOrder, effectiveDate);
+
+            if (chipType == null) {
+                throw new ResourceException("Found no chip types for " + chip.getLabel() + " on " + effectiveDate,
+                        Response.Status.INTERNAL_SERVER_ERROR);
             }
 
-            String idatPrefix = DATA_PATH + "/" + chip.getLabel() + "_" + vesselPosition.name();
-            String chipType = chipTypes.iterator().next();
-            Config config = mapChipTypeToConfig.get(chipType);
-            if (config == null) {
-                throw new ResourceException("No configuration for " + chipType, Response.Status.INTERNAL_SERVER_ERROR);
-            } else {
-                infiniumRunBean = new InfiniumRunBean(
-                        idatPrefix + "_Red.idat",
-                        idatPrefix + "_Grn.idat",
-                        config.getChipManifestPath(),
-                        config.getBeadPoolManifestPath(),
-                        config.getClusterFilePath(),
-                        config.getzCallThresholdsPath(),
-                        sampleData.getCollaboratorsSampleName(),
-                        sampleData.getSampleLsid(),
-                        sampleData.getGender());
+            String idatPrefix = DATA_PATH + "/" + chip.getLabel() + "/" + chip.getLabel() + "_" + vesselPosition.name();
+            Map<String, String> chipAttributes = chipType.getAttributeMap();
+            if (chipAttributes.isEmpty()) {
+                throw new ResourceException("Found no configuration for " + chipType.getChipName(),
+                        Response.Status.INTERNAL_SERVER_ERROR);
             }
+
+            Date startDate = null;
+            for (LabEvent labEvent: chip.getInPlaceLabEvents()) {
+                if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_SOME_STARTED) {
+                    startDate = labEvent.getEventDate();
+                }
+            }
+            String scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), infiniumStarterConfig);
+
+            String batchName = null;
+            if (sampleInstanceV2.getSingleBatch() != null) {
+                batchName = sampleInstanceV2.getSingleBatch().getBatchName();
+            }
+            String productOrderId = null;
+            String productName = null;
+            String productFamily = null;
+            String partNumber = null;
+            String researchProjectId = null;
+            ResearchProject.RegulatoryDesignation regulatoryDesignation = null;
+            if (productOrder != null) {
+                productOrderId = productOrder.getJiraTicketKey();
+                productName = productOrder.getProduct().getProductName();
+                productFamily = productOrder.getProduct().getProductFamily().getName();
+                partNumber = productOrder.getProduct().getPartNumber();
+                researchProjectId = productOrder.getResearchProject().getBusinessKey();
+                regulatoryDesignation = productOrder.getResearchProject().getRegulatoryDesignation();
+
+                //Attempt to override default chip attributes if changed in product order
+                GenotypingProductOrderMapping genotypingProductOrderMapping =
+                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getProductOrderId());
+                if (genotypingProductOrderMapping != null) {
+                    for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
+                        if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
+                                archetypeAttribute.getAttributeValue() != null) {
+                            chipAttributes.put(
+                                    archetypeAttribute.getAttributeName(), archetypeAttribute.getAttributeValue());
+                        }
+                    }
+                }
+            }
+
+            String sampleLsid = sampleData.getSampleLsid();
+            if (sampleLsid == null && regulatoryDesignation != null && regulatoryDesignation.isClinical()) {
+                sampleLsid = CrspPipelineUtils.getCrspLSIDForBSPSampleId(sampleInstanceV2.getNearestMercurySampleName());
+            }
+            infiniumRunBean = new InfiniumRunBean(
+                    idatPrefix + "_Red.idat",
+                    idatPrefix + "_Grn.idat",
+                    chipAttributes.get("illumina_manifest_unix"),
+                    chipAttributes.get("manifest_location_unix"),
+                    chipAttributes.get("cluster_location_unix"),
+                    chipAttributes.get("zcall_threshold_unix"),
+                    sampleInstanceV2.getNearestMercurySampleName(),
+                    sampleData.getCollaboratorsSampleName(),
+                    sampleLsid,
+                    sampleData.getGender(),
+                    sampleData.getPatientId(),
+                    researchProjectId,
+                    positiveControl,
+                    negativeControl,
+                    chipAttributes.get("call_rate_threshold"),
+                    chipAttributes.get("gender_cluster_file"),
+                    sampleData.getCollaboratorParticipantId(),
+                    productOrderId,
+                    productName,
+                    productFamily,
+                    partNumber,
+                    batchName,
+                    startDate,
+                    scannerName,
+                    chipAttributes.get("norm_manifest_unix"),
+                    regulatoryDesignation == null ? null : regulatoryDesignation.name());
         } else {
             throw new RuntimeException("Expected 1 sample, found " + sampleInstancesAtPositionV2.size());
         }
@@ -133,128 +293,54 @@ public class InfiniumRunResource {
     }
 
     /**
-     * No connection to a product was found for a specific sample, so determine if it's a control, then try to
-     * get chip type from all samples.
+     * No connection to a product was found for a specific sample, so determine if it's a control.
      */
-    private Set<String> evaluateAsControl(LabVessel chip, SampleData sampleData) {
-        Set<String> chipTypes = new HashSet<>();
+    private Control evaluateAsControl(SampleData sampleData) {
         List<Control> controls = controlDao.findAllActive();
+        Control processControl = null;
         for (Control control : controls) {
             if (control.getCollaboratorParticipantId().equals(sampleData.getCollaboratorParticipantId())) {
-                List<String> sampleNames = new ArrayList<>();
-                for (SampleInstanceV2 sampleInstanceV2 : chip.getSampleInstancesV2()) {
-                     sampleNames.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
-                }
-                List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(sampleNames);
-                for (ProductOrderSample productOrderSample : productOrderSamples) {
-                    String chipType = ProductOrder.genoChipTypeForPart(
-                            productOrderSample.getProductOrder().getProduct().getPartNumber());
-                    if (chipType != null) {
-                        chipTypes.add(chipType);
-                    }
-                }
+                processControl = control;
                 break;
             }
         }
-        return chipTypes;
+        return processControl;
     }
 
-    private static class Config {
-        private String chipManifestPath;
-        private String beadPoolManifestPath;
-        private String clusterFilePath;
-        private String zCallThresholdsPath;
-
-        private Config(String chipManifestPath, String beadPoolManifestPath, String clusterFilePath,
-                String zCallThresholdsPath) {
-            this.chipManifestPath = chipManifestPath;
-            this.beadPoolManifestPath = beadPoolManifestPath;
-            this.clusterFilePath = clusterFilePath;
-            this.zCallThresholdsPath = zCallThresholdsPath;
+    private GenotypingChip findChipType(ProductOrder productOrder, Date effectiveDate) {
+        GenotypingChip chip = null;
+        Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(productOrder,
+                effectiveDate);
+        if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
+            chip = attributeArchetypeDao.findGenotypingChip(chipFamilyAndName.getLeft(),
+                    chipFamilyAndName.getRight());
+            if (chip == null) {
+                throw new ResourceException("Chip " + chipFamilyAndName.getRight() + " is not configured",
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            }
         }
-
-        public String getChipManifestPath() {
-            return chipManifestPath;
-        }
-
-        public String getBeadPoolManifestPath() {
-            return beadPoolManifestPath;
-        }
-
-        public String getClusterFilePath() {
-            return clusterFilePath;
-        }
-
-        public String getzCallThresholdsPath() {
-            return zCallThresholdsPath;
-        }
+        return chip;
     }
 
-    /*
-SELECT
-	p.pool_name,
-	ici.norm_manifest_unix,
-	ici.manifest_location_unix,
-	ici.cluster_location_unix,
-	ici.zcall_threshold_unix
-FROM
-	esp.infinium_chip_info ici
-	INNER JOIN esp.pool p
-		ON   p.pool_id = ici.pool_id
-WHERE
-	p.pool_name IN ('Broad_GWAS_supplemental_15061359_A1',
-	               'HumanCoreExome-24v1-0_A', 'HumanExome-12v1-2_A',
-	               'HumanOmni2.5-8v1_A', 'HumanOmniExpressExome-8v1_B',
-	               'HumanOmniExpressExome-8v1-3_A', 'HumanOmniExpress-24v1-1_A',
-	               'PsychChip_15048346_B', 'PsychChip_v1-1_15073391_A1');
-     */
-    // todo jmt move this to configuration
-    private static final Map<String, Config> mapChipTypeToConfig = new HashMap<>();
+    // Must be public, to allow calling from test
+    @SuppressWarnings("WeakerAccess")
+    public void setInfiniumStarterConfig(InfiniumStarterConfig infiniumStarterConfig) {
+        this.infiniumStarterConfig = infiniumStarterConfig;
+    }
+
+    public void setAttributeArchetypeDao(AttributeArchetypeDao attributeArchetypeDao) {
+        this.attributeArchetypeDao = attributeArchetypeDao;
+    }
+
+    static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
     static {
-        mapChipTypeToConfig.put("Broad_GWAS_supplemental_15061359_A1", new Config(
-                "/humgen/illumina_data/Broad_GWAS_supplemental_15061359_A1.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/Broad_GWAS_supplemental_15061359_A1.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/Broad_GWAS_supplemental_15061359_A1.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/thresholds.7.txt"));
-        mapChipTypeToConfig.put("HumanCoreExome-24v1-0_A", new Config(
-                "/humgen/illumina_data/HumanCoreExome-24v1-0_A.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanCoreExome-24v1-0_A/HumanCoreExome-24v1-0_A.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanCoreExome-24v1-0_A/HumanCoreExome-24v1-0_A.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanCoreExome-24v1-0_A/HumanCoreExome-24v1-0_A.thresholds.7.txt"));
-        mapChipTypeToConfig.put("HumanExome-12v1-2_A", new Config(
-                "/humgen/illumina_data/HumanExome-12v1-2_A.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanExome-12v1-2_A/HumanExome-12v1-2_A.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanExome-12v1-2_A/HumanExome-12v1-2_Illumina-HapMap.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanExome-12v1-2_A/HumanExome-12v1-2_A.thresholds.7.txt"));
-        mapChipTypeToConfig.put("HumanOmni2.5-8v1_A",new Config(
-                "/humgen/illumina_data/HumanOmni2.5-8v1_A.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmni2.5-8v1_A/HumanOmni2.5-8v1_A.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmni2.5-8v1_A/HumanOmni2.5-8v1_A.egt",
-                null));
-        mapChipTypeToConfig.put("HumanOmniExpressExome-8v1_B", new Config(
-                "/humgen/illumina_data/HumanOmniExpressExome-8v1_B.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmniExpressExome-8v1_B/HumanOmniExpressExome-8v1_B.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmniExpressExome-8v1_B/HumanOMXEX_CEPH_B.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmniExpressExome-8v1_B/Combo_OmniExpress_Exome_All.egt.thresholds.txt"));
-        mapChipTypeToConfig.put("HumanOmniExpressExome-8v1-3_A", new Config(
-                "/humgen/illumina_data/InfiniumOmniExpressExome-8v1-3_A.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/InfiniumOmniExpressExome-8v1-3_A/InfiniumOmniExpressExome-8v1-3_A.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/InfiniumOmniExpressExome-8v1-3_A/InfiniumOmniExpressExome-8v1-3_A_ClusterFile.egt",
-                null));
-        mapChipTypeToConfig.put("HumanOmniExpress-24v1-1_A", new Config(
-                "/humgen/illumina_data/HumanOmniExpress-24v1.1A.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmniExpress-24v1-1_A/HumanOmniExpress-24v1.1A.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmniExpress-24v1.1_A/HumanOmniExpress-24v1.1A.egt",
-                null));
-        mapChipTypeToConfig.put("PsychChip_15048346_B", new Config(
-                "/humgen/illumina_data/PsychChip_15048346_B.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15048346_B/PsychChip_15048346_B.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15048346_B/PsychChip_B_1000samples_no-filters.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15048346_B/PsychChip_15048346_B.thresholds.6.1000.txt"));
-        mapChipTypeToConfig.put("PsychChip_v1-1_15073391_A1", new Config(
-                "/humgen/illumina_data/PsychChip_v1-1_15073391_A1.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15073391_v1-1_A/PsychChip_v1-1_15073391_A1.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15073391_v1-1_A/PsychChip_v1-1_15073391_A1_ClusterFile.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15073391_v1-1_A/thresholds.7.txt"));
+        mapSerialNumberToMachineName.put("N296", "Practical Pig");
+        mapSerialNumberToMachineName.put("N0296", "Practical Pig");
+        mapSerialNumberToMachineName.put("N370", "Big Bad Wolf");
+        mapSerialNumberToMachineName.put("N0370", "Big Bad Wolf");
+        mapSerialNumberToMachineName.put("N700", "Fiddler Pig");
+        mapSerialNumberToMachineName.put("N0700", "Fiddler Pig");
+        mapSerialNumberToMachineName.put("N588", "Fiffer Pig");
+        mapSerialNumberToMachineName.put("N0588", "Fiffer Pig");
     }
 }

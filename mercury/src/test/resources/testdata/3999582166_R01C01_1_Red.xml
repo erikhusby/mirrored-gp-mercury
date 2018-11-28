@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImageHeader xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <SentrixMatrixID>3999582166</SentrixMatrixID>
+    <SampleLabel>R01C01</SampleLabel>
+    <SectionLabel>1</SectionLabel>
+    <ColorChannel>Red</ColorChannel>
+    <ImageWidth>0</ImageWidth>
+    <ImageHeight>0</ImageHeight>
+    <RotationAngle>-90</RotationAngle>
+    <Resolution>1</Resolution>
+    <ChOffsetX>0</ChOffsetX>
+    <ChOffsetY>0</ChOffsetY>
+    <Compressed>false</Compressed>
+    <ImageDate>2015-01-22T04:20:10.8209146-05:00</ImageDate>
+    <SentrixScanVersion />
+    <RegistrationVersion>??</RegistrationVersion>
+    <ExtractionVersion>n/a</ExtractionVersion>
+    <ExtractionMethod>StandardWithBackground</ExtractionMethod>
+    <RegsitrationScores>
+        <registrationScore>0</registrationScore>
+        <focusScore>0</focusScore>
+        <saturatedPixels>0</saturatedPixels>
+        <A11>0</A11>
+        <A12>0</A12>
+        <A21>0</A21>
+        <A22>0</A22>
+        <A31>0</A31>
+        <A32>0</A32>
+        <irregularBeads>0</irregularBeads>
+    </RegsitrationScores>
+    <P95>9447.273</P95>
+    <P50>1103.1991</P50>
+    <P05>125.537979</P05>
+    <PMT>0</PMT>
+    <PMTFactor>0</PMTFactor>
+    <Filter />
+    <zOffset>0</zOffset>
+    <ScannerID>N370</ScannerID>
+    <SlidePosition>0</SlidePosition>
+    <UserName>gtsill</UserName>
+</ImageHeader>

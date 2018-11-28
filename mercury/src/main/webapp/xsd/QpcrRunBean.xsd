@@ -1,0 +1,54 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:complexType name="libraryBeansType">
+        <xs:sequence>
+            <xs:element type="xs:decimal" name="concentration"/>
+            <xs:element type="xs:string" name="tubeBarcode"/>
+            <xs:element type="xs:string" name="well"/>
+            <xs:element type="xs:boolean" name="pass"/>
+            <xs:element name="metadata" type="metricMetadataType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:attributeGroup name="metadataGroup">
+        <xs:attribute name="name" type="xs:normalizedString" use="required"/>
+        <xs:attribute name="value" type="xs:normalizedString" use="required"/>
+    </xs:attributeGroup>
+
+    <xs:complexType name="metricMetadataType">
+        <xs:attributeGroup ref="metadataGroup"/>
+    </xs:complexType>
+
+    <xs:element name="qpcrRunBean">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element type="xs:string" name="runName"/>
+                <xs:element type="xs:dateTime" name="runDate"/>
+                <xs:element type="xs:string" name="operator"/>
+                <xs:element name="libraryBeans" type="libraryBeansType" maxOccurs="unbounded" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="libraryQuantBeanType">
+        <xs:sequence>
+            <xs:element type="xs:decimal" name="value"/>
+            <xs:element type="xs:string" name="tubeBarcode"/>
+            <xs:element type="xs:string" name="rackPositionName"/>
+            <xs:element name="metadata" type="metricMetadataType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="libraryQuantRunBean">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element type="xs:string" name="runName"/>
+                <xs:element type="xs:string" name="quantType"/>
+                <xs:element type="xs:dateTime" name="runDate"/>
+                <xs:element type="xs:string" name="operator"/>
+                <xs:element name="libraryQuantBeans" type="libraryQuantBeanType" maxOccurs="unbounded" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

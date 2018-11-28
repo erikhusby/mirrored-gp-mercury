@@ -4,6 +4,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -14,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent_;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hibernate.SQLQuery;
@@ -25,6 +28,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -35,6 +39,7 @@ import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,7 +50,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,6 +73,9 @@ public class ReagentFixupTest extends Arquillian {
 
     @Inject
     private LabEventDao labEventDao;
+
+    @Inject
+    private ProductDao productDao;
 
     @Inject
     private UserTransaction utx;
@@ -876,7 +883,8 @@ public class ReagentFixupTest extends Arquillian {
                 "2015-11-12T12:52:23", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
         }, "Rapid Capture Kit Box 4 (Bait)");
 
-        genericReagentDao.persist(new FixupCommentary("GPLIM-3791 add missing bait reagents using the Bravo log records."));
+        genericReagentDao.persist(
+                new FixupCommentary("GPLIM-3791 add missing bait reagents using the Bravo log records."));
         genericReagentDao.flush();
         utx.commit();
     }
@@ -1095,6 +1103,358 @@ public class ReagentFixupTest extends Arquillian {
 
         genericReagentDao.persist(new FixupCommentary("GPLIM-4063 fixup create emerge bait reagent and specify columns"));
         genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim4120fixDate() throws Exception {
+        userBean.loginOSUser();
+        // Replaces wrong expiration for P5 Indexed Adapter Plate reagent.
+        // Reagent was newly created for the event and not used elsewhere so the
+        // code just needs to fix the Reagent entity.
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1195956L);
+        Assert.assertNotNull(reagent);
+        String lot = "000001805823";
+        Assert.assertEquals(lot, reagent.getLot());
+        Date expiration = new GregorianCalendar(2016, Calendar.MAY, 21).getTime();
+        System.out.println("Changing expiration date on reagent id " + reagent.getReagentId() + " to " + expiration);
+        reagent.setExpiration(expiration);
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4120 fixup incorrect P5 adapter expiration"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4130() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Replaces reagent with one with the correct expiration. Preserves the original being used on other lab events.
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1308892L);
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1086959L);
+
+        // Finds and removes the labEventReagent
+        LabEventReagent foundLabEventReagent = null;
+        for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+            if (labEventReagent.getReagent().equals(reagent)) {
+                foundLabEventReagent = labEventReagent;
+            }
+        }
+        Assert.assertNotNull(foundLabEventReagent);
+        labEvent.getLabEventReagents().remove(foundLabEventReagent);
+        genericReagentDao.remove(foundLabEventReagent);
+
+        Reagent newReagent = new GenericReagent(reagent.getName(), reagent.getLot(),
+                new GregorianCalendar(2018, Calendar.MAY, 13).getTime());
+
+        System.out.println("Replacing " + reagent.getName() + " on event " + labEvent.getLabEventId() +
+                           " with one expiring " + newReagent.getExpiration().toString());
+        labEvent.addReagent(newReagent);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4130 change reagent due to wrong expiration date."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4130a() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Updates date from 5/13/18 to 4/13/18.
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1199001L);
+        Assert.assertNotNull(reagent);
+        reagent.setExpiration(new GregorianCalendar(2018, Calendar.APRIL, 13).getTime());
+        System.out.println("Updating reagent " + reagent.getReagentId() +
+                           " expiration to " + reagent.getExpiration().toString());
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4130 fix expiration date."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim4252EmergeBaitLotFixup() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Reagent undesired = genericReagentDao.findByReagentNameLotExpiration("Rapid Capture Kit Box 4 (Bait)",
+                "16D29A0013", new GregorianCalendar(2018, Calendar.DECEMBER, 3).getTime());
+        Assert.assertNotNull(undesired);
+
+        Reagent desired = genericReagentDao.findByReagentNameLotExpiration("Rapid Capture Kit Box 4 (Bait)",
+                "4520044903", new GregorianCalendar(2017, Calendar.JUNE, 29).getTime());
+        Assert.assertNotNull(desired);
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1434789L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.ICE_1S_TBAIT_PICK);
+        Assert.assertNotNull(labEvent.removeLabEventReagent(undesired));
+        labEvent.addReagent(desired);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4252 change reagent used on Ice 1st Bait Pick."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void support2453CrspSeqReagentFixup() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Reagent box1Incorrect = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit",
+                "16J13A0023", new GregorianCalendar(2017, Calendar.AUGUST, 11).getTime());
+        Assert.assertNotNull(box1Incorrect);
+
+        Reagent box2Incorrect = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit Box 2 of 2",
+                "16J13A0024", new GregorianCalendar(2017, Calendar.JULY, 31).getTime());
+        Assert.assertNotNull(box2Incorrect);
+
+        // Correct reagents already exist since used on other flowcells
+        Reagent box1Actual = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit",
+                "16J13A0024", new GregorianCalendar(2017, Calendar.JULY, 31).getTime());
+        Assert.assertNotNull(box1Actual);
+
+        Reagent box2Actual = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit Box 2 of 2",
+                "16J13A0023", new GregorianCalendar(2017, Calendar.AUGUST, 11).getTime());
+        Assert.assertNotNull(box2Actual);
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1811530L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+        Assert.assertNotNull(labEvent.removeLabEventReagent(box1Incorrect));
+        Assert.assertNotNull(labEvent.removeLabEventReagent(box2Incorrect));
+        labEvent.addReagent(box1Actual);
+        labEvent.addReagent(box2Actual);
+
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-2453 change to correct lots."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void support2496FixupWrongSeqReagents() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Reagent peKitIncorrect = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid PE Cluster Kit",
+                "RGT8269110", new GregorianCalendar(2017, Calendar.JULY, 11).getTime());
+        Assert.assertNotNull(peKitIncorrect);
+
+        Reagent peKitActual = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid PE Cluster Kit",
+                "16J13A0022", new GregorianCalendar(2017, Calendar.JULY, 11).getTime());
+        Assert.assertNotNull(peKitActual);
+
+        Reagent sbsKit1Incorrect = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit",
+                "RGT8133446", new GregorianCalendar(2017, Calendar.JULY, 31).getTime());
+        Assert.assertNotNull(sbsKit1Incorrect);
+
+        Reagent sbsKit1Actual = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit",
+                "16J13A0024", new GregorianCalendar(2017, Calendar.JULY, 31).getTime());
+        Assert.assertNotNull(sbsKit1Actual);
+
+        Reagent sbsKit2Incorrect = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit Box 2 of 2",
+                "RGT8229077", new GregorianCalendar(2017, Calendar.AUGUST, 11).getTime());
+        Assert.assertNotNull(sbsKit2Incorrect);
+
+        Reagent sbsKit2Actual = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit Box 2 of 2",
+                "16J13A0023", new GregorianCalendar(2017, Calendar.AUGUST, 11).getTime());
+        Assert.assertNotNull(sbsKit2Actual);
+
+
+        List<Long> labEventIds = Arrays.asList(1831151L, 1831152L);
+        for (Long labEventId: labEventIds) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+            Assert.assertEquals(labEvent.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+            Assert.assertNotNull(labEvent.removeLabEventReagent(peKitIncorrect));
+            Assert.assertNotNull(labEvent.removeLabEventReagent(sbsKit1Incorrect));
+            Assert.assertNotNull(labEvent.removeLabEventReagent(sbsKit2Incorrect));
+            labEvent.addReagent(peKitActual);
+            labEvent.addReagent(sbsKit1Actual);
+            labEvent.addReagent(sbsKit2Actual);
+        }
+
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-2496 change to correct lots."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport3067() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // requires setting updatable = true on ReagentDesign.designName (On Product, bait is referred to by name,
+        // not PK).
+        ReagentDesign reagentDesign = reagentDesignDao.findByBusinessKey("Broad_Liquid_Biopsy_Panel_v1.1");
+        reagentDesign.setDesignName("Broad_Liquid_Biopsy_Panel_v1_1");
+        Product product = productDao.findByPartNumber("P-VAL-0018");
+        Assert.assertEquals(product.getProductName(), "Deep Coverage Exome for Cell-Free Liquid Biopsy_Custom Panel");
+        product.setReagentDesignKey(reagentDesign.getDesignName());
+
+        reagentDesignDao.persist(new FixupCommentary("SUPPORT-3067 change design to correct spelling"));
+        reagentDesignDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * Backfill to update reagent with date of first use for GPLIM-4886
+     */
+    @Test(enabled = false)
+    public void fixupBackfillFirstUse() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        EntityManager em = genericReagentDao.getEntityManager();
+        Query qry = em.createNativeQuery("select r.reagent_id, min(e.event_date)\n" +
+                "  from lab_event e\n" +
+                "     , lab_event_reagents er\n" +
+                "     , reagent r\n" +
+                " where er.lab_event = e.lab_event_id\n" +
+                "   and er.reagents   = r.reagent_id\n" +
+                "group by r.reagent_id");
+        List<Object[]> rslts = qry.getResultList();
+        Long reagentId;
+        Date firstUsed;
+        Reagent reagent;
+        for( Object[] vals : rslts) {
+            reagentId = ((BigDecimal) vals[0]).longValue();
+            firstUsed = (Date) vals[1];
+            reagent = genericReagentDao.findById( Reagent.class, reagentId );
+            reagent.setFirstUse(firstUsed);
+
+        }
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4886 Backfill reagent first used dates"));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport3618() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+
+        // Fix Linearization Mix 2
+        Reagent linearizationReagent = genericReagentDao.findByReagentNameLotExpiration("Patterned Linearization Mix 2",
+                "20177318", new GregorianCalendar(2018, Calendar.JULY, 1).getTime());
+        Assert.assertNotNull(linearizationReagent);
+        linearizationReagent.setLot("20208351");
+        linearizationReagent.setExpiration(sdf.parse("10/17/2018"));
+        System.out.println("Changing reagent: " + linearizationReagent.getReagentId() +
+                           " lot to: " + linearizationReagent.getLot() + " and expiration to 10/17/2018");
+
+        //Indexing Primer Mix
+        Reagent indexingPrimerMix = genericReagentDao.findByReagentNameLotExpiration("Indexing Primer Mix",
+                "20154795", new GregorianCalendar(2018, Calendar.APRIL, 24).getTime());
+        Assert.assertNotNull(indexingPrimerMix);
+        indexingPrimerMix.setLot("20185773");
+        indexingPrimerMix.setExpiration(sdf.parse("08/02/2018"));
+        System.out.println("Changing reagent: " + indexingPrimerMix.getReagentId() +
+                           " lot to: " + indexingPrimerMix.getLot() + " and expiration to 08/02/2018");
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-3618 fixup reagent lot and expiration."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+    @Test(enabled = false)
+    public void fixupSupport3794() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 2522890L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+
+        Reagent cleavageMM = genericReagentDao.findByReagentNameLotExpiration("Cleavage Reagent Master Mix",
+                "20192115", new GregorianCalendar(2019, Calendar.AUGUST, 25).getTime());
+        Assert.assertNotNull(cleavageMM);
+        labEvent.addReagent(cleavageMM);
+
+        Reagent cleavageWashMix = genericReagentDao.findByReagentNameLotExpiration("Cleavage Reagent Wash Mix",
+                "20191163", new GregorianCalendar(2018, Calendar.AUGUST, 26).getTime());
+        Assert.assertNotNull(cleavageWashMix);
+        labEvent.addReagent(cleavageWashMix);
+
+        Reagent fastAmp = genericReagentDao.findByReagentNameLotExpiration("Fast Amplifixation Mix",
+                "20204400", new GregorianCalendar(2018, Calendar.OCTOBER, 11).getTime());
+        Assert.assertNotNull(fastAmp);
+        labEvent.addReagent(fastAmp);
+
+        Reagent fastAmpPre = genericReagentDao.findByReagentNameLotExpiration("Fast Amplification Premix",
+                "20210536", new GregorianCalendar(2019, Calendar.OCTOBER, 30).getTime());
+        Assert.assertNotNull(fastAmpPre);
+        labEvent.addReagent(fastAmpPre);
+
+        Reagent fastDenature = genericReagentDao.findByReagentNameLotExpiration("Fast Denaturation Reagent",
+                "20204370", new GregorianCalendar(2018, Calendar.OCTOBER, 8).getTime());
+        Assert.assertNotNull(fastDenature);
+        labEvent.addReagent(fastDenature);
+
+        Reagent fastLine1 = genericReagentDao.findByReagentNameLotExpiration("Fast Linearization Mix 1",
+                "20199036", new GregorianCalendar(2018, Calendar.SEPTEMBER, 19).getTime());
+        Assert.assertNotNull(fastLine1);
+        labEvent.addReagent(fastLine1);
+
+        Reagent fastLine2 = genericReagentDao.findByReagentNameLotExpiration("Fast Linearization Mix 2",
+                "20204405", new GregorianCalendar(2019, Calendar.FEBRUARY, 4).getTime());
+        Assert.assertNotNull(fastLine2);
+        labEvent.addReagent(fastLine2);
+
+        Reagent fastResyn = genericReagentDao.findByReagentNameLotExpiration("Fast Resynthesis Mix",
+                "20205214", new GregorianCalendar(2018, Calendar.OCTOBER, 15).getTime());
+        Assert.assertNotNull(fastResyn);
+        labEvent.addReagent(fastResyn);
+
+        Reagent incorporationMix = genericReagentDao.findByReagentNameLotExpiration("Incorporation Master Mix",
+                "20187116", new GregorianCalendar(2019, Calendar.JANUARY, 31).getTime());
+        Assert.assertNotNull(incorporationMix);
+        labEvent.addReagent(incorporationMix);
+
+        Reagent i7Primer = genericReagentDao.findByReagentNameLotExpiration("Primer Mix Index i7",
+                "20199029", new GregorianCalendar(2018, Calendar.OCTOBER, 21).getTime());
+        Assert.assertNotNull(i7Primer);
+        labEvent.addReagent(i7Primer);
+
+        Reagent read1Primer = genericReagentDao.findByReagentNameLotExpiration("Primer Mix Read 1",
+                "20199029", new GregorianCalendar(2019, Calendar.SEPTEMBER, 19).getTime());
+        Assert.assertNotNull(read1Primer);
+        labEvent.addReagent(read1Primer);
+
+        Reagent read2Primer = genericReagentDao.findByReagentNameLotExpiration("Primer Mix Read 2",
+                "20207978", new GregorianCalendar(2018, Calendar.OCTOBER, 20).getTime());
+        Assert.assertNotNull(read2Primer);
+        labEvent.addReagent(read2Primer);
+
+        Reagent scanReagent = genericReagentDao.findByReagentNameLotExpiration("Scan Reagent",
+                "20190535", new GregorianCalendar(2018, Calendar.AUGUST, 14).getTime());
+        Assert.assertNotNull(scanReagent);
+        labEvent.addReagent(scanReagent);
+
+        Reagent clusterKit = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid PE Cluster Kit",
+                "18A12A0015", new GregorianCalendar(2018, Calendar.SEPTEMBER, 19).getTime());
+        Assert.assertNotNull(clusterKit);
+        labEvent.addReagent(clusterKit);
+
+        Reagent sbsKit = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit",
+                "17K15A0031", new GregorianCalendar(2018, Calendar.AUGUST, 7).getTime());
+        Assert.assertNotNull(sbsKit);
+        labEvent.addReagent(sbsKit);
+
+        Reagent sbsKit2 = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit Box 2 of 2",
+                "17K15A0029", new GregorianCalendar(2018, Calendar.AUGUST, 14).getTime());
+        Assert.assertNotNull(sbsKit2);
+        labEvent.addReagent(sbsKit2);
+
+        Reagent usb1 = genericReagentDao.findByReagentNameLotExpiration("Universal Sequencing Buffer 1",
+                "20186729", new GregorianCalendar(2018, Calendar.AUGUST, 7).getTime());
+        Assert.assertNotNull(usb1);
+        labEvent.addReagent(usb1);
+
+        Reagent usb2 = genericReagentDao.findByReagentNameLotExpiration("Universal Sequencing Buffer 2",
+                "20186729", new GregorianCalendar(2018, Calendar.AUGUST, 7).getTime());
+        Assert.assertNotNull(usb2);
+        labEvent.addReagent(usb2);
+
+        Reagent flowcell = genericReagentDao.findByReagentNameLotExpiration("Flowcell Lot",
+                "20216849", new GregorianCalendar(2018, Calendar.MAY, 27).getTime());
+        Assert.assertNotNull(flowcell);
+        labEvent.addReagent(flowcell);
+
+        utx.commit();
     }
 
 }

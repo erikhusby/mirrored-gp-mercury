@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Set;
  * Handler for FlowcellLoaded message.  For flowcells that are descendants of strip tubes, sets the machine name in
  * the FCT ticket (for other flowcells, the machine name is set by FlowcellMessageHandler).
  */
+@Dependent
 public class FlowcellLoadedHandler extends AbstractEventHandler {
 
     private static final Log logger = LogFactory.getLog(FlowcellLoadedHandler.class);

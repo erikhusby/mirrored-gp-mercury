@@ -5,14 +5,12 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.jetbrains.annotations.Nullable;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -28,58 +26,57 @@ import java.util.TreeSet;
  * and {@link CreateFields.IssueType} in the future
  */
 public abstract class AbstractBatchJiraFieldFactory {
-
     protected final LabBatch batch;
-
-    private final CreateFields.ProjectType projectType;
+    protected final CreateFields.ProjectType projectType;
+    protected final ProductOrderDao productOrderDao;
+    protected final WorkflowConfig workflowConfig;
+    // Determines whether to use nearest or earliest sample name in the Jira ticket.
+    protected boolean jiraSampleFromNearest = true;
 
     public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType) {
+        this(batch, projectType, null, null);
+    }
+
+    public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType,
+            ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
         this.batch = batch;
         this.projectType = projectType;
+        this.productOrderDao = productOrderDao;
+        this.workflowConfig = workflowConfig;
+    }
+
+    public String buildSamplesListString() {
+        return buildSamplesListString(batch, jiraSampleFromNearest);
     }
 
     /**
-     * Returns the unique list of sample names referenced by the given collection of vessels.
+     * Builds a string for the JIRA ticket consisting of the sample names
+     * from initial and rework samples in the batch.
      */
-    private static Set<String> getUniqueSampleNames(Collection<LabVessel> labVessels) {
-        Set<String> sampleNames = new HashSet<>();
-        for (LabVessel labVessel : labVessels) {
-            Collection<String> sampleNamesForVessel = labVessel.getSampleNames();
-            sampleNames.addAll(labVessel.getSampleNames());
-        }
-        return sampleNames;
-    }
-
-    /**
-     * Takes the initial samples and the rework samples
-     * from the batch and builds a string to display
-     * on the batch ticket
-     *
-     * @param labBatch contains samples
-     *
-     * @return sample list
-     */
-    public static String buildSamplesListString(LabBatch labBatch, @Nullable Bucket bucket) {
+    public static String buildSamplesListString(LabBatch labBatch, boolean nearestSample) {
         StringBuilder samplesText = new StringBuilder();
         Set<String> newSamples = new TreeSet<>();
         Set<String> reworkSamples = new TreeSet<>();
-        newSamples.addAll(getUniqueSampleNames(labBatch.getNonReworkStartingLabVessels()));
-        reworkSamples.addAll(getUniqueSampleNames(labBatch.getReworks()));
+        for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+            Collection<String> sampleNames = bucketEntry.getLabVessel().getSampleNames(nearestSample);
+            switch (bucketEntry.getEntryType()) {
+            case PDO_ENTRY:
+                newSamples.addAll(sampleNames);
+                break;
+            case REWORK_ENTRY:
+                reworkSamples.addAll(sampleNames);
+                break;
+            default:
+                throw new IllegalArgumentException("No support for " + bucketEntry.getEntryType());
+            }
+        }
 
         samplesText.append(StringUtils.join(newSamples, "\n"));
         samplesText.append("\n");
 
         if (!reworkSamples.isEmpty()) {
+            samplesText.append(StringUtils.join(reworkSamples, "\n"));
             samplesText.append("\n");
-            for (String reworkSample : reworkSamples) {
-                if (bucket == null) {
-                    samplesText.append(reworkSample).append(" (rework)\n");
-                } else {
-                    samplesText.append(reworkSample).append(" (rework from ").append(bucket.getBucketDefinitionName())
-                            .append(
-                                    ")\n");
-                }
-            }
         }
         return samplesText.toString();
     }
@@ -124,55 +121,37 @@ public abstract class AbstractBatchJiraFieldFactory {
     }
 
     /**
-     * Provides the user the ability to retrieve a concrete factory class specific to the given Project Type.
-     *
+     * Returns a subclass depending on the type of JIRA ticket.
      *
      * @param projectType         type of JIRA Project for which the user needs to generate submission values
-     * @param batch               an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch} entity and is the primary source of the data from
+     *                            If null, defaults to FCT.
+     * @param batch               an instance of a {@link LabBatch} entity and is the primary source of the data from
      *                            which the custom submission fields will be generated
-     * @param productOrderDao
-     * @return The instance of the JIRA field factory for the given project type
      */
-    public static AbstractBatchJiraFieldFactory getInstance(@Nonnull CreateFields.ProjectType projectType,
-                                                            @Nonnull LabBatch batch,
-                                                            ProductOrderDao productOrderDao) {
-        AbstractBatchJiraFieldFactory builder;
+    public static AbstractBatchJiraFieldFactory getInstance(CreateFields.ProjectType projectType,
+            @Nonnull LabBatch batch, ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
 
-        if (projectType == null) {
-            return getInstanceByBatchType(batch);
+        if (projectType == null || projectType == CreateFields.ProjectType.FCT_PROJECT) {
+            switch (batch.getLabBatchType()) {
+            case MISEQ:
+            case FCT:
+                return new FCTJiraFieldFactory(batch);
+            default:
+                throw new IllegalArgumentException(projectType + " ticket type cannot be used with a " +
+                        batch.getLabBatchType() + " batch type.");
+            }
         }
+
         switch (projectType) {
-        case FCT_PROJECT:
-            builder = getInstanceByBatchType(batch);
-            break;
         case EXTRACTION_PROJECT:
-            builder = new ExtractionJiraFieldFactory(batch, productOrderDao);
-            break;
+            return new ExtractionJiraFieldFactory(batch, productOrderDao, workflowConfig);
+
+        case ARRAY_PROJECT:
+            return new ArrayJiraFieldFactory(batch);
+
         case LCSET_PROJECT:
         default:
-            builder = new LCSetJiraFieldFactory(batch, productOrderDao);
-            break;
+            return new LCSetJiraFieldFactory(batch, productOrderDao, workflowConfig);
         }
-
-        return builder;
-    }
-
-    /**
-     * @param batch an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch} entity
-     *              and is the primary source of the data from which the custom submission fields will be generated
-     * @return The instance of the JIRA field factory for the given project type
-     */
-    private static AbstractBatchJiraFieldFactory getInstanceByBatchType(LabBatch batch) {
-        AbstractBatchJiraFieldFactory builder;
-        switch (batch.getLabBatchType()) {
-        case MISEQ:
-        case FCT:
-            builder = new FCTJiraFieldFactory(batch);
-            break;
-        default:
-            throw new IllegalArgumentException("Not enough information was passed to determine the type of Jira ticket"
-                                           + " that should be populated");
-        }
-        return builder;
     }
 }

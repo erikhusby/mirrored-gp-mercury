@@ -8,13 +8,13 @@ import java.util.List;
 /**
  * This interface abstracts the behavior necessary to convert a list of entities to a
  * table of values, with variable columns. This interface allows SearchTerm and
- * ColumnConfig objects to be used interchangeably by ConfigurableList.
+ * SearchValue objects to be used interchangeably by ConfigurableList.
  */
 public interface ColumnTabulation {
     /**
      * @return name of the column.
      */
-    public String getName();
+    String getName();
 
     /**
      * Returns the results of evaluating the value expression.
@@ -23,16 +23,32 @@ public interface ColumnTabulation {
      * @param context Other objects which (may be) used in the expression.
      * @return The property value object, which could be a collection of values.
      */
-    public Object evalValueExpression(Object entity, SearchContext context);
+    Object evalValueExpression(Object entity, SearchContext context);
 
     /**
-     * Returns the display value of a column value property
+     * Returns the plain text display value of a column value property
      *
      * @param value Property value or collection of values to be displayed
      * @param context Other objects which (may be) used in the expression.
      * @return Results converted to a String to display
      */
-    public String evalFormattedExpression(Object value, SearchContext context);
+    String evalPlainTextOutputExpression(Object value, SearchContext context);
+
+    /**
+     * Returns the display value enhanced for display in UI <br />
+     * If no override implemented in evaluator, defaults to evalPlainTextOutputExpression
+     *
+     * @param value Property value or collection of values to be displayed
+     * @param context Other objects which (may be) used in the expression.
+     * @return Results converted to an enhanced String (e.g. HTML CSS or Hyperlink) to display in UI
+     */
+    String evalUiDisplayOutputExpression(Object value, SearchContext context);
+
+    /**
+     * Whether to apply XSS escaping.
+     * @return true if needs central escaping, false if already escaped by the output expression
+     */
+    boolean mustEscape();
 
     /**
      * returns the results of evaluating the expression for the view column header.
@@ -43,25 +59,25 @@ public interface ColumnTabulation {
     Object evalViewHeaderExpression(Object entity, SearchContext context);
 
     /**
-     * Utility method to eliminate ambiguity of using evalPlainTextExpression
+     * Utility method to eliminate ambiguity of using evalPlainTextOutputExpression
      *   to access nested table collection.
      *
      * @param entity  root of object graph that expression navigates.
      * @param context Other objects which (may be) used in the expression.
      * @return results, which must be a collection
      */
-    public Collection<?> evalNestedTableExpression(Object entity, SearchContext context);
+    Collection<?> evalNestedTableExpression(Object entity, SearchContext context);
 
     /**
      * Access nested entity ColumnTabulation objects associated with this ColumnTabulation
      */
-    public List<? extends ColumnTabulation> getNestedEntityColumns();
+    List<? extends ColumnTabulation> getNestedEntityColumns();
 
-    public void addNestedEntityColumn(ColumnTabulation columnTabulation);
+    void addNestedEntityColumn(ColumnTabulation columnTabulation);
 
-    public void setIsNestedParent( Boolean isNestedParent );
+    void setIsNestedParent( Boolean isNestedParent );
 
-    public Boolean isNestedParent( );
+    Boolean isNestedParent( );
 
     /**
      * returns the results of evaluating the expression for the first row of the
@@ -71,7 +87,7 @@ public interface ColumnTabulation {
      * @param context Other objects which (may be) used in the expression.
      * @return results, which could be a list.
      */
-    public Object evalDownloadHeader1Expression(Object entity, SearchContext context);
+    Object evalDownloadHeader1Expression(Object entity, SearchContext context);
 
     /**
      * returns the results of evaluating the expression for the second row of the
@@ -81,28 +97,28 @@ public interface ColumnTabulation {
      * @param context Other objects which (may be) used in the expression.
      * @return results, which could be a list.
      */
-    public Object evalDownloadHeader2Expression(Object entity, SearchContext context);
+    Object evalDownloadHeader2Expression(Object entity, SearchContext context);
 
     /**
      * @return the name of the plugin class that returns data for this pseudo-column
      */
-    public Class getPluginClass();
+    Class getPluginClass();
 
-    public void setPluginClass( Class pluginClass );
+    void setPluginClass( Class pluginClass );
 
     /**
      * For re-sorting of results
      *
      * @return path to a Hibernate property.
      */
-    public String getDbSortPath();
+    String getDbSortPath();
 
     /**
      * Allows hierarchies of columns, e.g. a trait (parent) and its metadata (children).
      *
      * @return list of child columns.
      */
-    public List<ColumnTabulation> getChildColumnTabulations();
+    List<ColumnTabulation> getChildColumnTabulations();
 
     /**
      * Returns the column value type from an expression evaluation
@@ -111,6 +127,6 @@ public interface ColumnTabulation {
      * @param context Other objects which (may be) used in the expression.
      * @return
      */
-    public ColumnValueType evalValueTypeExpression( Object value, SearchContext context );
+    ColumnValueType evalValueTypeExpression( Object value, SearchContext context );
 
 }

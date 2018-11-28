@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselTest;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -45,13 +46,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.is;
 
 
 /**
@@ -77,12 +75,17 @@ public class WorkflowTest {
     public void setupWorkflow() {
         workflowConfig = new WorkflowLoader().load();
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-        BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
+        BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
         labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
 
         labVesselFactory = new LabVesselFactory();
         labVesselFactory.setBspUserList(testUserList);
 
+    }
+
+    @BeforeMethod
+    public void setUp() throws Exception {
+        workflowConfig = new WorkflowLoader().load();
     }
 
     @Test
@@ -194,7 +197,7 @@ public class WorkflowTest {
                 LabEventType.A_BASE_CLEANUP));
 
         WorkflowProcessDef hybridSelectionProcess =
-                new WorkflowProcessDef(Workflow.HYBRID_SELECTION.getWorkflowName());
+                new WorkflowProcessDef(Workflow.HYBRID_SELECTION);
         WorkflowProcessDefVersion hybridSelectionProcessVersion = new WorkflowProcessDefVersion("1.0", new Date());
         hybridSelectionProcess.addWorkflowProcessDefVersion(hybridSelectionProcessVersion);
         WorkflowStepDef capture = new WorkflowStepDef("Capture");
@@ -205,7 +208,7 @@ public class WorkflowTest {
         new WorkflowProcessDef("QTP");
         new WorkflowProcessDef("HiSeq");
 
-        exomeExpressProductName = Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName();
+        exomeExpressProductName = Workflow.AGILENT_EXOME_EXPRESS;
         exomeExpressProduct = new ProductWorkflowDef(exomeExpressProductName);
         exomeExpressProductVersion = new ProductWorkflowDefVersion("1.0", new Date());
         exomeExpressProduct.addProductWorkflowDefVersion(exomeExpressProductVersion);
@@ -247,10 +250,12 @@ public class WorkflowTest {
             }
         }
     }
+
     private MercurySample createNewMercurySample(final String sampleId, final MaterialType materialType,
                                                  MercurySample.MetadataSource metadataSource) {
         return createNewMercurySample(sampleId, materialType.getDisplayName(), metadataSource);
     }
+
     private MercurySample createNewMercurySample(final String sampleId, final String materialType,
                                                  MercurySample.MetadataSource metadataSource) {
         MercurySample mercurySample=null;
@@ -306,7 +311,7 @@ public class WorkflowTest {
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
-        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
+        ProductWorkflowDef workflow = workflowConfig.getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
         boolean meetsCriteria=false;
         List<WorkflowBucketDef> workflowBuckets = workflow.getEffectiveVersion().getBuckets();
         for (WorkflowBucketDef workflowBucketDef : workflowBuckets) {
@@ -331,7 +336,7 @@ public class WorkflowTest {
         productOrder.getProduct().addAddOn(addOn);
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
 
-        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
+        ProductWorkflowDef workflow = workflowConfig.getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
         boolean meetsCriteria=false;
         List<WorkflowBucketDef> workflowBuckets = workflow.getEffectiveVersion().getBuckets();
         for (WorkflowBucketDef workflowBucketDef : workflowBuckets) {
@@ -357,7 +362,7 @@ public class WorkflowTest {
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
-        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
+        ProductWorkflowDef workflow = workflowConfig.getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
         WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName("Extract to DNA and RNA");
         boolean meetsBucketCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube, productOrder);
 
@@ -378,7 +383,7 @@ public class WorkflowTest {
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
-        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
+        ProductWorkflowDef workflow = workflowConfig.getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
 
         WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName("Extract to DNA and RNA");
         boolean meetsBucketCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube, productOrder);
@@ -398,7 +403,7 @@ public class WorkflowTest {
                         "ZZ-TOP", "AH_HA", "JOAN-JET");
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
 
-        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
+        ProductWorkflowDef workflow = workflowConfig.getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
 
         WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion()
                 .findBucketDefByName("Extract to DNA and RNA");
@@ -444,14 +449,6 @@ public class WorkflowTest {
     }
 
 
-    @Test
-    public void testSupportedWorkflows() {
-        Assert.assertTrue(Workflow.AGILENT_EXOME_EXPRESS.isWorkflowSupportedByMercury(),
-                "Uh oh, mercury doesn't support exome express!");
-        Assert.assertFalse(Workflow.WHOLE_GENOME.isWorkflowSupportedByMercury(),
-                "Do we support WGS in mercury? Party time!");
-    }
-
     @DataProvider(name = "bucketScenariosDataProvider")
     public Iterator<Object[]> bucketScenariosDataProvider() {
         Set<Object[]> result= new HashSet<>();
@@ -486,8 +483,8 @@ public class WorkflowTest {
                                                 boolean meetsBucketCriteriaExpected) {
         LabVessel labVessel = createLabVesselWithSample(labEventType, sampleMaterialType, metadataSource, doTransfer);
 
-        WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName());
-        workflowBucketDef.setBucketEntryEvaluator(new WorkflowBucketEntryEvaluator(Collections.<Workflow>emptySet(),
+        WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef(Workflow.AGILENT_EXOME_EXPRESS);
+        workflowBucketDef.setBucketEntryEvaluator(new WorkflowBucketEntryEvaluator(Collections.emptySet(),
                 Collections.singleton(MaterialType.DNA)));
 
         boolean actualBucketCriteria = workflowBucketDef.meetsBucketCriteria(labVessel, null);
@@ -515,69 +512,50 @@ public class WorkflowTest {
     }
 
     public void testFindParentWorkflow() {
-        List<String> expectedValues = new ArrayList<>(Workflow.values().length);
-        List<String> actualValues = new ArrayList<>(Workflow.values().length);
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        List<ProductWorkflowDef> productWorkflowDefs = workflowConfig.getProductWorkflowDefs();
+        List<String> expectedValues = new ArrayList<>(productWorkflowDefs.size());
+        List<String> actualValues = new ArrayList<>(productWorkflowDefs.size());
 
-        for (Workflow workflow : EnumSet.complementOf(EnumSet.of(Workflow.NONE))) {
-            ProductOrder productOrder =
-                    ProductOrderTestFactory.buildProductOrder(1, ProductOrderTestFactory.SAMPLE_SUFFIX, workflow);
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(workflow);
+        for (ProductWorkflowDef workflowDef : productWorkflowDefs) {
+            ProductOrder productOrder = ProductOrderTestFactory.buildProductOrder(
+                    1, ProductOrderTestFactory.SAMPLE_SUFFIX, workflowDef.getName());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
                 expectedValues.add(workflowDef.getName());
-                actualValues.add(bucket.getWorkflowForProductOrder(productOrder).getWorkflowName());
+                actualValues.add(bucket.getWorkflowForProductOrder(productOrder));
             }
         }
         assertThat(actualValues, contains(expectedValues.toArray()));
     }
 
     public void testFindParentWorkflowAddonsWithWorkflow() {
-        List<String> expectedValues = new ArrayList<>(Workflow.values().length);
-        List<String> actualValues = new ArrayList<>(Workflow.values().length);
+        List<ProductWorkflowDef> productWorkflowDefs = workflowConfig.getProductWorkflowDefs();
+        List<String> expectedValues = new ArrayList<>(productWorkflowDefs.size());
+        List<String> actualValues = new ArrayList<>(productWorkflowDefs.size());
 
         ProductOrder productOrder =
                 ProductOrderTestFactory.buildProductOrder(1, ProductOrderTestFactory.SAMPLE_SUFFIX, Workflow.ICE_CRSP);
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
 
-        for (Workflow workflow : EnumSet.complementOf(EnumSet.of(Workflow.NONE))) {
-            Product addOn = ProductTestFactory.createDummyProduct(workflow, "P-" + workflow.name() + "-1");
+        for (ProductWorkflowDef workflowDef : productWorkflowDefs) {
+            String workflowName = workflowDef.getName();
+            Product addOn = ProductTestFactory.createDummyProduct(workflowName, "P-" + workflowName + "-1");
             productOrder.getProduct().getAddOns().clear();
             productOrder.getProduct().addAddOn(addOn);
             productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(workflow);
             for (WorkflowBucketDef workflowBucketDef : workflowDef.getEffectiveVersion().getBuckets()) {
-                WorkflowBucketEntryEvaluator bucketEntryEvaluator =
-                                            new WorkflowBucketEntryEvaluator(Collections.singleton(workflow), Collections.<MaterialType>emptySet());
+                WorkflowBucketEntryEvaluator bucketEntryEvaluator = new WorkflowBucketEntryEvaluator(
+                        Collections.singleton(workflowName), Collections.<MaterialType>emptySet());
                 workflowBucketDef.setBucketEntryEvaluator(bucketEntryEvaluator);
             }
 
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
-                expectedValues.add(workflow.getWorkflowName());
-                actualValues.add(bucket.getWorkflowForProductOrder(productOrder).getWorkflowName());
+                expectedValues.add(workflowName);
+                actualValues.add(bucket.getWorkflowForProductOrder(productOrder));
             }
         }
         assertThat(actualValues, contains(expectedValues.toArray()));
-    }
-
-
-    @Test(dataProvider = "WorkflowComparatorData")
-    public void workflowComparatorTest(Workflow theWorkflow, Workflow theOtherWorkflow, org.hamcrest.Matcher<Integer> matcher) {
-        assertThat(Workflow.BY_NAME.compare(theWorkflow, theOtherWorkflow), matcher);
-    }
-
-    @DataProvider(name = "WorkflowComparatorData")
-    public static Object[][] WorkflowComparatorData() {
-        return new Object[][]{
-                new Object[]{null, null, equalTo(0)},
-                new Object[]{Workflow.NONE, Workflow.NONE, equalTo(0)},
-                new Object[]{Workflow.NONE, Workflow.AGILENT_EXOME_EXPRESS, lessThan(0)},
-                new Object[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.NONE, greaterThan(0)},
-                new Object[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS, lessThan(0)},
-                new Object[]{Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS, Workflow.AGILENT_EXOME_EXPRESS, greaterThan(0)},
-        };
     }
 
 }

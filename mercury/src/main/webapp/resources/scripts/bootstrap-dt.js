@@ -4,22 +4,39 @@
  *
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
+function isLegacyDataTables () {
+    return $j.fn.DataTable.version.match(/1.10.\d/)==undefined;
+}
 
 /*
  * Define the TableTools export resources and types.
  */
-var ttExportDefines = {
-    "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
-    "aButtons": [ "copy", "csv", "print" ]
-};
-
+if (isLegacyDataTables()) {
+    ttExportDefines = {
+        "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
+        "aButtons": ["copy", "csv", "print"]
+    };
+} else {
+    $j.extend($j.fn.dataTable.defaults, {
+        buttons: [ 'copy', 'csv', 'excel' ]
+    });
+}
 var sDomNoTableToolsButtons = "lfrtip";
 
+function enableDefaultPagingOptions(){
+    $j.extend( true, $j.fn.dataTable.defaults, {
+        "bPaginate": true,
+        "iDisplayLength": 100,
+        "bLengthChange": true,
+        "sPaginationType": 'bootstrap',
+    });
+    $j.fn.dataTable.defaults.aLengthMenu = [[50, 100, 200, 400, 1000, 2000, 4000, -1], [50, 100, 200, 400, 1000, 2000, 4000, "All"]];
+}
 /**
  *  Set the defaults for DataTables initialization
  */
-$j.extend( true, $j.fn.dataTable.defaults, {
-    "sDom": "<'row-fluid'<'span8'f><'span4'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
+$j.extend(true, $j.fn.dataTable.defaults, {
+    'sDom': "<'row-fluid'<'span8'f>><'row-fluid'<'span4'l><'span4 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
     "bAutoWidth": false,
     "bInfo": false,
     "bStateSave": true,
@@ -29,9 +46,14 @@ $j.extend( true, $j.fn.dataTable.defaults, {
     "bLengthChange": false,
     "oLanguage": {
         "sLengthMenu": "_MENU_ records per page"
-        }
-} );
-
+    }
+});
+if (isLegacyDataTables()) {
+    $j.extend(true, $j.fn.dataTable.defaults, {
+        'sDom': "<'row-fluid'<'span6'f><'span4'T><'span2'il>>rt<'row-fluid'<'span6'l><'span6'p>>",
+        "sPaginationType": "bootstrap",
+    });
+}
 
 /* Default class modification */
 $j.extend( $j.fn.dataTableExt.oStdClasses, {
@@ -39,6 +61,47 @@ $j.extend( $j.fn.dataTableExt.oStdClasses, {
 } );
 
 var filterDropdownHtml = "<div class='filterOptions'>using <select class='filterDropdown'><option value='all'>All of the words</option><option value='any'>Any of the words</option></select></div>";
+
+function isBlank(value){
+    return (value === undefined || value.trim() === '');
+}
+
+/**
+ * Create standard set of buttons used in Mercury: 'excel' and 'copy' which exports the data to chosen format.
+ *
+ * Exported data includes all checked entries in the DataTable with filtering, sorting:
+ */
+function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
+    var defaultOptions = {
+        /* do not export colum 0 (the checkbox column) */
+        columns: ':visible :gt(0)',
+        rows: function (html, index, node) {
+            /* include only checked rows in the export */
+            var $checked = $j(node).find('input:checked.' + checkboxClass);
+            return $checked!==undefined && $checked.length>0;
+        },
+        format: {
+            /* if there are any additional things in the headers such as filtering widgets, ignore them */
+            header: function(html, index, node){
+                if (headerClass){
+                    return $j(node).find("."+headerClass).text();
+                }
+                return $j(node).text();
+            }
+        },
+        /* export results should include only filtered results and for all pages, not just the current page. */
+        modifier: {
+            search: 'applied',
+            order: 'current',
+            page: 'all'
+        }
+    };
+
+    return [
+        {extend: 'copy', exportOptions: defaultOptions },
+        { extend: 'excel', exportOptions: defaultOptions},
+        ];
+}
 
 /**
  * Dynamically add the HTML element for the dropdown and the choices, as well as define the
@@ -52,10 +115,24 @@ function includeAdvancedFilter(oTable, tableID) {
     $j(tableID + "_filter").find(".filterDropdown").change(function() {
         chooseFilterForData(oTable);
     });
+    findFilterTextInput(oTable).focusout(function () {
+        var filterTextInput = oTable.fnSettings().oPreviousSearch;
+        if (isBlank(filterTextInput.sSearch)) {
+            oTable.fnFilterClear();
+        }
+    });
 
-    $j(".dataTables_filter input").keyup();
+
+    $j(".dataTables_filter").find("input[type='text'],input[type='search']").keyup();
 }
 
+function findDataTableWrapper(oTable) {
+    return $j(oTable).closest("[id$='_wrapper']");
+}
+
+function findFilterTextInput(oTable) {
+    return $j(findDataTableWrapper(oTable)).find(".dataTables_filter").find("input[type='text'],input[type='search']");
+}
 /**
  * Define the regular expression for the AND and OR filter.  The OR filter needs to create
  * the regex on the fly as the user adds characters into the filter input textbox.
@@ -63,33 +140,36 @@ function includeAdvancedFilter(oTable, tableID) {
  * @param oTable
  */
 function chooseFilterForData(oTable) {
-    $j(".dataTables_filter input").unbind('keyup');
-    $j(".dataTables_filter input").keyup(function() {
+    var filterWrapperSelector = findDataTableWrapper(oTable);
+    var filterTextInput = findFilterTextInput(oTable);
+    filterTextInput.unbind('keyup');
+    filterTextInput.keyup(function () {
         var tab = RegExp("\\t", "g");
         var useOr = false;
-        var dataTableName = $j(this).attr("aria-controls");
-        if ($j("#" + dataTableName + "_filter").find(".filterDropdown").val() == "any") {
+        if ($j(filterWrapperSelector).find(".filterDropdown").val() == "any") {
             useOr = true;
         }
-
-        var filterInput = $j(".dataTables_filter input").val().replace(tab, " ");
+        var filterInput = filterTextInput.val().replace(tab, " ");
+        var searchRegex = ".";
         if (useOr) {
             // OR
-            var searchRegex = ".";
-            if (filterInput != '') {
-                var searchRegex = "(" + filterInput.trim().split(" ").join("+|") + "+)";
+            if (!isBlank(filterInput)) {
+                searchRegex = "(" + filterInput.trim().split(" ").join("+|") + "+)";
             }
             oTable.fnFilter( searchRegex, null, true, false );
-        } else {
+        }else {
             // AND
-            if (filterInput != '') {
+            if (!isBlank(filterInput)) {
                 oTable.fnFilter(filterInput, null, false, true);
             }
         }
-        $j(".dataTables_filter input").val( filterInput );
+        if (useOr||matchNone) {
+            oTable.fnFilter( searchRegex, null, true, false );
+        }
+        filterTextInput.val(filterInput);
     });
 
-    $j(".dataTables_filter input").keyup();
+    filterTextInput.keyup();
 }
 
 
@@ -156,25 +236,27 @@ $j.extend( $j.fn.dataTableExt.oPagination, {
                 $('li:gt(0)', an[i]).filter(':not(:last)').remove();
 
                 // Add the new list items and their event handlers
-                for ( j=iStart ; j<=iEnd ; j++ ) {
-                    sClass = (j==oPaging.iPage+1) ? 'class="active"' : '';
-                    $('<li '+sClass+'><a href="#">'+j+'</a></li>')
-                        .insertBefore( $('li:last', an[i])[0] )
-                        .bind('click', function (e) {
-                            e.preventDefault();
-                            oSettings._iDisplayStart = (parseInt($('a', this).text(),10)-1) * oPaging.iLength;
-                            fnDraw( oSettings );
-                        } );
+                if (oPaging.iTotalPages>1) {
+                    for (j = iStart; j <= iEnd; j++) {
+                        sClass = (j == oPaging.iPage + 1) ? 'class="active"' : '';
+                        $('<li ' + sClass + '><a href="#">' + j + '</a></li>')
+                            .insertBefore($('li:last', an[i])[0])
+                            .bind('click', function (e) {
+                                e.preventDefault();
+                                oSettings._iDisplayStart = (parseInt($('a', this).text(), 10) - 1) * oPaging.iLength;
+                                fnDraw(oSettings);
+                            });
+                    }
                 }
 
                 // Add / remove disabled classes from the static elements
-                if ( oPaging.iPage === 0 ) {
+                if ( oPaging.iPage <= 0 ) {
                     $('li:first', an[i]).addClass('disabled');
                 } else {
                     $j('li:first', an[i]).removeClass('disabled');
                 }
 
-                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages === 0 ) {
+                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages <= 0 ) {
                     $j('li:last', an[i]).addClass('disabled');
                 } else {
                     $j('li:last', an[i]).removeClass('disabled');
@@ -216,35 +298,37 @@ $j.fn.dataTableExt.oApi.fnFilterClear = function (oSettings) {
  * TableTools Bootstrap compatibility
  * Required TableTools 2.1+
  */
-if ( $j.fn.DataTable.TableTools ) {
-    // Set the classes that TableTools uses to something suitable for Bootstrap
-    $j.extend( true, $j.fn.DataTable.TableTools.classes, {
-        "container": "DTTT btn-group",
-        "buttons": {
-            "normal": "btn btn-mini",
-            "disabled": "disabled"
-        },
-        "collection": {
-            "container": "DTTT_dropdown dropdown-menu",
+if (isLegacyDataTables()) {
+    if ($j.fn.DataTable.TableTools) {
+        // Set the classes that TableTools uses to something suitable for Bootstrap
+        $j.extend(true, $j.fn.DataTable.TableTools.classes, {
+            "container": "DTTT btn-group",
             "buttons": {
-                "normal": "",
+                "normal": "btn btn-mini",
                 "disabled": "disabled"
+            },
+            "collection": {
+                "container": "DTTT_dropdown dropdown-menu",
+                "buttons": {
+                    "normal": "",
+                    "disabled": "disabled"
+                }
+            },
+            "print": {
+                "info": "DTTT_print_info modal"
+            },
+            "select": {
+                "row": "active"
             }
-        },
-        "print": {
-            "info": "DTTT_print_info modal"
-        },
-        "select": {
-            "row": "active"
-        }
-    } );
+        });
 
-    // Have the collection use a bootstrap compatible dropdown
-    $j.extend( true, $j.fn.DataTable.TableTools.DEFAULTS.oTags, {
-        "collection": {
-            "container": "ul",
-            "button": "li",
-            "liner": "a"
-        }
-    } );
+        // Have the collection use a bootstrap compatible dropdown
+        $j.extend(true, $j.fn.DataTable.TableTools.DEFAULTS.oTags, {
+            "collection": {
+                "container": "ul",
+                "button": "li",
+                "liner": "a"
+            }
+        });
+    }
 }

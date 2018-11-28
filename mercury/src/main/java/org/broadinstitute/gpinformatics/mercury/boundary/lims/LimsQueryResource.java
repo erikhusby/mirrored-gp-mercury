@@ -9,32 +9,51 @@ import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PoolGroupType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReagentDesignType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ValidationErrorType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WorklowValidationErrorType;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -64,19 +83,27 @@ public class LimsQueryResource {
     @Inject
     private LabVesselDao labVesselDao;
 
+    @Inject
+    private GenericReagentDao genericReagentDao;
+
+    @Inject
+    private WorkflowValidator workflowValidator;
+
     public LimsQueryResource() {
     }
 
     public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries,
                              SequencingTemplateFactory sequencingTemplateFactory,
                              LimsQueryResourceResponseFactory responseFactory,
-                             SystemRouter systemRouter, BSPUserList bspUserList) {
+                             SystemRouter systemRouter, BSPUserList bspUserList,
+                             GenericReagentDao genericReagentDao) {
         this.thriftService = thriftService;
         this.limsQueries = limsQueries;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.responseFactory = responseFactory;
         this.systemRouter = systemRouter;
         this.bspUserList = bspUserList;
+        this.genericReagentDao = genericReagentDao;
     }
 
     @GET
@@ -104,10 +131,11 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchConcentrationAndVolumeAndWeightForTubeBarcodes")
     public Map<String,ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
-            @QueryParam("q") List<String> tubeBarcodes) {
+            @QueryParam("q") List<String> tubeBarcodes,
+            @DefaultValue("true") @QueryParam("labMetricsFirst") boolean labMetricsFirst) {
         switch (systemRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
         case MERCURY:
-            return limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(tubeBarcodes);
+            return limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(tubeBarcodes, labMetricsFirst);
         case SQUID:
             Map<String, ConcentrationAndVolume> concentrationAndVolumeMap =
                     thriftService.fetchConcentrationAndVolumeForTubeBarcodes(tubeBarcodes);
@@ -348,10 +376,16 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQpcrForTube")
-    public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode) {
+    public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode,
+                                   @QueryParam("quantType") String quantType,
+                                   @DefaultValue("false") @QueryParam("onTubeOnly") boolean onTubeOnly ) {
         switch (systemRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
-            return limsQueries.fetchQuantForTube(tubeBarcode, LabMetric.MetricType.ECO_QPCR.getDisplayName());
+            if( !onTubeOnly ) {
+                return limsQueries.fetchNearestQuantForTube(tubeBarcode, quantType);
+            } else {
+                return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
+            }
         case SQUID:
             return thriftService.fetchQpcrForTube(tubeBarcode);
         default:
@@ -382,10 +416,15 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQuantForTube")
     public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode,
-                                    @QueryParam("quantType") String quantType) {
+                                    @QueryParam("quantType") String quantType,
+                                    @DefaultValue("false") @QueryParam("onTubeOnly") boolean onTubeOnly ) {
         switch (systemRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
-            return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
+            if( !onTubeOnly ) {
+                return limsQueries.fetchNearestQuantForTube(tubeBarcode, quantType);
+            } else {
+                return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
+            }
         case SQUID:
             return thriftService.fetchQuantForTube(tubeBarcode, quantType);
         default:
@@ -470,5 +509,93 @@ public class LimsQueryResource {
     @Path("/routeForVesselBarcodes")
     public SystemRouter.System routeForVesselBarcodes(@QueryParam("q") List<String> barcodes) {
         return systemRouter.routeForVesselBarcodes(barcodes);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/findAllReagentsListedInEventWithReagent")
+    public Set<ReagentType> findAllReagentsListedInEventWithReagent(@QueryParam("name") String name,
+                                                        @QueryParam("lot") String lot,
+                                                        @QueryParam("expiration") String expiration) {
+        if (name == null || lot == null || expiration == null) {
+            throw new RuntimeException("name, lot, and exp are all required query parameters");
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Set<ReagentType> reagentTypes = new HashSet<>();
+        try {
+            Date expirationDate = sdf.parse(expiration);
+            GenericReagent genericReagent =
+                    genericReagentDao.findByReagentNameLotExpiration(name, lot, expirationDate);
+            if (genericReagent != null) {
+                Set<LabEventReagent> labEventReagents = genericReagent.getLabEventReagents();
+                if (labEventReagents != null && !labEventReagents.isEmpty()) {
+                    LabEventReagent labEventReagent = labEventReagents.iterator().next();
+                    LabEvent labEvent = labEventReagent.getLabEvent();
+                    for (Reagent reagent : labEvent.getReagents()) {
+                        ReagentType reagentType = new ReagentType();
+                        reagentType.setBarcode(reagent.getLot());
+                        reagentType.setExpiration(reagent.getExpiration());
+                        reagentType.setKitType(reagent.getName());
+                        reagentTypes.add(reagentType);
+                    }
+                }
+            } else {
+                throw new RuntimeException(
+                        "Reagent not found for name: " + name + ", lot: " + lot + ", and expiration: " + expiration);
+            }
+            return reagentTypes;
+        } catch (ParseException e) {
+            throw new RuntimeException("Expiration string must be in the format of yyyy-MM-dd");
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/validateWorkflow")
+    public WorklowValidationErrorType validateWorkflow(
+            @QueryParam("q") List<String> vesselBarcodes, @QueryParam("nextEventTypeName") String nextEventTypeName) {
+        if (vesselBarcodes == null || vesselBarcodes.isEmpty() || nextEventTypeName == null) {
+            throw new RuntimeException("vessel barcodes ('q') and nextEventTypeName are required query parameters.");
+        }
+        Map<String, LabVessel> mapBarcodetoVessel = labVesselDao.findByBarcodes(vesselBarcodes);
+        Set<String> unknownLabVesselBarcodes = new HashSet<>();
+        Set<String> unacceptableLabVesselBarcodes = new HashSet<>();
+        for (Map.Entry<String, LabVessel> entry: mapBarcodetoVessel.entrySet()) {
+            if (entry.getValue() == null) {
+                unknownLabVesselBarcodes.add(entry.getKey());
+            } else if (OrmUtil.proxySafeIsInstance(entry.getValue(), RackOfTubes.class)) {
+                unacceptableLabVesselBarcodes.add(entry.getKey());
+            }
+        }
+        if (!unknownLabVesselBarcodes.isEmpty()) {
+            throw new RuntimeException("Failed to find lab vessels with barcodes: " + unknownLabVesselBarcodes);
+        }
+        if (!unacceptableLabVesselBarcodes.isEmpty()) {
+            throw new RuntimeException("Incompatible vessel types: " + unacceptableLabVesselBarcodes);
+        }
+        List<WorkflowValidator.WorkflowValidationError> workflowValidationErrors =
+                workflowValidator.validateWorkflow(mapBarcodetoVessel.values(), nextEventTypeName);
+        WorklowValidationErrorType errorType = new WorklowValidationErrorType();
+        errorType.setHasErrors(!workflowValidationErrors.isEmpty());
+        if (errorType.isHasErrors()) {
+            for (WorkflowValidator.WorkflowValidationError workflowValidationError: workflowValidationErrors) {
+                for (ProductWorkflowDefVersion.ValidationError validationError: workflowValidationError.getErrors()) {
+                    ValidationErrorType validationErrorType = new ValidationErrorType();
+                    validationErrorType.setMessage(validationError.getMessage());
+                    validationErrorType.getActualEventTypes().addAll(validationError.getActualEventNames());
+                    validationErrorType.getExpectedEventTypes().addAll(validationError.getExpectedEventNames());
+                    errorType.getValidationErrors().add(validationErrorType);
+                }
+            }
+
+        }
+        return errorType;
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchExpectedReagentDesignsForTubeBarcodes")
+    public List<ReagentDesignType> fetchExpectedReagentDesignsForTubeBarcodes(@QueryParam("q") List<String> tubeBarcodes) {
+        return limsQueries.fetchExpectedReagentDesignsForTubeBarcodes(tubeBarcodes);
     }
 }

@@ -35,11 +35,12 @@ public class CsvParser {
                                                              char fieldDelimiter,
                                                              Class<T> beanClass,
                                                              @Nullable Map<String, String> columnNameToBeanMap,
-                                                             CsvToBeanFilter filter) {
+                                                             CsvToBeanFilter filter,
+                                                             int skipLines) {
         CSVReader reader = null;
         try {
             reader = new CSVReader(new BufferedReader(new InputStreamReader(inputStream)),
-                    fieldDelimiter);
+                    fieldDelimiter, '\'', skipLines);
             HeaderColumnNameTranslateMappingStrategy<T> strategy =
                     new HeaderColumnNameTranslateMappingStrategy<>();
             strategy.setColumnMapping(columnNameToBeanMap);

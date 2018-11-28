@@ -8,13 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <version>1.70-SNAPSHOT</version>
-    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+    <version>1.101-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -113,20 +107,11 @@
             </snapshots>
         </repository>
 
-        <!-- For Arquillian-JRebel -->
-        <!--
-                <repository>
-                    <id>Arquillian-JRebel snapshots</id>
-                    <name>libs-snapshot</name>
-                    <url>http://artifactory.it-crowd.com.pl/libs-snapshot</url>
-                    <snapshots />
-                </repository>
-        -->
-
+        <!-- Maven central -->
         <repository>
-            <id>Sonatype-public</id>
-            <name>SnakeYAML repository</name>
-            <url>http://oss.sonatype.org/content/groups/public/</url>
+            <id>MavenCentral</id>
+            <name>Maven Central</name>
+            <url>https://repo1.maven.org/maven2</url>
         </repository>
 
     </repositories>
@@ -148,19 +133,36 @@
         </pluginRepository>
 
         <pluginRepository>
+            <id>Prodinfo Maven</id>
+            <name>Prodinfo's Maven2 Custom Repository</name>
+            <layout>default</layout>
+            <url>http://prodinfosvn.broadinstitute.org:8000/m2-repository</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+
+
+        <pluginRepository>
             <id>apache.snapshots</id>
             <url>http://repository.apache.org/snapshots/</url>
+        </pluginRepository>
+
+        <pluginRepository>
+            <id>MavenCentral</id>
+            <name>Maven Central</name>
+            <url>https://repo1.maven.org/maven2</url>
         </pluginRepository>
     </pluginRepositories>
 
     <properties>
         <!-- Clover -->
-        <clover.version>4.0.0</clover.version>
-        <clover.plugin.version>4.0.0</clover.plugin.version>
+        <clover.version>4.1.2</clover.version>
+        <clover.plugin.version>4.1.2</clover.plugin.version>
         <clover.targetPercentage>15%</clover.targetPercentage>
 
 
-        <deltaspike.version>0.5</deltaspike.version>
+        <deltaspike.version>1.7.1</deltaspike.version>
         <!-- For site reports -->
         <jira.url>http://prodinfojira.broadinstitute.org:8080/jira</jira.url>
         <bamboo.url>http://prodinfobuild.broadinstitute.org:8085</bamboo.url>
@@ -176,10 +178,10 @@
         <seam.version>3.1.0.Final</seam.version>
         <jersey.version>1.11</jersey.version>
 
-        <oracle.version>6-11.2.0.1.0</oracle.version>
-        <postgresql.version>9.1-901.jdbc4</postgresql.version>
+        <oracle.version>12.1.0.2</oracle.version>
 
-        <jbossas_7.version>7.1.1.Final</jbossas_7.version>
+        <!-- todo jmt fix -->
+        <wildfly.version>10.1.0.Final</wildfly.version>
 
         <!-- In order to ignore the UI tests by default but turn them on in the Tests.UI profile, we need to do this
         by using properties. The Tests.UI profile basically reverses these properties. Doing this from the command line
@@ -199,11 +201,12 @@
         <database.delimiterType>normal</database.delimiterType>
         <!--<passwords.properties>must be specified as the location of the password properties file</passwords.properties>-->
 
-        <!-- Note - For the RC builds, the mercury.rc.ip must contain an @ otherwise the mercury-rc-ds.xml will not be syntactically correct. The @ is a meta character to the maven filtering such that the combination of
-        @${mercury.rc.ip} does not get subsituted at all. Hence mercury-rc-ds.xml only contains ${mercury.rc.ip} -->
+        <!-- Note - For the Feature branch builds, the mercury.fb.ip must contain an @ otherwise the resources-fb/mercury-dev-ds.xml will not be syntactically correct.
+        The @ is a meta character to the maven filtering such that the combination of
+        @${mercury.fb.ip} does not get subsituted at all. Hence the resources-fb/mercury-dev-ds.xml only contains ${mercury.rc.ip} -->
 
-        <!-- Switching MercuryRC to use the MercuryQA datbase. -->
-        <!--<mercury.rc.ip>@192.168.195.28</mercury.rc.ip>-->
+        <!-- A Feature Branch gpgold server -->
+        <mercury.fb.ip>MustBeSpecified</mercury.fb.ip>
 
         <umlgraph.path>must be specified</umlgraph.path>
 
@@ -214,18 +217,32 @@
         <jboss.socket.https>8443</jboss.socket.https>
 
         <bspclient.version>[1.3,)</bspclient.version>
+
+	<mercuryCloverDatabase>${project.build.directory}/clover/clover.db</mercuryCloverDatabase>
+
     </properties>
 
     <profiles>
+        <profile>
+            <id>LinuxProperties</id>
+            <activation>
+                <os>
+                    <name>Linux</name>
+                </os>
+            </activation>
+            <properties>
+                <surefire.argLine>-XX:ReservedCodeCacheSize=256m -Xms4g -XX:MaxPermSize=1g </surefire.argLine>
+            </properties>
+        </profile>
         <profile>
             <id>Clover.report</id>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
@@ -256,7 +273,7 @@
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                     </plugin>
                 </plugins>
             </reporting>
@@ -267,9 +284,9 @@
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <fullRunEvery>60</fullRunEvery>
                             <snapshot>${user.home}/.clover/${project.groupId}-${project.artifactId}/clover.snapshot
                             </snapshot>
@@ -297,12 +314,13 @@
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
+			    <flushPolicy>threaded</flushPolicy>
                             <generateHtml>true</generateHtml>
                             <generateXml>true</generateXml>
                         </configuration>
@@ -324,9 +342,9 @@
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
@@ -363,10 +381,10 @@
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                         <version>${clover.plugin.version}</version>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <generateHistorical>true</generateHistorical>
                             <generateHtml>true</generateHtml>
@@ -384,7 +402,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>jaxb2-maven-plugin</artifactId>
-                        <version>1.4</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>LabEventSchemaGen</id>
@@ -482,6 +500,26 @@
                                     </transformSchemas>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>FingerprintSchemaGen</id>
+                                <goals>
+                                    <goal>schemagen</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java
+                                        </include>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/run/Finger*Bean.java
+                                        </include>
+                                    </includes>
+                                    <transformSchemas>
+                                        <transformSchema>
+                                            <uri>http://broadinstitute.org/gpinformatics/mercury/fingerprint</uri>
+                                            <toFile>fingerprint.xsd</toFile>
+                                        </transformSchema>
+                                    </transformSchemas>
+                                </configuration>
+                            </execution>
                         </executions>
                     </plugin>
                 </plugins>
@@ -527,15 +565,36 @@
                                     <value>${jboss.socket.https}</value>
                                 </property>
                             </systemProperties>
-
-                            <!--<parallel>methods</parallel>-->
-                            <!--<threadCount>10</threadCount>-->
+                            <argLine>${surefire.argLine}</argLine>
                         </configuration>
                     </plugin>
                 </plugins>
             </build>
 
         </profile>
+        <profile>
+            <id>Tests.Multithreaded</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>Multithreaded</groups>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
+                            <argLine>${surefire.argLine}</argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+
+        </profile>
+
         <profile>
             <id>Tests.Parallel</id>
             <build>
@@ -694,75 +753,36 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>Tests.LongRunning</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <!-- "arquillian" test group is used by Arquillian itself and needs to be active to run Arquillian tests -->
+                        <configuration>
+                            <groups>arquillian, LongRunning</groups>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
-            <id>JavaEE</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <id>Arquillian-WildFly10-Managed</id>
             <dependencies>
                 <dependency>
-                    <groupId>javax</groupId>
-                    <artifactId>javaee-api</artifactId>
-                    <version>6.0</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
-            <id>Arquillian-Weld</id>
-            <dependencies>
-                <!-- For Arquillian Weld embedded, use org.jboss.spec:jboss-javaee-6.0 in lieu of javax:javaee-api.
-                     see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
-                -->
-                <dependency>
-                    <groupId>org.jboss.spec</groupId>
-                    <artifactId>jboss-javaee-6.0</artifactId>
-                    <version>1.0.0.Final</version>
-                    <type>pom</type>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.jboss.arquillian.container</groupId>
-                    <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
-                    <version>1.0.0.CR3</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.jboss.weld</groupId>
-                    <artifactId>weld-core</artifactId>
-                    <version>1.1.7.Final</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <version>1.6.4</version>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
-            <id>Arquillian-JBossAS7-Managed</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.jboss.spec</groupId>
-                    <artifactId>jboss-javaee-6.0</artifactId>
-                    <version>1.0.0.Final</version>
-                    <type>pom</type>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.jboss.as</groupId>
-                    <artifactId>jboss-as-arquillian-container-managed</artifactId>
-                    <version>${jbossas_7.version}</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.jboss.arquillian.protocol</groupId>
-                    <artifactId>arquillian-protocol-servlet</artifactId>
+                    <groupId>org.wildfly.arquillian</groupId>
+                    <artifactId>wildfly-arquillian-container-managed</artifactId>
+                    <version>2.1.0.Final</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -773,7 +793,7 @@
                         <configuration>
                             <argLine>-Xmx2048m</argLine>
                             <systemProperties>
-                                <jboss.version>${jbossas_7.version}</jboss.version>
+                                <jboss.version>${wildfly.version}</jboss.version>
                                 <property>
                                     <name>jbossHttpsPort</name>
                                     <value>${jboss.socket.https}</value>
@@ -793,9 +813,9 @@
                                 <configuration>
                                     <artifactItems>
                                         <artifactItem>
-                                            <groupId>org.jboss.as</groupId>
-                                            <artifactId>jboss-as-dist</artifactId>
-                                            <version>${jbossas_7.version}</version>
+                                            <groupId>org.wildfly</groupId>
+                                            <artifactId>wildfly-dist</artifactId>
+                                            <version>${wildfly.version}</version>
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}</outputDirectory>
@@ -810,19 +830,64 @@
         </profile>
 
         <profile>
-            <id>Arquillian-JBossAS7-Remote</id>
+            <id>Arquillian-WildFly10-Remote</id>
+            <!-- These dependencies won't get bundled into shrinkwrapped Arquillian archive -->
+            <dependencyManagement>
+                <dependencies>
+                    <!-- Child of arquillian-bom -->
+                    <dependency>
+                        <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                        <artifactId>shrinkwrap-resolver-bom</artifactId>
+                        <version>2.2.4</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+
+
             <dependencies>
                 <dependency>
-                    <groupId>org.jboss.spec</groupId>
-                    <artifactId>jboss-javaee-6.0</artifactId>
-                    <version>1.0.0.Final</version>
-                    <type>pom</type>
-                    <scope>provided</scope>
+                    <groupId>org.jboss.arquillian.testng</groupId>
+                    <artifactId>arquillian-testng-container</artifactId>
+                    <scope>test</scope>
+                </dependency>
+
+                 <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-api</artifactId>
+                    <scope>test</scope>
                 </dependency>
                 <dependency>
-                    <groupId>org.jboss.as</groupId>
-                    <artifactId>jboss-as-arquillian-container-remote</artifactId>
-                    <version>${jbossas_7.version}</version>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-spi</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-spi-maven</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-impl-maven-archive</artifactId>
+                    <scope>test</scope>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.wildfly.arquillian</groupId>
+                    <artifactId>wildfly-arquillian-container-remote</artifactId>
+                    <version>2.1.0.Final</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -843,8 +908,31 @@
         </profile>
 
         <profile>
+            <!-- For Feature Branch builds -->
+            <id>FB</id>
+            <properties>
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:${mercury.fb.ip}:1521:gpgold</database.url>
+                <passwords.properties>src/test/resources-fb/fb-passwords.properties</passwords.properties>
+            </properties>
+
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources-fb</directory>
+                        <filtering>true</filtering>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+
+        <profile>
             <id>BUILD</id>
             <properties>
+                <!-- For Unit tests on MercuryFB and deploy to MercuryDEV -->
                 <!--  Oracle Dev database -->
                 <database>oracle</database>
                 <database.delimiterType>row</database.delimiterType>
@@ -860,6 +948,22 @@
                         <filtering>true</filtering>
                     </testResource>
                 </testResources>
+                <plugins>
+                    <plugin>
+
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for Bamboo builds and GPUI testing -->
+                                    <directory>src/main/webapp-build</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+
+                    </plugin>
+                </plugins>
             </build>
         </profile>
         <profile>
@@ -873,18 +977,29 @@
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
                 <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
-                <!--<database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>-->
-                <!--<database.url>jdbc:oracle:thin:${mercury.rc.ip}:1521:gpinfprd</database.url>-->
-                <!--<mercury.password>guest</mercury.password>-->
-                <!--<athena.password>guest</athena.password>-->
             </properties>
             <build>
                 <testResources>
                     <testResource>
                         <directory>src/test/resources-rc</directory>
-                        <!--<filtering>true</filtering>-->
                     </testResource>
                 </testResources>
+                <plugins>
+                    <plugin>
+
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for RC testing -->
+                                    <directory>src/main/webapp-rc</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+
+                    </plugin>
+                </plugins>
             </build>
         </profile>
 
@@ -903,10 +1018,8 @@
         <profile>
             <id>PROD</id>
             <!-- This is for PRODUCTION ONLY.  If you need to debug against production, use one of the
-  other profiles and the -prod-ds.xml files.  This profile pulls from production JMS queues, so using
-   it for a debug server may cause message loss.
-
-  -->
+                 other profiles and the -prod-ds.xml files.  This profile pulls from production JMS queues, so using
+                 it for a debug server may cause message loss.  -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>
@@ -1060,14 +1173,9 @@ nodePrinter.print(webapp)
                         <artifactId>sql-maven-plugin</artifactId>
                         <dependencies>
                             <dependency>
-                                <groupId>com.oracle</groupId>
-                                <artifactId>ojdbc</artifactId>
+                                <groupId>com.oracle.jdbc</groupId>
+                                <artifactId>ojdbc7</artifactId>
                                 <version>${oracle.version}</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>postgresql</groupId>
-                                <artifactId>postgresql</artifactId>
-                                <version>${postgresql.version}</version>
                             </dependency>
                         </dependencies>
                         <configuration>
@@ -1181,55 +1289,98 @@ nodePrinter.print(webapp)
             <dependency>
                 <groupId>org.jboss.arquillian</groupId>
                 <artifactId>arquillian-bom</artifactId>
-                <version>1.0.3.Final</version>
-                <type>pom</type>
+                <version>1.4.0.Final</version>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.arquillian.extension</groupId>
-                <artifactId>arquillian-drone-bom</artifactId>
-                <version>1.0.0.Final</version>
                 <type>pom</type>
-                <scope>import</scope>
             </dependency>
+
             <dependency>
                 <groupId>org.eu.ingwar.tools</groupId>
                 <artifactId>arquillian-suite-extension</artifactId>
-                <version>1.1.1</version>
+                <version>1.2.0</version>
                 <scope>test</scope>
             </dependency>
 
-            <!-- this is needed for any seam 3 dependencies to work -->
-            <!--
-                        <dependency>
-                            <groupId>org.jboss.seam</groupId>
-                            <artifactId>seam-bom</artifactId>
-                            <version>${seam.version}</version>
-                            <type>pom</type>
-                            <scope>import</scope>
-                        </dependency>
-            -->
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
+
+        <!-- Hibernate classes include this but at deploy causes versioning error :
+           - java.lang.ClassCastException: org.dom4j.DocumentFactory cannot be cast to org.dom4j.DocumentFactory
+           - Exclude by declaring scope private and explicitly exclude jar in Arquillian shrinkwrap DeploymentBuilder!
+           - TODO:  Failed 10.0.0, retry for 10.1.0+
+           -->
+        <dependency>
+            <groupId>dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+            <version>1.6.1</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.1.1</version>
+            <version>6.14.3</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-netty</artifactId>
+            <version>3.10.4</version>
+            <exclusions>
+                <exclusion>
+                    <!-- Version is too old -->
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- App dependency plus org.eu.ingwar.tools.arquillian-suite-extension requires newer library than what's in org.mock-server -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>24.0-jre</version>
+        </dependency>
+
+        <!-- ***
+             * For WildFly, use org.jboss.spec:jboss-javaee-7.0 in lieu of javax:javaee-api.
+             * See: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
+             *** -->
+        <dependency> <!-- WildFly 10.1 patched to CDI 1.2 API -->
+            <groupId>javax.enterprise</groupId>
+            <artifactId>cdi-api</artifactId>
+            <version>1.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.spec</groupId>
+            <artifactId>jboss-javaee-7.0</artifactId>
+            <version>1.0.0.Final</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/org.hamcrest/java-hamcrest   -->
+        <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
+            <artifactId>java-hamcrest</artifactId>
+            <version>2.0.0.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.hamcrest/hamcrest-integration -->
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-integration</artifactId>
             <version>1.3</version>
         </dependency>
 
         <!-- uncomment this to enable squid integration -->
         <!--
         <dependency>
-
             <groupId>Squid</groupId>
             <artifactId>SquidEntities</artifactId>
             <version>${build.version}</version>
@@ -1242,92 +1393,123 @@ nodePrinter.print(webapp)
         </dependency>
         -->
 
+        <!-- TODO:  JMS:  These will get hoovered up by DeploymentBuilder and put into Arquillian shrinkwrap war
+           - Not sure which can be moved to WildFly10 profiles and which need to stay here for deploy with test
+           -->
         <dependency>
-            <groupId>org.jboss.arquillian.testng</groupId>
-            <artifactId>arquillian-testng-container</artifactId>
+            <groupId>org.jboss.arquillian.core</groupId>
+            <artifactId>arquillian-core-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.core</groupId>
+            <artifactId>arquillian-core-spi</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.core</groupId>
+            <artifactId>arquillian-core-impl-base</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.config</groupId>
+            <artifactId>arquillian-config-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.config</groupId>
+            <artifactId>arquillian-config-spi</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.config</groupId>
+            <artifactId>arquillian-config-impl-base</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.test</groupId>
+            <artifactId>arquillian-test-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.test</groupId>
+            <artifactId>arquillian-test-spi</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.test</groupId>
+            <artifactId>arquillian-test-impl-base</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-spi</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-impl-base</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-test-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-test-spi</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-test-impl-base</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-            <version>1.1.0-alpha-3</version>
+            <groupId>org.jboss.arquillian.testenricher</groupId>
+            <artifactId>arquillian-testenricher-ejb</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-            <version>1.1.0-alpha-3</version>
+            <groupId>org.jboss.arquillian.testenricher</groupId>
+            <artifactId>arquillian-testenricher-cdi</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.jboss.arquillian.testenricher</groupId>
+            <artifactId>arquillian-testenricher-resource</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.testenricher</groupId>
+            <artifactId>arquillian-testenricher-initialcontext</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.protocol</groupId>
             <artifactId>arquillian-protocol-servlet</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- End of dependencies for Arquillian shrinkwrap war -->
 
         <dependency>
-            <groupId>org.jboss.arquillian.extension</groupId>
-            <artifactId>arquillian-drone-impl</artifactId>
-            <scope>test</scope>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
+            <version>1.3</version>
         </dependency>
-
         <dependency>
-            <groupId>org.jboss.arquillian.extension</groupId>
-            <artifactId>arquillian-drone-selenium</artifactId>
-            <scope>test</scope>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20090211</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.jboss.arquillian.extension</groupId>
-            <artifactId>arquillian-drone-webdriver</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.arquillian.extension</groupId>
-            <artifactId>arquillian-drone-selenium-server</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>2.21.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-server</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.mortbay.jetty</groupId>
-                    <artifactId>servlet-api-2.5</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <!-- ???
-                <dependency>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                    <scope>test</scope>
-                </dependency>
-        -->
-
-        <!-- not really ready yet. following https://community.jboss.org/thread/197981
-                <dependency>
-                    <groupId>org.jboss.arquillian.extension</groupId>
-                    <artifactId>arquillian-jrebel-impl</artifactId>
-                    <version>1.0.0.Alpha1-SNAPSHOT</version>
-                </dependency>
-        -->
         <dependency>
             <groupId>net.sourceforge.stripes</groupId>
             <artifactId>stripes</artifactId>
+            <!-- version 1.7.0 betas compiled against servlet 3.1 -->
             <version>1.5.7</version>
         </dependency>
 
@@ -1340,7 +1522,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
-            <version>4.0</version>
+            <version>4.1</version>
         </dependency>
 
         <dependency>
@@ -1362,10 +1544,11 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
+        <!-- Match what's in WildFly 10 CDI patch -->
         <dependency>
-            <groupId>org.jboss.weld.servlet</groupId>
-            <artifactId>weld-servlet</artifactId>
-            <version>1.1.8.Final</version>
+            <groupId>org.jboss.weld</groupId>
+            <artifactId>weld-core-impl</artifactId>
+            <version>2.4.1.Final</version>
             <scope>provided</scope>
         </dependency>
 
@@ -1387,16 +1570,18 @@ nodePrinter.print(webapp)
             <version>1.1.3</version>
         </dependency>
 
+        <!-- Hibernate API dependencies -->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>4.1.3.Final</version>
+            <version>5.0.10.Final</version>
+            <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
-            <version>4.1.3.Final</version>
+            <version>5.0.10.Final</version>
+            <scope>provided</scope>
             <exclusions>
                 <!-- using cglib-nodep instead -->
                 <exclusion>
@@ -1405,29 +1590,25 @@ nodePrinter.print(webapp)
                 </exclusion>
             </exclusions>
         </dependency>
-
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-jpamodelgen</artifactId>
-            <version>1.2.0.Final</version>
+            <version>5.0.10.Final</version>
+            <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-envers</artifactId>
-            <version>4.1.3.Final</version>
+            <version>5.0.10.Final</version>
+            <scope>provided</scope>
         </dependency>
+        <!-- End of Hibernate API dependencies -->
 
         <dependency>
-            <groupId>postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.oracle</groupId>
-            <artifactId>ojdbc</artifactId>
+            <groupId>com.oracle.jdbc</groupId>
+            <artifactId>ojdbc7</artifactId>
             <version>${oracle.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -1455,6 +1636,7 @@ nodePrinter.print(webapp)
             <version>1.9.5</version>
             <scope>test</scope>
             <exclusions>
+                <!-- Uses an old hamcrest library incompatible with Arquillian -->
                 <exclusion>
                     <groupId>org.hamcrest</groupId>
                     <artifactId>hamcrest-core</artifactId>
@@ -1467,15 +1649,11 @@ nodePrinter.print(webapp)
             <artifactId>jersey-client</artifactId>
             <version>${jersey.version}</version>
         </dependency>
-
-        <!-- disable when deploying to JBoss AS 7 -->
-        <!--
-                <dependency>
-                    <groupId>com.sun.jersey</groupId>
-                    <artifactId>jersey-server</artifactId>
-                    <version>${jersey.version}</version>
-                </dependency>
-        -->
+        <dependency>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-multipart</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.sun.jersey</groupId>
@@ -1513,22 +1691,33 @@ nodePrinter.print(webapp)
             <!--<scope>test</scope>-->
         </dependency>
 
+        <!-- Support client ws testing, WildFly app uses module "javax.ws.rs.api" which references this
+           - See jboss-deployment-structure.xml  -->
         <dependency>
-            <groupId>com.sun.xml.ws</groupId>
-            <artifactId>jaxws-rt</artifactId>
-            <version>2.2.6</version>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jaxrs</artifactId>
+            <version>3.0.19.Final</version>
+            <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.0.1</version>
+            <version>2.2</version>
         </dependency>
 
 
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
-            <version>1.7.0</version>
+            <version>1.9.2</version>
+        </dependency>
+
+        <!-- Before bspclient until it's dependency version is updated from 1.4.4! -->
+        <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+            <version>1.4.9</version>
         </dependency>
 
         <dependency>
@@ -1573,33 +1762,12 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
+        <!--  BettaLimsMessageBeanTest, WorkCompleteMessageBeanTest, and InfiniumPipelineClient -->
         <dependency>
-            <groupId>org.hornetq</groupId>
-            <artifactId>hornetq-core-client</artifactId>
-            <version>2.2.7.Final</version>
-            <scope>compile</scope>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-client</artifactId>
+            <version>5.14.5</version>
         </dependency>
-        <dependency>
-            <groupId>org.hornetq</groupId>
-            <artifactId>hornetq-jms-client</artifactId>
-            <version>2.2.7.Final</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-ejb-client-bom</artifactId>
-            <version>7.1.1.Final</version>
-            <type>pom</type>
-        </dependency>
-        <!--
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-jms-client-bom</artifactId>
-            <version>7.1.1.Final</version>
-            <type>pom</type>
-        </dependency>
--->
 
         <dependency>
             <groupId>com.jgraph</groupId>
@@ -1614,13 +1782,6 @@ nodePrinter.print(webapp)
             <version>0.7.0</version>
         </dependency>
 
-        <!--
-                <dependency>
-                    <groupId>org.mvel</groupId>
-                    <artifactId>mvel2</artifactId>
-                    <version>2.1.4.Final</version>
-                </dependency>
-        -->
         <dependency>
             <groupId>net.sf.scannotation</groupId>
             <artifactId>scannotation</artifactId>
@@ -1633,6 +1794,10 @@ nodePrinter.print(webapp)
             <version>2.3.19</version>
         </dependency>
 
+        <!-- WildFly 10 has newer versions of org.apache.httpcomponents built in.
+           - Is it worth the effort to make scope provided
+           -   and declare as a module dependency in jboss-deployment-structure.xml?
+          -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
@@ -1681,7 +1846,7 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
-        <!--
+        <!-- Uncomment to deploy jprofiler libraries for performance troubleshooting
                 <dependency>
                     <groupId>com.jprofiler</groupId>
                     <artifactId>jprofiler</artifactId>
@@ -1702,11 +1867,52 @@ nodePrinter.print(webapp)
         </dependency>
 
         <dependency>
-            <groupId>org.jboss.aerogear.test.arquillian</groupId>
-            <artifactId>arquillian-smart-url</artifactId>
-            <version>0.2.0</version>
+            <groupId>org.broadinstitute.sapservices</groupId>
+            <artifactId>SAPServices</artifactId>
+            <version>1.10</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>uk.com.robust-it</groupId>
+            <artifactId>cloning</artifactId>
+            <version>1.9.5</version>
+        </dependency>
+
+<!-- todo jmt for fingerprint concordance checking
+        <dependency>
+            <groupId>com.github.broadinstitute</groupId>
+            <artifactId>picard</artifactId>
+            <version>2.16.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.broadinstitute</groupId>
+            <artifactId>picard-private</artifactId>
+            <version>1.1</version>
+        </dependency>
+-->
+
+        <dependency>
+            <groupId>com.github.pukkaone</groupId>
+            <artifactId>webappenhance</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
+            <version>1.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.owasp</groupId>
+            <artifactId>csrfguard</artifactId>
+            <version>3.1.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -1714,7 +1920,7 @@ nodePrinter.print(webapp)
             <plugins>
                 <plugin>
                     <groupId>com.atlassian.maven.plugins</groupId>
-                    <artifactId>maven-clover2-plugin</artifactId>
+                    <artifactId>clover-maven-plugin</artifactId>
                     <version>${clover.plugin.version}</version>
                 </plugin>
 
@@ -1727,14 +1933,12 @@ nodePrinter.print(webapp)
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <!--                    <version>2.3.2</version> -->
                     <version>3.1</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <!--<version>2.13-SNAPSHOT</version>-->
                     <version>2.17</version>
                 </plugin>
 
@@ -1763,9 +1967,10 @@ nodePrinter.print(webapp)
                 </plugin>
 
                 <plugin>
-                    <groupId>org.jboss.as.plugins</groupId>
-                    <artifactId>jboss-as-maven-plugin</artifactId>
-                    <version>7.1.1.Final</version>
+                    <!-- https://mvnrepository.com/artifact/org.wildfly.plugins/wildfly-maven-plugin -->
+                    <groupId>org.wildfly.plugins</groupId>
+                    <artifactId>wildfly-maven-plugin</artifactId>
+                    <version>1.0.2.Final</version>
                 </plugin>
 
                 <plugin>
@@ -1776,7 +1981,7 @@ nodePrinter.print(webapp)
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>sql-maven-plugin</artifactId>
-                    <version>1.5</version>
+                    <version>3.0.0-SNAPSHOT</version>
                 </plugin>
 
                 <plugin>
@@ -1814,37 +2019,10 @@ nodePrinter.print(webapp)
                 </plugin>
 
                 <plugin>
-                     <groupId>external.atlassian.jgitflow</groupId>
-                     <artifactId>jgitflow-maven-plugin</artifactId>
-                     <version>1.0-m5.1</version>
-                 </plugin>
-
-                <!--
-                                <plugin>
-                                    <artifactId>maven-dependency-plugin</artifactId>
-                                    <executions>
-                                        <execution>
-                                            <id>unpack</id>
-                                            <phase>process-test-classes</phase>
-                                            <goals>
-                                                <goal>unpack</goal>
-                                            </goals>
-                                            <configuration>
-                                                <artifactItems>
-                                                    <artifactItem>
-                                                        <groupId>org.jboss.as</groupId>
-                                                        <artifactId>jboss-as-dist</artifactId>
-                                                        <version>7.0.2.Final</version>
-                                                        <type>zip</type>
-                                                        <overWrite>false</overWrite>
-                                                        <outputDirectory>target</outputDirectory>
-                                                    </artifactItem>
-                                                </artifactItems>
-                                            </configuration>
-                                        </execution>
-                                    </executions>
-                                </plugin>
-                -->
+                    <groupId>external.atlassian.jgitflow</groupId>
+                    <artifactId>jgitflow-maven-plugin</artifactId>
+                    <version>1.0-m5.1</version>
+                </plugin>
 
             </plugins>
 
@@ -1853,104 +2031,6 @@ nodePrinter.print(webapp)
 
 
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                    <compilerArgument>-proc:none</compilerArgument>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.bsc.maven</groupId>
-                <artifactId>maven-processor-plugin</artifactId>
-                <version>2.0.5</version>
-                <executions>
-                    <execution>
-                        <id>process</id>
-                        <goals>
-                            <goal>process</goal>
-                        </goals>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <!-- source output directory -->
-                            <outputDirectory>target/generated-sources/annotations</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>target/generated-sources/annotations</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.3</version>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/endorsed</outputDirectory>
-                            <silent>true</silent>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>javax.xml.bind</groupId>
-                                    <artifactId>jaxb-api</artifactId>
-                                    <version>2.2.4</version>
-                                    <type>jar</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>javax.xml.ws</groupId>
-                                    <artifactId>jaxws-api</artifactId>
-                                    <version>2.2.8</version>
-                                    <type>jar</type>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>SquidWS</groupId>
-                                    <artifactId>squidWS</artifactId>
-                                    <version>1.0-SNAPSHOT</version>
-                                    <classifier>XSD</classifier>
-                                    <type>tar</type>
-                                    <outputDirectory>${project.basedir}/target/xsd-includes</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <!--
              Configuration is a little quirky, but it's what's needed to put
              the output of different XSDs into different packages. Based on
@@ -2061,6 +2141,141 @@ nodePrinter.print(webapp)
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>
                     </execution>
+                    <execution>
+
+                        <id>QpcrRunBean</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                        <configuration>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>QpcrRunBean.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.lims.generated</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.QpcrRunBeanXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>QiagenRackFile</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                        <configuration>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>QiagenRackFile.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.QiagenRackFileXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>BarcodeDecoder</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                        <configuration>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>BarcodeDecoder.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.lims.barcode.generated</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.BarcodeDecoderXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <compilerArguments>
+                        <!-- todo jmt Revisit JPA 2.1 Hibernate schemagen in WildFly 10+
+                             JPA standard is to use settings in persistence.xml -->
+                        <!-- <processor>org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor</processor> -->
+                    </compilerArguments>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.11</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>target/generated-sources/annotations</source>
+                                <source>target/generated-sources/jaxb</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/endorsed</outputDirectory>
+                            <silent>true</silent>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>javax.xml.bind</groupId>
+                                    <artifactId>jaxb-api</artifactId>
+                                    <version>2.2.4</version>
+                                    <type>jar</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>javax.xml.ws</groupId>
+                                    <artifactId>jaxws-api</artifactId>
+                                    <version>2.2.8</version>
+                                    <type>jar</type>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>SquidWS</groupId>
+                                    <artifactId>squidWS</artifactId>
+                                    <version>1.0-SNAPSHOT</version>
+                                    <classifier>XSD</classifier>
+                                    <type>tar</type>
+                                    <outputDirectory>${project.basedir}/target/xsd-includes</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
@@ -2082,46 +2297,11 @@ nodePrinter.print(webapp)
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
                 <configuration>
-                    <targetJdk>1.7</targetJdk>
-<!--
-                    <includeTests>true</includeTests>
--->
+                    <targetJdk>1.8</targetJdk>
+                    <!--
+                                        <includeTests>true</includeTests>
+                    -->
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.1.1</version>
-                <executions>
-                    <execution>
-                        <id>generate-create-schema-ddl</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <mainClass>org.broadinstitute.gpinformatics.infrastructure.jpa.EnversSchemaExport
-                            </mainClass>
-                            <arguments>
-                                <argument>--drop</argument>
-                                <argument>--create</argument>
-                                <argument>--delimiter=;</argument>
-                                <argument>
-                                    --output=${project.basedir}/target/generated-sources/ddl/generated_schema.sql
-                                </argument>
-                                <argument>mercury_pu</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.hibernate</groupId>
-                        <artifactId>hibernate-entitymanager</artifactId>
-                        <version>4.1.3.Final</version>
-                    </dependency>
-                </dependencies>
             </plugin>
 
             <plugin>
@@ -2174,9 +2354,7 @@ nodePrinter.print(webapp)
                             <wsdlDirectory>${basedir}/src/main/wsdl/squid</wsdlDirectory>
                         </configuration>
                     </execution>
-
                 </executions>
-
 
                 <!-- if you want to use a specific version of JAX-WS, you can do so like this -->
                 <dependencies>
@@ -2252,21 +2430,6 @@ nodePrinter.print(webapp)
                 <version>2.2</version>
                 <configuration>
                     <webappDirectory>${project.build.directory}/${project.artifactId}.war</webappDirectory>
-                    <!-- We'll keep mercury-config-local.yaml in src/main/resources for now. We can add a local directory later if needed.
-                                        <webResources>
-                                            <resource>
-                                                <directory>${project.basedir}/local</directory>
-                                                <includes>
-                                                    <include>mercury-config-local.yaml</include>
-                                                    <include>target/version.properties</include>
-                                                </includes>
-                                                <targetPath>WEB-INF/classes</targetPath>
-                                            </resource>
-                                        </webResources>
-                    -->
-                    <!--
-                                        <packagingExcludes>WEB-INF/classes/META-INF/persistence.xml</packagingExcludes>
-                    -->
                 </configuration>
             </plugin>
 
@@ -2276,7 +2439,7 @@ nodePrinter.print(webapp)
                 <executions>
                     <execution>
                         <id>Update Version property file for use by Bamboo</id>
-                        <phase>generate-resources</phase>
+                        <phase>process-classes</phase> <!-- folder needs to exist -->
                         <goals>
                             <goal>run</goal>
                         </goals>
@@ -2312,15 +2475,10 @@ nodePrinter.print(webapp)
                     <noDeploy>true</noDeploy>
                     <!-- Do push the release branches to the remote upstream -->
                     <pushReleases>true</pushReleases>
-                    <!-- Do push the hotfix branches to the remote upstream --> 
+                    <!-- Do push the hotfix branches to the remote upstream -->
                     <pushHotfixes>true</pushHotfixes>
                     <noHotfixBuild>true</noHotfixBuild>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.jboss.as.plugins</groupId>
-                <artifactId>jboss-as-maven-plugin</artifactId>
             </plugin>
 
         </plugins>
@@ -2434,7 +2592,7 @@ nodePrinter.print(webapp)
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>3.0.1</version>
                 <configuration>
-                    <targetJdk>1.7</targetJdk>
+                    <targetJdk>1.8</targetJdk>
                 </configuration>
             </plugin>
             <plugin>
@@ -2445,7 +2603,7 @@ nodePrinter.print(webapp)
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.6</version>
+                <version>2.8</version>
             </plugin>
         </plugins>
     </reporting>

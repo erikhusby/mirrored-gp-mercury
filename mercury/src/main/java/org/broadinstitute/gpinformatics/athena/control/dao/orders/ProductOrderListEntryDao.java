@@ -24,6 +24,8 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRang
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -45,6 +47,7 @@ import java.util.Set;
 
 @RequestScoped
 @Stateful
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductOrderListEntryDao extends GenericDao implements Serializable {
 
     private static final long serialVersionUID = -3433442117288051562L;
@@ -95,7 +98,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.createdBy),
                         productOrderRoot.get(ProductOrder_.placedDate),
                         productOrderRoot.get(ProductOrder_.laneCount),
-                        productOrderRoot.get(ProductOrder_.quoteId)));
+                        productOrderRoot.get(ProductOrder_.quoteId),
+                        productOrderRoot.get(ProductOrder_.orderType)));
 
         List<Predicate> listOfAndTerms = new ArrayList<>();
 

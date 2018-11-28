@@ -23,6 +23,7 @@ import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
@@ -35,7 +36,6 @@ import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -49,7 +49,7 @@ import java.util.logging.Logger;
 @UrlBinding(value = FingerprintingSpreadsheetActionBean.ACTION_BEAN_URL)
 public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
     private static final Logger logger = Logger.getLogger(FingerprintingSpreadsheetActionBean.class.getName());
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("M-d-yy");
+    private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("M-d-yy");
 
     public static final String ACTION_BEAN_URL = "/vessel/FingerprintingSpreadsheet.action";
     private static final String CREATE_PAGE = "/vessel/create_fingerprint_spreadsheet.jsp";
@@ -146,6 +146,7 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
             return new ForwardResolution(CREATE_PAGE);
 
         } catch (Exception e) {
+            logger.log(Level.WARNING, "Exception thrown when attempting to make fingerprinting spreadsheet.", e);
             addGlobalValidationError(e.getMessage());
             return new ForwardResolution(CREATE_PAGE);
         }

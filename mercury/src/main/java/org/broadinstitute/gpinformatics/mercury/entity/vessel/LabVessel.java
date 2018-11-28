@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.google.common.collect.Sets;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
@@ -12,7 +11,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -28,10 +29,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
+import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -48,6 +53,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -64,9 +70,9 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -82,14 +88,15 @@ import java.util.TreeSet;
 @Entity
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
-@BatchSize(size = 50)
+@BatchSize(size = 20)
 public abstract class LabVessel implements Serializable {
 
     private static final long serialVersionUID = 2868707154970743503L;
 
     private static final Log logger = LogFactory.getLog(LabVessel.class);
 
-    /** Determines whether diagnostics are printed.  This is done as a constant, rather than as a logging level,
+    /**
+     * Determines whether diagnostics are printed.  This is done as a constant, rather than as a logging level,
      * because the compiler should be smart enough to remove the printing code if the constant is false, whereas
      * a logging level would require frequent checks in heavily used code.
      */
@@ -101,7 +108,15 @@ public abstract class LabVessel implements Serializable {
     @Id
     private Long labVesselId;
 
+    /**
+     * Typically a barcode.
+     */
     private String label;
+
+    /**
+     * A human readable name e.g. BSP plate name.
+     */
+    protected String name;
 
     private Date createdOn;
 
@@ -112,19 +127,21 @@ public abstract class LabVessel implements Serializable {
     private BigDecimal receptacleWeight;
 
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
-    @JoinTable(schema = "mercury")
-    @BatchSize(size = 100)
+    @JoinTable(schema = "mercury", name="LAB_VESSEL_TICKETS_CREATED"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "TICKETS_CREATED")})
+    @BatchSize(size = 20)
     private final Set<JiraTicket> ticketsCreated = new HashSet<>();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "labVessel")
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<LabBatchStartingVessel> labBatches = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "dilutionVessel")
     private Set<LabBatchStartingVessel> dilutionReferences = new HashSet<>();
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworks")
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<LabBatch> reworkLabBatches = new HashSet<>();
 
     // todo jmt separate role for reagents?
@@ -132,7 +149,7 @@ public abstract class LabVessel implements Serializable {
     // have to specify name, generated aud name is too long for Oracle
     @JoinTable(schema = "mercury", name = "lv_reagent_contents", joinColumns = @JoinColumn(name = "lab_vessel"),
             inverseJoinColumns = @JoinColumn(name = "reagent_contents"))
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<Reagent> reagentContents = new HashSet<>();
 
     /**
@@ -145,8 +162,10 @@ public abstract class LabVessel implements Serializable {
 
     // todo jmt separate role for containee?
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "mercury")
-    @BatchSize(size = 100)
+    @JoinTable(schema = "mercury", name="LAB_VESSEL_CONTAINERS"
+        , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+        , inverseJoinColumns = {@JoinColumn(name = "CONTAINERS")})
+    @BatchSize(size = 20)
     private Set<LabVessel> containers = new HashSet<>();
 
     /**
@@ -161,15 +180,33 @@ public abstract class LabVessel implements Serializable {
      * Reagent additions and machine loaded events, i.e. not transfers
      */
     @OneToMany(mappedBy = "inPlaceLabVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<LabEvent> inPlaceLabEvents = new HashSet<>();
 
-    @OneToMany // todo jmt should this have mappedBy?
-    @JoinTable(schema = "mercury")
-    private Collection<StatusNote> notes = new HashSet<>();
+    /**
+     * Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
+     * avoid an unnecessary database round trip
+     */
+    @NotAudited
+    @Formula("(select count(*) from lab_event where lab_event.in_place_lab_vessel = lab_vessel_id)")
+    private Integer inPlaceEventsCount = 0;
+
+    @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @BatchSize(size = 20)
+    private Set<AbandonVessel> abandonVessels = new HashSet<>();
 
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
+    private Set<SampleInstanceEntity> sampleInstanceEntities = new HashSet<>();
+
+    @OneToMany // todo jmt should this have mappedBy?
+    @JoinTable(schema = "mercury", name = "LAB_VESSEL_NOTES"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "NOTES")})
+    private Collection<StatusNote> notes = new HashSet<>();
+
+    @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     /**
@@ -185,7 +222,10 @@ public abstract class LabVessel implements Serializable {
 
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @BatchSize(size = 100)
+    @JoinTable(schema = "mercury", name = "LAB_VESSEL_MERCURY_SAMPLES"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "MERCURY_SAMPLES")})
+    @BatchSize(size = 20)
     private Set<MercurySample> mercurySamples = new HashSet<>();
 
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
@@ -203,13 +243,17 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     private Set<LabMetric> labMetrics = new HashSet<>();
 
+    @ManyToOne
+    @JoinColumn(name="STORAGE_LOCATION")
+    private StorageLocation storageLocation;
+
     @Transient
     private Map<LabMetric.MetricType, Set<LabMetric>> ancestorMetricMap;
     @Transient
     private Map<LabMetric.MetricType, Set<LabMetric>> descendantMetricMap;
 
     @Transient
-    private MaterialType latestMaterialType=null;
+    private MaterialType latestMaterialType = null;
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -240,6 +284,7 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Find the latest material type by first searching the event history then falling back on the sample's metadata.
+     *
      * @return
      */
     public MaterialType getLatestMaterialType() {
@@ -253,7 +298,7 @@ public abstract class LabVessel implements Serializable {
                 }
             }
         }
-        if (latestMaterialType == MaterialType.NONE || latestMaterialType==null) {
+        if (latestMaterialType == MaterialType.NONE || latestMaterialType == null) {
             logger.error(String.format("No material type was found for vessel '%s'.", label));
         }
         return latestMaterialType;
@@ -272,9 +317,10 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Initializes SampleData for all vessels with data used when viewing Buckets.
+     *
      * @param labVessels
      */
-    public static void loadSampleDataForBuckets(Collection<LabVessel> labVessels){
+    public static void loadSampleDataForBuckets(Collection<LabVessel> labVessels) {
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         Map<String, MercurySample> samplesBySampleKey = new HashMap<>();
         for (LabVessel labVessel : labVessels) {
@@ -283,7 +329,8 @@ public abstract class LabVessel implements Serializable {
                 samplesBySampleKey.put(mercurySample.getSampleKey(), mercurySample);
             }
         }
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(samplesBySampleKey.values(),
+
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(samplesBySampleKey.keySet(),
                 BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
         for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
             samplesBySampleKey.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
@@ -292,6 +339,7 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Find the current MaterialType of this LabVesel.
+     *
      * @param materialType materialType to test
      * @return true if the event history indicates the latest MaterialType matches input
      */
@@ -301,6 +349,7 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Traverse the event history of this LabVessel to find the current MaterialType.
+     *
      * @return the current MaterialType
      */
     public MaterialType getLatestMaterialTypeFromEventHistory() {
@@ -321,24 +370,60 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Well A01, Lane 3, Region 6 all might
-     * be considered a labeled sub-section
-     * of a lab vessel.  Labels are GUIDs
-     * for LabVessels; no two LabVessels
-     * may share this id.  It's primarily the
-     * barcode on the piece of plastic.
+     *  Check to see if this vessel is directly abandoned.
+     *
+     *  @return true if this vessel is abandoned
+     *
+     */
+    @SuppressWarnings("unused") // used in JSP
+    public boolean isVesselAbandoned() {
+        if (getAbandonVessels().size() == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     *  Determine if the given vessel has multiple positions within it
+     *
+     */
+    public boolean isMultiplePositions() {
+        if(getGeometrySize() > 1) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     *  Returns the size of the vessel rows * columns.
+     *
+     */
+    public int getGeometrySize() {
+        return this.getVesselGeometry().getColumnCount() * this.getVesselGeometry().getRowCount();
+    }
+
+    /**
+     * Label is typically the barcode of a lab vessel and must be unique in Mercury.
      */
     public String getLabel() {
         return label;
     }
 
     /**
-     * This is used only for fixups.
-     *
-     * @param label barcode
+     * Warning this method also changes the equals and hashcode of this lab vessel entity.
      */
-    void setLabel(String label) {
+    public void setLabel(String label) {
         this.label = label;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Set<VesselToSectionTransfer> getVesselToSectionTransfersThisAsSource() {
@@ -358,6 +443,15 @@ public abstract class LabVessel implements Serializable {
         labMetric.setLabVessel(this);
     }
 
+    public void addAbandonedVessel(AbandonVessel abandonVessel) {
+        abandonVessels.add(abandonVessel);
+        abandonVessel.setAbandonedVessel(this);
+    }
+
+    public void removeAbandonedVessel(Set<AbandonVessel> abandonVessel) {
+        this.abandonVessels.removeAll(abandonVessel);
+    }
+
     public Set<LabMetric> getMetrics() {
         return labMetrics;
     }
@@ -374,6 +468,24 @@ public abstract class LabVessel implements Serializable {
         }
 
         return null;
+    }
+
+    public LabMetric getMostRecentConcentration() {
+        Set<LabMetric> concentrationMetrics = getConcentrationMetrics();
+        if (concentrationMetrics == null || concentrationMetrics.isEmpty()) {
+            return null;
+        }
+        List<LabMetric> metricList = new ArrayList<>(concentrationMetrics);
+        metricList.sort(Collections.reverseOrder());
+        return metricList.get(0);
+    }
+
+    public StorageLocation getStorageLocation() {
+        return storageLocation;
+    }
+
+    public void setStorageLocation(StorageLocation storageLocation) {
+        this.storageLocation = storageLocation;
     }
 
     /**
@@ -470,7 +582,11 @@ public abstract class LabVessel implements Serializable {
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
             transfersFrom.add(vesselToVesselTransfer.getLabEvent());
         }
+        for( VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersThisAsSource ) {
+            transfersFrom.add(vesselToSectionTransfer.getLabEvent());
+        }
         if (getContainerRole() == null) {
+
             for (VesselContainer<?> vesselContainer : getVesselContainers()) {
                 transfersFrom.addAll(vesselContainer.getTransfersFrom());
             }
@@ -537,6 +653,12 @@ public abstract class LabVessel implements Serializable {
             ticketsCreated.add(jiraTicket);
         }
     }
+    /**
+     * Remove the association of the LabeVessel and the JiraTicket.
+     */
+    public void removeJiraTickets() {
+        ticketsCreated.clear();
+    }
 
     /**
      * Get all the {@link JiraTicket jira tickets} that were started
@@ -563,7 +685,10 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<LabEvent> getInPlaceLabEvents() {
-        return inPlaceLabEvents;
+        if (inPlaceEventsCount != null && inPlaceEventsCount > 0) {
+            return inPlaceLabEvents;
+        }
+        return Collections.emptySet();
     }
 
     public Set<LabEvent> getInPlaceEventsWithContainers() {
@@ -585,6 +710,10 @@ public abstract class LabVessel implements Serializable {
     public void addInPlaceEvent(LabEvent labEvent) {
         inPlaceLabEvents.add(labEvent);
         labEvent.setInPlaceLabVessel(this);
+        if (inPlaceEventsCount == null) {
+            inPlaceEventsCount = 0;
+        }
+        inPlaceEventsCount++;
     }
 
     public abstract ContainerType getType();
@@ -673,9 +802,9 @@ public abstract class LabVessel implements Serializable {
         return !doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER);
     }
 
-    public void setReceiptEvent(BspUser user, Date receivedDate, long disambiguator) {
+    public void setReceiptEvent(BspUser user, Date receivedDate, long disambiguator, String eventLocation) {
         LabEvent receiptEvent =
-                new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, LabEvent.UI_EVENT_LOCATION,
+                new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, eventLocation,
                         disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         addInPlaceEvent(receiptEvent);
     }
@@ -857,6 +986,32 @@ public abstract class LabVessel implements Serializable {
         this.receptacleWeight = receptacleWeight;
     }
 
+    /**
+     * Gets only the AbandonVessel entities directly attached to this lab vessel <br/>
+     * Use TransferTraverserCriteria.AbandonedVesselCriteria For method of finding abandon state of ancestors and/or descendants
+     * @see TransferTraverserCriteria.AbandonedLabVesselCriteria
+     */
+    public Set<AbandonVessel> getAbandonVessels() {
+        return abandonVessels;
+    }
+
+    public Set<SampleInstanceEntity> getSampleInstanceEntities() {
+        return sampleInstanceEntities;
+    }
+
+    /**
+     *  Get the AbandonVessel entry for a specific well <br/>
+     *  Return null if well has not been abandoned.
+     */
+    public AbandonVessel getAbandonPositionForWell( VesselPosition well ) {
+        for (AbandonVessel abandonVessel : getAbandonVessels() ) {
+            if( abandonVessel.getVesselPosition() == well ){
+                return abandonVessel;
+            }
+        }
+        return null;
+    }
+
     public Set<BucketEntry> getBucketEntries() {
         return bucketEntries;
     }
@@ -877,6 +1032,7 @@ public abstract class LabVessel implements Serializable {
              */
             throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
         }
+        bucketEntriesCount++;
         clearCaches();
     }
 
@@ -887,6 +1043,18 @@ public abstract class LabVessel implements Serializable {
 
     public void addReworkLabBatch(LabBatch reworkLabBatch) {
         reworkLabBatches.add(reworkLabBatch);
+    }
+
+    public void removeFromBatch(LabBatch labBatch) {
+        for (LabBatchStartingVessel labBatchStartingVessel : labBatches) {
+            if (Objects.equals(labBatchStartingVessel.getLabBatch(), labBatch)) {
+                labBatchStartingVessel.setLabVessel(null);
+                labBatchStartingVessel.getLabBatch().getLabBatchStartingVessels().remove(labBatchStartingVessel);
+                labBatches.remove(labBatchStartingVessel);
+                break;
+            }
+        }
+        reworkLabBatches.remove(labBatch);
     }
 
     public Set<LabBatch> getLabBatches() {
@@ -980,6 +1148,7 @@ public abstract class LabVessel implements Serializable {
         return builder.toComparison();
     }
 
+
     /**
      * This is over ridden by subclasses that implement {@link VesselContainerEmbedder}
      *
@@ -998,7 +1167,11 @@ public abstract class LabVessel implements Serializable {
     public void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
                                  TransferTraverserCriteria.TraversalDirection traversalDirection) {
         TransferTraverserCriteria.Context context = TransferTraverserCriteria.buildStartingContext(this, null, null, traversalDirection);
-        transferTraverserCriteria.evaluateVesselPreOrder(context);
+        TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVesselPreOrder(
+                context);
+        if (traversalControl == TransferTraverserCriteria.TraversalControl.StopTraversing) {
+            return;
+        }
         evaluateCriteria(transferTraverserCriteria, traversalDirection, 1);
         transferTraverserCriteria.evaluateVesselPostOrder(context);
     }
@@ -1026,13 +1199,20 @@ public abstract class LabVessel implements Serializable {
             traversalNodes = getDescendants();
         }
 
+        boolean shouldStop = false;
         for( VesselEvent vesselEvent : traversalNodes ) {
             context = TransferTraverserCriteria.buildTraversalNodeContext(vesselEvent, hopCount, traversalDirection);
-            transferTraverserCriteria.evaluateVesselPreOrder(context);
-            evaluateVesselEvent(transferTraverserCriteria,
+            TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVesselPreOrder(context);
+            if (traversalControl == TransferTraverserCriteria.TraversalControl.StopTraversing) {
+                shouldStop = true;
+            }
+            // Finish up handling this hop before stopping
+            if( !shouldStop ) {
+                evaluateVesselEvent(transferTraverserCriteria,
                         traversalDirection,
                         hopCount,
                         vesselEvent);
+            }
             transferTraverserCriteria.evaluateVesselPostOrder(context);
         }
     }
@@ -1074,6 +1254,26 @@ public abstract class LabVessel implements Serializable {
             event = eventsList.get(size - 1);
         }
         return event;
+    }
+
+    /**
+     * @return return latest storage lab event.
+     */
+    public LabEvent getLatestStorageEvent() {
+        List<LabEvent> eventsList = getAllEventsSortedByDate();
+        int size = eventsList.size();
+        if (size > 0) {
+            int index = eventsList.size() - 1;
+            while (index >= 0) {
+                LabEvent labEvent = eventsList.get(index);
+                if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
+                    labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT) {
+                    return labEvent;
+                }
+                index--;
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings("unused")
@@ -1323,15 +1523,22 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Goes through all the {@link #getSampleInstancesV2()} and creates
-     * a collection of the unique String sample names from {@link MercurySample#getSampleKey()}
-     *
-     * @return The names
+     * Returns the sample names of the most recent ancestors of samples in the vessel.
      */
     public Collection<String> getSampleNames() {
+        return getSampleNames(true);
+    }
+
+    /**
+     * Returns the sample names of all samples in the vessel, looking for either the most
+     * recent ancestors or the root (or earliest) ancestors.
+     */
+    public Collection<String> getSampleNames(boolean useNearestSample) {
         Set<String> sampleNames = new HashSet<>();
         for (SampleInstanceV2 sampleInstance : getSampleInstancesV2()) {
-            MercurySample sample = sampleInstance.getRootOrEarliestMercurySample();
+            MercurySample sample = useNearestSample ?
+                    sampleInstance.getNearestMercurySample() :
+                    sampleInstance.getRootOrEarliestMercurySample();
             if (sample != null) {
                 String sampleKey = StringUtils.trimToNull(sample.getSampleKey());
                 if (sampleKey != null) {
@@ -1340,10 +1547,6 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return sampleNames;
-    }
-
-    public String[] getSampleNamesArray() {
-        return getSampleNames().toArray(new String[]{});
     }
 
     /**
@@ -1439,11 +1642,18 @@ public abstract class LabVessel implements Serializable {
 
     public Set<SampleInstanceV2> getSampleInstancesV2() {
         if (sampleInstances == null) {
-            sampleInstances = new LinkedHashSet<>();
+            sampleInstances = new TreeSet<>();
             if (getContainerRole() == null) {
                 List<VesselEvent> ancestorEvents = getAncestors();
-                if (ancestorEvents.isEmpty()) {
-                    sampleInstances.add(new SampleInstanceV2(this));
+                if (ancestorEvents.isEmpty() || isRoot()) {
+                    if(sampleInstanceEntities.isEmpty()) {
+                        sampleInstances.add(new SampleInstanceV2(this));
+                    }
+                    else {
+                        for (SampleInstanceEntity sampleInstanceEntity : sampleInstanceEntities) {
+                            sampleInstances.add(new SampleInstanceV2(this, sampleInstanceEntity));
+                        }
+                    }
                 } else {
                     sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
                 }
@@ -1452,6 +1662,17 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return sampleInstances;
+    }
+
+    private boolean isRoot() {
+        for (MercurySample mercurySample : mercurySamples) {
+            Boolean isRoot = mercurySample.isRoot();
+            if (isRoot != null && isRoot) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

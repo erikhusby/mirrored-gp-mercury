@@ -22,6 +22,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "AGGREGATION_READ_GROUP", schema = "METRICS")
 public class AggregationReadGroup implements Serializable {
+    private static final long serialVersionUID = 3261955479443339355L;
     @EmbeddedId
     private AggregationReadGroupPK aggregationReadGroupPK;
 
@@ -67,41 +68,4 @@ public class AggregationReadGroup implements Serializable {
         return aggregation;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof AggregationReadGroup)) {
-            return false;
-        }
-
-        AggregationReadGroup that = (AggregationReadGroup) o;
-
-        if (!aggregationId.equals(that.aggregationId)) {
-            return false;
-        }
-        if (lane != that.lane) {
-            return false;
-        }
-        if (aggregationReadGroupPK != null ? !aggregationReadGroupPK.equals(that.aggregationReadGroupPK) :
-                that.aggregationReadGroupPK != null) {
-            return false;
-        }
-        if (flowcellBarcode != null ? !flowcellBarcode.equals(that.flowcellBarcode) : that.flowcellBarcode != null) {
-            return false;
-        }
-        return !(libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = aggregationReadGroupPK != null ? aggregationReadGroupPK.hashCode() : 0;
-        result = 31 * result + aggregationId;
-        result = 31 * result + (flowcellBarcode != null ? flowcellBarcode.hashCode() : 0);
-        result = 31 * result + (int) (lane ^ (lane >>> 32));
-        result = 31 * result + (libraryName != null ? libraryName.hashCode() : 0);
-        return result;
-    }
 }

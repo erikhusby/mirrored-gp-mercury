@@ -3,10 +3,18 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.annotations.Index;
-
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 /**
  * This holds the cohorts for a research project
@@ -28,6 +36,7 @@ public class ResearchProjectCohort {
      */
     @ManyToOne(fetch = FetchType.EAGER)
     @Index(name = "ix_cohort_project")
+    @JoinColumn(name = "RESEARCH_PROJECT")
     private ResearchProject researchProject;
 
     // The BSP cohort Identifier

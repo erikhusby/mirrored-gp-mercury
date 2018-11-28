@@ -18,6 +18,8 @@ public class WorkflowBucketDef extends WorkflowStepDef {
     private static final Log log = LogFactory.getLog(WorkflowBucketDef.class);
 
     private WorkflowBucketEntryEvaluator bucketEntryEvaluator;
+    private Boolean autoBucketFromPdoSubmission;
+    private Boolean jiraSampleFromNearest;
 
     /** auto-drain rules - time / date based */
     private Double autoDrainDays;
@@ -54,10 +56,10 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         return bucketEntryEvaluator.invoke(labVessel, productOrder);
     }
 
-    public Workflow getWorkflowForProductOrder(ProductOrder productOrder) {
-        Workflow workflow = bucketEntryEvaluator.getMatchingWorkflow(productOrder);
-        if (workflow == Workflow.NONE) {
-            workflow = productOrder.getProduct().getWorkflow();
+    public String getWorkflowForProductOrder(ProductOrder productOrder) {
+        String workflow = bucketEntryEvaluator.getMatchingWorkflow(productOrder);
+        if (workflow == null) {
+            workflow = productOrder.getProduct().getWorkflowName();
         }
         return workflow;
     }
@@ -85,5 +87,13 @@ public class WorkflowBucketDef extends WorkflowStepDef {
 
     public String findMissingRequirements(ProductOrder productOrder, MaterialType latestMaterialType) {
         return bucketEntryEvaluator.findMissingRequirements(productOrder, latestMaterialType);
+    }
+
+    public boolean isAutoBucketFromPdoSubmission() {
+        return autoBucketFromPdoSubmission == null ? true : autoBucketFromPdoSubmission;
+    }
+
+    public boolean isJiraSampleFromNearest() {
+        return jiraSampleFromNearest == null ? true : jiraSampleFromNearest;
     }
 }

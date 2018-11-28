@@ -20,5 +20,6 @@ TRAILING NULLCOLS
  position,
  event_date DATE "YYYYMMDDHH24MISS",
  program_name,
- molecular_indexing_scheme
+ molecular_indexing_scheme,
+ library_name
 )

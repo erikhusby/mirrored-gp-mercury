@@ -247,7 +247,7 @@ public class HybridSelectionEntityBuilder {
         StaticPlate catchCleanPlate =
                 (StaticPlate) catchEnrichmentCleanupEntity.getTargetLabVessels().iterator().next();
 
-        LimsQueries limsQueries = new LimsQueries(null, null, null);
+        LimsQueries limsQueries = new LimsQueries(null, null, null, null);
         List<PlateTransferType> plateTransferTypes =
                 limsQueries.fetchTransfersForPlate(hybridizationPlate, 2);
         Assert.assertEquals(plateTransferTypes.size(), 4, "Wrong number of plate transfers");

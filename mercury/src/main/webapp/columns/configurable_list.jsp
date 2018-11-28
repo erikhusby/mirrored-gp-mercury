@@ -36,11 +36,17 @@
 <%-- Render a DataTable (only useful if there is only one page, disables server-side Excel and paging) --%>
 <%--@elvariable id="dataTable" type="java.lang.Boolean"--%>
 
+<%-- call jQuery to initialize the datatable: true if null (useful if calling script wants to initialize differently) --%>
+<%--@elvariable id="loadDatatable" type="java.lang.Boolean"--%>
+
+<%-- show 'jump to end' hyperlink, defaults to true if null --%>
+<%--@elvariable id="showJumpToEnd" type="java.lang.Boolean"--%>
+
 <script type="text/javascript">
     atLeastOneChecked = function (name, form) {
-        var checkboxes = form.getInputs("checkbox", name);
+        var checkboxes = $j( ":checkbox", form );
         for (var i = 0; i < checkboxes.length; ++i) {
-            if (checkboxes[i].checked) {
+            if (checkboxes[i].name === name && checkboxes[i].checked) {
                 return true;
             }
         }
@@ -67,12 +73,12 @@
     Count: ${resultList.resultRows[0].sortableCells[0]}
 </c:when>
 <c:otherwise>
-<c:if test="${fn:length(resultList.resultRows) > 0}">
+<c:if test="${fn:length(resultList.resultRows) > 0 && (showJumpToEnd == null || showJumpToEnd)}">
     <div class="control-group"><a href="#search${entityName}ListEnd">Jump to end</a></div>
 </c:if>
 
 <c:if test="${!dataTable}">
-    <form action="/Mercury/util/ConfigurableList.action" id="searchResultsForm${entityName}">
+    <form action="/Mercury/util/ConfigurableList.action" id="searchResultsForm${entityName}" method="post">
     <input type="hidden" name="sessionKey" value="${sessionKey}"/>
     <input type="hidden" name="entityName" value="${entityName}"/>
 </c:if>
@@ -83,6 +89,7 @@
         <%--@elvariable id="resultRow" type="org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList.ResultRow"--%>
         <%-- Break up the table every few hundred rows, because the browser uses unreasonable amounts of
         CPU to render large tables --%>
+        <%-- do headers need to be split?--%><c:set var="hasHeaderSplit" scope="page" value="${false}"/>
         <c:if test="${status.index % 500 == 0}">
             <thead>
             <tr>
@@ -90,35 +97,35 @@
                 <th width="5em"><c:if test="${status.index == 0}"><input for="count" type="checkbox" class="checkAll" id="checkAllTop" onclick="checkOtherAllBox('#checkAllBottom', this.checked );"><div id="count" class="checkedCount">0</div></c:if></th>
                 </c:if>
                 <c:forEach items="${resultList.headers}" var="resultListHeader" varStatus="status">
+                    <c:if test="${ not empty resultListHeader.downloadHeader2 }">
+                      <c:set var="headerDisplay" scope="page" value="${resultListHeader.downloadHeader1}"/>
+                      <c:set var="hasHeaderSplit" scope="page" value="${true}"/>
+                    </c:if>
+                    <c:if test="${ empty resultListHeader.downloadHeader2 }">
+                        <c:set var="headerDisplay" scope="page" value="${resultListHeader.viewHeader}"/>
+                    </c:if>
                     <%-- Render headers, and links for sorting by column --%>
                     <c:choose>
+                        <c:when test="${ not empty resultListHeader.downloadHeader2 }"><th>${headerDisplay}</th></c:when>
                         <c:when test="${not empty pagination and pagination.numberPages == 1}">
                             <%-- Results with only one page are sortable in-memory --%>
-                            <th class="sorting ${resultList.resultSortColumnIndex == status.index ?
-                            (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}"
-                                    >
+                            <th class="sorting ${resultList.resultSortColumnIndex == status.index ? (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}">
                                 <stripes:link
-                                        href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&sortColumnIndex=${status.index}&sortDirection=${resultList.resultSortColumnIndex == status.index && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
-                                    ${resultListHeader.viewHeader}</stripes:link>
+                                        href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&sortColumnIndex=${status.index}&sortDirection=${resultList.resultSortColumnIndex == status.index && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">${headerDisplay}</stripes:link>
                             </th>
                         </c:when>
                         <c:otherwise>
                             <c:choose>
                                 <c:when test="${ ( not empty resultListHeader.sortPath ) and isDbSortAllowed}">
                                     <%-- Multi-page results are sortable in the database, if the column has a sort path --%>
-                                    <th class="sorting ${resultListHeader.sortPath == dbSortPath ?
-                                    (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}"
-                                            >
+                                    <th class="sorting ${resultListHeader.sortPath == dbSortPath ? (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}">
                                         <stripes:link
-                                                href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
-                                            ${resultListHeader.viewHeader}</stripes:link>
+                                                href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">${headerDisplay}</stripes:link>
                                     </th>
                                 </c:when>
                                 <c:otherwise>
                                     <%-- No dbSortPath, therefore no sort link --%>
-                                    <th>
-                                        ${resultListHeader.viewHeader}
-                                    </th>
+                                    <th>${headerDisplay}</th>
                                 </c:otherwise>
                             </c:choose>
                         </c:otherwise>
@@ -128,6 +135,40 @@
                     <th>${resultList.conditionalCheckboxHeader}</th>
                 </c:if>
             </tr>
+            <c:if test="${hasHeaderSplit}">
+                <c:if test="${!dataTable}"><th>&nbsp</th></c:if>
+            <c:forEach items="${resultList.headers}" var="resultListHeader" varStatus="status">
+                <c:set var="headerDisplay" scope="page" value="${resultListHeader.downloadHeader2}"/>
+                <%-- Render headers, and links for sorting by column --%>
+                <c:choose>
+                    <c:when test="${empty headerDisplay}"><th>&nbsp</th></c:when>
+                    <c:when test="${not empty pagination and pagination.numberPages == 1}">
+                        <%-- Results with only one page are sortable in-memory --%>
+                        <th class="sorting ${resultList.resultSortColumnIndex == status.index ? (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}">
+                            <stripes:link
+                                    href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&sortColumnIndex=${status.index}&sortDirection=${resultList.resultSortColumnIndex == status.index && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">${headerDisplay}</stripes:link>
+                        </th>
+                    </c:when>
+                    <c:otherwise>
+                        <c:choose>
+                            <c:when test="${ ( not empty resultListHeader.sortPath ) and isDbSortAllowed}">
+                                <%-- Multi-page results are sortable in the database, if the column has a sort path --%>
+                                <th class="sorting ${resultListHeader.sortPath == dbSortPath ? (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}">
+                                    <stripes:link
+                                            href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">${headerDisplay}</stripes:link>
+                                </th>
+                            </c:when>
+                            <c:otherwise>
+                                <%-- No dbSortPath, therefore no sort link --%>
+                                <th>${headerDisplay}</th>
+                            </c:otherwise>
+                        </c:choose>
+                    </c:otherwise>
+                </c:choose>
+            </c:forEach>
+            </c:if>
+            </tr>
+
             </thead>
             <tbody>
         </c:if>
@@ -138,9 +179,11 @@
                     <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
                 </td>
             </c:if>
-            <c:forEach items="${resultRow.renderableCells}" var="cell">
-                <td>${fn:replace( cell, CRLF, "<br>" )}</td>
-            </c:forEach>
+            <enhance:out escapeXml="false">
+                <c:forEach items="${resultRow.renderableCells}" var="cell">
+                    <td><enhance:out escapeXml="false">${fn:replace( cell, CRLF, "<br>" )}</enhance:out></td>
+                </c:forEach>
+            </enhance:out>
             <c:if test="${not empty resultList.conditionalCheckboxHeader}">
                 <td>
                     <c:if test="${resultRow.hasConditionalCheckbox()}">
@@ -156,24 +199,10 @@
                 <c:set var="nestedTable" value="${resultRow.nestedTables[tableName]}"/>
                 <tr ${status.index%2==0 ? "class=\"even\"" : "class=\"odd\""}>
                     <td>&nbsp;</td>
-                    <td style="padding-left: 6px;" colspan="${nestedTable.headers.size()}">
-                        <table class="table simple dataTable">
-                            <tr>
-                                <th colspan="${nestedTable.headers.size()}">${tableName}</th>
-                            </tr>
-                            <tr>
-                                <c:forEach items="${nestedTable.headers}" var="nestedHeader">
-                                    <th>${nestedHeader.viewHeader}</th>
-                                </c:forEach>
-                            </tr>
-                            <c:forEach items="${nestedTable.resultRows}" var="nestRow">
-                                <tr style="white-space: pre-line">
-                                <c:forEach items="${nestRow.renderableCells}" var="nestCell">
-                                    <td>${nestCell}</td>
-                                </c:forEach>
-                                </tr>
-                            </c:forEach>
-                         </table>
+                    <td style="padding-left: 6px;" colspan="${resultList.headers.size()}">
+                        <c:set var="nestedTable" value="${nestedTable}" scope="request"/>
+                        <c:set var="tableName" value="${tableName}" scope="request"/>
+                        <jsp:include page="nested_table.jsp"/>
                      </td>
                 </tr>
             </c:forEach>
@@ -273,13 +302,15 @@
 </c:if>
 <c:if test="${dataTable}">
     <script type="text/javascript">
-        $j('#${entityName}ResultsTable').dataTable({
-            "oTableTools": ttExportDefines,
-            "aoColumnDefs" : [
-                { "bSortable": false, "aTargets": "no-sort" },
-                { "bSortable": true, "sType": "numeric", "aTargets": "sort-numeric" }
-            ]
-        });
+        if (${loadDatatable == null || loadDatatable}) {
+            $j('#${entityName}ResultsTable').dataTable({
+                "oTableTools": ttExportDefines,
+                "aoColumnDefs" : [
+                    { "bSortable": false, "aTargets": "no-sort" },
+                    { "bSortable": true, "sType": "numeric", "aTargets": "sort-numeric" }
+                ]
+            });
+        }
     </script>
 </c:if>
 </c:otherwise>

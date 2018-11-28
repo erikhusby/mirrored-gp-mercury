@@ -196,7 +196,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         for (SampleInstanceV2 si : sampleInstances) {
             EasyMock.expect(si.getAllProductOrderSamples()).andReturn(pdoSampleList).anyTimes();
-            EasyMock.expect(si.getSingleBatch()).andReturn(labBatch).anyTimes();
+            EasyMock.expect(si.getSingleBucketEntry()).andReturn(bucketEntry).anyTimes();
+            EasyMock.expect(si.getProductOrderSampleForSingleBucket()).andReturn(pdoSample1).anyTimes();
+            EasyMock.expect(bucketEntry.getLabBatch()).andReturn(labBatch).anyTimes();
+            EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo).anyTimes();
             EasyMock.expect(si.getMolecularIndexingScheme()).andReturn(indexingScheme).anyTimes();
             EasyMock.expect(si.getSingleBatchVessel(LabBatch.LabBatchType.FCT)).andReturn(
                     fctBatch.getLabBatchStartingVessels().iterator().next()).anyTimes();
@@ -280,8 +283,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         for (SampleInstanceV2 si : sampleInstances) {
             EasyMock.reset(si);
-            EasyMock.expect(si.getAllProductOrderSamples()).andReturn(pdoSampleList).anyTimes();
-            EasyMock.expect(si.getSingleBatch()).andReturn(labBatch).anyTimes();
+            EasyMock.expect(si.getProductOrderSampleForSingleBucket()).andReturn(pdoSample1).times(2);
+            EasyMock.expect(si.getSingleBucketEntry()).andReturn(bucketEntry).times(2);
             EasyMock.expect(si.getMolecularIndexingScheme()).andReturn(null).anyTimes();
             EasyMock.expect(si.getSingleBatchVessel(LabBatch.LabBatchType.FCT)).andReturn(
                     fctBatch.getLabBatchStartingVessels().iterator().next()).anyTimes();

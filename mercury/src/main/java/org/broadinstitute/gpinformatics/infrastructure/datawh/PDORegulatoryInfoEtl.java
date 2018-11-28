@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -18,6 +20,7 @@ import java.util.Collection;
  * (As of 04/2015, less than 10% of PDOs have multiple regulatory info)
  */
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class PDORegulatoryInfoEtl extends GenericEntityEtl<ProductOrder,ProductOrder> {
 
     public PDORegulatoryInfoEtl() {

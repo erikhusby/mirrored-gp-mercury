@@ -1,11 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
-import com.sun.xml.ws.developer.Stateful;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
 import org.hibernate.SQLQuery;
@@ -15,10 +16,15 @@ import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
+import org.hibernate.envers.query.internal.property.RevisionPropertyPropertyName;
+import org.hibernate.envers.query.order.internal.PropertyAuditOrder;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TimestampType;
 
+import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
@@ -26,12 +32,15 @@ import javax.persistence.TemporalType;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -41,9 +50,20 @@ import java.util.TreeMap;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class AuditReaderDao extends GenericDao {
     private final long MSEC_IN_SEC = 1000L;
     private static final Log logger = LogFactory.getLog(ExtractTransform.class);
+    private static final Date EARLIEST_RELIABLE_REVCHANGE;
+
+    static {
+        try {
+            EARLIEST_RELIABLE_REVCHANGE = DateUtils.convertStringToDateTime("8/6/2014 09:35 PM");
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     private AuditReader getAuditReader() {
         return AuditReaderFactory.get(getEntityManager());
@@ -157,7 +177,7 @@ public class AuditReaderDao extends GenericDao {
      *
      * @param revIds collection of audit revision ids to search through.
      * @param entityClassName the class name of the entity.
-     * @return list of EnversAudit objects.
+     * @return list of EnversAudit objects, unordered.
      */
     public List<EnversAudit> fetchEnversAudits(Set<Long> revIds, Class entityClassName) {
         List<EnversAudit> enversAudits = new ArrayList<>();
@@ -171,7 +191,10 @@ public class AuditReaderDao extends GenericDao {
         return enversAudits;
     }
 
-    // Allows "unrolling" the batch to handle AuditReader failures on individual records.
+    /**
+     * Allows "unrolling" the batch to handle AuditReader failures on individual records.
+     * @return list of array of envers triples, unordered.
+     */
     private List<Object[]> fetchEnversAudits(Collection<Long> revIds, Class<?> entityClass, boolean doChunks) {
         List<Object[]> dataChanges = new ArrayList<>();
 
@@ -263,4 +286,93 @@ public class AuditReaderDao extends GenericDao {
         return (Collections.emptyList());
     }
 
+    /**
+     * Returns all versions of the entity identified by entity id.
+     * The entity class must be auditable and have an @Id field.
+     *
+     * @return List of the Pair (modified date, entity) ordered by increasing date.
+     * A deleted entity is represented by the Pair (date deleted, null).
+     */
+    public <T> List<Pair<Date, T>> getSortedVersionsOfEntity(Class entityClass, Long entityId) {
+        List<Pair<Date, T>> list = new ArrayList<>();
+        List<Object[]> versions = getAuditReader().createQuery()
+                .forRevisionsOfEntity(entityClass, false, true)
+                .add(AuditEntity.id().eq(entityId))
+                .addOrder(new PropertyAuditOrder(new RevisionPropertyPropertyName("revDate"), true))
+                .getResultList();
+        for (Object[] version : versions) {
+            RevInfo revInfo = (RevInfo) version[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
+            RevisionType revType = (RevisionType) version[AuditReaderDao.AUDIT_READER_TYPE_IDX];
+            T entity = (revType == RevisionType.DEL) ? null : (T) version[AuditReaderDao.AUDIT_READER_ENTITY_IDX];
+            list.add(Pair.of(revInfo.getRevDate(), entity));
+        }
+        return list;
+    }
+
+    /**
+     * Returns the version of the entity as of the effective date. The entity will be null if it was deleted
+     * before effective date. It will also be null if the entity was created after the effective date unless
+     * extendToFirstAvailable is true, which then returns the first available entity.
+     */
+    public <T> T getVersionAsOf(Class entityClass, Long entityId, Date effectiveDate, boolean extendToFirstAvailable) {
+        T entity = null;
+        boolean found = false;
+        List<Pair<Date, Object>> versions = getSortedVersionsOfEntity(entityClass, entityId);
+        for (Pair<Date, Object> version : versions) {
+            if (version.getLeft().getTime() <= effectiveDate.getTime() || !found && extendToFirstAvailable) {
+                found = true;
+                entity = (T)version.getRight();
+            } else {
+                break;
+            }
+        }
+        return entity;
+    }
+
+    /**
+     * Returns all entities of a given class as they existed on the effective date.
+     */
+    public <T> Collection<T> getVersionsAsOf(Class entityClass, Date effectiveDate) {
+        if (effectiveDate.before(EARLIEST_RELIABLE_REVCHANGE)) {
+            throw new RuntimeException(
+                    "Cannot obtain data revisions for " + DateUtils.convertDateTimeToString(effectiveDate) +
+                    "  Earliest available date is " + DateUtils.convertDateTimeToString(EARLIEST_RELIABLE_REVCHANGE));
+        }
+        // Cannot use AuditReader query since it assumes revInfoId increases over time which isn't true for Mercury.
+        Query query = getEntityManager().createNativeQuery(
+                "select distinct rev_info_id as rev_id " +
+                "from rev_info, revchanges where rev = rev_info_id " +
+                "and rev_date <= :effectiveDate " +
+                "and entityname = :entityName ");
+        query.setParameter("effectiveDate", effectiveDate, TemporalType.TIMESTAMP);
+        query.setParameter("entityName", entityClass.getCanonicalName());
+        // Fixes the return types.
+        query.unwrap(SQLQuery.class).addScalar("rev_id", LongType.INSTANCE);
+        List<Long> revIds = query.getResultList();
+
+        // Collects the entities at the revIds but only keeps the latest version of each entity.
+        // Deleted entities must be handled separately since they'll appear in the list which is unordered.
+        Map<Long, Date> revisionDates = new HashMap<>();
+        Set<Long> deletions = new HashSet<>();
+        Map<Long, T> entityMap = new HashMap<>();
+        for (Object[] enversTriple : fetchEnversAudits(revIds, entityClass, true)) {
+            RevInfo revInfo = (RevInfo) enversTriple[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
+            T entity = (T)enversTriple[AuditReaderDao.AUDIT_READER_ENTITY_IDX];
+            RevisionType revType = (RevisionType) enversTriple[AuditReaderDao.AUDIT_READER_TYPE_IDX];
+
+            Long entityId = ReflectionUtil.getEntityId(entity, entityClass);
+            if (revType == RevisionType.DEL) {
+                deletions.add(entityId);
+                revisionDates.remove(entityId);
+                entityMap.remove(entityId);
+            } else if (!deletions.contains(entityId)) {
+                Date existingDate = revisionDates.get(entityId);
+                if (existingDate == null || (existingDate.getTime() < revInfo.getRevDate().getTime())) {
+                    revisionDates.put(entityId, revInfo.getRevDate());
+                    entityMap.put(entityId, entity);
+                }
+            }
+        }
+        return entityMap.values();
+    }
 }

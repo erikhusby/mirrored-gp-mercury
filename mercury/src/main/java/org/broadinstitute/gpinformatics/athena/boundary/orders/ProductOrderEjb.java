@@ -13,19 +13,30 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -34,24 +45,42 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsRes
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.LockModeType;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,6 +94,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus;
@@ -74,6 +106,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder
 /**
  * Transactional manager for {@link ProductOrder}s.
  */
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductOrderEjb {
 
     private ProductOrderDao productOrderDao;
@@ -101,6 +134,24 @@ public class ProductOrderEjb {
 
     private ProductOrderJiraUtil productOrderJiraUtil;
 
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
+
+    private SapIntegrationService sapService;
+
+    private AppConfig appConfig;
+    private SapConfig sapConfig;
+
+    private EmailSender emailSender;
+
+    private SAPAccessControlEjb accessController;
+
+    private Deployment deployment;
+
+    private PriceListCache priceListCache;
+
+    private SAPProductPriceCache productPriceCache;
+
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
@@ -116,7 +167,9 @@ public class ProductOrderEjb {
                            BucketEjb bucketEjb,
                            SquidConnector squidConnector,
                            MercurySampleDao mercurySampleDao,
-                           ProductOrderJiraUtil productOrderJiraUtil) {
+                           ProductOrderJiraUtil productOrderJiraUtil,
+                           SapIntegrationService sapService, PriceListCache priceListCache,
+                           SAPProductPriceCache productPriceCache) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -127,6 +180,9 @@ public class ProductOrderEjb {
         this.squidConnector = squidConnector;
         this.mercurySampleDao = mercurySampleDao;
         this.productOrderJiraUtil = productOrderJiraUtil;
+        this.sapService = sapService;
+        this.priceListCache = priceListCache;
+        this.productPriceCache = productPriceCache;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -134,8 +190,10 @@ public class ProductOrderEjb {
     /**
      * Remove all non-received samples from the order.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void removeNonReceivedSamples(ProductOrder editOrder,
-                                         MessageReporter reporter) throws NoSuchPDOException, IOException {
+                                         MessageReporter reporter)
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
         // Note that calling getReceivedSampleCount() will cause the sample data for all samples to be
         // fetched if it hasn't been already. This is good because without it each call to getSampleData() below
         // would fetch it one sample at a time.
@@ -166,13 +224,27 @@ public class ProductOrderEjb {
      * @throws IOException
      * @throws QuoteNotFoundException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
                                     @Nonnull Collection<String> deletedIds,
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
-            throws IOException, QuoteNotFoundException {
+            throws IOException, QuoteNotFoundException, SAPInterfaceException {
+
+        persistProductOrder(saveType, editedProductOrder, deletedIds, kitDetailCollection, Collections.<CustomizationValues>emptyList(), new MessageCollection());
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
+                                    @Nonnull Collection<String> deletedIds,
+                                    @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection,
+                                    List<CustomizationValues> customizationValues,
+                                    MessageCollection messageCollection)
+            throws IOException, QuoteNotFoundException, SAPInterfaceException {
 
         kitDetailCollection.removeAll(Collections.singleton(null));
         deletedIds.removeAll(Collections.singleton(null));
+
+        editedProductOrder.updateCustomSettings(customizationValues);
 
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 
@@ -199,14 +271,400 @@ public class ProductOrderEjb {
 
                     } else {
                         editedProductOrder.getProductOrderKit().addKitOrderDetail(kitDetailUpdate);
+
                     }
                 }
             }
         } else {
             updateJiraIssue(editedProductOrder);
+            for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
+                if(!childProductOrder.getOrderStatus().canPlace()) {
+                    updateJiraIssue(childProductOrder);
+                }
+            }
+            publishProductOrderToSAP(editedProductOrder, messageCollection, false);
         }
         attachMercurySamples(editedProductOrder.getSamples());
+        for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
+            attachMercurySamples(childProductOrder.getSamples());
+        }
+
         productOrderDao.persist(editedProductOrder);
+    }
+
+
+    /**
+     * Modified version of persistProductOrder to deal with the new concept of child ProductOrders introduced with the
+     * SAP integration.  The main difference here is that the Parent order has persist directly called on it instead of
+     * the child order to enable the cascades to correctly save the entities instead of getting confused.
+     *
+     * Whether the issues (GPLIM-4513, GPLIM-4514) that led to this being implemented are a Hibernate bug or an
+     * implementation issue is not known now, but should continue to be investigated.  Hopefully the upgrade to Java 8
+     * and Wildfly will show some improvement on this
+     *
+     * @param saveType indicates what state the ProductOrder is in when this method is called
+     * @param editedProductOrder
+     * @param messageCollection
+     * @throws IOException
+     * @throws QuoteNotFoundException
+     * @throws SAPInterfaceException
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void persistClonedProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
+                                    MessageCollection messageCollection)
+            throws IOException, QuoteNotFoundException, SAPInterfaceException {
+
+
+        editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
+
+        if (!editedProductOrder.isDraft()) {
+            updateJiraIssue(editedProductOrder);
+
+            publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+        }
+        attachMercurySamples(editedProductOrder.getSamples());
+
+        productOrderDao.persist(editedProductOrder.getParentOrder());
+    }
+
+    /**
+     * Takes care of the logic to publish the Product Order to SAP for the purposes of either creating or updating
+     * an SAP order.  This must be done in order to directly bill to SAP from mercury
+     *
+     * @param editedProductOrder Product order entity which intends to be reflected in SAP
+     * @param messageCollection  Storage for error/success messages that happens during the publishing process
+     * @param allowCreateOrder   Helper flag to know indicate if the scenario by which the method is called intends to
+     *                           allow a new order to be replaced (e.g. an order previously was associated with an SAP
+     *                           order but needs a new one)
+     *
+     * @throws SAPInterfaceException
+     */
+    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
+                                         boolean allowCreateOrder) throws SAPInterfaceException {
+         publishProductOrderToSAP(editedProductOrder, messageCollection, allowCreateOrder, new Date());
+    }
+
+    /**
+     * Takes care of the logic to publish the Product Order to SAP for the purposes of either creating or updating
+     * an SAP order.  This must be done in order to directly bill to SAP from mercury
+     *
+     * @param editedProductOrder Product order entity which intends to be reflected in SAP
+     * @param messageCollection  Storage for error/success messages that happens during the publishing process
+     * @param allowCreateOrder   Helper flag to know indicate if the scenario by which the method is called intends to
+     *                           allow a new order to be replaced (e.g. an order previously was associated with an SAP
+     *                           order but needs a new one)
+     * @param effectiveDate
+     *
+     * @throws SAPInterfaceException
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
+                                         boolean allowCreateOrder, Date effectiveDate) throws SAPInterfaceException {
+        ProductOrder orderToPublish = editedProductOrder;
+
+        final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
+        if(editedProductOrder.getParentOrder() != null && editedProductOrder.getSapOrderNumber() != null) {
+            orderToPublish = editedProductOrder.getParentOrder();
+        }
+        if (!areProductsOnOrderBlocked(orderToPublish)) {
+            try {
+                if (isOrderEligibleForSAP(orderToPublish, effectiveDate)
+                    && !orderToPublish.getOrderStatus().canPlace()) {
+                    Quote quote = orderToPublish.getQuote(quoteService);
+                    final List<String> effectivePricesForProducts = productPriceCache
+                            .getEffectivePricesForProducts(allProductsOrdered,editedProductOrder, quote);
+
+                    final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
+                                                  !orderToPublish.getQuoteId()
+                                                          .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
+
+                    boolean priceChangeForNewOrder = false;
+                    if(orderToPublish.isSavedInSAP() && orderToPublish.isPriorToSAP1_5()) {
+                        priceChangeForNewOrder = !StringUtils.equals(orderToPublish.latestSapOrderDetail().getOrderPricesHash(),
+                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
+                                                 && orderToPublish.hasAtLeastOneBilledLedgerEntry();
+                    }
+
+                    if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange || priceChangeForNewOrder) {
+                        final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange,allProductsOrdered,
+                                effectivePricesForProducts, messageCollection, priceChangeForNewOrder, true);
+
+
+                } else if(orderToPublish.isSavedInSAP()){
+
+                        updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection,
+                            CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),
+                                    Collections.singleton(orderToPublish.getOrderStatus()))
+                            && !orderToPublish.isPriorToSAP1_5());
+
+                        for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
+
+                            if (childProductOrder.isSubmitted() &&
+                                !StringUtils.equals(childProductOrder.getSapOrderNumber(),
+                                        orderToPublish.getSapOrderNumber())) {
+
+                                updateOrderInSap(childProductOrder, allProductsOrdered, effectivePricesForProducts,
+                                        messageCollection,
+                            CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned,
+                                            OrderStatus.Completed),
+                                            Collections.singleton(orderToPublish.getOrderStatus()))
+                                    && !orderToPublish.isPriorToSAP1_5());
+                        }
+                    }
+                }
+                productOrderDao.persist(orderToPublish);
+            } else {
+                final String inelligiblOrderError = "This order is ineligible to post to SAP: ";
+                if(orderToPublish.isSavedInSAP()) {
+                    throw new SAPInterfaceException(inelligiblOrderError);
+                } else {
+                    messageCollection.addInfo(inelligiblOrderError);
+                }
+            }
+        } catch (SAPIntegrationException | QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
+            StringBuilder errorMessage = new StringBuilder();
+                errorMessage.append("Unable to ");
+            if (!orderToPublish.isSavedInSAP()) {
+                errorMessage.append("create ");
+            } else {
+                errorMessage.append("update ");
+            }
+            errorMessage.append("this order in SAP at this point in time: ").append(e.getMessage());
+            messageCollection.addError(errorMessage.toString());
+            log.error(errorMessage, e);
+            if(orderToPublish.isSavedInSAP()) {
+                throw new SAPInterfaceException(errorMessage.toString(), e);}
+            }
+        }
+    }
+
+    /**
+     * Encapsulates the series of calls to make when updating an order in SAP.  This is created to support updating
+     * the child orders of a product order for which abandoned samples have been replaced.
+     *
+     * @param orderToUpdate     A product order from which an SAP order is to be updated
+     * @param messageCollection To collect any errors or success messages that may occur during the process
+     * @param closingOrder
+     * @throws SAPIntegrationException
+     */
+    public void updateOrderInSap(ProductOrder orderToUpdate, List<Product> allProductsOrdered,
+                                  List<String> effectivePricesForProducts, MessageCollection messageCollection,
+                                  boolean closingOrder)
+            throws SAPIntegrationException {
+        sapService.updateOrder(orderToUpdate, closingOrder);
+        BigDecimal sampleCount = BigDecimal.ZERO ;
+        if(orderToUpdate.isPriorToSAP1_5()) {
+            sampleCount = SapIntegrationServiceImpl.getSampleCount(orderToUpdate,
+                    orderToUpdate.getProduct(), 0, false, closingOrder);
+        }
+        orderToUpdate.updateSapDetails(sampleCount.intValue(),
+                TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),
+                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")));
+        messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
+                                  " has been successfully updated in SAP");
+
+    }
+
+    /**
+     * This method contains the specific logic surrounding the creation and persistence of an SAP order
+     * @param priceChangeForNewOrder
+     * @param closingOrder
+     * @param orderToPublish  The Product Order from which a new SAP order will be created
+     * @param quoteIdChange   Indicates that creating the SAP order is as a result of the Quote being changed
+     * @return  The order ID of the newly created SAP Order
+     * @throws SAPIntegrationException
+     */
+    private String createOrderInSAP(ProductOrder orderToPublish, boolean quoteIdChange,
+                                    List<Product> allProductsOrdered,
+                                    List<String> effectivePricesForProducts,
+                                    MessageCollection messageCollection, boolean priceChangeForNewOrder,
+                                    boolean closingOrder)
+            throws SAPIntegrationException {
+
+        if(closingOrder && orderToPublish.isSavedInSAP()) {
+            updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection,
+                    closingOrder);
+        }
+
+        String sapOrderIdentifier = sapService.createOrder(orderToPublish);
+
+        String oldNumber = null;
+        if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
+            oldNumber = orderToPublish.getSapOrderNumber();
+        }
+        orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,0,
+                orderToPublish.getQuoteId(),
+                SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode(),
+                TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),
+                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ","))));
+
+        if(quoteIdChange || priceChangeForNewOrder) {
+            String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
+                          " is being associated with a new quote by "+
+                          userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
+            sendSapOrderShortCloseRequest(body);
+        }
+        orderToPublish.setPriorToSAP1_5(false);
+        messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
+                                  " has been successfully created in SAP");
+
+        return sapOrderIdentifier;
+    }
+
+    /**
+     * Helper method to determine if, based on certain criteria, the order is allowed to be pushed to SAP at the time
+     * that the method is called.
+     *
+     * @param editedProductOrder The order to be tested for SAP eligibility
+     * @return Boolean indicator identifying SAP eligibility
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     */
+    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
+            throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
+        return isOrderEligibleForSAP(editedProductOrder, new Date());
+    }
+    /**
+     * Helper method to determine if, based on certain criteria, the order is allowed to be pushed to SAP at the time
+     * that the method is called.
+     *
+     * @param editedProductOrder The order to be tested for SAP eligibility
+     * @param effectiveDate
+     * @return Boolean indicator identifying SAP eligibility
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     */
+    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
+            throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
+        Quote orderQuote = editedProductOrder.getQuote(quoteService);
+        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
+        boolean eligibilityResult = false;
+
+        Set<AccessItem> priceItemNameList = new HashSet<>();
+
+        final boolean priceItemsValid = areProductPricesValid(editedProductOrder, priceItemNameList, orderQuote);
+
+        if(orderQuote != null && accessControl.isEnabled()) {
+
+            eligibilityResult = editedProductOrder.getProduct()!=null &&
+                                editedProductOrder.getProduct().getPrimaryPriceItem() != null &&
+                                orderQuote != null && orderQuote.isEligibleForSAP(effectiveDate) &&
+                                !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
+        }
+
+        if(eligibilityResult && !priceItemsValid) {
+            throw new InvalidProductException("One of the Price items associated with " +
+                                              editedProductOrder.getBusinessKey() + ": " +
+                                              editedProductOrder.getName() + " is invalid");
+        }
+        return eligibilityResult;
+    }
+
+    private boolean areProductsOnOrderBlocked(ProductOrder targetOrder) {
+        Set<AccessItem> priceItemNameList = new HashSet<>();
+
+        if(targetOrder.getProduct() != null) {
+            priceItemNameList.add(new AccessItem(targetOrder.getProduct().getPrimaryPriceItem().getName()));
+        }
+        for (ProductOrderAddOn productOrderAddOn : targetOrder.getAddOns()) {
+            priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
+        }
+
+        return areProductsBlocked(priceItemNameList);
+
+    }
+
+    public boolean areProductsBlocked(Set<AccessItem> priceItemNameList) {
+        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
+        return !accessControl.isEnabled() ||
+               CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList);
+    }
+
+    public boolean areProductPricesValid(ProductOrder editedProductOrder, Set<AccessItem> priceItemNameList,
+                                         Quote orderQuote)
+            throws InvalidProductException {
+        Set<Product> productListFromOrder = new HashSet<>();
+        if (editedProductOrder.getProduct() != null) {
+            productListFromOrder.add(editedProductOrder.getProduct());
+            PriceItem priceItem = editedProductOrder.determinePriceItemByCompanyCode(editedProductOrder.getProduct());
+            priceItemNameList.add(new AccessItem(priceItem.getName()));
+        }
+        for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
+            productListFromOrder.add(productOrderAddOn.getAddOn());
+            PriceItem addonPricItem = editedProductOrder.determinePriceItemByCompanyCode(productOrderAddOn.getAddOn());
+            priceItemNameList.add(new AccessItem(addonPricItem.getName()));
+        }
+        return determineProductAndPriceItemValidity(productListFromOrder, orderQuote, editedProductOrder);
+    }
+
+    private boolean determineProductAndPriceItemValidity(Collection<Product> productsToConsider,
+                                                         Quote orderQuote, ProductOrder productOrder) throws InvalidProductException {
+        boolean allItemsValid = true;
+        QuotePriceItem primaryPriceItem;
+        if (CollectionUtils.isNotEmpty(productsToConsider)) {
+            for (Product product : productsToConsider) {
+                try {
+                    PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
+                    
+                    primaryPriceItem =
+                            priceListCache.findByKeyFields(priceItem.getPlatform(),
+                                    priceItem.getCategory(),
+                                    priceItem.getName());
+                    if (primaryPriceItem == null) {
+                        allItemsValid = false;
+                        break;
+                    }
+                } catch (Exception e) {
+                    allItemsValid = false;
+                    break;
+                }
+
+                validateSAPAndQuoteServerPrices(orderQuote, product, productOrder);
+            }
+
+        }
+        return allItemsValid;
+    }
+
+    public String validateSAPAndQuoteServerPrices(Quote orderQuote, Product product,
+                                                  ProductOrder productOrder)
+            throws InvalidProductException {
+        SAPMaterial sapMaterial = null;
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = null;
+
+        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
+
+        try {
+            companyCode = SapIntegrationServiceImpl.determineCompanyCode(productOrder);
+        } catch (SAPIntegrationException e) {
+            throw new InvalidProductException(e);
+        }
+
+        // todo sgm check quote and throw exception if it is null
+
+        if(accessControl.isEnabled() &&
+           !CollectionUtils.containsAny(accessControl.getDisabledItems(),
+                   Collections.singleton(new AccessItem(product.getPrimaryPriceItem().getName())))) {
+            sapMaterial = productPriceCache.findByProduct(product, companyCode);
+        }
+
+        PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
+        final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
+        if (priceListItem != null) {
+            final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
+            if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {
+                final BigDecimal basePrice = new BigDecimal(sapMaterial.getBasePrice());
+                if (basePrice.compareTo(effectivePrice) != 0) {
+                    throw new InvalidProductException("Unable to continue since the price for the product " +
+                                                      product.getDisplayName() + " has not been properly set up in SAP");
+                }
+            }
+        } else {
+            throw new InvalidProductException("Unable to continue since the price list item " +
+                                              priceItem.getDisplayName() + " for " + product.getDisplayName() +
+                                              " is invalid.");
+        }
+        return priceListCache.getEffectivePrice(priceItem, orderQuote);
     }
 
     /**
@@ -216,7 +674,7 @@ public class ProductOrderEjb {
     void validateQuote(ProductOrder productOrder, QuoteService quoteService) throws QuoteNotFoundException {
         if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
             try {
-                quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+                productOrder.getQuote(quoteService);
             } catch (QuoteServerException e) {
                 throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(), e);
             }
@@ -230,6 +688,7 @@ public class ProductOrderEjb {
      *
      * @throws Exception Any errors in reporting the risk.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void calculateRisk(String productOrderKey) throws Exception {
         calculateRisk(productOrderKey, null);
     }
@@ -243,6 +702,7 @@ public class ProductOrderEjb {
      *
      * @throws Exception Any errors in reporting the risk.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void calculateRisk(String productOrderKey, List<ProductOrderSample> samples) throws Exception {
         ProductOrder editOrder = productOrderDao.findByBusinessKey(productOrderKey);
         if (editOrder == null) {
@@ -278,6 +738,7 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void addManualOnRisk(@Nonnull BspUser user, @Nonnull String productOrderKey,
                                 List<ProductOrderSample> orderSamples, boolean riskStatus, @Nonnull String riskComment)
             throws IOException {
@@ -308,8 +769,10 @@ public class ProductOrderEjb {
     /**
      * Set the Proceed if Out of Spec indicator.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void proceedOos(@Nonnull BspUser user, @Nonnull List<ProductOrderSample> orderSamples,
-            @Nonnull ProductOrder productOrder, @Nonnull ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec) {
+                           @Nonnull ProductOrder productOrder,
+                           @Nonnull ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec) {
 
         for (ProductOrderSample orderSample : orderSamples) {
             orderSample.setProceedIfOutOfSpec(proceedIfOutOfSpec);
@@ -340,12 +803,14 @@ public class ProductOrderEjb {
                 username, isRisk, sampleCount, comment);
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
                                    @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
         // Only add samples to the LIMS bucket if the order is ready for lab work.
         if (order.getOrderStatus().readyForLab()) {
-            Map<String, Collection<ProductOrderSample>> samples = bucketEjb.addSamplesToBucket(order, newSamples);
+            Map<String, Collection<ProductOrderSample>> samples = bucketEjb.addSamplesToBucket(order, newSamples,
+                    ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
             if (!samples.isEmpty()) {
                 Set<String> bucketedSampleNames = new HashSet<>();
                 for (Map.Entry<String, Collection<ProductOrderSample>> bucketSampleEntry : samples.entrySet()) {
@@ -373,6 +838,7 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
         validateQuote(productOrder, quoteService);
 
@@ -386,7 +852,7 @@ public class ProductOrderEjb {
                 new PDOUpdateField(ProductOrder.JiraField.SAMPLE_IDS, productOrder.getSampleString(), true),
                 new PDOUpdateField(ProductOrder.JiraField.REPORTER,
                         new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy())
-                                                          .getUsername()))));
+                                .getUsername()))));
 
         if (productOrder.getProduct().getSupportsNumberOfLanes()) {
             pdoUpdateFields.add(
@@ -465,6 +931,7 @@ public class ProductOrderEjb {
      * @param productOrder     product order
      * @param addOnPartNumbers add-on part numbers
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void update(ProductOrder productOrder, List<String> addOnPartNumbers) throws QuoteNotFoundException {
         // update JIRA ticket with new quote
         // GPLIM-488
@@ -496,6 +963,23 @@ public class ProductOrderEjb {
 
         updatedProductOrder.setProductOrderAddOns(productOrderAddOns);
 
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void addAndRemoveSamplesAndBucket(Map<ProductOrder, Set<ProductOrderSample>> mapPdoToSamplesToAdd,
+                                             Map<ProductOrder, Set<ProductOrderSample>> mapPdoToSamplesToRemove)
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
+        for (Map.Entry<ProductOrder, Set<ProductOrderSample>> entry: mapPdoToSamplesToRemove.entrySet()) {
+            ProductOrder productOrder = entry.getKey();
+            Set<ProductOrderSample> productOrderSamples = entry.getValue();
+            removeSamples(productOrder.getJiraTicketKey(), productOrderSamples, MessageReporter.UNUSED);
+        }
+
+        for (Map.Entry<ProductOrder, Set<ProductOrderSample>> entry: mapPdoToSamplesToAdd.entrySet()) {
+            ProductOrder productOrder = entry.getKey();
+            List<ProductOrderSample> productOrderSamples = new ArrayList<>(entry.getValue());
+            addSamples(productOrder.getJiraTicketKey(), productOrderSamples, MessageReporter.UNUSED);
+        }
     }
 
     public static class NoSuchPDOException extends Exception {
@@ -550,6 +1034,16 @@ public class ProductOrderEjb {
         return productOrder;
     }
 
+
+    /**
+     * THis should have transactionAttributeType.REQUIRED in order to work.  It was removed because it is causing an
+     * undesired side effect of saving the Product order on ProductOrderActionBean before it should.  Will need to
+     * figure out another locking strategey for all entities that is more generic.
+     *
+     * @param jiraTicket
+     * @param fetchSpecs
+     * @return
+     */
     public ProductOrder findProductOrderByBusinessKeySafely(@Nonnull String jiraTicket,
                                                             ProductOrderDao.FetchSpec... fetchSpecs) {
         return productOrderDao.findByBusinessKey(jiraTicket, LockModeType.PESSIMISTIC_READ, fetchSpecs);
@@ -566,7 +1060,7 @@ public class ProductOrderEjb {
      *
      * @throws SampleDeliveryStatusChangeException Thrown if any samples are found to not be in an acceptable starting status.
      */
-    private void transitionSamples(ProductOrder order,
+    public void transitionSamples(ProductOrder order,
                                    Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
                                    DeliveryStatus targetStatus,
                                    Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
@@ -585,6 +1079,14 @@ public class ProductOrderEjb {
                     sample.setDeliveryStatus(targetStatus);
                 }
             }
+        }
+
+        Predicate<ProductOrderSample> activeSampleFilter = pos -> pos.getDeliveryStatus() != DeliveryStatus.ABANDONED;
+        final List<ProductOrderSample> filteredSamples =
+                order.getSamples().stream().filter(activeSampleFilter).collect(Collectors.toList());
+
+        if(order.getOrderStatus() == OrderStatus.Completed && filteredSamples.size()>0) {
+            order.setOrderStatus(OrderStatus.Submitted);
         }
 
         if (!untransitionableSamples.isEmpty()) {
@@ -606,6 +1108,7 @@ public class ProductOrderEjb {
      * @param samples                    Samples to change.
      * @param comment                    optional user supplied comment about this action.
      *
+     * @param messageCollection
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
      * @throws IOException
@@ -613,11 +1116,19 @@ public class ProductOrderEjb {
     private void transitionSamplesAndUpdateTicket(String jiraTicketKey,
                                                   Set<DeliveryStatus> acceptableStartingStatuses,
                                                   DeliveryStatus targetStatus,
-                                                  Collection<ProductOrderSample> samples, String comment)
-            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
+                                                  Collection<ProductOrderSample> samples, String comment,
+                                                  MessageCollection messageCollection)
+            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException, SAPInterfaceException {
         ProductOrder order = findProductOrder(jiraTicketKey);
 
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
+
+        try {
+            publishProductOrderToSAP(order, messageCollection, false);
+        } catch (SAPInterfaceException e) {
+            log.error("SAP Error when attempting to abandon samples", e);
+            throw e;
+        }
 
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
         issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
@@ -629,7 +1140,7 @@ public class ProductOrderEjb {
     /**
      * @return The name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context).
      */
-    private String getUserName() {
+    public String getUserName() {
         String user = userBean.getLoginUserName();
         return user == null ? "Mercury" : user;
     }
@@ -752,7 +1263,9 @@ public class ProductOrderEjb {
      * Rollback on failures to update JIRA tickets with status changes is undesirable in billing as the status change is
      * fairly inconsequential in comparison to persisting database records of whether work was billed to the quote server.
      */
-    public void updateOrderStatusNoRollback(@Nonnull String jiraTicketKey) throws NoSuchPDOException, IOException {
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void updateOrderStatusNoRollback(@Nonnull String jiraTicketKey)
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
         try {
             updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
         } catch (RuntimeException e) {
@@ -768,8 +1281,9 @@ public class ProductOrderEjb {
      *
      * @param jiraTicketKey the key to update
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateOrderStatus(@Nonnull String jiraTicketKey, @Nonnull MessageReporter reporter)
-            throws NoSuchPDOException, IOException {
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
         // Since we can't directly change the JIRA status of a PDO, we need to use a JIRA transition which in turn will
         // update the status.
         ProductOrder order = findProductOrder(jiraTicketKey);
@@ -777,7 +1291,28 @@ public class ProductOrderEjb {
             transitionIssueToSameOrderStatus(order);
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
+            conditionallyShortCloseOrder(order);
         }
+    }
+
+    /**
+     * Encapsulates the call necessary to request that SAP short close an order.  The logic here will also send to
+     * test users in a non Production environment
+     *
+     * @param body The body of the short close request email
+     */
+    private void sendSapOrderShortCloseRequest(String body) {
+
+        Collection<String> currentUserForCC = Collections.singletonList(userBean.getBspUser().getEmail());
+
+        final boolean isProduction = deployment.equals(Deployment.PROD);
+        final Collection<String> ccAddrdesses = new ArrayList<>();
+        if(isProduction) {
+            ccAddrdesses .addAll(currentUserForCC);
+        }
+
+        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapSupportEmail(), ccAddrdesses,
+                sapConfig.getSapShortCloseEmailSubject(), body, !isProduction, true);
     }
 
     /**
@@ -785,6 +1320,7 @@ public class ProductOrderEjb {
      * generated if the transition is not possible, or if the JIRA status already matches Mercury.
      *
      * @param order the order to transition
+     *
      * @throws IOException
      */
     private void transitionIssueToSameOrderStatus(@Nonnull ProductOrder order) throws IOException {
@@ -805,8 +1341,9 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void transitionJiraTicket(String jiraTicketKey, JiraResolution currentResolution, JiraTransition state,
-                                      @Nullable String transitionComments) throws IOException {
+                                     @Nullable String transitionComments) throws IOException {
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
         JiraResolution resolution = JiraResolution.fromString(issue.getResolution());
         if (currentResolution != resolution) {
@@ -827,8 +1364,9 @@ public class ProductOrderEjb {
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void abandon(@Nonnull String jiraTicketKey, @Nullable String abandonComments)
-            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
+            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException, SAPInterfaceException {
 
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
@@ -844,6 +1382,37 @@ public class ProductOrderEjb {
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
         transitionJiraTicket(jiraTicketKey, JiraResolution.CANCELLED, JiraTransition.CANCEL, abandonComments);
+
+
+        conditionallyShortCloseOrder(productOrder);
+    }
+
+    private void conditionallyShortCloseOrder(ProductOrder productOrder) throws SAPInterfaceException {
+
+        ProductOrder targetSapPdo = productOrder;
+
+        if(targetSapPdo.isSavedInSAP() &&
+           ((targetSapPdo.allOrdersAreComplete() &&
+             targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) < targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()
+           ) || CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),Collections.singleton(targetSapPdo.getOrderStatus())))) {
+
+            boolean orderEligibleForSAP = true;
+            try {
+                orderEligibleForSAP = isOrderEligibleForSAP(productOrder);
+            } catch (QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
+                orderEligibleForSAP = false;
+            }
+            if(productOrder.isPriorToSAP1_5() || !orderEligibleForSAP ||
+               targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) <1 ) {
+                sendSapOrderShortCloseRequest(
+                        "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
+                        " has been marked as completed in Mercury by " +
+                        userBean.getBspUser().getFullName() + " and may need to be short closed.");
+
+            }   else {
+                publishProductOrderToSAP(productOrder, new MessageCollection(), false);
+            }
+        }
     }
 
     /**
@@ -852,56 +1421,69 @@ public class ProductOrderEjb {
      * @param jiraTicketKey the order's JIRA key
      * @param samples       the samples to abandon
      * @param comment       optional user supplied comment about this action.
+     * @param messageCollection
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void abandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
-                               @Nonnull String comment)
-            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+                               @Nonnull String comment, MessageCollection messageCollection)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException, SAPInterfaceException {
         transitionSamplesAndUpdateTicket(jiraTicketKey,
                 EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
                 DeliveryStatus.ABANDONED, samples,
-                comment);
+                comment, messageCollection);
     }
 
     /**
      * Un-abandon a list of samples and add a message to the JIRA ticket to reflect this change.
-     *
      * @param jiraTicketKey the order's JIRA key
-     * @param sampleIds       the samples to un-abandon
+     * @param sampleIds     the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
+     * @param messageCollection
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> sampleIds,
-                                 @Nonnull String comment, @Nonnull MessageReporter reporter)
-            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+                                 @Nonnull String comment, @Nonnull MessageCollection messageCollection)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException, SAPInterfaceException {
 
         List<ProductOrderSample> samples = productOrderSampleDao.findListByList(ProductOrderSample.class,
                 ProductOrderSample_.productOrderSampleId, sampleIds);
 
-        if (!StringUtils.isBlank(comment)) {
-            for (ProductOrderSample sample : samples) {
-                if (sample.getDeliveryStatus() == DeliveryStatus.ABANDONED) {
-                    sample.setSampleComment(comment);
+            Iterator<ProductOrderSample> unAbandonedSamples = samples.iterator();
+
+            while(unAbandonedSamples.hasNext()) {
+                ProductOrderSample sample = unAbandonedSamples.next();
+
+                if(sample.getDeliveryStatus() != DeliveryStatus.ABANDONED) {
+                    unAbandonedSamples.remove();
+                } else {
+                    if(StringUtils.isNotBlank(comment)) {
+                        sample.setSampleComment(comment);
+                    }
                 }
             }
+
+        if(CollectionUtils.isNotEmpty(samples)) {
+            transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
+                    DeliveryStatus.NOT_STARTED, samples, comment, messageCollection);
+            messageCollection.addInfo("Un-Abandoned samples: " +
+                                      StringUtils.join(ProductOrderSample.getSampleNames(samples), ", ") +".");
+        } else {
+            messageCollection.addError("You cannot un-abandon samples since you have not selected any samples that are Abandoned");
         }
 
-        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
-                DeliveryStatus.NOT_STARTED, samples, comment);
-
-        reporter.addMessage("Un-Abandoned samples: {0}.",
-                StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
     }
 
     /**
      * Update JIRA state of an order based on a sample change operation.
      * <ul>
-     *     <li>add a comment with the operation and the list of samples changed</li>
-     *     <li>update the Sample IDs and Number of Samples fields</li>
-     *     <li>output a message to the user about the operation</li>
-     *     <li>if necessary, update the order status based on the new list of samples</li>
+     * <li>add a comment with the operation and the list of samples changed</li>
+     * <li>update the Sample IDs and Number of Samples fields</li>
+     * <li>output a message to the user about the operation</li>
+     * <li>if necessary, update the order status based on the new list of samples</li>
      * </ul>
      */
-    private void updateSamples(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
-                               String operation) throws IOException, NoSuchPDOException {
+    public void updateSamples(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
+                               String operation) throws IOException, NoSuchPDOException, SAPInterfaceException {
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
 
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
@@ -910,9 +1492,62 @@ public class ProductOrderEjb {
         productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.SAMPLE_IDS, order.getSampleString());
         productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.NUMBER_OF_SAMPLES, order.getSamples().size());
 
+        MessageCollection collection = new MessageCollection();
+        publishProductOrderToSAP(order, collection, false);
+        for (String error : collection.getErrors()) {
+            reporter.addMessage(error);
+        }
+        for (String warn : collection.getWarnings()) {
+            reporter.addMessage("Warning: " + warn);
+        }
+        for (String info : collection.getInfos()) {
+            reporter.addMessage(info);
+        }
+
         reporter.addMessage("{0} samples: {1}.", WordUtils.capitalize(operation), nameList);
 
         updateOrderStatus(order.getJiraTicketKey(), reporter);
+
+
+    }
+
+    /**
+     * Used only for a fixup test.
+     *
+     * Update JIRA state of an order based on a sample change operation.
+     * <ul>
+     * <li>add a comment with the operation and the list of samples changed</li>
+     * <li>update the Sample IDs and Number of Samples fields</li>
+     * <li>output a message to the user about the operation</li>
+     * <li>if necessary, update the order status based on the new list of samples</li>
+     * </ul>
+     */
+    private void updateSamplesNoSap(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
+                               String operation) throws IOException, NoSuchPDOException, SAPInterfaceException {
+        JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
+
+        String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
+        issue.addComment(MessageFormat.format("{0} {1} samples: {2}.",
+                userBean.getLoginUserName(), operation, nameList));
+        productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.SAMPLE_IDS, order.getSampleString());
+        productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.NUMBER_OF_SAMPLES, order.getSamples().size());
+
+        MessageCollection collection = new MessageCollection();
+        for (String error : collection.getErrors()) {
+            reporter.addMessage(error);
+        }
+        for (String warn : collection.getWarnings()) {
+            reporter.addMessage("Warning: " + warn);
+        }
+        for (String info : collection.getInfos()) {
+            reporter.addMessage(info);
+        }
+
+        reporter.addMessage("{0} samples: {1}.", WordUtils.capitalize(operation), nameList);
+
+        updateOrderStatus(order.getJiraTicketKey(), reporter);
+
+
     }
 
     /**
@@ -924,12 +1559,18 @@ public class ProductOrderEjb {
      * @param samples       the samples to add. this argument must not be changed to Collection, or
      *                      ImmutableListMultiMap does not work correctly.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void addSamples(@Nonnull String jiraTicketKey, @Nonnull List<ProductOrderSample> samples,
-                           @Nonnull MessageReporter reporter) throws NoSuchPDOException, IOException {
+                           @Nonnull MessageReporter reporter)
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
 
         attachMercurySamples(samples);
+
+        if(order.getOrderStatus() == OrderStatus.Completed) {
+            order.setOrderStatus(OrderStatus.Submitted);
+        }
 
         order.prepareToSave(userBean.getBspUser());
         productOrderDao.persist(order);
@@ -939,9 +1580,37 @@ public class ProductOrderEjb {
     }
 
     /**
+     * Used only for a fixup test
+     *
+     * Given a PDO ID, add a list of samples to the PDO.  This will update the PDO's JIRA with a comment that the
+     * samples have been added, and will notify LIMS that the samples are now present, and update the PDO's status
+     * if necessary.
+     *
+     * @param jiraTicketKey the PDO key
+     * @param samples       the samples to add. this argument must not be changed to Collection, or
+     *                      ImmutableListMultiMap does not work correctly.
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void addSamplesNoSap(@Nonnull String jiraTicketKey, @Nonnull List<ProductOrderSample> samples,
+                           @Nonnull MessageReporter reporter)
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
+        ProductOrder order = findProductOrder(jiraTicketKey);
+        order.addSamples(samples);
+
+        attachMercurySamples(samples);
+
+        order.prepareToSave(userBean.getBspUser());
+        productOrderDao.persist(order);
+        handleSamplesAdded(jiraTicketKey, samples, reporter);
+
+        updateSamplesNoSap(order, samples, reporter, "added");
+    }
+
+
+    /**
      * Makes the association between ProductOrderSample and MercurySample.
      */
-    private void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) {
+    public void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) {
         ImmutableListMultimap<String, ProductOrderSample> samplesBySampleId =
                 Multimaps.index(samples, new Function<ProductOrderSample, String>() {
                     @Override
@@ -961,12 +1630,17 @@ public class ProductOrderEjb {
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void removeSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
-                              @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
+                              @Nonnull MessageReporter reporter)
+            throws IOException, NoSuchPDOException, SAPInterfaceException {
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
         // If removeAll returns false, no samples were removed -- should never happen.
         if (productOrder.getSamples().removeAll(samples)) {
+            for (ProductOrderSample sample : samples) {
+                sample.remove();
+            }
             String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
             productOrder.prepareToSave(userBean.getBspUser());
             productOrderDao.persist(productOrder);
@@ -989,6 +1663,7 @@ public class ProductOrderEjb {
      * @param businessKey       Business key by which to reference the currently persisted Product order
      * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public ProductOrder placeProductOrder(@Nonnull Long productOrderID, String businessKey,
                                           @Nonnull MessageCollection messageCollection) {
         ProductOrder editOrder =
@@ -1043,6 +1718,7 @@ public class ProductOrderEjb {
      * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
      *                          a value or throwing an exception.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void submitSampleKitRequest(@Nonnull ProductOrder order, @Nonnull MessageCollection messageCollection) {
         String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
         order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
@@ -1059,6 +1735,7 @@ public class ProductOrderEjb {
      *
      * @return work request output
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public AutoWorkRequestOutput createSquidWorkRequest(@Nonnull String productOrderKey,
                                                         @Nonnull AutoWorkRequestInput squidInput) {
 
@@ -1098,8 +1775,104 @@ public class ProductOrderEjb {
         }
     }
 
+    /**
+     * Apply a collection of ledger updates for some product order samples. The update requests have the previous
+     * quantities as well as the new quantities being requested. The previous quantities represent those that were in
+     * effect when the decision to change the quantity was made. Across a sequence of web requests, it is possible that
+     * those quantities have changed for other reasons, so this protects users from making billing decisions based on
+     * outdated information.
+     *
+     * @param ledgerUpdates a map of PDO sample to a collection of ledger updates
+     *
+     * @throws ValidationWithRollbackException to capture and relay multiple errors that may have occurred while
+     * creating or updating ledger entries
+     * @throws QuoteNotFoundException if the quote is not found
+     * @throws QuoteServerException if any errors occurs during the attempt to access the quote server during this
+     * method
+     *
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
+            throws ValidationWithRollbackException, QuoteNotFoundException, QuoteServerException {
+        List<String> errorMessages = new ArrayList<>();
+
+        Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
+
+        Map<String, Boolean> updatedOrderMap = new HashMap<>();
+
+        for (Map.Entry<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> entry : ledgerUpdates
+                .entrySet()) {
+            ProductOrderSample productOrderSample = entry.getKey();
+
+            if(!updatedOrderMap.containsKey(productOrderSample.getProductOrder().getBusinessKey()) ||
+               !updatedOrderMap.get(productOrderSample.getProductOrder().getBusinessKey())) {
+
+                Quote orderQuote = usedQuotesMiniCache.get(productOrderSample.getProductOrder().getQuoteId());
+
+                if(orderQuote == null) {
+                    orderQuote = quoteService.getQuoteByAlphaId(productOrderSample.getProductOrder().getQuoteId());
+                    usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
+                }
+
+                updatedOrderMap.put(productOrderSample.getProductOrder().getBusinessKey(), Boolean.TRUE);
+            }
+
+            Collection<ProductOrderSample.LedgerUpdate> updates = entry.getValue();
+            for (ProductOrderSample.LedgerUpdate update : updates) {
+                try {
+                    productOrderSample.applyLedgerUpdate(update);
+                } catch (Exception e) {
+                    errorMessages.add(e.getMessage());
+                }
+            }
+        }
+
+        if (!errorMessages.isEmpty()) {
+            throw new ValidationWithRollbackException("Error updating ledger quantities", errorMessages);
+        }
+        productOrderDao.flush();
+    }
+
     @Inject
     public void setProductOrderSampleDao(ProductOrderSampleDao productOrderSampleDao) {
         this.productOrderSampleDao = productOrderSampleDao;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public GenotypingProductOrderMapping findOrCreateGenotypingChipProductOrderMapping(Long productOrderId) {
+        GenotypingProductOrderMapping mapping =
+                attributeArchetypeDao.findGenotypingProductOrderMapping(productOrderId);
+        if (mapping == null) {
+            mapping = new GenotypingProductOrderMapping(productOrderId.toString(), null, null);
+            attributeArchetypeDao.persist(mapping);
+            attributeArchetypeDao.flush();
+        }
+        return mapping;
+    }
+
+    @Inject
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
+
+    @Inject
+    public void setEmailSender(EmailSender emailSender) {
+        this.emailSender = emailSender;
+    }
+
+    @Inject
+    public void setAccessController(
+            SAPAccessControlEjb accessController) {
+        this.accessController = accessController;
+    }
+
+    @Inject
+    public void setSapConfig(SapConfig sapConfig) {
+        this.sapConfig = sapConfig;
+    }
+
+    @Inject
+    public void setDeployment(Deployment deployment) {
+        this.deployment = deployment;
     }
 }

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.apache.commons.io.FileUtils;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +29,10 @@ import java.util.Set;
  * Tests of the LabBatch entity, using a database
  */
 @Test(groups = TestGroups.STUBBY)
-public class LabBatchDbTest extends ContainerTest {
+@Dependent
+public class LabBatchDbTest extends StubbyContainerTest {
+
+    public LabBatchDbTest(){}
 
     @Inject
     private LabBatchDao labBatchDao;

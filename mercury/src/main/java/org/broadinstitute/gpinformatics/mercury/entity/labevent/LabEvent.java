@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
@@ -88,6 +87,9 @@ public class LabEvent {
     public static final String UI_EVENT_LOCATION = "User Interface";
     public static final String UI_PROGRAM_NAME = "Mercury";
 
+    /**
+     * Sort by ascending date, ascending disambiguator
+     */
     public static final Comparator<LabEvent> BY_EVENT_DATE = new Comparator<LabEvent>() {
         @Override
         public int compare(LabEvent o1, LabEvent o2) {
@@ -103,7 +105,7 @@ public class LabEvent {
         @Override
         public int compare(LabEvent o1, LabEvent o2) {
             int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
-            if (dateComparison == 0) {
+            if (dateComparison == 0 && o1.getEventLocation() != null && o2.getEventLocation() != null ) {
                 dateComparison = o1.getEventLocation().compareTo(o2.getEventLocation());
             }
             if (dateComparison == 0) {
@@ -147,24 +149,28 @@ public class LabEvent {
      * for transfers using a tip box, e.g. Bravo
      */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent", orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<SectionTransfer> sectionTransfers = new HashSet<>();
 
     /**
      * for random access transfers, e.g. MultiProbe
      */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent", orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<>();
 
     /**
      * for transfers from a single vessel to an entire section, e.g. from a tube to a plate
      */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent", orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<>();
 
     /**
      * Typically for tube to tube transfers
      */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent", orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<VesselToVesselTransfer> vesselToVesselTransfers = new HashSet<>();
 
     /**
@@ -187,10 +193,13 @@ public class LabEvent {
     private LabEventType labEventType;
 
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "LAB_BATCH")
     private LabBatch labBatch;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "mercury", name = "le_lab_event_metadatas")
+    @JoinTable(schema = "mercury", name = "le_lab_event_metadatas"
+            , joinColumns = {@JoinColumn(name = "LAB_EVENT")}
+            , inverseJoinColumns = {@JoinColumn(name = "LAB_EVENT_METADATAS")})
     private Set<LabEventMetadata> labEventMetadatas = new HashSet<>();
 
     /**
@@ -206,11 +215,16 @@ public class LabEvent {
      * processed in multiple technologies.
      */
     @ManyToOne
+    @JoinColumn(name = "MANUAL_OVERRIDE_LC_SET")
     private LabBatch manualOverrideLcSet;
 
     private String workflowQualifier;
 
     private static Set<LabEventType> eventTypesThatCanFollowBucket = new HashSet<>();
+
+    /** The station event from which this lab event was created by LabEventFactory. */
+    @Transient
+    private StationEventType stationEventType;
 
     /**
      * For JPA
@@ -389,12 +403,21 @@ public class LabEvent {
         return eventOperator;
     }
 
+
+    void setEventOperator(Long eventOperator) {
+        this.eventOperator = eventOperator;
+    }
+
     public String getProgramName() {
         return programName;
     }
 
     public Date getEventDate() {
         return eventDate;
+    }
+
+    void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
     }
 
     public Collection<Reagent> getReagents() {
@@ -501,6 +524,14 @@ todo jmt adder methods
 
     public void setWorkflowQualifier(String workflowQualifier) {
         this.workflowQualifier = workflowQualifier;
+    }
+
+    public StationEventType getStationEventType() {
+        return stationEventType;
+    }
+
+    public void setStationEventType(StationEventType stationEventType) {
+        this.stationEventType = stationEventType;
     }
 
     /**
@@ -732,10 +763,8 @@ todo jmt adder methods
      * Using workflow config, searches the Mercury supported workflows for events that can follow a bucketing
      * step. Takes into account that the optional steps after a bucket may be skipped.
      */
-    public static void setupEventTypesThatCanFollowBucket(WorkflowLoader workflowLoader) {
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-            ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+    public static void setupEventTypesThatCanFollowBucket(WorkflowConfig workflowConfig) {
+        for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
             ProductWorkflowDefVersion effectiveWorkflow = workflowDef.getEffectiveVersion();
             boolean collectEvents = false;
             for (WorkflowProcessDef processDef : effectiveWorkflow.getWorkflowProcessDefs()) {

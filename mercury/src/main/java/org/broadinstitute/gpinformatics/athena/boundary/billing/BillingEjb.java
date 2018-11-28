@@ -1,31 +1,52 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.sap.entity.DeliveryCondition;
+import org.broadinstitute.sap.entity.SAPMaterial;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Stateful
 @RequestScoped
@@ -48,6 +69,7 @@ public class BillingEjb {
         private String workId;
 
         private String errorMessage;
+        private String SAPBillingId;
 
         public BillingResult(@Nonnull QuoteImportItem quoteImportItem) {
             this.quoteImportItem = quoteImportItem;
@@ -76,6 +98,14 @@ public class BillingEjb {
         public boolean isError() {
             return errorMessage != null;
         }
+
+        public void setSAPBillingId(String SAPBillingId) {
+            this.SAPBillingId = SAPBillingId;
+        }
+
+        public String getSAPBillingId() {
+            return SAPBillingId;
+        }
     }
 
     private PriceListCache priceListCache;
@@ -88,8 +118,16 @@ public class BillingEjb {
 
     SampleDataFetcher sampleDataFetcher;
 
+    private AppConfig appConfig;
+    private SapConfig sapConfig;
+    private EmailSender emailSender;
+    private TemplateEngine templateEngine;
+    private BSPUserList bspUserList;
+
+    private SAPProductPriceCache productPriceCache;
+
     public BillingEjb() {
-        this(null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null, null, null, null);
     }
 
     @Inject
@@ -97,13 +135,24 @@ public class BillingEjb {
                       BillingSessionDao billingSessionDao,
                       ProductOrderDao productOrderDao,
                       LedgerEntryDao ledgerEntryDao,
-                      SampleDataFetcher sampleDataFetcher) {
+                      SampleDataFetcher sampleDataFetcher,
+                      AppConfig appConfig, SapConfig sapConfig,
+                      EmailSender emailSender,
+                      TemplateEngine templateEngine,
+                      BSPUserList bspUserList,
+                      SAPProductPriceCache productPriceCache) {
 
         this.priceListCache = priceListCache;
         this.billingSessionDao = billingSessionDao;
         this.productOrderDao = productOrderDao;
         this.ledgerEntryDao = ledgerEntryDao;
         this.sampleDataFetcher = sampleDataFetcher;
+        this.appConfig = appConfig;
+        this.sapConfig = sapConfig;
+        this.emailSender = emailSender;
+        this.templateEngine = templateEngine;
+        this.bspUserList = bspUserList;
+        this.productPriceCache = productPriceCache;
     }
 
     /**
@@ -143,19 +192,23 @@ public class BillingEjb {
      * @param item                Representation of the quote and its ledger entries that are to be billed
      * @param quoteIsReplacing    Set if the price item is replacing a previously defined item.
      * @param quoteServerWorkItem the pointer back to the quote server transaction
+     * @param sapDeliveryId
+     * @param billingMessage
      */
-    public void updateLedgerEntries(QuoteImportItem item, QuotePriceItem quoteIsReplacing, String quoteServerWorkItem) {
+    public void updateLedgerEntries(QuoteImportItem item, QuotePriceItem quoteIsReplacing, String quoteServerWorkItem,
+                                    String sapDeliveryId, String billingMessage) {
 
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
         Collection<String> replacementPriceItemNames = new ArrayList<>();
+        PriceItem priceItem = item.getProductOrder().determinePriceItemByCompanyCode(item.getPrimaryProduct());
         Collection<QuotePriceItem> replacementPriceItems =
-                priceListCache.getReplacementPriceItems(item.getProduct().getPrimaryPriceItem());
+                priceListCache.getReplacementPriceItems(priceItem);
         for (QuotePriceItem replacementPriceItem : replacementPriceItems) {
             replacementPriceItemNames.add(replacementPriceItem.getName());
         }
-        item.updateLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS, quoteServerWorkItem,
-                replacementPriceItemNames);
+        item.updateLedgerEntries(quoteIsReplacing, billingMessage, quoteServerWorkItem,
+                replacementPriceItemNames, sapDeliveryId);
         billingSessionDao.flush();
     }
 
@@ -286,5 +339,64 @@ public class BillingEjb {
                 MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, no matching sample in PDO.",
                         order.getBusinessKey(), sampleName, aliquotId)
         );
+    }
+
+    public void sendBillingCreditRequestEmail(QuoteImportItem quoteImportItem, Set<LedgerEntry> priorBillings,
+                                              Long billedById) throws InformaticsServiceException {
+        Collection<String> ccUsers = new HashSet<>(appConfig.getGpBillingManagers());
+        BspUser billedBy = bspUserList.getById(billedById);
+        if (billedBy!=null) {
+            ccUsers.add(billedBy.getEmail());
+        }
+        BspUser orderPlacedBy = bspUserList.getById(quoteImportItem.getProductOrder().getCreatedBy());
+        if (orderPlacedBy != null) {
+            ccUsers.add(orderPlacedBy.getEmail());
+        }
+
+        Map<String, Object> rootMap = new HashMap<>();
+
+        String sapDocuments = priorBillings.stream()
+            .map(LedgerEntry::getSapDeliveryDocumentId)
+            .filter(StringUtils::isNotBlank).distinct()
+            .collect(Collectors.joining("<br/>"));
+
+        StringBuilder discountText = new StringBuilder();
+        if (StringUtils.equals(quoteImportItem.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
+            discountText.append(Boolean.TRUE.toString()).append(" -- ");
+            final SAPMaterial discountedMaterial = productPriceCache.findByProduct(quoteImportItem.getProduct(),
+                    quoteImportItem.getProductOrder().getSapCompanyConfigurationForProductOrder());
+            final BigDecimal discount = discountedMaterial.getPossibleDeliveryConditions().get(
+                    DeliveryCondition.LATE_DELIVERY_DISCOUNT);
+
+            discountText.append(NumberFormat.getCurrencyInstance().format(discount.doubleValue()));
+
+        } else {
+            discountText.append(Boolean.FALSE.toString());
+        }
+
+        rootMap.put("mercuryOrder", quoteImportItem.getProductOrder().getJiraTicketKey());
+        rootMap.put("material", quoteImportItem.getProduct().getDisplayName());
+        rootMap.put("sapOrderNumber", quoteImportItem.getProductOrder().getSapOrderNumber());
+        rootMap.put("sapDeliveryDocuments", sapDocuments);
+        rootMap.put("deliveryDiscount", discountText.toString());
+        rootMap.put("quantity", quoteImportItem.getQuantity());
+
+        String body;
+        try {
+            body = processTemplate(SapConfig.BILLING_CREDIT_TEMPLATE, rootMap);
+        } catch (RuntimeException e) {
+            throw new InformaticsServiceException("Error creating message body from template", e);
+        }
+        Deployment deployment = appConfig.getDeploymentConfig();
+        boolean isProduction = deployment.equals(Deployment.PROD);
+
+        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapSupportEmail(), ccUsers,
+            sapConfig.getSapReverseBillingSubject(), body, !isProduction, false);
+    }
+
+    protected String processTemplate(String template, Map<String, Object> objectMap) {
+        StringWriter stringWriter = new StringWriter();
+        templateEngine.processTemplate(template, objectMap, stringWriter);
+        return stringWriter.toString();
     }
 }

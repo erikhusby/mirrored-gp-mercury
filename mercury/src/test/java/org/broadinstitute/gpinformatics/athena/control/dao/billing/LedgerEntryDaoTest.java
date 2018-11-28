@@ -1,36 +1,34 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
-import org.testng.Assert;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 
 @Test(groups = TestGroups.STUBBY)
-public class LedgerEntryDaoTest extends ContainerTest {
+@Dependent
+public class LedgerEntryDaoTest extends StubbyContainerTest {
+
+    public LedgerEntryDaoTest(){}
 
     @Inject
     private LedgerEntryDao ledgerEntryDao;
@@ -51,7 +49,7 @@ public class LedgerEntryDaoTest extends ContainerTest {
     @Inject
     private UserTransaction utx;
 
-    private static final DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+    private static final FastDateFormat formatter = FastDateFormat.getInstance("MM/dd/yy");
     private final ProductOrder[] orders = new ProductOrder[1];
     private final ProductOrder[] dupeOrders = new ProductOrder[1];
 

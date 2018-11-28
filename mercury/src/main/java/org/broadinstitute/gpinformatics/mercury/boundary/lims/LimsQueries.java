@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -22,10 +26,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReagentDesignType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,6 +47,7 @@ import java.util.SortedMap;
  *
  * @author breilly
  */
+@Dependent
 public class LimsQueries {
 
     private static final String NOT_FOUND = "NOT_FOUND";
@@ -47,13 +55,15 @@ public class LimsQueries {
     private StaticPlateDao staticPlateDao;
     private LabVesselDao labVesselDao;
     private BarcodedTubeDao barcodedTubeDao;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
     public LimsQueries(StaticPlateDao staticPlateDao, LabVesselDao labVesselDao,
-                       BarcodedTubeDao barcodedTubeDao) {
+            BarcodedTubeDao barcodedTubeDao, BSPSampleDataFetcher bspSampleDataFetcher) {
         this.staticPlateDao = staticPlateDao;
         this.labVesselDao = labVesselDao;
         this.barcodedTubeDao = barcodedTubeDao;
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
     /**
@@ -279,7 +289,7 @@ public class LimsQueries {
      *
      * @return The double value of the quant we are looking for.
      */
-    public Double fetchQuantForTube(String tubeBarcode, String quantType) {
+    public Double fetchNearestQuantForTube(String tubeBarcode, String quantType) {
         LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
         if (vessel != null) {
             List<LabMetric> metrics = vessel.getNearestMetricsOfType(LabMetric.MetricType.getByDisplayName(quantType));
@@ -292,22 +302,91 @@ public class LimsQueries {
     }
 
     /**
+     * This method returns the double value of newest quant of type quantType directly on the vessel specified by the tubeBarcode.
+     *
+     * @param tubeBarcode The barcode of the tube to look up quants on.
+     * @param quantType   The type of quant we are looking for.
+     *
+     * @return The double value of the quant we are looking for.
+     * @throws RuntimeException on any invalid input or no metrics available
+     */
+    public Double fetchQuantForTube(String tubeBarcode, String quantType) {
+        LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(quantType);
+        if( metricType == null ) {
+            throw new RuntimeException("No metric type found for " + quantType );
+        }
+        LabVessel labVessel = labVesselDao.findByIdentifier(tubeBarcode);
+        Double value = null;
+        if( labVessel != null ) {
+            if( labVessel.getContainerRole() != null ) {
+                throw new RuntimeException("Resource does not handle container vessels");
+            }
+            ArrayList<LabMetric> metrics = new ArrayList<>();
+
+            for( LabMetric metric : labVessel.getMetrics() ) {
+                if( metric.getName() == metricType ) {
+                    metrics.add( metric );
+                }
+            }
+            if( metrics.size() > 0 ) {
+                // If more than 1, get latest only!
+                if( metrics.size() > 1 ) {
+                    Collections.sort(metrics);
+                }
+                value = metrics.get( metrics.size() - 1 ).getValue().doubleValue();
+            }
+        } else {
+            throw new RuntimeException("No LabVessel for barcode " + tubeBarcode);
+        }
+        if( value != null ) {
+            return value;
+        } else {
+            throw new RuntimeException("No " + metricType + " metrics for vessel barcode " + tubeBarcode);
+        }
+    }
+
+    /**
      * This method returns a mapping from tube barcode to the concentration and volume
      * for each tube barcode specified.
      *
      * @param tubeBarcodes The barcodes of the tubes to up concentration and volume for.
+     * @param labMetricsFirst Check for uploaded LabMetrics before checking the concentration field
+     *                        on LabVessel when setting the concentration.
      *
      * @return Map of barcode to Concentration and Volume of the quant we are looking for.
      */
     public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
-            List<String> tubeBarcodes) {
+            List<String> tubeBarcodes, boolean labMetricsFirst) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
-        return fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
+        List<String> bspBarcodes = new ArrayList<>();
+        for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
+            LabVessel labVessel = entry.getValue();
+            if (labVessel != null && (labVessel.getVolume() == null || labVessel.getConcentration() == null)) {
+                Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    if (!sampleInstanceV2.isReagentOnly()) {
+                        metadataSources.add(sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource());
+                    }
+                }
+                if (metadataSources.size() == 1 && metadataSources.iterator().next() ==
+                        MercurySample.MetadataSource.BSP) {
+                    bspBarcodes.add(labVessel.getLabel());
+                }
+            }
+        }
+        Map<String, GetSampleDetails.SampleInfo> mapBarcodeToInfo = new HashMap<>();
+        if (!bspBarcodes.isEmpty()) {
+            mapBarcodeToInfo = bspSampleDataFetcher.fetchSampleDetailsByBarcode(bspBarcodes);
+        }
+        return fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
+                mapBarcodeToVessel, mapBarcodeToInfo, labMetricsFirst);
     }
 
     @DaoFree
     public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
-            Map<String, LabVessel> mapBarcodeToVessel) {
+            Map<String, LabVessel> mapBarcodeToVessel,
+            Map<String, GetSampleDetails.SampleInfo> mapBarcodeToInfo,
+            boolean labMetricsFirst) {
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeAndWeightTypeMap = new HashMap<>();
         for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
             String tubeBarcode = entry.getKey();
@@ -322,32 +401,92 @@ public class LimsQueries {
                 if (labVessel.getReceptacleWeight() != null) {
                     concentrationAndVolumeAndWeightType.setWeight(labVessel.getReceptacleWeight());
                 }
-                if (labVessel.getVolume() != null) {
+                if ((labVessel.getVolume() == null || labVessel.getConcentration() == null) &&
+                        mapBarcodeToInfo.get(labVessel.getLabel()) != null) {
+                    GetSampleDetails.SampleInfo sampleInfo = mapBarcodeToInfo.get(labVessel.getLabel());
+                    if (sampleInfo != null) {
+                        concentrationAndVolumeAndWeightType.setVolume(MathUtils.scaleTwoDecimalPlaces(
+                                BigDecimal.valueOf(sampleInfo.getVolume())));
+                        if (concentrationAndVolumeAndWeightType.getConcentration() == null) {
+                            concentrationAndVolumeAndWeightType.setConcentration(MathUtils.scaleTwoDecimalPlaces(
+                                    BigDecimal.valueOf(sampleInfo.getConcentration())));
+                        }
+                    }
+                } else {
                     concentrationAndVolumeAndWeightType.setVolume(labVessel.getVolume());
                 }
 
-                Set<LabMetric> metrics = labVessel.getConcentrationMetrics();
-                if (metrics != null && !metrics.isEmpty()) {
-                    List<LabMetric> metricList = new ArrayList<>(metrics);
-                    Collections.sort(metricList, new LabMetric.LabMetricRunDateComparator());
-                    LabMetric.MetricType metricType = metricList.get(0).getName();
-                    for (LabMetric labMetric : metricList) {
-                        if (labMetric.getName() != metricType) {
-                            throw new RuntimeException(
-                                    "Got more than one quant for barcode:" + tubeBarcode);
-                        }
-                    }
-                    LabMetric labMetric = metricList.get(0);
-                    concentrationAndVolumeAndWeightType.setConcentration(labMetric.getValue());
-                    concentrationAndVolumeAndWeightType
-                            .setConcentrationUnits(labMetric.getUnits().getDisplayName());
-                } else if (labVessel.getConcentration() != null) {
+                if (!labMetricsFirst && labVessel.getConcentration() != null) {
                     concentrationAndVolumeAndWeightType.setConcentration(labVessel.getConcentration());
+                } else {
+                    Set<LabMetric> metrics = labVessel.getConcentrationMetrics();
+                    if (metrics != null && !metrics.isEmpty()) {
+                        List<LabMetric> metricList = new ArrayList<>(metrics);
+                        Collections.sort(metricList, Collections.reverseOrder());
+                        LabMetric.MetricType metricType = metricList.get(0).getName();
+                        for (LabMetric labMetric : metricList) {
+                            if (labMetric.getName() != metricType) {
+                                throw new RuntimeException("Got more than one quant for barcode:" + tubeBarcode);
+                            }
+                        }
+                        LabMetric labMetric = metricList.get(0);
+                        concentrationAndVolumeAndWeightType.setConcentration(labMetric.getValue());
+                        concentrationAndVolumeAndWeightType
+                                .setConcentrationUnits(labMetric.getUnits().getDisplayName());
+                    } else if (labVessel.getConcentration() != null) {
+                        concentrationAndVolumeAndWeightType.setConcentration(labVessel.getConcentration());
+                    }
                 }
             }
             concentrationAndVolumeAndWeightTypeMap.put(tubeBarcode, concentrationAndVolumeAndWeightType);
         }
-
         return concentrationAndVolumeAndWeightTypeMap;
+    }
+
+    public List<ReagentDesignType> fetchExpectedReagentDesignsForTubeBarcodes(List<String> tubeBarcodes) {
+        List<ReagentDesignType> reagentDesignTypes = new ArrayList<>();
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
+        for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
+            ReagentDesignType reagentDesignType = new ReagentDesignType();
+            reagentDesignTypes.add(reagentDesignType);
+            LabVessel labVessel = entry.getValue();
+            reagentDesignType.setTubeBarcode(entry.getKey());
+            if (labVessel == null) {
+                reagentDesignType.setError("Failed to find tube " + entry.getKey());
+                reagentDesignType.setHasErrors(true);
+                reagentDesignType.setWasFound(false);
+                continue;
+            }
+            reagentDesignType.setWasFound(true);
+            Set<String> reagentDesigns = new HashSet<>();
+            for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
+                ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+                if (pdoSampleForSingleBucket == null) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                        if (productOrderSample.getProductOrder().getProduct() != null) {
+                            String reagentDesignKey = productOrderSample.getProductOrder().getReagentDesignKey();
+                            if (StringUtils.isNotBlank(reagentDesignKey)) {
+                                reagentDesigns.add(reagentDesignKey);
+                            }
+                        }
+                    }
+                } else {
+                    String reagentDesignKey = pdoSampleForSingleBucket.getProductOrder().getReagentDesignKey();
+                    if (StringUtils.isNotBlank(reagentDesignKey)) {
+                        reagentDesigns.add(reagentDesignKey);
+                    }
+                }
+            }
+            if (reagentDesigns.size() == 0) {
+                reagentDesignType.setHasErrors(true);
+                reagentDesignType.setError("Found no reagent designs.");
+            } else if (reagentDesigns.size() > 1) {
+                reagentDesignType.setHasErrors(true);
+                reagentDesignType.setError("Found multiple reagent designs: " + StringUtils.join(reagentDesigns, ","));
+            } else {
+                reagentDesignType.setReagentDesignName(reagentDesigns.iterator().next());
+            }
+        }
+        return reagentDesignTypes;
     }
 }

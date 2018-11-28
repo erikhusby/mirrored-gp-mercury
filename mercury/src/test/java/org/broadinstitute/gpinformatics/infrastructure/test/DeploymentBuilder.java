@@ -10,12 +10,16 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
+import org.jboss.shrinkwrap.resolver.api.maven.ScopeType;
 
 import java.io.File;
-import java.util.Collection;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author breilly
@@ -43,16 +47,31 @@ public class DeploymentBuilder {
      * @return war
      */
     public static WebArchive buildMercuryWar(Deployment deployment, String dataSourceEnvironment) {
+
+        // Look for the mercury data source in two places, prefering the target/test-classes over src/test/resources
+        // A feature branch build needs to filter the mercury datasource from src/test/resources-fb to target/test-classes
+        // And if the build is being done with clover, it will be in target/clover/test-classes. If not there then
+        // use the one in src/test/resources
+        File mercuryDS = new File("target/test-classes/" + "mercury-"
+                + dataSourceEnvironment + "-ds.xml");
+        if (!mercuryDS.exists()) {
+            mercuryDS = new File("target/clover/test-classes/" + "mercury-" + dataSourceEnvironment + "-ds.xml");
+            if (!mercuryDS.exists()) {
+                mercuryDS = new File("src/test/resources/" + "mercury-" + dataSourceEnvironment + "-ds.xml");
+            }
+        }
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, MERCURY_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
-                .addAsWebInfResource(new File("src/test/resources/" + "mercury-"
-                                              + dataSourceEnvironment + "-ds.xml"))
+                .addAsWebInfResource(mercuryDS)
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
-                .addAsWebInfResource(new File("src/test/resources/metrics-prod-ds.xml"))
+                .addAsWebInfResource(new File("src/test/resources/metrics-" + dataSourceEnvironment + "-ds.xml"))
+                .addAsWebInfResource(new File("src/test/resources/analytics-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
+                .addAsResource(new File("src/main/resources/META-INF/beans.xml"), "META-INF/beans.xml")
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
-                        //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
+                .addAsWebInfResource(new File("src/main/webapp/WEB-INF/jboss-deployment-structure.xml"))
+                //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
                 .addAsResource(new File("src/main/resources/WorkflowConfig.xml"), "WorkflowConfig.xml")
                 .addAsResource(new File("src/main/resources/templates/WorkflowValidation.ftl"),
                         "templates/WorkflowValidation.ftl")
@@ -62,52 +81,78 @@ public class DeploymentBuilder {
                         "classes/jndi.properties");
         addWebResourcesTo(war, TestUtils.TEST_DATA_LOCATION);
         war = addWarDependencies(war);
+        /*
+         *** Capture contents of war to troubleshoot dependencies
+        try {
+            war.writeTo(new FileOutputStream("target/Mercury-Arquillian.war.files.txt"), Formatters.VERBOSE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
         return war;
     }
+
 
     private static WebArchive addWebResourcesTo(WebArchive archive, String directoryName) {
         final File webAppDirectory = new File(directoryName);
         for (File file : FileUtils.listFiles(webAppDirectory, null, true)) {
             if (!file.isDirectory()) {
-                archive.addAsResource(file, file.getPath().substring(directoryName.length()));
+                // Replace backslashes with forward slashes to avoid "file not found" error when deploying on Windows
+                archive.addAsResource(file, file.getPath().replace('\\', '/').substring(directoryName.length()));
             }
         }
         return archive;
     }
 
     public static WebArchive buildMercuryWar() {
-
         return buildMercuryWar(Deployment.STUBBY);
     }
 
+    /**
+     * Replace the default beans.xml file as deployed with alternative beans for testing
+     * @param beansXml Contents of alternative beans.xml file
+     * @return WebArchive with alternative beans.xml file substituted
+     */
     public static WebArchive buildMercuryWar(String beansXml) {
-        return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
-                .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
-                .merge(buildMercuryWar());
+        WebArchive war = buildMercuryWar();
+        war.addAsResource(new StringAsset(beansXml), "META-INF/beans.xml");
+        return war;
     }
 
+    /**
+     * @see DeploymentBuilder#buildMercuryWar(String)
+     */
     private static WebArchive buildMercuryWar(String beansXml, Deployment deployment) {
-        return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
-                .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
-                .merge(buildMercuryWar(deployment));
+        WebArchive war = buildMercuryWar(deployment);
+        war.addAsResource(new StringAsset(beansXml), "META-INF/beans.xml");
+        return war;
     }
 
+    /**
+     * @see DeploymentBuilder#buildMercuryWar(String)
+     */
     private static WebArchive buildMercuryWar(String beansXml, String dataSourceEnvironment, Deployment deployment) {
-        return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
-                .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
-                .merge(buildMercuryWar(deployment, dataSourceEnvironment));
+        WebArchive war = buildMercuryWar(deployment, dataSourceEnvironment);
+        war.addAsResource(new StringAsset(beansXml), "META-INF/beans.xml");
+        return war;
     }
 
-    @SuppressWarnings("UnusedDeclaration")
     public static WebArchive buildMercuryWarWithAlternatives(String... alternatives) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<beans>\n")
-                .append("  <alternatives>\n");
+        StringBuilder sbAlts = new StringBuilder();
+        sbAlts.append("  <alternatives>\n");
         for (String alternative : alternatives) {
-            sb.append("    <class>").append(alternative).append("</class>\n");
+           sbAlts.append("    <class>").append(alternative).append("</class>\n");
         }
-        sb.append("  </alternatives>\n")
-                .append("</beans>");
+        sbAlts.append("  </alternatives>\n");
+
+        // Small enough, dump it in a String
+        StringBuilder sb = new StringBuilder();
+        try {
+            sb.append(new String(Files.readAllBytes(FileSystems.getDefault().getPath("./src/main/resources/META-INF/beans.xml"))));
+            sb.insert(sb.indexOf("</beans>"), sbAlts.toString());
+        } catch ( Exception ex ) {
+            throw new RuntimeException("Fail to read beans.xml template file: " + ex.getMessage() );
+        }
+
         return buildMercuryWar(sb.toString());
     }
 
@@ -149,57 +194,59 @@ public class DeploymentBuilder {
      * @return the string contents for a beans.xml file
      */
     public static String buildBeansXml(Class... alternatives) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<beans>\n")
-                .append("  <alternatives>\n");
+        StringBuilder sbAlts = new StringBuilder();
+        sbAlts.append("  <alternatives>\n");
         for (Class alternative : alternatives) {
             if (alternative.isAnnotation()) {
-                sb.append("    <stereotype>").append(alternative.getName()).append("</stereotype>\n");
+                sbAlts.append("    <stereotype>").append(alternative.getName()).append("</stereotype>\n");
             } else {
-                sb.append("    <class>").append(alternative.getName()).append("</class>\n");
+                sbAlts.append("    <class>").append(alternative.getName()).append("</class>\n");
             }
         }
-        sb.append("  </alternatives>\n")
-                .append("</beans>");
+        sbAlts.append("  </alternatives>\n");
+
+        // Small enough, dump it in a String
+        StringBuilder sb = new StringBuilder();
+        try {
+            sb.append(new String(Files.readAllBytes(Paths.get("./src/main/resources/META-INF/beans.xml"))));
+            sb.insert(sb.indexOf("</beans>"), sbAlts.toString());
+        } catch ( Exception ex ) {
+            throw new RuntimeException("Fail to read beans.xml template file: " + ex.getMessage() );
+        }
+
         return sb.toString();
     }
 
     @SuppressWarnings("UnusedDeclaration")
     private static JavaArchive addTestHelpers(JavaArchive archive) {
         // TODO: put all test helpers into a single package or two to import all at once
-        return archive
-                .addClass(ContainerTest.class)
-                .addClass(BettaLimsMessageTestFactory.class);
+        return archive.addClass(BettaLimsMessageTestFactory.class);
     }
 
+    /**
+     * Import Maven dependencies to WEB-INF/lib folder
+     * @param archive The archive to build out with dependencies
+     * @return Same archive instance with added dependencies (why not use by reference and return void?)
+     */
     private static WebArchive addWarDependencies(WebArchive archive) {
-        MavenResolutionFilter resolutionFilter = new MavenResolutionFilter() {
-            @Override
-            public boolean accept(MavenDependency dependency) {
-                if (dependency == null) {
-                    return false;
-                }
-                // TODO: remove all test-scoped dependencies; optionally explicitly add certain test dependencies that we commit to supporting
-                // TODO: remove exclusion of xerces, which is a workaround until all test-scoped dependencies are removed
-                return
-//                        !dependency.getScope().equals("test") &&
-                        !dependency.getScope().equals("provided") &&
-                        !dependency.getCoordinates().contains("xerces");
+
+        // Import Maven runtime dependencies
+        List<File> artifacts = new ArrayList<>();
+
+        for (MavenResolvedArtifact artifact : Maven.resolver().loadPomFromFile("pom.xml")
+                .importDependencies(ScopeType.IMPORT, ScopeType.RUNTIME, ScopeType.TEST, ScopeType.COMPILE )
+                .resolve().withTransitivity().asResolvedArtifact()) {
+            // This is some old stuff I had to pull up to use new API and be consistent
+            // TODO: remove all test-scoped dependencies; optionally explicitly add certain test dependencies that we commit to supporting
+            // TODO: remove exclusion of xerces, which is a workaround until all test-scoped dependencies are removed
+            // TODO: remove exclusion of dom4j, WildFly problem with an older release in it's runtime classpath
+            if( artifact.getExtension().equals("jar")
+                    && !artifact.getCoordinate().getArtifactId().contains("xerces")
+                    // Pulled in with another dependency
+                    && !artifact.getCoordinate().getArtifactId().contains("dom4j") ) {
+                artifacts.add(artifact.asFile());
             }
-
-            @Override
-            public MavenResolutionFilter configure(Collection<MavenDependency> dependencies) {
-                return this;
-            }
-        };
-
-//        MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class).includeDependenciesFromPom("pom.xml");
-//        return archive.addAsLibraries(resolver.resolveAsFiles(resolutionFilter);
-
-        return archive
-                .as(MavenImporter.class)
-                .loadEffectivePom("pom.xml")
-                .importAnyDependencies(resolutionFilter)
-                .as(WebArchive.class);
+        }
+        return archive.addAsLibraries(artifacts.toArray(new File[0] ));
     }
 }

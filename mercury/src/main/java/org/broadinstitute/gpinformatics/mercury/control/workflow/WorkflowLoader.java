@@ -3,60 +3,76 @@ package org.broadinstitute.gpinformatics.mercury.control.workflow;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.ExternalDataCacheControl;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.Serializable;
 
 /**
- * Loads a workflow configuration from the file system if outside a container (DBFree tests)
- *  or from preference table if called from within a container (Deployed app and Arquillian tests)
+ * This class is responsible for loading and refreshing the WorkflowConfiguration from the database. For database-free
+ * tests, the configuration is read from the filesystem. As WorkflowLoader extends AbstractCache, the cached
+ * WorkflowConfig is periodically refreshed.
+ *
+ * @see ExternalDataCacheControl#invalidateCache()
  */
-public class WorkflowLoader implements Serializable {
+@ApplicationScoped
+public class WorkflowLoader extends AbstractCache implements Serializable {
 
-    // Use file based configuration access for DBFree testing
-    private static boolean IS_STANDALONE = false;
-
-    // In-container only - do not inject or DBFree tests will fail
+    // Valid for in-container only - DBFree tests will load workflow from file system
+    @Inject
     private PreferenceDao preferenceDao;
+
+    @Inject
+    private SessionContextUtility sessionContextUtility;
 
     // Standalone only (DBFree tests)
     private static WorkflowConfig workflowConfigFromFile;
 
-    // Use availability of context to test for running in container
-    static {
-        try{
-            new InitialContext().lookup("java:comp/env");
-        } catch (NamingException e) {
-            IS_STANDALONE = true;
-        }
-    }
+    private WorkflowConfig workflowConfig;
 
     public WorkflowLoader(){}
 
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public WorkflowConfig load() {
-        if( IS_STANDALONE ) {
-            return loadFromFile();
+        if (workflowConfig==null){
+            refreshCache();
+        }
+        return workflowConfig;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public void refreshCache() {
+        if ( preferenceDao == null ) {
+            // DB Free tests will load from file
+            workflowConfig = loadFromFile();
         } else {
-            return loadFromPrefs();
+            sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
+                @Override
+                public void apply() {
+                    workflowConfig = loadFromPrefs();
+                }
+            });
         }
     }
 
     /**
      * Pull workflow configuration from preferences when running in container
-     * TODO JMS This is an expensive reload for rarely changing data.  A 30 minute cache would be nice...
-     * @return
      */
     private WorkflowConfig loadFromPrefs() {
 
         if( preferenceDao == null ) {
-            preferenceDao = ServiceAccessUtility.getBean(PreferenceDao.class);
+            throw new RuntimeException("Attempt to load preferences from DB without JavaEE container services.");
         }
 
         Preference workflowConfigPref = preferenceDao.getGlobalPreference(PreferenceType.WORKFLOW_CONFIGURATION);
@@ -77,12 +93,10 @@ public class WorkflowLoader implements Serializable {
         return config;
     }
 
-    /** Pull workflow configuration from file when running outside a container
-     *
-     * @return
+    /**
+     *  Pull workflow configuration from file when running outside a container
      */
     private WorkflowConfig loadFromFile() {
-        if (workflowConfigFromFile == null) {
             try {
                 JAXBContext jc = JAXBContext.newInstance(WorkflowConfig.class, WorkflowBucketDef.class);
                 Unmarshaller unmarshaller = jc.createUnmarshaller();
@@ -91,7 +105,7 @@ public class WorkflowLoader implements Serializable {
             } catch (JAXBException e) {
                 throw new RuntimeException(e);
             }
-        }
         return workflowConfigFromFile;
     }
+
 }

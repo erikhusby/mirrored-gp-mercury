@@ -17,6 +17,7 @@
                         {"bSortable": true},                   // Quote
                         {"bSortable": true},                   // PDOs
                         {"bSortable": true},                   // quote server work items
+                        {"bSortable": true},                   // SAP Server document ID
                         {"bSortable": true},                   // Platform
                         {"bSortable": true},                   // Category
                         {"bSortable": true},                   // Price Item
@@ -28,10 +29,10 @@
             });
 
             $j(window).load(function() {
-                var idToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
+                var workItemIdToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
                 // if the url contains a quote server work item, highlight the corresponding row
-                $j(idToHighlight).attr('class','highlighted');
-                $('html, body').scrollTop($(idToHighlight).offset().top);
+                $j(workItemIdToHighlight).attr('class','highlighted');
+                $('html, body').scrollTop($(workItemIdToHighlight).offset().top);
             });
 
         </script>
@@ -43,11 +44,10 @@
 
             <security:authorizeBlock roles="<%= roles(Developer, BillingManager) %>">
                 <c:if test="${actionBean.editSession.billedDate == null}">
-                    <stripes:submit name="bill" value="Bill Work in Broad Quotes" class="btn"
+                    <stripes:submit name="bill" value="Bill Work in Broad SAP/Quotes" class="btn"
                                     style="margin-right:30px;" disabled="${actionBean.isBillingSessionLocked()}"/>
                 </c:if>
 
-                <stripes:submit name="downloadTracker" value="Download Tracker" class="btn" style="margin-right:30px;"/>
                 <stripes:submit name="downloadQuoteItems" value="Download Quote Items" class="btn" style="margin-right:30px;"/>
 
                 <c:if test="${actionBean.editSession.billedDate == null}">
@@ -99,6 +99,7 @@
                 <th width="60">Quote</th>
                 <th width="250">PDOs</th>
                 <th width="50">Work Items</th>
+                <th width="90">SAP<br/>Document ID(s)</th>
                 <th>Platform</th>
                 <th>Category</th>
                 <th>Price Item</th>
@@ -133,6 +134,11 @@
                             <a href="${actionBean.getQuoteWorkItemUrl(item.quoteId,quoteServerWorkItem)}" target="QUOTE">
                                 ${quoteServerWorkItem}<br>
                             </a>
+                        </c:forEach>
+                    </td>
+                    <td>
+                        <c:forEach items="${item.sapItems}" var="sapWorkItem">
+                                ${sapWorkItem}<br>
                         </c:forEach>
                     </td>
                     <td>${item.priceItem.platform}</td>

@@ -4,9 +4,7 @@ import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
@@ -16,7 +14,6 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,12 +27,12 @@ import java.util.Set;
  * Wrapper around {@link BSPSampleSearchService} that
  * does a bit more object-ifying and type-safety.
  */
-public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializable {
+public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Serializable {
     static final long serialVersionUID = -1432207534876411738L;
-    // Many versions of this service written only for tests are considered as options by IntelliJ.
-    @SuppressWarnings("CdiInjectionPointsInspection")
+
     @Inject
     BSPSampleSearchService service;
+
     static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
     static final String WS_DETAILS = "sample/getdetails";
     // Used for mapping Matrix barcodes to Sample short barcodes, forces xml output format.
@@ -149,11 +146,12 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
 
         final Map<String, BspSampleData> barcodeToSampleDataMap = new HashMap<>();
         for (BspSampleData bspSampleData : bspSampleDatas) {
-            barcodeToSampleDataMap.put(bspSampleData.getSampleId(), bspSampleData);
+            if (StringUtils.isNotBlank(bspSampleData.getSampleId())) {
+                barcodeToSampleDataMap.put(bspSampleData.getSampleId(), bspSampleData);
+            }
         }
-
         // Check to see if BSP is supported before trying to get data.
-        if (AbstractConfig.isSupported(getBspConfig())) {
+        if (!barcodeToSampleDataMap.isEmpty() && AbstractConfig.isSupported(getBspConfig())) {
             String urlString = getUrl(WS_FFPE_DERIVED);
             String queryString = makeQueryString("barcodes", barcodeToSampleDataMap.keySet());
             final int SAMPLE_BARCODE = 0;

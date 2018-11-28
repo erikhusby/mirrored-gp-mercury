@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -20,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -40,6 +40,7 @@ import java.util.Set;
  * vessels) have been batched for a Mercury-supported workflow.
  *
  */
+@Dependent
 public class SystemRouter implements Serializable {
 
     private static final long serialVersionUID = 20130507L;
@@ -68,17 +69,17 @@ public class SystemRouter implements Serializable {
         SYSTEM_OF_RECORD
     }
 
-    private LabVesselDao         labVesselDao;
-    private WorkflowLoader       workflowLoader;
-    private BSPExportsService    bspExportsService;
+    private LabVesselDao labVesselDao;
+    private WorkflowConfig workflowConfig;
+    private BSPExportsService bspExportsService;
 
     SystemRouter() {
     }
 
     @Inject
-    public SystemRouter(LabVesselDao labVesselDao, WorkflowLoader workflowLoader, BSPExportsService bspExportsService) {
+    public SystemRouter(LabVesselDao labVesselDao, WorkflowConfig workflowConfig, BSPExportsService bspExportsService) {
         this.labVesselDao = labVesselDao;
-        this.workflowLoader = workflowLoader;
+        this.workflowConfig = workflowConfig;
         this.bspExportsService = bspExportsService;
     }
 
@@ -377,9 +378,6 @@ public class SystemRouter implements Serializable {
 
     /** Returns the workflowDef for the given workflowName and date. */
     private ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String workflowName, @Nonnull Date effectiveDate) {
-
-        WorkflowConfig workflowConfig = workflowLoader.load();
-
         return workflowConfig.getWorkflowVersionByName(workflowName, effectiveDate);
     }
 

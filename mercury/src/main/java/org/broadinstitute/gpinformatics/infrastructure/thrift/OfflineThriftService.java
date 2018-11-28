@@ -1,8 +1,23 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.*;
+import edu.mit.broad.prodinfo.thrift.lims.ConcentrationAndVolume;
+import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
+import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
+import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
+import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
+import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
+import edu.mit.broad.prodinfo.thrift.lims.PoolGroup;
+import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+import edu.mit.broad.prodinfo.thrift.lims.TZReadType;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
 import org.broadinstitute.gpinformatics.infrastructure.Offline;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,13 +27,24 @@ import java.util.Map;
  * @author breilly
  */
 @Offline
+@Alternative
+@Dependent
 public class OfflineThriftService implements ThriftService {
+
+    public OfflineThriftService(){}
 
     private static int libraryNumber = 100;
 
     @Override
     public TZamboniRun fetchRun(String runName) {
         return makeRun(runName, 8, 12);
+    }
+
+    @Override
+    public TZamboniRun fetchRunByBarcode(String runBarcode) {
+        TZamboniRun run = makeRun("Run" + System.currentTimeMillis(), 8, 12);
+        run.setRunBarcode(runBarcode);
+        return run;
     }
 
     @Override

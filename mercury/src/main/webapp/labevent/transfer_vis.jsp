@@ -18,12 +18,16 @@
             <c:if test="${not empty actionBean.jsonUrl}">
             $j(document).ready(
                     function () {
-                        d3.json("${ctxpath}${actionBean.jsonUrl}")
+                        d3.json(<enhance:out escapeXml="false">"${ctxpath}${actionBean.jsonUrl}"</enhance:out>)
                                 .on("progress", function() {
                                     d3.select("#progress").html("Bytes loaded: " + d3.event.loaded);
                                 })
                                 .get(function (error, json) {
-                                    renderJson(json);
+                                    if (json.error) {
+                                        alert(json.error);
+                                    } else {
+                                        renderJson(json);
+                                    }
                                 });
                     }
             );

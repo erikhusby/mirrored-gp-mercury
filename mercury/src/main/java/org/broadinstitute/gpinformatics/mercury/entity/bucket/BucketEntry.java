@@ -4,7 +4,6 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -12,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -87,7 +86,7 @@ public class BucketEntry {
     private Long bucketEntryId;
 
     // FetchType.EAGER is a temporary fix for org.hibernate.PropertyNotFoundException: field [tubeType] not found on
-    // ... LabVessel_$$_javassist_33 in LabBatchEjb.addToLabBatch
+    // ... LabVessel_$$_javassist_33 in LabBatchEjb.updateLabBatch
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "lab_vessel_id")
     private LabVessel labVessel;
@@ -108,8 +107,9 @@ public class BucketEntry {
     private Status status = Status.Active;
 
     /*
-        TODO SGM:  Implement this as a separate join table to have the ranking associated directly with the Product
+        TODO Implement this as a separate join table to have the ranking associated directly with the Product
         order, and not duplicated across bucket entries
+        todo jmt can this be removed?
      */
     @Column(name = "product_order_ranking")
     private Integer productOrderRanking = 1;
@@ -121,6 +121,8 @@ public class BucketEntry {
      * The batch into which the bucket was drained.
      */
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "LAB_BATCH")
+    @BatchSize(size = 500)
     private LabBatch labBatch;
 
     @Column(name = "ENTRY_TYPE", nullable = false)
@@ -136,7 +138,7 @@ public class BucketEntry {
      * getWorkflows()
      */
     @Transient
-    private Collection<Workflow> workflows = null;
+    private Collection<String> workflows = null;
 
     protected BucketEntry() {
     }
@@ -149,6 +151,12 @@ public class BucketEntry {
         this.productOrderRanking = productOrderRanking;
         this.createdDate = new Date();
         setProductOrder(productOrder);
+    }
+
+    public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
+                       @Nonnull BucketEntryType entryType, int productOrderRanking, @Nonnull Date date) {
+        this(vessel, productOrder, bucket, entryType, productOrderRanking);
+        createdDate = date;
     }
 
     /**
@@ -202,7 +210,7 @@ public class BucketEntry {
     public void setProductOrder(@Nonnull ProductOrder productOrder) {
         this.productOrder = checkNotNull(productOrder);
 
-        //TODO SGM-- Temporary add until GPLIM-2710 is implemented
+        //TODO Temporary add until GPLIM-2710 is implemented:  This should be able to be removed now.
         this.poBusinessKey = productOrder.getBusinessKey();
     }
 
@@ -307,11 +315,18 @@ public class BucketEntry {
 
     @Override
     public String toString() {
+        String workflowString=null;
+        if (workflows == null) {
+            workflowString="(not initialized)";
+        } else if (workflows.isEmpty()) {
+            workflowString = "(no workflows)";
+        }
+
         return String.format("Bucket: %s, %s, Vessel %s, Batch %s, Workflow: %s",
                 bucket != null ? bucket.getBucketDefinitionName() : "(no bucket)",
                 productOrder != null?productOrder.getBusinessKey():"(no product order)",
                 labVessel != null ? labVessel.getLabel() : "(no vessel)",
-                workflows != null && !workflows.isEmpty() ? getWorkflowNames(): "(no workflows)",
+                workflowString == null ? this.workflows : workflowString,
                 labBatch != null ? labBatch.getBatchName() : "(not batched)");
     }
 
@@ -326,11 +341,10 @@ public class BucketEntry {
     }
 
     @Nonnull
-    private Collection<Workflow> findWorkflows() {
-        Collection<Workflow> workflows = new HashSet<>();
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
-        for (Workflow workflow : getProductOrder().getProductWorkflows()) {
-            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
+    private Collection<String> loadWorkflows(WorkflowConfig workflowConfig) {
+        Collection<String> workflows = new HashSet<>();
+        for (String workflow : getProductOrder().getProductWorkflows()) {
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflow);
             for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
                 if (workflowBucketDef.meetsBucketCriteria(labVessel, productOrder)) {
                     workflows.add(workflow);
@@ -345,20 +359,11 @@ public class BucketEntry {
      * @return
      */
     @Nonnull
-    public Collection<Workflow> getWorkflows() {
+    public Collection<String> getWorkflows(WorkflowConfig workflowConfig) {
         if (workflows == null) {
-            workflows = findWorkflows();
+            workflows = loadWorkflows(workflowConfig);
         }
         return workflows;
-    }
-
-    @Nonnull
-    public Collection<String> getWorkflowNames() {
-        Set<String> workflowNames = new HashSet<>();
-        for (Workflow workflow : getWorkflows()) {
-            workflowNames.add(workflow.getWorkflowName());
-        }
-        return workflowNames;
     }
 
     public enum BucketEntryType {

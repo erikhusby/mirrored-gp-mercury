@@ -4,10 +4,18 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 
 
@@ -16,7 +24,7 @@ import java.io.Serializable;
  */
 @Entity
 @Audited
-@Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
+@Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = "NAME"))
 public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     private static final long serialVersionUID = 234809472774666093L;
@@ -33,9 +41,10 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     /** Name of the Sequence Only Product Family.  Must be updated if the name is changed in the database! */
     private static final String SEQUENCE_ONLY_NAME = "Sequence Only";
     public static final String RNA_FAMILY_NAME = "RNA";
+    public static final String WHOLE_GENOME_GENOTYPING = "Whole Genome Genotyping";
     public static final String SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE_NAME = "Sample Initiation, Qualification & Cell Culture";
 
-    public enum ProductFamilyName {
+    public enum ProductFamilyInfo {
         RNA("RNA"),
         SMALL_DESIGN_VALIDATION_EXTENSION("Small Design, Validation & Extension"),
         SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE(SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE_NAME),
@@ -50,13 +59,37 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         DATA_ANALYSIS("Data Analysis");
 
         private final String familyName;
-        ProductFamilyName(String familyName) {
+        private final SubmissionLibraryDescriptor submissionLibraryDescriptor;
+
+        ProductFamilyInfo(String familyName) {
+            this(familyName, ProductFamily.defaultLibraryDescriptor());
+        }
+
+        ProductFamilyInfo(String familyName, SubmissionLibraryDescriptor submissionLibraryDescriptor) {
             this.familyName = familyName;
+            this.submissionLibraryDescriptor = submissionLibraryDescriptor;
         }
 
         public String getFamilyName() {
             return familyName;
         }
+
+        public SubmissionLibraryDescriptor getSubmissionLibraryDescriptor() {
+            return submissionLibraryDescriptor;
+        }
+
+        public static ProductFamilyInfo byFamilyName(String familyName) {
+            for (ProductFamilyInfo productFamilyInfo : values()) {
+                if (familyName.equals(productFamilyInfo.familyName)) {
+                    return productFamilyInfo;
+                }
+            }
+            return null;
+        }
+    }
+
+    public static SubmissionLibraryDescriptor defaultLibraryDescriptor() {
+        return SubmissionLibraryDescriptor.WHOLE_GENOME;
     }
 
     /**
@@ -78,6 +111,14 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     public Long getProductFamilyId() {
         return productFamilyId;
+    }
+
+    public SubmissionLibraryDescriptor getSubmissionType() {
+        ProductFamilyInfo productFamilyInfo = ProductFamilyInfo.byFamilyName(name);
+        if (productFamilyInfo != null) {
+            return productFamilyInfo.getSubmissionLibraryDescriptor();
+        }
+        return null;
     }
 
     @Nonnull

@@ -3,10 +3,13 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 public enum BSPSampleSearchColumn {
     SAMPLE_ID("Sample ID"),
+    SAMPLE_KIT("Sample Kit"),
+    SAMPLE_STATUS("Sample Status"),
     PARTICIPANT_ID("Participant ID(s)"),
     COLLABORATOR_SAMPLE_ID("Collaborator Sample ID"),
     SPECIES("Species"),
     COLLABORATOR_PARTICIPANT_ID("Collaborator Participant ID"),
+    COLLABORATOR_FAMILY_ID("Collaborator Family ID"),
     MATERIAL_TYPE("Material Type"),
     VOLUME("Vol(uL)"),
     CONCENTRATION("Conc(ng/uL)"),
@@ -19,6 +22,8 @@ public enum BSPSampleSearchColumn {
     LSID("Sample LSID"),
     ROOT_SAMPLE("Root Sample(s)"),
     COLLECTION("Collection"),
+    BSP_COLLECTION_BARCODE("BSP Collection Barcode"),
+    BSP_COLLECTION_NAME("BSP Collection Name"),
     STOCK_SAMPLE("Stock Sample"),
     PARENT_SAMPLES("Parent Sample(s)"),
     CONTAINER_ID("Container"),
@@ -47,6 +52,7 @@ public enum BSPSampleSearchColumn {
         BSPSampleSearchColumn.STOCK_SAMPLE,
         BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
         BSPSampleSearchColumn.COLLECTION,
+        BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
         BSPSampleSearchColumn.VOLUME,
         BSPSampleSearchColumn.CONCENTRATION,
         BSPSampleSearchColumn.SPECIES,
@@ -85,7 +91,7 @@ public enum BSPSampleSearchColumn {
     };
 
     public static final BSPSampleSearchColumn[] BUCKET_PAGE_COLUMNS = {
-            COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE, RECEIPT_DATE
+            COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE, RECEIPT_DATE, ROOT_SAMPLE
     };
 
     public static boolean isQuantColumn(BSPSampleSearchColumn bspSampleSearchColumn) {

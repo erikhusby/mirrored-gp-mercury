@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,6 +99,25 @@ public class ReagentSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("First Use Date");
+        searchTerm.setDbSortPath("firstUse");
+        searchTerm.setValueType(ColumnValueType.DATE_TIME);
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("ReagentID"));
+        criteriaPath.setPropertyName("firstUse");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Date evaluate(Object entity, SearchContext context) {
+                Reagent reagent = (Reagent) entity;
+                return reagent.getFirstUse();
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -109,7 +129,7 @@ public class ReagentSearchDefinition {
         searchTerm.setName("LCSET");
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setAlternateSearchDefinition(buildLcsetAlternateSearchDef());
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
         searchTerm.setHelpText( "Reagents are collected and consolidated from all descendant events in the LCSET."
             + "\nThe LCSET term is exclusive, no other terms can be selected.");
         // Need criteria path in order to see in list of terms
@@ -133,6 +153,10 @@ public class ReagentSearchDefinition {
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
         List<SearchTerm> searchTerms = new ArrayList<>();
 
+        // Mercury only cares about workflow batches
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
+
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
@@ -140,6 +164,7 @@ public class ReagentSearchDefinition {
         criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */
                 "labBatches", /* LabBatchStartingVessel */ "labBatch" /* LabBatch */));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
 
@@ -147,6 +172,7 @@ public class ReagentSearchDefinition {
         criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */
                 "reworkLabBatches" /* LabBatch */));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
 

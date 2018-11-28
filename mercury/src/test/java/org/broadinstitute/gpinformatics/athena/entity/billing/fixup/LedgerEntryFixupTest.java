@@ -1,29 +1,61 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryFixupDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 @Test(groups = TestGroups.FIXUP)
 public class LedgerEntryFixupTest extends Arquillian {
@@ -31,11 +63,28 @@ public class LedgerEntryFixupTest extends Arquillian {
     private static final Log logger = LogFactory.getLog(LedgerEntryFixupTest.class);
 
     @Inject
+    private UserBean userBean;
+
+    @Inject
+    private UserTransaction utx;
+
+    @Inject
     private LedgerEntryFixupDao ledgerEntryFixupDao;
 
     @Inject
     private PriceListCache priceListCache;
 
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    private ProductOrderEjb productOrderEjb;
+
+    @Inject
+    private QuoteServiceImpl quoteService;
+
+    @Inject
+    private BillingEjb billingEjb;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -220,5 +269,161 @@ public class LedgerEntryFixupTest extends Arquillian {
 
         // Persist all the clears
         ledgerEntryFixupDao.persistAll(Collections.emptyList());
+    }
+
+    @Test(enabled = false)
+    public void gplim4143FixEntryBilledAsAddOnInsteadOfPrimary()
+            throws IOException, ProductOrderEjb.NoSuchPDOException, SystemException, NotSupportedException,
+            HeuristicRollbackException, HeuristicMixedException, RollbackException, SAPInterfaceException {
+        userBean.loginOSUser();
+
+        /*
+         * Use a user transaction for this test because it calls an EJB method. Without the user transaction, the EJB's
+         * transaction would save the entity modifications while the FixupCommentary would be persisted in a separate
+         * transaction with a different rev ID.
+         */
+        utx.begin();
+
+        String pdoKey = "PDO-8360";
+        String sample = "SM-4AZSZ";
+
+        List<ProductOrderSample> samples =
+                productOrderSampleDao.findByOrderKeyAndSampleNames(pdoKey, Collections.singleton(sample));
+        assertThat(samples, hasSize(1));
+        assertThat(samples.get(0).getLedgerItems(), hasSize(1));
+        LedgerEntry ledgerEntry = samples.get(0).getLedgerItems().iterator().next();
+
+        assertThat(ledgerEntry.getPriceItemType(), equalTo(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM));
+        ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM);
+
+        MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(logger);
+        productOrderEjb.updateOrderStatus(pdoKey, reporter);
+
+        ledgerEntryFixupDao.persist(new FixupCommentary(
+            String.format("GPLIM-4143 Correcting price item type for %s on %s", sample, pdoKey)));
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim4371BackfillLedgerEntryBilledSuccessfullyMessage() {
+        userBean.loginOSUser();
+
+        List<LedgerEntry> ledgerEntries = ledgerEntryFixupDao.findBilledWithoutBillingMessage();
+        for (LedgerEntry ledgerEntry : ledgerEntries) {
+            ProductOrderSample productOrderSample = ledgerEntry.getProductOrderSample();
+            System.out.println(String.format("Updating billingMessage on billed LedgerEntry for sample %s in %s", productOrderSample.getSampleKey(), productOrderSample.getProductOrder().getBusinessKey()));
+            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+        }
+
+        ledgerEntryFixupDao.persist(new FixupCommentary(
+                String.format("SUPPORT-2120 Backfilled \"%s\" billing message for %d billed ledger entries",
+                        BillingSession.SUCCESS, ledgerEntries.size())));
+    }
+
+    @Test(enabled = false)
+    public void support4164ReverseIncorrectQuantity() {
+        userBean.loginOSUser();
+
+        LedgerEntry entryToCorrect= ledgerEntryFixupDao.findSingle(LedgerEntry.class, LedgerEntry_.workItem, "282137");
+
+        Quote quoteByAlphaId = null;
+        try {
+            quoteByAlphaId = quoteService.getQuoteByAlphaId(entryToCorrect.getQuoteId());
+        } catch (QuoteServerException e) {
+            Assert.fail();
+        } catch (QuoteNotFoundException e) {
+            Assert.fail();
+        }
+
+        final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
+                QuotePriceItem.convertMercuryPriceItem(entryToCorrect.getPriceItem()), null,
+                entryToCorrect.getWorkCompleteDate(), -entryToCorrect.getQuantity(),
+                "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4164",
+                "correction", "SUPPORT-4164", null);
+
+        entryToCorrect.getProductOrderSample().getLedgerItems().remove(entryToCorrect);
+//        ledgerEntryFixupDao.remove(entryToCorrect);
+
+        System.out.println("Corrected value in Quote server for quote " + entryToCorrect.getQuoteId() +
+                           " with work item id " + correction);
+
+        ledgerEntryFixupDao.persist(new FixupCommentary("Support-4164 Removing Ledger entry that was created "
+                                                        + "in the wrong way.  Quote server correction is found at work item " + correction));
+    }
+
+    @Test(enabled = false)
+    public void support4714ReverseIncorrectQuantity() {
+        userBean.loginOSUser();
+
+        String workItem = "302042";
+        LedgerEntry entryToCorrect= ledgerEntryFixupDao.findSingle(LedgerEntry.class, LedgerEntry_.workItem, workItem);
+        String quote = "MMML4G";
+        Assert.assertEquals(entryToCorrect.getQuoteId(), quote);
+
+        Quote quoteByAlphaId = null;
+        try {
+            quoteByAlphaId = quoteService.getQuoteByAlphaId(entryToCorrect.getQuoteId());
+        } catch (QuoteServerException | QuoteNotFoundException e) {
+            Assert.fail();
+        }
+        String fixupMessage = String.format("SUPPORT-4714 Reverse samples billed in Quotes (workItem %s, Quote %s)", workItem, quote);
+
+        final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
+                QuotePriceItem.convertMercuryPriceItem(entryToCorrect.getPriceItem()), null,
+                entryToCorrect.getWorkCompleteDate(), -4,
+                "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4714",
+                "correction", "SUPPORT-4714", null);
+
+        String messageWithCorrection = String.format("%s %s", fixupMessage, correction);
+        System.out.println(messageWithCorrection);
+        ledgerEntryFixupDao.persist(new FixupCommentary(messageWithCorrection));
+    }
+
+    @Test(enabled=false)
+    public void support4208RePostQuoteServerPosts() {
+        userBean.loginOSUser();
+        QuoteImportInfo collectedEntriesByQuoteId = new QuoteImportInfo();
+        final List<String> workItemsToUpdate = Arrays.asList("282484", "282485", "282488", "282509", "282489", "282494",
+                "282495", "282496", "282501", "282502");
+
+        Multimap<String, Long> entriesByWorkItem = ArrayListMultimap.create();
+        ledgerEntryFixupDao.findListByList(LedgerEntry.class, LedgerEntry_.workItem, workItemsToUpdate)
+                .forEach((entry)->{
+            collectedEntriesByQuoteId.addQuantity(entry);
+            entriesByWorkItem.put(entry.getWorkItem(), entry.getLedgerId());
+        }
+        );
+
+        List<String> newWorkItems = new ArrayList<>();
+        try {
+            final List<QuoteImportItem> quoteImportItems = collectedEntriesByQuoteId.getQuoteImportItems(priceListCache);
+            for (QuoteImportItem item : quoteImportItems) {
+                Quote quote = item.getProductOrder().getQuote(quoteService);
+
+                System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
+                                   + item.getLedgerItems().size() + " ledger entries: "
+                                   + StringUtils.join(entriesByWorkItem.get(item.getSingleWorkItem()), ","));
+                final PriceList priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
+                String newWorkId = quoteService.registerNewWork(quote,
+                        QuotePriceItem.convertMercuryPriceItem(item.getPriceItem()),
+                        item.getPrimaryForReplacement(priceItemsForDate),
+                        item.getWorkCompleteDate(),
+                        item.getQuantity(),
+                        "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4208",
+                        "SupportTicket","SUPPORT-4208",null);
+
+                newWorkItems.add(newWorkId);
+
+                item.updateLedgerEntries(null, BillingSession.SUCCESS, newWorkId, Collections.emptyList(),
+                        item.getSapItems());
+            }
+
+        } catch (QuoteNotFoundException | QuoteServerException e) {
+            Assert.fail();
+        }
+        ledgerEntryFixupDao.persist(new FixupCommentary("SUPPORT-4208 Replaced work item references " +
+                                                        StringUtils.join(workItemsToUpdate,",")
+                                                        + " Found in Ledger entries, with " + StringUtils.join(newWorkItems, ",")));
     }
 }

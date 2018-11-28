@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.HashMultimap;
-
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionCreator;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
-import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.JAXBContext;
@@ -16,6 +14,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +29,7 @@ import java.util.Map;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class WorkflowConfig implements PreferenceDefinitionValue {
+public class WorkflowConfig implements PreferenceDefinitionValue, Serializable {
 
     // JAXBContext is threadsafe
     @XmlTransient
@@ -84,8 +83,8 @@ public class WorkflowConfig implements PreferenceDefinitionValue {
         return sequencingConfigDef;
     }
 
-    public ProductWorkflowDef getWorkflow(@Nonnull Workflow workflow) {
-        return getWorkflowByName(workflow.getWorkflowName());
+    public ProductWorkflowDef getWorkflow(@Nonnull String workflow) {
+        return getWorkflowByName(workflow);
     }
 
     public ProductWorkflowDef getWorkflowByName(String workflowName) {
@@ -203,4 +202,16 @@ public class WorkflowConfig implements PreferenceDefinitionValue {
         }
         return null;
     }
+
+    public WorkflowBucketDef findWorkflowBucketDef(@Nonnull ProductOrder productOrder, String bucketName) {
+        for (String productWorkflow : productOrder.getProductWorkflows()) {
+            ProductWorkflowDefVersion workflowDefVersion = getWorkflowVersionByName(productWorkflow, new Date());
+            WorkflowBucketDef bucketDef = workflowDefVersion.findBucketDefByName(bucketName);
+            if (bucketDef != null) {
+                return bucketDef;
+            }
+        }
+        return null;
+    }
+
 }

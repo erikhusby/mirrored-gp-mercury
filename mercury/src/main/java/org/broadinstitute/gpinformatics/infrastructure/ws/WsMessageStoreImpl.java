@@ -2,8 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure.ws;
 
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.xml.bind.UnmarshalException;
 import java.io.File;
@@ -17,7 +18,8 @@ import java.util.Date;
  * Handles server-side storage of the text of messages from liquid handling decks.  If the database persistence fails,
  * we must have the text of the message, so we can troubleshoot and resubmit.
  */
-@Impl
+@Dependent
+@Default
 public class WsMessageStoreImpl implements WsMessageStore {
 
     @SuppressWarnings("CdiInjectionPointsInspection")

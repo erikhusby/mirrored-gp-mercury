@@ -20,6 +20,9 @@ import javax.persistence.Table;
 @Audited
 @Table(name = "ALIGNER", schema = "mercury")
 public class Aligner implements BusinessObject {
+    // This puts a null value in the pipeline query.
+    public static String UNALIGNED = "Unaligned";
+
     @Id
     @SequenceGenerator(name = "SEQ_ALIGNER", schema = "mercury", sequenceName = "SEQ_ALIGNER", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ALIGNER")

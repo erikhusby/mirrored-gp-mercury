@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+//import com.jprofiler.api.agent.Controller;
+
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
@@ -52,6 +55,9 @@ public class ConfigurableSearchTest extends Arquillian {
     private UserBean userBean;
 
     @Inject
+    private BSPUserList bspUserList;
+
+    @Inject
     private LabEventDao labEventDao;
 
     @Deployment
@@ -70,7 +76,7 @@ public class ConfigurableSearchTest extends Arquillian {
 
         // Create instance
         SearchInstance searchInstance = new SearchInstance();
-        String entity = "LabEvent";
+        String entity = ColumnEntity.LAB_EVENT.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("EventDate",
                 configurableSearchDef);
@@ -182,7 +188,7 @@ public class ConfigurableSearchTest extends Arquillian {
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
 
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", ColumnEntity.LAB_EVENT);
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, Collections.EMPTY_MAP, 0, "ASC", ColumnEntity.LAB_EVENT);
 
         LabEvent labEvent = labEventDao.findById(LabEvent.class, new Long("268634"));
         List<LabEvent> entityList = new ArrayList<>();
@@ -201,22 +207,22 @@ public class ConfigurableSearchTest extends Arquillian {
         Assert.assertEquals(data[0][0].toString(), "LabEventId" );
         Assert.assertEquals(data[1][0].toString(), "268634" );
         // Matrix 96 layout nested table
-        Assert.assertEquals(data[2][1].toString(), "Source Layout" );
-        Assert.assertEquals(data[3][2].toString(), "01");
-        Assert.assertEquals(data[3][13].toString(), "12" );
-        Assert.assertTrue(data[5][2].toString().indexOf("0154862184") >= 0);
+        Assert.assertEquals(data[2][0].toString(), "Source Layout" );
+        Assert.assertEquals(data[3][1].toString(), "01");
+        Assert.assertEquals(data[3][12].toString(), "12" );
+        Assert.assertEquals(data[7][1].toString(), "0154862184");
         // Parent term handled by child
-        Assert.assertTrue(data[5][2].toString().indexOf("SM-4CRI7") >= 0);
-        Assert.assertEquals(data[11][1].toString(), "H");
+        Assert.assertEquals(data[9][1].toString(), "SM-4CRI7");
+        Assert.assertEquals(data[25][0].toString(), "H");
         // Matrix 96 layout nested table
-        Assert.assertEquals(data[12][1].toString(), "Destination Layout");
-        Assert.assertEquals(data[13][2].toString(), "01" );
-        Assert.assertEquals(data[13][13].toString(), "12" );
-        Assert.assertEquals(data[14][1].toString(), "A" );
-        Assert.assertTrue(data[14][2].toString().indexOf("0116400397") >= 0);
+        Assert.assertEquals(data[28][0].toString(), "Destination Layout");
+        Assert.assertEquals(data[29][1].toString(), "01" );
+        Assert.assertEquals(data[29][12].toString(), "12" );
+        Assert.assertEquals(data[30][0].toString(), "A" );
+        Assert.assertEquals(data[30][1].toString(), "0116400397");
         // Parent term handled by child
-        Assert.assertTrue(data[14][2].toString().indexOf("SM-4CRI7") >= 0);
-        Assert.assertEquals(data[21][1].toString(), "H");
+        Assert.assertEquals(data[59][1].toString(), "SM-4CRI7");
+        Assert.assertEquals(data[121][0].toString(), "H");
 
     }
 
@@ -232,7 +238,7 @@ public class ConfigurableSearchTest extends Arquillian {
 
         // Create instance
         SearchInstance searchInstance = new SearchInstance();
-        String entity = "MercurySample";
+        String entity = ColumnEntity.MERCURY_SAMPLE.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET",
                 configurableSearchDef);
@@ -344,7 +350,7 @@ public class ConfigurableSearchTest extends Arquillian {
     @Test
     public void testEventMaterialType() {
         SearchInstance searchInstance = new SearchInstance();
-        String entity = "LabVessel";
+        String entity = ColumnEntity.LAB_VESSEL.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
 
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("PDO", configurableSearchDef);
@@ -364,5 +370,193 @@ public class ConfigurableSearchTest extends Arquillian {
         Assert.assertEquals(resultRows.get(2).getRenderableCells().get(1), "0175568200");
         Assert.assertEquals(resultRows.get(3).getRenderableCells().get(0), "SM-A19Z9");
         Assert.assertEquals(resultRows.get(3).getRenderableCells().get(1), "E000000293 0175568179");
+    }
+
+    @Test
+    public void testInfinium() {
+//        Controller.startCPURecording(true);
+        SearchInstance searchInstance = new SearchInstance();
+        String entity = ColumnEntity.LAB_VESSEL.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
+
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("PDO", configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        searchValue.setValues(Collections.singletonList("PDO-9246"));
+
+        searchInstance.getPredefinedViewColumns().add("Infinium DNA Plate Drill Down");
+        searchInstance.getPredefinedViewColumns().add("Infinium Amp Plate Drill Down");
+        searchInstance.setCustomTraversalOptionConfig(InfiniumVesselTraversalEvaluator.DNA_PLATE_INSTANCE.getUiName());
+        searchInstance.setExcludeInitialEntitiesFromResults(true);
+        searchInstance.getTraversalEvaluatorValues().put(LabEventSearchDefinition.TraversalEvaluatorName.DESCENDANTS.getId(), Boolean.TRUE);
+        searchInstance.getTraversalEvaluatorValues().put(LabEventSearchDefinition.TraversalEvaluatorName.ANCESTORS.getId(), Boolean.FALSE);
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);
+        List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
+        Assert.assertEquals(resultRows.size(), 38);
+//        Controller.stopCPURecording();
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "CO-15138260");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "CO-18828951");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000016825709");
+    }
+
+    /**
+     * Tests LabVesselLatestPositionPlugin using one tube prior to implementation of event transfer ancillary vessels,
+     *   and the other after implementation.
+     * Hopefully both old enough and/or discarded so they're never used again in newer workflows.
+     */
+    @Test
+    public void testVesselPositionPlugin(){
+        SearchInstance searchInstance = new SearchInstance();
+
+        searchInstance.getEvalContext().setBspUserList(bspUserList);
+
+        String entity = ColumnEntity.LAB_VESSEL.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
+
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Barcode", configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.IN);
+
+        searchValue.setValues(Arrays.asList("0157493754","0175362315"));
+
+        searchInstance.getPredefinedViewColumns().add("Barcode");
+        searchInstance.getPredefinedViewColumns().add("Most Recent Rack and Event");
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);
+        List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
+        Assert.assertEquals(resultRows.size(), 2);
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "0157493754");
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(1), "000006677301");
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(2), "A06");
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(3), "Hybridization, 03/03/2014, Cassie Crawford");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "0175362315");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000003038103");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(2), "E09");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(3), "FingerprintingPlateSetup, 10/29/2014, Michael Wilson");
+    }
+
+    @Test
+    public void testViewOnlyProductOrderType() throws Exception {
+
+        userBean.loginViewOnlyUser();
+
+        SearchInstance searchInstance = new SearchInstance();
+        final String productOrderEntityName = ColumnEntity.PRODUCT_ORDER.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDefinition =
+                SearchDefinitionFactory.getForEntity(productOrderEntityName);
+
+        SearchInstance.SearchValue quoteSearchValue = searchInstance.addTopLevelTerm("Quote Identifier",
+                configurableSearchDefinition);
+        quoteSearchValue.setOperator(SearchInstance.Operator.EQUALS);
+        quoteSearchValue.setValues(Collections.singletonList("GPSPIE8"));
+
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER);
+
+
+        Map<PreferenceType, Preference> mapTypeToPreference = new HashMap<>();
+        Map<String,String> newSearchLevels = new HashMap<>();
+        Map<String,String> searchInstanceNames = new HashMap<>();
+        try {
+            searchInstanceEjb.fetchInstances(ColumnEntity.PRODUCT_ORDER, mapTypeToPreference, searchInstanceNames,
+                    newSearchLevels);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        String newSearchName = "Test-" + productOrderEntityName + "-" +
+                               new SimpleDateFormat("MM/dd/yyyy").format(new Date(System.currentTimeMillis()));
+        searchInstanceEjb.persistSearch(true, searchInstance, new MessageCollection(),
+                PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
+        preferenceDao.flush();
+        preferenceDao.clear();
+
+        // Retrieve instance
+        mapTypeToPreference.clear();
+        searchInstanceNames.clear();
+        newSearchLevels.clear();
+        try {
+            searchInstanceEjb.fetchInstances( ColumnEntity.PRODUCT_ORDER, mapTypeToPreference, searchInstanceNames, newSearchLevels);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Preference preference = mapTypeToPreference.get(PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES);
+        SearchInstance fetchedSearchInstance = null;
+        try {
+            SearchInstanceList searchInstanceList =
+                    (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
+            for (SearchInstance instance : searchInstanceList.getSearchInstances()) {
+                if (instance.getName().equals(newSearchName)) {
+                    fetchedSearchInstance = instance;
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Assert.assertNotNull(fetchedSearchInstance);
+
+
+        fetchedSearchInstance.establishRelationships(configurableSearchDefinition);
+        fetchedSearchInstance.postLoad();
+
+        testSearch(fetchedSearchInstance, productOrderEntityName, configurableSearchDefinition);
+
+        searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES,
+                newSearchName, mapTypeToPreference);
+    }
+
+    @Test
+    public void testProductOrderType() throws Exception {
+
+        userBean.loginOSUser();
+
+        SearchInstance searchInstance = new SearchInstance();
+        final String productOrderEntityName = ColumnEntity.PRODUCT_ORDER.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDefinition =
+                SearchDefinitionFactory.getForEntity(productOrderEntityName);
+
+        SearchInstance.SearchValue quoteSearchValue = searchInstance.addTopLevelTerm("Quote Identifier",
+                configurableSearchDefinition);
+        quoteSearchValue.setOperator(SearchInstance.Operator.EQUALS);
+        quoteSearchValue.setValues(Collections.singletonList("GPSPIE8"));
+
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER);
+        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER);
+
+        searchInstance.establishRelationships(configurableSearchDefinition);
+        searchInstance.postLoad();
+
+        testSearch(searchInstance, productOrderEntityName, configurableSearchDefinition);
+    }
+
+    private void testSearch(SearchInstance searchInstance, String productOrderEntityName,
+                            ConfigurableSearchDefinition configurableSearchDefinition) {
+        ConfigurableListFactory.FirstPageResults pageResults =
+                configurableListFactory.getFirstResultsPage(searchInstance, configurableSearchDefinition,
+                        null, 1, null, "ASC",
+                        productOrderEntityName);
+
+        ConfigurableList.ResultRow row = null;
+        for( ConfigurableList.ResultRow currentRow : pageResults.getResultList().getResultRows() ){
+            row = currentRow;
+            break;
+        }
+
+        Map<String, Integer> colunnNumbersByHeader = new HashMap<>();
+        int columnNumber = 0;
+        for (ConfigurableList.Header header : pageResults.getResultList().getHeaders()) {
+            colunnNumbersByHeader.put(header.getViewHeader(), columnNumber);
+            columnNumber++;
+        }
+
+        List<String> rowValues = row.getRenderableCells();
+        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER)), "Draft-220113 -- Johan Nilsson_Lund University_Heart Transplant_PCR-PLUS_FFPE_XXTimepoints", "Incorrect PDO found");
+        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER)), "GPSPIE8", "Incorrect quote found");
+
+        Assert.assertTrue(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER)).contains("XTNL-WGS-010307"), "Incorrect product part number found");
     }
 }

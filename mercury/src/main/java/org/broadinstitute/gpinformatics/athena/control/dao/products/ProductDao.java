@@ -8,6 +8,8 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -29,6 +31,7 @@ import java.util.List;
  * Dao for {@link Product}s, supporting the browse and CRUD UIs.
  *
  */
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductDao extends GenericDao implements Serializable {
 
     @Inject
@@ -49,11 +52,18 @@ public class ProductDao extends GenericDao implements Serializable {
     }
 
     public enum IncludePDMOnly {
+        WITH_GP_PM,
         YES,
         NO;
 
-        public static IncludePDMOnly toIncludePDMOnly(boolean bool) {
-           return IncludePDMOnly.valueOf(BooleanUtils.toStringYesNo(bool).toUpperCase());
+        public static IncludePDMOnly toIncludePDMOnly(boolean bool, boolean gpPMRole) {
+            IncludePDMOnly includePDMOnly = NO;
+            if(gpPMRole) {
+                includePDMOnly = WITH_GP_PM;
+            } else {
+                includePDMOnly = IncludePDMOnly.valueOf(BooleanUtils.toStringYesNo(bool).toUpperCase());
+            }
+            return includePDMOnly;
         }
     }
 
@@ -135,6 +145,12 @@ public class ProductDao extends GenericDao implements Serializable {
 
         if (includePDMOnly == IncludePDMOnly.NO) {
             predicateList.add(cb.equal(product.get(Product_.pdmOrderableOnly), false));
+        } else if(includePDMOnly == IncludePDMOnly.WITH_GP_PM) {
+            predicateList.add(cb.or(cb.equal(product.get(Product_.pdmOrderableOnly), false),
+                    cb.and(cb.equal(product.get(Product_.pdmOrderableOnly), true),
+                            cb.equal(product.get(Product_.externalOnlyProduct), true))
+                    )
+            );
         }
 
         Predicate[] predicates = new Predicate[predicateList.size()];
@@ -197,7 +213,7 @@ public class ProductDao extends GenericDao implements Serializable {
         return findProducts(
                 Availability.CURRENT,
                 TopLevelOnly.YES,
-                IncludePDMOnly.toIncludePDMOnly(canIncludePdmProducts()), searchTerms);
+                IncludePDMOnly.toIncludePDMOnly(canIncludePdmProducts(), userBean.isGPPMUser()), searchTerms);
     }
 
     private boolean canIncludePdmProducts() {
@@ -221,7 +237,7 @@ public class ProductDao extends GenericDao implements Serializable {
     public List<Product> searchProductsForAddOnsInProductEdit(Product topLevelProduct, Collection<String> searchTerms) {
         List<Product> products = findProducts(
                 ProductDao.Availability.CURRENT_OR_FUTURE, TopLevelOnly.NO,
-                IncludePDMOnly.toIncludePDMOnly(canIncludePdmProducts()), searchTerms);
+                IncludePDMOnly.toIncludePDMOnly(canIncludePdmProducts(), userBean.isGPPMUser()), searchTerms);
 
         // remove top level product from the list if it's showing up there
         products.remove(topLevelProduct);

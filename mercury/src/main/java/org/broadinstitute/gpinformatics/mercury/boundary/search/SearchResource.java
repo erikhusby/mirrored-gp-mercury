@@ -14,6 +14,8 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -48,6 +50,7 @@ public class SearchResource {
     @Path("/run")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public SearchResponseBean runSearch(SearchRequestBean searchRequestBean) {
         try {
             ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(

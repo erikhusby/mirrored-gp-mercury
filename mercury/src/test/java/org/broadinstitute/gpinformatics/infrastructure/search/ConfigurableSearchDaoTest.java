@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -30,6 +31,9 @@ public class ConfigurableSearchDaoTest extends Arquillian {
 
     @Inject
     private ConfigurableSearchDao configurableSearchDao;
+
+    @Inject
+    private ConfigurableListFactory configurableListFactory;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -62,6 +66,32 @@ public class ConfigurableSearchDaoTest extends Arquillian {
         @SuppressWarnings("unchecked")
         List<LabVessel> list = criteria.list();
         Assert.assertEquals(list.size(), 4);
+    }
+
+    public void testRegulatoryDesignation() {
+        SearchInstance searchInstance = new SearchInstance();
+        String entity = ColumnEntity.LAB_VESSEL.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
+
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Barcode", configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.IN);
+        searchValue.setValues(Arrays.asList("0217574484", "0214238488"));
+
+        searchInstance.getPredefinedViewColumns().add("Barcode");
+        searchInstance.getPredefinedViewColumns().add("Regulatory Designation");
+        searchInstance.establishRelationships(configurableSearchDef);
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);
+        List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
+        Assert.assertEquals(resultRows.size(), 2);
+        ConfigurableList.ResultRow resultRow = resultRows.get(0);
+        Assert.assertEquals(resultRow.getRenderableCells().get(0), "0214238488");
+        Assert.assertEquals(resultRow.getRenderableCells().get(1), "CLINICAL_DIAGNOSTICS");
+
+        resultRow = resultRows.get(1);
+        Assert.assertEquals(resultRow.getRenderableCells().get(0), "0217574484");
+        Assert.assertEquals(resultRow.getRenderableCells().get(1), "RESEARCH_ONLY");
     }
 
     /**

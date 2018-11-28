@@ -26,6 +26,15 @@ public class InfiniumJaxbBuilder {
 
     private String ampPlate;
     private List<String> hybridizationChips = new ArrayList<>();
+    private PlateTransferEventType infiniumMethlationZymoPlateJaxb;
+    private PlateEventType infiniumMethylationBufferAddition1Jaxb;
+    private PlateEventType infiniumMethylationBufferAddition2Jaxb;
+    private PlateTransferEventType infiniumMethlationFilterPlateJaxb;
+    private PlateEventType infiniumMethylationWash1Jaxb;
+    private PlateEventType infiniumMethylationDesulphonationJaxb;
+    private PlateEventType infiniumMethylationWash2Jaxb;
+    private PlateEventType infiniumMethylationWash3Jaxb;
+    private PlateTransferEventType InfiniumMethylationElutionJaxb;
     private PlateTransferEventType infiniumAmplificationJaxb;
     private PlateEventType infiniumAmplificationReagentAdditionJaxb;
     private PlateEventType infiniumFragmentationJaxb;
@@ -39,6 +48,7 @@ public class InfiniumJaxbBuilder {
     private List<PlateEventType> infiniumPostHybridizationHybOvenLoadedJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumHybChamberLoadedJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumXStainJaxbs = new ArrayList<>();
+    private final InfiniumJaxbBuilder.IncludeMethylation includeMethylation;
     private List<Triple<String, String, Integer>> amplificationReagents;
     private List<Triple<String, String, Integer>> amplificationReagentReagents;
     private List<Triple<String, String, Integer>> fragmentationReagents;
@@ -46,20 +56,29 @@ public class InfiniumJaxbBuilder {
     private List<Triple<String, String, Integer>> precipitationIsopropanolReagents;
     private List<Triple<String, String, Integer>> resuspensionReagents;
     private List<Triple<String, String, Integer>> xstainReagents;
+    private String filterPlate;
+    private String elutionPlate;
+    private String zymoPlate;
+
+    public enum IncludeMethylation {
+        TRUE, FALSE
+    }
 
     public InfiniumJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-            String sourcePlate, int numSamples,
-            List<Triple<String, String, Integer>> amplificationReagents,
-            List<Triple<String, String, Integer>> amplificationReagentReagents,
-            List<Triple<String, String, Integer>> fragmentationReagents,
-            List<Triple<String, String, Integer>> precipitationReagents,
-            List<Triple<String, String, Integer>> precipitationIsopropanolReagents,
-            List<Triple<String, String, Integer>> resuspensionReagents,
-            List<Triple<String, String, Integer>> xstainReagents) {
+                               String sourcePlate, int numSamples,
+                               InfiniumJaxbBuilder.IncludeMethylation includeMethylation,
+                               List<Triple<String, String, Integer>> amplificationReagents,
+                               List<Triple<String, String, Integer>> amplificationReagentReagents,
+                               List<Triple<String, String, Integer>> fragmentationReagents,
+                               List<Triple<String, String, Integer>> precipitationReagents,
+                               List<Triple<String, String, Integer>> precipitationIsopropanolReagents,
+                               List<Triple<String, String, Integer>> resuspensionReagents,
+                               List<Triple<String, String, Integer>> xstainReagents) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.sourcePlate = sourcePlate;
         this.numSamples = numSamples;
+        this.includeMethylation = includeMethylation;
         this.amplificationReagents = amplificationReagents;
         this.amplificationReagentReagents = amplificationReagentReagents;
         this.fragmentationReagents = fragmentationReagents;
@@ -71,8 +90,53 @@ public class InfiniumJaxbBuilder {
 
     public InfiniumJaxbBuilder invoke() {
         ampPlate = testPrefix + "AmplificationPlate";
-        infiniumAmplificationJaxb =
-                bettaLimsMessageTestFactory.buildPlateToPlate("InfiniumAmplification", sourcePlate, ampPlate);
+        if (includeMethylation == InfiniumJaxbBuilder.IncludeMethylation.TRUE) {
+            zymoPlate = testPrefix + "ZymoPlate";
+            infiniumMethlationZymoPlateJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
+                    "InfiniumMethylationZymoTransferElution", sourcePlate, zymoPlate);
+            bettaLimsMessageTestFactory.addMessage(messageList, infiniumMethlationZymoPlateJaxb);
+
+            infiniumMethylationBufferAddition1Jaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                    "InfiniumMethylationBufferAddition1", zymoPlate);
+            bettaLimsMessageTestFactory.addMessage(messageList, infiniumMethylationBufferAddition1Jaxb);
+
+            infiniumMethylationBufferAddition2Jaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                    "InfiniumMethylationBufferAddition2", zymoPlate);
+            bettaLimsMessageTestFactory.addMessage(messageList, infiniumMethylationBufferAddition2Jaxb);
+
+            filterPlate = testPrefix + "FilterPlate";
+            infiniumMethlationFilterPlateJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
+                    "InfiniumMethylationFilterPlateTransfer", zymoPlate, filterPlate);
+            bettaLimsMessageTestFactory.addMessage(messageList, infiniumMethlationFilterPlateJaxb);
+
+            infiniumMethylationWash1Jaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                    "InfiniumMethylationWash1", filterPlate);
+            bettaLimsMessageTestFactory.addMessage(messageList, infiniumMethylationWash1Jaxb);
+
+            infiniumMethylationDesulphonationJaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                    "InfiniumMethylationDesulphonation", filterPlate);
+            bettaLimsMessageTestFactory.addMessage(messageList, infiniumMethylationDesulphonationJaxb);
+
+            infiniumMethylationWash2Jaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                    "InfiniumMethylationWash2", filterPlate);
+            bettaLimsMessageTestFactory.addMessage(messageList, infiniumMethylationWash2Jaxb);
+
+            infiniumMethylationWash3Jaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                    "InfiniumMethylationWash3", filterPlate);
+            bettaLimsMessageTestFactory.addMessage(messageList, infiniumMethylationWash3Jaxb);
+
+            elutionPlate = testPrefix + "ElutionPlate";
+            InfiniumMethylationElutionJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
+                    "InfiniumMethylationElution", filterPlate, elutionPlate);
+            bettaLimsMessageTestFactory.addMessage(messageList, InfiniumMethylationElutionJaxb);
+
+            infiniumAmplificationJaxb =
+                    bettaLimsMessageTestFactory.buildPlateToPlate("InfiniumAmplification", elutionPlate, ampPlate);
+        } else {
+            infiniumAmplificationJaxb =
+                    bettaLimsMessageTestFactory.buildPlateToPlate("InfiniumAmplification", sourcePlate, ampPlate);
+        }
+
         for (Triple<String, String, Integer> typeLotYearOffset : amplificationReagents) {
             ReagentType reagentType = new ReagentType();
             reagentType.setKitType(typeLotYearOffset.getLeft());
@@ -132,8 +196,9 @@ public class InfiniumJaxbBuilder {
         bettaLIMSMessage.getPlateEvent().add(infiniumResuspensionJaxb);
         bettaLIMSMessage.getPlateEvent().add(infiniumPostResuspensionHybOvenJaxb);
 
-        for (int i = 0; i <= numSamples / 24; i++) {
-            hybridizationChips.add(testPrefix + "HybridizationChip" + i);
+        int numChips = (int) Math.ceil(numSamples / 24.0);
+        for (int i = 0; i < numChips; i++) {
+            hybridizationChips.add(testPrefix + "HC" + i);
         }
 
         // 24 chip type
@@ -141,7 +206,7 @@ public class InfiniumJaxbBuilder {
         List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
         bettaLIMSMessage = new BettaLIMSMessage();
         // The decks don't "know" that wells are empty, so do a cherry pick for every destination
-        for (int i = 0; i < Math.ceil(numSamples / 24.0) * 24; i++) {
+        for (int i = 0; i < numChips * 24; i++) {
             int chipIndex = i % 24;
             int chipNum = i / 24;
             cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(ampPlate,
@@ -247,4 +312,47 @@ public class InfiniumJaxbBuilder {
         return messageList;
     }
 
+    public PlateEventType getInfiniumMethylationBufferAddition1Jaxb() {
+        return infiniumMethylationBufferAddition1Jaxb;
+    }
+
+    public PlateEventType getInfiniumMethylationBufferAddition2Jaxb() {
+        return infiniumMethylationBufferAddition2Jaxb;
+    }
+
+    public PlateTransferEventType getInfiniumMethlationFilterPlateJaxb() {
+        return infiniumMethlationFilterPlateJaxb;
+    }
+
+    public PlateEventType getInfiniumMethylationWash1Jaxb() {
+        return infiniumMethylationWash1Jaxb;
+    }
+
+    public PlateEventType getInfiniumMethylationDesulphonationJaxb() {
+        return infiniumMethylationDesulphonationJaxb;
+    }
+
+    public PlateEventType getInfiniumMethylationWash2Jaxb() {
+        return infiniumMethylationWash2Jaxb;
+    }
+
+    public PlateEventType getInfiniumMethylationWash3Jaxb() {
+        return infiniumMethylationWash3Jaxb;
+    }
+
+    public PlateTransferEventType getInfiniumMethylationElutionJaxb() {
+        return InfiniumMethylationElutionJaxb;
+    }
+
+    public PlateTransferEventType getInfiniumMethlationZymoPlateJaxb() {
+        return infiniumMethlationZymoPlateJaxb;
+    }
+
+    public String getZymoPlate() {
+        return zymoPlate;
+    }
+
+    public InfiniumJaxbBuilder.IncludeMethylation getIncludeMethylation() {
+        return includeMethylation;
+    }
 }

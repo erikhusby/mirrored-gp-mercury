@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInstanceNameCache;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
@@ -47,6 +48,9 @@ public class SearchInstanceEjb {
 
     @Inject
     private PreferenceDao preferenceDao;
+
+    @Inject
+    private SearchInstanceNameCache searchInstanceNameCache;
 
     /**
      * Map from preference type name to a method to get the preference
@@ -209,6 +213,34 @@ public class SearchInstanceEjb {
             }
         });
 
+        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES, new PreferenceAccess() {
+            @Override
+            public List<Preference> getPreferences(Long userID,
+                                                   PreferenceDao preferenceDao) {
+                List<Preference> preferences = new ArrayList<>();
+                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES);
+                if( preference != null ) {
+                    preferences.add(preference);
+                }
+                return preferences;
+            }
+
+            @Override
+            public Preference createNewPreference(Long userID) {
+                return new Preference(userID, PreferenceType.GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES, "");
+            }
+
+            @Override
+            public boolean canModifyPreference(Long userID) {
+                return true;
+            }
+
+            @Override
+            public PreferenceType.PreferenceScope getScope() {
+                return PreferenceType.PreferenceScope.GLOBAL;
+            }
+        });
+
         mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES, new PreferenceAccess() {
             @Override
             public List<Preference> getPreferences(Long userID,
@@ -323,6 +355,77 @@ public class SearchInstanceEjb {
                 return PreferenceType.PreferenceScope.USER;
             }
         });
+
+        mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES, new PreferenceAccess() {
+            @Override
+            public List<Preference> getPreferences(Long userID,
+                                                   PreferenceDao preferenceDao) throws Exception {
+                return preferenceDao.getPreferences(userID, PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES);
+            }
+
+            @Override
+            public Preference createNewPreference(Long userID) {
+                return new Preference(userID, PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES, "");
+            }
+
+            @Override
+            public boolean canModifyPreference(Long userID) {
+                return true;
+            }
+
+            @Override
+            public PreferenceType.PreferenceScope getScope() {
+                return PreferenceType.PreferenceScope.USER;
+            }
+        });
+
+        mapTypeToPreferenceAccess.put(PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES, new PreferenceAccess() {
+            @Override
+            public List<Preference> getPreferences(Long userID, PreferenceDao preferenceDao) throws Exception {
+                return preferenceDao.getPreferences(userID, PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES);
+            }
+
+            @Override
+            public Preference createNewPreference(Long userID) {
+                return new Preference(userID, PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES, "");
+            }
+
+            @Override
+            public boolean canModifyPreference(Long userID) {
+                return true;
+            }
+
+            @Override
+            public PreferenceType.PreferenceScope getScope() {
+                return PreferenceType.PreferenceScope.USER;
+            }
+        });
+        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES, new PreferenceAccess() {
+            @Override
+            public List<Preference> getPreferences(Long userID, PreferenceDao preferenceDao) throws Exception {
+                List<Preference> preferences = new ArrayList<>();
+                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES);
+                if( preference != null ) {
+                    preferences.add(preference);
+                }
+                return preferences;
+            }
+
+            @Override
+            public Preference createNewPreference(Long userID) {
+                return new Preference(userID, PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES, "");
+            }
+
+            @Override
+            public boolean canModifyPreference(Long userID) {
+                return true;
+            }
+
+            @Override
+            public PreferenceType.PreferenceScope getScope() {
+                return PreferenceType.PreferenceScope.GLOBAL;
+            }
+        });
     }
 
     /**
@@ -373,56 +476,6 @@ public class SearchInstanceEjb {
                 mapTypeToPreference.put(type, preference);
 
             }
-        }
-    }
-
-
-    /**
-     * Builds a list of all available saved search instances at USER and GLOBAL scopes
-     * TODO: Consider caching this data somewhere:
-     *       Global searches application scope, User searches session scope?
-     *       Refreshes triggered by deleteSearch and persistSearch methods
-     * @param searchInstances the target search entity type
-     *                        [LabVessel, LabEvent]
-     *                                       '-> [Global Type, User Type]
-     *                                                             '-> [Saved Search Names]
-     *
-     */
-    public void fetchAllInstances( Map<ColumnEntity, Map<PreferenceType,List<String>>> searchInstances ) throws Exception {
-
-        // Required for user defined searches
-        Long userID = userBean.getBspUser().getUserId();
-
-        for (ColumnEntity columnEntity : ColumnEntity.values()) {
-            Map<PreferenceType,List<String>> typeMap = new LinkedHashMap<>();
-            for (PreferenceType preferenceType : columnEntity.getSearchInstancePrefs()) {
-                PreferenceAccess preferenceAccess  = mapTypeToPreferenceAccess.get(preferenceType);
-
-                // An entity can only have USER and GLOBAL scope
-                List<Preference> preferences = preferenceAccess.getPreferences( userID, preferenceDao);
-                if ( preferences == null ) {
-                    continue;
-                }
-                if( preferences.isEmpty() ){
-                    typeMap.put( preferenceType, new ArrayList<String>());
-                } else {
-                    for (Preference preference : preferences) {
-                        SearchInstanceList searchInstanceList;
-                        try {
-                            searchInstanceList =
-                                    (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        List<String> searchNames = new ArrayList<>();
-                        for (SearchInstance instance : searchInstanceList.getSearchInstances()) {
-                            searchNames.add(instance.getName());
-                        }
-                        typeMap.put(preferenceType, searchNames);
-                    }
-                }
-            }
-            searchInstances.put(columnEntity, typeMap);
         }
     }
 
@@ -511,6 +564,14 @@ public class SearchInstanceEjb {
 
                     messageCollection.addInfo("The search was saved");
                 }
+
+                preferenceDao.flush();
+                // Refresh cached instance names
+                if( newSearchType.getPreferenceScope() == PreferenceType.PreferenceScope.GLOBAL ) {
+                    searchInstanceNameCache.refreshGlobalCache();
+                } else {
+                    searchInstanceNameCache.refreshCacheForUser(userID);
+                }
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -549,6 +610,14 @@ public class SearchInstanceEjb {
                 messageCollection.addError("Failed to delete the search");
             }
             messageCollection.addInfo("The search was deleted");
+
+            preferenceDao.flush();
+            // Refresh cached instance names
+            if( preferenceType.getPreferenceScope() == PreferenceType.PreferenceScope.GLOBAL ) {
+                searchInstanceNameCache.refreshGlobalCache();
+            } else {
+                searchInstanceNameCache.refreshCacheForUser(userID);
+            }
         }
     }
 }

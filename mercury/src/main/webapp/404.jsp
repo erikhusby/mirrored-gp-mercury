@@ -6,7 +6,6 @@
 
     <link rel="Shortcut Icon" type="image/x-icon" href="/Mercury/favicon.ico">
 
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Carrois+Gothic+SC">
     <link rel="stylesheet" type="text/css" href="/Mercury/resources/css/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="/Mercury/resources/css/jquery-ui-1.9.2.custom.min.css">
     <link rel="stylesheet" type="text/css" href="/Mercury/resources/css/mercury.css">

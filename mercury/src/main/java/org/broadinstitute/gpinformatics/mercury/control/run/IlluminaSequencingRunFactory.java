@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStru
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -24,6 +25,7 @@ import java.text.MessageFormat;
 /**
  * Creates a sequencing run from a JAX-RS DTO.  Implements Serializable because it's used by a Stateful session bean.
  */
+@Dependent
 public class IlluminaSequencingRunFactory implements Serializable {
 
     private static final Log log = LogFactory.getLog(IlluminaSequencingRunFactory.class);
@@ -110,7 +112,7 @@ public class IlluminaSequencingRunFactory implements Serializable {
         return new IlluminaSequencingRun(illuminaFlowcell, runName, solexaRunBean.getRunBarcode(),
                 solexaRunBean.getMachineName(),
                 null
-                                                /* TODO SGM -- Operator information is always missing.  may revisit later*/,
+                                                /* TODO -- Operator information is always missing.  may revisit later*/,
                 false, solexaRunBean.getRunDate(), solexaRunBean.getRunDirectory());
     }
 }

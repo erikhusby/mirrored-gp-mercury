@@ -2,13 +2,16 @@ package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -16,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -67,7 +71,8 @@ public class ProductOrderSampleTestFactory {
             if (createMercurySamples) {
                 MercurySample mercurySample = new MercurySample(sampleName, metadataSource);
                 LabVessel testVessel = new BarcodedTube(sampleName+"Tube", BarcodedTube.BarcodedTubeType.MatrixTube075);
-                testVessel.setReceiptEvent(new BSPUserList.QADudeUser("LU", counter++),new Date(), 1L);
+                testVessel.setReceiptEvent(new BSPUserList.QADudeUser("LU", counter++),new Date(), 1L,
+                        LabEvent.UI_EVENT_LOCATION);
                 mercurySample.addLabVessel(testVessel);
 
                 productOrderSample.setMercurySample(mercurySample);
@@ -78,5 +83,19 @@ public class ProductOrderSampleTestFactory {
             productOrderSamples.add(productOrderSample);
         }
         return productOrderSamples;
+    }
+
+    public static void markAsBilled(ProductOrderSample sampleToBeBilled) {
+
+        final PriceItem priceItem = new PriceItem(sampleToBeBilled.getProductOrder().getQuoteId(), "platform", "category", "test");
+
+        sampleToBeBilled.addLedgerItem(new Date(), priceItem, 1d);
+
+        LedgerEntry toclose = sampleToBeBilled.getLedgerItems().iterator().next();
+        toclose.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+        toclose.setBillingMessage(BillingSession.SUCCESS);
+        BillingSession closingSession = new BillingSession(ProductOrderTestFactory.TEST_CREATOR, Collections.singleton(toclose));
+        closingSession.setBilledDate(new Date());
+
     }
 }

@@ -88,7 +88,7 @@
          */
         //pass the options variable to the function
         updateCheckCount:function (options) {
-            $('.' + options.countDisplayClass).text($("input." + options.checkboxClass + ":checked").size());
+            $('.' + options.countDisplayClass).text($("input." + options.checkboxClass + ":checked").length);
         },
 
         checkAll:function (input, options) {
@@ -282,4 +282,69 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
         return fn_title_jira_asc(b, a);
     }
 });
+
+/**
+ *  Find the column index of the supplied column header.
+ */
+(function($) {
+    $.fn.columnIndexOfHeader = function (columnHeader) {
+        return $(this).find("tr th").filter(function () {
+                return $(this).text() === columnHeader;
+            }).index() + 1;
+    };
+})(jQuery);
+
+(function ($) {
+    return stripesMessage = {
+        set: function (message, alertType, fieldSelector) {
+            stripesMessage.clear();
+            addStripesMessage(message, alertType, fieldSelector);
+        },
+        add: function (message, alertType, fieldSelector) {
+            addStripesMessage(message, alertType, fieldSelector);
+        },
+        clear: function () {
+            $("[class ^= 'alert']").remove();
+        }
+    };
+
+    function getAlertClass(alertType) {
+        if (alertType == undefined) {
+            alertType = "success";
+        }
+        return 'alert-' + alertType;
+    }
+
+    function addStripesMessageDiv(alertType, fieldSelector) {
+        var messageBox = $(document.createElement("div"));
+        messageBox.css({"margin-left": "20%", "margin-right": "20%"});
+        messageBox.addClass("alert").addClass(alertType);
+        if (fieldSelector != undefined) {
+            $(fieldSelector).addClass(alertType);
+        }
+        messageBox.append('<button type="button" class="close" data-dismiss="alert">&times;</button>');
+        messageBox.append('<ul></ul>');
+
+        $('.page-body').before(messageBox);
+        return messageBox;
+    }
+
+    function addStripesMessage(message, alertType, fieldSelector) {
+        var alertClass = getAlertClass(alertType);
+        var messageBoxJquery = $("div.alert-" + alertClass);
+        if (messageBoxJquery.length == 0) {
+            messageBoxJquery = addStripesMessageDiv(alertClass, fieldSelector);
+        }
+        messageBoxJquery.find("ul").append("<li>" + message + "</li>");
+    }
+
+})(jQuery);
+
+String.prototype.escapeJson= function() {
+    return this.replace(/\n/g, "\\n")
+               .replace(/\&/g, "\\&")
+               .replace(/\r/g, "\\r")
+               .replace(/\t/g, "\\t")
+};
+
 

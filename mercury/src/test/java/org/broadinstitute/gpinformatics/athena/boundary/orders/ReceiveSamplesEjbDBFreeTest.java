@@ -9,12 +9,14 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -116,10 +118,11 @@ public class ReceiveSamplesEjbDBFreeTest {
         test1RequestSMIds.add(sample3Kit1);
         test1RequestSMIds.add(sample4Kit1);
 
-        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPSampleReceiptService stubReceiptService = new BSPSampleReceiptServiceStub();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
         SampleManager mockSampManager = Mockito.mock(SampleManager.class);
         SampleReceiptResource sampleReceiptResource = Mockito.mock(SampleReceiptResource.class);
+        BSPRestService bspRestService = Mockito.mock(BSPRestService.class);
 
         SampleKitListResponse mockResponse = new SampleKitListResponse();
         mockResponse.setResult(Collections.singletonList(sampleKit1));
@@ -137,8 +140,8 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
-        ReceiveSamplesEjb testEjb =
-                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, sampleReceiptResource);
+        ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
+                testUserList, sampleReceiptResource, bspRestService);
 
         MessageCollection validationResults = new MessageCollection();
 
@@ -167,10 +170,11 @@ public class ReceiveSamplesEjbDBFreeTest {
         test2RequestSMIds.add(sample2Kit1);
         test2RequestSMIds.add(sample3Kit1);
 
-        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPSampleReceiptService stubReceiptService = new BSPSampleReceiptServiceStub();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
         SampleManager mockSampManager = Mockito.mock(SampleManager.class);
         SampleReceiptResource sampleReceiptResource = Mockito.mock(SampleReceiptResource.class);
+        BSPRestService bspRestService = Mockito.mock(BSPRestService.class);
 
         SampleKitListResponse mockResponse = new SampleKitListResponse();
         mockResponse.setResult(Collections.singletonList(sampleKit1));
@@ -187,8 +191,8 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
-        ReceiveSamplesEjb testEjb =
-                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, sampleReceiptResource);
+        ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
+                testUserList, sampleReceiptResource, bspRestService);
 
         MessageCollection validationResults = new MessageCollection();
 
@@ -231,10 +235,11 @@ public class ReceiveSamplesEjbDBFreeTest {
         test3RequestSMIds.add(sample4Kit1);
         test3RequestSMIds.add(sample5Kit1);
 
-        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPSampleReceiptService stubReceiptService = new BSPSampleReceiptServiceStub();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
         SampleManager mockSampManager = Mockito.mock(SampleManager.class);
         SampleReceiptResource sampleReceiptResource = Mockito.mock(SampleReceiptResource.class);
+        BSPRestService bspRestService = Mockito.mock(BSPRestService.class);
 
         SampleKitListResponse mockResponse = new SampleKitListResponse();
         mockResponse.setResult(Collections.singletonList(sampleKit1));
@@ -253,8 +258,8 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
-        ReceiveSamplesEjb testEjb =
-                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, sampleReceiptResource);
+        ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
+                testUserList, sampleReceiptResource, bspRestService);
 
         MessageCollection validationResults = new MessageCollection();
 
@@ -293,10 +298,11 @@ public class ReceiveSamplesEjbDBFreeTest {
         test4RequestSMIds.add(sample3Kit2);
         test4RequestSMIds.add(sample4Kit2);
 
-        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPSampleReceiptService stubReceiptService = new BSPSampleReceiptServiceStub();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
         SampleManager mockSampManager = Mockito.mock(SampleManager.class);
         SampleReceiptResource sampleReceiptResource = Mockito.mock(SampleReceiptResource.class);
+        BSPRestService bspRestService = Mockito.mock(BSPRestService.class);
 
         SampleKitListResponse mockResponse = new SampleKitListResponse();
         List<SampleKit> skResponseKits = new ArrayList<>();
@@ -322,8 +328,8 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
-        ReceiveSamplesEjb testEjb =
-                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, sampleReceiptResource);
+        ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
+                testUserList, sampleReceiptResource, bspRestService);
 
         MessageCollection validationResults = new MessageCollection();
 
@@ -393,10 +399,12 @@ public class ReceiveSamplesEjbDBFreeTest {
         test5RequestSMIds.add(sample2Kit2);
         test5RequestSMIds.add(sample4Kit2);
 
-        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPSampleReceiptService stubReceiptService = new BSPSampleReceiptServiceStub();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
         SampleManager mockSampManager = Mockito.mock(SampleManager.class);
         SampleReceiptResource sampleReceiptResource = Mockito.mock(SampleReceiptResource.class);
+        BSPRestService bspRestService = Mockito.mock(BSPRestService.class);
+        BSPRestClient bspRestClient = Mockito.mock(BSPRestClient.class);
 
         SampleKitListResponse mockResponse = new SampleKitListResponse();
         List<SampleKit> skResponseKits = new ArrayList<>();
@@ -421,8 +429,8 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
-        ReceiveSamplesEjb testEjb =
-                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList, sampleReceiptResource);
+        ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
+                testUserList, sampleReceiptResource, bspRestService);
 
         MessageCollection validationResults = new MessageCollection();
 

@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Parent;
 
@@ -22,6 +21,7 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
+import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.MapKeyColumn;
@@ -38,10 +38,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * This class represents A role of a vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a
@@ -73,7 +73,9 @@ public class VesselContainer<T extends LabVessel> {
     * striptube holds tubes, tubes can't be removed, don't have barcodes. */
     @ManyToMany(targetEntity = LabVessel.class, cascade = CascadeType.PERSIST)
     // have to specify name, generated name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "lv_map_position_to_vessel")
+    @JoinTable(schema = "mercury", name = "lv_map_position_to_vessel"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "MAP_POSITION_TO_VESSEL")})
     @MapKeyEnumerated(EnumType.STRING)
     // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")
@@ -142,6 +144,22 @@ public class VesselContainer<T extends LabVessel> {
     public T getVesselAtPosition(VesselPosition position) {
         //noinspection unchecked
         return (T) mapPositionToVessel.get(position);
+    }
+
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
+    @Nullable
+    public T getImmutableVesselAtPosition(VesselPosition position) {
+        LabVessel labVessel = mapPositionToVessel.get(position);
+        if (labVessel == null) {
+            if (mapPositionToVessel.isEmpty()) {
+                //noinspection unchecked
+                return (T) new ImmutableLabVessel(this, position);
+            } else {
+                return null;
+            }
+        }
+        //noinspection unchecked
+        return (T) labVessel;
     }
 
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
@@ -360,8 +378,13 @@ public class VesselContainer<T extends LabVessel> {
                     continue;
                 }
 
-                VesselPosition targetPosition = sectionTransfer.getTargetSection().getWells()
-                        .get(sourceWellIndex);
+                List<VesselPosition> wells = sectionTransfer.getTargetSection().getWells();
+                if (sourceWellIndex >= wells.size()) {
+                    throw new RuntimeException("For event " + sectionTransfer.getLabEvent().getLabEventId() +
+                            ", source section " + sectionTransfer.getSourceSection() + " is larger than destination " +
+                            sectionTransfer.getTargetSection());
+                }
+                VesselPosition targetPosition = wells.get(sourceWellIndex);
                 LabVessel targetVessel = targetVesselContainer.getVesselAtPosition(targetPosition);
                 LabVessel.VesselEvent vesselEvent = new LabVessel.VesselEvent(
                         sourceVessel, this, sourcePosition, sectionTransfer.getLabEvent(),
@@ -998,11 +1021,9 @@ public class VesselContainer<T extends LabVessel> {
                 ancestorEvents = vesselAtPosition.getAncestors();
             }
             if (ancestorEvents.isEmpty()) {
+                sampleInstances = new TreeSet<>();
                 if (vesselAtPosition != null) {
-                    sampleInstances = new HashSet<>();
                     sampleInstances.add(new SampleInstanceV2(vesselAtPosition));
-                } else {
-                    sampleInstances = Collections.emptySet();
                 }
             } else {
                 sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
@@ -1015,12 +1036,12 @@ public class VesselContainer<T extends LabVessel> {
 
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstanceV2> getSampleInstancesV2() {
-        Set<SampleInstanceV2> sampleInstanceList = new LinkedHashSet<>();
+        Set<SampleInstanceV2> sampleInstances = new TreeSet<>();
         VesselPosition[] vesselPositions = getEmbedder().getVesselGeometry().getVesselPositions();
         for (VesselPosition vesselPosition : vesselPositions) {
-            sampleInstanceList.addAll(getSampleInstancesAtPositionV2(vesselPosition));
+            sampleInstances.addAll(getSampleInstancesAtPositionV2(vesselPosition));
         }
-        return sampleInstanceList;
+        return sampleInstances;
     }
 
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
@@ -1059,7 +1080,7 @@ public class VesselContainer<T extends LabVessel> {
         }
 
         if (ancestorSampleInstances.isEmpty()) {
-            return new LinkedHashSet<>(ancestorSampleInstances);
+            return new TreeSet<>(ancestorSampleInstances);
         } else {
             // Filter sample instances that are reagent only
             Iterator<SampleInstanceV2> iterator = ancestorSampleInstances.iterator();
@@ -1096,7 +1117,7 @@ public class VesselContainer<T extends LabVessel> {
             // Apply vessel changes to clones
             if (labVessel != null) {
                 for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.applyVesselChanges(labVessel);
+                    currentSampleInstance.applyVesselChanges(labVessel,null);
                 }
             }
 
@@ -1107,7 +1128,7 @@ public class VesselContainer<T extends LabVessel> {
                 }
             }
 
-            return new LinkedHashSet<>(currentSampleInstances);
+            return new TreeSet<>(currentSampleInstances);
         }
     }
 

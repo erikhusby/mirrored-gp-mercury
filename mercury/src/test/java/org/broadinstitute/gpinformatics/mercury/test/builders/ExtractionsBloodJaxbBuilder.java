@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 
 import java.util.ArrayList;
@@ -51,6 +52,8 @@ public class ExtractionsBloodJaxbBuilder {
         // BloodCryovialExtraction is a cherry pick from Hamilton Carrier to Deepwell plate.
         // Dummy barcode is only needed for internal message element cross referencing.
         String hamiltonCarrierBarcode = "dummy";
+        PositionMapType destinationPositionMapType = new PositionMapType();
+        destinationPositionMapType.setBarcode(preChemagenDeepwellBarcode);
         List<BettaLimsMessageTestFactory.CherryPick> bloodCherryPicks = new ArrayList<>();
         for (int i = 1; i <= bloodCryovialTubeBarcodes.size(); i++) {
             String sourceWell = bettaLimsMessageTestFactory.buildWellName(NUMBER_OF_RACK_COLUMNS, i,
@@ -60,11 +63,18 @@ public class ExtractionsBloodJaxbBuilder {
                     BettaLimsMessageTestFactory.WellNameType.LONG);
             bloodCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(hamiltonCarrierBarcode, sourceWell,
                     preChemagenDeepwellBarcode, destinationWell));
+
+            ReceptacleType destinationReceptacle = new ReceptacleType();
+            destinationReceptacle.setReceptacleType("Well2000");
+            destinationReceptacle.setPosition(destinationWell);
+            destinationPositionMapType.getReceptacle().add(destinationReceptacle);
         }
         bloodCryovialTransfer = bettaLimsMessageTestFactory.buildCherryPickToPlate("BloodCryovialExtraction",
                 "HamiltonSampleCarrier32",
                 Collections.singletonList(hamiltonCarrierBarcode), Collections.singletonList(bloodCryovialTubeBarcodes),
                 Collections.singletonList(preChemagenDeepwellBarcode), bloodCherryPicks);
+
+        bloodCryovialTransfer.getPositionMap().add(destinationPositionMapType);
 
         // Sets the plate type to deepwell and fixes up the source positionMap to be 1xN.
         bloodCryovialTransfer.getPlate().get(0).setPhysType(DEEPWELL96);

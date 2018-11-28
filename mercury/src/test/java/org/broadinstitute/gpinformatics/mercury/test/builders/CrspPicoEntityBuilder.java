@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
@@ -16,6 +17,7 @@ import org.testng.Assert;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,10 +69,11 @@ public class CrspPicoEntityBuilder {
         labEventHandler.processEvent(initialTareEntity);
         TubeFormation initialRack = (TubeFormation) initialTareEntity.getInPlaceLabVessel();
 
-        LimsQueries limsQueries = new LimsQueries(null, null, null);
+        LimsQueries limsQueries = new LimsQueries(null, null, null, null);
         mapBarcodeToVessel.putAll(mapBarcodeToTube);
         Map<String, ConcentrationAndVolumeAndWeightType> mapBarcodeToConcVolDto =
-                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel,
+                        Collections.<String, GetSampleDetails.SampleInfo>emptyMap(), true);
         ConcentrationAndVolumeAndWeightType concVolDto = mapBarcodeToConcVolDto.get("R1");
         Assert.assertEquals(concVolDto.getWeight(), new BigDecimal("0.63"));
         Assert.assertNull(concVolDto.getConcentration());
@@ -111,7 +114,9 @@ public class CrspPicoEntityBuilder {
         }
         fingerprintingAliquotEntity = labEventFactory.buildFromBettaLims(
                 crspPicoJaxbBuilder.getFingerprintingAliquotJaxb(), mapBarcodeToVessel);
-        mapBarcodeToConcVolDto = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
+        mapBarcodeToConcVolDto = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
+                new HashMap<String, LabVessel>(mapBarcodeToTube),
+                Collections.<String, GetSampleDetails.SampleInfo>emptyMap(), true);
         concVolDto = mapBarcodeToConcVolDto.get("R1");
         Assert.assertEquals(concVolDto.getWeight(), new BigDecimal("0.63"));
         Assert.assertNull(concVolDto.getConcentration());

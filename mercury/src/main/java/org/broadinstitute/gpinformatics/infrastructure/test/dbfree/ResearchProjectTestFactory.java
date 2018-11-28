@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFun
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -56,6 +57,8 @@ public class ResearchProjectTestFactory {
         researchProject.addPerson(RoleType.SCIENTIST, 222);
         researchProject.addPerson(RoleType.BROAD_PI, 10950);
         researchProject.addPerson(RoleType.BROAD_PI, 10951);
+
+        researchProject.setSubmissionRepositoryName(SubmissionRepository.DEFAULT_REPOSITORY_NAME);
 
         String identifier = String.valueOf(new Date().getTime());
         RegulatoryInfo regulatoryInfo =

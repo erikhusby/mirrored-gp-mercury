@@ -24,14 +24,19 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
+            <xs:element type="xs:string" name="reagentNames" maxOccurs="unbounded" minOccurs="0"/>
             <xs:element type="xs:string" name="sourceVesselTypeGeometryString" minOccurs="0"/>
             <xs:element type="xs:string" name="sourceSection" minOccurs="0"/>
             <xs:element type="xs:string" name="targetVesselTypeGeometryString"/>
             <xs:element type="xs:string" name="targetSection"/>
+            <xs:element type="xs:string" name="targetWellTypeString"/>
+            <xs:element type="xs:boolean" name="sourceMassRemoved"/>
             <xs:element type="xs:string" name="buttonValue" minOccurs="0"/>
             <xs:element type="xs:string" name="targetExpectedToExist" minOccurs="0"/>
+            <xs:element type="xs:string" name="targetExpectedEmpty" minOccurs="0"/>
             <xs:element type="xs:string" name="repeatedEvent" minOccurs="0"/>
             <xs:element type="xs:string" name="repeatedWorkflowQualifier" minOccurs="0"/>
+            <xs:element type="xs:boolean" name="useWebCam"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="workflowStepDefsType">
@@ -50,6 +55,7 @@
             <xs:element type="xs:string" name="reEntryPoint" minOccurs="0"/>
             <xs:element type="jiraTransitionType" name="jiraTransition" maxOccurs="unbounded" minOccurs="0"/>
             <xs:element type="bucketEntryEvaluatorType" name="bucketEntryEvaluator" minOccurs="0"/>
+            <xs:element type="xs:boolean" name="autoBucketFromPdoSubmission" minOccurs="0"/>
             <xs:element type="xs:string" name="quantType" minOccurs="0"/>
             <xs:element type="xs:integer" name="numberOfRepeats" minOccurs="0"/>
             <xs:element name="batchJiraProjectType" minOccurs="0">
@@ -57,6 +63,7 @@
                     <xs:restriction base="xs:string">
                         <xs:enumeration value="LCSET"/>
                         <xs:enumeration value="XTR"/>
+                        <xs:enumeration value="ARRAY"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
@@ -75,6 +82,7 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
+            <xs:element type="xs:boolean" name="jiraSampleFromNearest" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="workflowConfigType">
@@ -104,6 +112,7 @@
                 </xs:simpleType>
             </xs:element>
             <xs:element type="xs:string" name="statusTransition" minOccurs="0"/>
+            <xs:element type="xs:string" name="endStatus" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="sequencingConfigDefsType" mixed="true">
@@ -118,6 +127,8 @@
         <xs:sequence>
             <xs:element type="xs:string" name="version"/>
             <xs:element type="xs:string" name="effectiveDate"/>
+            <xs:element type="xs:string" name="batchJiraProjectType"/>
+            <xs:element type="xs:string" name="batchJiraIssueType"/>
             <xs:element type="xs:string" name="workflowProcessDefs" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element type="xs:string" name="sequencingConfigDefs" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="routingRule" minOccurs="0">

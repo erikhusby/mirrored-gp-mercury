@@ -9,11 +9,13 @@
  */
 package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.xml.bind.DatatypeConverter;
 import java.text.DateFormat;
+import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -47,17 +49,15 @@ public class DateUtils {
     // private static String TIME_PATTERN_DASH = DATE_PATTERN_DASH + " HH:MM a";
 
     /** Cached default date format for performance. */
-    public static final DateFormat defaultDateFormat = new SimpleDateFormat(DATE_PATTERN);
+    public static final Format defaultDateFormat = FastDateFormat.getInstance(DATE_PATTERN);
 
     /** Cached default date/time format for performance. */
-    public static final DateFormat defaultTimeFormat = new SimpleDateFormat(TIME_PATTERN);
+    public static final Format defaultTimeFormat = FastDateFormat.getInstance(TIME_PATTERN);
 
     /** Cached default year-first date/time format for performance. */
-    public static final DateFormat dateTimeFormat = new SimpleDateFormat(
-            DATE_TIME_PATTERN_YY_DASH);
+    public static final Format dateTimeFormat = FastDateFormat.getInstance(DATE_TIME_PATTERN_YY_DASH);
 
-    public static final DateFormat yyyymmmdddDateTimeFormat = new SimpleDateFormat(
-            DATE_TIME_PATTERN_YYYYMMDD_DASH);
+    public static final FastDateFormat yyyymmmdddDateTimeFormat = FastDateFormat.getInstance(DATE_TIME_PATTERN_YYYYMMDD_DASH);
 
     /**
      * Return default DATE_PATTERN (MM/dd/yyyy)
@@ -496,6 +496,17 @@ public class DateUtils {
         Calendar cal = new GregorianCalendar();
         cal.add(Calendar.WEEK_OF_YEAR, 2);
         return cal.getTime();
+    }
+
+    /**
+     * Get the date "monthCount" ago or until now.
+     * @param monthCount how many months ahead or behinde (negative number)
+     * @return
+     */
+    public static Date getByMonthOffset(int monthCount) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, monthCount);
+        return calendar.getTime();
     }
 
     /**

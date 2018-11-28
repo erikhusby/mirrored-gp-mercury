@@ -4,7 +4,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -14,7 +13,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -121,6 +119,13 @@ public class LabEventTraversalTest extends Arquillian {
 //        Controller.startCPURecording(true);
 //        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
 
+        // Search term and result values, LCSET order in result column is non-deterministic
+        List<String> val6875 = Collections.singletonList("LCSET-6875");
+        List<String> val6625 = Collections.singletonList("LCSET-6625");
+        List<String> val6677_6875 = Arrays.asList( "LCSET-6677", "LCSET-6875");
+        List<String> val6712_6875 = Arrays.asList( "LCSET-6712", "LCSET-6875");
+        List<String> val6340_6625 = Arrays.asList( "LCSET-6340", "LCSET-6625");
+
         ConfigurableSearchDefinition configurableSearchDefinition =
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_EVENT.getEntityName());
 
@@ -129,7 +134,7 @@ public class LabEventTraversalTest extends Arquillian {
         searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE );
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
-        searchValue.setValues(Collections.singletonList("LCSET-6875"));
+        searchValue.setValues(val6875);
 
         searchInstance.getPredefinedViewColumns().add("LabEventId");
         searchInstance.getPredefinedViewColumns().add("EventType");
@@ -140,60 +145,65 @@ public class LabEventTraversalTest extends Arquillian {
                 searchInstance, configurableSearchDefinition, null, 0, null, "ASC", "LabEvent" );
 
         Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 46);
-        List<ImmutablePair<String, String>> listEventLcset = Arrays.asList(
-                new ImmutablePair<>("NormalizedCatchRegistration", "LCSET-6625"),
-                new ImmutablePair<>("CatchPico", "LCSET-6625"),
-                new ImmutablePair<>("CatchPico", "LCSET-6625"),
-                new ImmutablePair<>("PoolingTransfer", "LCSET-6625"),
-                new ImmutablePair<>("EcoTransfer", "LCSET-6625"),
-                new ImmutablePair<>("NormalizationTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DenatureTransfer", "LCSET-6625"),
-                new ImmutablePair<>("MiseqReagentKitLoading", "LCSET-6625"),
-                new ImmutablePair<>("ReagentKitToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DenatureTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DenatureToDilutionTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("DilutionToFlowcellTransfer", "LCSET-6625"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingBucket", "LCSET-6875"),
-                new ImmutablePair<>("PoolingTransfer", "LCSET-6875"),
-                new ImmutablePair<>("EcoTransfer", "LCSET-6677 LCSET-6875"),
-                new ImmutablePair<>("EcoTransfer", "LCSET-6677 LCSET-6875"),
-                new ImmutablePair<>("NormalizationTransfer", "LCSET-6875"),
-                new ImmutablePair<>("DenatureTransfer", "LCSET-6677 LCSET-6875"),
-                new ImmutablePair<>("MiseqReagentKitLoading", "LCSET-6875"),
-                new ImmutablePair<>("ReagentKitToFlowcellTransfer", "LCSET-6875"),
-                new ImmutablePair<>("DenatureTransfer", "LCSET-6677 LCSET-6875"),
-                new ImmutablePair<>("StripTubeBTransfer", "LCSET-6712 LCSET-6875"),
-                new ImmutablePair<>("FlowcellTransfer", "LCSET-6875")
+        List<ImmutablePair<String, List<String>>> listEventLcset = Arrays.asList(
+                new ImmutablePair<>("NormalizedCatchRegistration", val6625),
+                new ImmutablePair<>("CatchPico", val6625),
+                new ImmutablePair<>("CatchPico", val6625),
+                new ImmutablePair<>("PoolingTransfer", val6625),
+                new ImmutablePair<>("EcoTransfer", val6340_6625),
+                new ImmutablePair<>("NormalizationTransfer", val6340_6625),
+                new ImmutablePair<>("DenatureTransfer", val6340_6625),
+                new ImmutablePair<>("MiseqReagentKitLoading", val6340_6625),
+                new ImmutablePair<>("ReagentKitToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DenatureTransfer", val6340_6625),
+                new ImmutablePair<>("DenatureToDilutionTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("DilutionToFlowcellTransfer", val6340_6625),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingBucket", val6875),
+                new ImmutablePair<>("PoolingTransfer", val6875),
+                new ImmutablePair<>("EcoTransfer", val6677_6875),
+                new ImmutablePair<>("EcoTransfer", val6677_6875),
+                new ImmutablePair<>("NormalizationTransfer", val6875),
+                new ImmutablePair<>("DenatureTransfer", val6677_6875),
+                new ImmutablePair<>("MiseqReagentKitLoading", val6875),
+                new ImmutablePair<>("ReagentKitToFlowcellTransfer", val6875),
+                new ImmutablePair<>("DenatureTransfer", val6677_6875),
+                new ImmutablePair<>("StripTubeBTransfer", val6712_6875),
+                new ImmutablePair<>("FlowcellTransfer", val6875)
         );
         int i = 0;
         for (ConfigurableList.ResultRow resultRow : firstPageResults.getResultList().getResultRows()) {
             Assert.assertEquals(resultRow.getRenderableCells().get(1), listEventLcset.get(i).getLeft(),
                     "Wrong event type in row " + i);
-            Assert.assertEquals(resultRow.getRenderableCells().get(2), listEventLcset.get(i).getRight(),
-                    "Wrong LCSET in row " + i);
+            String[] results = resultRow.getRenderableCells().get(2).split(" ");
+            Assert.assertEquals(results.length, listEventLcset.get(i).getRight().size(),
+                    "Wrong number of LCSETs in row " + i);
+            for( String result : results ) {
+                Assert.assertTrue(listEventLcset.get(i).getRight().contains(result),
+                        "Wrong LCSET in row " + i);
+            }
             i++;
         }
 

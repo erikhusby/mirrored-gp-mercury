@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -13,12 +14,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +34,7 @@ import java.util.Set;
  * FlowcellMessageHandler takes care of updating the FCT ticket associated with creating a Flowcell with the Flowcell
  * barcode and other related information.
  */
+@Dependent
 public class FlowcellMessageHandler extends AbstractEventHandler {
 
     private static final Log logger = LogFactory.getLog(FlowcellMessageHandler.class);
@@ -76,7 +80,8 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
         try {
             for (LabBatch currentUpdateBatch : batchesToUpdate) {
                 Map<String, CustomFieldDefinition> mapNameToField = jiraService.getCustomFields(
-                        LabBatch.TicketFields.SUMMARY.getName(), LabBatch.TicketFields.SEQUENCING_STATION.getName());
+                        LabBatch.TicketFields.SUMMARY.getName(), LabBatch.TicketFields.SEQUENCING_STATION.getName(),
+                        LabBatch.TicketFields.CLUSTER_STATION.getName());
 
                 CustomField summaryCustomField = new CustomField(mapNameToField, LabBatch.TicketFields.SUMMARY,
                         flowcell.getLabel());
@@ -91,6 +96,12 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
                                     flowcell.getFlowcellType().getSequencingStationName(), stationEvent.getStation());
                     jiraService.updateIssue(currentUpdateBatch.getBusinessKey(),
                             Collections.singleton(sequencingStationCustomField));
+                } else {
+                    CustomField clusterStationCustomField =
+                            new CustomField(mapNameToField, LabBatch.TicketFields.CLUSTER_STATION,
+                                    "cBot", stationEvent.getStation());
+                    jiraService.updateIssue(currentUpdateBatch.getBusinessKey(),
+                            Collections.singleton(clusterStationCustomField));
                 }
             }
 
@@ -104,21 +115,33 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
      * Get the FCT batches that pertain to the ancestor (dilution tube or strip tube) of this flowcell.
      */
     static Set<LabBatch> getLabBatches(IlluminaFlowcell flowcell, EmailSender emailSender, AppConfig appConfig) {
-        Collection<LabBatch> flowcellBatches;
+        List<LabBatch> flowcellBatches = new ArrayList<>();
 
         Set<LabBatch> batchesToUpdate = new HashSet<>();
 
+        LabBatch.LabBatchType labBatchType = null;
         if (flowcell.getFlowcellType() == IlluminaFlowcell.FlowcellType.MiSeqFlowcell) {
-            flowcellBatches = flowcell.getAllLabBatches(LabBatch.LabBatchType.MISEQ);
+            labBatchType = LabBatch.LabBatchType.MISEQ;
         } else {
-            flowcellBatches = flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT);
+            labBatchType = LabBatch.LabBatchType.FCT;
+        }
+
+        LabVesselSearchDefinition.VesselBatchTraverserCriteria
+                downstreamBatchFinder = new LabVesselSearchDefinition.VesselBatchTraverserCriteria();
+        flowcell.getContainerRole().applyCriteriaToAllPositions(
+                downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+        for (LabBatch labBatch: downstreamBatchFinder.getLabBatches()) {
+            if(labBatch.getLabBatchType() == labBatchType) {
+                flowcellBatches.add(labBatch);
+            }
         }
 
         if (flowcellBatches.isEmpty()) {
             String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
             logger.error(emptyBatchListMessage);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                    "[Mercury] Failed update FCT Ticket", emptyBatchListMessage);
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
+                    "[Mercury] Failed update FCT Ticket", emptyBatchListMessage, false, true);
             return batchesToUpdate;
         }
 
@@ -138,8 +161,8 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
                 String emptyBatchListMessage = "There are too many MiSeq Flowcell batch tickets for " +
                         flowcell.getLabel() + " to determine which one to update";
                 logger.error(emptyBatchListMessage);
-                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                        "[Mercury] Failed update FCT Ticket", emptyBatchListMessage);
+                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
+                        "[Mercury] Failed update FCT Ticket", emptyBatchListMessage, false, true);
                 return batchesToUpdate;
             } else {
                 for (Map.Entry<VesselPosition, LabVessel> loadingVesselByPosition : loadedVesselsAndPosition
@@ -162,8 +185,8 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
         if (batchesToUpdate.isEmpty()) {
             String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
             logger.error(emptyBatchListMessage);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                    "[Mercury] Failed update FCT Ticket", emptyBatchListMessage);
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
+                    "[Mercury] Failed update FCT Ticket", emptyBatchListMessage, false, true);
         }
         return batchesToUpdate;
     }

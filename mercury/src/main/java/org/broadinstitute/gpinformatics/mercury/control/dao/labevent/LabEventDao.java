@@ -2,9 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.labevent;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
@@ -16,6 +19,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class LabEventDao extends GenericDao {
     /**
      * Find lab events that were performed between a date range
@@ -28,6 +32,16 @@ public class LabEventDao extends GenericDao {
             @Override
             public void callback(CriteriaQuery<LabEvent> criteriaQuery, Root<LabEvent> root) {
                 criteriaQuery.where(getCriteriaBuilder().between(root.get(LabEvent_.eventDate), beginDate, endDate));
+            }
+        });
+    }
+
+    public List<LabEvent> findByDateAndType(final Date beginDate, final Date endDate, LabEventType labEventType) {
+        return findAll(LabEvent.class, new GenericDaoCallback<LabEvent>() {
+            @Override
+            public void callback(CriteriaQuery<LabEvent> criteriaQuery, Root<LabEvent> root) {
+                criteriaQuery.where(getCriteriaBuilder().between(root.get(LabEvent_.eventDate), beginDate, endDate),
+                        getCriteriaBuilder().equal(root.get(LabEvent_.labEventType), labEventType));
             }
         });
     }

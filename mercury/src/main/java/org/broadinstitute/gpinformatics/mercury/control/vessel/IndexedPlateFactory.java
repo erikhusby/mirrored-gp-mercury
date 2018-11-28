@@ -39,20 +39,40 @@ public class IndexedPlateFactory {
 
     public enum TechnologiesAndParsers {
         FOUR54_SINGLE("454 (Single Index)",
-                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IndexPosition.FOUR54_A.getTechnology())),
+                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IndexPosition.FOUR54_A.getTechnology()),
+                false),
         ION_SINGLE("Ion Torrent (Single Index)",
-                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IndexPosition.ION_A.getTechnology())),
+                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IndexPosition.ION_A.getTechnology()),
+                false),
         ILLUMINA_SINGLE("Illumina (Single Index)",
-                new IndexedPlateParserIDTSpreadsheetFormat()),
+                new IndexedPlateParserIDTSpreadsheetFormat(),
+                true),
         ILLUMINA_TSCA("Illumina (TSCA)",
-                new IndexedPlateParserTSCAFormat());
+                new IndexedPlateParserTSCAFormat(),
+                false),
+        ILLUMINA_FP("Illumina (FP)",
+                new IndexedPlateParserTSCAFormat(), StaticPlate.PlateType.IndexedAdapterPlate384,
+                true);
 
         private final String prettyName;
         private final IndexedPlateParser indexedPlateParser;
+        private final StaticPlate.PlateType plateType;
+        private final boolean active;
 
-        TechnologiesAndParsers(String name, IndexedPlateParser indexedPlateParser) {
+        TechnologiesAndParsers(String name, IndexedPlateParser indexedPlateParser, boolean active) {
             prettyName = name;
             this.indexedPlateParser = indexedPlateParser;
+            this.plateType = StaticPlate.PlateType.IndexedAdapterPlate96;
+            this.active = active;
+        }
+
+        TechnologiesAndParsers(String prettyName,
+                               IndexedPlateParser indexedPlateParser,
+                               StaticPlate.PlateType plateType, boolean active) {
+            this.prettyName = prettyName;
+            this.indexedPlateParser = indexedPlateParser;
+            this.plateType = plateType;
+            this.active = active;
         }
 
         public String getPrettyName() {
@@ -61,6 +81,14 @@ public class IndexedPlateFactory {
 
         public IndexedPlateParser getIndexedPlateParser() {
             return indexedPlateParser;
+        }
+
+        public StaticPlate.PlateType getPlateType() {
+            return plateType;
+        }
+
+        public boolean isActive() {
+            return active;
         }
     }
 
@@ -90,17 +118,19 @@ public class IndexedPlateFactory {
             } catch (IOException ignored) {
             }
         }
-        return uploadIndexedPlates(associations);
+        return uploadIndexedPlates(associations, technologiesAndParsers.getPlateType());
     }
 
-    public Map<String, StaticPlate> uploadIndexedPlates(List<PlateWellIndexAssociation> plateWellIndexes) {
+    public Map<String, StaticPlate> uploadIndexedPlates(List<PlateWellIndexAssociation> plateWellIndexes,
+                                                        StaticPlate.PlateType plateType) {
         Map<String, StaticPlate> platesByBarcode = new HashMap<>();
         Set<PlateWell> previousWells = new HashSet<>();
 
         for (PlateWellIndexAssociation plateWellIndex : plateWellIndexes) {
             StaticPlate plate = createOrGetPlate(
                     plateWellIndex,
-                    platesByBarcode);
+                    platesByBarcode,
+                    plateType);
             VesselPosition vesselPosition = VesselPosition.getByName(plateWellIndex.getWellName());
             PlateWell plateWell = new PlateWell(plate, vesselPosition);
             if (previousWells.contains(plateWell)) {
@@ -111,7 +141,7 @@ public class IndexedPlateFactory {
             previousWells.add(plateWell);
 
             MolecularIndexingScheme indexingScheme = indexingSchemeFactory.findOrCreateIndexingScheme(
-                    Arrays.asList(plateWellIndex.getPositionPairs()));
+                    Arrays.asList(plateWellIndex.getPositionPairs()), false);
             plateWell.addReagent(new MolecularIndexReagent(indexingScheme));
 
             plate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
@@ -123,12 +153,12 @@ public class IndexedPlateFactory {
 
 
     private StaticPlate createOrGetPlate(PlateWellIndexAssociation plateWellIndex,
-            Map<String, StaticPlate> platesByBarcode) {
+                                         Map<String, StaticPlate> platesByBarcode, StaticPlate.PlateType plateType) {
 
         String formattedBarcode = StringUtils.leftPad(plateWellIndex.getPlateBarcode(), BARCODE_LENGTH, '0');
         StaticPlate plate = platesByBarcode.get(formattedBarcode);
         if (plate == null) {
-            plate = new StaticPlate(formattedBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
+            plate = new StaticPlate(formattedBarcode, plateType);
             plate.setCreatedOn(new Date());
             platesByBarcode.put(formattedBarcode, plate);
         }

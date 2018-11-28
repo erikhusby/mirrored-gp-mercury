@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -24,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -57,12 +57,40 @@ public class LabMetricSearchDefinition {
         }
     }
 
+    // These search term and/or result column names need to be referenced multiple places during processing.
+    // Use an enum rather than having to reference via String values of term names
+    // TODO: JMS Create a shared interface that this implements then use this as a registry of all term names
+    public enum MultiRefTerm {
+        METRIC_RUN_ID("Metric Run ID"),
+        METRIC_TUBES_ONLY("Only Show Metrics for Tubes"),
+        BSP_PARTICIPANT("Collaborator Patient ID"),
+        BSP_MATERIAL("Original Material Type");
+
+        MultiRefTerm(String termRefName ) {
+            this.termRefName = termRefName;
+            if( termNameReference.put(termRefName,this) != null ) {
+                throw new RuntimeException( "Attempt to add a term with a duplicate name [" + termRefName + "]." );
+            }
+        }
+
+        private String termRefName;
+        private Map<String,MultiRefTerm> termNameReference = new HashMap<>();
+
+        public String getTermRefName() {
+            return termRefName;
+        }
+
+        public boolean isNamed(String termName ) {
+            return termRefName.equals(termName);
+        }
+    }
+
     public LabMetricSearchDefinition(){
         // Cache the metadata keys related to lab metrics available for display
         metadataDisplayKeyMap = new HashMap<>();
         for( Metadata.Key key : Metadata.Key.values() ) {
             if (key.getCategory() == Metadata.Category.LAB_METRIC
-                    || key.getCategory() == Metadata.Category.LAB_METRIC_RUN) {
+                    || key.getCategory() == Metadata.Category.LAB_METRIC_RUN || key.getCategory() == Metadata.Category.LIQUID_HANDLER_METRIC) {
                 metadataDisplayKeyMap.put(key.getDisplayName(), key);
             }
         }
@@ -137,6 +165,7 @@ public class LabMetricSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Barcode");
+        searchTerm.setRackScanSupported(Boolean.TRUE);
         searchTerm.setDbSortPath("labVessel.label");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
@@ -156,10 +185,16 @@ public class LabMetricSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         criteriaPaths = new ArrayList<>();
+
+        // Mercury only cares about workflow batches
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
+
         // Non-reworks
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "labBatches", "labBatch"));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         // Reworks
@@ -170,6 +205,7 @@ public class LabMetricSearchDefinition {
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "labMetrics"));
         criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -188,7 +224,7 @@ public class LabMetricSearchDefinition {
                 return results;
             }
         });
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -246,7 +282,7 @@ public class LabMetricSearchDefinition {
         // User-selectable filter to exclude plate wells from the results
         // Note: Accessed by name in LabMetricTraversalEvaluator to filter ancestors and descendants
         searchTerm = new SearchTerm();
-        searchTerm.setName("Only Show Metrics for Tubes");
+        searchTerm.setName(MultiRefTerm.METRIC_TUBES_ONLY.getTermRefName());
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setValueType(ColumnValueType.NOT_NULL);
         criteriaPaths = new ArrayList<>();
@@ -265,21 +301,16 @@ public class LabMetricSearchDefinition {
 
                 LabMetric labMetric = (LabMetric) entity;
 
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                labEventTypes.add(LabEventType.FLOWCELL_TRANSFER);
-                labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
-                labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
-
-                LabVesselSearchDefinition.VesselDescendantTraverserCriteria eval
-                        = new LabVesselSearchDefinition.VesselDescendantTraverserCriteria(labEventTypes );
+                LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
+                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
+                                LabVesselSearchDefinition.FLOWCELL_LAB_EVENT_TYPES);
                 labMetric.getLabVessel().evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 Set<String> barcodes = null;
-                if (!eval.getPositions().isEmpty()) {
-                    barcodes = new HashSet<>();
-                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
-                        barcodes.add(positionPair.getLeft());
-                    }
+                for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : eval.getPositions().asMap().entrySet()) {
+                        (barcodes==null?barcodes = new HashSet<>():barcodes)
+                                .add(labVesselAndPositions.getKey().getLabel());
                 }
                 return barcodes;
             }
@@ -299,17 +330,22 @@ public class LabMetricSearchDefinition {
                 @Override
                 public String evaluate(Object entity, SearchContext context) {
                     LabMetric labMetric = (LabMetric) entity;
-                    if (labMetric.getLabMetricRun().getMetadata().isEmpty()) {
-                        return "";
-                    } else {
-                        Metadata.Key key = metadataDisplayKeyMap.get(context.getSearchTerm().getName());
+                    Metadata.Key key = metadataDisplayKeyMap.get(context.getSearchTerm().getName());
+                    // Check metric metadata
+                    for (Metadata metadata : labMetric.getMetadataSet()) {
+                        if (metadata.getKey() == key) {
+                            return metadata.getValue();
+                        }
+                    }
+                    // Still here? Check run metadata
+                    if (labMetric.getLabMetricRun() != null) {
                         for (Metadata metadata : labMetric.getLabMetricRun().getMetadata()) {
-                            if( metadata.getKey() == key ) {
+                            if (metadata.getKey() == key) {
                                 return metadata.getValue();
                             }
                         }
-                        return "";
                     }
+                    return "";
                 }
             });
 
@@ -436,6 +472,29 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName(MultiRefTerm.METRIC_RUN_ID.getTermRefName());
+        searchTerm.setValueType(ColumnValueType.UNSIGNED);
+        searchTerm.setDbSortPath("labMetricRun.labMetricRunId");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Long evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                return labMetric.getLabMetricRun() == null? null: labMetric.getLabMetricRun().getLabMetricRunId();
+            }
+        });
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+
+        // Projected property of nested subquery
+        criteriaPath.setCriteria(Collections.singletonList("labMetricId"));
+        criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
+
+        criteriaPath.setPropertyName("labMetricRunId");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Position");
         searchTerm.setDbSortPath("vesselPosition");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -448,7 +507,7 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Collaborator Patient ID");
+        searchTerm.setName(MultiRefTerm.BSP_PARTICIPANT.getTermRefName());
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
@@ -601,16 +660,22 @@ public class LabMetricSearchDefinition {
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> products = new HashSet<>();
                 LabMetric labMetric = (LabMetric) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
-                    BucketEntry singleBucketEntry = sampleInstanceV2.getSingleBucketEntry();
-                    if (singleBucketEntry != null) {
-                        products.add(singleBucketEntry.getProductOrder().getProduct().getName());
+                Set <String> results = new HashSet<>();
+                for (SampleInstanceV2 sampleInstanceV2: labMetric.getLabVessel().getSampleInstancesV2()) {
+                    ProductOrderSample pdoSampleForSingleBucket =
+                            sampleInstanceV2.getProductOrderSampleForSingleBucket();
+                    if (pdoSampleForSingleBucket == null) {
+                        for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                            if (productOrderSample.getProductOrder().getProduct() != null) {
+                                results.add(productOrderSample.getProductOrder().getProduct().getName());
+                            }
+                        }
+                    } else {
+                        results.add(pdoSampleForSingleBucket.getProductOrder().getProduct().getName());
                     }
                 }
-
-                return products;
+                return results;
             }
         });
         searchTerms.add(searchTerm);
@@ -641,7 +706,7 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Original Material Type");
+        searchTerm.setName(MultiRefTerm.BSP_MATERIAL.getTermRefName());
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {

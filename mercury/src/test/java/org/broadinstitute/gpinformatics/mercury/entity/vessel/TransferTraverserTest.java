@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.List;
 
@@ -17,7 +18,11 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
  * Validate that the traverser finds events correctly
  */
 @Test(groups = TestGroups.STUBBY)
-public class TransferTraverserTest extends ContainerTest {
+@Dependent
+public class TransferTraverserTest extends StubbyContainerTest {
+
+    public TransferTraverserTest(){}
+
     @Inject
     private JiraTicketDao jiraTicketDao;
 

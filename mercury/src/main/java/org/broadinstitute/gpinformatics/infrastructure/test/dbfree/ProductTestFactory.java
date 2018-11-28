@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.UUID;
@@ -17,18 +18,18 @@ public class ProductTestFactory {
         return createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber " + uuid);
     }
 
-    public static Product createDummyProduct(Workflow workflow, String partNumber) {
+    public static Product createDummyProduct(String workflow, String partNumber) {
         return createDummyProduct(workflow, partNumber, false, false);
     }
 
-    public static Product createDummyProduct(Workflow workflow, String partNumber, boolean addRisk,
+    public static Product createDummyProduct(String workflow, String partNumber, boolean addRisk,
                                              boolean pdmOrderableOnly) {
         Product product =
                 new Product("productName", new ProductFamily("Test product family"), "description", partNumber,
                         new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
-                        workflow, false, "an aggregation data type");
-        product.setPdmOrderableOnly(pdmOrderableOnly);
-
+                        workflow, pdmOrderableOnly, "an aggregation data type");
+        product.setReadLength(76);
+        product.setPairedEndRead(true);
         if (addRisk) {
             product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.MANUAL, Operator.IS, "true"));
         }
@@ -60,6 +61,8 @@ public class ProductTestFactory {
             product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.PICO_AGE, Operator.IS, "true"));
             product.addRiskCriteria(
                     new RiskCriterion(RiskCriterion.RiskCriteriaType.TOTAL_DNA, Operator.LESS_THAN, ".250"));
+            product.setLoadingConcentration(BigDecimal.valueOf(225));
+            product.setPairedEndRead(true);
         } catch (ParseException e) {
 
         }

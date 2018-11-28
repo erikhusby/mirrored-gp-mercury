@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
 import javax.annotation.Nonnull;
@@ -35,7 +36,7 @@ public class ProductOrderTestFactory {
     public static final String otherRpSynopsis = "To Study Stuff";
 
     public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey,
-                                                       Workflow workflow, long creatorId, String rpTitle,
+                                                       String workflow, long creatorId, String rpTitle,
                                                        String rpSynopsis, boolean irbNotEngaged,
                                                        String productPartNumber, String sampleSuffix, String quoteId) {
         Product dummyProduct =
@@ -57,7 +58,8 @@ public class ProductOrderTestFactory {
 
         ResearchProject researchProject = ResearchProjectTestFactory.createDummyResearchProject(
                 creatorId, rpTitle, rpSynopsis, irbNotEngaged);
-
+        String testRpValue = "RP-99999";
+        researchProject.setJiraTicketKey(testRpValue);
         ProductOrder productOrder =
                 new ProductOrder(creatorId, "Test PO", productOrderSamples, "GSP-123", dummyProduct, researchProject);
         if (StringUtils.isNotBlank(jiraKey)) {
@@ -68,8 +70,13 @@ public class ProductOrderTestFactory {
         }
 
         Product dummyAddOnProduct =
-                ProductTestFactory.createDummyProduct(Workflow.NONE, "partNumber");
+                ProductTestFactory.createDummyProduct(Workflow.NONE, productPartNumber+"-addon");
         dummyAddOnProduct.setProductName("addOnProduct");
+        PriceItem exExAddOnPriceItem =
+                new PriceItem(quoteId, PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
+                        PriceItem.NAME_STANDARD_WHOLE_EXOME);
+        dummyAddOnProduct.setPrimaryPriceItem(exExAddOnPriceItem);
+
 
         productOrder.updateAddOnProducts(Collections.singletonList(dummyAddOnProduct));
 
@@ -121,10 +128,10 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.AGILENT_EXOME_EXPRESS);
     }
 
-    public static ProductOrder buildProductOrder(int maxSamples, String sampleSuffix, Workflow workflow) {
+    public static ProductOrder buildProductOrder(int maxSamples, String sampleSuffix, String workflow) {
         return createDummyProductOrder(maxSamples, "PD0-1EE", workflow, 101, "Test RP",
                 rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-" + workflow.name() + "-1232", sampleSuffix, "ExExQuoteId");
+                ResearchProject.IRB_ENGAGED, "P-" + workflow + "-1232", sampleSuffix, "ExExQuoteId");
     }
 
     public static ProductOrder buildIceProductOrder(int maxSamples) {
@@ -137,6 +144,34 @@ public class ProductOrderTestFactory {
 
     public static ProductOrder buildWholeGenomeProductOrder(int maxSamples) {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.WHOLE_GENOME);
+    }
+
+    public static ProductOrder buildPcrFreeProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_FREE);
+    }
+
+    public static ProductOrder buildPcrPlusProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_PLUS);
+    }
+
+    public static ProductOrder buildPcrPlusHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_PLUS_HYPER_PREP);
+    }
+
+    public static ProductOrder buildPcrFreeHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_FREE_HYPER_PREP);
+    }
+
+    public static ProductOrder builCustomSelectionProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.CUSTOM_SELECTION);
+    }
+
+    public static ProductOrder buildCellFreeHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.CELL_FREE_HYPER_PREP);
+    }
+
+    public static ProductOrder buildICEHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.ICE_EXOME_EXPRESS_HYPER_PREP);
     }
 
     public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {
@@ -153,9 +188,14 @@ public class ProductOrderTestFactory {
         return sampleInitiationProductOrder;
     }
 
-    public static ProductOrder buildInfiniumProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PDO-1INF", Workflow.NONE, 101,
-                "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-INFtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+    public static ProductOrder buildFPProductOrder(int maxSamples) {
+        return createDummyProductOrder(maxSamples, "PDO-1FP", Workflow.NONE, 101,
+                "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-FPtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+    }
+
+    public static ProductOrder buildSingleCellProductOrder(int maxSamples) {
+        return createDummyProductOrder(maxSamples, "PDO-1SC", Workflow.NONE, 101,
+                "Test Single Cell", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-SCtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
     public static ProductOrder buildArrayPlatingProductOrder(int maxSamples) {
@@ -166,6 +206,14 @@ public class ProductOrderTestFactory {
     public static ProductOrder buildTruSeqStrandSpecificProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PDO-1TRUSS", Workflow.NONE, 101,
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-TRUSStest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+    }
+
+    public static ProductOrder buildInfiniumMethylationProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.INFINIUM_METHYLATION);
+    }
+
+    public static ProductOrder buildInfiniumProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.INFINIUM);
     }
 
 
@@ -179,18 +227,22 @@ public class ProductOrderTestFactory {
         UUID uuid = UUID.randomUUID();
         ProductFamily productFamily = new ProductFamily("Product Family " + uuid);
         Product product =
-                new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-" + uuid,
-                        new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, Workflow.NONE,
+                new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-X" + uuid,
+                        new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, null,
                         false, "Aggregation Data Type");
 
 
         ResearchProject researchProject = new ResearchProject(-1L, "Research Project " + uuid, "Synopsis", false,
                                                               ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
-        researchProject.setJiraTicketKey("RP-" + uuid);
+        // X after dash, to prevent web page autocomplete randomly matching uuid
+        researchProject.setJiraTicketKey("RP-X" + uuid);
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         for (String sampleName : sampleNames) {
-            productOrderSamples.add(new ProductOrderSample(sampleName));
+            MercurySample mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.BSP);
+            ProductOrderSample productOrderSample = new ProductOrderSample(sampleName);
+            mercurySample.addProductOrderSample(productOrderSample);
+            productOrderSamples.add(productOrderSample);
         }
 
         PriceItem priceItem = new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category", "PriceItem Name " + uuid);
@@ -199,7 +251,7 @@ public class ProductOrderTestFactory {
         ProductOrder productOrder =
                 new ProductOrder(-1L, "PDO title " + uuid, productOrderSamples, "Quote-" + uuid, product,
                         researchProject);
-        productOrder.setJiraTicketKey("PDO-" + uuid);
+        productOrder.setJiraTicketKey("PDO-X" + uuid);
         productOrder.setModifiedBy(-1L);
         productOrder.setOrderStatus(Submitted);
         return productOrder;

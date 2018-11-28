@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -21,11 +20,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
-
 @Test(groups = TestGroups.DATABASE_FREE)
 public class WorkflowDiagrammerDbFreeTest {
     // 3 successive days starting 1-jan-2013 00:00:00 EST
@@ -33,7 +27,6 @@ public class WorkflowDiagrammerDbFreeTest {
     private static final long[] MSEC_DATES = {1357016400000L, 1357016400000L + ONE_DAY, 1357016400000L + 2L * ONE_DAY};
 
     private final WorkflowDiagrammer diagrammer = new WorkflowDiagrammer();
-    private final WorkflowLoader workflowLoader = createMock(WorkflowLoader.class);
     private WorkflowConfig workflowConfig;
 
     private static final String WORKFLOW_NAME_1 = "Partial Genome";
@@ -120,11 +113,13 @@ public class WorkflowDiagrammerDbFreeTest {
         // Puts all into WorkflowConfig.
         workflowConfig = new WorkflowConfig(Arrays.asList(process1, process2), workflowDefs);
 
-        // Mock the loader.
-        reset(workflowLoader);
-        expect(workflowLoader.load()).andReturn(workflowConfig).anyTimes();
-        replay(workflowLoader);
-        diagrammer.setWorkflowLoader(workflowLoader);
+        diagrammer.setWorkflowConfig(workflowConfig);
+    }
+
+    @Test
+    public void testWorkflowConfig() throws Exception {
+        //Load and verify WorkflowConfig file.
+        diagrammer.makeAllDiagramFiles();
     }
 
     @Test
@@ -156,6 +151,7 @@ public class WorkflowDiagrammerDbFreeTest {
             Assert.assertFalse(filename.contains(" "));
         }
     }
+
 
     @Test
     public void testGraph() throws Exception {

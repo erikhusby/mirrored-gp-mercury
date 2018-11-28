@@ -4,11 +4,13 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
  * This contains common code used by all clients of GAP rest (ie: non-broadcore) services.
  */
+@Dependent
 public class GAPRestClient extends AbstractJerseyClientService {
 
     private static final long serialVersionUID = 20150720L;

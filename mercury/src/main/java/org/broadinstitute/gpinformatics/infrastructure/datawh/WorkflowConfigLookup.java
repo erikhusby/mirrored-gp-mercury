@@ -3,19 +3,27 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Stateful
 public class WorkflowConfigLookup implements Serializable {
     private static Log logger = LogFactory.getLog(WorkflowConfigLookup.class);
-    private WorkflowLoader workflowLoader;
+
+    private WorkflowConfig workflowConfig;
     private Map<String, List<WorkflowConfigDenorm>> mapEventToWorkflows = null;
     private static final int CONFIG_ID_CACHE_SIZE = 64;
     private final LRUMap configIdCache = new LRUMap(CONFIG_ID_CACHE_SIZE);
@@ -71,14 +79,11 @@ public class WorkflowConfigLookup implements Serializable {
         SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "Activity", "0", "Activity", "0",
                 LabEventType.ACTIVITY_END.getName(), LabEventType.ACTIVITY_END.getName(),
                 PDO_NOT_NEEDED, BATCH_NOT_NEEDED, false));
+        SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "InstrumentQC", "0", "InstrumentQC", "0",
+                LabEventType.INSTRUMENT_QC.getName(), LabEventType.INSTRUMENT_QC.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED, false));
     }
 
-
-    @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
-        initWorkflowConfigDenorm();
-    }
 
     /**
      * Builds 1:N mapping of event name to denorm workflow configs that contain that event name.
@@ -154,7 +159,7 @@ public class WorkflowConfigLookup implements Serializable {
 
     /** Returns the workflowConfigDenorms obtained from WorkflowConfig plus the synthetic ones needed for etl. */
     public Collection<WorkflowConfigDenorm> getDenormConfigs() {
-        Collection<WorkflowConfigDenorm> denormConfigs = WorkflowConfigDenorm.parse(workflowLoader.load());
+        Collection<WorkflowConfigDenorm> denormConfigs = WorkflowConfigDenorm.parse(workflowConfig);
         denormConfigs.addAll(SYNTHETIC_WORKFLOW_CONFIGS);
         return denormConfigs;
     }
@@ -173,4 +178,11 @@ public class WorkflowConfigLookup implements Serializable {
     public static boolean needsBatch(String workflowStepEventName) {
         return !ACCEPT_WITHOUT_BATCH_NAME.contains(workflowStepEventName);
     }
+
+    @Inject
+    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
+        initWorkflowConfigDenorm();
+    }
+
 }

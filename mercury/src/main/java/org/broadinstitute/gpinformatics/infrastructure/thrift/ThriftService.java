@@ -18,6 +18,8 @@ public interface ThriftService extends Serializable {
 
     public TZamboniRun fetchRun(String runName);
 
+    public TZamboniRun fetchRunByBarcode(String runBarcode);
+
     public List<LibraryData> fetchLibraryDetailsByTubeBarcode(List<String> tubeBarcodes, boolean includeWorkRequestDetails);
 
     boolean doesSquidRecognizeAllLibraries(List<String> barcodes);

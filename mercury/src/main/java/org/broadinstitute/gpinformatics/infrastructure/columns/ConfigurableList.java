@@ -1,12 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.ResultParamValues;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -50,7 +53,7 @@ public class ConfigurableList {
      * A way to capture high latency bulk data for a page of results
      */
     public interface AddRowsListener {
-        void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations);
+        void addRows(List<?> entityList, SearchContext context, Map<Integer,ColumnTabulation> nonPluginTabulations);
         void reset();
     }
 
@@ -59,9 +62,13 @@ public class ConfigurableList {
      */
     private final Map<String,AddRowsListener> addRowsListeners = new HashMap<>();
 
-    private final List<ColumnTabulation> pluginTabulations = new ArrayList<>();
+    /**
+     Correlates custom result params with their associated ColumnTabluation **/
+    private final Map<Integer,ResultParamValues> resultParamsMap = new HashMap<>();
 
-    private final List<ColumnTabulation> nonPluginTabulations = new ArrayList<>();
+    private final Map<Integer,ColumnTabulation> pluginTabulations = new HashMap<>();
+
+    private final  Map<Integer,ColumnTabulation> nonPluginTabulations = new HashMap<>();
 
     private final Integer sortColumnIndex;
 
@@ -158,29 +165,54 @@ public class ConfigurableList {
         DOWNLOAD
     }
 
-    public ConfigurableList(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
-            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
-        this(columnTabulations, sortColumnIndex, sortDirection, /*admin, */columnEntity,
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, ResultParamValues> resultParamsMap, Integer sortColumnIndex,
+                            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
+        this( columnTabulations, resultParamsMap, sortColumnIndex, sortDirection, /*admin, */columnEntity,
                 DEFAULT_MULTI_VALUE_DELIMITER);
+    }
+
+    /**
+     * Constructor without sort direction.
+     * @param columnTabulations The tabulations used.
+     * @param resultParamsMap Any result column parameters (indexed by associated column's position in columnTabulations)
+     * @param sortColumnIndexes The columns and sorting configurations
+     * @param columnEntity The base entity of the search result
+     */
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, ResultParamValues> resultParamsMap, List<SortColumn> sortColumnIndexes,
+                            @Nonnull ColumnEntity columnEntity) {
+
+        this( columnTabulations, resultParamsMap, null, null, /*admin, */columnEntity);
+        if (sortColumnIndexes != null && !sortColumnIndexes.isEmpty()) {
+            this.sortColumnIndexes = new ArrayList<>(sortColumnIndexes);
+        }
     }
 
     /**
      * Constructor.
      *
      * @param columnTabulations The tabulations used.
+     * @param resultParamsMap Any result column parameters (indexed by associated column's position in columnTabulations)
      * @param sortColumnIndex The column to sort.
      * @param sortDirection Ascending or descending.
-     * @param columnEntity The field id.
+     * @param columnEntity The base entity of the search result
      * @param multiValueDelimiter The text to use as the delimiter between values in a multi-valued field.
      */
-    public ConfigurableList(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
-            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity, String multiValueDelimiter) {
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, ResultParamValues> resultParamsMap, Integer sortColumnIndex,
+                            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity, String multiValueDelimiter) {
         this.columnEntity = columnEntity;
         this.multiValueDelimiter = multiValueDelimiter;
-        for (ColumnTabulation columnTabulation : columnTabulations) {
+        this.resultParamsMap.putAll(resultParamsMap);
+
+        for (int i = 0; i < columnTabulations.size(); i++ ) {
+            ColumnTabulation columnTabulation = columnTabulations.get(i);
             // Ignore header logic on nested table ColumnTabulation
             if( !columnTabulation.isNestedParent() ) {
-                headerGroupMap.put(columnTabulation.getName(), new HeaderGroup(columnTabulation.getName()));
+                ResultParamValues resultParams = resultParamsMap.get(i);
+                if( resultParams == null ) {
+                    headerGroupMap.put(columnTabulation.getName(), new HeaderGroup(columnTabulation.getName()));
+                } else {
+                    headerGroupMap.put(resultParams.getUserColumnName(), new HeaderGroup(columnTabulation.getName()));
+                }
             }
         }
         this.sortColumnIndex = sortColumnIndex;
@@ -188,30 +220,15 @@ public class ConfigurableList {
 //        isAdmin = admin;
 
         // Get the plugin tabulations and the non plugin tabulations.
-        for (ColumnTabulation columnTabulation : columnTabulations) {
+        for (int i = 0; i < columnTabulations.size();i++ ) {
+            ColumnTabulation columnTabulation = columnTabulations.get(i);
             if (columnTabulation.getPluginClass() != null) {
-                pluginTabulations.add(columnTabulation);
+                pluginTabulations.put(i, columnTabulation);
             } else {
-                nonPluginTabulations.add(columnTabulation);
+                nonPluginTabulations.put(i, columnTabulation);
             }
         }
 
-    }
-
-    /**
-     * Constructor without sort direction.
-     *
-     * @param columnTabulations The tabulations used.
-     * @param sortColumnIndexes The columns to sort by.
-     * @param columnEntity The field id.
-     */
-    public ConfigurableList(List<ColumnTabulation> columnTabulations, List<SortColumn> sortColumnIndexes,
-            @Nonnull ColumnEntity columnEntity) {
-
-        this(columnTabulations, null, null, /*admin, */columnEntity);
-        if (sortColumnIndexes != null && !sortColumnIndexes.isEmpty()) {
-            this.sortColumnIndexes = new ArrayList<>(sortColumnIndexes);
-        }
     }
 
     /**
@@ -354,12 +371,14 @@ public class ConfigurableList {
         private String formattedValue;
 
         Cell(Header header, Comparable<?> sortableValue, String formattedValue) {
+            this(header, sortableValue, formattedValue, true);
+        }
+
+        Cell(Header header, Comparable<?> sortableValue, String formattedValue, boolean xssEncode) {
             this.header = header;
             this.sortableValue = sortableValue;
-
-            // Protect against JS Injection by escaping the formatted value.
-            if ( formattedValue != null && !formattedValue.isEmpty() ) {
-                this.formattedValue = StringEscapeUtils.escapeXml(formattedValue);
+            if (formattedValue != null) {
+                this.formattedValue = xssEncode ? Encode.forHtml(formattedValue) : formattedValue;
             }
         }
 
@@ -446,9 +465,16 @@ public class ConfigurableList {
             // evaluate expression to get ID
             Row row = new Row(columnEntity.getIdGetter().getId(entity));
             rows.add(row);
-            for (ColumnTabulation columnTabulation : nonPluginTabulations) {
+            for (Map.Entry<Integer,ColumnTabulation> intColumnEntry : nonPluginTabulations.entrySet()) {
+                ColumnTabulation columnTabulation = intColumnEntry.getValue();
+                Integer paramIndex = intColumnEntry.getKey();
+                context.setColumnParams( resultParamsMap.get(paramIndex) );
                 if( !columnTabulation.isNestedParent() ) {
-                    recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
+                    if( resultParamsMap.get(paramIndex) == null ) {
+                        recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
+                    } else {
+                        recurseColumns(context, entity, row, columnTabulation, resultParamsMap.get(paramIndex).getUserColumnName());
+                    }
                 } else {
                     Collection<?> nestedEntities = columnTabulation.evalNestedTableExpression(entity, context);
                     // Build final nested ResultList here...
@@ -459,11 +485,14 @@ public class ConfigurableList {
                 }
             }
             // Plugins for nested table processing handled on a row-by-row basis
-            for (ColumnTabulation columnTabulation : pluginTabulations) {
+            for (Map.Entry<Integer,ColumnTabulation> intColumnEntry : pluginTabulations.entrySet()) {
+                ColumnTabulation columnTabulation = intColumnEntry.getValue();
+                Integer paramIndex = intColumnEntry.getKey();
+                context.setColumnParams( resultParamsMap.get(paramIndex) );
+                context.setSearchTerm((SearchTerm) columnTabulation);
                 if( columnTabulation.isNestedParent() ) {
                     ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
                     // Nested table will never be a SearchValue ... cast to SearchTerm
-                    context.setSearchTerm((SearchTerm) columnTabulation);
                     ResultList nestedResultList = listPlugin.getNestedTableData(entity, columnTabulation, context);
                     if( nestedResultList != null ) {
                         row.getNestedTableEntities().put(columnTabulation, nestedResultList);
@@ -473,12 +502,17 @@ public class ConfigurableList {
         }
 
         // Call the plugins, and add their data to the accumulated rows.
-        for (ColumnTabulation columnTabulation : pluginTabulations) {
+        for (ColumnTabulation columnTabulation : pluginTabulations.values()) {
+            context.setSearchTerm((SearchTerm) columnTabulation);
             ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
             // Legacy plugin process from BSP
             if( !columnTabulation.isNestedParent() ) {
                 List<Row> pluginRows =
                         listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()), context);
+                if (pluginRows.size() != entityList.size()) {
+                    throw new RuntimeException("Plugin returned " + pluginRows.size() +
+                            " rows, but entityList size is " + entityList.size());
+                }
                 int rowIndex = pageStartingRow;
                 for (Row row : pluginRows) {
                     // TODO jmt rows might be empty, if columns are all plugins
@@ -558,12 +592,18 @@ public class ConfigurableList {
                 header = new Header(currentViewHeader, currentViewHeader, null, columnTabulation.getDbSortPath() );
                 headerGroup.getHeaderMap().put(currentViewHeader, header);
             }
-            String formattedString = columnTabulation.evalFormattedExpression(currentValue, context );
+
+            String formattedString;
+            if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
+                formattedString = columnTabulation.evalUiDisplayOutputExpression(currentValue, context);
+            } else {
+                formattedString = columnTabulation.evalPlainTextOutputExpression(currentValue, context);
+            }
 
             Comparable<?> comparableValue =
                     columnTabulation.evalValueTypeExpression(entity,context)
                         .getComparableValue(currentValue,multiValueDelimiter);
-            Cell cell = new Cell(header, comparableValue, formattedString);
+            Cell cell = new Cell(header, comparableValue, formattedString, columnTabulation.mustEscape());
             row.addCell(cell);
             valueIndex++;
         }
@@ -594,7 +634,13 @@ public class ConfigurableList {
             List<String> cells = new ArrayList<>();
             for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
                 Object value = nestedColumnTabulation.evalValueExpression(entity, context);
-                cells.add(nestedColumnTabulation.evalFormattedExpression(value, context));
+                String output;
+                if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
+                    output = nestedColumnTabulation.evalUiDisplayOutputExpression(value, context);
+                } else {
+                    output = nestedColumnTabulation.evalPlainTextOutputExpression(value, context);
+                }
+                cells.add(nestedColumnTabulation.mustEscape() ? Encode.forHtml(output) : output);
             }
             ResultRow row = new ResultRow( emptySortableCells, cells, null );
             localRows.add(row);
@@ -725,83 +771,116 @@ public class ConfigurableList {
          * @return 2d array of cells
          */
         public Object[][] getAsArray() {
-
-            // Calculate how many rows and columns required using nested tables
-            // Default for no nested tables
-            int rowCount = getResultRows().size() + 2;
-            int colCount = getHeaders().size();
-
-            // Some rows have 1 or more nested tables, some don't.
-            // Adjust array size as required
-            for (ConfigurableList.ResultRow resultRow : getResultRows()) {
-                for( ResultList nestedTable: resultRow.getNestedTables().values() ){
-                    rowCount += nestedTable.getResultRows().size() + 2;
-                    int nestCols = nestedTable.getHeaders().size() + 1;
-                    if( nestCols > colCount ) {
-                        colCount = nestCols;
-                    }
-                }
-            }
-
-            Object[][] rowObjects = new Object[rowCount][colCount];
-
-            // Set the first (name) and second (units, metadata) headers.
-            int columnNumber;
-            boolean headerRow2Present = false;
-            for (columnNumber = 0; columnNumber < getHeaders().size(); columnNumber++) {
-                ConfigurableList.Header header = getHeaders().get(columnNumber);
-                rowObjects[0][columnNumber] = new SpreadsheetCreator.ExcelHeader(header.getDownloadHeader1());
-                String header2Name = header.getDownloadHeader2();
-                if (header2Name != null && !header2Name.isEmpty()) {
-                    rowObjects[1][columnNumber] = new SpreadsheetCreator.ExcelHeader(header2Name);
-                    headerRow2Present = true;
-                }
-            }
-            // Set the data
-            int rowNumber = headerRow2Present ? 2 : 1;
-            for (ConfigurableList.ResultRow resultRow : getResultRows()) {
-                columnNumber = 0;
-                for (String value : resultRow.getRenderableCells()) {
-                    rowObjects[rowNumber][columnNumber] = value;
-                    columnNumber++;
-                }
-                rowNumber++;
-
-                // Nested tables
-                for( Map.Entry<String,ResultList> nestedTable : resultRow.getNestedTables().entrySet() ) {
-                    rowObjects[rowNumber][1] = new SpreadsheetCreator.ExcelHeader(nestedTable.getKey());
-                    rowNumber++;
-                    rowNumber = appendNestedRows(rowNumber, 1, nestedTable.getValue(), rowObjects);
-                }
-
-            }
+            Pair<Integer, Integer> rowColPair = fillArray(null, this, 0, 0, false);
+            Object[][] rowObjects = new Object[rowColPair.getLeft()][rowColPair.getRight()];
+            fillArray(rowObjects, this, 0, 0, true);
             return rowObjects;
         }
 
         /**
-         * Append nested table rows to 2 dimensional Excel output data array
-         * (Assume no deeper than 1 layer)
+         * Recursively renders a resultList, and any nested resultLists, into a 2D array.  First call with
+         * render = false, to get size information, then allocate array, then call with render = true.
+         * @param rowObjects array of cells to render into
+         * @param resultList source to render
+         * @param startRow offsets for nested tables, start with 0
+         * @param startColumn offsets for nested tables, start with 0
+         * @param render true to fill rowObjects, false to only caculate size
+         * @return pair of row count, column count
          */
-        private int appendNestedRows( int rowIndex, int startColumn, ResultList resultList, Object[][] rowObjects ){
+        private Pair<Integer, Integer> fillArray(Object[][] rowObjects, ResultList resultList, int startRow,
+                int startColumn, boolean render) {
 
-            int col = startColumn;
-
-            for( Header header : resultList.getHeaders() ) {
-                rowObjects[rowIndex][col] = new SpreadsheetCreator.ExcelHeader(header.getViewHeader());
-                col++;
-            }
-            rowIndex++;
-
-            for ( ConfigurableList.ResultRow resultRow : resultList.resultRows ) {
-                col = startColumn;
-                for (String val : resultRow.getRenderableCells()) {
-                    rowObjects[rowIndex][col] = val;
-                    col++;
+            // Determine whether headers are one row or two.
+            boolean headerRow2Present = false;
+            for (Header header : resultList.getHeaders()) {
+                String header2Name = header.getDownloadHeader2();
+                if (header2Name != null && !header2Name.isEmpty()) {
+                    headerRow2Present = true;
+                    break;
                 }
-                rowIndex++;
             }
 
-            return rowIndex;
+            int currentRow = startRow + (headerRow2Present ? 2 : 1);
+            List<Integer> headerWidths = new ArrayList<>();
+            boolean firstRow = true;
+            int currentColumn = startColumn;
+            int returnRow = 0;
+            int returnColumn = 0;
+            for (ResultRow resultRow : resultList.getResultRows()) {
+
+                // Render cells
+                List<String> renderableCells = resultRow.getRenderableCells();
+                returnRow++;
+                int maxNestedRow = 0;
+                boolean atLeastOneNested = false;
+                for (int i = 0; i < renderableCells.size(); i++) {
+                    if (render) {
+                        rowObjects[currentRow][currentColumn] = renderableCells.get(i);
+                    }
+
+                    // Render nested tables that are inside each cell
+                    if (resultRow.getCellNestedTables().isEmpty() || resultRow.getCellNestedTables().get(i) == null ||
+                            resultRow.getCellNestedTables().get(i).getHeaders().isEmpty()) {
+                        if (firstRow) {
+                            headerWidths.add(1);
+                            returnColumn++;
+                        }
+                        currentColumn++;
+                        continue;
+                    }
+                    atLeastOneNested = true;
+                    Pair<Integer, Integer> cellNestedRowCol = fillArray(rowObjects,
+                            resultRow.getCellNestedTables().get(i), currentRow + 1, currentColumn, render);
+                    maxNestedRow = Math.max(maxNestedRow, cellNestedRowCol.getLeft());
+
+                    currentColumn += cellNestedRowCol.getRight();
+                    if (firstRow) {
+                        headerWidths.add(cellNestedRowCol.getRight());
+                        returnColumn += cellNestedRowCol.getRight();
+                    }
+                }
+                if (resultRow.getCellNestedTables().isEmpty() || !atLeastOneNested) {
+                    currentRow++;
+                    returnRow += maxNestedRow;
+                } else {
+                    currentRow += maxNestedRow + 1;
+                    returnRow += maxNestedRow;
+                }
+                currentColumn = startColumn;
+
+                // Render nested tables that are the width of the table
+                for (Map.Entry<String, ResultList> stringResultListEntry : resultRow.getNestedTables().entrySet()) {
+                    if (render) {
+                        rowObjects[currentRow][currentColumn] = stringResultListEntry.getKey();
+                    }
+                    Pair<Integer, Integer> nestedRowCol = fillArray(rowObjects, stringResultListEntry.getValue(),
+                            currentRow + 1, currentColumn, render);
+                    returnRow += nestedRowCol.getLeft() + 1;
+                    currentRow += nestedRowCol.getLeft() + 1;
+                    returnColumn = Math.max(nestedRowCol.getRight(), returnColumn);
+                }
+
+                firstRow = false;
+            }
+
+            // Render headers (after we know how wide the nested tables are)
+            currentColumn = startColumn;
+            if (render) {
+                List<Header> headers1 = resultList.getHeaders();
+                for (int i = 0; i < headers1.size(); i++) {
+                    Header header = headers1.get(i);
+                    rowObjects[startRow][currentColumn] = new SpreadsheetCreator.ExcelHeader(
+                            header.getDownloadHeader1());
+                    String header2Name = header.getDownloadHeader2();
+                    if (header2Name != null && !header2Name.isEmpty()) {
+                        rowObjects[startRow + 1][currentColumn] = new SpreadsheetCreator.ExcelHeader(header2Name);
+                    }
+                    currentColumn += (header.getDownloadHeader1() == null ? 1 :
+                            headerWidths.isEmpty() ? 1 : headerWidths.get(i));
+                }
+            }
+            return new ImmutablePair<>(returnRow + (headerRow2Present ? 2 : 1),
+                    returnColumn == 0 ? resultList.getHeaders().size() : returnColumn);
         }
 
         public List<ResultRow> getResultRows() {
@@ -861,8 +940,19 @@ public class ConfigurableList {
         /**
          * Each row may have a nested table
          */
-        private Map<String, ResultList> nestedTables = new HashMap<>();
+        private Map<String, ResultList> nestedTables = new LinkedHashMap<>();
 
+        /**
+         * Each cell may have a nested table.
+         */
+        private List<ResultList> cellNestedTables = new ArrayList<>();
+
+        /**
+         *
+         * @param sortableCells see field
+         * @param renderableCells must be escaped for XSS
+         * @param resultId see field
+         */
         ResultRow(List<Comparable<?>> sortableCells, List<String> renderableCells, String resultId) {
             this.sortableCells = sortableCells;
             this.renderableCells = renderableCells;
@@ -940,6 +1030,14 @@ public class ConfigurableList {
          */
         public void addNestedTable(String name, ResultList nestedTable) {
             nestedTables.put(name, nestedTable);
+        }
+
+        public void setCellNestedTables(List<ResultList> cellNestedTables) {
+            this.cellNestedTables = cellNestedTables;
+        }
+
+        public List<ResultList> getCellNestedTables() {
+            return cellNestedTables;
         }
     }
 

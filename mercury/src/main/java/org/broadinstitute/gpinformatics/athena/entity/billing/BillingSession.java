@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.hibernate.envers.Audited;
 
@@ -47,6 +48,9 @@ public class BillingSession implements Serializable {
 
     public static final String ID_PREFIX = "BILL-";
     public static final String SUCCESS = "Billed Successfully";
+    public static final String BILLING_CREDIT= "Billing Credit Request Sent";
+    public static final String BILLED_FOR_SAP = "Partially billed For SAP";
+    public static final String BILLED_FOR_QUOTES = "Partially billed for Quotes Server";
 
     @Id
     @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION",
@@ -175,18 +179,20 @@ public class BillingSession implements Serializable {
     /**
      * @return A list of only the unbilled quote items for this session.
      */
-    public List<QuoteImportItem> getUnBilledQuoteImportItems(PriceListCache priceListCache) {
+    public List<QuoteImportItem> getUnBilledQuoteImportItems(PriceListCache priceListCache)
+            throws QuoteServerException {
         return getQuoteImportItems(priceListCache, false);
     }
 
     /**
      * @return A list of all the quote items for this session.
      */
-    public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) {
+    public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) throws QuoteServerException {
         return getQuoteImportItems(priceListCache, true);
     }
 
-    private List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache, boolean includeAll) {
+    private List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache, boolean includeAll)
+            throws QuoteServerException {
         QuoteImportInfo quoteImportInfo = new QuoteImportInfo();
 
         for (LedgerEntry ledger : ledgerEntryItems) {
@@ -222,6 +228,18 @@ public class BillingSession implements Serializable {
         }
 
         return allRemoved;
+    }
+
+    /**
+     * Tells whether or not this billing session has been billed.
+     *
+     * Sessions that are cancelled or fail for all samples are removed from the database, so having a billedDate is a
+     * distinguishing feature of sessions that have been completed for at least one sample.
+     *
+     * @return true if the session has been billed; false if it is in progress
+     */
+    public boolean isComplete() {
+        return billedDate != null;
     }
 
     @Override

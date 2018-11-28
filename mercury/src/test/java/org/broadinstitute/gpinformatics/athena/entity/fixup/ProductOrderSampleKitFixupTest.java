@@ -23,7 +23,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -34,8 +36,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -53,6 +55,9 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
 
     @Inject
     private MercurySampleDao mercurySampleDao;
+
+    @Inject
+    private UserBean userBean;
 
     private final Log log = LogFactory.getLog(ProductOrderSampleKitFixupTest.class);
 
@@ -112,5 +117,15 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
                 iteration++;
             }
         } while (!allSamplesToModify.isEmpty());
+    }
+
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void gplim4146LinkPdoSamplesToMercurySample() {
+        userBean.loginOSUser();
+        gplim3153_associate_mercurySamples_to_productOrderSamples();
+        // Ideally this would be in each transaction, but this is an infrastructure fixup, so it doesn't seem worthwhile
+        // to copy and change the existing, working code.
+        productOrderSampleDao.persist(new FixupCommentary("GPLIM-4146 link ProductOrderSamples to MercurySamples"));
+        productOrderSampleDao.flush();
     }
 }

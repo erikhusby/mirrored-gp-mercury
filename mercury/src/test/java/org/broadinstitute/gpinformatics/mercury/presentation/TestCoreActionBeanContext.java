@@ -1,18 +1,18 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-
 import net.sourceforge.stripes.action.Message;
 import net.sourceforge.stripes.controller.DispatcherServlet;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockServletContext;
 import net.sourceforge.stripes.validation.ValidationErrors;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * The test Stripes action bean context that gets passed around in the ActionBeans.
@@ -30,6 +30,11 @@ public class TestCoreActionBeanContext extends CoreActionBeanContext {
 
     public TestCoreActionBeanContext() {
         initContext();
+    }
+
+    @Override
+    public Locale getLocale() {
+        return Locale.getDefault();
     }
 
     @Override

@@ -2,11 +2,14 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -25,6 +28,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -43,6 +50,10 @@ public class ResearchProjectFixupTest extends Arquillian {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private Log log;
 
     @Inject
     private UserTransaction utx;
@@ -104,6 +115,24 @@ public class ResearchProjectFixupTest extends Arquillian {
 
         rpDao.remove(researchProject);
         rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3526"));
+    }
+
+    @Test(enabled = false)
+    public void fixupGPLIM_4880_Change_Title() {
+        userBean.loginOSUser();
+
+        final String RP1449 = "RP-1449";
+        final String OLD_TITLE = "Nada Kalaany - Boston Children's Hospital";
+        final String NEW_TITLE = "Nada Kalaany - Boston Childrens Hospital";
+
+        ResearchProject researchProject = rpDao.findByJiraTicketKey(RP1449);
+        if (researchProject == null) {
+            Assert.fail(String.format("Research Project %s doesn't exist.", RP1449));
+        }
+        assertThat(researchProject.getTitle(), equalTo(OLD_TITLE));
+        researchProject.setTitle(NEW_TITLE);
+
+        rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4880"));
     }
 
     /**
@@ -191,6 +220,25 @@ public class ResearchProjectFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void gplim4021addDefaultSubmissionRepository() {
+        userBean.loginOSUser();
+        List<ResearchProject> researchProjectList = rpDao.findList(ResearchProject.class, ResearchProject_.submissionRepositoryName, null);
+
+        for (ResearchProject project : researchProjectList) {
+            if (StringUtils.isNotBlank(project.getSubmissionRepositoryName())) {
+                String message = String.format(
+                        "Default SubmissionRepository not set for Research Project '%s' Current Value: '%s')",
+                        project.getName(), project.getSubmissionRepositoryName());
+                log.debug(message);
+            } else {
+                project.setSubmissionRepositoryName(SubmissionRepository.DEFAULT_REPOSITORY_NAME);
+            }
+        }
+        rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4021"));
+        log.info(String.format("Updated %d rows", researchProjectList.size()));
+    }
+
+    @Test(enabled = false)
     public void fixupGplim4025() throws Exception {
         userBean.loginOSUser();
         utx.begin();
@@ -203,4 +251,45 @@ public class ResearchProjectFixupTest extends Arquillian {
 
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void fixupSupport1822() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1227");
+        assertThat(researchProject, is(notNullValue()));
+        researchProject.setTitle("Takeda Myeloid/Lymphoid v1 Panel Performance Assessment");
+
+        researchProjectEjb.updateJiraIssue(researchProject);
+        rpDao.persist(new FixupCommentary("SUPPORT 1822 changing title of RP"));
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2534() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1375");
+        Assert.assertNotNull(researchProject);
+        researchProject.setReferenceSequenceKey(null);
+        researchProject.setSequenceAlignerKey(null);
+        System.out.println("Setting " + researchProject.getBusinessKey() +
+                " reference sequence to " + researchProject.getReferenceSequenceKey() +
+                ", aligner to " + researchProject.getSequenceAlignerKey());
+        rpDao.persist(new FixupCommentary("SUPPORT-2534 fix RP-1375 for pipeline query"));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void changeRegulatoryDesignationGplim5031() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1467");
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
+        rpDao.persist(new FixupCommentary("GPLIM-5031 updating incorrectly selected regulatory designation."));
+        utx.commit();
+    }
+
+
 }

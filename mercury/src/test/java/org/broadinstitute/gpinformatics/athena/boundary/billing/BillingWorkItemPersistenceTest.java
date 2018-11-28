@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -8,8 +10,15 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.AbstractContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -19,13 +28,18 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+@Dependent
 public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
+
+    public BillingWorkItemPersistenceTest(){}
 
     @Inject
     ProductOrderDao pdoDao;
@@ -34,8 +48,27 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
     BillingSessionDao billingSessionDao;
 
     @Inject
-    BillingAdaptor billingAdaptor;
+    private PriceListCache priceListCache;
 
+    @Inject
+    private BillingEjb billingEjb;
+
+    @Inject
+    private QuoteService quoteService;
+
+    @Inject
+    private BillingSessionAccessEjb billingSessionAccessEjb;
+
+    // Stub implementation
+    private SapIntegrationService sapService = new SapIntegrationServiceStub();
+
+    @Inject
+    private ProductOrderEjb productOrderEjb;
+
+    @Inject
+    private org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment deployment;
+
+    private BillingAdaptor billingAdaptor;
     @Inject
     LedgerEntryDao ledgerEntryDao;
 
@@ -51,6 +84,12 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
 
     private ProductOrder pdo;
 
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private SAPAccessControlEjb accessControlEjb;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class);
@@ -65,16 +104,38 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
         if (!isRunningInContainer()) {return;}
 
         pdo = pdoDao.findByBusinessKey(PDO_BUSINESS_KEY);
+
+        final Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
+
+        Set<PriceItem> primaryPriceItems = new HashSet<>();
+
+        primaryPriceItems.add(pdo.getProduct().getPrimaryPriceItem());
+        for (ProductOrderAddOn productOrderAddOn : pdo.getAddOns()) {
+            primaryPriceItems.add(productOrderAddOn.getAddOn().getPrimaryPriceItem());
+        }
+
         Assert.assertNotNull(pdo, "Can't find " + PDO_BUSINESS_KEY
                                   + ".  No way to verify that work item is being persisted properly.");
         Set<LedgerEntry> ledgerEntries = new HashSet<>();
         PriceItem priceItem = priceItemDao.findById(PriceItem.class, 46L);
+        primaryPriceItems.add(priceItem);
         for (ProductOrderSample pdoSample : pdo.getSamples()) {
             LedgerEntry ledgerEntry = new LedgerEntry(pdoSample, priceItem, new Date(), 3);
             pdoSample.getLedgerItems().add(ledgerEntry);
             ledgerEntries.add(ledgerEntry);
             ledgerEntryDao.persist(ledgerEntry);
         }
+
+        for(PriceItem primaryPriceItem: primaryPriceItems) {
+            quotePriceItems.add(new QuotePriceItem(primaryPriceItem.getCategory(),
+                    primaryPriceItem.getName() + "_id", primaryPriceItem.getName(),
+                    "250", "each", primaryPriceItem.getPlatform()));
+        }
+
+        PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
+        billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
+                billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
+        billingAdaptor.setProductOrderEjb(productOrderEjb);
 
         BillingSession billingSession = new BillingSession(-1L, ledgerEntries);
         billingSessionDao.persist(billingSession);

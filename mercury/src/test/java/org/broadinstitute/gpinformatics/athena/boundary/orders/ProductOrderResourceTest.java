@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -29,7 +30,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -57,7 +60,6 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Deployment
     public static WebArchive buildMercuryWar() {
         // need TEST here for now because there's no STUBBY version of ThriftConfig
-        // see ThriftServiceProducer.produce()
         return DeploymentBuilder.buildMercuryWar(AUTO_BUILD);
     }
 
@@ -83,7 +85,8 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
         WebResource resource = makeWebResource(baseUrl, "create");
 
-        ProductOrderData productOrderData = resource.entity(data).post(new GenericType<ProductOrderData>() { });
+        ProductOrderData productOrderData = resource.entity(data).post(new GenericType<ProductOrderData>() {
+        });
         Assert.assertEquals(productOrderData.getStatus(), ProductOrder.OrderStatus.Pending.name());
     }
 
@@ -231,6 +234,25 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(orders.getOrders().get(0).getId(), VALID_PDO_ID);
         Assert.assertEquals(orders.getOrders().get(0).getProductOrderKey(), VALID_PDO_ID);
     }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @RunAsClient
+    public void testGenotypingInfo(@ArquillianResource URL baseUrl) throws Exception {
+        Map<String, String> map = new HashMap<String, String>() {{
+            put("PDO-7727", null);
+            put("PDO-8470", "Broad_GWAS_supplemental_15061359_A1");
+            put("PDO-8350", "Multi-EthnicGlobal-8_A1");
+        }};
+        ProductOrders orders = makeWebResource(baseUrl, "pdo/" + StringUtils.join(map.keySet(), ","))
+                .accept(MediaType.APPLICATION_XML)
+                .get(ProductOrders.class);
+        Assert.assertEquals(orders.getOrders().size(), map.size());
+        for (ProductOrderData order : orders.getOrders()) {
+            Assert.assertEquals(order.getGenoChipType(), map.get(order.getProductOrderKey()));
+        }
+    }
+
+
 
     private static PDOSamples getAtRiskSamples() {
         return makeTestPdoSamplePairs("PDO-2350", MULTIPLE_RISK_SAMPLE, "SM-3S1Q8", "SM-4AXN1", "SM-4AXN5", "SM-4AXNJ",

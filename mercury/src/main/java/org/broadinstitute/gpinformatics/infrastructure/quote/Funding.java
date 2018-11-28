@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
+import org.broadinstitute.gpinformatics.infrastructure.ShortDateAdapter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -49,6 +50,12 @@ public class Funding implements Displayable {
 
     private String purchaseOrderNumber;
 
+    private String purchaseOrderContact;
+
+    private String fundsReservationNumber;
+
+    private String platform;
+
     public Funding() {}
 
     public Funding(String fundingType, String grantDescription, String costObject) {
@@ -60,6 +67,17 @@ public class Funding implements Displayable {
     @Override
     public String getDisplayName() {
         return FUNDS_RESERVATION.equals(getFundingType()) ? "CO-" + grantNumber : "PO-" + purchaseOrderNumber;
+    }
+
+    public String getCompareName() {
+        StringBuilder initialName = new StringBuilder(getDisplayName());
+
+        initialName.append("::").append(platform);
+        if(FUNDS_RESERVATION.equals(getFundingType())) {
+            initialName.append("Funds Reservation").append(fundsReservationNumber);
+        }
+
+        return initialName.toString();
     }
 
     public String getMatchDescription() {
@@ -138,7 +156,7 @@ public class Funding implements Displayable {
     }
 
     @XmlAttribute(name = "grantStartDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
+    @XmlJavaTypeAdapter(ShortDateAdapter.class)
     public Date getGrantStartDate() {
         return grantStartDate;
     }
@@ -147,7 +165,7 @@ public class Funding implements Displayable {
     }
 
     @XmlAttribute(name = "grantEndDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
+    @XmlJavaTypeAdapter(ShortDateAdapter.class)
     public Date getGrantEndDate() {
         return grantEndDate;
     }
@@ -171,6 +189,29 @@ public class Funding implements Displayable {
 
     public void setPurchaseOrderNumber(String purchaseOrderNumber) {
         this.purchaseOrderNumber = purchaseOrderNumber;
+    }
+
+    @XmlAttribute(name = "purchaseOrderContact")
+    public String getPurchaseOrderContact() { return purchaseOrderContact;}
+
+    public void setPurchaseOrderContact(String purchaseOrderContact) {
+        this.purchaseOrderContact = purchaseOrderContact;
+    }
+
+    @XmlAttribute(name = "fundsReservationNumber")
+    public String getFundsReservationNumber() {return fundsReservationNumber;}
+
+    public void setFundsReservationNumber(String fundsReservationNumber) {
+        this.fundsReservationNumber = fundsReservationNumber;
+    }
+
+    @XmlAttribute(name = "platform")
+    public String getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
     }
 
     @Override
@@ -241,6 +282,7 @@ public class Funding implements Displayable {
                 funding.setInstitute(nameValueAttributes.get("NAME"));
                 funding.setPurchaseOrderNumber(nameValueAttributes.get("PO_NUMBER"));
                 funding.setSponsorName(nameValueAttributes.get("SPONSOR_NAME"));
+                funding.setPlatform(nameValueAttributes.get("PLATFORM"));
 
                 fundingSet.add(funding);
             } catch (Exception ex) {
@@ -254,7 +296,7 @@ public class Funding implements Displayable {
     public static final Comparator<Funding> byDisplayName = new Comparator<Funding>() {
         @Override
         public int compare(Funding o1, Funding o2) {
-            return o1.getDisplayName().compareTo(o2.getDisplayName());
+            return o1.getCompareName().compareTo(o2.getCompareName());
         }
     };
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
@@ -15,9 +16,11 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.math.BigDecimal;
 
 @Entity
@@ -32,38 +35,60 @@ public class LabBatchStartingVessel {
     private Long batchStartingVesselId;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "LAB_BATCH")
     private LabBatch labBatch;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
     @Column
     private BigDecimal concentration;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "DILUTION_VESSEL")
     private LabVessel dilutionVessel;
 
     @Enumerated(EnumType.STRING)
     private VesselPosition vesselPosition;
 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "FLOWCELL_DESIGNATION")
+    private FlowcellDesignation flowcellDesignation;
+
+    @Transient
+    private String linkedLcset;
+
+    @Transient
+    private String productNames;
+
     public LabBatchStartingVessel() {
     }
 
     public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch) {
-        this(labVessel, labBatch, null);
+        this.labVessel = labVessel;
+        this.labBatch = labBatch;
     }
 
     public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch,
                                   @Nullable BigDecimal concentration) {
-        this(labVessel, labBatch, concentration, null);
+        this(labVessel, labBatch);
+        this.concentration = concentration;
     }
 
     public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch,
                                   @Nullable BigDecimal concentration, VesselPosition vesselPosition) {
-        this.labVessel = labVessel;
-        this.labBatch = labBatch;
-        this.concentration = concentration;
+        this(labVessel, labBatch, concentration);
         this.vesselPosition = vesselPosition;
+    }
+
+    public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch,
+            @Nullable BigDecimal concentration, VesselPosition vesselPosition, @Nullable String linkedLcset,
+            @Nullable String productNames, @Nullable FlowcellDesignation designation) {
+        this(labVessel, labBatch, concentration, vesselPosition);
+        this.linkedLcset = linkedLcset;
+        this.productNames = productNames;
+        this.flowcellDesignation = designation;
     }
 
     public Long getBatchStartingVesselId() {
@@ -113,5 +138,31 @@ public class LabBatchStartingVessel {
 
     public void setVesselPosition(VesselPosition vesselPosition) {
         this.vesselPosition = vesselPosition;
+    }
+
+    public String getLinkedLcset() {
+        return linkedLcset;
+    }
+
+    @Transient
+    public void setLinkedLcset(String linkedLcset) {
+        this.linkedLcset = linkedLcset;
+    }
+
+    public String getProductNames() {
+        return productNames;
+    }
+
+    @Transient
+    public void setProductNames(String productNames) {
+        this.productNames = productNames;
+    }
+
+    public FlowcellDesignation getFlowcellDesignation(){
+        return flowcellDesignation;
+    }
+
+    public void setFlowcellDesignation( FlowcellDesignation flowcellDesignation){
+        this.flowcellDesignation = flowcellDesignation;
     }
 }

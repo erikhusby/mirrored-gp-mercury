@@ -5,10 +5,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
@@ -27,6 +30,8 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetup
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -35,9 +40,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StripTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.GapHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -49,6 +54,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -66,9 +72,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -88,6 +97,7 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "serial", "CloneableClassWithoutClone",
         "ClassExtendsConcreteCollection", "OverlyComplexClass", "ClassWithTooManyMethods", "ClassWithTooManyFields"})
+@Dependent
 public class LabEventFactory implements Serializable {
 
     /**
@@ -127,6 +137,10 @@ public class LabEventFactory implements Serializable {
      */
     public static final String MODE_MERCURY = "Mercury";
     /**
+     * Used when backfilling messages from GAP, avoids forwarding them to GAP.
+     */
+    public static final String MODE_BACKFILL = "Backfill";
+    /**
      * Whether to create sources that are not found in the database.  Handling out of order messages requires this
      * to be true, but when running in parallel with Squid / BettaLIMS (which can't handle out of order messages)
      * we set this to false so Mercury fails in the same way as Squid / BettaLIMS.
@@ -140,6 +154,7 @@ public class LabEventFactory implements Serializable {
     @Inject
     private StaticPlateDao staticPlateDao;
 
+    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -170,16 +185,27 @@ public class LabEventFactory implements Serializable {
     private EventHandlerSelector eventHandlerSelector;
 
     @Inject
-    private SamplesDaughterPlateHandler samplesDaughterPlateHandler;
+    private BSPRestSender bspRestSender;
 
     @Inject
     private GapHandler gapHandler;
 
+    @Inject
+    private ProductEjb productEjb;
+
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
+
+    @Inject
     private BSPSetVolumeConcentration bspSetVolumeConcentration;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);
 
-    @Inject
+    public LabEventFactory(){}
+
     public LabEventFactory(BSPUserList userList, BSPSetVolumeConcentration bspSetVolumeConcentration) {
         bspUserList = userList;
         this.bspSetVolumeConcentration = bspSetVolumeConcentration;
@@ -318,35 +344,6 @@ public class LabEventFactory implements Serializable {
         }
     }
 
-    /**
-     * Determines whether volume / concentration etc. should be updated in BSP.
-     */
-    public boolean isUpdateVolConcInBsp(LabEvent labEvent) {
-        LabEventType labEventType = labEvent.getLabEventType();
-        LabVessel labVessel = labEvent.getInPlaceLabVessel();
-        if (labVessel == null) {
-            labVessel = labEvent.getSourceLabVessels().iterator().next();
-        }
-        if (labEventType.getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
-            MercurySample mercurySample = null;
-            if (labVessel.getContainerRole() != null) {
-                for (LabVessel testVessel : labVessel.getContainerRole().getContainedVessels()) {
-                    mercurySample = extractSample(testVessel.getSampleInstancesV2());
-                    if (mercurySample != null) {
-                        break;
-                    }
-                }
-            } else {
-                mercurySample = extractSample(labVessel.getSampleInstancesV2());
-            }
-            // If no mercury samples found, assumes samples are derived from old BSP samples that haven't
-            // been exported to Mercury.  This is OK provided they are processed by Squid
-            // CRSP/Buick samples are expected to be already accessioned and therefore have mercury samples.
-            return (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP);
-        }
-        return false;
-    }
-
     private MercurySample extractSample(Collection<SampleInstanceV2> sampleInstances) {
         MercurySample mercurySample = null;
         for (SampleInstanceV2 sampleInstance : sampleInstances) {
@@ -368,7 +365,6 @@ public class LabEventFactory implements Serializable {
     public List<LabEvent> buildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
         List<LabEvent> labEvents = new ArrayList<>();
         Set<UniqueEvent> uniqueEvents = new HashSet<>();
-        Set<ReceptacleType> updateReceptacles = new HashSet<>();
 
         // Have to persist and flush inside each loop, because the first event may create
         // vessels that are referenced by the second event, e.g. PreSelectionPool
@@ -377,33 +373,18 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateCherryPickEvent);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            if (isUpdateVolConcInBsp(labEvent)) {
-                for (PositionMapType positionMapType : plateCherryPickEvent.getPositionMap()) {
-                    updateReceptacles.addAll(positionMapType.getReceptacle());
-                }
-            }
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateEventType);
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            if (isUpdateVolConcInBsp(labEvent)) {
-                if (plateEventType.getPositionMap() != null) {
-                    updateReceptacles.addAll(plateEventType.getPositionMap().getReceptacle());
-                }
-            }
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateTransferEventType);
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateTransferEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            if (isUpdateVolConcInBsp(labEvent)) {
-                if (plateTransferEventType.getPositionMap() != null) {
-                    updateReceptacles.addAll(plateTransferEventType.getPositionMap().getReceptacle());
-                }
-            }
         }
         for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
                 bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
@@ -411,20 +392,12 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, receptaclePlateTransferEvent);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            if (isUpdateVolConcInBsp(labEvent)) {
-                for (PositionMapType positionMapType : receptaclePlateTransferEvent.getDestinationPositionMap()) {
-                    updateReceptacles.addAll(positionMapType.getReceptacle());
-                }
-            }
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
             LabEvent labEvent = buildFromBettaLims(receptacleEventType);
             eventHandlerSelector.applyEventSpecificHandling(labEvent, receptacleEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            if (isUpdateVolConcInBsp(labEvent)) {
-                updateReceptacles.add(receptacleEventType.getReceptacle());
-            }
         }
         StationSetupEvent stationSetupEvent = bettaLIMSMessage.getStationSetupEvent();
         if (stationSetupEvent != null) {
@@ -438,20 +411,35 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, receptacleTransferEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            if (isUpdateVolConcInBsp(labEvent)) {
-                updateReceptacles.add(receptacleTransferEventType.getReceptacle());
-            }
         }
 
         if (!labEvents.isEmpty()) {
-            LabEventType.ForwardMessage forwardMessage = labEvents.get(0).getLabEventType().getForwardMessage();
+            LabEvent labEvent = labEvents.get(0);
+            LabEventType.ForwardMessage forwardMessage = labEvent.getLabEventType().getForwardMessage();
             switch (forwardMessage) {
                 case BSP:
-                    samplesDaughterPlateHandler.postToBsp(bettaLIMSMessage,
-                            SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
+                    BettaLIMSMessage bspBettaLIMSMessage = bspRestSender.bspBettaLIMSMessage(bettaLIMSMessage, labEvents);
+                    if (bspBettaLIMSMessage != null) {
+                        bspRestSender.postToBsp(bspBettaLIMSMessage,
+                                BSPRestSender.BSP_TRANSFER_REST_URL);
+                    }
                     break;
                 case GAP:
-                    gapHandler.postToGap(bettaLIMSMessage);
+                    String forwardToGap = null;
+                    Set<LabVessel> labVessels = labEvent.getSourceLabVessels();
+                    if (labVessels.isEmpty()) {
+                        LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
+                        if (inPlaceLabVessel != null) {
+                            labVessels.add(inPlaceLabVessel);
+                        }
+                    }
+                    for (LabVessel labVessel : labVessels) {
+                        forwardToGap = determineForwardToGap(labEvent, labVessel, productEjb,
+                                attributeArchetypeDao);
+                    }
+                    if (forwardToGap == null || forwardToGap.equalsIgnoreCase("Y")) {
+                        gapHandler.postToGap(bettaLIMSMessage);
+                    }
                     break;
                 case NONE:
                     break;
@@ -459,9 +447,30 @@ public class LabEventFactory implements Serializable {
                     throw new RuntimeException("Unexpected forwardMessage " + forwardMessage.name());
             }
         }
-
-        updateVolumeConcentration(updateReceptacles.toArray(new ReceptacleType[updateReceptacles.size()]));
         return labEvents;
+    }
+
+    @Nullable
+    public static String determineForwardToGap(LabEvent labEvent, LabVessel labVessel,
+            ProductEjb productEjb, AttributeArchetypeDao attributeArchetypeDao) {
+        String forwardToGap = null;
+        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+            ProductOrderSample productOrderSample =
+                    sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (productOrderSample != null) {
+                Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(
+                        productOrderSample.getProductOrder(), labEvent.getEventDate());
+                if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
+                    GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(
+                            chipFamilyAndName.getLeft(), chipFamilyAndName.getRight());
+                    forwardToGap = chip.getAttributeMap().get("forward_to_gap");
+                    if (forwardToGap != null) {
+                        break;
+                    }
+                }
+            }
+        }
+        return forwardToGap;
     }
 
     /**
@@ -531,18 +540,48 @@ public class LabEventFactory implements Serializable {
             for (PlateType plateType : plateCherryPickEvent.getSourcePlate()) {
                 barcodes.add(plateType.getBarcode());
             }
-            extractBarcodes(barcodes, plateCherryPickEvent.getSourcePositionMap());
+            List<PositionMapType> extractSourcePositionMaps = extractPositionMapBarcodes(
+                    plateCherryPickEvent.getSourcePlate(), plateCherryPickEvent.getSourcePositionMap());
+            extractBarcodes(barcodes, extractSourcePositionMaps);
 
             for (PlateType plateType : plateCherryPickEvent.getPlate()) {
                 barcodes.add(plateType.getBarcode());
             }
-            extractBarcodes(barcodes, plateCherryPickEvent.getPositionMap());
+
+            List<PositionMapType> extractPositionMaps = extractPositionMapBarcodes(
+                    plateCherryPickEvent.getPlate(), plateCherryPickEvent.getPositionMap());
+            extractBarcodes(barcodes, extractPositionMaps);
 
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
 
+        labEvent.setStationEventType(plateCherryPickEvent);
         return labEvent;
+    }
+
+    /**
+     * Find position maps from plates that may have receptacle barcodes that will need to be extracted
+     * to make a DAO call.
+     *
+     * @param plateTypes        list of plates to which to check if position map will need to be extracted
+     * @param positionMapTypes  list of possible positionMaps that may need barcodes extracted
+     */
+    private List<PositionMapType> extractPositionMapBarcodes(List<PlateType> plateTypes,
+                                                             List<PositionMapType> positionMapTypes) {
+        List<PositionMapType> extractPositionMaps = new ArrayList<>();
+        for (PlateType plateType: plateTypes) {
+            if (expectBarcodedReceptacleTypes(plateType)) {
+                for (PositionMapType positionMapType: positionMapTypes) {
+                    if (positionMapType.getBarcode().equals(plateType.getBarcode())) {
+                        extractPositionMaps.add(positionMapType);
+                        break;
+                    }
+                }
+            }
+        }
+        return extractPositionMaps;
     }
 
     /**
@@ -583,10 +622,10 @@ public class LabEventFactory implements Serializable {
 
         Map<String, TubeFormation> mapBarcodeToTubeFormation =
                 buildPlates(mapBarcodeToVessel, plateCherryPickEvent.getSourcePlate(),
-                        plateCherryPickEvent.getSourcePositionMap(), createSourcesForEvent, true);
+                        plateCherryPickEvent.getSourcePositionMap(), createSourcesForEvent, true, labEvent);
 
         mapBarcodeToTubeFormation.putAll(buildPlates(mapBarcodeToVessel, plateCherryPickEvent.getPlate(),
-                plateCherryPickEvent.getPositionMap(), createSourcesForEvent, false));
+                plateCherryPickEvent.getPositionMap(), createSourcesForEvent, false, labEvent));
 
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
             String destinationRackBarcode = cherryPickSourceType.getDestinationBarcode();
@@ -628,13 +667,13 @@ public class LabEventFactory implements Serializable {
     }
 
     /**
-     * Wrapper around {@link #buildPlates(java.util.Map, java.util.List, java.util.List, boolean, boolean)}, for
-     * single plates and position maps
+     * Wrapper around {@link #buildPlates(Map, List, List, boolean, boolean, LabEvent)},
+     * for single plates and position maps.
      */
     @DaoFree
     private Map<String, TubeFormation> buildPlate(Map<String, LabVessel> mapBarcodeToVessel,
                                                   PlateType plateJaxb, PositionMapType positionMap,
-                                                  boolean createSourcesForEvent, boolean source) {
+                                                  boolean createSourcesForEvent, boolean source, LabEvent labEvent) {
         List<PlateType> plateTypeList = new ArrayList<>();
         if (plateJaxb != null) {
             plateTypeList.add(plateJaxb);
@@ -643,8 +682,8 @@ public class LabEventFactory implements Serializable {
         if (positionMap != null) {
             positionMapTypeList.add(positionMap);
         }
-        return buildPlates(mapBarcodeToVessel, plateTypeList,
-                positionMapTypeList, createSourcesForEvent, source);
+        return buildPlates(mapBarcodeToVessel, plateTypeList, positionMapTypeList, createSourcesForEvent, source,
+                labEvent);
     }
 
     /**
@@ -654,14 +693,14 @@ public class LabEventFactory implements Serializable {
      * @param platesJaxb         list of plates / racks
      * @param positionMaps       list of tubes / positions
      * @param create             true if this method should create entities not found in mapBarcodeToVessel
-     * @param source             true if the plate is a source in an event
+     * @param areSourceTubes     true if the plate is a areSourceTubes in an event
      *
      * @return map from rack barcode to tube formation (in mapBarcodeToVessel, tube formations are mapped by their digest)
      */
     @DaoFree
     private Map<String, TubeFormation> buildPlates(Map<String, LabVessel> mapBarcodeToVessel,
                                                    List<PlateType> platesJaxb, List<PositionMapType> positionMaps,
-                                                   boolean create, boolean source) {
+                                                   boolean create, boolean areSourceTubes, LabEvent labEvent) {
         Map<String, TubeFormation> mapBarcodeToTubeFormation = new HashMap<>();
         for (PlateType plateType : platesJaxb) {
             if (plateType.getPhysType().equals(PHYS_TYPE_TUBE_RACK) ||
@@ -692,7 +731,7 @@ public class LabEventFactory implements Serializable {
                         }
                         if (tubeFormation == null) {
                             tubeFormation = buildRackDaoFree(mapBarcodeToTube, rackOfTubes, plateType,
-                                    positionMapType, source, create);
+                                    positionMapType, areSourceTubes, create, labEvent);
                             mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
                             if (rackOfTubesWasNull) {
                                 rackOfTubes = tubeFormation.getRacksOfTubes().iterator().next();
@@ -705,7 +744,7 @@ public class LabEventFactory implements Serializable {
                                 mapBarcodeToVessel.put(rackOfTubes.getLabel(), rackOfTubes);
                                 tubeFormation.addRackOfTubes(rackOfTubes);
                             }
-                            setTubeQuantities(mapBarcodeToTube, positionMapType);
+                            setTubeQuantities(mapBarcodeToTube, positionMapType, labEvent, areSourceTubes);
                         }
                         mapBarcodeToTubeFormation.put(plateType.getBarcode(), tubeFormation);
                         break;
@@ -724,7 +763,7 @@ public class LabEventFactory implements Serializable {
                     }
 
                     if (labVessel == null) {
-                        if (source && !create) {
+                        if (areSourceTubes && !create) {
                             throw new RuntimeException("Failed to find plate " + plateType.getBarcode());
                         }
                         labVessel = new StaticPlate(plateType.getBarcode(),
@@ -793,7 +832,7 @@ public class LabEventFactory implements Serializable {
                                                          Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes) {
         LabEvent labEvent = constructReferenceData(plateCherryPickEvent, labEventRefDataFetcher);
         addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube,
-                mapBarcodeToSourceRackOfTubes);
+                mapBarcodeToSourceRackOfTubes, labEvent);
 
 /*
         for (Map.Entry<String, VesselContainer<?>> stringVesselContainerEntry : mapBarcodeToTargetTubeFormation.entrySet()) {
@@ -850,14 +889,14 @@ public class LabEventFactory implements Serializable {
      * @return the LabEvent object
      */
     @DaoFree
-    public LabEvent buildCherryPickRackToReagentKitDbFree(PlateCherryPickEvent plateCherryPickEvent,
+    private LabEvent buildCherryPickRackToReagentKitDbFree(PlateCherryPickEvent plateCherryPickEvent,
                                                           Map<String, TubeFormation> mapBarcodeToSourceTubeFormation,
                                                           Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes,
                                                           Map<String, BarcodedTube> mapBarcodeToSourceTube
     ) {
         LabEvent labEvent = constructReferenceData(plateCherryPickEvent, labEventRefDataFetcher);
         addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube,
-                mapBarcodeToSourceRackOfTubes);
+                mapBarcodeToSourceRackOfTubes, labEvent);
 
         for (Map.Entry<String, RackOfTubes> rackOfTubesSet : mapBarcodeToSourceRackOfTubes.entrySet()) {
             RackOfTubes rack = rackOfTubesSet.getValue();
@@ -867,7 +906,8 @@ public class LabEventFactory implements Serializable {
                     TubeFormation targetRack =
                             buildRackDaoFree(mapBarcodeToSourceTube, rack, plateCherryPickEvent.getPlate().get(0),
                                     plateCherryPickEvent.getPositionMap().get(0), false,
-                                    LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources());
+                                    LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources(),
+                                    labEvent);
                     stringVesselContainerEntry.setValue(targetRack);
                 }
             }
@@ -875,7 +915,7 @@ public class LabEventFactory implements Serializable {
 
         // todo jmt why is this done twice?
         addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube,
-                mapBarcodeToSourceRackOfTubes);
+                mapBarcodeToSourceRackOfTubes, labEvent);
         MiSeqReagentKit reagentKit = null;
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
             // todo jmt take barcode from plate element, not source element
@@ -914,7 +954,8 @@ public class LabEventFactory implements Serializable {
     private void addSourceTubeFormationsToMap(PlateCherryPickEvent plateCherryPickEvent,
                                               Map<String, TubeFormation> mapBarcodeToSourceTubeFormation,
                                               Map<String, BarcodedTube> mapBarcodeToSourceTube,
-                                              Map<String, RackOfTubes> mapBarcodeToRackOfTubes) {
+                                              Map<String, RackOfTubes> mapBarcodeToRackOfTubes,
+                                              LabEvent labEvent) {
         for (PlateType sourceRackJaxb : plateCherryPickEvent.getSourcePlate()) {
             TubeFormation sourceTubeFormationEntity = mapBarcodeToSourceTubeFormation.get(sourceRackJaxb.getBarcode());
             if (sourceTubeFormationEntity == null) {
@@ -923,7 +964,8 @@ public class LabEventFactory implements Serializable {
                         sourceTubeFormationEntity = buildRackDaoFree(mapBarcodeToSourceTube,
                                 mapBarcodeToRackOfTubes.get(sourceRackJaxb.getBarcode()), sourceRackJaxb,
                                 sourcePositionMap,
-                                true, LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources());
+                                true, LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources(),
+                                labEvent);
                         break;
                     }
                 }
@@ -955,10 +997,11 @@ public class LabEventFactory implements Serializable {
             labEvent = buildFromBettaLimsPlateEventDbFree(plateEventType, staticPlate);
         } else {
             TubeFormation tubeFormation = fetchTubeFormation(plateEventType.getPositionMap());
+            RackOfTubes rackOfTubes = rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode());
             labEvent = buildFromBettaLimsRackEventDbFree(plateEventType, tubeFormation, findTubesByBarcodes(
-                    plateEventType.getPositionMap()),
-                    rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode()));
+                    plateEventType.getPositionMap()), rackOfTubes);
         }
+        labEvent.setStationEventType(plateEventType);
         return labEvent;
     }
 
@@ -992,8 +1035,43 @@ public class LabEventFactory implements Serializable {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+        trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
+
         LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
+        labEvent.setStationEventType(plateTransferEvent);
         return labEvent;
+    }
+
+    /**
+     * In extractions, it is sometimes easier to scan the SM-ID than the manufacturer barcode.  If a barcode starts
+     * with SM-, and it wasn't found when fetched by label, try fetching by sample ID.
+     * @param barcodes           barcodes from the message
+     * @param mapBarcodeToVessel vessels already fetched by manufacturer barcode, added to if fetch by SM-ID is
+     *                           successful
+     * @param mercurySampleDao   used to fetch
+     */
+    public static void trySampleIds(List<String> barcodes, Map<String, LabVessel> mapBarcodeToVessel,
+            MercurySampleDao mercurySampleDao) {
+        List<String> sampleIds = new ArrayList<>();
+        for (String barcode : barcodes) {
+            if (barcode.startsWith("SM-")) {
+                if (mapBarcodeToVessel.get(barcode) == null) {
+                    sampleIds.add(barcode);
+                }
+            }
+        }
+        if (!sampleIds.isEmpty()) {
+            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+            for (Map.Entry<String, MercurySample> sampleIdSampleEntry : mapIdToMercurySample.entrySet()) {
+                MercurySample mercurySample = sampleIdSampleEntry.getValue();
+                if (mercurySample != null) {
+                    Set<LabVessel> labVessel = mercurySample.getLabVessel();
+                    if (labVessel.size() == 1) {
+                        mapBarcodeToVessel.put(sampleIdSampleEntry.getKey(), labVessel.iterator().next());
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -1012,10 +1090,10 @@ public class LabEventFactory implements Serializable {
 
         Map<String, TubeFormation> mapBarcodeToTubeFormation = buildPlate(mapBarcodeToVessel,
                 plateTransferEvent.getSourcePlate(), plateTransferEvent.getSourcePositionMap(), createSourcesForEvent,
-                true);
+                true, labEvent);
 
         mapBarcodeToTubeFormation.putAll(buildPlate(mapBarcodeToVessel, plateTransferEvent.getPlate(),
-                plateTransferEvent.getPositionMap(), createSourcesForEvent, false));
+                plateTransferEvent.getPositionMap(), createSourcesForEvent, false, labEvent));
 
         LabVessel sourceContainer = mapBarcodeToTubeFormation.get(plateTransferEvent.getSourcePlate().getBarcode());
         LabVessel ancillarySourceLabVessel = null;
@@ -1063,20 +1141,24 @@ public class LabEventFactory implements Serializable {
      * Build a rack entity
      *
      * @param mapBarcodeToTubes source tubes
+     * @param rackOfTubes       The rack entity based on the plate element in the message
      * @param plate             JAXB rack
      * @param positionMap       JAXB list of tube barcodes
+     * @param areSourceTubes    Whether the mapBarcodeToTubes passed are sources
+     * @param createSources     Whether the sources can be created if missing
+     * @param labEvent          The LabEvent that the rack is for.
      *
      * @return entity
      */
     @DaoFree
     private TubeFormation buildRackDaoFree(Map<String, BarcodedTube> mapBarcodeToTubes, RackOfTubes rackOfTubes,
-                                           PlateType plate, PositionMapType positionMap, boolean source,
-                                           boolean createSources) {
+                                           PlateType plate, PositionMapType positionMap, boolean areSourceTubes,
+                                           boolean createSources, LabEvent labEvent) {
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new EnumMap<>(VesselPosition.class);
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             BarcodedTube barcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if (barcodedTube == null) {
-                if (source && !(CREATE_SOURCES || createSources)) {
+                if (areSourceTubes && !(CREATE_SOURCES || createSources)) {
                     throw new RuntimeException("Failed to find tube " + receptacleType.getBarcode());
                 }
                 BarcodedTube.BarcodedTubeType tubeType =
@@ -1089,7 +1171,7 @@ public class LabEventFactory implements Serializable {
             }
             mapPositionToTube.put(VesselPosition.getByName(receptacleType.getPosition()), barcodedTube);
         }
-        setTubeQuantities(mapBarcodeToTubes, positionMap);
+        setTubeQuantities(mapBarcodeToTubes, positionMap, labEvent, areSourceTubes);
         RackOfTubes.RackType rackType = getRackType(plate);
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, rackType);
         if (rackOfTubes == null) {
@@ -1114,20 +1196,24 @@ public class LabEventFactory implements Serializable {
 
     /**
      * Set volume, concentration, receptacleWeight etc.
+     *
      * @param mapBarcodeToTubes map from tube barcode to tube
-     * @param positionMap JAXB quantities from deck
+     * @param positionMap       JAXB quantities from deck
+     * @param areSourceTubes    Whether the tubes are source samples.
      */
     @DaoFree
-    public void setTubeQuantities(Map<String, BarcodedTube> mapBarcodeToTubes, PositionMapType positionMap) {
+    private void setTubeQuantities(Map<String, BarcodedTube> mapBarcodeToTubes, PositionMapType positionMap,
+            LabEvent labEvent, Boolean areSourceTubes) {
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             BarcodedTube barcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if (barcodedTube != null) {
-                setTubeQuantities(receptacleType, barcodedTube);
+                setTubeQuantities(receptacleType, barcodedTube, labEvent, areSourceTubes);
             }
         }
     }
 
-    private void setTubeQuantities(ReceptacleType receptacleType, BarcodedTube barcodedTube) {
+    private void setTubeQuantities(ReceptacleType receptacleType, BarcodedTube barcodedTube, LabEvent labEvent,
+                                   Boolean areSourceTubes) {
         if (receptacleType.getVolume() != null) {
             barcodedTube.setVolume(receptacleType.getVolume());
         }
@@ -1136,6 +1222,49 @@ public class LabEventFactory implements Serializable {
         }
         if (receptacleType.getReceptacleWeight() != null) {
             barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
+        }
+        if (labEvent.getLabEventType().getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
+            MercurySample mercurySample = extractSample(barcodedTube.getSampleInstancesV2());
+            if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                Boolean terminateDepleted = labEvent.getLabEventType().depleteSources();
+                // At least one of the values must be set or the tube(s) must sources that are set to be depleted in
+                // order to incur the cost of calling BSP.
+                if ((receptacleType.getVolume() != null || receptacleType.getConcentration() != null ||
+                        receptacleType.getReceptacleWeight() != null) || (areSourceTubes && terminateDepleted)){
+                    // If this is setting quantities for sources, check to see if we need to deplete the
+                    // sources or possibly flag for termination on depletion.
+                    if (areSourceTubes) {
+                        // If the flag is set to deplete sources, then we need to set the volume to zero.
+                        if (labEvent.getLabEventType().depleteSources()) {
+                            receptacleType.setVolume(BigDecimal.ZERO);
+                        }
+
+                        // If the lab event type has a flag set for 'TERMINATE_DEPLETED' then check to see if the
+                        // individual source sample is set for terminating on depleted.
+                        if (labEvent.getLabEventType().terminateDepletedSources()) {
+                            terminateDepleted = true;   // Default to true, then check for the individual metadata flag
+                            for (MetadataType metadataType : receptacleType.getMetadata()) {
+                                // If the individual tube has the metadata flag set, then use the value set.
+                                if (metadataType.getName().compareToIgnoreCase(
+                                        LabEventType.SourceHandling.TERMINATE_DEPLETED.getDisplayName()) == 0) {
+                                    terminateDepleted = Boolean.valueOf(metadataType.getValue());
+                                }
+                            }
+                        }
+                    }
+
+                    BSPSetVolumeConcentration.TerminateAction terminateAction =
+                            terminateDepleted ? BSPSetVolumeConcentration.TerminateAction.TERMINATE_DEPLETED :
+                                    BSPSetVolumeConcentration.TerminateAction.LEAVE_CURRENT_STATE;
+                    String result = bspSetVolumeConcentration.setVolumeAndConcentration(receptacleType.getBarcode(),
+                            receptacleType.getVolume(), receptacleType.getConcentration(),
+                            receptacleType.getReceptacleWeight(),
+                            terminateAction);
+                    if (!result.equals(BSPSetVolumeConcentration.RESULT_OK)) {
+                        logger.error(result);
+                    }
+                }
+            }
         }
     }
 
@@ -1157,6 +1286,14 @@ public class LabEventFactory implements Serializable {
 
     // todo jmt make this database free?
     private void addReagents(LabEvent labEvent, List<ReagentType> reagentTypes) {
+        LabEventType.ManualTransferDetails manualTransferDetails = labEvent.getLabEventType().getManualTransferDetails();
+        HashSet<String> reagentNameSet = null;
+
+        if (manualTransferDetails != null) {
+            // Populate hashset of reagent names that we need to verify expiration date.
+            reagentNameSet = new HashSet<>(Arrays.asList(manualTransferDetails.getReagentFieldExpirationRequired()));
+        }
+
         for (ReagentType reagentType : reagentTypes) {
             GenericReagent genericReagent = null;
             // This is null only in database free tests
@@ -1178,15 +1315,27 @@ public class LabEventFactory implements Serializable {
                     throw new RuntimeException("Failed to find metadata " + metadataType.getName());
                 }
             }
+            // If the lab event type has a requirement for valid expiration date.
+            if ((manualTransferDetails != null && manualTransferDetails.getReagentFieldExpirationRequired() != null)) {
+                // check to see if the genericReagent name is in the reagentFieldExpirationRequired array. if yes, then ensure expiration date is valid.
+                if (reagentNameSet.contains(genericReagent.getName())) {
+                    if (reagentType.getExpiration() == null) {
+                        throw new RuntimeException("No expiration date provided for reagent " + genericReagent.getName());
+                    } else if (reagentType.getExpiration().before(DateUtils.getStartOfDay(new Date()))) {
+                        throw new RuntimeException("Reagent " + genericReagent.getName() + " expired as of " + reagentType.getExpiration().toString());
+                    }
+                }
+
+            }
             labEvent.addReagentMetadata(genericReagent, metadataSet);
         }
     }
 
     private void addMetadatas( LabEvent labEvent, List<MetadataType> metadataTypes) {
-        for(MetadataType metadataType: metadataTypes){
+        for (MetadataType metadataType: metadataTypes){
             LabEventMetadata.LabEventMetadataType labEventMetadataType =
                     LabEventMetadata.LabEventMetadataType.getByName(metadataType.getName());
-            if(labEventMetadataType != null) { //Throw runtime exception for unknown metadata?
+            if (labEventMetadataType != null) { //Throw runtime exception for unknown metadata?
                 LabEventMetadata labEventMetadata =
                         new LabEventMetadata(labEventMetadataType, metadataType.getValue());
                 labEvent.addMetadata(labEventMetadata);
@@ -1204,32 +1353,12 @@ public class LabEventFactory implements Serializable {
         if (tubeFormation == null) {
             tubeFormation =
                     buildRackDaoFree(mapBarcodeToTubes, rackOfTubes, plateEvent.getPlate(), plateEvent.getPositionMap(),
-                            true, LabEventType.getByName(plateEvent.getEventType()).isCreateSources());
+                            true, LabEventType.getByName(plateEvent.getEventType()).isCreateSources(), labEvent);
         } else {
-            setTubeQuantities(mapBarcodeToTubes, plateEvent.getPositionMap());
+            setTubeQuantities(mapBarcodeToTubes, plateEvent.getPositionMap(), labEvent, true);
         }
         tubeFormation.addInPlaceEvent(labEvent);
         return labEvent;
-    }
-
-    /**
-     * Pull volume and concentration values from the receptacleType and update bsp samples.
-     *
-     * @param receptacleTypes One or more receptacleTypes from a BettaLimsMessage.
-     */
-    private void updateVolumeConcentration(ReceptacleType... receptacleTypes) {
-        for (ReceptacleType receptacleType : receptacleTypes) {
-            // At least one of the values must be set in order to incur the cost of calling BSP.
-            if (receptacleType.getVolume() != null || receptacleType.getConcentration() != null ||
-                    receptacleType.getReceptacleWeight() != null) {
-                String result = bspSetVolumeConcentration.setVolumeAndConcentration(receptacleType.getBarcode(),
-                        receptacleType.getVolume(), receptacleType.getConcentration(),
-                        receptacleType.getReceptacleWeight());
-                if (!result.equals(BSPSetVolumeConcentration.RESULT_OK)) {
-                    logger.error(result);
-                }
-            }
-        }
     }
 
     @DaoFree
@@ -1321,16 +1450,21 @@ public class LabEventFactory implements Serializable {
         LabEvent labEvent = buildVesselToSectionDbFree(receptaclePlateTransferEvent,
                 barcodedTubeDao.findByBarcode(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode()),
                 destination, receptaclePlateTransferEvent.getDestinationPlate().getSection());
+        labEvent.setStationEventType(receptaclePlateTransferEvent);
         return labEvent;
     }
 
     public LabEvent buildFromBettaLims(ReceptacleEventType receptacleEventType) {
-        return buildReceptacleEventDbFree(receptacleEventType, labVesselDao.findByIdentifier(
+        LabEvent labEvent = buildReceptacleEventDbFree(receptacleEventType, labVesselDao.findByIdentifier(
                 receptacleEventType.getReceptacle().getBarcode()));
+        labEvent.setStationEventType(receptacleEventType);
+        return labEvent;
     }
 
     private LabEvent buildFromBettaLims(StationSetupEvent stationSetupEvent) {
-        return constructReferenceData(stationSetupEvent, labEventRefDataFetcher);
+        LabEvent labEvent = constructReferenceData(stationSetupEvent, labEventRefDataFetcher);
+        labEvent.setStationEventType(stationSetupEvent);
+        return labEvent;
     }
 
     /**
@@ -1357,7 +1491,9 @@ public class LabEventFactory implements Serializable {
         barcodes.add(receptacleTransferEventType.getSourceReceptacle().getBarcode());
         barcodes.add(receptacleTransferEventType.getReceptacle().getBarcode());
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-        return buildReceptacleTransferEventDbFree(receptacleTransferEventType, mapBarcodeToVessel);
+        LabEvent labEvent = buildReceptacleTransferEventDbFree(receptacleTransferEventType, mapBarcodeToVessel);
+        labEvent.setStationEventType(receptacleTransferEventType);
+        return labEvent;
     }
 
     @DaoFree
@@ -1378,15 +1514,16 @@ public class LabEventFactory implements Serializable {
             }
             targetLabVessel = new BarcodedTube(receptacleTransferEventType.getReceptacle().getBarcode(), tubeType);
         }
+
         setTubeQuantities(receptacleTransferEventType.getSourceReceptacle(),
-                OrmUtil.proxySafeCast(sourceLabVessel, BarcodedTube.class));
+                OrmUtil.proxySafeCast(sourceLabVessel, BarcodedTube.class), labEvent, true);
         setTubeQuantities(receptacleTransferEventType.getReceptacle(),
-                OrmUtil.proxySafeCast(targetLabVessel, BarcodedTube.class));
+                OrmUtil.proxySafeCast(targetLabVessel, BarcodedTube.class), labEvent, false);
         labEvent.getVesselToVesselTransfers().add(new VesselToVesselTransfer(sourceLabVessel, targetLabVessel, labEvent));
         return labEvent;
     }
 
-    public LabEvent constructReferenceData(StationEventType stationEventType,
+    private LabEvent constructReferenceData(StationEventType stationEventType,
                                            LabEventRefDataFetcher labEventRefDataFetcher) {
 
         LabEventType labEventType = LabEventType.getByName(stationEventType.getEventType());
@@ -1444,9 +1581,10 @@ public class LabEventFactory implements Serializable {
      */
     public Collection<LabEvent> buildFromBatchRequests(@Nonnull Collection<BucketEntry> entryCollection,
                                                        String operator, LabBatch batchIn, @Nonnull String eventLocation,
-                                                       @Nonnull String programName, @Nonnull LabEventType eventType) {
+                                                       @Nonnull String programName, @Nonnull LabEventType eventType,
+                                                       Date date, long disambiguatorOffset) {
 
-        long workCounter = 1L;
+        long workCounter = 1 + disambiguatorOffset;
 
         List<LabEvent> fullEventList = new LinkedList<>();
 
@@ -1455,7 +1593,7 @@ public class LabEventFactory implements Serializable {
         for (BucketEntry mapEntry : entryCollection) {
             List<LabEvent> events = new LinkedList<>();
             LabEvent currEvent = createFromBatchItems(mapEntry.getProductOrder().getBusinessKey(), mapEntry.getLabVessel(),
-                    workCounter++, operator, eventType, eventLocation, programName);
+                    workCounter++, operator, eventType, eventLocation, programName, date);
             if (null != batchIn) {
                 currEvent.setLabBatch(batchIn);
             }
@@ -1472,19 +1610,20 @@ public class LabEventFactory implements Serializable {
      * Order ID to the event for reference
      *
      */
-    public LabEvent createFromBatchItems(@Nonnull String pdoKey, @Nonnull LabVessel batchItem,
+    private LabEvent createFromBatchItems(@Nonnull String pdoKey, @Nonnull LabVessel batchItem,
                                          @Nonnull Long disambiguator, String operator, @Nonnull LabEventType eventType,
-                                         @Nonnull String eventLocation, @Nonnull String programName) {
+                                         @Nonnull String eventLocation, @Nonnull String programName,
+                                          @Nonnull Date date) {
 
         Long operatorInfo = labEventRefDataFetcher.getOperator(operator).getUserId();
 
         LabEvent bucketMoveEvent =
-                new LabEvent(eventType, new Date(), eventLocation, disambiguator, operatorInfo, programName);
+                new LabEvent(eventType, date, eventLocation, disambiguator, operatorInfo, programName);
 
-        //TODO SGM: add to container.
+        //TODO add to container.
         batchItem.addInPlaceEvent(bucketMoveEvent);
 
-        //TODO SGM: If LabVessel has a batch waiting to be associated with an event, add it here
+        //TODO If LabVessel has a batch waiting to be associated with an event, add it here
 
         return bucketMoveEvent;
     }
@@ -1511,5 +1650,13 @@ public class LabEventFactory implements Serializable {
 
     public void setBarcodedTubeDao(BarcodedTubeDao barcodedTubeDao) {
         this.barcodedTubeDao = barcodedTubeDao;
+    }
+
+    public void setGapHandler(GapHandler gapHandler) {
+        this.gapHandler = gapHandler;
+    }
+
+    public void setBspRestSender(BSPRestSender bspRestSender) {
+        this.bspRestSender = bspRestSender;
     }
 }

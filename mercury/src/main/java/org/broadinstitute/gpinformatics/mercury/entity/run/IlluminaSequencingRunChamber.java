@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 
 /**
  * Holds lane level information about a run.
@@ -14,8 +14,11 @@ import javax.persistence.Table;
 public class IlluminaSequencingRunChamber extends SequencingRunChamber {
 
     @ManyToOne
+    @JoinColumn(name = "ILLUMINA_SEQUENCING_RUN")
     private IlluminaSequencingRun illuminaSequencingRun;
+
     private int laneNumber;
+
     private String actualReadStructure;
 
     public IlluminaSequencingRunChamber(

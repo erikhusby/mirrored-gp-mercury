@@ -11,22 +11,27 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.StandardBasicTypes;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
+import javax.persistence.criteria.CollectionJoin;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Fetch;
@@ -49,6 +54,7 @@ import java.util.Set;
 
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductOrderDao extends GenericDao {
 
     /**
@@ -69,6 +75,17 @@ public class ProductOrderDao extends GenericDao {
     }
 
     /**
+     * @return all product orders with ORSP having a given identifier
+     */
+    public List<ProductOrder> findOrdersByRegulatoryInfoIdentifier(String identifier) {
+        return findAll(ProductOrder.class, (criteriaQuery, root) -> {
+            CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+            CollectionJoin<ProductOrder, RegulatoryInfo> join = root.join(ProductOrder_.regulatoryInfos);
+            criteriaQuery.where(criteriaBuilder.equal(join.get(RegulatoryInfo_.identifier), identifier));
+        });
+    }
+
+    /**
      * Use this to specify which tables should be fetched (joined) with ProductOrder when it's loaded from the
      * database. Using it can have a major performance benefit when retrieving many PDOs that will in turn need
      * a related table loaded.
@@ -80,7 +97,9 @@ public class ProductOrderDao extends GenericDao {
         SAMPLES,
         RISK_ITEMS,
         LEDGER_ITEMS,
-        PRODUCT_ORDER_KIT
+        PRODUCT_ORDER_KIT,
+        CHILD_ORDERS,
+        SAP_ORDER_INFO
     }
 
     private static class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
@@ -127,6 +146,14 @@ public class ProductOrderDao extends GenericDao {
 
             if (fetchSpecs.contains(FetchSpec.PRODUCT_ORDER_KIT)) {
                 productOrder.fetch(ProductOrder_.productOrderKit, JoinType.LEFT);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.CHILD_ORDERS)) {
+                productOrder.fetch(ProductOrder_.childOrders, JoinType.LEFT);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.SAP_ORDER_INFO)) {
+                productOrder.fetch(ProductOrder_.sapReferenceOrders, JoinType.LEFT);
             }
         }
     }
@@ -203,7 +230,7 @@ public class ProductOrderDao extends GenericDao {
 
 
     // Used by tests only.
-    public List<ProductOrder> findByWorkflow(@Nonnull Workflow workflow) {
+    public List<ProductOrder> findByWorkflow(@Nonnull String workflowName) {
 
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -215,7 +242,7 @@ public class ProductOrderDao extends GenericDao {
         Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
         Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
 
-        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflow.getWorkflowName()));
+        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflowName));
 
         criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
 
@@ -447,6 +474,23 @@ public class ProductOrderDao extends GenericDao {
                     }
                 }
         );
+    }
+
+    public List<ProductOrder> findOrdersWithSAPOrdersAndBilledSamples() {
+        return findAll(ProductOrder.class,new ProductOrderDaoCallback(FetchSpec.SAMPLES, FetchSpec.LEDGER_ITEMS,
+                FetchSpec.SAP_ORDER_INFO){
+            @Override
+            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrderRoot) {
+                super.callback(criteriaQuery, productOrderRoot);
+
+                criteriaQuery.distinct(true);
+
+                CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
+
+                final ListJoin<ProductOrder, SapOrderDetail> join =
+                        productOrderRoot.join(ProductOrder_.sapReferenceOrders);
+            }
+        }) ;
     }
 }
 

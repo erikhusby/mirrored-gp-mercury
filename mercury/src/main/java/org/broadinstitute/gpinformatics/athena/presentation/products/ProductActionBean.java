@@ -14,7 +14,9 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
@@ -22,25 +24,31 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFacto
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
@@ -50,9 +58,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.TopLevelOnly;
@@ -69,11 +82,15 @@ public class ProductActionBean extends CoreActionBean {
     public static final String PRODUCT_STRING = "Product";
     public static final String CREATE_PRODUCT = CoreActionBean.CREATE + PRODUCT_STRING;
     private static final String EDIT_PRODUCT = CoreActionBean.EDIT + PRODUCT_STRING;
+    public static final String PUBLISH_TO_SAP = "publishToSap";
+    public static final String OPEN_RISK_SUGGESTIONS = "openRiskSuggestedValues";
 
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
     public static final String PRODUCT_VIEW_PAGE = "/products/view.jsp";
     private static final String DOWNLOAD_PRODUCT_LIST = "downloadProductDescriptions";
+    private static final String PUBLISH_PRODUCTS_TO_SAP = "publishProductsToSap";
+    private static final String RISK_CRITERIA_SUGGESTED_VALUES = "risk_criteria_suggested_values.jsp";
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -91,6 +108,9 @@ public class ProductActionBean extends CoreActionBean {
     private PriceItemTokenInput priceItemTokenInput;
 
     @Inject
+    private PriceItemTokenInput externalPriceItemTokenInput;
+
+    @Inject
     private PriceListCache priceListCache;
 
     @Inject
@@ -102,9 +122,21 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
+    @Inject
+    private WorkflowConfig workflowConfig;
+
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
+
+    private List<String> selectedProductPartNumbers;
+    private List<Product> selectedProducts;
+
+    private List<String> criteriaSelectionValues = new ArrayList<>();
+
 
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String product;
@@ -112,6 +144,15 @@ public class ProductActionBean extends CoreActionBean {
     private String[] criteria = new String[0];
     private String[] operators = new String[0];
     private String[] values = new String[0];
+
+    // Genotyping chip name, pdo substring, chip technology for the current product.
+    private List<Triple<String, String, String>> genotypingChipInfo = new ArrayList<>();
+    private String[] genotypingChipTechnologies = new String[0];
+    private String[] genotypingChipNames = new String[0];
+    private String[] genotypingChipPdoSubstrings = new String[0];
+
+    // Map of chip technology to chip names, for populating UI dropdowns.
+    private Map<String, SortedSet<String>> availableChipTechnologyAndChipNames = new HashMap<>();
 
     @Validate(required = true, on = {SAVE_ACTION})
     private Long productFamilyId;
@@ -128,6 +169,9 @@ public class ProductActionBean extends CoreActionBean {
             @Validate(field = "availabilityDate", required = true, on = {SAVE_ACTION}, label = "Availability Date")
     })
     private Product editProduct;
+
+    private boolean productUsedInOrders = false;
+    private List<String> suggestedValueSelections = new ArrayList();
 
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
@@ -151,12 +195,39 @@ public class ProductActionBean extends CoreActionBean {
         this.q = q;
     }
 
+    private String criteriaIndex;
+    private String criteriaLabel;
+    private String criteriaOp;
+    private String currentCriteriaChoices;
+
     /**
      * Initialize the product with the passed in key for display in the form.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, "addOnsAutocomplete"})
-    public void init() {
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"addOnsAutocomplete"})
+    public void addOnsAutocompleteBindingAndValidation() {
+        initProduct();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, PUBLISH_TO_SAP})
+    public void viewBindingAndValidation() {
+        initProduct();
+        initGenotypingInfo();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {EDIT_ACTION, CREATE_ACTION})
+    public void editCreateBindingAndValidation() {
+        initProduct();
+        initGenotypingInfo();
+        setupFamilies();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {SAVE_ACTION})
+    public void saveBindingAndValidation() {
+        initProduct();
+        setupFamilies();
+    }
+
+    private void initProduct() {
         product = getContext().getRequest().getParameter(PRODUCT_PARAMETER);
         if (!StringUtils.isBlank(product)) {
             editProduct = productDao.findByBusinessKey(product);
@@ -164,6 +235,18 @@ public class ProductActionBean extends CoreActionBean {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
         }
+        productPriceCache.refreshCache();
+        availableChipTechnologyAndChipNames = productEjb.findChipFamiliesAndNames();
+    }
+
+    private void initGenotypingInfo() {
+        genotypingChipInfo = productEjb.getCurrentMappedGenotypingChips(editProduct.getPartNumber());
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION, SAVE_ACTION})
+    private void setupFamilies() {
+        productFamilies = productFamilyDao.findAll();
+        Collections.sort(productFamilies);
     }
 
     @Before(stages = LifecycleStage.CustomValidation, on = SAVE_ACTION)
@@ -187,15 +270,6 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
-     * Need to get this for setting up create and edit and for any errors on save.
-     */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION, SAVE_ACTION})
-    public void setupFamilies() {
-        productFamilies = productFamilyDao.findAll();
-        Collections.sort(productFamilies);
-    }
-
-    /**
      * If the product exists then set any value that needs to be set up for display.
      */
     @After(stages = LifecycleStage.EventHandling, on = {CREATE_ACTION, EDIT_ACTION})
@@ -207,12 +281,28 @@ public class ProductActionBean extends CoreActionBean {
             if (editProduct.getPositiveControlResearchProject() != null) {
                 controlsProject = editProduct.getPositiveControlResearchProject().getBusinessKey();
             }
+
+            List<ProductOrder> productOrderList = null;
+            if (editProduct.getProductId() != null) {
+                productOrderList = productDao.findList(ProductOrder.class, ProductOrder_.product, editProduct);
+            }
+            productUsedInOrders = !CollectionUtils.isEmpty(productOrderList);
         }
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void allProductsInit() {
         allProducts = productDao.findProducts(availability, TopLevelOnly.NO, IncludePDMOnly.YES);
+
+        for (Product product: allProducts) {
+            final QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+            if (quotePriceItem != null) {
+                product.getPrimaryPriceItem().setPrice(quotePriceItem.getPrice());
+                product.getPrimaryPriceItem().setUnits(quotePriceItem.getUnit());
+
+                product.setSapMaterial(productPriceCache.findByProduct(product, product.determineCompanyConfiguration()));
+            }
+        }
     }
 
     /**
@@ -246,8 +336,37 @@ public class ProductActionBean extends CoreActionBean {
         if (priceItemTokenInput.getItem() == null) {
             addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
+        if (StringUtils.isNotBlank(editProduct.getAlternateExternalName()) && externalPriceItemTokenInput.getItem() == null) {
+            addValidationError("token-input-externalPriceItem",
+                    "If setting an external product name, an external price item is required");
+        }
+        if (externalPriceItemTokenInput.getItem() != null && StringUtils.isBlank(editProduct.getAlternateExternalName())) {
+            addValidationError("token-input-externalPriceItem",
+                    "If setting an external price item, an external product name is required");
+        }
 
         checkValidCriteria();
+
+        // Strips off "item" prefix.
+        List<String> nakedPdoSubstrings = new ArrayList<>();
+        for (String prefixedString : genotypingChipPdoSubstrings) {
+            String nakedString = StringUtils.trimToNull(StringUtils.substringAfter(prefixedString, " "));
+            // pdoSubstring must be unique since product part number + pdoSubstring must form a unique lookup key.
+            if (nakedPdoSubstrings.contains(nakedString)) {
+                addGlobalValidationError("Cannot have duplicate genotyping chip product order name substrings: " +
+                                         nakedString);
+            }
+            nakedPdoSubstrings.add(nakedString);
+        }
+        genotypingChipPdoSubstrings = nakedPdoSubstrings.toArray(new String[0]);
+
+        // Repacks genotyping parameters into a list for persistence and to redisplay in case of validation failure.
+        genotypingChipInfo.clear();
+        for (int i = 0; i < genotypingChipTechnologies.length; ++i) {
+            genotypingChipInfo.add(
+                    Triple.of(genotypingChipTechnologies[i], genotypingChipNames[i], genotypingChipPdoSubstrings[i]));
+        }
+
     }
 
     private void checkValidCriteria() {
@@ -332,6 +451,11 @@ public class ProductActionBean extends CoreActionBean {
         if (primaryPriceItem != null) {
             priceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(primaryPriceItem)));
         }
+
+        PriceItem externalPriceItem = editProduct.getExternalPriceItem();
+        if(externalPriceItem != null) {
+            externalPriceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(externalPriceItem)));
+        }
     }
 
     @HandlesEvent("addOnsAutocomplete")
@@ -344,12 +468,57 @@ public class ProductActionBean extends CoreActionBean {
         return createTextResolution(priceItemTokenInput.getJsonString(getQ()));
     }
 
+
+    @HandlesEvent("externalPriceItemAutocomplete")
+    public Resolution externalPriceItemAutocomplete() throws Exception {
+        return createTextResolution(externalPriceItemTokenInput.getExternalJsonString(getQ()));
+    }
+
+
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
-        productEjb.saveProduct(
-                editProduct, addOnTokenInput, priceItemTokenInput,
-                allLengthsMatch(), criteria, operators, values);
+        // Sets paired end non-null when sequencing params are present.
+        if (StringUtils.isNotBlank(editProduct.getAggregationDataType())) {
+            editProduct.setPairedEndRead(editProduct.getPairedEndRead());
+        }
+        productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
+                criteria, operators, values, genotypingChipInfo, externalPriceItemTokenInput);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
+            try {
+                productEjb.publishProductToSAP(editProduct);
+            } catch (SAPIntegrationException e) {
+                addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
+            }
+
+        return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
+                editProduct.getPartNumber());
+    }
+
+    @HandlesEvent(PUBLISH_PRODUCTS_TO_SAP)
+    public Resolution publishProductsToSap() {
+        if(CollectionUtils.isEmpty(selectedProductPartNumbers)) {
+            addGlobalValidationError("Select at least one product when publishing products in bulk.");
+        } else {
+            selectedProducts =
+                    productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
+            try {
+                productEjb.publishProductsToSAP(selectedProducts);
+            } catch (ValidationException e) {
+                addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
+            }
+        }
+        return new RedirectResolution(ProductActionBean.class,LIST_ACTION);
+    }
+
+    @HandlesEvent(PUBLISH_TO_SAP)
+    public Resolution publishToSap() {
+        try {
+            productEjb.publishProductToSAP(editProduct);
+            addMessage("Product \"" + editProduct.getProductName() + "\" Successfully published to SAP");
+        } catch (SAPIntegrationException e) {
+            addGlobalValidationError("Unable to publish the product to SAP. " + e.getMessage());
+        }
+
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
                 editProduct.getPartNumber());
     }
@@ -380,6 +549,19 @@ public class ProductActionBean extends CoreActionBean {
         }.setFilename(fileName);
     }
 
+    @HandlesEvent(OPEN_RISK_SUGGESTIONS)
+    public Resolution openRiskSuggestedValues() throws Exception {
+        RiskCriterion.RiskCriteriaType criterion = RiskCriterion.RiskCriteriaType.findByLabel(criteriaLabel);
+        Optional<String> optionalCriterion = Optional.ofNullable(currentCriteriaChoices);
+        optionalCriterion.ifPresent(s -> suggestedValueSelections =
+                Arrays.stream(s.split(",")).map(String::trim).collect(Collectors.toList()));
+
+        if(CollectionUtils.isNotEmpty(criterion.getSuggestedValues())) {
+            criteriaSelectionValues.addAll(criterion.getSuggestedValues());
+        }
+        return new ForwardResolution(RISK_CRITERIA_SUGGESTED_VALUES);
+    }
+
     public static String getPdfFilename(List<Product> productList) {
         String fileName = "Product Descriptions.pdf";
         if (productList.size() == 1) {
@@ -396,13 +578,17 @@ public class ProductActionBean extends CoreActionBean {
             productDownloadList = Arrays.asList(downloadProduct);
         } else {
             productDownloadList = productDao.findProducts(ProductDao.Availability.CURRENT, TopLevelOnly.NO,
-                    IncludePDMOnly.toIncludePDMOnly(userBean.isPDMUser()));
+                    IncludePDMOnly.toIncludePDMOnly(userBean.isPDMUser(), userBean.isGPPMUser()));
         }
         return productDownloadList;
     }
 
     public Product getEditProduct() {
         return editProduct;
+    }
+
+    public boolean isProductNameSet() {
+        return StringUtils.isNotBlank(editProduct.getPartNumber());
     }
 
     public void setEditProduct(Product product) {
@@ -431,6 +617,15 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setPriceItemTokenInput(PriceItemTokenInput priceItemTokenInput) {
         this.priceItemTokenInput = priceItemTokenInput;
+    }
+
+    public PriceItemTokenInput getExternalPriceItemTokenInput() {
+        return externalPriceItemTokenInput;
+    }
+
+    public void setExternalPriceItemTokenInput(
+            PriceItemTokenInput externalPriceItemTokenInput) {
+        this.externalPriceItemTokenInput = externalPriceItemTokenInput;
     }
 
     public ProductTokenInput getAddOnTokenInput() {
@@ -483,6 +678,10 @@ public class ProductActionBean extends CoreActionBean {
 
     public Collection<QuotePriceItem> getReplacementPriceItems() {
         return priceListCache.getReplacementPriceItems(editProduct);
+    }
+
+    public Collection<QuotePriceItem> getExternalReplacementPriceItems() {
+        return priceListCache.getReplacementPriceItems(editProduct.getExternalPriceItem());
     }
 
     /**
@@ -568,13 +767,18 @@ public class ProductActionBean extends CoreActionBean {
      *
      * @return all workflows
      */
-    public Set<Workflow> getAvailableWorkflows() {
-        Set<Workflow> workflows = new TreeSet<>(Workflow.BY_NAME);
-        List<ProductWorkflowDef> productWorkflowDefs = new WorkflowLoader().load().getProductWorkflowDefs();
+    public Set<String> getAvailableWorkflows() {
+        Set<String> workflows = new TreeSet<>();
+        List<ProductWorkflowDef> productWorkflowDefs = workflowConfig.getProductWorkflowDefs();
         for (ProductWorkflowDef productWorkflowDef : productWorkflowDefs) {
-            workflows.add(Workflow.findByName(productWorkflowDef.getName()));
+            workflows.add(productWorkflowDef.getName());
         }
         return workflows;
+    }
+
+    public boolean productInSAP(String partNumber, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
+
+        return productPriceCache.findByPartNumber(partNumber, companyCode) != null;
     }
 
     public ProductDao.Availability getAvailability() {
@@ -592,4 +796,112 @@ public class ProductActionBean extends CoreActionBean {
     public void setControlsProject(String controlsProject) {
         this.controlsProject = controlsProject;
     }
+
+    public String[] getGenotypingChipTechnologies() {
+        return genotypingChipTechnologies;
+    }
+
+    public void setGenotypingChipTechnologies(String[] genotypingChipTechnologies) {
+        this.genotypingChipTechnologies = genotypingChipTechnologies;
+    }
+
+    public String[] getGenotypingChipNames() {
+        return genotypingChipNames;
+    }
+
+    public void setGenotypingChipNames(String[] genotypingChipNames) {
+        this.genotypingChipNames = genotypingChipNames;
+    }
+
+    public String[] getGenotypingChipPdoSubstrings() {
+        return genotypingChipPdoSubstrings;
+    }
+
+    public void setGenotypingChipPdoSubstrings(String[] genotypingChipPdoSubstrings) {
+        this.genotypingChipPdoSubstrings = genotypingChipPdoSubstrings;
+    }
+
+    public List<Triple<String, String, String>> getGenotypingChipInfo() {
+        return genotypingChipInfo;
+    }
+
+    public void setGenotypingChipInfo(List<Triple<String, String, String>> genotypingChipInfo) {
+        this.genotypingChipInfo = genotypingChipInfo;
+    }
+
+    public Map<String, SortedSet<String>> getAvailableChipTechnologyAndChipNames() {
+        return availableChipTechnologyAndChipNames;
+    }
+
+    public String getPublishSAPAction() {
+        return PUBLISH_TO_SAP;
+    }
+
+
+    public List<String> getSelectedProductPartNumbers() {
+        return selectedProductPartNumbers;
+    }
+
+    public void setSelectedProductPartNumbers(List<String> selectedProductPartNumbers) {
+        this.selectedProductPartNumbers = selectedProductPartNumbers;
+    }
+
+    public SAPProductPriceCache getProductPriceCache() {
+        return productPriceCache;
+    }
+
+    public boolean isProductUsedInOrders() {
+        return productUsedInOrders;
+    }
+
+
+    public List<String> getCriteriaSelectionValues() {
+        return criteriaSelectionValues;
+    }
+
+    public void setCriteriaSelectionValues(List<String> criteriaSelectionValues) {
+        this.criteriaSelectionValues = criteriaSelectionValues;
+    }
+
+    public String getCriteriaIndex() {
+        return criteriaIndex;
+    }
+
+    public void setCriteriaIndex(String criteriaIndex) {
+        this.criteriaIndex = criteriaIndex;
+    }
+
+    public String getCriteriaLabel() {
+        return criteriaLabel;
+    }
+
+    public void setCriteriaLabel(String criteriaLabel) {
+        this.criteriaLabel = criteriaLabel;
+    }
+
+    public String getCriteriaOp() {
+        return criteriaOp;
+    }
+
+    public void setCriteriaOp(String criteriaOp) {
+        this.criteriaOp = criteriaOp;
+    }
+
+    public String getCurrentCriteriaChoices() {
+        return currentCriteriaChoices;
+    }
+
+    public void setCurrentCriteriaChoices(String currentCriteriaChoices) {
+        this.currentCriteriaChoices = currentCriteriaChoices;
+    }
+
+
+    public List<String> getSuggestedValueSelections() {
+        return suggestedValueSelections;
+    }
+
+    public void setSuggestedValueSelections(List<String> suggestedValueSelections) {
+        this.suggestedValueSelections = suggestedValueSelections;
+    }
+
 }

@@ -6,7 +6,6 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
 import javax.net.ssl.HostnameVerifier;
@@ -25,6 +24,8 @@ import java.util.Map;
  * Utility class to define common rest helper functions that can assist in most Jersey calls.
  */
 public class JerseyUtils {
+    private static final int DEFAULT_TIMEOUT_MILLISECONDS = 300000;
+
     public static WebResource.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
         WebResource resource = getWebResourceBase(squidWSUrl, mediaType);
         return resource.type(mediaType);
@@ -38,15 +39,16 @@ public class JerseyUtils {
         return resource.queryParams(params).type(mediaType);
     }
 
-    public static WebResource getWebResourceBase(String squidWSUrl, MediaType mediaType) {
-        Client client = Client.create();
+    public static WebResource getWebResourceBase(String wsUrl, MediaType mediaType) {
+        ClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, DEFAULT_TIMEOUT_MILLISECONDS);
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, DEFAULT_TIMEOUT_MILLISECONDS);
         if (mediaType == MediaType.APPLICATION_JSON_TYPE) {
-            ClientConfig clientConfig = new DefaultClientConfig();
             clientConfig.getClasses().add(JacksonJsonProvider.class);
-            client = Client.create(clientConfig);
         }
+        Client client = Client.create(clientConfig);
 
-        return client.resource(squidWSUrl);
+        return client.resource(wsUrl);
     }
 
     /**

@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -31,12 +31,14 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -50,6 +52,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -66,6 +69,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
@@ -100,9 +104,10 @@ public class ExomeExpressEndToEndTest {
 
 
     private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
-    // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
-    // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
-    private JiraService jiraService = JiraServiceProducer.stubInstance();
+
+    // if this bombs because of a jira refresh, just switch it to JiraServiceTestProducer.stubInstance();
+    // for integration test fun where we post things back to a real jira, try JiraServiceTestProducer.testInstance();
+    private JiraService jiraServiceStub = JiraServiceTestProducer.stubInstance();
 
     private QuoteService quoteService = QuoteServiceProducer.stubInstance();
 
@@ -144,7 +149,7 @@ public class ExomeExpressEndToEndTest {
             //            if (directedPass.getResearchProject() != null)
             //                researchProject = pmBridgeService.getResearchProjectByID(directedPass.getResearchProject());
 
-            //TODO SGM: change this to PassBackedProjectPlan
+            //TODO change this to PassBackedProjectPlan
             //TODO MLC: tie in ResearchProject above
             //            BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
             //            String runName = "theRun";
@@ -208,7 +213,7 @@ public class ExomeExpressEndToEndTest {
 
             // grab the jira custom field definitions
             Map<String, CustomFieldDefinition> requiredFieldsMap =
-                    JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraService);
+                    JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraServiceStub);
             Assert.assertFalse(requiredFieldsMap.isEmpty());
             Assert.assertEquals(requiredFieldsMap.size(), 9);
 
@@ -233,13 +238,13 @@ public class ExomeExpressEndToEndTest {
             allCustomFields.add(descriptionCustomField);
 
             for (LabBatch labBatch : labBatches) {
-                JiraIssue jira = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
+                JiraIssue jira = jiraServiceStub.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
                                                          "hrafal", CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
                                                          labBatch.getBatchName(),
                                                          allCustomFields);
                 Assert.assertNotNull(jira);
                 Assert.assertNotNull(jira.getKey());
-                jiraTicket = new JiraTicket(jiraService, jira.getKey());
+                jiraTicket = new JiraTicket(jiraServiceStub, jira.getKey());
                 labBatch.setJiraTicket(jiraTicket);
                 //labBatch.get
             }
@@ -323,7 +328,7 @@ public class ExomeExpressEndToEndTest {
             BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
 
             LabBatchEjb labBatchEJB = new LabBatchEjb();
-            labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+            labBatchEJB.setJiraService(jiraServiceStub);
 
             LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
             labBatchEJB.setTubeDao(tubeDao);
@@ -380,7 +385,8 @@ public class ExomeExpressEndToEndTest {
                                                          shearingEntityBuilder.getShearCleanPlateBarcode(),
                                                          shearingEntityBuilder.getShearingPlate(),
                                                          mapBarcodeToTube.size(), "testPrefix",
-                                                         LibraryConstructionEntityBuilder.Indexing.DUAL).invoke();
+                                                         LibraryConstructionEntityBuilder.Indexing.DUAL,
+                                                         LibraryConstructionJaxbBuilder.PondType.REGULAR).invoke();
 
             HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                     new HybridSelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
@@ -547,11 +553,31 @@ public class ExomeExpressEndToEndTest {
                 }
             });
 
+            AttributeArchetypeDao attributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
+            Mockito.when(attributeArchetypeDao.findWorkflowMetadata(Mockito.anyString())).then(new Answer<Object>() {
+                @Override
+                public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                    return null;
+                }
+            });
+
+            // Method calls on factory will always use our list of flowcell designations.
+            // Need not put anything into it for now.
+            final List<FlowcellDesignation> flowcellDesignations = new ArrayList<>();
+            FlowcellDesignationEjb testFlowcellDesignationEjb = new FlowcellDesignationEjb(){
+                @Override
+                public List<FlowcellDesignation> getFlowcellDesignations(LabBatch fct) {
+                return flowcellDesignations;
+            }
+                @Override
+                public List<FlowcellDesignation> getFlowcellDesignations(Collection<LabVessel> loadingTubes) {
+                    return flowcellDesignations;
+                }
+            };
+
             ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new SampleDataFetcher(),
-                                                                                       null,
-                                                                                       new SequencingTemplateFactory(),
-                                                                                       productOrderDao,
-                                                                                       crspPipelineUtils);
+                    null, new SequencingTemplateFactory(), productOrderDao, crspPipelineUtils,
+                    testFlowcellDesignationEjb, attributeArchetypeDao);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
             // how to populate BspSampleData?  Ease of use from EL suggests an entity that can load itself, but this

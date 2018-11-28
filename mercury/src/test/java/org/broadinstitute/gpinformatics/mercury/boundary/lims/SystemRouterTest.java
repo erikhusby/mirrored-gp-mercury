@@ -75,9 +75,9 @@ import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventT
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.PREFLIGHT_CLEANUP;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.SAMPLE_RECEIPT;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Mockito.mock;
@@ -148,7 +148,7 @@ public class SystemRouterTest extends BaseEventTest {
         // existed before that method was factored out.
         mockLabVesselDao = mock(LabVesselDao.class);
         mockBspExportService = mock(BSPExportsService.class);
-        systemRouter = new SystemRouter(mockLabVesselDao, new WorkflowLoader(), mockBspExportService);
+        systemRouter = new SystemRouter(mockLabVesselDao, new WorkflowLoader().load(), mockBspExportService);
 
         // By default, make BSP answer that it knows about all vessels and returns that they have not been exported.
         when(mockBspExportService.findExportDestinations(anyCollectionOf(LabVessel.class))).thenAnswer(
@@ -1136,7 +1136,7 @@ public class SystemRouterTest extends BaseEventTest {
             }
             LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, tubes,
                                              LabBatch.LabBatchType.WORKFLOW);
-            labBatch.setWorkflow(product.getWorkflow());
+            labBatch.setWorkflow(product.getWorkflowName());
             for (BucketEntry bucketEntry : bucketEntries) {
                 bucketEntry.setLabBatch(labBatch);
             }

@@ -16,6 +16,13 @@
         <stripes:form beanclass="${actionBean.class.name}" id="platesForm">
             <div class="form-horizontal">
                 <div class="control-group">
+                    <stripes:label for="technologyAndParserType" class="control-label">Technology And Parser</stripes:label>
+                    <div class="controls">
+                        <stripes:select name="technologyAndParserType">
+                            <stripes:options-collection collection="${actionBean.activeTechnologiesAndParsers}"
+                                                        label="prettyName"/>
+                        </stripes:select>
+                    </div>
                     <stripes:label for="platesFile" class="control-label">
                         Molecular Index Plates File
                     </stripes:label>

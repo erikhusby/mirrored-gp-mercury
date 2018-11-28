@@ -11,10 +11,12 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
@@ -23,17 +25,25 @@ import java.util.Map;
  * Thrift service client that connects to a live thrift endpoint. All thrift
  * communication details and handling of error conditions are handled here.
  */
-@Impl
+@Dependent
+@Default
 public class LiveThriftService implements ThriftService {
 
     private ThriftConnection thriftConnection;
 
-    private Log log;
+    private Log log = LogFactory.getLog(this.getClass());
 
-    @Inject
+    /**
+     * Testing only
+     */
     public LiveThriftService(ThriftConnection thriftConnection, Log log) {
         this.thriftConnection = thriftConnection;
         this.log = log;
+    }
+
+    @Inject
+    public LiveThriftService(ThriftConnection thriftConnection) {
+        this.thriftConnection = thriftConnection;
     }
 
     @Override
@@ -57,6 +67,34 @@ public class LiveThriftService implements ThriftService {
                     throw new RuntimeException(message, e);
                 } catch (TException e) {
                     String message = "Failed to fetch run: " + runName;
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public TZamboniRun fetchRunByBarcode(final String runBarcode) {
+        return thriftConnection.call(new ThriftConnection.Call<TZamboniRun>() {
+            @Override
+            public TZamboniRun call(LIMQueries.Client client) {
+                try {
+                    return client.fetchRunByBarcode(runBarcode);
+                } catch (TZIMSException e) {
+                    if (e.getDetails() != null) {
+                        if (e.getDetails().contains("ZIMs failed to find run")) {
+                            // this is a typical situation: the pipeline is asking for a run
+                            // a tad too early, and it hasn't been registered yet, so don't panic.
+                            log.info("Run having barcode " + runBarcode + " doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists.");
+                        }
+                        return null;
+                    }
+                    String message = "Failed to fetch run by barcode: " + runBarcode;
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
+                } catch (TException e) {
+                    String message = "Failed to fetch run by barcode: " + runBarcode;
                     log.error(message, e);
                     throw new RuntimeException(message, e);
                 }

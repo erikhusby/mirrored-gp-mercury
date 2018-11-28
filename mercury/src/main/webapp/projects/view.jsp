@@ -1,3 +1,6 @@
+<%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
@@ -9,27 +12,28 @@
                        sectionTitle="View Project: ${actionBean.editResearchProject.title}"
                        businessKeyValue="${actionBean.editResearchProject.businessKey}">
     <stripes:layout-component name="extraHead">
-        <script type="text/javascript">
-            function getParameterByName(name) {
-                name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-                var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-                    results = regex.exec(location.search);
-                return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+        <style type="text/css">
+            .extraSpace {
+                height: calc(100vh - 100px);
             }
-
+            .extraSpace > .ui-tabs-panel {
+                height: auto;
+                min-height: 100%;
+            }
+        </style>
+        <script type="text/javascript">
             $j(document).ready(function () {
-                $j( "#tabs" ).tabs({
-                active: getParameterByName("rpSelectedTab"),
-                    beforeLoad: function(event, ui) {
-                        if (ui.panel.children('form').length == 0) {
-                            if (ui.panel.children('p.loading').length == 0) {
-                                $j('<p>').addClass('loading').append('Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes.').appendTo(ui.panel);
-                            }
-                        } else {
-                            event.preventDefault();
+                $j("#tabs").tabs({
+                    activate: function (event, ui) {
+                        if ($j(ui.newTab).text() === "<%=ResearchProjectActionBean.RESEARCH_PROJECT_SUBMISSIONS_TAB%>") {
+                            this.scrollIntoView({block: "start", behavior: "smooth"});
                         }
                     }
                 });
+                if (${! actionBean.validateViewOrPostSubmissions(true)}) {
+                    var index = $j("#tabs ul").find("[href='#submissionsTab']").closest("li").index();
+                    $j("#tabs").tabs("disable", index);
+                }
 
                 $j('#addRegulatoryInfoDialog').dialog({
                     autoOpen: false,
@@ -40,24 +44,38 @@
 
                 $j('#addRegulatoryInfo').click(function(event) {
                     event.preventDefault();
-                    resetRegulatoryInfoDialog();
-                    $j('#addRegulatoryInfoDialog').dialog("open");
+                    openRegulatoryInfoDialog(
+                            '${actionBean.editResearchProject.businessKey}',
+                        '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.webSafeTitle}',
+                            function() {
+                                location.reload(true);
+                            }
+                    );
                 });
 
-                $j('#regulatoryInfoSearchForm').submit(searchRegulatoryInfo);
+                $j('.editRegulatoryInfo').click(function(event) {
+                    event.preventDefault();
+                    $target = $j(event.target);
+                    openRegulatoryInfoEditDialog(
+                            $target.attr('regulatoryInfoId'),
+                            '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.webSafeTitle}',
+                            function() {
+                                location.reload(true);
+                            }
+                    );
+                });
 
                 $j('#orderList').dataTable({
                     "oTableTools": ttExportDefines
                 });
 
                 setupDialogs();
+            });
 
-                var selectedTabValue = '${actionBean.rpSelectedTab}';
-
-                if(selectedTabValue !== "") {
-                    $j("#tabs").tabs("load",'${actionBean.rpSelectedTab}');
-                    $j("#tabs").tabs({active: eval('${actionBean.rpSelectedTab}')});
-                }
+            // $(window).load(...) is used here because the submissions.jsp dom is not ready
+            // when $j(document).ready() is called.
+            $(window).load(function () {
+                $j("a[href='#${actionBean.rpSelectedTab}']").trigger('click');
             });
 
             function showBeginCollaboration() {
@@ -104,49 +122,6 @@
                         }
                     ]
                 });
-            }
-
-            function resetRegulatoryInfoDialog() {
-                $j('#regulatoryInfoQuery').val('');
-                $j('#addRegulatoryInfoDialogSheet2').html('');
-                $j('#addRegulatoryInfoDialogSheet1').show();
-            }
-
-            function searchRegulatoryInfo(event) {
-                event.preventDefault();
-                $j.ajax({
-                    url: '${ctxpath}/projects/project.action',
-                    data: {
-                        '<%= ResearchProjectActionBean.REGULATORY_INFO_QUERY_ACTION %>': '',
-                        researchProject: '${actionBean.editResearchProject.businessKey}',
-                        q: $j('#regulatoryInfoQuery').val()
-                    },
-                    dataType: 'html',
-                    success: function(html) {
-                        $j('#addRegulatoryInfoDialogSheet2').html(html);
-                    }
-                });
-                $j('#addRegulatoryInfoDialogSheet1').hide();
-            }
-
-            function openRegulatoryInfoEditDialog(regulatoryInfoId) {
-                $j('#addRegulatoryInfoDialogSheet2').html('');
-                $j('#addRegulatoryInfoDialogSheet1').hide();
-                $j('#addRegulatoryInfoDialog').dialog("open");
-
-                $j.ajax({
-                    url: '${ctxpath}/projects/project.action',
-                    data: {
-                        '<%= ResearchProjectActionBean.VIEW_REGULATORY_INFO_ACTION %>': '',
-                        regulatoryInfoId: regulatoryInfoId,
-                        researchProject: '${actionBean.editResearchProject.businessKey}'
-                    },
-                    dataType: 'html',
-                    success: function(html) {
-                        $j('#addRegulatoryInfoDialogSheet2').html(html);
-                    }
-                });
-                return false;
             }
         </script>
     </stripes:layout-component>
@@ -490,31 +465,34 @@
                     </div>
                 </div>
             </fieldset>
-        </div>
 
-        <div id="addRegulatoryInfoDialog" title="Add Regulatory Information for ${actionBean.editResearchProject.title} (${actionBean.editResearchProject.businessKey})" class="form-horizontal">
+            <fieldset>
+                <legend><h4>Data Submission</h4></legend>
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Submission Repository</label>
 
-            <div id="addRegulatoryInfoDialogSheet1">
-                <p>Enter the IRB Protocol or ORSP Determination number to see if the regulatory information is already known to Mercury.</p>
-                <stripes:form id="regulatoryInfoSearchForm" beanclass="${actionBean.class.name}">
-                    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
-                    <div class="control-group">
-                        <stripes:label for="regulatoryInfoQuery" class="control-label">Identifier</stripes:label>
-                        <div class="controls">
-                            <input id="regulatoryInfoQuery" type="text" name="q" required>
-                            <button id="regulatoryInfoSearchButton" class="btn btn-primary">Search</button>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${actionBean.editResearchProject.submissionRepositoryName != null}">
+                                ${actionBean.submissionRepository.description}
+                            </c:if>
                         </div>
                     </div>
-                </stripes:form>
+                </div>
+            </fieldset>
+        </div>
+
+        <stripes:layout-render name="/projects/regulatory_info_dialog.jsp"
+                               rpKey="${actionBean.editResearchProject.businessKey}"
+                               rpTitle="${actionBean.editResearchProject.title}" />
+
+            <div style="clear:both;" class="tableBar">
+        <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
+                <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
+                <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory
+                    Information</a>
+        </security:authorizeBlock>
             </div>
-
-            <div id="addRegulatoryInfoDialogSheet2"></div>
-        </div>
-
-        <div style="clear:both;" class="tableBar">
-            <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
-            <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory Information</a>
-        </div>
         <div>
             <h5>${actionBean.complianceStatement}</h5>
         </div>
@@ -537,31 +515,56 @@
                             <td>${regulatoryInfo.identifier}</td>
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
-                            <td style="text-align:center"><a href="#" onclick="return openRegulatoryInfoEditDialog(${regulatoryInfo.regulatoryInfoId});">Edit...</a></td>
-                            <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" disabled="${actionBean.isRegulatoryInfoInProductOrdersForThisResearchProject(regulatoryInfo)}" class="btn">Remove</stripes:submit></td>
+                            <td style="text-align:center">
+                                <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
+                                    <c:choose>
+                                        <c:when test="${actionBean.isRegulatoryInfoEditAllowed(regulatoryInfo)}">
+                                            <a href="#" class="editRegulatoryInfo"
+                                               regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}">Edit...</a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="disabled-link" style="font-size: 12px;"
+                                                  title="Editing regulatory information from the ORSP Portal is not allowed.">Edit...</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </security:authorizeBlock>
+                            </td>
+                            <td style="text-align:center">
+                                <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
+                                    <stripes:submit name="remove"
+                                                    onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});"
+                                                    disabled="${actionBean.isRegulatoryInfoInProductOrdersForThisResearchProject(regulatoryInfo)}"
+                                                    class="btn">Remove</stripes:submit>
+                                </security:authorizeBlock>
+                            </td>
                         </tr>
                     </c:forEach>
                 </tbody>
             </table>
         </stripes:form>
 
-        <div id="tabs" class="simpletab">
+        <%-- extraSpace class adds about a page worth of blank at the bottom of the page so the --%>
+        <%-- submission entries aren't hidden when the ajax call returns --%>
+
+        <div id="tabs" class="simpletab extraSpace">
             <ul>
-                <li><a href="#ordersTab">Orders</a></li>
-                <li><stripes:link beanclass="${actionBean.class.name}" event="viewSubmissions">Submission Requests
-                        <stripes:param name="researchProject" value="${actionBean.researchProject}" />
-                        <stripes:param name="rpSelectedTab" value="<%= ResearchProjectActionBean.RESEARCH_PROJECT_SUBMISSIONS_TAB%>" />
-                    </stripes:link></li>
+                <li><a href="#ordersTab" title="View Product Orders">Orders</a></li>
+                <c:if test="${not actionBean.userBean.viewer}">
+                    <li><a href="#submissionsTab" title="${actionBean.submissionTabHelpText}">Submission Requests</a></li>
+                </c:if>
             </ul>
 
             <div id="ordersTab">
 
-            <stripes:link title="Create product order with research project ${actionBean.editResearchProject.title}"
-                          beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
-                <stripes:param name="researchProjectKey" value="${actionBean.editResearchProject.businessKey}"/>
-                <i class="icon-plus"></i>
-                Add New Product Order
-            </stripes:link>
+                <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
+                    <stripes:link
+                            title="Create product order with research project ${actionBean.editResearchProject.title}"
+                            beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
+                        <stripes:param name="researchProjectKey" value="${actionBean.editResearchProject.businessKey}"/>
+                        <i class="icon-plus"></i>
+                        Add New Product Order
+                    </stripes:link>
+                </security:authorizeBlock>
 
         <table id="orderList" class="table simple">
             <thead>
@@ -615,6 +618,17 @@
             </tbody>
         </table>
             </div>
+            <c:if test="${not actionBean.userBean.viewer}">
+
+            <div id="submissionsTab">
+                <a name="#submissionsTab"></a>
+                <input type="hidden" name="_sourcePage" value="<%request.getServletPath();%>"/>
+                <stripes:layout-render name="<%=ResearchProjectActionBean.PROJECT_SUBMISSIONS_PAGE%>"
+                                       event="viewSubmissions"
+                                       submissionsTabSelector="a[href = '#submissionsTab']"
+                                       researchProject="${actionBean.editResearchProject.businessKey}"/>
+            </div>
+            </c:if>
         </div>
 
 

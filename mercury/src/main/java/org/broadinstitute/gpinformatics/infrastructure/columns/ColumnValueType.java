@@ -91,6 +91,27 @@ public enum ColumnValueType {
             }
     ),
     /**
+     * A java.math.BigDecimal value formatted with three decimal places
+     */
+    THREE_PLACE_DECIMAL(
+            new Formatter<BigDecimal>(){
+                @Override
+                public String format( BigDecimal value ){
+                    if( value == null ){
+                        return "0";
+                    } else {
+                        return MathUtils.scaleThreeDecimalPlaces(value).toPlainString();
+                    }
+                }
+            },
+            new SearchTerm.Evaluator<ColumnValueType>() {
+                @Override
+                public ColumnValueType evaluate(Object entity, SearchContext context) {
+                    return ColumnValueType.THREE_PLACE_DECIMAL;
+                }
+            }
+    ),
+    /**
      * A java.lang.String value
      */
     STRING(

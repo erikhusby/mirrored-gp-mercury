@@ -1,0 +1,59 @@
+a.dt-button.buttons-columnVisibility span {
+    padding-left: 12px;
+}
+
+a.dt-button.buttons-columnVisibility.active, a.dt-button.buttons-columnVisibility {
+    position: relative;
+    width: auto;
+    /**width: 230px;*/
+    text-align: left;
+    *zoom: expression(
+this.runtimeStyle['zoom'] = '1',
+this.insertBefore(document.createElement("div"),
+this.childNodes[0]).className="before",
+this.appendChild(document.createElement("div")).className="after");
+}
+
+a.dt-button.buttons-columnVisibility:before, a.dt-button.buttons-columnVisibility.active:after {
+    display: block;
+    position: absolute;
+    top: 1em;
+    margin-top: -6px;
+    margin-left: -6px;
+    width: 16px;
+    height: 16px;
+    box-sizing: border-box;
+}
+
+a.dt-button.buttons-columnVisibility:before {
+    content: ' ';
+    border: 1px solid black;
+    border-radius: 3px;
+}
+
+a.dt-button.buttons-columnVisibility.active:after {
+    font: 0.9em Arial;
+    content: '\2714';
+    text-align: center;
+}
+
+* a.dt-button.buttons-columnVisibility .before, * a.dt-button.buttons-columnVisibility.active .after, * a.dt-button.buttons-columnVisibility.active:hover .after {
+    position: absolute;
+    margin: 6px 0px 0px -6px;
+    width: 16px;
+    height: 16px;
+    background-image: url("${ctxpath}/resources/css/images/checkbox.png");
+    background-position: 0px 0px;
+}
+
+* a.dt-button.buttons-columnVisibility .before {
+    background-position: 0px 0px;
+}
+
+* a.dt-button.buttons-columnVisibility.active .before {
+    background-position: 0px 16px;
+}
+
+* a.dt-button.buttons-columnVisibility.active:hover .before {
+    background-position: 16px 0px;
+}

@@ -3,14 +3,29 @@ package org.broadinstitute.gpinformatics.athena.entity.billing;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This handles the billing ledger items for product order samples
@@ -21,6 +36,10 @@ import java.util.Date;
 @Audited
 @Table(name= "BILLING_LEDGER", schema = "athena")
 public class LedgerEntry implements Serializable {
+    /**
+     * Date format used for displaying DCFM and the value of Date Complete inputs.
+     */
+    public static final String BILLING_LEDGER_DATE_FORMAT = "MMM d, yyyy";
     private static final long serialVersionUID = -4740767648087018522L;
 
     @Id
@@ -50,6 +69,7 @@ public class LedgerEntry implements Serializable {
 
     @Index(name = "ix_ledger_billing_session")
     @ManyToOne
+    @JoinColumn(name="BILLING_SESSION")
     private BillingSession billingSession;
 
     @Column(name = "WORK_COMPLETE_DATE")
@@ -68,6 +88,13 @@ public class LedgerEntry implements Serializable {
     // work item id handed back from the quote server
     @Column(name = "QUOTE_SERVER_WORK_ITEM")
     private String workItem;
+
+    @Column(name = "SAP_DELIVERY_DOCUMENT_ID")
+    private String sapDeliveryDocumentId;
+
+    @ManyToOne
+    @JoinColumn(name = "SAP_ORDER_DETAIL_ID")
+    private SapOrderDetail sapOrderDetail;
 
     /**
      * Package private constructor for JPA use.
@@ -128,6 +155,10 @@ public class LedgerEntry implements Serializable {
         return workCompleteDate;
     }
 
+    public void setWorkCompleteDate(Date workCompleteDate) {
+        this.workCompleteDate = workCompleteDate;
+    }
+
     public String getBillingMessage() {
         return billingMessage;
     }
@@ -135,6 +166,8 @@ public class LedgerEntry implements Serializable {
     public void setBillingMessage(String billingMessage) {
         this.billingMessage = billingMessage;
     }
+
+
 
     /**
      * A ledger item is billed if either its message is the success status or the session has been billed. The
@@ -152,6 +185,15 @@ public class LedgerEntry implements Serializable {
      */
     private boolean isBillingSessionBilled() {
         return (billingSession != null) && (billingSession.getBilledDate() != null);
+    }
+
+    /**
+     * Tells whether or not this ledger entry is currently being billed (is included in an incomplete billing session).
+     *
+     * @return true if this ledger entry is being billed; false if it is ready to bill or has been successfully billed
+     */
+    public boolean isBeingBilled() {
+        return billingSession != null && !billingSession.isComplete();
     }
 
     /**
@@ -200,6 +242,14 @@ public class LedgerEntry implements Serializable {
         this.workItem = workItem;
     }
 
+    public String getSapDeliveryDocumentId() {
+        return sapDeliveryDocumentId;
+    }
+
+    public void setSapDeliveryDocumentId(String sapDeliveryDocumentId) {
+        this.sapDeliveryDocumentId = sapDeliveryDocumentId;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -230,7 +280,23 @@ public class LedgerEntry implements Serializable {
     }
 
     public Date getBucketDate() {
-        return billingSession.getBucketDate(workCompleteDate);
+        Date bucketDate = null;
+        if(billingSession != null) {
+            bucketDate = billingSession.getBucketDate(workCompleteDate);
+        }
+        return bucketDate;    }
+
+    public void setSapOrderDetail(SapOrderDetail sapOrderDetail) {
+        this.sapOrderDetail = sapOrderDetail;
+    }
+
+    public SapOrderDetail getSapOrderDetail() {
+        return sapOrderDetail;
+    }
+
+    public Set<LedgerEntry> getPreviouslyBilled() {
+        return productOrderSample.getLedgerItems().stream().filter(LedgerEntry::isSuccessfullyBilled)
+            .collect(Collectors.toSet());
     }
 
     /**

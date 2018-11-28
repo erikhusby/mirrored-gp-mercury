@@ -1,18 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.jersey.api.json.JSONMarshaller;
-import com.sun.jersey.api.json.JSONUnmarshaller;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -36,66 +30,90 @@ public class SubmissionStatusResultBeanTest {
     private Date submissionUpdateDate;
     @BeforeMethod
     public void setUp() throws Exception {
-    submissionUpdateDate = DateUtils.parseISO8601Date("2014-07-30T11:35:58Z");
+    submissionUpdateDate = DateUtils.parseISO8601Date("2014-07-30T15:35:58.000+0000");
         testUUID1 = "d835cc7-cd63-4cc6-9621-868155618745";
-        detail1 = new SubmissionStatusDetailBean(testUUID1,"Submitted", submissionUpdateDate);
+        detail1 = new SubmissionStatusDetailBean(testUUID1, SubmissionStatusDetailBean.Status.SUBMITTED,
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME,
+                SubmissionLibraryDescriptor.WHOLE_GENOME.getName(), submissionUpdateDate);
         testUUID2 = "d835cc7-cd63-4cc6-9621-868155618746";
-        detail2 = new SubmissionStatusDetailBean(testUUID2,"Failure", submissionUpdateDate, "And error was returned from NCBI");
+        detail2 = new SubmissionStatusDetailBean(testUUID2, SubmissionStatusDetailBean.Status.FAILURE, SubmissionRepository.DEFAULT_REPOSITORY_NAME,
+                SubmissionLibraryDescriptor.WHOLE_GENOME.getName(), submissionUpdateDate,
+                "And error was returned from NCBI");
 
         testJson = "{\n"
-                          + "  \"submissionStatuses\": [\n"
-                          + "    {\n"
-                          + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
-                          + "      \"status\": \"ReadyForSubmission\",\n"
-                          + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618745\"\n"
-                          + "    },\n"
-                          + "    {\n"
-                          + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
-                          + "      \"status\": \"ReadyForSubmission\",\n"
-                          + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618746\"\n"
-                          + "    },\n"
-                          + "    {\n"
-                          + "      \"errors\": [\n"
-                          + "        \"No bioproject found matching submitted accession BlahBlahBlah\",\n"
-                          + "        \"No biosample found matching submitted id BlahBlahBlah\"\n"
-                          + "      ],\n"
-                          + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
-                          + "      \"status\": \"Failure\",\n"
-                          + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618749\"\n"
-                          + "    },\n"
-                          + "    {\n"
-                          + "      \"errors\": [\n"
-                          + "        \"No biosample found matching submitted id BlahBlahBlah\"\n"
-                          + "      ],\n"
-                          + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
-                          + "      \"status\": \"Failure\",\n"
-                          + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618748\"\n"
-                          + "    },\n"
-                          + "    {\n"
-                          + "      \"errors\": [\n"
-                          + "        \"No bioproject found matching submitted accession BlahBlah\"\n"
-                          + "      ],\n"
-                          + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
-                          + "      \"status\": \"Failure\",\n"
-                          + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618747\"\n"
-                          + "    }\n"
-                          + "  ]\n"
-                          + "}";
+                   + "  \"submissionStatuses\": [\n"
+                   + "    {\n"
+                   + "      \"lastStatusUpdate\": \"2014-07-30T15:35:58.000+0000\", \n"
+                   + "      \"site\": \"NCBI_PROTECTED\", \n"
+                   + "      \"status\": \"ReadyForSubmission\",\n"
+                   + "      \"submissiondatatype\": \"Whole Genome\", \n"
+                   + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618745\"\n"
+                   + "    },\n"
+                   + "    {\n"
+                   + "      \"lastStatusUpdate\": \"2014-07-30T15:35:58.000+0000\", \n"
+                   + "      \"site\": \"NCBI_PROTECTED\", \n"
+                   + "      \"status\": \"ReadyForSubmission\",\n"
+                   + "      \"submissiondatatype\": \"Whole Genome\", \n"
+                   + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618746\"\n"
+                   + "    },\n"
+                   + "    {\n"
+                   + "      \"errors\": [\n"
+                   + "        \"No bioproject found matching submitted accession BlahBlahBlah\",\n"
+                   + "        \"No biosample found matching submitted id BlahBlahBlah\"\n"
+                   + "      ],\n"
+                   + "      \"lastStatusUpdate\": \"2014-07-30T15:35:58.000+0000\", \n"
+                   + "      \"site\": \"NCBI_PROTECTED\", \n"
+                   + "      \"status\": \"Failure\",\n"
+                   + "      \"submissiondatatype\": \"Whole Genome\", \n"
+                   + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618749\"\n"
+                   + "    },\n"
+                   + "    {\n"
+                   + "      \"errors\": [\n"
+                   + "        \"No biosample found matching submitted id BlahBlahBlah\"\n"
+                   + "      ],\n"
+                   + "      \"lastStatusUpdate\": \"2014-07-30T15:35:58.000+0000\", \n"
+                   + "      \"site\": \"NCBI_PROTECTED\", \n"
+                   + "      \"status\": \"Failure\",\n"
+                   + "      \"submissiondatatype\": \"Whole Genome\", \n"
+                   + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618748\"\n"
+                   + "    },\n"
+                   + "    {\n"
+                   + "      \"errors\": [\n"
+                   + "        \"No bioproject found matching submitted accession BlahBlah\"\n"
+                   + "      ],\n"
+                   + "      \"lastStatusUpdate\": \"2014-07-30T15:35:58.000+0000\", \n"
+                   + "      \"site\": \"NCBI_PROTECTED\", \n"
+                   + "      \"status\": \"Failure\",\n"
+                   + "      \"submissiondatatype\": \"Whole Genome\", \n"
+                   + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618747\"\n"
+                   + "    }\n"
+                   + "  ]\n"
+                   + "}";
         results = new SubmissionStatusResultBean();
-        detail11 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618745", "ReadyForSubmission",submissionUpdateDate);
+        detail11 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618745",
+                SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION, SubmissionRepository.DEFAULT_REPOSITORY_NAME,
+                SubmissionLibraryDescriptor.WHOLE_GENOME.getName(), submissionUpdateDate);
         statusUpdate = new GregorianCalendar();
         statusUpdate.set(Calendar.MILLISECOND, 0);
 
         statusUpdate.set(2014, Calendar.JULY, 30, 11, 35, 58);
         detail11.setLastStatusUpdate(statusUpdate.getTime());
 
-        detail21 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618746", "ReadyForSubmission", submissionUpdateDate);
-        detail3 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618749", "Failure", submissionUpdateDate,
+        detail21 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618746", SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION,
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
+                submissionUpdateDate);
+        detail3 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618749", SubmissionStatusDetailBean.Status.FAILURE,
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
+                submissionUpdateDate,
                 "No bioproject found matching submitted accession BlahBlahBlah",
                 "No biosample found matching submitted id BlahBlahBlah");
-        detail4 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618748", "Failure", submissionUpdateDate,
+        detail4 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618748", SubmissionStatusDetailBean.Status.FAILURE,
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
+                submissionUpdateDate,
                 "No biosample found matching submitted id BlahBlahBlah");
-        detail5 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618747", "Failure", submissionUpdateDate,
+        detail5 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618747", SubmissionStatusDetailBean.Status.FAILURE,
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
+                submissionUpdateDate,
                 "No bioproject found matching submitted accession BlahBlah");
 
         detail21.setLastStatusUpdate(statusUpdate.getTime());
@@ -120,27 +138,13 @@ public class SubmissionStatusResultBeanTest {
     }
 
     public void testSerialize() throws Exception {
-
-        JSONJAXBContext context = new JSONJAXBContext(JSONConfiguration.natural().humanReadableFormatting(true).build(),
-                SubmissionStatusResultBean.class);
-        JSONMarshaller marshaller = context.createJSONMarshaller();
-
-        StringWriter writer = new StringWriter();
-
-        marshaller.marshallToJSON(results, writer);
-        Assert.assertEquals(writer.toString().replaceAll("\\s+", ""), testJson.replaceAll("\\s+", ""));
+        String resultsString = MercuryStringUtils.serializeJsonBean(results);
+        Assert.assertEquals(resultsString.replaceAll("\\s+", ""), testJson.replaceAll("\\s+", ""));
     }
 
     public void testDeSerialize() throws Exception {
-        JSONJAXBContext context =
-                new JSONJAXBContext(JSONConfiguration.natural().humanReadableFormatting(true).build(),
-                        SubmissionStatusResultBean.class);
-
-        JSONUnmarshaller unmarshaller = context.createJSONUnmarshaller();
-
-        InputStream input = new ByteArrayInputStream(testJson.getBytes());
-
-        SubmissionStatusResultBean deserializedResultBean = unmarshaller.unmarshalFromJSON(input, SubmissionStatusResultBean.class);
+        SubmissionStatusResultBean deserializedResultBean =
+            MercuryStringUtils.deSerializeJsonBean(testJson, SubmissionStatusResultBean.class);
 
         Assert.assertEquals(deserializedResultBean, results);
     }

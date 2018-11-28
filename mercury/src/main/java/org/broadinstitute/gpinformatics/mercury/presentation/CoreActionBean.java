@@ -9,6 +9,8 @@
  */
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import net.sourceforge.stripes.action.ActionBean;
 import net.sourceforge.stripes.action.ActionBeanContext;
 import net.sourceforge.stripes.action.Before;
@@ -30,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -44,8 +47,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponse;
@@ -64,6 +69,8 @@ import java.util.Map;
 public abstract class CoreActionBean implements ActionBean, MessageReporter {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
+    public static final String ERROR_CONTACT_SUPPORT =
+        "Please contact support using the <span class='badge'>Feedback</span> link above.";
     public static final String DATE_PATTERN = "MM/dd/yyyy";
     private static final String DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm";
     private static final String PRECISE_DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm:ss.S";
@@ -384,6 +391,37 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     }
 
     /**
+     * @return formatted messages collected in the context
+     */
+    public List<String> getFormattedMessages() {
+        return transformMessages(getContext().getMessages());
+    }
+
+    private List<String> transformMessages(List<? extends Message> messages) {
+        return new ArrayList<>(Collections2.transform(messages, new Function<Message, String>() {
+            @Override
+            public String apply(@Nullable Message input) {
+                if (input != null) {
+                    return input.getMessage(getContext().getLocale());
+                }
+                return null;
+            }
+        }));
+    }
+
+    /**
+     * @return formatted errors collected in the context
+     */
+    public List<String> getFormattedErrors() {
+        final List<String> formattedMessages = new ArrayList<>();
+        for (String errorKey : getValidationErrors().keySet()) {
+            List<ValidationError> validationErrors = getValidationErrors().get(errorKey);
+            formattedMessages.addAll(transformMessages(validationErrors));
+        }
+        return formattedMessages;
+    }
+
+    /**
      * Get the build info bean.
      *
      * @return the injected BuildInfoBean
@@ -393,7 +431,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     }
 
     public String getError(Map<String, Object> requestScope) {
-        return ((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getMessage();
+        return Encode.forHtml(((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getMessage());
     }
 
     public StackTraceElement[] getStackTrace(Map<String, Object> requestScope) {
@@ -600,14 +638,14 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
         return createTitle;
     }
 
-    protected Quote validateQuoteId(String quoteId) {
+    protected Quote validateQuote(ProductOrder productOrder) {
         Quote quoteDetails = null;
         try {
-            quoteDetails = quoteService.getQuoteByAlphaId(quoteId);
+            quoteDetails = productOrder.getQuote(quoteService);
         } catch (QuoteServerException e) {
-            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", productOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+            addGlobalValidationError("The quote ''{2}'' was not found ", productOrder.getQuoteId());
         }
         return quoteDetails;
     }

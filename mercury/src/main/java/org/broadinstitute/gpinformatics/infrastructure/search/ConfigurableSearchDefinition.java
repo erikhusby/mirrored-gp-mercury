@@ -53,6 +53,11 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     private Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
 
     /**
+     * Map from group index to UI help text
+     */
+    private Map<Integer, String> mapGroupHelpText = new HashMap<>();
+
+    /**
      * Map from term name to search term, includes dependent terms
      */
     transient private Map<String, SearchTerm> mapNameToSearchTerm = new HashMap<>();
@@ -66,6 +71,11 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
      * Allow an evaluator to expand entity list to be attached to search term.
      */
     private Map<String, TraversalEvaluator> traversalEvaluators;
+
+    /**
+     * Allow a user to apply a filter to include/exclude what's provided from traversals
+     */
+    private Map<String, CustomTraversalEvaluator> customTraversalOptions;
 
     /**
      * Produce named AddRowsListener instances for this search definition.
@@ -112,6 +122,31 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
         return mapGroupToColumnTabulations;
     }
 
+    /**
+     * Allow UI help text to be displayed for an option group of columns
+     */
+    public void addColumnGroupHelpText( Map<String, String> nameHelpMap) {
+        int index = 0;
+        for( String groupName : mapGroupSearchTerms.keySet() ) {
+            for( Map.Entry<String,String> helpNameEntry : nameHelpMap.entrySet() ) {
+                if( helpNameEntry.getKey().equals(groupName) ) {
+                    mapGroupHelpText.put(index, helpNameEntry.getValue() );
+                    // Group name should never be duplicated
+                    break;
+                }
+            }
+            index++;
+        }
+    }
+
+    /**
+     * Allow UI help text to be displayed for an option group of columns
+     * @return  Map of group name to help text to display
+     */
+    public Map<Integer,String> getMapGroupHelpText( ) {
+        return mapGroupHelpText;
+    }
+
     public List<SearchTerm> getRequiredSearchTerms() {
         List<SearchTerm> requiredSearchTerms = new ArrayList<>();
         for (List<SearchTerm> searchTermList : mapGroupSearchTerms.values()) {
@@ -149,6 +184,29 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
      */
     public Map<String,TraversalEvaluator> getTraversalEvaluators(){
         return traversalEvaluators;
+    }
+
+    /**
+     * Allow an optional custom traversal evaluator to be attached to this search
+     * @param customTraversalOption The custom traversal implementation
+     */
+    public void addCustomTraversalOption(CustomTraversalEvaluator customTraversalOption) {
+        if( customTraversalOptions == null ) {
+            // Retain deterministic ordering
+            customTraversalOptions = new LinkedHashMap<>();
+        } else {
+            if( customTraversalOptions.containsKey(customTraversalOption.getUiName()) ) {
+                throw new RuntimeException("Duplicate CustomTraversalOptions Id in ConfigurableSearchDefinition: " + customTraversalOption.getUiName());
+            }
+        }
+        this.customTraversalOptions.put(customTraversalOption.getUiName(), customTraversalOption);
+    }
+
+    /**
+     * Obtain the TraversalSelectionFilter implementations
+     */
+    public Map<String,CustomTraversalEvaluator> getCustomTraversalOptions(){
+        return customTraversalOptions;
     }
 
 

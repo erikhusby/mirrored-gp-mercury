@@ -9,7 +9,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -19,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -36,9 +36,10 @@ import java.util.Set;
 /**
  * This class generates diagrams of workflows.
  */
+@Dependent
 public class WorkflowDiagrammer implements Serializable {
     private static Log logger = LogFactory.getLog(WorkflowDiagrammer.class);
-    private static WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;
     static final String DOT_EXTENSION = ".dot";
     public static final String DIAGRAM_FILE_EXTENSION = ".png";
     public static final String DIAGRAM_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator +
@@ -48,8 +49,8 @@ public class WorkflowDiagrammer implements Serializable {
     }
 
     @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
+    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
     }
 
     @Nonnull
@@ -68,8 +69,6 @@ public class WorkflowDiagrammer implements Serializable {
      * @return List of workflow graphs ordered as found in WorkflowConfig.
      */
     List<Graph> createGraphs() throws Exception {
-        WorkflowConfig workflowConfig = workflowLoader.load();
-
         List<Graph> graphs = new ArrayList<>();
         if (workflowConfig == null) {
             return graphs;
@@ -99,7 +98,7 @@ public class WorkflowDiagrammer implements Serializable {
 
                             for (WorkflowStepDef step : process.getWorkflowStepDefs()) {
 
-                                if (!visitedProcessStep.add(processDef.getName() + "//" + step.getName())) {
+                                if (!visitedProcessStep.add(processDef.getName() + "//" + step.getName() + "//" + step.getWorkflowQualifier())) {
                                     throw new Exception("Workflow config contains a cyclic graph in process " +
                                                         processDef.getName() + " at step " + step.getName());
                                 }

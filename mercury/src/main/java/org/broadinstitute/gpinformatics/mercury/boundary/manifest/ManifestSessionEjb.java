@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
@@ -375,12 +376,18 @@ public class ManifestSessionEjb {
             sourceRecord = session.findRecordByKey(targetSample.getSampleKey(), Metadata.Key.BROAD_SAMPLE_ID);
         }
 
-        JiraIssue receiptInfo = null;
-        try {
-            receiptInfo = jiraService.getIssueInfo(session.getReceiptTicket());
-        } catch (IOException e) {
-            throw new TubeTransferException(RECEIPT_NOT_FOUND + session.getReceiptTicket());
-        }
+        JiraIssue receiptInfo=findJiraIssue(session);
+
+        targetSample.addMetadata(
+                Collections.singleton(new Metadata(Metadata.Key.RECEIPT_RECORD, session.getReceiptTicket())));
+
+        int disambiguator = sourceRecord.getSpreadsheetRowNumber();
+        BspUser bspUserByUsername = getBspUser(session, receiptInfo);
+        targetVessel.setReceiptEvent(bspUserByUsername, receiptInfo.getCreated(), disambiguator,
+            buildEventLocationName(session));
+    }
+
+    public BspUser getBspUser(ManifestSession session, JiraIssue receiptInfo) {
         BspUser bspUserByUsername = null;
         try {
             bspUserByUsername = bspUserList.getByUsername(receiptInfo.getReporter());
@@ -394,36 +401,41 @@ public class ManifestSessionEjb {
                              " is not a Mercury user");
             }
         }
-
-        targetSample.addMetadata(
-                Collections.singleton(new Metadata(Metadata.Key.RECEIPT_RECORD, session.getReceiptTicket())));
-
-        List<ManifestSession> otherReceiptSessions =
-                manifestSessionDao.getSessionsForReceiptTicket(session.getReceiptTicket());
-
-        otherReceiptSessions.remove(session);
-
-        int disambiguator = sourceRecord.getSpreadsheetRowNumber();
-
-        for (ManifestSession sessionToAdd : otherReceiptSessions) {
-            disambiguator += sessionToAdd.getRecords().size();
-        }
-
-        targetVessel.setReceiptEvent(bspUserByUsername, receiptInfo.getCreated(), disambiguator);
+        return bspUserByUsername;
     }
 
-    private void transitionReceiptTicket(ManifestSession session, Set<String> accessionedSamples) {
+    public JiraIssue findJiraIssue(ManifestSession session) {
+        JiraIssue receiptInfo;
+        BspUser bspUserByUsername=null;
+        try {
+            receiptInfo = jiraService.getIssueInfo(session.getReceiptTicket());
+        } catch (IOException e) {
+            throw new TubeTransferException(RECEIPT_NOT_FOUND + session.getReceiptTicket());
+        }
+
+        return receiptInfo;
+    }
+
+    public String buildEventLocationName(ManifestSession session) {
+        return LabEvent.UI_EVENT_LOCATION + " Accessioning--" + session.getSessionName();
+    }
+
+    public void transitionReceiptTicket(JiraIssue receiptIssue, ManifestSession session, Set<String> accessionedSamples) {
         String comment = String.format("Session %s associated with Research Project %s has been Accessioned.  "
                                        + "Source samples include: %s", session.getSessionName(),
                 session.getResearchProject().getBusinessKey(), StringUtils.join(accessionedSamples, ", "));
         try {
-            JiraIssue receiptIssue = new JiraIssue(session.getReceiptTicket(), jiraService);
             receiptIssue.postTransition(JiraTransition.ACCESSIONED.getStateName(), comment);
             receiptIssue.addComment(comment);
 
         } catch (IOException e) {
             logger.error("Unable to transition receipt ticket " + session.getReceiptTicket() + " to Accessioned", e);
         }
+    }
+
+    private void transitionReceiptTicket(ManifestSession session, Set<String> accessionedSamples) {
+        JiraIssue receiptIssue = new JiraIssue(session.getReceiptTicket(), jiraService);
+        transitionReceiptTicket(receiptIssue, session, accessionedSamples);
     }
 
     /**
@@ -493,9 +505,7 @@ public class ManifestSessionEjb {
         }
     }
 
-    public void updateReceiptInfo(Long manifestSessionId, String receiptKey) throws IOException {
-        ManifestSession session = manifestSessionDao.find(manifestSessionId);
-
+    public void updateReceiptInfo(ManifestSession session, String receiptKey) throws IOException {
         String oldReceiptKey = session.getReceiptTicket();
 
         session.setReceiptTicket(receiptKey);
@@ -503,6 +513,11 @@ public class ManifestSessionEjb {
 
         JiraIssue researchProjectIssue = new JiraIssue(sourceBusinessKey, jiraService);
         researchProjectIssue.updateIssueLink(receiptKey, oldReceiptKey);
+    }
+
+    public void updateReceiptInfo(Long manifestSessionId, String receiptKey) throws IOException {
+        ManifestSession session = manifestSessionDao.find(manifestSessionId);
+        updateReceiptInfo(session, receiptKey);
     }
 
 

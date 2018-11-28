@@ -11,7 +11,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,14 +30,15 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
 
     private FileBean platesFile;
 
+    private IndexedPlateFactory.TechnologiesAndParsers technologyAndParserType;
+
     @DefaultHandler
     @HandlesEvent(UPLOAD_ACTION)
     public Resolution upload() {
         if (platesFile != null) {
             try {
-                // todo jmt support other index types.
                 Map<String, StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseAndPersist(
-                        IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE,
+                        technologyAndParserType,
                         platesFile.getInputStream());
                 addMessage("Uploaded " + mapBarcodeToPlate.size() + " plates");
             } catch (Exception e) {
@@ -48,5 +50,25 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
 
     public void setPlatesFile(FileBean platesFile) {
         this.platesFile = platesFile;
+    }
+
+    public void setTechnologyAndParserType(
+            IndexedPlateFactory.TechnologiesAndParsers technologyAndParserType) {
+        this.technologyAndParserType = technologyAndParserType;
+    }
+
+    public IndexedPlateFactory.TechnologiesAndParsers[] getTechnologiesAndParsers() {
+        return IndexedPlateFactory.TechnologiesAndParsers.values();
+    }
+
+    public List<IndexedPlateFactory.TechnologiesAndParsers> getActiveTechnologiesAndParsers() {
+        List<IndexedPlateFactory.TechnologiesAndParsers> activeParsers = new ArrayList<>();
+        IndexedPlateFactory.TechnologiesAndParsers[] values = IndexedPlateFactory.TechnologiesAndParsers.values();
+        for (IndexedPlateFactory.TechnologiesAndParsers technologiesAndParser: values) {
+            if (technologiesAndParser.isActive()) {
+                activeParsers.add(technologiesAndParser);
+            }
+        }
+        return activeParsers;
     }
 }

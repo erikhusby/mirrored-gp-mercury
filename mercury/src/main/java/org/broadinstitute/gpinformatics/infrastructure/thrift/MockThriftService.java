@@ -2,12 +2,14 @@ package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 @Alternative
+@Dependent
 public class MockThriftService implements ThriftService {
 
     public MockThriftService() {
@@ -24,6 +26,24 @@ public class MockThriftService implements ThriftService {
         }
 
         if (runName.equals(run.getRunName())) {
+            return run;
+        }
+        else {
+            return null;
+        }
+    }
+
+    @Override
+    public TZamboniRun fetchRunByBarcode(String runBarcode) {
+        TZamboniRun run = null;
+
+        try {
+            run = ThriftFileAccessor.deserializeRun();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to deserialize run from local file", e);
+        }
+
+        if (runBarcode.equals(run.getRunBarcode())) {
             return run;
         }
         else {

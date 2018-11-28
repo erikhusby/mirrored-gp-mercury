@@ -4,23 +4,31 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hibernate.Criteria;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,6 +36,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ConfigurableListFactory {
 
     @Inject
@@ -41,6 +50,21 @@ public class ConfigurableListFactory {
 
     @Inject
     private ThreadEntityManager threadEntityManager;
+
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private JiraConfig jiraConfig;
+
+    @Inject
+    private PriceListCache priceListCache;
+
+    @Inject
+    private QuoteLink quoteLink;
+
+    @Inject
+    private ConstrainedValueDao constrainedValueDao;
 
     /**
      * Create a ConfigurableList instance.
@@ -60,7 +84,12 @@ public class ConfigurableListFactory {
             @Nullable ConfigurableSearchDefinition configurableSearchDefinition) {
 
         List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, columnEntity);
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", columnEntity);
+        ConfigurableList configurableList;
+        if( evalContext.getSearchInstance() == null ) {
+            configurableList = new ConfigurableList(columnTabulations, Collections.EMPTY_MAP,0, "ASC", columnEntity);
+        } else {
+            configurableList = new ConfigurableList(columnTabulations, evalContext.getSearchInstance().getViewColumnParamMap(),0, "ASC", columnEntity);
+        }
         if (configurableSearchDefinition != null) {
             configurableList.addAddRowsListeners(configurableSearchDefinition);
         }
@@ -338,13 +367,14 @@ public class ConfigurableListFactory {
         List<?> entityList = PaginationUtil.getPage(configurableSearchDao.getEntityManager(), pagination, 0);
 
         // Format the results into columns
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations,
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, searchInstance.getViewColumnParamMap(),
                 pagination.getNumberPages() == 1 ? sortColumnIndex : null, sortDirection,
                 ColumnEntity.getByName(entityName));
 
         // Add any row listeners
         configurableList.addAddRowsListeners(configurableSearchDef);
 
+        searchInstance.getEvalContext().setPagination(pagination);
         configurableList.addRows( entityList, searchInstance.getEvalContext() );
 
         ConfigurableList.ResultList resultList = configurableList.getResultList();
@@ -405,7 +435,7 @@ public class ConfigurableListFactory {
         for (SearchInstance.SearchValue displaySearchValue : displaySearchValues) {
             columnTabulations.add(displaySearchValue);
         }
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, null,
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, searchInstance.getViewColumnParamMap(), null,
                 ColumnEntity.getByName(entityName));
 
         // Add any row listeners
@@ -426,7 +456,7 @@ public class ConfigurableListFactory {
             columnTabulations = buildColumnSetTabulations(downloadColumnSetName,
                     ColumnEntity.getByName(entityName));
         }
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, searchInstance.getViewColumnParamMap(), 0, "ASC",
                 ColumnEntity.getByName(entityName));
 
         // Add any row listeners
@@ -434,6 +464,8 @@ public class ConfigurableListFactory {
 
         // Get each page and add it to the configurable list
         SearchContext context = buildSearchContext(searchInstance, entityName);
+        context.setPagination(pagination);
+        context.setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.TEXT);
         for (int i = 0; i < pagination.getNumberPages(); i++) {
             List<?> resultsPage = PaginationUtil.getPage(threadEntityManager.getEntityManager(), pagination, i);
             configurableList.addRows(resultsPage, context);
@@ -451,6 +483,11 @@ public class ConfigurableListFactory {
         evalContext.setBspUserList( bspUserList );
         evalContext.setSearchInstance(searchInstance);
         evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
+        evalContext.setUserBean(userBean);
+        evalContext.setJiraConfig(jiraConfig);
+        evalContext.setPriceListCache(priceListCache);
+        evalContext.setQuoteLink(quoteLink);
+        evalContext.setOptionValueDao(constrainedValueDao);
         return evalContext;
     }
 }

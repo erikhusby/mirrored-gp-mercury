@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftConfig;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.yaml.snakeyaml.Yaml;
 
@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.Map;
+import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class MercuryConfigurationTest {
@@ -73,5 +74,12 @@ public class MercuryConfigurationTest {
         BSPConfig testBSPConfig = (BSPConfig) configuration.getConfig(BSPConfig.class, Deployment.TEST);
 
         Assert.assertEquals(testBSPConfig.getHost(), "bsp.broadinstitute.org");
+
+        // test Sets
+        AppConfig appConfig = (AppConfig) configuration.getConfig(AppConfig.class, Deployment.TEST);
+        Set<String> gpBillingManagers = appConfig.getGpBillingManagers();
+        Assert.assertFalse(gpBillingManagers.isEmpty());
+        Assert.assertEquals(gpBillingManagers.size(), 2);
+
     }
 }

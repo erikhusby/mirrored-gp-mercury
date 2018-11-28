@@ -28,7 +28,7 @@
         </c:if>
         <%-- Checkbox to determine whether term appears in search results--%>
         <c:choose>
-            <c:when test="${not actionBean.minimal and not empty searchValue.searchTerm.displayValueExpression}">
+            <c:when test="${not actionBean.minimal and (not empty searchValue.searchTerm.displayValueExpression or not empty searchValue.searchTerm.displayExpression)}">
                 <input type="checkbox" class="displayTerm"
                        name="tbd"  ${searchValue.includeInResults ? 'checked="true"' : ''}/>
             </c:when>

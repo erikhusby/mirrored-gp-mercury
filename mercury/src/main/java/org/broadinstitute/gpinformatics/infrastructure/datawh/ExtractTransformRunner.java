@@ -16,6 +16,8 @@ import javax.ejb.Timeout;
 import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import java.util.Date;
 
@@ -28,6 +30,7 @@ import static javax.ejb.ConcurrencyManagementType.BEAN;
 @Startup
 @Singleton
 @ConcurrencyManagement(BEAN)
+@TransactionManagement(TransactionManagementType.BEAN)
 public class ExtractTransformRunner {
     private static final Log log = LogFactory.getLog(ExtractTransform.class);
 

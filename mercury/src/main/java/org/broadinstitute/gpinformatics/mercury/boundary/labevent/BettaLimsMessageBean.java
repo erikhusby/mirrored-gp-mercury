@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
+import java.util.Collections;
 
 /**
  * A Message Driven Bean to receive JMS messages from liquid handling decks.
@@ -70,8 +71,8 @@ public class BettaLimsMessageBean implements MessageListener {
                         String text = ((TextMessage) message).getText();
                         bettaLimsMessageResource.storeAndProcess(text);
                     } catch (Exception e) {
-                        emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                                "[Mercury] Failed to process JMS message", e.getMessage());
+                        emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
+                                "[Mercury] Failed to process JMS message", e.getMessage(), false, true);
                     }
                 } else {
                     // todo jmt email LIMS oddities

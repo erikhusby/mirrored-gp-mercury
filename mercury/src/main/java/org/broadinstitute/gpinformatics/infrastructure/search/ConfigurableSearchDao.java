@@ -4,8 +4,10 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
+import org.hibernate.criterion.Conjunction;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Disjunction;
@@ -18,6 +20,8 @@ import org.hibernate.ejb.HibernateEntityManager;
 import org.hibernate.sql.JoinFragment;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import java.util.Calendar;
 import java.util.Collection;
@@ -41,6 +45,7 @@ import java.util.Set;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ConfigurableSearchDao extends GenericDao {
     /**
      * The maximum allowed length for all {@code IN} queries in a single SQL statement.
@@ -236,14 +241,14 @@ public class ConfigurableSearchDao extends GenericDao {
                         // Create the base search criterion using operator and value(s)
                         // Note:  Regardless of depth of any nested criteria paths,
                         //    the criterion property name is attached to the root criteria path
-                        Criterion criterion = buildCriterion(searchValue);
+                        Criterion criterion = buildCriterion(searchValue, criteriaPath);
 
                         createCriteria( configurableSearchDefinition,
                                 mapPathToCriteria, criteriaPath,
                                 detachedCriteria, criterion );
 
                     } else {
-                        Criterion criterion = buildCriterion(searchValue);
+                        Criterion criterion = buildCriterion(searchValue, criteriaPath);
                         if (criterion != null) {
                             resultCriteria.add(criterion);
                         }
@@ -278,6 +283,7 @@ public class ConfigurableSearchDao extends GenericDao {
         } else {
             pagination.setResultEntity(configurableSearchDef.getResultEntity());
         }
+        searchInstance.getEvalContext().setPagination(pagination);
 
         // Determine if we need to expand the core entity list via a user selectable traversal option
         Map<String,Boolean> traversalEvaluatorValues = searchInstance.getTraversalEvaluatorValues();
@@ -297,7 +303,7 @@ public class ConfigurableSearchDao extends GenericDao {
             PaginationUtil.startPagination(criteria, pagination, true);
 
             TraversalEvaluator evaluator = null;
-            Set<Object> idList = null;
+            Set<Object> traversalEntities = null;
 
             Map<String,TraversalEvaluator> traversalEvaluators;
             if( isAlternateSearchDefinition ) {
@@ -305,28 +311,55 @@ public class ConfigurableSearchDao extends GenericDao {
 
                 // Alternate traversal evaluator configured
                 evaluator = traversalEvaluators.get(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID);
-                idList = evaluator.evaluate(pagination.getIdList(), searchInstance);
+                traversalEntities = evaluator.evaluate(pagination.getIdList(), searchInstance);
                 // Reconfigure pagination with correct base entity type
                 pagination.setResultEntity(configurableSearchDef.getResultEntity());
             } else {
+                boolean isCustomTraversal = false;
                 traversalEvaluators = configurableSearchDef.getTraversalEvaluators();
                 for (Map.Entry<String, TraversalEvaluator> configuredEvaluatorEntry
                         : traversalEvaluators.entrySet()) {
                     // Traverse the options which are checked
-                    Boolean doTraverse = traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey());
-                    if (doTraverse) {
+                    if (traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey())) {
                         evaluator = configuredEvaluatorEntry.getValue();
-                        if (idList == null) {
-                            idList = evaluator.evaluate(pagination.getIdList(), searchInstance);
+
+                        // Did user select a custom evaluator?
+                        isCustomTraversal = configurableSearchDef.getCustomTraversalOptions() != null &&
+                                configurableSearchDef.getCustomTraversalOptions().containsKey(
+                                        searchInstance.getCustomTraversalOptionName() );
+
+                        if( isCustomTraversal ) {
+                            // Do the traversal via the custom evaluator
+                            TransferTraverserCriteria.TraversalDirection traversalDirection = evaluator.getTraversalDirection();
+                            CustomTraversalEvaluator customEvaluator = configurableSearchDef.getCustomTraversalOptions().get(searchInstance.getCustomTraversalOptionName());
+                            if (traversalEntities == null) {
+                                traversalEntities = customEvaluator.evaluate(pagination.getIdList(), traversalDirection, searchInstance);
+                            } else {
+                                traversalEntities.addAll(customEvaluator.evaluate(pagination.getIdList(), traversalDirection, searchInstance));
+                            }
                         } else {
-                            idList.addAll(evaluator.evaluate(pagination.getIdList(), searchInstance));
+                            // Do the traversal via the standard (ancestor/descendant) evaluator
+                            if (traversalEntities == null) {
+                                traversalEntities = evaluator.evaluate(pagination.getIdList(), searchInstance);
+                            } else {
+                                traversalEntities.addAll(evaluator.evaluate(pagination.getIdList(), searchInstance));
+                            }
                         }
+                    }
+                }
+
+                // Add initial vessels to custom traversal results if selected
+                // The custom traverser logic is responsible for adding initial vessels as required if exclude is checked
+                if( isCustomTraversal ) {
+                    if (!searchInstance.getExcludeInitialEntitiesFromResults()) {
+                        // Put all the initial entities back into the result Set
+                        traversalEntities.addAll(pagination.getIdList());
                     }
                 }
             }
 
             // Replace the full entities in the pagination with ids using last evaluator
-            List<Object> rootIdList = evaluator.buildEntityIdList(idList);
+            List<Object> rootIdList = evaluator.buildEntityIdList(traversalEntities);
             pagination.setIdList(rootIdList);
 
         }
@@ -337,9 +370,10 @@ public class ConfigurableSearchDao extends GenericDao {
      * Create a Hibernate restriction, based on the operator
      *
      * @param searchValue contains operator chosen by user
+     * @param criteriaPath The criteria path used for this criterion (to obtain any optional hardcoded filters)
      * @return Hibernate restriction
      */
-    private Criterion buildCriterion(SearchInstance.SearchValue searchValue) {
+    private Criterion buildCriterion(SearchInstance.SearchValue searchValue, SearchTerm.CriteriaPath criteriaPath) {
         Criterion criterion;
         // Add the criterion for the search value
         List<Object> propertyValues = searchValue.convertSearchValue();
@@ -397,7 +431,64 @@ public class ConfigurableSearchDao extends GenericDao {
         } else {
             throw new RuntimeException("Unknown operator " + searchValue.getOperator());
         }
-        return criterion;
+
+        if( criteriaPath.getImmutableTermFilters() != null && criteriaPath.getImmutableTermFilters().size() > 0 ) {
+            return addFiltersToCriterion(criterion, criteriaPath);
+        } else {
+            return criterion;
+        }
+    }
+
+    /**
+     * Adds additional hardcoded filters to a search term criterion
+     * @param criterion The criterion created with the user entered operator and value(s)
+     * @param criteriaPath The criteria path which has a filter attached
+     * @return A junction containing the user criterion an all filters
+     */
+    private Criterion addFiltersToCriterion(Criterion criterion, SearchTerm.CriteriaPath criteriaPath){
+        Conjunction junction = new Conjunction();
+        junction.add(criterion);
+        for (SearchTerm.ImmutableTermFilter immutableTermFilter : criteriaPath.getImmutableTermFilters()) {
+            switch( immutableTermFilter.getOperator() ){
+                case EQUALS:
+                    junction.add(Restrictions.eq(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case GREATER_THAN:
+                    junction.add(Restrictions.gt(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case GREATER_THAN_EQUAL:
+                    junction.add(Restrictions.ge(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case LESS_THAN:
+                    junction.add(Restrictions.lt(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case LESS_THAN_EQUAL:
+                    junction.add(Restrictions.le(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case BETWEEN:
+                    junction.add(Restrictions.between(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0], immutableTermFilter.getValues()[1]));
+                    break;
+                case IN:
+                    junction.add(Restrictions.in(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()));
+                    break;
+                case LIKE:
+                    junction.add(Restrictions.ilike(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case NOT_EQUALS:
+                    junction.add(Restrictions.ne(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case NOT_IN:
+                    junction.add(Restrictions.not(Restrictions.in(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues())));
+                    break;
+                case NOT_NULL:
+                    junction.add(Restrictions.isNotNull(immutableTermFilter.getPropertyName()));
+                    break;
+                default:
+                    throw new RuntimeException("Unknown criteria operator");
+            }
+
+        }
+        return junction;
     }
 
     /**

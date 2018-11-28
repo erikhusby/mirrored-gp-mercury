@@ -11,8 +11,9 @@ import org.testng.annotations.Test;
 
 import java.util.Collections;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -97,6 +98,21 @@ public class MercurySampleDataTest {
         SampleData hasWgaDummy = new MercurySampleData(SAMPLE_ID, Collections.<Metadata>emptySet());
         ProductOrderSample productOrderSample = new ProductOrderSample(SAMPLE_ID, hasWgaDummy);
         Assert.assertEquals(productOrderSample.getSampleData().getMaterialType(), "");
+    }
+
+    public void testSetSampleDataInMercurySampleAndProductOrderSampleSampleDataShouldBeInitialized() {
+        SampleData dummyData = new MercurySampleData(SAMPLE_ID, Collections.<Metadata>emptySet());
+        ProductOrderSample productOrderSample = new ProductOrderSample(SAMPLE_ID, dummyData);
+        assertThat(productOrderSample.isHasBspSampleDataBeenInitialized(), is(true));
+    }
+
+    public void testSetSampleDataInProductOrderSampleAndMercurySampleSampleDataShouldBeInitialized() {
+        SampleData dummyData = new MercurySampleData(SAMPLE_ID, Collections.<Metadata>emptySet());
+        MercurySample mercurySample = new MercurySample(SAMPLE_ID, MercurySample.MetadataSource.BSP);
+        ProductOrderSample productOrderSample = new ProductOrderSample(SAMPLE_ID);
+        mercurySample.addProductOrderSample(productOrderSample);
+        productOrderSample.setSampleData(dummyData);
+        assertThat(mercurySample.isHasBspSampleDataBeenInitialized(), is(true));
     }
 
     public void testMercurySampleDataDoesNotInitializeQuantDataWhenNotQueried() {

@@ -12,11 +12,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
@@ -28,10 +30,12 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,6 +49,8 @@ import static org.hamcrest.Matchers.nullValue;
  */
 @Test(groups = TestGroups.FIXUP)
 public class SampleMetadataFixupTest extends Arquillian {
+    private static final Pattern TAB_PATTERN = Pattern.compile("\\t");
+
     @Inject
     private MercurySampleDao mercurySampleDao;
 
@@ -154,6 +160,126 @@ public class SampleMetadataFixupTest extends Arquillian {
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74PCO", Metadata.Key.BUICK_COLLECTION_DATE, "41290", "01/16/2013"));
 
         String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3913";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
+     * Excel auto-incremented NA12878 when user was creating manifest.
+     */
+    @Test(enabled = false)
+    public void testGPLIM_4354_NA12878_Excel() throws Exception {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZO", Metadata.Key.PATIENT_ID, "NA12879", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K11", Metadata.Key.PATIENT_ID, "NA12880", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1D", Metadata.Key.PATIENT_ID, "NA12881", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1P", Metadata.Key.PATIENT_ID, "NA12882", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K22", Metadata.Key.PATIENT_ID, "NA12883", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K2E", Metadata.Key.PATIENT_ID, "NA12884", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JYY", Metadata.Key.PATIENT_ID, "NA12885", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZB", Metadata.Key.PATIENT_ID, "NA12886", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZN", Metadata.Key.PATIENT_ID, "NA12887", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZZ", Metadata.Key.PATIENT_ID, "NA12888", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1C", Metadata.Key.PATIENT_ID, "NA12889", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1O", Metadata.Key.PATIENT_ID, "NA12890", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K21", Metadata.Key.PATIENT_ID, "NA12891", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K2D", Metadata.Key.PATIENT_ID, "NA12892", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JYX", Metadata.Key.PATIENT_ID, "NA12893", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZA", Metadata.Key.PATIENT_ID, "NA12894", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZM", Metadata.Key.PATIENT_ID, "NA12895", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZY", Metadata.Key.PATIENT_ID, "NA12896", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1B", Metadata.Key.PATIENT_ID, "NA12897", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1N", Metadata.Key.PATIENT_ID, "NA12898", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1Z", Metadata.Key.PATIENT_ID, "NA12899", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K2C", Metadata.Key.PATIENT_ID, "NA12900", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JYW", Metadata.Key.PATIENT_ID, "NA12901", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZ9", Metadata.Key.PATIENT_ID, "NA12902", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZL", Metadata.Key.PATIENT_ID, "NA12903", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZX", Metadata.Key.PATIENT_ID, "NA12904", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1A", Metadata.Key.PATIENT_ID, "NA12905", "NA12878"));
+
+        String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4354";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
+     * Physician requested repatienting of samples uploaded through CRSP Portal.
+     */
+    @Test(enabled = false)
+    public void testCRSP_443_Repatient() throws Exception {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I2", Metadata.Key.PATIENT_ID, "CP-3682", "CP-3681"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I4", Metadata.Key.PATIENT_ID, "CP-3680", "CP-3679"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I6", Metadata.Key.PATIENT_ID, "CP-3679", "CP-3680"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I7", Metadata.Key.PATIENT_ID, "CP-3681", "CP-3683"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I8", Metadata.Key.PATIENT_ID, "CP-3681", "CP-3682"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I9", Metadata.Key.PATIENT_ID, "CP-3683", "CP-3681"));
+
+        String fixupComment = "see https://gpinfojira.broadinstitute.org:8443/jira/browse/CRSP-443";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
+     * Samples were mixed up before receipt at The Broad.
+     */
+    @Test(enabled = false)
+    public void testCrsp475Mixup() throws Exception {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-CEMYY", Metadata.Key.PATIENT_ID, "CP-7596", "CP-7595"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-CEMYZ", Metadata.Key.PATIENT_ID, "CP-7595", "CP-7596"));
+
+        String fixupComment = "see https://gpinfojira.broadinstitute.org:8443/jira/browse/CRSP-475";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
+     * "Tumor" was silently replaced with empty string, so add "Primary".
+     */
+    @Test(enabled = false)
+    public void testSupport3129Fixup() throws Exception {
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(Arrays.asList(
+                "SM-B3LYZ",
+                "SM-B3LZO",
+                "SM-CEMGG",
+                "SM-CEMH5",
+                "SM-CEMHH",
+                "SM-CEMI5",
+                "SM-CEMI6"));
+        Map<MercurySample, MetaDataFixupItem> fixupItems = new HashMap<>();
+        for (MercurySample mercurySample : mercurySamples) {
+            MetaDataFixupItem fixupItem = new MetaDataFixupItem(mercurySample.getSampleKey(), Metadata.Key.TUMOR_NORMAL,
+                    "", "Primary");
+            fixupItems.put(mercurySample, fixupItem);
+        }
+        String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-3129";
+        addMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateSampleMetadata.txt, so
+     * it can be used for other similar fixups, without writing a new test.
+     * Line 1 is the fixup commentary.
+     * Line 2 and subsequent are SampleId\tMetadata.Key\tOld value\tNew value.
+     * Note: currently, each sample can appear only once in the file; if there are multiple lines for the same sample,
+     * all but the last are ignored.
+     * Example contents of the file are:
+     * CRSP-538
+     * SM-CEM8Z	TUMOR_NORMAL	NA	Normal
+     * SM-CEM9C	TUMOR_NORMAL	NA	Normal
+     */
+    @Test(enabled = false)
+    public void testCrsp538Fixup() throws Exception {
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateSampleMetadata.txt"));
+        String fixupComment = lines.get(0);
+
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = TAB_PATTERN.split(line);
+            if (fields.length != 4) {
+                throw new RuntimeException("Expected four tab separated fields in " + line);
+            }
+            fixupItems.putAll(MetaDataFixupItem.mapOf(fields[0], Metadata.Key.valueOf(fields[1]), fields[2], fields[3]));
+        }
+
         updateMetadataAndValidate(fixupItems, fixupComment);
     }
 
@@ -279,8 +405,12 @@ class MetaDataFixupItem {
         }
 
         Metadata metadataRecord = findMetadataRecord(mercurySample);
-
-        if (metadataRecord != null && metadataRecord.getValue() != null) {
+        if (metadataRecord == null) {
+            metadataRecord = new Metadata(metadataKey, newValue);
+            mercurySample.getMetadata().add(metadataRecord);
+            log.info(String.format("Successfully created metadata for sample '%s': '[%s, %s]", sampleKey,
+                    metadataRecord.getKey(), metadataRecord.getValue()));
+        } else if (metadataRecord.getValue() != null) {
             metadataRecord.setStringValue(newValue);
             log.info(String.format("Successfully updated metadata for sample '%s': '[%s, %s]", sampleKey,
                     metadataRecord.getKey(), metadataRecord.getValue()));

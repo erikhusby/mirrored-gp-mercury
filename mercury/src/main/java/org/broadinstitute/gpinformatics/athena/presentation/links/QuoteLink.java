@@ -2,11 +2,13 @@ package org.broadinstitute.gpinformatics.athena.presentation.links;
 
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
  * This class is used to generate Quote server links for the UI.
  */
+@Dependent
 public class QuoteLink {
     private static final String QUOTE_DETAILS = "/quotes/quote/Quote.action?viewQuote=&quote.identifier=";
 

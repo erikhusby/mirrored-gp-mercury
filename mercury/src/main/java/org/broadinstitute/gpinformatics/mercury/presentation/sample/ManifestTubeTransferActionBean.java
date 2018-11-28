@@ -146,7 +146,9 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
             resolution =
                     new RedirectResolution(getClass(), VIEW_ACTION).addParameter("activeSessionId", activeSessionId);
         } catch (Exception e) {
-            addGlobalValidationError(e.getMessage());
+            addGlobalValidationError(String.format(
+                    "Could not record a transfer of sample %s to vessel %s with sample %s",
+                    sourceTube, targetVessel, targetSample), e);
             logger.error(String.format(
                     "Could not record a transfer of sample %s to vessel %s with sample %s",
                     sourceTube, targetVessel, targetSample), e);

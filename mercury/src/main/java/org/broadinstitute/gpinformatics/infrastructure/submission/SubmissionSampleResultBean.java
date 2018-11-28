@@ -14,17 +14,24 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
-@XmlRootElement
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionSampleResultBean implements Serializable {
     private static final long serialVersionUID = 2014081301L;
+    @JsonProperty
     private String accession;
+    @JsonProperty
     private List<String> submittedSampleIds;
 
     public SubmissionSampleResultBean() {
@@ -39,7 +46,6 @@ public class SubmissionSampleResultBean implements Serializable {
         return accession;
     }
 
-    @XmlElement
     public void setAccession(String accession) {
         this.accession = accession;
     }
@@ -48,7 +54,6 @@ public class SubmissionSampleResultBean implements Serializable {
         return submittedSampleIds;
     }
 
-    @XmlElement
     public void setSubmittedSampleIds(List<String> submittedSampleIds) {
         this.submittedSampleIds = submittedSampleIds;
     }

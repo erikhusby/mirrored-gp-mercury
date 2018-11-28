@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -19,6 +22,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -46,6 +50,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -65,6 +70,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             + "Coriell cell line have already received a blanket determination (ORSP-995).<br/><br/> If your order "
             + "does not involve human-derived samples, then neither ORSP nor IRB review is required. However your "
             + "order must identify the specific type of samples involved (e.g mouse cells, artificial DNA).";
+
+    public boolean isResearchOnly() {
+        return getRegulatoryDesignation() == RegulatoryDesignation.RESEARCH_ONLY;
+    }
 
     public enum RegulatoryDesignation {
         // changing enum names requires integration testing with the pipeline,
@@ -193,7 +202,8 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     @ManyToMany(cascade = {CascadeType.PERSIST})
     @JoinTable(schema = "athena", name = "RP_REGULATORY_INFOS",
-            joinColumns = {@JoinColumn(name="RESEARCH_PROJECT")})
+            joinColumns = {@JoinColumn(name="RESEARCH_PROJECT")},
+            inverseJoinColumns = {@JoinColumn(name="REGULATORY_INFOS")})
     private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
@@ -209,6 +219,9 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             orphanRemoval = true)
     private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
 
+    @Column(name = "REPOSITORY_NAME")
+    private String submissionRepositoryName;
+
     /**
      * The Buick ManifestSessions linked to this ResearchProject.
      */
@@ -216,17 +229,16 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     private Set<ManifestSession> manifestSessions = new HashSet<>();
 
     // todo: we can cache the submissiontrackers in a static map
-    public SubmissionTracker getSubmissionTracker(SubmissionTuple tuple){
+    public SubmissionTracker getSubmissionTracker(SubmissionTuple submissionTuple) {
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
-            if (submissionTracker.getTuple().equals(tuple)) {
-                if (!foundSubmissionTrackers.add(submissionTracker)) {
+            if (submissionTracker.getSubmissionTuple().equals(submissionTuple)) {
+                if (!foundSubmissionTrackers.add(submissionTracker)){
                     throw new RuntimeException("More then one result found");
                 }
             }
         }
-
-        if (foundSubmissionTrackers.size() == 0) {
+        if (foundSubmissionTrackers.isEmpty()) {
             return null;
         }
         return foundSubmissionTrackers.iterator().next();
@@ -282,6 +294,15 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Override
     public String getBusinessKey() {
         return jiraTicketKey;
+    }
+
+    /**
+     * If the title is being used to populate javascript code, a special character in the title could corrupt
+     * the script, resulting in page rendering errors.
+     * @return websafe title which won't corrupt javascript.
+     */
+    public String getWebSafeTitle() {
+        return StringEscapeUtils.escapeEcmaScript(title);
     }
 
     public String getTitle() {
@@ -373,8 +394,26 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         this.accessControlEnabled = accessControlEnabled;
     }
 
+    public String getSubmissionRepositoryName() {
+        return submissionRepositoryName;
+    }
+
+    public void setSubmissionRepositoryName(String submissionSiteName) {
+        this.submissionRepositoryName = submissionSiteName;
+    }
+
     public Collection<RegulatoryInfo> getRegulatoryInfos() {
         return regulatoryInfos;
+    }
+
+    public Map<String, RegulatoryInfo> getRegulatoryByIdentifier() {
+        Collection<RegulatoryInfo> regulatoryInfos = getRegulatoryInfos();
+        return Maps.uniqueIndex(regulatoryInfos, new Function<RegulatoryInfo, String>() {
+            @Override
+            public String apply(@Nullable RegulatoryInfo input) {
+                return input.getIdentifier();
+            }
+        });
     }
 
     public List<String> getRegulatoryInfoStrings() {
@@ -553,6 +592,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return foundPersonList;
     }
 
+    /**
+     * Find all people in project with given RoleType.
+     * <p/>
+     * <b>Note</b> that it is possible for a ProjectPerson to have one role in the project but have a different role in
+     * their UserBean. A case where this could happen is when a user is a PM in a project and their Role is revoked
+     * for some reason. Because of this it is important  to check the project role and the individual's role when
+     * determining access.
+     */
     public Long[] getPeople(RoleType role) {
         List<Long> people = new ArrayList<>();
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -124,7 +125,6 @@ public class ProductOrderData {
         }
 
         numberOfSamples = productOrder.getSampleCount();
-        genoChipType = productOrder.getGenoChipType();
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
@@ -287,7 +287,8 @@ public class ProductOrderData {
      */
     public ProductOrder toProductOrder(ProductOrderDao productOrderDao, ResearchProjectDao researchProjectDao,
                                        ProductDao productDao)
-            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException {
+            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
+            InvalidProductException {
 
         // Make sure the title/name is supplied and unique
         if (StringUtils.isBlank(title)) {
@@ -304,6 +305,11 @@ public class ProductOrderData {
         // Find the product by the product name.
         if (!StringUtils.isBlank(productName)) {
             productOrder.setProduct(productDao.findByName(productName));
+        }
+        if(productOrder.getProduct().isClinicalProduct() || productOrder.getProduct().isExternalOnlyProduct()) {
+            productOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+        } else {
+            productOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
         }
 
         if (!StringUtils.isBlank(researchProjectId)) {

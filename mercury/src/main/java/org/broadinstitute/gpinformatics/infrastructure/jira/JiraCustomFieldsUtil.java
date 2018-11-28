@@ -48,8 +48,13 @@ public class JiraCustomFieldsUtil {
                     LabBatch.TicketFields.DESCRIPTION.getName(),
                     LabBatch.TicketFields.SUMMARY.getName(),
                     LabBatch.TicketFields.SEQUENCING_STATION.getName(),
+                    LabBatch.TicketFields.CLUSTER_STATION.getName(),
                     LabBatch.TicketFields.BATCH_TYPE.getName(),
+                    LabBatch.TicketFields.MATERIAL_TYPE.getName(),
                     LabBatch.TicketFields.LANE_INFO.getName(),
+                    LabBatch.TicketFields.SAMPLES_ON_RISK.getName(),
+                    LabBatch.TicketFields.RISK_CATEGORIZED_SAMPLES.getName(),
+                    LabBatch.TicketFields.REWORK_SAMPLES.getName()
             };
 
     /**

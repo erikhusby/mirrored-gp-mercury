@@ -34,6 +34,7 @@ public class IceEntityBuilder {
     private final List<List<String>> listPondRegTubeBarcodes = new ArrayList<>();
     private final String testPrefix;
     private final IceJaxbBuilder.PlexType plexType;
+    private final IceJaxbBuilder.PrepType prepType;
 
     private TubeFormation catchEnrichRack;
     private List<String> catchEnrichBarcodes;
@@ -41,7 +42,8 @@ public class IceEntityBuilder {
 
     public IceEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-            List<TubeFormation> pondRegRacks, String testPrefix, IceJaxbBuilder.PlexType plexType) {
+            List<TubeFormation> pondRegRacks, String testPrefix, IceJaxbBuilder.PlexType plexType,
+            IceJaxbBuilder.PrepType prepType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -56,16 +58,18 @@ public class IceEntityBuilder {
         }
         this.testPrefix = testPrefix;
         this.plexType = plexType;
+        this.prepType = prepType;
     }
 
     public IceEntityBuilder invoke() {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcodes,
                 listPondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2",
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY, plexType,
+                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, plexType,
                 Arrays.asList(Triple.of("CT3", "0009763452", 1), Triple.of("Rapid Capture Kit bait", "0009773452", 2),
                         Triple.of("Rapid Capture Kit Resuspension Buffer", "0009783452", 3)),
                 Arrays.asList(Triple.of("Dual Index Primers Lot", "0009764452", 4),
-                        Triple.of("Rapid Capture Enrichment Amp Lot Barcode", "0009765452", 5))
+                        Triple.of("Rapid Capture Enrichment Amp Lot Barcode", "0009765452", 5)),
+                prepType
         ).invoke();
         catchEnrichBarcodes = iceJaxbBuilder.getCatchEnrichTubeBarcodes();
 
@@ -114,34 +118,72 @@ public class IceEntityBuilder {
         LabEvent icePoolTest = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIcePoolTest(), mapBarcodeToVessel);
         labEventHandler.processEvent(icePoolTest);
 
-        LabEventTest.validateWorkflow("Ice1stHybridization", spriRack);
-        mapBarcodeToVessel.clear();
-        mapBarcodeToVessel.put(spriRack.getLabel(), spriRack);
-        for (BarcodedTube barcodedTube : spriRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
+        StaticPlate firstHybPlate;
+        if (prepType == IceJaxbBuilder.PrepType.HYPER_PREP_ICE) {
+            // IceHyperPrep1stBaitPick (bait tubes to empty plate)
+            ReagentDesign baitDesign = new ReagentDesign("Ice Bait 1", ReagentDesign.ReagentType.BAIT);
+            BarcodedTube baitTube = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube1Barcode(), baitDesign);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(baitTube.getLabel(), baitTube);
+            LabEvent baitPickEvent = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce1stBaitPick(),
+                    mapBarcodeToVessel);
+            labEventHandler.processEvent(baitPickEvent);
+            StaticPlate baitPlate = (StaticPlate) baitPickEvent.getTargetLabVessels().iterator().next();
+
+            // IceHyperPrep1stBaitAddition (bait plate to empty hyb plate)
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(baitPlate.getLabel(), baitPlate);
+            LabEvent baitAdditionEvent = labEventFactory.buildFromBettaLims(
+                    iceJaxbBuilder.getIceHyperPrep1stBaitAddition(), mapBarcodeToVessel);
+            labEventHandler.processEvent(baitAdditionEvent);
+            firstHybPlate = (StaticPlate) baitAdditionEvent.getTargetLabVessels().iterator().next();
+
+            // IceHyperPrep1stHybridization (SPRI tubes merge into bait plate)
+            LabEventTest.validateWorkflow("IceHyperPrep1stHybridization", spriRack);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(spriRack.getLabel(), spriRack);
+            mapBarcodeToVessel.put(firstHybPlate.getLabel(), firstHybPlate);
+            for (BarcodedTube barcodedTube : spriRack.getContainerRole().getContainedVessels()) {
+                mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
+            }
+            LabEvent hybridizationEvent = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce1stHybridization(),
+                    mapBarcodeToVessel);
+            labEventHandler.processEvent(hybridizationEvent);
+            firstHybPlate.clearCaches();
+            Set<LabBatch> computedLcSets = hybridizationEvent.getComputedLcSets();
+            Assert.assertFalse(computedLcSets.isEmpty());
+
+        } else {
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(spriRack.getLabel(), spriRack);
+            for (BarcodedTube barcodedTube : spriRack.getContainerRole().getContainedVessels()) {
+                mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
+            }
+
+            LabEventTest.validateWorkflow("Ice1stHybridization", spriRack);
+            LabEvent ice1stHybridization = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce1stHybridization(),
+                    mapBarcodeToVessel);
+            labEventHandler.processEvent(ice1stHybridization);
+            firstHybPlate = (StaticPlate) ice1stHybridization.getTargetLabVessels().iterator().next();
+            Set<LabBatch> computedLcSets = ice1stHybridization.getComputedLcSets();
+            Assert.assertFalse(computedLcSets.isEmpty());
+
+            LabEventTest.validateWorkflow("Ice1stBaitAddition", firstHybPlate);
+            firstHybPlate.clearCaches();
+            ReagentDesign baitDesign1 = new ReagentDesign("Ice Bait 1", ReagentDesign.ReagentType.BAIT);
+            BarcodedTube baitTube1 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube1Barcode(), baitDesign1);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(baitTube1.getLabel(), baitTube1);
+            mapBarcodeToVessel.put(firstHybPlate.getLabel(), firstHybPlate);
+            LabEvent ice1stBaitAddition = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce1stBaitPick(),
+                    mapBarcodeToVessel);
+            labEventHandler.processEvent(ice1stBaitAddition);
+
+            LabEventTest.validateWorkflow("PostIce1stHybridizationThermoCyclerLoaded", firstHybPlate);
+            LabEvent postIce1stHybridizationThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    iceJaxbBuilder.getPostIce1stHybridizationThermoCyclerLoaded(), firstHybPlate);
+            labEventHandler.processEvent(postIce1stHybridizationThermoCyclerLoaded);
         }
-        LabEvent ice1stHybridization = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce1stHybridization(),
-                mapBarcodeToVessel);
-        labEventHandler.processEvent(ice1stHybridization);
-        StaticPlate firstHybPlate = (StaticPlate) ice1stHybridization.getTargetLabVessels().iterator().next();
-        Set<LabBatch> computedLcSets = ice1stHybridization.getComputedLcSets();
-        Assert.assertFalse(computedLcSets.isEmpty());
-
-        LabEventTest.validateWorkflow("Ice1stBaitAddition", firstHybPlate);
-        firstHybPlate.clearCaches();
-        ReagentDesign baitDesign1 = new ReagentDesign("Ice Bait 1", ReagentDesign.ReagentType.BAIT);
-        BarcodedTube baitTube1 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube1Barcode(), baitDesign1);
-        mapBarcodeToVessel.clear();
-        mapBarcodeToVessel.put(baitTube1.getLabel(), baitTube1);
-        mapBarcodeToVessel.put(firstHybPlate.getLabel(), firstHybPlate);
-        LabEvent ice1stBaitAddition = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce1stBaitPick(),
-                mapBarcodeToVessel);
-        labEventHandler.processEvent(ice1stBaitAddition);
-
-        LabEventTest.validateWorkflow("PostIce1stHybridizationThermoCyclerLoaded", firstHybPlate);
-        LabEvent postIce1stHybridizationThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                iceJaxbBuilder.getPostIce1stHybridizationThermoCyclerLoaded(), firstHybPlate);
-        labEventHandler.processEvent(postIce1stHybridizationThermoCyclerLoaded);
 
         LabEventTest.validateWorkflow("Ice1stCapture", firstHybPlate);
         mapBarcodeToVessel.clear();
@@ -156,26 +198,54 @@ public class IceEntityBuilder {
                 iceJaxbBuilder.getPostIce1stCaptureThermoCyclerLoaded(), firstCapturePlate);
         labEventHandler.processEvent(postIce1stCaptureThermoCyclerLoaded);
 
-        LabEventTest.validateWorkflow("Ice2ndHybridization", firstCapturePlate);
-        LabEvent ice2ndHybridization = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                iceJaxbBuilder.getIce2ndHybridization(), firstCapturePlate);
-        labEventHandler.processEvent(ice2ndHybridization);
+        if (prepType == IceJaxbBuilder.PrepType.HYPER_PREP_ICE) {
+            // IceHyperPrep2ndBaitPick (bait tubes to empty plate)
+            ReagentDesign baitDesign = new ReagentDesign("Ice Bait 2", ReagentDesign.ReagentType.BAIT);
+            BarcodedTube baitTube = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube2Barcode(), baitDesign);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(baitTube.getLabel(), baitTube);
+            LabEvent baitPickEvent = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce2ndBaitPick(),
+                    mapBarcodeToVessel);
+            labEventHandler.processEvent(baitPickEvent);
+            StaticPlate baitPlate = (StaticPlate) baitPickEvent.getTargetLabVessels().iterator().next();
 
-        LabEventTest.validateWorkflow("Ice2ndBaitAddition", firstCapturePlate);
-        firstCapturePlate.clearCaches();
-        ReagentDesign baitDesign2 = new ReagentDesign("Ice Bait 2", ReagentDesign.ReagentType.BAIT);
-        BarcodedTube baitTube2 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube2Barcode(), baitDesign2);
-        mapBarcodeToVessel.clear();
-        mapBarcodeToVessel.put(baitTube2.getLabel(), baitTube2);
-        mapBarcodeToVessel.put(firstCapturePlate.getLabel(), firstCapturePlate);
-        LabEvent ice2ndBaitAddition = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce2ndBaitPick(),
-                mapBarcodeToVessel);
-        labEventHandler.processEvent(ice2ndBaitAddition);
+            LabEventTest.validateWorkflow("Ice2ndHybridization", firstCapturePlate);
+            LabEvent ice2ndHybridization = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    iceJaxbBuilder.getIce2ndHybridization(), firstCapturePlate);
+            labEventHandler.processEvent(ice2ndHybridization);
 
-        LabEventTest.validateWorkflow("PostIce2ndHybridizationThermoCyclerLoaded", firstCapturePlate);
-        LabEvent postIce2ndHybridizationThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                iceJaxbBuilder.getPostIce2ndHybridizationThermoCyclerLoaded(), firstCapturePlate);
-        labEventHandler.processEvent(postIce2ndHybridizationThermoCyclerLoaded);
+            // IceHyperPrep2ndBaitAddition (bait plate merges into 2nd hyb plate)
+            LabEventTest.validateWorkflow("IceHyperPrep2ndBaitAddition", firstCapturePlate);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(baitPlate.getLabel(), baitPlate);
+            mapBarcodeToVessel.put(firstCapturePlate.getLabel(), firstCapturePlate);
+            LabEvent baitAdditionEvent = labEventFactory.buildFromBettaLims(
+                    iceJaxbBuilder.getIceHyperPrep2ndBaitAddition(), mapBarcodeToVessel);
+            labEventHandler.processEvent(baitAdditionEvent);
+            firstCapturePlate.clearCaches();
+
+        } else {
+            LabEventTest.validateWorkflow("Ice2ndHybridization", firstCapturePlate);
+            LabEvent ice2ndHybridization = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    iceJaxbBuilder.getIce2ndHybridization(), firstCapturePlate);
+            labEventHandler.processEvent(ice2ndHybridization);
+
+            LabEventTest.validateWorkflow("Ice2ndBaitAddition", firstCapturePlate);
+            firstCapturePlate.clearCaches();
+            ReagentDesign baitDesign2 = new ReagentDesign("Ice Bait 2", ReagentDesign.ReagentType.BAIT);
+            BarcodedTube baitTube2 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube2Barcode(), baitDesign2);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(baitTube2.getLabel(), baitTube2);
+            mapBarcodeToVessel.put(firstCapturePlate.getLabel(), firstCapturePlate);
+            LabEvent ice2ndBaitAddition = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce2ndBaitPick(),
+                    mapBarcodeToVessel);
+            labEventHandler.processEvent(ice2ndBaitAddition);
+
+            LabEventTest.validateWorkflow("PostIce2ndHybridizationThermoCyclerLoaded", firstCapturePlate);
+            LabEvent postIce2ndHybridizationThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    iceJaxbBuilder.getPostIce2ndHybridizationThermoCyclerLoaded(), firstCapturePlate);
+            labEventHandler.processEvent(postIce2ndHybridizationThermoCyclerLoaded);
+        }
 
         LabEventTest.validateWorkflow("Ice2ndCapture", firstCapturePlate);
         mapBarcodeToVessel.clear();

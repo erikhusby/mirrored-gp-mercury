@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +60,10 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     private String routingRule;
 
+    private String batchJiraIssueType;
+
+    private String batchJiraProjectType;
+
     /**
      * True if a validation LCSET is expected in the near future.   When a product is first rolled out,
      * routingRule be BOTH, and inValidation will be false. After a few weeks, inValidation will be
@@ -67,6 +72,19 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     private Boolean inValidation;
 
+    /**
+     * For ProductWorkflow level Jira Issue types
+     */
+    public String getProductWorkflowDefBatchJiraIssueType() {
+        return batchJiraIssueType;
+    }
+
+    /**
+     * For ProductWorkflow level Jira Project types
+     */
+    public String getProductWorkflowDefBatchJiraProjectType() {
+        return batchJiraProjectType;
+    }
 
     /**
      * For JAXB
@@ -79,28 +97,6 @@ public class ProductWorkflowDefVersion implements Serializable {
     public ProductWorkflowDefVersion(String version, Date effectiveDate) {
         this.version = version;
         this.effectiveDate = effectiveDate;
-    }
-
-    /**
-     * findBucketDef will utilize the WorkflowConfig to return an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef} based
-     * on a given workflow definition and and step labEventType
-     */
-    public static WorkflowBucketDef findBucketDef(@Nonnull Workflow workflow, @Nonnull LabEventType stepDef) {
-
-        WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
-        assert (workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
-                !workflowConfig.getProductWorkflowDefs().isEmpty());
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
-        ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
-
-        LabEventNode labEventNode =
-                versionResult.findStepByEventType(stepDef.getName());
-
-        WorkflowBucketDef bucketDef = null;
-        if (labEventNode != null) {
-            bucketDef = (WorkflowBucketDef) labEventNode.getStepDef();
-        }
-        return bucketDef;
     }
 
     public String getVersion() {
@@ -156,7 +152,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     public List<WorkflowBucketDef> getCreationBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
-            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getCreationBuckets());
+            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getBuckets());
         }
         return workflowBucketDefs;
     }
@@ -164,7 +160,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     public List<WorkflowBucketDef> getReworkBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
-            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getReworkBuckets());
+            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getBuckets());
         }
         return workflowBucketDefs;
     }
@@ -303,21 +299,28 @@ public class ProductWorkflowDefVersion implements Serializable {
         return mapNameToLabEvents.get(eventTypeName);
     }
 
+    public enum BucketingSource {
+        PDO_SUBMISSION,
+        LAB_BATCH_WS
+    }
+
     /**
      * Scans the workflow's processes for a matching bucket.
      *
      * @return a map of buckets to vessels.
      */
     public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(ProductOrder productOrder,
-                                                                          List<LabVessel> labVessels) {
+            List<LabVessel> labVessels, BucketingSource bucketingSource) {
 
         Multimap<WorkflowBucketDef, LabVessel> vesselBuckets = HashMultimap.create();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
-                for (LabVessel vessel : labVessels) {
-                    if (!vesselBuckets.containsValue(vessel)) {
-                        if (bucketDef.meetsBucketCriteria(vessel, productOrder)) {
-                            vesselBuckets.put(bucketDef, vessel);
+                if (bucketingSource != BucketingSource.PDO_SUBMISSION || bucketDef.isAutoBucketFromPdoSubmission()) {
+                    for (LabVessel vessel : labVessels) {
+                        if (!vesselBuckets.containsValue(vessel)) {
+                            if (bucketDef.meetsBucketCriteria(vessel, productOrder)) {
+                                vesselBuckets.put(bucketDef, vessel);
+                            }
                         }
                     }
                 }
@@ -483,14 +486,16 @@ public class ProductWorkflowDefVersion implements Serializable {
     /**
      * Determine whether the given next event is valid for the given lab vessel.
      *
-     * @param labVessel         vessel, typically with event history
-     * @param nextEventTypeName the event that the lab intends to do next
+     * @param labVessel         vessel, typically with event history.
+     * @param nextEventTypeNames ordered set of events the lab intends to do next.
      *
      * @return list of errors, empty if event is valid
      */
-    public List<ValidationError> validate(LabVessel labVessel, String nextEventTypeName) {
+    public List<ValidationError> validate(LabVessel labVessel, Set<String> nextEventTypeNames) {
         List<ValidationError> errors = new ArrayList<>();
 
+        Iterator<String> nextEventIterator = nextEventTypeNames.iterator();
+        String nextEventTypeName = nextEventIterator.next();
         Collection<LabEventNode> labEventNodes = findStepsByEventType(nextEventTypeName);
         if (labEventNodes.isEmpty()) {
             errors.add(new ValidationError("Failed to find " + nextEventTypeName + " in " +
@@ -501,6 +506,7 @@ public class ProductWorkflowDefVersion implements Serializable {
             boolean found = false;
             Set<String> validPredecessorEventNames = null;
             boolean start = false;
+            LabEventNode foundLabEvent = null;
             for (LabEventNode labEventNode : labEventNodes) {
                 validPredecessorEventNames = new HashSet<>();
                 start = recurseToNonOptional(validPredecessorEventNames, labEventNode);
@@ -509,27 +515,51 @@ public class ProductWorkflowDefVersion implements Serializable {
                         found, labVessel.getTransfersFrom(), labEventNode);
 
                 if (!found) {
-                    found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
+                    found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames,
+                            actualEventNames,
                             found, labVessel.getTransfersToWithReArrays(), labEventNode);
                 }
                 if (!found) {
-                    found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
+                    found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames,
+                            actualEventNames,
                             found, labVessel.getInPlaceEventsWithContainers(), labEventNode);
                 }
                 if (!found) {
                     // e.g. PicoBufferAddition after PicoTransfer
                     for (LabEvent labEvent : labVessel.getTransfersFrom()) {
                         for (LabVessel vessel : labEvent.getTargetLabVessels()) {
-                            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
+                            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames,
+                                    actualEventNames,
                                     found, vessel.getInPlaceLabEvents(), labEventNode);
                         }
                     }
                 }
+                if (found || start) {
+                    foundLabEvent = labEventNode;
+                }
             }
             if (!found && !start) {
                 errors.add(new ValidationError("", actualEventNames, validPredecessorEventNames));
+            } else {
+                // Walk up workflow successor list to check
+                List<LabEventNode> successors = foundLabEvent.getSuccessors();
+                while(nextEventIterator.hasNext()) {
+                    nextEventTypeName = nextEventIterator.next();
+                    found = false;
+                    for (LabEventNode labEventNode: successors) {
+                        if (labEventNode.labEventType.getName().equals(nextEventTypeName)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        errors.add(new ValidationError("", Collections.singleton(nextEventTypeName),
+                                Collections.singleton(foundLabEvent.getLabEventType().name())));
+                    }
+                }
             }
         }
+
         return errors;
     }
 

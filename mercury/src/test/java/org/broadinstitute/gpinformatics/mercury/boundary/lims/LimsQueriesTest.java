@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -40,8 +41,8 @@ import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.instanceOf;
@@ -73,7 +74,7 @@ public class LimsQueriesTest {
         doSectionTransfer(makeTubeFormation(new BarcodedTube("tube")), plate3);
         doSectionTransfer(new StaticPlate("plate1", Eppendorf96), plate3);
         doSectionTransfer(new StaticPlate("plate2", Eppendorf96), plate3);
-        limsQueries = new LimsQueries(staticPlateDao, labVesselDao, barcodedTubeDao);
+        limsQueries = new LimsQueries(staticPlateDao, labVesselDao, barcodedTubeDao, null);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -232,7 +233,7 @@ public class LimsQueriesTest {
                 LabMetric.LabUnit.UG_PER_ML, "D04", gregorianCalendar.getTime());
         tube.addMetric(quantMetric);
 
-        Double quantValue = limsQueries.fetchQuantForTube("tube1", "Pond Pico");
+        Double quantValue = limsQueries.fetchNearestQuantForTube("tube1", "Pond Pico");
         assertThat(quantValue, equalTo(55.55));
     }
 
@@ -247,7 +248,7 @@ public class LimsQueriesTest {
                         "D04", new Date());
         tube.addMetric(quantMetric);
 
-        Double quantValue = limsQueries.fetchQuantForTube("tube1", LabMetric.MetricType.ECO_QPCR.getDisplayName());
+        Double quantValue = limsQueries.fetchNearestQuantForTube("tube1", LabMetric.MetricType.ECO_QPCR.getDisplayName());
         assertThat(quantValue, equalTo(55.55));
     }
 
@@ -273,6 +274,7 @@ public class LimsQueriesTest {
         String barcode = "tube1";
         Map<String, LabVessel> mercuryTubes = new HashMap<>();
         BarcodedTube tube = new BarcodedTube(barcode);
+        tube.getMercurySamples().add(new MercurySample("SM-1234", MercurySample.MetadataSource.MERCURY));
         mercuryTubes.put(barcode, tube);
 
         //Should not find Final Library Size since its not a concentration
@@ -281,7 +283,8 @@ public class LimsQueriesTest {
                         "A01", new Date());
         tube.addMetric(finalLibrarySizeMetric);
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeTypeMap =
-                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes,
+                        Collections.<String, GetSampleDetails.SampleInfo>emptyMap(), true);
         assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
         ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
         assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
@@ -297,8 +300,8 @@ public class LimsQueriesTest {
         BigDecimal receptacleWeight = BigDecimal.valueOf(.002);
         tube.setReceptacleWeight(receptacleWeight);
 
-        concentrationAndVolumeTypeMap =
-                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
+        concentrationAndVolumeTypeMap = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes,
+                Collections.<String, GetSampleDetails.SampleInfo>emptyMap(), true);
         assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
         concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
         assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
@@ -308,5 +311,26 @@ public class LimsQueriesTest {
         assertThat(concentrationAndVolumeType.getWeight(), equalTo(receptacleWeight));
         assertThat(concentrationAndVolumeType.getConcentrationUnits(),
                 equalTo(LabMetric.LabUnit.UG_PER_ML.getDisplayName()));
+
+        // If volume or concentration is null on labvessel and sample details have data for both, then trust
+        // sample details as the source
+        Map<String, LabVessel> clinicalGenomeTubes = new HashMap<>();
+        tube = new BarcodedTube(barcode);
+        tube.setVolume(volume);
+        tube.getMercurySamples().add(new MercurySample("SM-1234", MercurySample.MetadataSource.BSP));
+        clinicalGenomeTubes.put(barcode, tube);
+        Map<String, GetSampleDetails.SampleInfo> mapBarcodeToInfo = new HashMap<>();
+        GetSampleDetails.SampleInfo sampleInfo = new GetSampleDetails.SampleInfo();
+        sampleInfo.setConcentration(5f);
+        sampleInfo.setVolume(25f);
+        mapBarcodeToInfo.put(barcode, sampleInfo);
+        concentrationAndVolumeTypeMap =
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(clinicalGenomeTubes, mapBarcodeToInfo, true);
+        ConcentrationAndVolumeAndWeightType concentrationAndVolumeAndWeightType =
+                concentrationAndVolumeTypeMap.get(barcode);
+        BigDecimal expectedConcentration = new BigDecimal("5.00");
+        BigDecimal expectedVolume = new BigDecimal("25.00");
+        assertThat(concentrationAndVolumeAndWeightType.getConcentration(), equalTo(expectedConcentration));
+        assertThat(concentrationAndVolumeAndWeightType.getVolume(), equalTo(expectedVolume));
     }
 }

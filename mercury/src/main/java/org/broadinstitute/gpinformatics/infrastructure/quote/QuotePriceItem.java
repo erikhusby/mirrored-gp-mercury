@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.LongDateAdapter;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
@@ -8,6 +10,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.text.SimpleDateFormat;
+import java.util.Comparator;
 import java.util.Date;
 
 @XmlRootElement(name = "priceItem")
@@ -20,6 +23,7 @@ public class QuotePriceItem {
     private String unit;
     private Date submittedDate;
     private Date effectiveDate;
+    private Date expirationDate;
     private String platformName;
     private String categoryName;
     private String priceItemStatus;
@@ -38,6 +42,7 @@ public class QuotePriceItem {
         quotePriceItem.setName(priceItem.getName());
         quotePriceItem.setCategoryName(priceItem.getCategory());
         quotePriceItem.setPlatformName(priceItem.getPlatform());
+        quotePriceItem.setPrice(priceItem.getPrice());
         return quotePriceItem;
     }
 
@@ -119,7 +124,7 @@ public class QuotePriceItem {
     }
 
     @XmlElement(name = "submittedDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
+    @XmlJavaTypeAdapter(LongDateAdapter.class)
     public Date getSubmittedDate() {
         return submittedDate;
     }
@@ -129,7 +134,7 @@ public class QuotePriceItem {
     }
 
     @XmlElement(name = "effectiveDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
+    @XmlJavaTypeAdapter(LongDateAdapter.class)
     public Date getEffectiveDate() {
         return effectiveDate;
     }
@@ -220,6 +225,16 @@ public class QuotePriceItem {
         this.replacementItems = replacementItems;
     }
 
+    @XmlElement(name = "expirationDate")
+    @XmlJavaTypeAdapter(LongDateAdapter.class)
+    public Date getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Date expirationDate) {
+        this.expirationDate = expirationDate;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -277,5 +292,24 @@ public class QuotePriceItem {
             return dateFormat.parse(v);
         }
 
+    }
+
+    public static Comparator<QuotePriceItem> BY_PLATFORM_THEN_CATEGORY_THEN_NAME = new Comparator<QuotePriceItem>() {
+        @Override
+        public int compare(QuotePriceItem o1, QuotePriceItem o2) {
+
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(o1.getPlatformName(), o2.getPlatformName());
+            builder.append(o1.getCategoryName(), o2.getCategoryName());
+            builder.append(o1.getName(), o2.getName());
+
+            return builder.build();
+        }
+    };
+
+    public boolean sameAsQuoteItem(QuoteItem quoteItem) {
+        return quoteItem.getCategoryName().equals(getCategoryName()) &&
+               quoteItem.getName().equals(getName()) &&
+               quoteItem.getPlatform().equals(getPlatformName());
     }
 }

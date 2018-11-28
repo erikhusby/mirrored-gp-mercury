@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -219,6 +220,26 @@ public class BettaLimsMessageTestFactory {
         return plateTransferEvent;
     }
 
+    public PlateTransferEventType buildRackToRack(String eventType, String sourceRackBarcode, Map<String, String> sourceTubeBarcodesToWellNames,
+                                                  String targetRackBarcode, List<String> targetTubeBarcodes) {
+        PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
+        setStationEventData(eventType, plateTransferEvent);
+
+        plateTransferEvent.setSourcePositionMap(buildPositionMap(sourceRackBarcode, sourceTubeBarcodesToWellNames));
+        plateTransferEvent.setSourcePlate(buildRack(sourceRackBarcode));
+        // Create a map of the destination barcodes matched to source positions.
+        Map<String, String> destinationTubeBarcodesToWellNames = new HashMap<>();
+        Iterator<String> destinationIterator = targetTubeBarcodes.iterator();
+        for (String sourceWell : sourceTubeBarcodesToWellNames.values()) {
+            destinationTubeBarcodesToWellNames.put(destinationIterator.next(), sourceWell);
+        }
+
+        plateTransferEvent.setPositionMap(buildPositionMap(targetRackBarcode, destinationTubeBarcodesToWellNames));
+        plateTransferEvent.setPlate(buildRack(targetRackBarcode));
+
+        return plateTransferEvent;
+    }
+
     public ReceptaclePlateTransferEvent buildTubeToPlate(String eventType, String sourceTubeBarcode,
                                                          String targetPlateBarcode, String physType, String section,
                                                          String receptacleType) {
@@ -384,6 +405,37 @@ public class BettaLimsMessageTestFactory {
         for (int i = 0, targetTubeBarcodesSize = targetTubeBarcodes.size(); i < targetTubeBarcodesSize; i++) {
             List<String> targetTubeBarcode = targetTubeBarcodes.get(i);
             plateCherryPickEvent.getPositionMap().add(buildPositionMap(targetRackBarcodes.get(i), targetTubeBarcode));
+        }
+
+        for (CherryPick cherryPick : cherryPicks) {
+            CherryPickSourceType cherryPickSource = new CherryPickSourceType();
+            cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
+            cherryPickSource.setWell(cherryPick.getSourceWell());
+            cherryPickSource.setDestinationBarcode(cherryPick.getDestinationRackBarcode());
+            cherryPickSource.setDestinationWell(cherryPick.getDestinationWell());
+            plateCherryPickEvent.getSource().add(cherryPickSource);
+        }
+
+        return plateCherryPickEvent;
+    }
+
+    public PlateCherryPickEvent buildPlateToRackCherryPick(String eventType, List<String> sourcePlateBarcodes,
+                                                           String targetRackBarcode,
+                                                           List<List<String>> targetTubeBarcodes,
+                                                           List<CherryPick> cherryPicks) {
+        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
+        setStationEventData(eventType, plateCherryPickEvent);
+
+        for (String sourcePlateBarcode : sourcePlateBarcodes) {
+            plateCherryPickEvent.getSourcePlate().add(buildPlate(sourcePlateBarcode));
+        }
+
+        plateCherryPickEvent.getPlate().add(buildRack(targetRackBarcode));
+
+        for (int i = 0, targetTubeBarcodesSize = targetTubeBarcodes.size(); i < targetTubeBarcodesSize; i++) {
+            List<String> targetTubeBarcode = targetTubeBarcodes.get(i);
+            plateCherryPickEvent.getPositionMap()
+                    .add(buildPositionMap(targetRackBarcode, targetTubeBarcode));
         }
 
         for (CherryPick cherryPick : cherryPicks) {

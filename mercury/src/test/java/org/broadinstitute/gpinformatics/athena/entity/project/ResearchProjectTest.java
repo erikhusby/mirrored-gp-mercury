@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -244,7 +244,7 @@ public class ResearchProjectTest {
     }
 
     private ResearchProjectEjb setupMocksSoThatThereAreNotJiraTransitions() {
-        JiraService jiraService = JiraServiceProducer.stubInstance();
+        JiraService jiraService = JiraServiceTestProducer.stubInstance();
         UserBean userBean = EasyMock.createMock(UserBean.class);
         BSPUserList bspUserList = EasyMock.createMock(BSPUserList.class);
         BSPCohortList bspCohortList = EasyMock.createMock(BSPCohortList.class);

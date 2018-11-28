@@ -11,27 +11,26 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.hibernate.annotations.BatchSize;
+
 import javax.annotation.concurrent.Immutable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.io.Serializable;
 
 @Entity
 @Table(name = "AGGREGATION_HYBRID_SELECTION", schema = "METRICS")
 @Immutable
+@BatchSize(size = 500)
 public class AggregationHybridSelection implements Serializable {
+    private static final long serialVersionUID = -7910475408767965874L;
     @Id
     @Column(name = "AGGREGATION_ID", nullable = false, insertable = false, updatable = false)
     private Integer aggregationId;
     @Column(name = "PCT_TARGET_BASES_20X")
     private Double pctTargetBases20X;
-    @OneToOne
-    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, updatable = false, insertable = false)
-    private Aggregation aggregation;
 
     public AggregationHybridSelection(Double pctTargetBases20X) {
         this.pctTargetBases20X = pctTargetBases20X;
@@ -42,31 +41,5 @@ public class AggregationHybridSelection implements Serializable {
 
     public Double getPctTargetBases20X() {
         return pctTargetBases20X;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof AggregationHybridSelection)) {
-            return false;
-        }
-
-        AggregationHybridSelection that = (AggregationHybridSelection) o;
-
-        if (!aggregationId.equals(that.aggregationId)) {
-            return false;
-        }
-        return !(pctTargetBases20X != null ? !pctTargetBases20X.equals(that.pctTargetBases20X) :
-                that.pctTargetBases20X != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = aggregationId;
-        result = 31 * result + (pctTargetBases20X != null ? pctTargetBases20X.hashCode() : 0);
-        return result;
     }
 }

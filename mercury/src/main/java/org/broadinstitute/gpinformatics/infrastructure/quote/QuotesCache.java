@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import net.sourceforge.stripes.util.CollectionUtil;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.Collection;
@@ -53,8 +54,10 @@ public class QuotesCache {
             if (quote.getQuoteFunding() != null) {
                 if (CollectionUtils.isNotEmpty(quote.getQuoteFunding().getFundingLevel())) {
                     for (FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
-                        if (level.getFunding() != null) {
-                            fundingSources.add(level.getFunding());
+                        if (CollectionUtils.isNotEmpty(level.getFunding())) {
+                            for (Funding funding:level.getFunding()) {
+                                fundingSources.add(funding);
+                            }
                         }
                     }
                 }
@@ -78,12 +81,14 @@ public class QuotesCache {
             if (quote.getQuoteFunding() != null) {
                 if (CollectionUtils.isNotEmpty(quote.getQuoteFunding().getFundingLevel())) {
                     for(FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
-                        if (level.getFunding() != null) {
-                            Funding fundingForQuote = level.getFunding();
-                            if (fundingForQuote.getGrantDescription() != null) {
-                                if (grantDescription.equalsIgnoreCase(fundingForQuote.getGrantDescription())) {
-                                    quotesForFundingSource.add(quote);
+                        if (CollectionUtils.isNotEmpty(level.getFunding() )) {
+                            for (Funding fundingForQuote:level.getFunding()) {
+                                if (fundingForQuote.getGrantDescription() != null) {
+                                    if (grantDescription.equalsIgnoreCase(fundingForQuote.getGrantDescription())) {
+                                        quotesForFundingSource.add(quote);
+                                    }
                                 }
+                                break;
                             }
                         }
                     }
@@ -103,16 +108,19 @@ public class QuotesCache {
             if (quote.getQuoteFunding() != null) {
                 if (CollectionUtils.isNotEmpty(quote.getQuoteFunding().getFundingLevel())) {
                     for (FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
-                        if (level.getFunding() != null) {
-                            Funding funding = level.getFunding();
-                            if ((funding.getGrantDescription() != null) && (funding.getGrantNumber() != null)) {
-                                // get/create the set of quotes
-                                HashSet<Quote> quotesSet=quotesByFundingSource.get(funding);
-                                if  (quotesSet== null) {
-                                    quotesSet = new HashSet<>();
-                                    quotesByFundingSource.put(funding, quotesSet);
+                        if (CollectionUtils.isNotEmpty(level.getFunding())) {
+
+                            for (Funding funding :level.getFunding()) {
+                                if ((funding.getGrantDescription() != null) && (funding.getGrantNumber() != null)) {
+                                    // get/create the set of quotes
+                                    HashSet<Quote> quotesSet=quotesByFundingSource.get(funding);
+                                    if  (quotesSet== null) {
+                                        quotesSet = new HashSet<>();
+                                        quotesByFundingSource.put(funding, quotesSet);
+                                    }
+                                    quotesSet.add(quote);
                                 }
-                                quotesSet.add(quote);
+                                break;
                             }
                         }
                     }

@@ -23,14 +23,8 @@ public class RackOfTubes extends LabVessel {
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "racksOfTubes")
     private Set<TubeFormation> tubeFormations = new HashSet<>();
 
-    /**
-     * For JPA
-     */
-    protected RackOfTubes() {
-    }
-
     public enum RackType implements VesselTypeGeometry {
-        Abgene96SlotRack("Abgene96SlotRack", VesselGeometry.G12x8),
+        Abgene96SlotRack("Abgene96SlotRack", VesselGeometry.G12x8, CanRackScan.TRUE),
         CBSStraw_Box("CBSStraw_Box", VesselGeometry.G12x8),
         Conical15ml_10x5rack("Conical15ml_10x5rack", VesselGeometry.G4x10_NUM),
         Conical15ml_6x6box("Conical15ml_6x6box", VesselGeometry.G6x6_NUM),
@@ -41,18 +35,24 @@ public class RackOfTubes extends LabVessel {
         Conical50ml_8x3rack("Conical50ml_8x3rack", VesselGeometry.G3x8_NUM),
         Eppendorf10x10Box("Eppendorf10x10Box", VesselGeometry.G10x10_NUM),
         Eppendorf12x8Box("Eppendorf12x8Box", VesselGeometry.G12x8),
+        Eppendorf12x8BoxWell("Eppendorf12x8BoxWell", VesselGeometry.G12x8),
+        FlipperRackRow8("FlipperRackRow8", VesselGeometry.G8x1, false),
         FlipperRackRow24("FlipperRackRow24", VesselGeometry.G24x1, false),
+        FluidX_4x6_Rack("FluidX_4x6_Rack", VesselGeometry.G6x4_ALPHANUM, true),
         FourInch3x5Box("FourInch3x5Box", VesselGeometry.G5x3_NUM),
         FourInch7x7Box("FourInch7x7Box", VesselGeometry.G7x7_NUM),
+        QiasymphonyCarrier24("QiasymphonyCarrier24", VesselGeometry.G4x24),
         HamiltonSampleCarrier24("HamiltonSampleCarrier24", VesselGeometry.G24x1),
         HamiltonSampleCarrier32("HamiltonSampleCarrier32", VesselGeometry.G32x1),
         Matrix48SlotRack2mL("Matrix48SlotRack2mL", VesselGeometry.G12x8),
-        Matrix96("Matrix96", VesselGeometry.G12x8),
-        Matrix96SlotRack040("Matrix96SlotRack040", VesselGeometry.G12x8),
-        Matrix96SlotRack075("Matrix96SlotRack075", VesselGeometry.G12x8),
-        Matrix96SlotRack14("Matrix96SlotRack14", VesselGeometry.G12x8),
-        Matrix96SlotRackSC05("Matrix96SlotRackSC05", VesselGeometry.G12x8),
-        Matrix96SlotRackSC14("Matrix96SlotRackSC14", VesselGeometry.G12x8),
+        Matrix96("Matrix96", VesselGeometry.G12x8, CanRackScan.TRUE),
+        Matrix96Anonymous("Matrix96Anonymous", VesselGeometry.G12x8, false),
+        StripTubeRackOf12("StripTubeRackOf12", VesselGeometry.G12x8),
+        Matrix96SlotRack040("Matrix96SlotRack040", VesselGeometry.G12x8, CanRackScan.TRUE),
+        Matrix96SlotRack075("Matrix96SlotRack075", VesselGeometry.G12x8, CanRackScan.TRUE),
+        Matrix96SlotRack14("Matrix96SlotRack14", VesselGeometry.G12x8, CanRackScan.TRUE),
+        Matrix96SlotRackSC05("Matrix96SlotRackSC05", VesselGeometry.G12x8, CanRackScan.TRUE),
+        Matrix96SlotRackSC14("Matrix96SlotRackSC14", VesselGeometry.G12x8, CanRackScan.TRUE),
         SlideBox_1x10("SlideBox_1x10", VesselGeometry.G1x10_NUM),
         SlideBox_1x25("SlideBox_1x25", VesselGeometry.G1x25_NUM),
         SlideBox_2x50("SlideBox_2x50", VesselGeometry.G2x50_NUM),
@@ -63,13 +63,29 @@ public class RackOfTubes extends LabVessel {
         TissueCassetteBox_7x3("TissueCassetteBox_7x3", VesselGeometry.G3x7_NUM),
         TwoInch9x9box("TwoInch9x9box", VesselGeometry.G9x9_NUM),
         Vacutainer12x6Rack("Vacutainer12x6Rack", VesselGeometry.G12x6_NUM),
-        Voucher_Box("Voucher_Box", VesselGeometry.G10x1_NUM);
+        Voucher_Box("Voucher_Box", VesselGeometry.G10x1_NUM),
+        FTAPaperHolder("FTAPaperHolder", VesselGeometry.G12x8);
+
+        public enum CanRackScan {
+            TRUE(true),
+            FALSE(false);
+            private final boolean value;
+
+            CanRackScan(boolean value) {
+                this.value = value;
+            }
+
+            public boolean booleanValue() {
+                return value;
+            }
+        }
 
         private static final Map<String, RackType> MAP_NAME_TO_RACK_TYPE =
                 new HashMap<>(RackType.values().length);
         private final String         displayName;
         private final VesselGeometry vesselGeometry;
         private boolean barcoded = true;
+        private CanRackScan canRackScan;
 
         RackType(String displayName, VesselGeometry vesselGeometry) {
             this.displayName = displayName;
@@ -79,6 +95,11 @@ public class RackOfTubes extends LabVessel {
         RackType(String displayName, VesselGeometry vesselGeometry, boolean barcoded) {
             this(displayName, vesselGeometry);
             this.barcoded = barcoded;
+        }
+
+        RackType(String displayName, VesselGeometry vesselGeometry, CanRackScan canRackScan) {
+            this(displayName, vesselGeometry);
+            this.canRackScan = canRackScan;
         }
 
         static {
@@ -105,14 +126,29 @@ public class RackOfTubes extends LabVessel {
         public boolean isBarcoded() {
             return barcoded;
         }
+
+        public boolean isRackScannable() {
+            return canRackScan == CanRackScan.TRUE;
+        }
     }
 
     @Enumerated(EnumType.STRING)
     private RackType rackType;
 
+    /**
+     * For JPA
+     */
+    protected RackOfTubes() {
+    }
+
     public RackOfTubes(String label, RackType rackType) {
         super(label);
         this.rackType = rackType;
+    }
+
+    public RackOfTubes(String manufacturerBarcode, RackType rackType, String plateName) {
+        this(manufacturerBarcode, rackType);
+        this.name = plateName;
     }
 
     public RackType getRackType() {

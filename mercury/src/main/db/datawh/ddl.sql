@@ -100,6 +100,7 @@ CREATE TABLE product_order (
   owner                  VARCHAR2(40),
   placed_date            DATE,
   skip_regulatory_reason VARCHAR2(255),
+  sap_order_number VARCHAR2(255),
   etl_date               DATE           NOT NULL
 );
 
@@ -336,7 +337,9 @@ CREATE TABLE im_product (
   workflow_name             VARCHAR2(255),
   product_family_name       VARCHAR2(255),
   primary_price_item_id     NUMERIC(19, 0),
-  aggregation_data_type	    VARCHAR2(255)
+  aggregation_data_type	    VARCHAR2(255),
+  external_only_product     CHAR(1),
+  saved_in_sap              CHAR(1)
 );
 
 CREATE TABLE im_price_item (
@@ -433,6 +436,7 @@ CREATE TABLE im_product_order (
   owner                  VARCHAR2(40),
   placed_date            DATE,
   skip_regulatory_reason VARCHAR2(255),
+  sap_order_number VARCHAR2(255),
   reg_info_ids           VARCHAR2(255)
 );
 
@@ -737,8 +741,9 @@ CREATE INDEX event_fact_idx1 ON event_fact (event_date);
 CREATE INDEX event_fact_idx2 ON event_fact (product_order_id, sample_name);
 CREATE INDEX event_fact_idx3 ON event_fact (lab_event_id);
 CREATE INDEX IDX_EVENT_VESSEL ON EVENT_FACT( LAB_VESSEL_ID );
-CREATE UNIQUE INDEX PK_ANCESTRY on library_ancestry (child_library_id, ancestor_library_id, child_event_id, ancestor_event_id );
-CREATE INDEX idx_ancestry_reverse on library_ancestry (ancestor_library_id, child_library_id );
+CREATE UNIQUE INDEX PK_ANCESTRY on library_ancestry (child_library_id, ancestor_library_id );
+ALTER TABLE library_ancestry ADD CONSTRAINT PK_ANCESTRY PRIMARY KEY (child_library_id, ancestor_library_id ) USING INDEX PK_ANCESTRY;
+CREATE UNIQUE INDEX idx_ancestry_reverse on library_ancestry (ancestor_library_id, child_library_id );
 CREATE INDEX ix_parent_project ON research_project (parent_research_project_id);
 CREATE INDEX ix_root_project ON research_project (root_research_project_id);
 CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_barcode, lane, molecular_indexing_scheme);

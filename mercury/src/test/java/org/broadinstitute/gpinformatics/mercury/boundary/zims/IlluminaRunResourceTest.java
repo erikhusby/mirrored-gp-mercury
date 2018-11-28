@@ -38,9 +38,9 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
@@ -54,7 +54,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@Dependent
 public class IlluminaRunResourceTest extends Arquillian {
+
+    public IlluminaRunResourceTest(){}
 
     @Inject
     private IlluminaRunResource runLaneResource;
@@ -62,9 +65,12 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Inject
     private ProductOrderDao pdoDao;
 
-    private TZamboniRun zamboniRun;
+    // RequestScoped test bean may use multiple instances
+    private TZamboniRun zamboniRun = new MockThriftService().fetchRun(RUN_NAME);
 
     public static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
+    public static final String RUN_BARCODE = "C0GHCACXX120320";
+    public static final String MERCURY_RUN_BARCODE = "H7821ADXX131218";
 
     private final String CHAMBER = "2";
 
@@ -110,6 +116,19 @@ public class IlluminaRunResourceTest extends Arquillian {
         ZimsIlluminaRun runBean = runLaneResource.getRun(RUN_NAME);
 
         doAssertions(zamboniRun, runBean, wrIdToPDO);
+    }
+
+    @Test(groups = ALTERNATIVES)
+    public void testFetchByBarcodeInContainer() throws Exception {
+        wrIdToPDO.put(29225L, pdoDao.findByBusinessKey(PDO_KEY));
+        ZimsIlluminaRun runBean = runLaneResource.getRunByBarcode(RUN_BARCODE);
+        doAssertions(zamboniRun, runBean, wrIdToPDO);
+    }
+
+    @Test(groups = ALTERNATIVES)
+    public void testFetchByBarcodeMercuryInContainer() throws Exception {
+        ZimsIlluminaRun runBean = runLaneResource.getRunByBarcode(MERCURY_RUN_BARCODE);
+        Assert.assertEquals(runBean.getName(), "131218_SL-HDJ_0267_BFCH7821ADXX");
     }
 
     /**
@@ -482,11 +501,6 @@ public class IlluminaRunResourceTest extends Arquillian {
             }
         }
         return null;
-    }
-
-    @BeforeClass(groups = ALTERNATIVES)
-    private void getZamboniRun() throws Exception {
-        zamboniRun = new MockThriftService().fetchRun(RUN_NAME);
     }
 
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {

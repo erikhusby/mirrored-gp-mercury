@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<arquillian xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://jboss.org/schema/arquillian"
+    xsi:schemaLocation="http://jboss.org/schema/arquillian
+    http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+    <defaultProtocol type="Servlet 3.0">
+        <!-- localhost is needed for osx 10.9, jdk7.  Otherwise it flames out trying to connect to 0.0.0.0 -->
+        <property name="host">${jboss.managementAddress}</property>
+    </defaultProtocol>
+
+    <extension qualifier="selenium-server">
+       <property name="skip">true</property>
+    </extension>
+
+    <container qualifier="dev" default="true">
+        <configuration>
+            <property name="managementAddress">${jboss.managementAddress}</property>
+            <property name="managementPort">${jboss.managementPort}</property>
+            <property name="username">${jboss.username}</property>
+            <property name="password">${jboss.password}</property>
+        </configuration>
+    </container>
+
+</arquillian>

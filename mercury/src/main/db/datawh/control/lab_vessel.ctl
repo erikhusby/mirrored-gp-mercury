@@ -9,5 +9,7 @@ TRAILING NULLCOLS
  is_delete,
  lab_vessel_id,
  label,
- lab_vessel_type
+ lab_vessel_type,
+ name,
+ created_on DATE "YYYYMMDDHH24MISS"
 )

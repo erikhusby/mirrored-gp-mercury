@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -8,7 +7,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import java.util.ArrayList;
@@ -33,16 +36,32 @@ import java.util.Set;
  */
 public class EventAncestryEtlUtil {
 
-    public EventAncestryEtlUtil() {
-        WorkflowLoader workflowLoader = new WorkflowLoader();
-        wfconfig = workflowLoader.load();
+    // All workflow event types which are ETL flagged and have library names assigned
+    private Set<LabEventType> libraryEventTypes = new HashSet<>();
+    private List<LabEventType> eventTypeList = new ArrayList<>();
+
+
+    public EventAncestryEtlUtil(WorkflowConfig workflowConfig) {
+        // Build out workflow step list
+        for(ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs() ) {
+            for( ProductWorkflowDefVersion workflowDefVersion : workflowDef.getWorkflowVersionsDescEffDate() ) {
+                for( WorkflowProcessDef processDef : workflowDefVersion.getWorkflowProcessDefs()) {
+                    for( WorkflowProcessDefVersion processDefVersion : processDef.getProcessVersionsDescEffDate() ) {
+                        for( WorkflowStepDef workflowStepDef : processDefVersion.getWorkflowStepDefs() ) {
+                            if( workflowStepDef.doAncestryEtl() ) {
+                                for( LabEventType labEventType : workflowStepDef.getLabEventTypes() ) {
+                                    if( labEventType.getLibraryType() != LabEventType.LibraryType.NONE_ASSIGNED ) {
+                                        libraryEventTypes.add(labEventType);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        eventTypeList.addAll(libraryEventTypes);
     }
-
-    // Costly and unnecessary to load this more than once per instance
-    private WorkflowConfig wfconfig = null;
-
-    // Avoid the repeated overhead of parsing workflow for the same event if it is not flagged for ancestry
-    Set<Long> ignoreAncestryForEventList = new HashSet();
 
     /**
      * Examines the event hierarchy for events flagged for ancestry ETL and appends ancestors to event facts.
@@ -54,7 +73,6 @@ public class EventAncestryEtlUtil {
     public void generateAncestryData( List<LabEventEtl.EventFactDto> eventFacts, LabEvent labEvent, LabVessel labVessel ){
 
         Long previousEventId = -1L;
-        List<WorkflowStepDef> workflowStepList = null;
 
         // Skip duplicate entries for same vessel (e.g. static plate)
         Set<LabVessel> vesselsToSkip = new HashSet<>();
@@ -66,64 +84,42 @@ public class EventAncestryEtlUtil {
                 continue;
             }
 
-            // Can't do anything with a bad workflow
-            if( eventFact.getWfName() == null || eventFact.getWfName().isEmpty() ) {
-                continue;
-            }
-
-            if( WorkflowConfigLookup.isSynthetic(eventFact.getWfName() ) ) {
-                continue;
-            }
-
-            // Data is fully denormalized on Event-Vessel-Sample.
-            // Don't re-analyze the same event if ancestry flag is false
-            // Don't keep re-analyzing same vessel in same event
-            if( ignoreAncestryForEventList.contains(eventFact.getEventId() ) ) {
+            // Ignore events for which ancestry etl on current event is not flagged
+            if( !libraryEventTypes.contains(eventFact.getEventType()) ) {
                 continue;
             }
 
             // No need to keep re-parsing workflow for the same event ...
             if( !eventFact.getEventId().equals(previousEventId)) {
-                workflowStepList = getWorkflowStepsUpToEvent(eventFact, wfconfig);
                 previousEventId = eventFact.getEventId();
                 // Clear out vessels to skip upon hitting new event
                 vesselsToSkip.clear();
             }
 
-            // Ignore events for which ancestry etl on current event is not flagged
-            List<LabEventType> ancestorEventTypesToFind = new ArrayList<>();
-            if( workflowStepList.isEmpty() || ! workflowStepList.get( workflowStepList.size() - 1 ).doAncestryEtl() ) {
-                // Skip any subsequent denormalized events
-                ignoreAncestryForEventList.add( eventFact.getEventId() );
-                continue;
-            }
-
-            // Find the next nearest ancestor event type(s)
-            ancestorEventTypesToFind.addAll(findAllAncestorEtlEventTypes(workflowStepList));
+            // Find ancestor library event(s) of interest
             // Build the ancestry dtos
-            eventFact.addAllAncestryDtos(buildAncestryFacts(labEvent, labVessel, ancestorEventTypesToFind));
+            eventFact.addAllAncestryDtos(buildAncestryFacts(labEvent, labVessel));
+            eventFact.setIsEtlLibrary();
             vesselsToSkip.add(labVessel);
         }
     }
 
     /**
      * Navigate the event vessel ancestry, find all ancestor events of the specified types,
-     *   and create ancestry records linking to labEvent
+     *   and create ancestry records linking to labEvent. <br />
+     * Note:  At this point, the labEvent has already been vetted as being flagged for ancestry
      * @param labEvent The event from which to start ancestry search
      * @param labVessel The vessel associated with the labEvent argument
-     * @param ancestorEventTypes Event type(s) to search the ancestry for
      * @return Any ancestry facts found for the event-vessel combination, empty list if none
      */
-    private List<AncestryFactDto> buildAncestryFacts(LabEvent labEvent, LabVessel labVessel,
-                                                     List<LabEventType> ancestorEventTypes) {
+    private List<AncestryFactDto> buildAncestryFacts(LabEvent labEvent, LabVessel labVessel) {
         List<AncestryFactDto> ancestryFactDtos = new ArrayList<>();
 
-        if( ancestorEventTypes.isEmpty() ) {
-            return ancestryFactDtos;
-        }
-
         Map<LabEvent, Set<LabVessel>> ancestorEventVesselMap = labVessel.findVesselsForLabEventTypes(
-                ancestorEventTypes, Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors), true);
+                eventTypeList, Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors), true);
+
+        // Remove 'current' event
+        ancestorEventVesselMap.remove(labEvent);
 
         for( LabEvent ancestorLabEvent : ancestorEventVesselMap.keySet() ) {
             Set<LabVessel> eventVessels = ancestorEventVesselMap.get(ancestorLabEvent);
@@ -135,11 +131,11 @@ public class EventAncestryEtlUtil {
                         ancestryFactDtos.add(new AncestryFactDto(
                                 ancestorLabEvent.getLabEventId(),
                                 containerVessel.getEmbedder(),
-                                ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                ancestorLabEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                                 ancestorLabEvent.getEventDate(),
                                 labEvent.getLabEventId(),
                                 labVessel,
-                                labEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                labEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                                 labEvent.getEventDate()));
                     } else {
                         // Use vessels at positions
@@ -152,11 +148,11 @@ public class EventAncestryEtlUtil {
                                 ancestryFactDtos.add(new AncestryFactDto(
                                         ancestorLabEvent.getLabEventId(),
                                         containedVessel,
-                                        ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                        ancestorLabEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                                         ancestorLabEvent.getEventDate(),
                                         labEvent.getLabEventId(),
                                         labVessel,
-                                        labEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                        labEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                                         labEvent.getEventDate()));
                             }
                         }
@@ -166,11 +162,11 @@ public class EventAncestryEtlUtil {
                     ancestryFactDtos.add(new AncestryFactDto(
                             ancestorLabEvent.getLabEventId(),
                             ancestorLabVessel,
-                            ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
+                            ancestorLabEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                             ancestorLabEvent.getEventDate(),
                             labEvent.getLabEventId(),
                             labVessel,
-                            labEvent.getLabEventType().getLibraryType().getDisplayName(),
+                            labEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                             labEvent.getEventDate()));
                 }
             }
@@ -195,39 +191,6 @@ public class EventAncestryEtlUtil {
             }
         }
         return eventTypes;
-    }
-
-    /**
-     * Return a sequential list of workflow steps leading up to current event
-     * @param eventFact Event and workflow data structure built by LabEventEtl
-     * @param wfconfig Workflow configuration object model
-     * @return The workflow steps leading up to the current event
-     */
-    private List<WorkflowStepDef> getWorkflowStepsUpToEvent( LabEventEtl.EventFactDto eventFact, WorkflowConfig wfconfig){
-
-        Date eventEffectiveDate;
-        if( eventFact.getBatchName().equals(LabEventEtl.NONE ) ) {
-            eventEffectiveDate = eventFact.getEventDate();
-        } else {
-            eventEffectiveDate = eventFact.getBatchDate();
-        }
-
-        String workflowName = eventFact.getWfName();
-
-        // Workflow step list
-        List<WorkflowStepDef> workflowStepList = wfconfig.getSequentialWorkflowSteps( workflowName, eventEffectiveDate );
-
-        int indexOfCurrentEvent = 0;
-
-        LabEventType eventType = eventFact.getEventType();
-        for( WorkflowStepDef workflowStepDef : workflowStepList ) {
-            indexOfCurrentEvent++;
-            if (workflowStepDef.getLabEventTypes().contains( eventType ) ){
-                break;
-            }
-        }
-
-        return workflowStepList.subList(0, indexOfCurrentEvent);
     }
 
     public class AncestryFactDto {

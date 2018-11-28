@@ -1,11 +1,15 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
@@ -16,12 +20,13 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A flattened structure of information needed to import an item into the quote server.
  */
 public class QuoteImportItem {
-    private static final String PDO_QUANTITY_FORMAT = "###,###,###.##";
+    public static final String PDO_QUANTITY_FORMAT = "###,###,###.##";
     private final String quoteId;
     private final PriceItem priceItem;
     private String quotePriceType;
@@ -30,21 +35,37 @@ public class QuoteImportItem {
     private Date startRange;
     private Date endRange;
     private final Set<String> workItems = new HashSet<>();
+    private String sapItems;
+    private Product product;
+    private ProductOrder productOrder;
+
+    private PriceList priceOnWorkDate;
+    private Quote quote;
 
     public QuoteImportItem(
-            String quoteId, PriceItem priceItem, String quotePriceType, List<LedgerEntry> ledgerItems, Date billToDate) {
+            String quoteId, PriceItem priceItem, String quotePriceType, List<LedgerEntry> ledgerItems, Date billToDate,
+            Product product, ProductOrder productOrder) {
 
         this.quoteId = quoteId;
         this.priceItem = priceItem;
         this.quotePriceType = quotePriceType;
         this.ledgerItems = ledgerItems;
         this.billToDate = billToDate;
+        this.product = product;
+        this.productOrder = productOrder;
 
         if (ledgerItems != null) {
             for (LedgerEntry ledger : ledgerItems) {
                 updateDateRange(ledger.getWorkCompleteDate());
                 if (StringUtils.isNotBlank(ledger.getWorkItem())) {
                     workItems.add(ledger.getWorkItem());
+                }
+                if (StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
+                    sapItems = ledger.getSapDeliveryDocumentId();
+                } else {
+                    if (!StringUtils.equals(ledger.getSapDeliveryDocumentId(), sapItems)) {
+                        throw new RuntimeException("Mis Matched SAPDelivery Document Found");
+                    }
                 }
             }
         }
@@ -53,6 +74,15 @@ public class QuoteImportItem {
     public Collection<String> getWorkItems() {
         return Collections.unmodifiableCollection(workItems);
     }
+
+    public Collection<LedgerEntry> getBillingCredits(){
+        return ledgerItems.stream().filter(ledgerEntry -> ledgerEntry.getQuantity() < 0).collect(Collectors.toSet());
+    }
+
+    public String getSapItems() {
+        return sapItems;
+    }
+
 
     public String getChargedAmountForPdo(@Nonnull String pdoBusinessKey) {
         double quantity = 0;
@@ -106,6 +136,16 @@ public class QuoteImportItem {
         return quantity;
     }
 
+    public double getQuantityForSAP() {
+        double quantity = 0;
+        for (LedgerEntry ledgerItem : ledgerItems) {
+            if (StringUtils.isBlank(ledgerItem.getSapDeliveryDocumentId())) {
+                quantity += ledgerItem.getQuantity();
+            }
+        }
+        return quantity;
+    }
+
     public String getRoundedQuantity() {
         return new DecimalFormat(PDO_QUANTITY_FORMAT).format(getQuantity());
     }
@@ -133,6 +173,7 @@ public class QuoteImportItem {
         return endRange;
     }
 
+
     public String getNumSamples() {
         return MessageFormat.format("{0} Sample{0, choice, 0#s|1#|1<s}", ledgerItems.size());
     }
@@ -141,13 +182,14 @@ public class QuoteImportItem {
      * This method should be invoked upon successful billing to update ledger entries with the quote to which they were
      * billed and the work item.
      *
-     * @param itemIsReplacing The item that is replacing the primary price item.
-     * @param billingMessage The message to be assigned to all entries.
-     * @param quoteServerWorkItem the id of the transaction in the quote server
+     * @param itemIsReplacing           The item that is replacing the primary price item.
+     * @param billingMessage            The message to be assigned to all entries.
+     * @param quoteServerWorkItem       the id of the transaction in the quote server
      * @param replacementPriceItemNames names of price items that are valid replacements for {@link #priceItem}
+     * @param sapDeliveryId
      */
     public void updateLedgerEntries(QuotePriceItem itemIsReplacing, String billingMessage, String quoteServerWorkItem,
-                                    Collection<String> replacementPriceItemNames) {
+                                    Collection<String> replacementPriceItemNames, String sapDeliveryId) {
 
         LedgerEntry.PriceItemType priceItemType = getPriceItemType(itemIsReplacing, replacementPriceItemNames);
 
@@ -156,6 +198,9 @@ public class QuoteImportItem {
             ledgerEntry.setPriceItemType(priceItemType);
             ledgerEntry.setBillingMessage(billingMessage);
             ledgerEntry.setWorkItem(quoteServerWorkItem);
+            if (StringUtils.isNotBlank(sapDeliveryId)) {
+                ledgerEntry.setSapDeliveryDocumentId(sapDeliveryId);
+            }
         }
     }
 
@@ -164,13 +209,29 @@ public class QuoteImportItem {
      * just returns the first items sample because all items are grouped at a fine level by price item which means the
      * same product because price items are product based.
      */
-    public Product getProduct() {
+    public Product getPrimaryProduct() {
         return ledgerItems.get(0).getProductOrderSample().getProductOrder().getProduct();
+    }
+
+    /**
+     * While there is a shared primary product across all ledger entries, the price items these ledger entries
+     * represent may not equate to the primary product.  So as not to confuse the primary product and the potential
+     * addon product that may be billed, adding the visibility of the product being utilized
+     *
+     * @return
+     */
+    public Product getProduct() {
+        return product;
+    }
+
+    public ProductOrder getProductOrder() {
+        return productOrder;
     }
 
     public Collection<LedgerEntry> getLedgerItems() {
         return ledgerItems;
     }
+
     /**
      * Calculate if this item's price item is a replacement price item on this product. It returns a quote price item
      * object that is the primary.
@@ -179,14 +240,16 @@ public class QuoteImportItem {
      *
      * @return null if this is not a replacement item or the primary price item if it is one.
      */
-    public QuotePriceItem getPrimaryForReplacement(PriceListCache priceListCache) {
-        PriceItem primaryPriceItem = getProduct().getPrimaryPriceItem();
+    public QuotePriceItem getPrimaryForReplacement(PriceList priceListCache) {
+        PriceItem derivedPriceItem = getProductOrder().determinePriceItemByCompanyCode(getPrimaryProduct());
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
         // to the values on the product's price item, so do the item by item compare.
-        for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(primaryPriceItem)) {
+        for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(derivedPriceItem)) {
             if (optional.isMercuryPriceItemEqual(priceItem)) {
-                return QuotePriceItem.convertMercuryPriceItem(primaryPriceItem);
+                final QuotePriceItem priceItem = QuotePriceItem.convertMercuryPriceItem(derivedPriceItem);
+                priceItem.setPrice(priceListCache.findByKeyFields(derivedPriceItem).getPrice());
+                return priceItem;
             }
         }
 
@@ -199,12 +262,15 @@ public class QuoteImportItem {
 
         if (itemIsReplacing != null) {
             type = LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM;
-        } else if (getProduct().getPrimaryPriceItem().getName().equals(getPriceItem().getName())
-                   || replacementPriceItemNames.contains(getPriceItem().getName())) {
-            type = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
         } else {
-            // If it is not the primary or replacement right now, it has to be considered add on.
-            type = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
+            PriceItem priceItem = getProductOrder().determinePriceItemByCompanyCode(getPrimaryProduct());
+            if (priceItem.getName().equals(getPriceItem().getName())
+                || replacementPriceItemNames.contains(getPriceItem().getName())) {
+                type = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
+            } else {
+                // If it is not the primary or replacement right now, it has to be considered add on.
+                type = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
+            }
         }
 
         return type;
@@ -239,5 +305,41 @@ public class QuoteImportItem {
             workItem = workItems.iterator().next();
         }
         return workItem;
+    }
+
+    public PriceList getPriceOnWorkDate() {
+        return priceOnWorkDate;
+    }
+
+    public void setPriceOnWorkDate(PriceList priceOnWorkDate) throws QuoteServerException {
+        this.priceOnWorkDate = priceOnWorkDate;
+        updatePriceOnQuoteImportItem();
+    }
+
+    public Quote getQuote() {
+        return quote;
+    }
+
+    public void setQuote(Quote quote) {
+        this.quote = quote;
+    }
+
+    void updatePriceOnQuoteImportItem() throws QuoteServerException {
+
+        PriceList priceItemsForDate = getPriceOnWorkDate();
+
+        final QuotePriceItem replacedProductQuotePriceItem = priceItemsForDate.findByKeyFields(priceItem);
+
+        if (replacedProductQuotePriceItem == null || replacedProductQuotePriceItem.getPrice() == null) {
+            throw new QuoteServerException(
+                    "The price was not found for price item " + priceItem.getDisplayName());
+        }
+
+        getPriceItem().setPrice(replacedProductQuotePriceItem.getPrice());
+
+    }
+
+    public String getEffectivePrice() throws InvalidProductException {
+        return this.priceOnWorkDate.getEffectivePrice(this.priceItem, this.quote, this.getWorkCompleteDate());
     }
 }

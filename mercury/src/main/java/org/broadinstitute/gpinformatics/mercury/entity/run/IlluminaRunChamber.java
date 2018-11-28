@@ -8,6 +8,7 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,6 +22,7 @@ public class IlluminaRunChamber extends RunChamber {
     }
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "FLOWCELL")
     private IlluminaFlowcell flowcell;
     
     private int laneNumber;

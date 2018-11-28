@@ -63,15 +63,40 @@ public enum PreferenceType {
     USER_LAB_METRIC_COLUMN_SETS("User Lab Metric Column Sets", PreferenceScope.USER, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
 
+    GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES("Global Lab Metric Run Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    GLOBAL_LAB_METRIC_RUN_COLUMN_SETS("Global Lab Metric Run Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_LAB_METRIC_RUN_SEARCH_INSTANCES("User Lab Metric Run Search Instances", PreferenceScope.USER, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_LAB_METRIC_RUN_COLUMN_SETS("User Lab Metric Run Column Sets", PreferenceScope.USER, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+
     WORKFLOW_CONFIGURATION("Workflow Configuration", PreferenceScope.GLOBAL, 1,
-            new WorkflowConfig.WorkflowConfigPreferenceDefinitionCreator());
+            new WorkflowConfig.WorkflowConfigPreferenceDefinitionCreator()),
+    BUCKET_PREFERENCES("Bucket PagePreference", PreferenceScope.USER, 1,
+            new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
+    PRODUCT_ORDER_PREFERENCES("ProductOrder PagePreference", PreferenceScope.USER, 1,
+            new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
+
+    GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES("Global Product Order Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    GLOBAL_PRODUCT_ORDER_COLUMN_SETS("Global Product Order Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_PRODUCT_ORDER_SEARCH_INSTANCES("User Product Order Search Instances", PreferenceScope.USER, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_PRODUCT_ORDER_COLUMN_SETS("User Product Order Column Sets", PreferenceScope.USER, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+
+
+    ;
 
     private final String preferenceTypeName;
     private final PreferenceScope preferenceScope;
     private final PreferenceDefinitionCreator creator;
     private final int saveLimit;
 
-    private PreferenceType(
+    PreferenceType(
             String preferenceTypeName,
             PreferenceScope preferenceScope,
             int saveLimit,

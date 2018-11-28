@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.*;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
@@ -11,9 +14,16 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,9 +35,10 @@ import java.util.Set;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class LedgerEntryDao extends GenericDao {
 
-    private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED, CONFIRMATION_UPLOAD }
+    public enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED, CONFIRMATION_UPLOAD }
 
     public List<LedgerEntry> findAll() {
         return findAll(LedgerEntry.class);
@@ -109,10 +120,9 @@ public class LedgerEntryDao extends GenericDao {
         } catch (NoResultException ignored) {
             return Collections.emptySet();
         }
-
     }
 
-    private Set<LedgerEntry> findByOrderList(@Nonnull List<String> productOrderBusinessKeys, BillingSessionInclusion inclusion) {
+    public Set<LedgerEntry> findByOrderList(@Nonnull List<String> productOrderBusinessKeys, BillingSessionInclusion inclusion) {
         return findByOrderList(null, productOrderBusinessKeys, inclusion);
     }
 

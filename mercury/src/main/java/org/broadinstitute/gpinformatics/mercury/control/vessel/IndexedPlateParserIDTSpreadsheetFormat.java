@@ -21,7 +21,7 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
 
     private final String technology = MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.getTechnology();
 
-    abstract class ColumnParser {
+    abstract static class ColumnParser {
         public abstract int getColumnIndex();
         public abstract String getColumnName();
 
@@ -31,43 +31,47 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
                 throw new RuntimeException(getColumnName() + " is empty in row " + row.getRowNum());
             }
 
-            switch (cell.getCellType()) {
-                case Cell.CELL_TYPE_NUMERIC :
-                    double value = cell.getNumericCellValue();
-                    if (value % 1 == 0) {
-                        // getNumericCellValue() returns a primitive double. If it's not
-                        // actually a double -- i.e., if it could be represented as an
-                        // int -- return just the integer part.
-                        return String.valueOf((long) value);
-                    } else {
-                        return String.valueOf(value);
-                    }
+            return IndexedPlateParserIDTSpreadsheetFormat.getString(cell);
+        }
+    }
 
-                case Cell.CELL_TYPE_STRING :
-                    return cell.getStringCellValue();
+    private static String getString(Cell cell) {
+        switch (cell.getCellType()) {
+            case Cell.CELL_TYPE_NUMERIC :
+                double value = cell.getNumericCellValue();
+                if (value % 1 == 0) {
+                    // getNumericCellValue() returns a primitive double. If it's not
+                    // actually a double -- i.e., if it could be represented as an
+                    // int -- return just the integer part.
+                    return String.valueOf((long) value);
+                } else {
+                    return String.valueOf(value);
+                }
 
-                case Cell.CELL_TYPE_FORMULA :
-                    throw new IllegalArgumentException(
-                            "The cell in column " + (cell.getColumnIndex() + 1) +
-                                    ", row " + (cell.getRowIndex() + 1) +
-                                    "is a formula. Please expand the formulas to literal values and try again.");
+            case Cell.CELL_TYPE_STRING :
+                return cell.getStringCellValue();
 
-                case Cell.CELL_TYPE_BLANK :
-                    throw new IllegalArgumentException(
-                            "The cell in column " + (cell.getColumnIndex() + 1) +
-                                    ", row " + (cell.getRowIndex() + 1) + "is blank.");
+            case Cell.CELL_TYPE_FORMULA :
+                throw new IllegalArgumentException(
+                        "The cell in column " + (cell.getColumnIndex() + 1) +
+                                ", row " + (cell.getRowIndex() + 1) +
+                                "is a formula. Please expand the formulas to literal values and try again.");
 
-                case Cell.CELL_TYPE_BOOLEAN :
-                    return cell.getBooleanCellValue() ? "true" : "false";
+            case Cell.CELL_TYPE_BLANK :
+                throw new IllegalArgumentException(
+                        "The cell in column " + (cell.getColumnIndex() + 1) +
+                                ", row " + (cell.getRowIndex() + 1) + "is blank.");
 
-                case Cell.CELL_TYPE_ERROR :
-                    throw new IllegalStateException(
-                            "The sheet has an error in column " + (cell.getColumnIndex() + 1) +
-                                    ", row " + (cell.getRowIndex() + 1));
+            case Cell.CELL_TYPE_BOOLEAN :
+                return cell.getBooleanCellValue() ? "true" : "false";
 
-                default :
-                    throw new IllegalStateException("An unknown cell type was passed to the parser.");
-            }
+            case Cell.CELL_TYPE_ERROR :
+                throw new IllegalStateException(
+                        "The sheet has an error in column " + (cell.getColumnIndex() + 1) +
+                                ", row " + (cell.getRowIndex() + 1));
+
+            default :
+                throw new IllegalStateException("An unknown cell type was passed to the parser.");
         }
     }
 

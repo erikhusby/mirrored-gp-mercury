@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.FingerprintingPla
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ControlReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -180,12 +181,16 @@ public class FingerprintingSpreadsheetActionBeanTest {
             String participantId = row.getCell(0).getStringCellValue();
             if (participantId.startsWith("SM-")) {
                 ++smCount;
+                participantIds.add(participantId);
+            } else if (participantId.startsWith("negative")) {
+                Assert.fail("Negative controls shouldn't be put into participant sheet");
+            } else if (participantId.startsWith("NA12878")) {
+                Assert.fail("Positive controls shouldn't be put into participant sheet");
             }
-            participantIds.add(participantId);
             Assert.assertEquals(row.getCell(1).getStringCellValue(), "0");
         }
-        Assert.assertTrue(participantIds.contains(FingerprintingPlateFactory.NEGATIVE_CONTROL));
-        Assert.assertTrue(participantIds.contains(FingerprintingPlateFactory.NA12878));
+        Assert.assertFalse(participantIds.contains(FingerprintingPlateFactory.NEGATIVE_CONTROL));
+        Assert.assertFalse(participantIds.contains(FingerprintingPlateFactory.NA12878));
         Assert.assertEquals(90, smCount);
 
         // Checks the data on the second sheet against the tubes in rearray rack.
@@ -205,7 +210,9 @@ public class FingerprintingSpreadsheetActionBeanTest {
             String conc = row.getCell(5).getStringCellValue();
 
             // Checks the participantId matches across sheets, and column consistency.
-            Assert.assertEquals(participantId, participantIdsIter.next());
+            if (!participantId.startsWith("negative") && !participantId.startsWith("NA12878")) {
+                Assert.assertEquals(participantId, participantIdsIter.next());
+            }
             Assert.assertEquals(rootId, participantId);
             Assert.assertEquals(sampleId, participantId);
             Assert.assertEquals(volume, "22.2");
@@ -216,7 +223,7 @@ public class FingerprintingSpreadsheetActionBeanTest {
             if (tube.getLabel().substring(0, 5).endsWith("3")) {
                 Assert.assertEquals(FingerprintingPlateFactory.NA12878, participantId);
                 Assert.assertEquals(0, tube.getMetrics().size());
-                Assert.assertEquals(conc, "0");
+                Assert.assertEquals(conc, "20");
             } else {
                 Assert.assertEquals(tube.getMetrics().size(), 1);
                 Assert.assertEquals(tube.getMetrics().iterator().next().getValue().toString(), conc);
@@ -231,8 +238,56 @@ public class FingerprintingSpreadsheetActionBeanTest {
 
         // Checks row counts.
         Assert.assertFalse(participantIdsIter.hasNext());
-        Assert.assertEquals(participantIds.size(), FULL_RACK_COUNT);
+        Assert.assertEquals(participantIds.size(), 90);
 
+        EasyMock.verify(controlDao);
+    }
+
+    public void testRework() throws Exception {
+        EasyMock.expect(controlDao.findByCollaboratorParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
+        EasyMock.replay(controlDao);
+
+        final int fullPlateSampleCount = 96;
+        final int halfPlateSampleCount = 48;
+        // Makes a half-sized fp plate from the last half of the full plate.
+        List<VesselPosition> positions = new ArrayList<>(rearrayMap.keySet());
+        for (VesselPosition position : positions.subList(halfPlateSampleCount, fullPlateSampleCount)) {
+            rearrayMap.remove(position);
+        }
+        Assert.assertEquals(rearrayMap.size(), halfPlateSampleCount);
+        rearrayRack = new TubeFormation(rearrayMap, Matrix96);
+        fpPlate = new StaticPlate("fpPlate48", Eppendorf96);
+        LabEvent setupEvent = doSectionTransfer(LabEventType.FINGERPRINTING_PLATE_SETUP, rearrayRack, fpPlate);
+        LabEvent pondRegEvent = doSectionTransfer(LabEventType.POND_REGISTRATION, rearrayRack, fpPlate);
+        LabEvent reworkEvent = doSectionTransfer(LabEventType.FINGERPRINTING_PLATE_SETUP, rearrayRack, fpPlate);
+        // Provide no volume information as lab event metadata.
+
+        actionBean.setStaticPlate(fpPlate);
+        actionBean.barcodeSubmit();
+
+        Assert.assertEquals(actionBean.getErrorMessages().size(), 0, StringUtils.join(actionBean.getErrorMessages(), "; "));
+        Assert.assertNotNull(actionBean.getWorkbook());
+
+        // 48 sample rows in the spreadsheet.
+        int rowCount = 0;
+        for (Row row : actionBean.getWorkbook().getSheet("Participants")) {
+            // Skips the header row and last row that has nulls.
+            if (row.getCell(0) == null || row.getCell(0).getStringCellValue().startsWith("Participant")) {
+                continue;
+            }
+            String participantId = row.getCell(0).getStringCellValue();
+            if (participantId.startsWith("SM-")) {
+                Assert.fail("Reworked samples shouldn't be put into participant sheet");
+            } else if (participantId.startsWith("negative")) {
+                Assert.fail("Negative controls shouldn't be put into participant sheet");
+            } else if (participantId.startsWith("NA12878")) {
+                Assert.fail("Positive controls shouldn't be put into participant sheet");
+            } else {
+                rowCount++;
+            }
+        }
+        // Reworks, NA12878, and negative controls should be excluded which is the whole set after pond transfer
+        Assert.assertEquals(rowCount, 0);
         EasyMock.verify(controlDao);
     }
 
