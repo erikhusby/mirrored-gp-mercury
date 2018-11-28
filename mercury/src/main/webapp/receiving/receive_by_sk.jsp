@@ -51,7 +51,7 @@
             <stripes:form beanclass="${actionBean.class.name}"
                           id="showScanForm" class="form-horizontal">
                 <stripes:hidden name="rackBarcode" value="${actionBean.rackBarcode}"/>
-                <stripes:hidden name="isPlate" value="${actionBean.sampleKitInfo.isPlate()}"/>
+                <stripes:hidden name="isPlate" value="${actionBean.sampleKitInfo.plate}"/>
                 <table id="samplesTable" class="sample-checkbox table simple">
                     <thead>
                     <tr>
@@ -82,6 +82,7 @@
                     </c:forEach>
                     </tbody>
                 </table>
+                <br/>
                 <stripes:submit id="receiveToBsp" name="receiveBySkToBsp" value="Receive To BSP"
                                 class="btn btn-primary"/>
             </stripes:form>
