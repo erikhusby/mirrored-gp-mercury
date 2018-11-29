@@ -17,6 +17,7 @@
                         {"bSortable": true} ,
                         {"bSortable": true} ,
                         {"bSortable": true} ,
+                        {"bSortable": true},
                         {"bSortable": true}
                     ]
                 });
