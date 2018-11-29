@@ -554,6 +554,9 @@ public class LabEventFactory implements Serializable {
 
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
             trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
+            findTubeFormation(plateCherryPickEvent.getSourcePositionMap(), mapBarcodeToVessel);
+            findTubeFormation(plateCherryPickEvent.getPositionMap(), mapBarcodeToVessel);
+
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
 
@@ -601,7 +604,6 @@ public class LabEventFactory implements Serializable {
                 }
                 positionBarcodeList.add(new ImmutablePair<>(vesselPosition, receptacleType.getBarcode()));
             }
-            barcodes.add(TubeFormation.makeDigest(positionBarcodeList));
         }
     }
 
@@ -704,7 +706,7 @@ public class LabEventFactory implements Serializable {
         Map<String, TubeFormation> mapBarcodeToTubeFormation = new HashMap<>();
         for (PlateType plateType : platesJaxb) {
             if (plateType.getPhysType().equals(PHYS_TYPE_TUBE_RACK) ||
-                RackOfTubes.RackType.getByName(plateType.getPhysType()) != null) {
+                    RackOfTubes.RackType.getByName(plateType.getPhysType()) != null) {
                 List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
                 boolean found = false;
                 for (PositionMapType positionMapType : positionMaps) {
@@ -998,8 +1000,9 @@ public class LabEventFactory implements Serializable {
         } else {
             TubeFormation tubeFormation = fetchTubeFormation(plateEventType.getPositionMap());
             RackOfTubes rackOfTubes = rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode());
-            labEvent = buildFromBettaLimsRackEventDbFree(plateEventType, tubeFormation, findTubesByBarcodes(
-                    plateEventType.getPositionMap()), rackOfTubes);
+            Map<String, BarcodedTube> mapBarcodeToVessel = findTubesByBarcodes(plateEventType.getPositionMap());
+            trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
+            labEvent = buildFromBettaLimsRackEventDbFree(plateEventType, tubeFormation, mapBarcodeToVessel, rackOfTubes);
         }
         labEvent.setStationEventType(plateEventType);
         return labEvent;
@@ -1015,7 +1018,7 @@ public class LabEventFactory implements Serializable {
      */
     public LabEvent buildFromBettaLims(PlateTransferEventType plateTransferEvent) {
         if (plateTransferEvent.getSourcePlate().getPhysType().equals(PHYS_TYPE_STRIP_TUBE) &&
-            plateTransferEvent.getPlate().getPhysType().equals(PHYS_TYPE_FLOWCELL)) {
+                plateTransferEvent.getPlate().getPhysType().equals(PHYS_TYPE_FLOWCELL)) {
             // todo jmt create if null
             StripTube stripTube = stripTubeDao.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
             IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(
@@ -1026,20 +1029,39 @@ public class LabEventFactory implements Serializable {
         List<String> barcodes = new ArrayList<>();
         barcodes.add(plateTransferEvent.getSourcePlate().getBarcode());
         if (plateTransferEvent.getSourcePositionMap() != null &&
-            expectBarcodedReceptacleTypes(plateTransferEvent.getSourcePlate())) {
+                expectBarcodedReceptacleTypes(plateTransferEvent.getSourcePlate())) {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getSourcePositionMap()));
         }
         barcodes.add(plateTransferEvent.getPlate().getBarcode());
         if (plateTransferEvent.getPositionMap() != null &&
-            expectBarcodedReceptacleTypes(plateTransferEvent.getPlate())) {
+                expectBarcodedReceptacleTypes(plateTransferEvent.getPlate())) {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
 
+        if (plateTransferEvent.getSourcePositionMap() != null &&
+                expectBarcodedReceptacleTypes(plateTransferEvent.getSourcePlate())) {
+            findTubeFormation(Collections.singletonList(plateTransferEvent.getSourcePositionMap()), mapBarcodeToVessel);
+        }
+        if (plateTransferEvent.getPositionMap() != null &&
+                expectBarcodedReceptacleTypes(plateTransferEvent.getPlate())) {
+            findTubeFormation(Collections.singletonList(plateTransferEvent.getPositionMap()), mapBarcodeToVessel);
+        }
+
         LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
         labEvent.setStationEventType(plateTransferEvent);
         return labEvent;
+    }
+
+    private void findTubeFormation(List<PositionMapType> positionMaps, Map<String, LabVessel> mapBarcodeToVessel) {
+        for (PositionMapType positionMap : positionMaps) {
+            for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
+                receptacleType.getBarcode();
+                receptacleType.getPosition();
+            }
+        }
+        TubeFormation.makeDigest(positionBarcodeList);
     }
 
     /**
