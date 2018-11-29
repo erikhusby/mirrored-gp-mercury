@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
@@ -89,7 +88,6 @@ public class SampleInstanceEjb {
     public static final String PREXISTING_VALUES =
             "Row #%d values for %s already exist in Mercury; set the Overwrite checkbox to re-upload.";
     public static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
-    public static final String UNKNOWN_COND = "Row #%d each Condition must be a Jira ticket id for a sub-task of %s.";
     /**
      * A string of the available sequencer model names.
      */
@@ -253,14 +251,6 @@ public class SampleInstanceEjb {
                     reagentDesignDao.findByBusinessKey(dto.getBait()) :
                     (StringUtils.isNotBlank(dto.getCat()) ?
                             reagentDesignDao.findByBusinessKey(dto.getCat()) : null));
-            if (StringUtils.isNotBlank(dto.getExperiment())) {
-                try {
-                    JiraIssue jiraIssue = jiraService.getIssueInfo(dto.getExperiment(), (String[]) null);
-                    processor.getJiraIssueMap().put(dto.getExperiment(), jiraIssue);
-                } catch (Exception e) {
-                    jiraException = e;
-                }
-            }
 
             if (StringUtils.isNotBlank(dto.getReferenceSequenceName())) {
                 ReferenceSequence referenceSequence = dto.getReferenceSequenceName().contains("|") ?
@@ -462,8 +452,6 @@ public class SampleInstanceEjb {
         private String collaboratorParticipantId;
         private String collaboratorSampleId;
         private BigDecimal concentration;
-        private List<String> conditions;
-        private String experiment;
         private String insertSize;
         private String irbNumber;
         private String libraryName;
@@ -569,22 +557,6 @@ public class SampleInstanceEjb {
 
         public void setConcentration(BigDecimal concentration) {
             this.concentration = concentration;
-        }
-
-        public List<String> getConditions() {
-            return conditions;
-        }
-
-        public void setConditions(List<String> conditions) {
-            this.conditions = conditions;
-        }
-
-        public String getExperiment() {
-            return experiment;
-        }
-
-        public void setExperiment(String experiment) {
-            this.experiment = experiment;
         }
 
         public String getInsertSize() {

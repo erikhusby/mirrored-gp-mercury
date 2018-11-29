@@ -32,9 +32,6 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     private List<String> cats = new ArrayList<>();
     private List<String> collaboratorParticipantIds = new ArrayList<>();
     private List<String> collaboratorSampleIds = new ArrayList<>();
-    // conditions is a per-row list of one or more DEV ticket ids.
-    private List<List<String>> conditions = new ArrayList<>();
-    private List<String> experiments = new ArrayList<>();
     private List<String> fragmentSizes = new ArrayList<>();
     private List<String> libraryNames = new ArrayList<>();
     private List<String> lsids = new ArrayList<>();
@@ -64,8 +61,6 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         MOLECULAR_INDEXING_SCHEME("Molecular Indexing Scheme", DataPresence.REQUIRED),
         BAIT("Bait", DataPresence.OPTIONAL),
         CAT("CAT", DataPresence.OPTIONAL),
-        EXPERIMENT("Experiment", DataPresence.REQUIRED),
-        CONDITIONS("Conditions", DataPresence.REQUIRED),
         COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", DataPresence.OPTIONAL),
         COLLABORATOR_PARTICIPANT_ID("Collaborator Participant Id", DataPresence.OPTIONAL),
         BROAD_PARTICIPANT_ID("Broad Participant Id", DataPresence.OPTIONAL),
@@ -133,8 +128,6 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         cats.add(getFromRow(dataRow, Headers.CAT));
         collaboratorParticipantIds.add(getFromRow(dataRow, Headers.COLLABORATOR_PARTICIPANT_ID));
         collaboratorSampleIds.add(getFromRow(dataRow, Headers.COLLABORATOR_SAMPLE_ID));
-        conditions.add(Arrays.asList(StringUtils.stripAll(getFromRow(dataRow, Headers.CONDITIONS).split(","))));
-        experiments.add(getFromRow(dataRow, Headers.EXPERIMENT));
         fragmentSizes.add(getFromRow(dataRow, Headers.FRAGMENT_SIZE));
         libraryNames.add(getFromRow(dataRow, Headers.LIBRARY_NAME));
         lsids.add(getFromRow(dataRow, Headers.LSID));
@@ -167,15 +160,6 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         Set<String> uniqueLibraryNames = new HashSet<>();
         Set<String> uniqueTubeAndMis = new HashSet<>();
         Set<String> uniqueSampleAndMis = new HashSet<>();
-        // Looks up the Jira tickets identified by Experiment and gets the sub-tasks.
-        Multimap<String, String> ticketAndSubtasks = HashMultimap.create();
-        dtos.stream().map(SampleInstanceEjb.RowDto::getExperiment).distinct().filter(s -> StringUtils.isNotBlank(s))
-                .forEach(experiment -> {
-                    JiraIssue jiraIssue = getJiraIssueMap().get(experiment);
-                    if (jiraIssue != null) {
-                        ticketAndSubtasks.putAll(experiment, CollectionUtils.emptyIfNull(jiraIssue.getSubTaskKeys()));
-                    }
-                });
 
         for (SampleInstanceEjb.RowDto dto : dtos) {
             // If the sample appears in multiple spreadsheet rows, the sample metadata values must match the
@@ -261,20 +245,6 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
                         dto.getRootSampleName(), "Mercury");
             }
 
-            // Errors invalid experiment or conditions.
-            if (StringUtils.isNotBlank(dto.getExperiment())) {
-                if (!ticketAndSubtasks.containsKey(dto.getExperiment())) {
-                    messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
-                            Headers.EXPERIMENT.getText(), "JIRA DEV"));
-                } else {
-                    // Conditions must be listed as sub-tasks on the JIRA ticket.
-                    if (!ticketAndSubtasks.get(dto.getExperiment()).containsAll(dto.getConditions())) {
-                        messages.addError(String.format(SampleInstanceEjb.UNKNOWN_COND, dto.getRowNumber(),
-                                dto.getExperiment()));
-                    }
-                }
-            }
-
             if (StringUtils.isNotBlank(dto.getAnalysisTypeName()) &&
                     getAnalysisTypeMap().get(dto.getAnalysisTypeName()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
@@ -291,20 +261,7 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     @Override
     public List<SampleInstanceEntity> makeOrUpdateEntities(List<SampleInstanceEjb.RowDto> dtos) {
         makeTubesAndSamples(dtos);
-        List<SampleInstanceEntity> sampleInstanceEntities = makeSampleInstanceEntities(dtos);
-
-        // Add the SampleInstanceEntitiyTasks.
-        for (SampleInstanceEjb.RowDto dto : dtos) {
-            dto.getSampleInstanceEntity().removeSubTasks();
-            int orderOfCreation = 0;
-            for (String subTask : dto.getConditions()) {
-                SampleInstanceEntityTsk sampleInstanceEntityTsk = new SampleInstanceEntityTsk();
-                sampleInstanceEntityTsk.setSubTask(subTask);
-                sampleInstanceEntityTsk.setOrderOfCreation(orderOfCreation++);
-                dto.getSampleInstanceEntity().addSubTasks(sampleInstanceEntityTsk);
-            }
-        }
-        return sampleInstanceEntities;
+        return makeSampleInstanceEntities(dtos);
     }
 
     @Override
@@ -325,16 +282,6 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     @Override
     public List<String> getCats() {
         return cats;
-    }
-
-    @Override
-    public List<String> getExperiments() {
-        return experiments;
-    }
-
-    @Override
-    public List<List<String>> getConditions() {
-        return conditions;
     }
 
     @Override
