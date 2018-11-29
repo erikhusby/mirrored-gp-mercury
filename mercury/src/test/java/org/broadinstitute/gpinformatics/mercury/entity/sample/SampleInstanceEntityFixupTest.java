@@ -37,25 +37,40 @@ public class SampleInstanceEntityFixupTest extends Arquillian {
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "DEV");
     }
 
-    /** Sets SampleInstanceEntity.experiment to null based on input from a csv file. */
+    /**
+     * Sets SampleInstanceEntity.experiment to null based on input from a csv file, for example:
+     *    SUPPORT-4794 experiment should be null when aggregation particle is given
+     *    11/8/18 14:59,311427562,96plex_1well_32,DEV-8866,DEV-8868
+     *    11/8/18 14:59,311427563,96plex_1well_33,DEV-8866,DEV-8868
+     * The first line is the fixup commentary. Subsequent lines are five fields, comma-delimited, unquoted:
+     * field[0] - (ignored)
+     * field[1] - Tube Barcode
+     * field[2] - Sample Library Name from the Dev Tube upload spreadsheet
+     * field[3] - Experiment from the Dev Tube upload spreadsheet
+     * field[4] - Data Aggregator from the Dev Tube upload spreadsheet
+     */
     @Test(groups = TestGroups.FIXUP, enabled = false)
     public void support4794() throws Exception {
         userBean.loginOSUser();
         String filename = "sampleInstanceEntityDevTags.csv";
 
-        for (String line : IOUtils.readLines(VarioskanParserTest.getTestResource(filename))) {
-            String[] fields = line.split(",");
-            Assert.assertEquals(fields.length, 5);
-        }
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource(filename));
+        String fixupCommentary = lines.get(0);
+        Assert.assertFalse(fixupCommentary.isEmpty());
 
-        Set<String> barcodes = IOUtils.readLines(VarioskanParserTest.getTestResource(filename)).stream().
-                map(line -> line.split(",")[1]).collect(Collectors.toSet());
+        Assert.assertFalse(lines.subList(1, lines.size()).stream().
+                filter(line -> line.split(",").length != 5).
+                findFirst().isPresent(), "Subsequent lines must have five comma delimited, unquoted fields.");
+
+        Set<String> barcodes = lines.subList(1, lines.size()).stream().
+                map(line -> line.split(",")[1]).
+                filter(barcode -> !barcode.isEmpty()).
+                collect(Collectors.toSet());
 
         List<SampleInstanceEntity> sampleInstanceEntities = sampleInstanceEntityDao.findByBarcodes(barcodes);
 
-        for (String line : IOUtils.readLines(VarioskanParserTest.getTestResource(filename))) {
+        for (String line : lines.subList(1, lines.size())) {
             String[] fields = line.split(",");
-            Assert.assertEquals(fields.length, 5);
             boolean found = false;
             for (SampleInstanceEntity sampleInstanceEntity : sampleInstanceEntities) {
                 if (fields[1].equals(sampleInstanceEntity.getLabVessel().getLabel()) &&
@@ -70,8 +85,7 @@ public class SampleInstanceEntityFixupTest extends Arquillian {
             }
             Assert.assertTrue(found, "missing " + line);
         }
-        sampleInstanceEntityDao.persist(new FixupCommentary(
-                "SUPPORT-4794 experiment should be null when aggregation particle is given"));
+        sampleInstanceEntityDao.persist(new FixupCommentary(fixupCommentary));
         sampleInstanceEntityDao.flush();
     }
 }
