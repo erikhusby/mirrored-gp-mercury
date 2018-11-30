@@ -58,7 +58,7 @@
                     <tr>
                         <th width="30px">
                             <input type="checkbox" class="sample-checkAll" title="Check All"/>
-                            <span id="count" class="samples-checkedCount"></span>
+                            <span id="count" class="sample-checkedCount"></span>
                         </th>
                         <th>Sample Info</th>
                         <th>Sample Kit</th>
