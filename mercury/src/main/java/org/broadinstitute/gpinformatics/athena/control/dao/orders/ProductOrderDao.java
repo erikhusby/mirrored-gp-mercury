@@ -14,6 +14,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
@@ -29,6 +31,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
+import javax.persistence.criteria.CollectionJoin;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Fetch;
@@ -69,6 +72,17 @@ public class ProductOrderDao extends GenericDao {
         }
 
         return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR || hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
+    }
+
+    /**
+     * @return all product orders with ORSP having a given identifier
+     */
+    public List<ProductOrder> findOrdersByRegulatoryInfoIdentifier(String identifier) {
+        return findAll(ProductOrder.class, (criteriaQuery, root) -> {
+            CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+            CollectionJoin<ProductOrder, RegulatoryInfo> join = root.join(ProductOrder_.regulatoryInfos);
+            criteriaQuery.where(criteriaBuilder.equal(join.get(RegulatoryInfo_.identifier), identifier));
+        });
     }
 
     /**
