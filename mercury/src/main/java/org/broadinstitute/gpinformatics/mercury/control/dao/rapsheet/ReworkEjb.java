@@ -151,7 +151,8 @@ public class ReworkEjb {
             List<ProductOrderSample> productOrderSamples = new ArrayList<>();
             for (SampleInstanceV2 sampleInstanceV2 : vessel.getSampleInstancesV2()) {
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                    if (productOrderSample.getProductOrder().getOrderStatus().readyForLab()) {
+                    if (productOrderSample.getProductOrder().getOrderStatus().readyForLab() &&
+                        StringUtils.isNotBlank(productOrderSample.getProductOrder().getProduct().getWorkflowName())) {
                         productOrderSamples.add(productOrderSample);
                     }
                 }
@@ -186,7 +187,8 @@ public class ReworkEjb {
         if (bucketCandidates.isEmpty()) {
             Collection<ProductOrderSample> sampleCollection = new ArrayList<>();
             for (ProductOrderSample productOrderSample : productOrderSampleDao.findBySamples(query)) {
-                if (productOrderSample.getProductOrder().getOrderStatus().readyForLab()) {
+                if (productOrderSample.getProductOrder().getOrderStatus().readyForLab() &&
+                    StringUtils.isNotBlank(productOrderSample.getProductOrder().getProduct().getWorkflowName())) {
                     sampleCollection.add(productOrderSample);
                 }
             }
@@ -227,7 +229,8 @@ public class ReworkEjb {
     }
 
     private boolean productOrderSampleCanEnterBucket(ProductOrderSample sample) {
-        if (!sample.getProductOrder().getOrderStatus().readyForLab()) {
+        if (!sample.getProductOrder().getOrderStatus().readyForLab() ||
+            StringUtils.isBlank(sample.getProductOrder().getProduct().getWorkflowName())) {
             return false;
         }
         ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(
