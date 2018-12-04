@@ -4613,7 +4613,7 @@
     <productWorkflowDefs>
         <name>Whole Genome PCR Free HyperPrep</name>
         <productWorkflowDefVersions>
-            <version>1.0</version>
+            <version>1.2</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
             <batchJiraIssueType>HUMAN_PCR_FREE</batchJiraIssueType>
             <effectiveDate>2016-11-21T22:04:23.932-04:00</effectiveDate>
@@ -4686,7 +4686,7 @@
     <productWorkflowDefs>
         <name>Lasso</name>
         <productWorkflowDefVersions>
-            <version>1.0</version>
+            <version>1.1</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
             <batchJiraIssueType>CDNA_LASSO</batchJiraIssueType>
             <effectiveDate>2018-04-10T10:03:24.085-04:00</effectiveDate>
