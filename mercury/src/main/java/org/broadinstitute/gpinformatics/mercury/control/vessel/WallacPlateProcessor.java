@@ -34,12 +34,16 @@ public class WallacPlateProcessor  extends TableProcessor {
     }
 
     @Override
-    public void processHeader(List<String> headers, int row) {
-        this.headers = headers;
+    public void processHeader(List<String> headerNames, int row) {
+        headers = new ArrayList<>();
+        // "Group" header name appears in column A but the values for it are actually found in column B.
+        headers.add(headerNames.get(1));
+        headers.add(headerNames.get(0));
+        headers.addAll(headerNames.subList(2, headerNames.size()));
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String group = dataRow.get(Headers.GROUP.getText());
         String plate = dataRow.get(Headers.PLATE.getText());
         String well = dataRow.get(Headers.WELL.getText());
@@ -54,7 +58,7 @@ public class WallacPlateProcessor  extends TableProcessor {
                 if (plateBarcode != null) {
                     VesselPosition vesselPosition = VesselPosition.getByName(well.trim());
                     if (vesselPosition == null) {
-                        addDataMessage("Failed to find position " + well, dataRowIndex);
+                        addDataMessage("Failed to find position " + well, dataRowNumber);
                     }
                     try {
                         BigDecimal bigDecimal = new BigDecimal(value);
@@ -62,7 +66,7 @@ public class WallacPlateProcessor  extends TableProcessor {
                         plateWellResults.add(
                                 new VarioskanPlateProcessor.PlateWellResult(plateBarcode, vesselPosition, bigDecimal));
                     } catch (NumberFormatException e) {
-                        addDataMessage("Failed to parse number " + value, dataRowIndex);
+                        addDataMessage("Failed to parse number " + value, dataRowNumber);
                     }
                 }
             }
@@ -84,8 +88,7 @@ public class WallacPlateProcessor  extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
-        //Group Header in A1 but type is actually in B column
-        GROUP("", IS_STRING),
+        GROUP("Group", IS_STRING),
         PLATE("Plate", IS_STRING),
         WELL("Wells", IS_STRING),
         VALUE("Sample Conc. Mean");

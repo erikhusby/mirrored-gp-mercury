@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.owasp.encoder.Encode;
 
 import java.math.BigDecimal;
 import java.util.AbstractMap;
@@ -441,6 +442,7 @@ public class LabVesselSearchDefinition {
                 return SearchDefinitionFactory.buildDrillDownLink("", drillDownOption.getTargetEntity(), drillDownOption.getPreferenceScope().name() + "|" + drillDownOption.getPreferenceName() + "|" + drillDownOption.getSearchName(), terms, context);
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerm.setResultParamConfigurationExpression(
             new SearchTerm.Evaluator<ResultParamConfiguration>() {
 
@@ -1888,7 +1890,7 @@ public class LabVesselSearchDefinition {
                 if (entity != null && entity instanceof String) {
                     String str = (String) entity;
                     if (str.contains("[")) {
-                        String containerBarcode = str.substring(str.indexOf("[")+1,str.indexOf("]"));
+                        String containerBarcode = Encode.forHtml(str.substring(str.indexOf("[")+1,str.indexOf("]")));
                         String href = String.format(
                                 "/Mercury/container/container.action?containerBarcode=%s&viewContainerSearch=",
                                 containerBarcode
@@ -1902,6 +1904,7 @@ public class LabVesselSearchDefinition {
                 return null;
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -2219,6 +2222,7 @@ public class LabVesselSearchDefinition {
                 return SearchDefinitionFactory.buildDrillDownLink(barcode.toString(), ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context);
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -2247,6 +2251,7 @@ public class LabVesselSearchDefinition {
                 return SearchDefinitionFactory.buildDrillDownLink(barcode, ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context);
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -2304,6 +2309,7 @@ public class LabVesselSearchDefinition {
                 return results.toString();
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();

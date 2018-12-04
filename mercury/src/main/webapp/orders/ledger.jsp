@@ -217,7 +217,6 @@
                  * they are filtered out of the DOM when the page loads
                  */
                 'bStateSave': false,
-                "iDisplayLength": 50,
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
                     {'bVisible': false},                                                    // 1: search text
@@ -249,6 +248,8 @@
                         }).add("Please be aware that the user interface is less responsive when large amounts of data are displayed. (clicking things takes longer)", 'slowMessage');
 
                     }
+                    // re-build datePickers
+                    setupDatePickers();
                 },
                 fnInitComplete: function(){
                     /*
@@ -370,32 +371,37 @@
              */
             $j('div.onRisk').popover();
 
+            var $dateCompleteInputs = $ledger.find("input.dateComplete");
+
             /*
              * Set up date pickers for date complete.
              */
-            var $dateCompleteInputs = $ledger.find("input.dateComplete");
-            $dateCompleteInputs.on("click", function(){
-                var $thisInput = $j(this);
-                function destroyMe(){
-                    $j(this).datepicker("destroy");
+            function setupDatePickers() {
+                // Re-find dateCompleteInputs in case this method is called after a page change.
+                $dateCompleteInputs = $ledger.find("input.dateComplete");
+                $dateCompleteInputs.on("click", function(){
+                    var $thisInput = $j(this);
+                    function destroyMe(){
+                        $j(this).datepicker("destroy");
+                    }
+                    $thisInput.datepicker({ onClose: destroyMe, dateFormat: 'M d, yy', maxDate: 0}).datepicker('refresh');
+                    $thisInput.datepicker("show");
+                });
+                // Update display styles for all date complete inputs when the page loads.
+                for (var i = 0; i < $dateCompleteInputs.length; i++) {
+                    updateDateCompleteValidation($dateCompleteInputs.eq(i));
                 }
-                $thisInput.datepicker({ onClose: destroyMe, dateFormat: 'M d, yy', maxDate: 0}).datepicker('refresh');
-                $thisInput.datepicker("show");
-            });
-            // Update display styles for all date complete inputs when the page loads.
-            for (var i = 0; i < $dateCompleteInputs.length; i++) {
-                updateDateCompleteValidation($dateCompleteInputs.eq(i));
-            }
 
-            // Update display styles in response to change event fired after auto-fill.
-            $ledgerQuantities.on('change', function(event) {
-                updateUnbilledStatus($j(event.target), $dateCompleteInputs);
-                updateSubmitButton();
-            });
+                // Update display styles in response to change event fired after auto-fill.
+                $ledgerQuantities.on('change', function(event) {
+                    updateUnbilledStatus($j(event.target), $dateCompleteInputs);
+                    updateSubmitButton();
+                });
 
-            // Update display styles for all quantities when the page loads.
-            for (var i = 0; i < $ledgerQuantities.length; i++) {
-                updateUnbilledStatus($ledgerQuantities.eq(i), $dateCompleteInputs);
+                // Update display styles for all quantities when the page loads.
+                for (var i = 0; i < $ledgerQuantities.length; i++) {
+                    updateUnbilledStatus($ledgerQuantities.eq(i), $dateCompleteInputs);
+                }
             }
 
             function toggleHidden(row) {

@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabEventSearchDefinition;
@@ -18,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.ResultParamsActionBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -52,6 +56,18 @@ public class ConfigurableListContainerTest extends Arquillian {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private JiraConfig jiraConfig;
+
+    @Inject
+    private PriceListCache priceListCache;
+
+    @Inject
+    private QuoteLink quoteLink;
 
     @Inject
     private ConfigurableListFactory configurableListFactory;
@@ -262,7 +278,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(searchInstance,configurableSearchDef, null, 1, null, "ASC", "LabVessel");
 
         ConfigurableList.ResultList resultList = firstPageResults.getResultList();
-        
+
         /* Expected values:
          * 000003072303 1109099877 (shearing target)
          * 0175488349   1109099877 (sample import)
@@ -302,7 +318,10 @@ public class ConfigurableListContainerTest extends Arquillian {
         evalContext.setBspUserList( bspUserList );
         evalContext.setPagination(new PaginationUtil.Pagination(80));
         evalContext.setOptionValueDao(constrainedValueDao);
-
+        evalContext.setUserBean(userBean);
+        evalContext.setJiraConfig(jiraConfig);
+        evalContext.setPriceListCache(priceListCache);
+        evalContext.setQuoteLink(quoteLink);
         return evalContext;
     }
 

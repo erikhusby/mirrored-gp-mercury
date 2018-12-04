@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
@@ -765,8 +764,7 @@ todo jmt adder methods
      * step. Takes into account that the optional steps after a bucket may be skipped.
      */
     public static void setupEventTypesThatCanFollowBucket(WorkflowConfig workflowConfig) {
-        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-            ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+        for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
             ProductWorkflowDefVersion effectiveWorkflow = workflowDef.getEffectiveVersion();
             boolean collectEvents = false;
             for (WorkflowProcessDef processDef : effectiveWorkflow.getWorkflowProcessDefs()) {

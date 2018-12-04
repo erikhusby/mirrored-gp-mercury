@@ -726,7 +726,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     public boolean isRegulatoryInfoEditAllowed(RegulatoryInfo regulatoryInfo) {
         OrspProject orspProject = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
-        return !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
+        return !getUserBean().isViewer() && !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
     }
 
     /**

@@ -155,7 +155,7 @@ public class ZimsIlluminaRunFactory {
                 BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                 if (singleBucketEntry != null) {
                     if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
-                        Aggregation.DATA_TYPE_WGS)) {
+                            Aggregation.DATA_TYPE_WGS)) {
                         mixedLaneOk = true;
                         break;
                     }
@@ -365,47 +365,45 @@ public class ZimsIlluminaRunFactory {
                 lcSet = sampleInstance.getSingleBatch().getBatchName();
             }
 
-            // This loop goes through all the reagents and takes the last bait name (under the assumption that
-            // the lab would only ever have one for this sample instance. All cat names are collected and the
-            // last indexing scheme reagent.
-            MolecularIndexingScheme indexingSchemeEntity = null;
-            String baitName = null;
-            List<String> catNames = new ArrayList<>();
+            // Finds molecular barcode, bait, and CAT. There should be only one per sample instance but
+            // if multiple are found, takes the last one.
+            MolecularIndexingScheme indexingSchemeEntity = sampleInstance.getMolecularIndexingScheme();
+            String baitName = sampleInstance.getBaitName();
+            List<String> catNames = new ArrayList<String>() {{
+                if (sampleInstance.getCatName() != null) {
+                    add(sampleInstance.getCatName());
+                }
+            }};
 
-            //If this is an uploaded pooled tube we already have the reagent design
-            if(!sampleInstance.getReagentsDesigns().isEmpty())            {
-                for (ReagentDesign reagentDesign : sampleInstance.getReagentsDesigns()) {
-                    indexingSchemeEntity = sampleInstance.getMolecularIndexingScheme();
-                    ReagentDesign.ReagentType reagentType = reagentDesign.getReagentType();
-                        if (reagentType == ReagentDesign.ReagentType.BAIT) {
-                            baitName = reagentDesign.getDesignName();
-                        } else if (reagentType == ReagentDesign.ReagentType.CAT) {
-                            catNames.add(reagentDesign.getDesignName());
-                        }
-                    }
+            for (ReagentDesign reagentDesign : sampleInstance.getReagentsDesigns()) {
+                ReagentDesign.ReagentType reagentType = reagentDesign.getReagentType();
+                if (reagentType == ReagentDesign.ReagentType.BAIT) {
+                    baitName = reagentDesign.getDesignName();
+                } else if (reagentType == ReagentDesign.ReagentType.CAT) {
+                    catNames.add(reagentDesign.getDesignName());
+                }
             }
-            else {
-                for (Reagent reagent : sampleInstance.getReagents()) {
-                    if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                        indexingSchemeEntity =
-                                OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).getMolecularIndexingScheme();
-                    } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
-                        DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
-                        ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
-                        if (reagentType == ReagentDesign.ReagentType.BAIT) {
-                            baitName = designedReagent.getReagentDesign().getDesignName();
-                        } else if (reagentType == ReagentDesign.ReagentType.CAT) {
-                            catNames.add(designedReagent.getReagentDesign().getDesignName());
-                        }
+
+            for (Reagent reagent : sampleInstance.getReagents()) {
+                if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                    indexingSchemeEntity = OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).
+                            getMolecularIndexingScheme();
+                } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                    DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
+                    ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
+                    if (reagentType == ReagentDesign.ReagentType.BAIT) {
+                        baitName = designedReagent.getReagentDesign().getDesignName();
+                    } else if (reagentType == ReagentDesign.ReagentType.CAT) {
+                        catNames.add(designedReagent.getReagentDesign().getDesignName());
                     }
                 }
             }
+
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto = null;
             if (indexingSchemeEntity != null) {
                 Map<IndexPosition, String> positionSequenceMap = new HashMap<>();
                 Set<Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex>> entries =
                         indexingSchemeEntity.getIndexes().entrySet();
-
                 for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexEntry : entries) {
                     String indexName = indexEntry.getKey().toString();
                     positionSequenceMap.put(
@@ -548,18 +546,32 @@ public class ZimsIlluminaRunFactory {
         // default to the passed in bait name, but override if there is product specified version.
         String bait = baitName;
 
-        // These items are pulled off the project or product.
+        // These items are pulled off the project, product, or SampleInstanceEntity.
         String aligner = null;
-        boolean analyzeUmi = false;
-        String aggregationParticle;
+        Boolean analyzeUmi = sampleInstanceDto.sampleInstance.getUmisPresent();
+        if (sampleInstanceDto.sampleInstance.getAnalysisType() != null) {
+            analysisType = sampleInstanceDto.sampleInstance.getAnalysisType().getBusinessKey();
+        }
+
+        // insert size is a  range consisting of two integers with a hyphen in between, e.g. "225-350".
+        expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
+        String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
+         if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
+            referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();
+            referenceSequenceVersion = sampleInstanceDto.sampleInstance.getReferenceSequence().getVersion();
+        }
+
         if (productOrder != null) {
-            // Product stuff.
             Product product = productOrder.getProduct();
-            if (product.getInsertSize() != null) {
+            if (StringUtils.isBlank(expectedInsertSize) && product.getInsertSize() != null) {
                 expectedInsertSize = product.getInsertSize().toString();
             }
-            analysisType = product.getAnalysisTypeKey();
-
+            if (analyzeUmi == null) {
+                analyzeUmi = productOrder.getAnalyzeUmiOverride();
+            }
+            if (analysisType == null) {
+                analysisType = product.getAnalysisTypeKey();
+            }
             // If there was no bait on the actual samples, use the one defined on the product or pdo if unlocked.
             if (bait == null) {
                 bait = productOrder.getReagentDesignKey();
@@ -572,17 +584,15 @@ public class ZimsIlluminaRunFactory {
                 aligner = null;
             }
             // If there is a reference sequence value on the project, then populate the name and version.
-            if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
+            if (StringUtils.isBlank(referenceSequence) && !StringUtils.isBlank(project.getReferenceSequenceKey())) {
                 String[] referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
                 referenceSequence = referenceSequenceValues[0];
                 referenceSequenceVersion = referenceSequenceValues[1];
             }
-            if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
-                referenceSequence = null;
-                referenceSequenceVersion = null;
-            }
-
-            analyzeUmi = productOrder.getAnalyzeUmiOverride();
+        }
+        if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
+            referenceSequence = null;
+            referenceSequenceVersion = null;
         }
 
         List<SubmissionMetadata> submissionMetadataList = new ArrayList<>();
@@ -594,7 +604,6 @@ public class ZimsIlluminaRunFactory {
                 submissionMetadataList.add(metadata);
             }
         }
-        aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
 
         LibraryBean libraryBean = new LibraryBean(
                 library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
@@ -602,8 +611,8 @@ public class ZimsIlluminaRunFactory {
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
-                metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList, analyzeUmi,
-                aggregationParticle);
+                metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList,
+                Boolean.TRUE.equals(analyzeUmi), aggregationParticle);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }

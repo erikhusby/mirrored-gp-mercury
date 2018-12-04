@@ -62,7 +62,7 @@ public class PlateMetadataImportProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex, boolean requiredValuesPresent) {
         MessageCollection messageCollection = new MessageCollection();
         if (validateRow(dataRow, dataRowIndex)) {
             RowMetadata manifestRecord = Headers.toMetadata(dataRow, messageCollection);

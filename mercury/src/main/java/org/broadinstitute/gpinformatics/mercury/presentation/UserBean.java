@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -87,10 +88,10 @@ public class UserBean implements Serializable {
 
         /** The CSS class used to display the status text. */
         private final String cssClass;
-        
+
         /** A short message used to show the status of this server in a tooltip. */
         private final String statusFormat;
-        
+
         /** A longer message used to show the status of this server. */
         private final String messageFormat;
 
@@ -187,6 +188,14 @@ public class UserBean implements Serializable {
         loginDeveloper("QADudeTest");
     }
 
+    public void loginViewOnlyUser() {
+        loginVisitor("QAVisitor", Role.Viewer);
+    }
+
+    public void loginFinanceUser() {
+        loginVisitor("QAFinance", Role.FinanceViewer);
+    }
+
     /**
      * Logs in as the current OS user.
      * ONLY CALL FROM FIXUP TESTS
@@ -202,6 +211,11 @@ public class UserBean implements Serializable {
     private void loginDeveloper(String user) {
         login(user);
         roles.add(Role.Developer);
+    }
+
+    private void loginVisitor(String user, Role viewer) {
+        login(user);
+        roles.add(viewer);
     }
 
     public void login(String user) {
@@ -223,6 +237,9 @@ public class UserBean implements Serializable {
             if (request.isUserInRole(role.name) || request.isUserInRole(CRSP_ROLE_PREFIX + role.name)) {
                 roles.add(role);
             }
+        }
+        if(CollectionUtils.isEmpty(roles)) {
+            roles.add(Role.Viewer);
         }
     }
 
@@ -304,6 +321,10 @@ public class UserBean implements Serializable {
 
     public boolean isGPPMUser() {
         return roles.contains(Role.GPProjectManager);
+    }
+
+    public boolean isViewer() {
+        return roles.contains(Role.Viewer) || roles.contains(Role.FinanceViewer);
     }
 
     public String getRolesString() {

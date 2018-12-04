@@ -405,23 +405,16 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Well A01, Lane 3, Region 6 all might
-     * be considered a labeled sub-section
-     * of a lab vessel.  Labels are GUIDs
-     * for LabVessels; no two LabVessels
-     * may share this id.  It's primarily the
-     * barcode on the piece of plastic.
+     * Label is typically the barcode of a lab vessel and must be unique in Mercury.
      */
     public String getLabel() {
         return label;
     }
 
     /**
-     * This is used only for fixups.
-     *
-     * @param label barcode
+     * Warning this method also changes the equals and hashcode of this lab vessel entity.
      */
-    void setLabel(String label) {
+    public void setLabel(String label) {
         this.label = label;
     }
 

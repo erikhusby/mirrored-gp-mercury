@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.owasp.encoder.Encode;
 import org.w3c.dom.Document;
 
 import javax.annotation.Nonnull;
@@ -314,10 +315,10 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
-                throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
+                throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
             }
         } catch (UniformInterfaceException e) {
-            throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
+            throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
         } catch (ClientHandlerException e) {
             throw new QuoteServerException(String.format(COMMUNICATION_ERROR, url, e.getLocalizedMessage()));
         } catch (UnsupportedEncodingException e) {
