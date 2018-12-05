@@ -109,11 +109,20 @@ function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
  *
  * @param oTable
  * @param tableID
+ * @param additionalOptionMap map of new option to create:
+ *      var additionalOptionMap = {
+            value: "theValue",
+            text: "Something to select",
+            searchIndex: 1
+        }
  */
-function includeAdvancedFilter(oTable, tableID) {
+function includeAdvancedFilter(oTable, tableID, additionalOptionMap) {
     $j(tableID + "_filter").append(filterDropdownHtml);
+    if (additionalOptionMap != undefined) {
+        $j(tableID + "_filter").find(".filterDropdown").append("<option value='" + additionalOptionMap.value + "'>" + additionalOptionMap.text + "</option>");
+    }
     $j(tableID + "_filter").find(".filterDropdown").change(function() {
-        chooseFilterForData(oTable);
+        chooseFilterForData(oTable, additionalOptionMap);
     });
     findFilterTextInput(oTable).focusout(function () {
         var filterTextInput = oTable.fnSettings().oPreviousSearch;
@@ -121,7 +130,6 @@ function includeAdvancedFilter(oTable, tableID) {
             oTable.fnFilterClear();
         }
     });
-
 
     $j(".dataTables_filter").find("input[type='text'],input[type='search']").keyup();
 }
@@ -139,33 +147,43 @@ function findFilterTextInput(oTable) {
  *
  * @param oTable
  */
-function chooseFilterForData(oTable) {
+function chooseFilterForData(oTable, additionalOptionMap) {
     var filterWrapperSelector = findDataTableWrapper(oTable);
     var filterTextInput = findFilterTextInput(oTable);
     filterTextInput.unbind('keyup');
+    var hasAdditionalOption = additionalOptionMap != undefined
+        && additionalOptionMap.value != undefined
+        && additionalOptionMap.searchIndex != undefined;
+
     filterTextInput.keyup(function () {
         var tab = RegExp("\\t", "g");
         var useOr = false;
-        if ($j(filterWrapperSelector).find(".filterDropdown").val() == "any") {
+        var useAdditionalOption=false;
+
+        var selectedOption = $j(filterWrapperSelector).find(".filterDropdown").val();
+        if (selectedOption === "any") {
             useOr = true;
+        }else {
+            if (hasAdditionalOption && selectedOption === additionalOptionMap.value) {
+                useAdditionalOption = true;
+            }
         }
         var filterInput = filterTextInput.val().replace(tab, " ");
-        var searchRegex = ".";
-        if (useOr) {
-            // OR
-            if (!isBlank(filterInput)) {
-                searchRegex = "(" + filterInput.trim().split(" ").join("+|") + "+)";
-            }
-            oTable.fnFilter( searchRegex, null, true, false );
-        }else {
-            // AND
-            if (!isBlank(filterInput)) {
+        oTable.fnFilterClear(oTable.fnSettings());
+        if (!isBlank(filterInput)) {
+            var searchRegex = ".";
+            if (useOr) {
+                searchRegex = "(" + filterInput.trim().split(/\s+/).join(".*|") + ".*)";
+                oTable.fnFilter(searchRegex, null, true, false);
+            } else if (useAdditionalOption) {
+                searchRegex = "(^" + filterInput.trim().split(/\s+/).join("$|^") + "$)";
+                oTable.fnFilter(searchRegex, additionalOptionMap.searchIndex, true, false);
+            } else {
                 oTable.fnFilter(filterInput, null, false, true);
+                oTable.fnDraw();
             }
         }
-        if (useOr||matchNone) {
-            oTable.fnFilter( searchRegex, null, true, false );
-        }
+
         filterTextInput.val(filterInput);
     });
 
