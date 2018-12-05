@@ -649,6 +649,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public void setQuantities(Map<Long, ProductOrderSampleQuantities> quantities) {
             this.quantities = quantities;
         }
+
     }
 
     /**
