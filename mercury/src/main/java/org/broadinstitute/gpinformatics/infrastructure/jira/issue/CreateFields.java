@@ -158,6 +158,7 @@ public class CreateFields extends UpdateFields {
         HISEQ_2500_HIGH_OUTPUT("HiSeq 2500 High Output"),
         HISEQ_4000("HiSeq 4000"),
         HISEQ_X_10("HiSeq X 10"),
+        MALARIA("Malaria"),
         NOVASEQ("NovaSeq"),
         NOVASEQ_S4("NovaSeq S4"),
         NEXTSEQ("NextSeq"),
