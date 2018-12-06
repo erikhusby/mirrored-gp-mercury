@@ -119,7 +119,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private String catName;
     private int depth;
     private List<String> devConditions = new ArrayList<>();
-    private TZDevExperimentData tzDevExperimentData;
+    private TZDevExperimentData tzDevExperimentData = null;
     /**
      * For a reagent-only sample instance.
      */
@@ -733,24 +733,27 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     private void mergePooledTubeDevConditions(String experimentName, List<String> subTasks)
     {
-        devConditions.addAll(subTasks);
-        tzDevExperimentData = new TZDevExperimentData(experimentName,subTasks);
-
+        // tzDevExperimentData must also be null to prevent resurrecting the experiment in DevExperimentDataBean.
+        if (StringUtils.isNotBlank(experimentName)) {
+            devConditions.addAll(subTasks);
+            tzDevExperimentData = new TZDevExperimentData(experimentName, subTasks);
+        }
     }
 
     private void mergeDevConditions(LabVessel labVessel)
     {
-
-        for(JiraTicket ticket : labVessel.getJiraTickets()) {
-            if(ticket != null){
-                devConditions.add(ticket.getTicketId());
+        // DEV Pooled tube upload is the only way to add experiment & conditions to a sample instance.
+        if (!getIsPooledTube()) {
+            for (JiraTicket ticket : labVessel.getJiraTickets()) {
+                if (ticket != null) {
+                    devConditions.add(ticket.getTicketId());
+                }
+            }
+            if (devConditions.size() > 0) {
+                //The experiment data will be populated from the parent Jira ticket.
+                tzDevExperimentData = new TZDevExperimentData(null, devConditions);
             }
         }
-        if(devConditions.size() > 0 ) {
-            //The experiment data will be populated from the parent Jira ticket.
-            tzDevExperimentData = new TZDevExperimentData(null, devConditions);
-        }
-
     }
 
 
