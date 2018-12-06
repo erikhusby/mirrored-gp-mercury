@@ -179,7 +179,8 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
             }
             // The pipeline and elsewhere require a simple name so disallow chars that might cause trouble.
             if (!StringUtils.containsOnly(dto.getLibraryName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(), "Library Name"));
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        "Library Name", SampleInstanceEjb.RESTRICTED_CHARS));
             }
 
             // Disallow a library name that could cause the sample to collide with an existing or future BSP sample.
@@ -216,7 +217,7 @@ public class ExternalLibraryProcessorNewTech extends ExternalLibraryProcessor {
                 // The tube barcode character set is restricted.
                 if (!StringUtils.containsOnly(dto.getBarcode(), SampleInstanceEjb.RESTRICTED_CHARS)) {
                     messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                            "Tube barcode"));
+                            "Tube barcode", SampleInstanceEjb.RESTRICTED_CHARS));
                 }
             }
             if (StringUtils.isNotBlank(dto.getBarcode())) {

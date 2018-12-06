@@ -1,21 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.control.sample;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntityTsk;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +19,7 @@ import java.util.Set;
  * Handles spreadsheet uploads for "Pooled Tube" external DEV samples.
  */
 public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
+    private List<String> aggregationDataTypes = new ArrayList<>();
     private List<String> aggregationParticles = new ArrayList<>();
     private List<String> baits = new ArrayList<>();
     private List<String> barcodes = new ArrayList<>();
@@ -73,6 +68,7 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         DATA_ANALYSIS_TYPE("Data Analysis Type", DataPresence.REQUIRED),
         UMIS_PRESENT("UMIs Present (Y/N)", DataPresence.OPTIONAL),
         DATA_AGGREGATOR("Data Aggregator", DataPresence.OPTIONAL),
+        AGGREATION_DATA_TYPE("Aggregation Data Type", DataPresence.OPTIONAL),
         ;
 
         private final String text;
@@ -141,6 +137,7 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         umisPresents.add(getFromRow(dataRow, Headers.UMIS_PRESENT));
         dataAnalysisTypes.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
         aggregationParticles.add(getFromRow(dataRow, Headers.DATA_AGGREGATOR));
+        aggregationDataTypes.add(getFromRow(dataRow, Headers.AGGREATION_DATA_TYPE));
 
         this.requiredValuesPresent.add(requiredValuesPresent);
     }
@@ -162,6 +159,9 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         Set<String> uniqueSampleAndMis = new HashSet<>();
 
         for (SampleInstanceEjb.RowDto dto : dtos) {
+            // Checks that field values contain only a specified character set.
+            validateCharSet(dto, messages);
+
             // If the sample appears in multiple spreadsheet rows, the sample metadata values must match the
             // first occurrence, or be blank. The first occurrence must have all of the sample metadata.
             if (StringUtils.isNotBlank(dto.getSampleName())) {
@@ -186,12 +186,6 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
             if (tube != null) {
                 if (!overwrite) {
                     messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(), "Tube", barcode));
-                }
-            } else {
-                // A new tube barcode character set is restricted.
-                if (!StringUtils.containsOnly(barcode, SampleInstanceEjb.RESTRICTED_CHARS)) {
-                    messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(), "Tube barcode",
-                            "composed of " + SampleInstanceEjb.RESTRICTED_MESSAGE));
                 }
             }
 
@@ -249,6 +243,35 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
                     getAnalysisTypeMap().get(dto.getAnalysisTypeName()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         "Data Analysis Type", "Mercury"));
+            }
+
+            if (StringUtils.isNotBlank(dto.getAggregationDataType()) &&
+                    !getValidAggregationDataTypes().contains(dto.getAggregationDataType())) {
+                messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.AGGREATION_DATA_TYPE.getText(), "Mercury"));
+            }
+        }
+    }
+
+    /** Errors if a field contains some characters that it shouldn't. */
+    private void validateCharSet(SampleInstanceEjb.RowDto dto, MessageCollection messages) {
+        String[][] tests = {
+                {dto.getBarcode(), Headers.TUBE_BARCODE.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
+                {dto.getBarcode(), Headers.TUBE_BARCODE.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
+                {dto.getLibraryName(), Headers.LIBRARY_NAME.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
+                {dto.getSampleName(), Headers.BROAD_SAMPLE_ID.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
+                {dto.getRootSampleName(), Headers.ROOT_SAMPLE_ID.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
+                {dto.getAggregationParticle(), Headers.DATA_AGGREGATOR.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
+                {dto.getLsid(), Headers.LSID.getText(), SampleInstanceEjb.ALIAS_CHARS},
+                {dto.getOrganism(), Headers.SPECIES.getText(), SampleInstanceEjb.ALIAS_CHARS},
+                {dto.getCollaboratorSampleId(), Headers.COLLABORATOR_SAMPLE_ID.getText(),
+                        SampleInstanceEjb.ALIAS_CHARS},
+                {dto.getCollaboratorParticipantId(), Headers.COLLABORATOR_PARTICIPANT_ID.getText(),
+                        SampleInstanceEjb.ALIAS_CHARS}
+        };
+        for (String[] test : tests) {
+            if (!StringUtils.containsOnly(test[0], test[2])) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(), test[1], test[2]));
             }
         }
     }
@@ -357,5 +380,10 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     @Override
     public List<String> getAggregationParticles() {
         return aggregationParticles;
+    }
+
+    @Override
+    public List<String> getAggregationDataTypes() {
+        return aggregationDataTypes;
     }
 }

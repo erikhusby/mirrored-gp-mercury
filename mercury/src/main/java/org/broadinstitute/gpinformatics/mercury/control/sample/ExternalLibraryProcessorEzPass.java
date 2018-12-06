@@ -181,7 +181,8 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
             }
             // The pipeline and elsewhere require a simple name so disallow chars that might cause trouble.
             if (!StringUtils.containsOnly(dto.getLibraryName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(), "Library Name"));
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS,
+                        dto.getRowNumber(), "Library Name", SampleInstanceEjb.RESTRICTED_CHARS));
             }
 
             // Library name is assumed to be universally unique. If it's reused then it's assumed to be an
@@ -200,8 +201,8 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
             } else {
                 // Tube barcode character set is restricted.
                 if (!StringUtils.containsOnly(dto.getBarcode(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                    messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                            "Tube barcode"));
+                    messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS,
+                            dto.getRowNumber(), "Tube barcode", SampleInstanceEjb.RESTRICTED_CHARS));
                 }
             }
 

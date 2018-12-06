@@ -155,7 +155,8 @@ public class ZimsIlluminaRunFactory {
                 BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                 if (singleBucketEntry != null) {
                     if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
-                            Aggregation.DATA_TYPE_WGS)) {
+                            Aggregation.DATA_TYPE_WGS) ||
+                            Aggregation.DATA_TYPE_WGS.equals(sampleInstance.getAggregationDataType())) {
                         mixedLaneOk = true;
                         break;
                     }
@@ -322,24 +323,46 @@ public class ZimsIlluminaRunFactory {
         Set<Integer> insertSizes = new HashSet<>();
         Set<ResearchProject> positiveControlResearchProjects = new HashSet<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
+            String analysisType = sampleInstanceDto.getSampleInstance().getAnalysisType() != null ?
+                    sampleInstanceDto.getSampleInstance().getAnalysisType().getName() : null;
+            String referenceSequence = sampleInstanceDto.getSampleInstance().getReferenceSequence() != null ?
+                    sampleInstanceDto.getSampleInstance().getReferenceSequence().getName() : null;
+            String aggregationDataType = sampleInstanceDto.getSampleInstance().getAggregationDataType();
+            Integer insertSize = sampleInstanceDto.getSampleInstance().getExpectedInsertSizeInteger();
+
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
             if (productOrder != null) {
                 Product product = productOrder.getProduct();
-                analysisTypes.add(product.getAnalysisTypeKey());
-                aggregationDataTypes.add(product.getAggregationDataType());
                 ResearchProject project = productOrder.getResearchProject();
-                if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
-                    referenceSequenceKeys.add(project.getReferenceSequenceKey());
-                }
                 ResearchProject positiveControlResearchProject = product.getPositiveControlResearchProject();
                 if (positiveControlResearchProject != null) {
                     positiveControlResearchProjects.add(positiveControlResearchProject);
                 }
-                Integer insertSize = product.getInsertSize();
-                if (insertSize != null) {
-                    insertSizes.add(insertSize);
+                if (analysisType == null) {
+                    analysisType = product.getAnalysisTypeKey();
                 }
+                if (referenceSequence == null && !StringUtils.isBlank(project.getReferenceSequenceKey())) {
+                    referenceSequence = project.getReferenceSequenceKey();
+                }
+                if (aggregationDataType == null) {
+                    aggregationDataType = product.getAggregationDataType();
+                }
+                if (insertSize == null) {
+                    insertSize = product.getInsertSize();
+                }
+            }
+            if (analysisType != null) {
+                analysisTypes.add(analysisType);
+            }
+            if (referenceSequence != null) {
+                referenceSequenceKeys.add(referenceSequence);
+            }
+            if (aggregationDataType != null) {
+                aggregationDataTypes.add(aggregationDataType);
+            }
+            if (insertSize != null) {
+                insertSizes.add(insertSize);
             }
         }
 
@@ -489,7 +512,7 @@ public class ZimsIlluminaRunFactory {
         String initiative = null;
         Long workRequest = null;
         Boolean hasIndexingRead = null;
-        String expectedInsertSize = null;
+        Integer expectedInsertSize = null;
         String organism = null;
         String strain = null;
         String rrbsSizeRange = null;
@@ -507,11 +530,10 @@ public class ZimsIlluminaRunFactory {
         String referenceSequenceVersion = null;
         String aggregationDataType = null;
         String species = null;
-        String lsid = null;
+
         if (sampleData != null && productOrder == null) {
             Control control = mapNameToControl.get(sampleData.getCollaboratorParticipantId());
             species = sampleData.getOrganism();
-            lsid = sampleData.getSampleLsid();
             if (control != null) {
                 switch (control.getType()) {
                 case POSITIVE:
@@ -532,7 +554,7 @@ public class ZimsIlluminaRunFactory {
                             positiveControlProject = positiveControlProjects.iterator().next();
                         }
                         if (insertSizes.size() == 1) {
-                            expectedInsertSize = insertSizes.iterator().next().toString();
+                            expectedInsertSize = insertSizes.iterator().next();
                         }
                     }
                     break;
@@ -553,18 +575,22 @@ public class ZimsIlluminaRunFactory {
             analysisType = sampleInstanceDto.sampleInstance.getAnalysisType().getBusinessKey();
         }
 
-        // insert size is a  range consisting of two integers with a hyphen in between, e.g. "225-350".
-        expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
+        if (expectedInsertSize == null) {
+            expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSizeInteger();
+        }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
-         if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
+        if (aggregationDataType == null) {
+            aggregationDataType = sampleInstanceDto.sampleInstance.getAggregationDataType();
+        }
+        if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
             referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();
             referenceSequenceVersion = sampleInstanceDto.sampleInstance.getReferenceSequence().getVersion();
         }
 
         if (productOrder != null) {
             Product product = productOrder.getProduct();
-            if (StringUtils.isBlank(expectedInsertSize) && product.getInsertSize() != null) {
-                expectedInsertSize = product.getInsertSize().toString();
+            if (expectedInsertSize == null && product.getInsertSize() != null) {
+                expectedInsertSize = product.getInsertSize();
             }
             if (analyzeUmi == null) {
                 analyzeUmi = productOrder.getAnalyzeUmiOverride();
@@ -606,7 +632,8 @@ public class ZimsIlluminaRunFactory {
         }
 
         LibraryBean libraryBean = new LibraryBean(
-                library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
+                library, initiative, workRequest, indexingSchemeDto, hasIndexingRead,
+                expectedInsertSize != null ? expectedInsertSize.toString() : null,
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,

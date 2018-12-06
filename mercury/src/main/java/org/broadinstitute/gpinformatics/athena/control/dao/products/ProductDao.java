@@ -252,4 +252,15 @@ public class ProductDao extends GenericDao implements Serializable {
             }
         });
     }
+
+    public List<String> findAggregationDataTypes() {
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+        CriteriaQuery<String> criteriaQuery = criteriaBuilder.createQuery(String.class);
+        Root<Product> root = criteriaQuery.from(Product.class);
+        criteriaQuery.select(root.get(Product_.aggregationDataType)).
+                where(criteriaBuilder.isNotNull(root.get(Product_.aggregationDataType))).
+                distinct(true).
+                orderBy(criteriaBuilder.asc(root.get(Product_.aggregationDataType)));
+        return getEntityManager().createQuery(criteriaQuery).getResultList();
+    }
 }

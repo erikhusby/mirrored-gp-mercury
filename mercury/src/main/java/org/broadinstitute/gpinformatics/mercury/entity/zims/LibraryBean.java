@@ -339,10 +339,9 @@ public class LibraryBean {
         if (metadataSource != null) {
             this.metadataSource = metadataSource;
         }
+        dataType = aggregationDataType;
 
-        if (productOrder == null) {
-            dataType = aggregationDataType;
-        } else {
+        if (productOrder != null) {
             this.regulatoryDesignation = productOrder.getRegulatoryDesignationCodeForPipeline();
             productOrderKey = productOrder.getBusinessKey();
             productOrderTitle = productOrder.getTitle();
@@ -354,7 +353,9 @@ public class LibraryBean {
 
             Product product = productOrder.getProduct();
             if (product != null) {
-                this.dataType = productOrder.getProduct().getAggregationDataType();
+                if (dataType == null) {
+                    dataType = productOrder.getProduct().getAggregationDataType();
+                }
                 this.product = product.getProductName();
                 ProductFamily family = product.getProductFamily();
                 if (family != null) {
