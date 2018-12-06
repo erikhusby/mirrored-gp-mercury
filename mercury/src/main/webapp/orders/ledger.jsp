@@ -456,12 +456,14 @@
             });
 
             ledgerForm.submit(function (event) {
-                var infoMessages = modalMessages("info");
-                var statusNamespace = "updateStatus";
-                infoMessages.add("Updating Ledger", statusNamespace);
 
-                // clear any previous success messages
-                modalMessages('success').clear();
+                // clear any previous messages
+                ['error', 'success', 'info', 'warning'].forEach(function (level) {
+                    modalMessages(level).clear();
+                });
+
+                var statusNamespace = "updateStatus";
+                modalMessages("info").add("Updating Ledger", statusNamespace);
 
                 var formData = $j(event.target).serializeArray();
 
@@ -525,7 +527,7 @@
                                 } else {
                                     message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples, ").concat(rowsRemaining).concat(" remaining.");
                                 }
-                                infoMessages.add(message, statusNamespace);
+                                modalMessages("info").add(message, statusNamespace);
                                 message = "&successMessage=Successfully updated ".concat(totalRowsToUpdate).concat(" ledger entries.");
                                 if (json.redirectOnSuccess) {
                                     modalMessages("info").clear();
