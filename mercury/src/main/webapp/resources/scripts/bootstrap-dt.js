@@ -125,10 +125,7 @@ function includeAdvancedFilter(oTable, tableID, additionalOptionMap) {
         chooseFilterForData(oTable, additionalOptionMap);
     });
     findFilterTextInput(oTable).focusout(function () {
-        var filterTextInput = oTable.fnSettings().oPreviousSearch;
-        if (isBlank(filterTextInput.sSearch)) {
-            oTable.fnFilterClear();
-        }
+        findFilterTextInput(oTable).trigger('keyup');
     });
 
     $j(".dataTables_filter").find("input[type='text'],input[type='search']").keyup();
@@ -159,29 +156,29 @@ function chooseFilterForData(oTable, additionalOptionMap) {
         var tab = RegExp("\\t", "g");
         var useOr = false;
         var useAdditionalOption=false;
-
+        var searchIndex = null;
+        var useGrep = false;
         var selectedOption = $j(filterWrapperSelector).find(".filterDropdown").val();
         if (selectedOption === "any") {
             useOr = true;
-        }else {
-            if (hasAdditionalOption && selectedOption === additionalOptionMap.value) {
-                useAdditionalOption = true;
-            }
+            useGrep = true;
+        } else if (hasAdditionalOption && selectedOption === additionalOptionMap.value) {
+            searchIndex = additionalOptionMap.searchIndex;
+            useAdditionalOption = true;
+            useGrep = true;
         }
         var filterInput = filterTextInput.val().replace(tab, " ");
-        oTable.fnFilterClear(oTable.fnSettings());
+        oTable.fnFilterClear(oTable.oSettings);
         if (!isBlank(filterInput)) {
-            var searchRegex = ".";
+            var searchText = filterInput;
             if (useOr) {
-                searchRegex = "(" + filterInput.trim().split(/\s+/).join(".*|") + ".*)";
-                oTable.fnFilter(searchRegex, null, true, false);
+                searchText = "(" + filterInput.trim().split(/\s+/).join(".*|") + ".*)";
             } else if (useAdditionalOption) {
-                searchRegex = "(^" + filterInput.trim().split(/\s+/).join("$|^") + "$)";
-                oTable.fnFilter(searchRegex, additionalOptionMap.searchIndex, true, false);
-            } else {
-                oTable.fnFilter(filterInput, null, false, true);
-                oTable.fnDraw();
+                searchText = "(^" + filterInput.trim().split(/\s+/).join("$|^") + "$)";
             }
+
+            // the last column here is 'smart search' which is normally false when regexp is used.
+            oTable.fnFilter(searchText, searchIndex, useGrep, !useGrep);
         }
 
         filterTextInput.val(filterInput);
