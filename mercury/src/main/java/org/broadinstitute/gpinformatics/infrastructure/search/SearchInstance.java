@@ -524,6 +524,11 @@ public class SearchInstance implements Serializable {
         }
 
         @Override
+        public boolean mustEscape() {
+            return getSearchTerm().mustEscape();
+        }
+
+        @Override
         public Object evalViewHeaderExpression(Object entity, SearchContext context) {
             return evalHeaderExpression(entity, context);
         }

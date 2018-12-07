@@ -17,7 +17,7 @@
     <c:forEach items="${nestedTable.resultRows}" var="nestRow">
         <tr>
             <c:forEach items="${nestRow.renderableCells}" var="nestCell" varStatus="nestRowStatus">
-                <td style="vertical-align: top"><div>${nestCell}</div>
+                <td style="vertical-align: top"><div><enhance:out escapeXml="false">${nestCell}</enhance:out></div>
                     <c:if test="${not empty nestRow.cellNestedTables[nestRowStatus.index]}">
                         <c:set var="nestedTable" value="${nestRow.cellNestedTables[nestRowStatus.index]}" scope="request"/>
                         <c:set var="tableName" value="${null}" scope="request"/>

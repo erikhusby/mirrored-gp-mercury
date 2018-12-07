@@ -150,7 +150,10 @@
             }
 
             var oTable;
-            $j("${submissionsTabSelector}").click(function () {
+            <enhance:out escapeXml="false">
+                var submissionsTabSelector = "${submissionsTabSelector}";
+            </enhance:out>
+            $j(submissionsTabSelector).click(function () {
                 function buildMessage(jqXHR) {
                     var responseText = jqXHR.responseJSON;
                     if (responseText && responseText.stripesMessages) {
@@ -369,10 +372,12 @@
 
                 includeAdvancedFilter(oTable, "#submissionSamples");
                 $j('#submissionSamples').one('init', function (event, oSettings, aaData) {
+                    <enhance:out escapeXml="false">
                     $j('#submissionSamples').filterColumn("Current Status", ${actionBean.submissionStatusesJson}, {
                         selectedValues: ${actionBean.preselectedStatusesJson},
                         filteringText: "#columnFilter_filteringText .headerText"
                     });
+                    </enhance:out>
                 });
             }
             });

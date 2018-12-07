@@ -162,6 +162,8 @@ public class CreateFields extends UpdateFields {
         NOVASEQ_S4("NovaSeq S4"),
         NEXTSEQ("NextSeq"),
         MISEQ("MiSeq"),
+        MISEQ_16S("MiSeq16s"),
+        TSCA("TSCA"),
         SAMPLE_INITIATION("Sample Initiation"),
         RECEIPT("Receipt"),
         ALLPREP("AllPrep Extraction"),
