@@ -89,6 +89,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 /**
@@ -1001,7 +1002,8 @@ public class LabEventFactory implements Serializable {
             TubeFormation tubeFormation = fetchTubeFormation(plateEventType.getPositionMap());
             RackOfTubes rackOfTubes = rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode());
             Map<String, BarcodedTube> mapBarcodeToVessel = findTubesByBarcodes(plateEventType.getPositionMap());
-            trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
+            trySampleIds(plateEventType.getPositionMap().getReceptacle().stream().map(ReceptacleType::getBarcode).
+                    collect(Collectors.toList()), new HashMap<>(mapBarcodeToVessel), mercurySampleDao);
             labEvent = buildFromBettaLimsRackEventDbFree(plateEventType, tubeFormation, mapBarcodeToVessel, rackOfTubes);
         }
         labEvent.setStationEventType(plateEventType);
