@@ -43,6 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -190,7 +191,11 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 map(flowcellType -> SampleInstanceEjb.makeSequencerValue(flowcellType)).
                 sorted().
                 collect(Collectors.toList()).toArray(new String[0]);
-        String[] validAggregationDataTypes = productDao.findAggregationDataTypes().toArray(new String[0]);
+        String[] validAggregationDataTypes = (
+                new ArrayList<String>() {{
+                    add("");
+                    addAll(productDao.findAggregationDataTypes());
+                }}).toArray(new String[0]);
 
         // Makes the fixed up header names for the drowdown columns.
         String dataAnalysisTypeHeader = ExternalLibraryProcessor.fixupHeaderName(
