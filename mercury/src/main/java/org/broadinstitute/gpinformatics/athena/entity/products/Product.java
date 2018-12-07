@@ -514,7 +514,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         addOns.add(addOn);
     }
 
-    @Nullable
     public String getWorkflowName() {
         return workflowName;
     }
