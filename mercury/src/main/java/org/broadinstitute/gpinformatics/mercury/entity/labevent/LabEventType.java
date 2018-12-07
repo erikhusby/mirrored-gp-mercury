@@ -336,8 +336,9 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.BSP_AND_MERCURY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
-                    RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).build(),
-            LibraryType.NONE_ASSIGNED),
+                    RackOfTubes.RackType.values())
+            .sourceVolume(true).targetVolume(true).requireSingleParticipant(true).build(), LibraryType.NONE_ASSIGNED,
+            SourceHandling.TERMINATE_DEPLETED),
 
     // Dev Samples
     DEV("DevCherryPick",
@@ -3176,6 +3177,17 @@ public enum LabEventType {
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType);
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+                 VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
+                 SourceHandling sourceHandling) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType);
+
+        this.sourceHandling = sourceHandling;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,

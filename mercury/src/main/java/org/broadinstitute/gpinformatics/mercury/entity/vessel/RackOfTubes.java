@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.workrequest.kit.ReceptacleType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -7,8 +10,10 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToMany;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,6 +24,7 @@ import java.util.Set;
 @Entity
 @Audited
 public class RackOfTubes extends LabVessel {
+    private static final Log log = LogFactory.getLog(RackOfTubes.class);
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "racksOfTubes")
     private Set<TubeFormation> tubeFormations = new HashSet<>();
@@ -48,7 +54,9 @@ public class RackOfTubes extends LabVessel {
         FluidX_4x6_Rack("FluidX_4x6_Rack", VesselGeometry.G6x4_ALPHANUM, true),
         FourInch3x5Box("FourInch3x5Box", VesselGeometry.G5x3_NUM, null, null),
         FourInch7x7Box("FourInch7x7Box", VesselGeometry.G7x7_NUM, null, null),
-        QiasymphonyCarrier24("QiasymphonyCarrier24", VesselGeometry.G4x24, null, null),
+        QiasymphonyCarrier24("QiasymphonyCarrier24", VesselGeometry.G4x24, null,
+                new BarcodedTube.BarcodedTubeType[]{BarcodedTube.BarcodedTubeType.FluidX_6mL,
+                        BarcodedTube.BarcodedTubeType.FluidX_10mL}),
         HamiltonSampleCarrier24("HamiltonSampleCarrier24", VesselGeometry.G24x1, null, null),
         HamiltonSampleCarrier32("HamiltonSampleCarrier32", VesselGeometry.G32x1, null, null),
         Matrix48SlotRack2mL("Matrix48SlotRack2mL", VesselGeometry.G12x8, null, null),
@@ -141,7 +149,24 @@ public class RackOfTubes extends LabVessel {
             return canRackScan == CanRackScan.TRUE;
         }
 
-        public BarcodedTube.BarcodedTubeType[] getAllowedBarcodedTubeTypes() { return allowedBarcodedTubeTypes; }
+        public List<BarcodedTube.BarcodedTubeType> getAllowedChildTypes() {
+            // get the receptacle type
+            ReceptacleType receptacleType = ReceptacleType.findByName(this.name());
+
+            // for all the allowed tube types grab the applicable BarcodedTubeType objects
+            List<BarcodedTube.BarcodedTubeType> typesAllowed = new ArrayList<>();
+            for (ReceptacleType childReceptacleType : receptacleType.getChildReceptacleTypes()) {
+                try {
+
+                    BarcodedTube.BarcodedTubeType allowedType =
+                            BarcodedTube.BarcodedTubeType.valueOf(childReceptacleType.getName());
+                    typesAllowed.add(allowedType);
+                } catch (IllegalArgumentException exception) {
+                    log.error("Illegal Argument Exception when attempting to parse tube receptacle type of " + childReceptacleType.getName(), exception);
+                }
+            }
+            return typesAllowed;
+        }
     }
 
     @Enumerated(EnumType.STRING)

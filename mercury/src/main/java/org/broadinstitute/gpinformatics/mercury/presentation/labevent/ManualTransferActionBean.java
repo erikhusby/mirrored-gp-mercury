@@ -177,7 +177,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     private VesselTypeGeometry selectedTargetGeometry;
 
-    private BarcodedTube.BarcodedTubeType[] selectableTargetTubeTypeOptions;
+    private List<BarcodedTube.BarcodedTubeType> selectableTargetTubeTypeOptions = new ArrayList<>();
 
     private String selectedTargetTubeType;
 
@@ -272,10 +272,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
         if (selectedTargetGeometry != null) {
             RackOfTubes.RackType selectedTargetRackType =
                     RackOfTubes.RackType.getByName(selectedTargetGeometry.getDisplayName());
-            BarcodedTube.BarcodedTubeType[] allowedTargetBarcodedTubeTypes =
-                    selectedTargetRackType.getAllowedBarcodedTubeTypes();
-            if (allowedTargetBarcodedTubeTypes != null && allowedTargetBarcodedTubeTypes.length > 0) {
-                selectableTargetTubeTypeOptions = allowedTargetBarcodedTubeTypes;
+            List<BarcodedTube.BarcodedTubeType> allowedTargetBarcodedTubeTypes =
+                    selectedTargetRackType.getAllowedChildTypes();
+            if (!CollectionUtils.isEmpty(allowedTargetBarcodedTubeTypes)) {
+                selectableTargetTubeTypeOptions.clear();
+                selectableTargetTubeTypeOptions.addAll(allowedTargetBarcodedTubeTypes);
             }
         }
     }
@@ -400,14 +401,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     VesselTypeGeometry targetVesselTypeGeometryCp;
                     if (selectedTargetGeometry != null) {
                         targetVesselTypeGeometryCp = selectedTargetGeometry;
-
-                        RackOfTubes.RackType selectedTargetRackType =
-                                RackOfTubes.RackType.getByName(selectedTargetGeometry.getDisplayName());
-                        BarcodedTube.BarcodedTubeType[] allowedTargetBarcodedTubeTypes =
-                                selectedTargetRackType.getAllowedBarcodedTubeTypes();
-                        if (allowedTargetBarcodedTubeTypes != null && allowedTargetBarcodedTubeTypes.length > 0) {
-                            selectableTargetTubeTypeOptions = allowedTargetBarcodedTubeTypes;
-                        }
                     } else {
                         targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
                     }
@@ -1214,6 +1207,25 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 manualTransferDetails.getSourceVesselTypeGeometry());
                     }
 
+                    // If there was a selected geometry then we have to specifically set the tube type in the message.
+                    if (selectedSourceGeometry != null ) {
+
+                        Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
+                                plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
+                                Direction.SOURCE);
+                        // Look up each sample and get the receptacle type.
+                        for (ReceptacleType receptacleType : plateCherryPickEvent.getSourcePositionMap().get(0)
+                                .getReceptacle()) {
+                            LabVessel currentLabVessel = mapBarcodeToVessel.get(receptacleType.getBarcode());
+                            if (currentLabVessel == null) {
+                                continue;
+                            }
+                            if(receptacleType.getReceptacleType() == null) {
+                                receptacleType.setReceptacleType(((BarcodedTube) currentLabVessel).getTubeType().toString());
+                            }
+                        }
+                    }
+
                     // If there was a selected tube type, update the position map to use it (if the values are null).
                     if (selectedTargetTubeType != null) {
                         // Loop through destination types and set their tube type to the selected type
@@ -1515,7 +1527,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     public void setSelectedTargetGeometry(VesselTypeGeometry selectedTargetGeometry) { this.selectedTargetGeometry = selectedTargetGeometry; }
 
-    public BarcodedTube.BarcodedTubeType[] getSelectableTargetTubeTypeOptions() {
+    public List<BarcodedTube.BarcodedTubeType> getSelectableTargetTubeTypeOptions() {
         return selectableTargetTubeTypeOptions;
     }
 
