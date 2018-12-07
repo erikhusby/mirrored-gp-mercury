@@ -10,8 +10,23 @@ package org.broadinstitute.gpinformatics.mercury.entity.queue;
  * Because each defines the items themselves, we don't need to worry about Types which aren't used by a particular queue.
  */
 public enum QueuePriority {
-    STANDARD,
-    EXOME_EXPRESS,
-    CLIA,
-    ALTERED
+    STANDARD("Standard"),
+    EXOME_EXPRESS("Exome Express"),
+    CLIA("Clinical"),
+    ALTERED("Expedited"),
+    REPEAT("Contains Repeats");
+
+    private final String displayName;
+
+    QueuePriority(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public boolean shouldSkipPriorityCheck() {
+        return this == REPEAT || this == ALTERED;
+    }
 }

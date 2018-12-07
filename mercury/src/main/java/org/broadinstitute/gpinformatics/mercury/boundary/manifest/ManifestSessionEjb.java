@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
@@ -264,7 +265,9 @@ public class ManifestSessionEjb {
         }
 
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(accessionedVessels, QueueType.PICO, "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messageCollection);
+        queueEjb.enqueueLabVessels(accessionedVessels, QueueType.PICO,
+                "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
+                QueueOrigin.RECEIVING);
         for (String error : messageCollection.getErrors()) {
             logger.debug("Error Occurred in Enqueue to pico queue:  " + error);
         }

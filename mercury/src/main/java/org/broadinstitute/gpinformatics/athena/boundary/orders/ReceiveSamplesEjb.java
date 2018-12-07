@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptRes
 import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -136,7 +137,7 @@ public class ReceiveSamplesEjb {
                     }
                 }
                 queueEjb.enqueueLabVessels(vesselsForPico, QueueType.PICO,
-                        "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection);
+                        "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection, QueueOrigin.RECEIVING);
             }
         }
 
@@ -182,7 +183,7 @@ public class ReceiveSamplesEjb {
                         }
                     }
                     queueEjb.enqueueLabVessels(vesselsForPico, QueueType.PICO,
-                            "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection);
+                            "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection, QueueOrigin.RECEIVING);
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
                             parentVesselBeans, bspUser.getUsername());
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);

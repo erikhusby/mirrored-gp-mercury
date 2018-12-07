@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.bsp.client.queue.DequeueingOptions;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
@@ -10,15 +9,16 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -30,9 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -56,20 +54,57 @@ public class QueueEjb {
 
     private QueueValidationHandler queueValidationHandler = new QueueValidationHandler();
 
-
     /**
-     * Adds either a container lab vessel with its tubes, or a larger list of lab vessels of any type to a queue as a
+     * Adds a list of lab vessel of any type to a queue as a
      * single queue group.  The general intent is for all lab vessels added together to stay together.
      *
-     * @param vesselList        List of vessels to queue up as a single group.
-     * @param readableText      Text displayed on the queue row for this item.  If none is there, default text will be
-     *                          provided.  Recommended that if a single container is utilized, you use the barcode of
-     *                          the container lab vessel.
-     * @param queueType         Type of Queue to add the lab vessels to.
+     * @param sampleIds             String containing the sample Ids
+     * @param queueType             Type of Queue to add the lab vessels to.
+     * @param readableText          Text displayed on the queue row for this item.  If none is there, default text will be
+     *                              provided.  Recommended that if a single container is utilized, you use the barcode of
+     *                              the container lab vessel.
+     * @param messageCollection     Messages back to the user.
+     * @return                      the Database ID of the newly created QueueGrouping.
+     */
+    public Long enqueueBySampleIdList(String sampleIds, QueueType queueType, @Nullable String readableText,
+                                      @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin) {
+        final List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleIds.trim().toUpperCase());
+        return enqueueBySampleIdList(sampleNames, queueType, readableText, messageCollection, queueOrigin);
+    }
+
+    /**
+     * Adds a list of lab vessel of any type to a queue as a
+     * single queue group.  The general intent is for all lab vessels added together to stay together.
+     *
+     * @param sampleIds             List of sample ids to be added to the Queue.
+     * @param queueType             Type of Queue to add the lab vessels to.
+     * @param readableText          Text displayed on the queue row for this item.  If none is there, default text will be
+     *                              provided.  Recommended that if a single container is utilized, you use the barcode of
+     *                              the container lab vessel.
+     * @param messageCollection     Messages back to the user.
+     * @return                      the Database ID of the newly created QueueGrouping.
+     */
+    public Long enqueueBySampleIdList(List<String> sampleIds, QueueType queueType, @Nullable String readableText,
+                                      @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin) {
+        List<LabVessel> labVessels = labVesselDao.findBySampleKeyList(sampleIds);
+        return enqueueLabVessels(labVessels, queueType, readableText, messageCollection, queueOrigin);
+    }
+
+    /**
+     * Adds a list of lab vessel of any type to a queue as a
+     * single queue group.  The general intent is for all lab vessels added together to stay together.
+     *
+     * @param vesselList            List of vessels to queue up as a single group.
+     * @param readableText          Text displayed on the queue row for this item.  If none is there, default text will be
+     *                              provided.  Recommended that if a single container is utilized, you use the barcode of
+     *                              the container lab vessel.
+     * @param queueType             Type of Queue to add the lab vessels to.
+     * @param messageCollection     Messages back to the user.
+     * @return                      the Database ID of the newly created QueueGrouping.
      */
     public Long enqueueLabVessels(@Nonnull Collection<LabVessel> vesselList,
                                   @Nonnull QueueType queueType, @Nullable String readableText,
-                                  @Nonnull MessageCollection messageCollection) {
+                                  @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin) {
 
         GenericQueue genericQueue = findQueueByType(queueType);
 
@@ -105,6 +140,7 @@ public class QueueEjb {
 
         if (isUniqueSetOfActiveVessels) {
             QueueGrouping queueGrouping = createGroupingAndSetInitialOrder(readableText, genericQueue, vesselList);
+            queueGrouping.setQueueOrigin(queueOrigin);
 
             genericQueue.getQueueGroupings().add(queueGrouping);
             try {
@@ -166,11 +202,61 @@ public class QueueEjb {
     }
 
     /**
+     * Dequeues the Lab Vessels based on a completed LabMetricRun
+     *
+     * @param labMetricRun          Run to use in dequeueing.
+     * @param queueType             Queue Type to remove from.
+     * @param messageCollection     Messages back to the user.
+     */
+    public void dequeueLabVessels(LabMetricRun labMetricRun, QueueType queueType, MessageCollection messageCollection) {
+        List<LabVessel> completed = new ArrayList<>();
+        List<LabVessel> repeats = new ArrayList<>();
+
+        for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+            switch (labMetric.getLabMetricDecision().getDecision()) {
+                case FAIL:
+                    // Note:  There is no functional differnce between failling due to low ng, and passing as both are meant to fall out of the queue.
+                case PASS:
+                case RISK:
+                    completed.add(labMetric.getLabVessel());
+                    break;
+                case BAD_TRIP:
+                case OVER_THE_CURVE:
+                case REPEAT:
+                case RUN_FAILED:
+                case TEN_PERCENT_DIFF_REPEAT:
+                case NORM:
+                    repeats.add(labMetric.getLabVessel());
+                    break;
+
+                default:
+                    throw new RuntimeException("Unknown Metric Decision.");
+            }
+        }
+
+        dequeueLabVessels(completed, queueType, messageCollection, DequeueingOptions.OVERRIDE);
+        updateLabVesselsToRepeat(repeats, queueType, messageCollection);
+    }
+
+    private void updateLabVesselsToRepeat(List<LabVessel> repeats, QueueType queueType, MessageCollection messageCollection) {
+        List<Long> labVesselIds = getApplicableLabVesselIds(repeats);
+
+        // Finds all the Active entities by the vessel Ids
+        List<QueueEntity> queueEntities = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
+
+        for (QueueEntity queueEntity : queueEntities) {
+            queueEntity.setQueueStatus(QueueStatus.Repeat);
+            queueEntity.getQueueGrouping().setQueuePriority(QueuePriority.REPEAT);
+        }
+    }
+
+    /**
      * Changes the ordering of the queue to whatever is passed in by the user.
-     * @param queueGroupingId
-     * @param positionToMoveTo
-     * @param queueType             Queue to re-order
-     * @param messageCollection
+     *
+     * @param queueGroupingId       QueueGroupingID  to reorder.
+     * @param positionToMoveTo      Position to move the grouping to.
+     * @param queueType             Queue to re-order within.
+     * @param messageCollection     Messages back to the user.
      */
     public void reOrderQueue(Long queueGroupingId, Integer positionToMoveTo, QueueType queueType, MessageCollection messageCollection) {
 
@@ -205,7 +291,14 @@ public class QueueEjb {
         }
     }
 
-    public void excludeItems(Collection<? extends LabVessel> labVesselsToExclude, QueueType queueType, MessageCollection messageCollection) {
+    /**
+     * Items to remove manually from the Queue.
+     *
+     * @param labVesselsToExclude       List of Lab vessels to remove
+     * @param queueType                 Queue type to remove them from
+     * @param messageCollection         Messages back to the user.
+     */
+    void excludeItems(Collection<? extends LabVessel> labVesselsToExclude, QueueType queueType, MessageCollection messageCollection) {
 
         GenericQueue genericQueue = findQueueByType(queueType);
 
@@ -237,6 +330,14 @@ public class QueueEjb {
         }
     }
 
+    /**
+     * Creates a queueGrouping and adds it to the queue in the proper placement.
+     *
+     * @param readableText      Readable text for the Queue Grouping
+     * @param genericQueue      Queue to add the new grouping to
+     * @param vesselList        List of LabVessels to add the to the queue
+     * @return                  Newly created Queue Grouping.
+     */
     public QueueGrouping createGroupingAndSetInitialOrder(@Nullable String readableText, GenericQueue genericQueue, Collection<LabVessel> vesselList) {
         QueueGrouping queueGrouping = new QueueGrouping(readableText, genericQueue);
 
@@ -288,18 +389,12 @@ public class QueueEjb {
         }
     }
 
-    private void persist(QueueEntity queueEntity) {
-        genericQueueDao.persist(queueEntity);
-    }
-
-    private void persist(QueueGrouping queueGrouping) {
-        genericQueueDao.persist(queueGrouping);
-    }
-
-    public GenericQueue findQueueByType(QueueType queueType) {
-        return genericQueueDao.findQueueByType(queueType);
-    }
-
+    /**
+     * Moves a particular Queue Grouping to the top of the queue.
+     *
+     * @param queueType         Queue to move to the top of.
+     * @param queueGroupingId   Queue Grouping to move up.
+     */
     public void moveToTop(QueueType queueType, Long queueGroupingId) {
 
         GenericQueue queue = findQueueByType(queueType);
@@ -317,6 +412,12 @@ public class QueueEjb {
         }
     }
 
+    /**
+     * Moves a particular Queue Grouping to the bottom of the queue.
+     *
+     * @param queueType         Queue to move to the bottom of.
+     * @param queueGroupingId   Queue Grouping to move down.
+     */
     public void moveToBottom(QueueType queueType, Long queueGroupingId) {
 
         GenericQueue queue = findQueueByType(queueType);
@@ -339,17 +440,13 @@ public class QueueEjb {
         }
     }
 
-    public void dequeueLabVessels(LabMetricRun labMetricRun, QueueType queueType, MessageCollection messageCollection) {
-        List<LabVessel> passingLabVessels = new ArrayList<>();
-        for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
-            if (labMetric.getLabMetricDecision().getDecision() == LabMetricDecision.Decision.PASS) {
-                passingLabVessels.add(labMetric.getLabVessel());
-            }
-        }
-
-        dequeueLabVessels(passingLabVessels, queueType, messageCollection, DequeueingOptions.OVERRIDE);
-    }
-
+    /**
+     * Excludes lab vessels by their sample ids.
+     *
+     * @param excludeVessels        List of Sample Ids to exclude.
+     * @param queueType             Queue To exclude them from.
+     * @param messageCollection     Messages back to the user.
+     */
     public void excludeItemsById(List<String> excludeVessels, QueueType queueType, MessageCollection messageCollection) {
         List<LabVessel> vessels = labVesselDao.findBySampleKeyList(excludeVessels);
 
@@ -357,5 +454,22 @@ public class QueueEjb {
         vessels.removeAll(Collections.singletonList(null));
 
         excludeItems(vessels, queueType, messageCollection);
+    }
+
+    public void excludeItemsById(String excludeVessels, QueueType queueType, MessageCollection messageCollection) {
+        List<String> barcodes = SearchActionBean.cleanInputStringForSamples(excludeVessels.trim().toUpperCase());
+        excludeItemsById(barcodes, queueType, messageCollection);
+    }
+
+    private void persist(QueueEntity queueEntity) {
+        genericQueueDao.persist(queueEntity);
+    }
+
+    private void persist(QueueGrouping queueGrouping) {
+        genericQueueDao.persist(queueGrouping);
+    }
+
+    public GenericQueue findQueueByType(QueueType queueType) {
+        return genericQueueDao.findQueueByType(queueType);
     }
 }

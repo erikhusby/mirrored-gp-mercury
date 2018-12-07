@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -33,7 +34,7 @@ public class QueueEjbDbFreeTest {
 
         MessageCollection messageCollection = new MessageCollection();
         queueEjb.enqueueLabVessels(Arrays.asList(labVessel, labVessel2), QueueType.PICO,
-                        null, messageCollection);
+                        null, messageCollection, QueueOrigin.EXTRACTION);
         GenericQueue picoQueue = queueEjb.findQueueByType(QueueType.PICO);
         int foundItems = 0;
         for (QueueGrouping queueGrouping : picoQueue.getQueueGroupings()) {
@@ -139,7 +140,7 @@ public class QueueEjbDbFreeTest {
 
         MessageCollection messageCollection = new MessageCollection();
         queueEjb.enqueueLabVessels(Collections.singletonList(labVessel), QueueType.PICO,
-                null, messageCollection);
+                null, messageCollection, QueueOrigin.RECEIVING);
 
         queueEjb.excludeItems(Collections.singletonList(labVessel), QueueType.PICO, messageCollection);
 

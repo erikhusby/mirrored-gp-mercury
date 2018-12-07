@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchTestUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -81,7 +82,7 @@ public class QueueEjbTest extends Arquillian {
     @Test(groups = TestGroups.STANDARD)
     public void enqueueToPicoQueueTest() {
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection);
+        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION);
 
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
@@ -90,7 +91,7 @@ public class QueueEjbTest extends Arquillian {
     @Test(groups = TestGroups.STANDARD)
     public void dequeueFromPicoQueueTest() {
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection);
+        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION);
         queueEjb.dequeueLabVessels(generateLabVesselsForTest(), QueueType.PICO, messageCollection,
                 DequeueingOptions.OVERRIDE);
 
@@ -103,7 +104,7 @@ public class QueueEjbTest extends Arquillian {
         MessageCollection messageCollection = new MessageCollection();
         Collection<? extends LabVessel> labVessels = generateLabVesselsForTest();
         for (LabVessel labVessel : labVessels) {
-            queueEjb.enqueueLabVessels(Collections.singletonList(labVessel), QueueType.PICO, "Whatever", messageCollection);
+            queueEjb.enqueueLabVessels(Collections.singletonList(labVessel), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION);
         }
 
         SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings();
@@ -144,7 +145,7 @@ public class QueueEjbTest extends Arquillian {
     public void excludeTest() {
 
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection);
+        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION);
         queueEjb.excludeItems(generateLabVesselsForTest(), QueueType.PICO, messageCollection);
 
         Assert.assertFalse(messageCollection.hasErrors());
@@ -159,7 +160,7 @@ public class QueueEjbTest extends Arquillian {
     public void moveToBottomTest() {
 
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection);
+        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION);
 
         SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings();
         Long idOfItemBeingMoved = queueGroupings.first().getQueueGroupingId();
@@ -175,7 +176,7 @@ public class QueueEjbTest extends Arquillian {
     public void moveToTopTest() {
 
         MessageCollection messageCollection = new MessageCollection();
-        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection);
+        queueEjb.enqueueLabVessels(generateLabVesselsForTest(), QueueType.PICO, "Whatever", messageCollection, QueueOrigin.EXTRACTION);
 
         SortedSet<QueueGrouping> queueGroupings = queueEjb.findQueueByType(QueueType.PICO).getQueueGroupings();
         Long idOfItemBeingMoved = queueGroupings.last().getQueueGroupingId();

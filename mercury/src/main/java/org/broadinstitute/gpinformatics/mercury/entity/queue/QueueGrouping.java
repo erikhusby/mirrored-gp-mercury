@@ -45,6 +45,8 @@ public class QueueGrouping {
     @BatchSize(size = 100)
     private List<QueueEntity> queuedEntities;
 
+    private QueueOrigin queueOrigin;
+
     @NotAudited
     @Formula("(select count(*) from mercury.queue_entity where queue_entity.queue_status = 'Active'" +
             " and queue_entity.queue_grouping_id = queue_grouping_id)")
@@ -143,5 +145,13 @@ public class QueueGrouping {
 
     public void setQueuePriority(QueuePriority queuePriority) {
         this.queuePriority = queuePriority;
+    }
+
+    public QueueOrigin getQueueOrigin() {
+        return queueOrigin;
+    }
+
+    public void setQueueOrigin(QueueOrigin queueOrigin) {
+        this.queueOrigin = queueOrigin;
     }
 }

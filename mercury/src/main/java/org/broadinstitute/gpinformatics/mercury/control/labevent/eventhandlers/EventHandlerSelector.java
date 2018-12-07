@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtil
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 
 import javax.enterprise.context.Dependent;
@@ -85,7 +86,8 @@ public class EventHandlerSelector {
 
             MessageCollection messageCollection = new MessageCollection();
             queueEjb.enqueueLabVessels(targetEvent.getTargetLabVessels(), QueueType.PICO, "Extracted" +
-                    " on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()), messageCollection);
+                    " on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()), messageCollection,
+                    QueueOrigin.EXTRACTION);
         }
     }
 

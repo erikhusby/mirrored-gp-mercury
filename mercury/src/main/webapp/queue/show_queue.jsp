@@ -51,7 +51,7 @@
             <table class="table simple dataTable" id="queueTable">
                 <thead>
                     <tr>
-                        <th>Readable Text</th><th>Queue Status</th><th>Positioning</th>
+                        <th>Readable Text</th><th>Queue Priority Type</th><th>Origin</th><th>Queue Status</th><th>Positioning</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,6 +65,7 @@
                                     ${queueGrouping.queueGroupingText}
                                 </stripes:link>
                             </td>
+                            <td>${queueGrouping.queuePriority.displayName}</td><td>${queueGrouping.queueOrigin.displayName}</td>
 
                             <c:set var="doNotNeedPico" value="${fn:length(queueGrouping.queuedEntities) - queueGrouping.remainingEntities}" />
                             <c:set var="needPico" value="${queueGrouping.remainingEntities}" />
@@ -103,9 +104,16 @@
         <p>&#160;</p>
         <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
             <stripes:hidden name="queueType" />
-            Enter the barcodes of the vessels to remove. One per line.
+            Enter the barcodes of the vessels to Remove. One per line.
             <stripes:textarea name="excludeVessels" /><br />
             <stripes:submit name="excludeLabVessels" value="Exclude Vessels" />
+        </stripes:form>
+        <p>&#160;</p>
+        <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
+            <stripes:hidden name="queueType" />
+            Enter the barcodes of the vessels to Add to the Queue.  One per line.
+            <stripes:textarea name="enqueueSampleIds" /><br />
+            <stripes:submit name="enqueueLabVessels" value="Add Vessels" />
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>

@@ -129,17 +129,17 @@ public abstract class AbstractEnqueueOverride {
     /**
      * Sets the sort order for the grouping, and updates all QueueGroupings which should be set after the newly enqueued item.
      *
-     * @param queueGrouping     QueueGrouping being enqueued.
+     * @param newGrouping     QueueGrouping being enqueued.
      */
     @SuppressWarnings("Duplicates")
-    private final void insertQueueGroupingIntoQueue(QueueGrouping queueGrouping) {
+    private final void insertQueueGroupingIntoQueue(QueueGrouping newGrouping) {
         long currentSortOrder = 1;
 
         QueuePriority[] queuePriorityOrder = getQueuePriorityOrder();
         int insertedItemPriorityIndex = DEFAULT_PRIORITY_INDEX;
 
         for (int i = 0; i < queuePriorityOrder.length; i++) {
-            if (queueGrouping.getQueuePriority() == queuePriorityOrder[i]) {
+            if (newGrouping.getQueuePriority() == queuePriorityOrder[i]) {
                 insertedItemPriorityIndex = i;
                 break;
             }
@@ -147,30 +147,30 @@ public abstract class AbstractEnqueueOverride {
 
         boolean newItemAdded = false;
         // To avoid even the minor possibility of modifying the contents of the collection being iterated.
-        List<QueueGrouping> queueGroupings = new ArrayList<>(queueGrouping.getAssociatedQueue().getQueueGroupings());
-        for (QueueGrouping grouping : queueGroupings) {
+        List<QueueGrouping> queueGroupings = new ArrayList<>(newGrouping.getAssociatedQueue().getQueueGroupings());
+        for (QueueGrouping existingGrouping : queueGroupings) {
 
-            if (grouping.getQueuePriority() == QueuePriority.ALTERED) {
-                grouping.setSortOrder(currentSortOrder++);
+            if (existingGrouping.getQueuePriority().shouldSkipPriorityCheck()) {
+                existingGrouping.setSortOrder(currentSortOrder++);
             } else {
 
                 int currentPriorityIndex = Integer.MAX_VALUE; 
                 for (int priorityIndex = 0; priorityIndex < queuePriorityOrder.length; priorityIndex++) {
-                    if (grouping.getQueuePriority() == queuePriorityOrder[priorityIndex]) {
+                    if (existingGrouping.getQueuePriority() == queuePriorityOrder[priorityIndex]) {
                         currentPriorityIndex = priorityIndex;
                         break;
                     }
                 }
                 if (insertedItemPriorityIndex < currentPriorityIndex && !newItemAdded) {
-                    queueGrouping.setSortOrder(currentSortOrder++);
+                    newGrouping.setSortOrder(currentSortOrder++);
                     newItemAdded = true;
                 }
-                grouping.setSortOrder(currentSortOrder++);
+                existingGrouping.setSortOrder(currentSortOrder++);
             }
         }
 
         if (!newItemAdded) {
-            useDefaultOrdering(queueGrouping);
+            useDefaultOrdering(newGrouping);
         }
     }
 

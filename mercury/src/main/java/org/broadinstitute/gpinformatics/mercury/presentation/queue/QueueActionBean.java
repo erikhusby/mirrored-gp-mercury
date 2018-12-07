@@ -11,17 +11,19 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,7 @@ public class QueueActionBean extends CoreActionBean {
     private Long queueGroupingId;
     private Integer positionToMoveTo;
     private String excludeVessels;
+    private String enqueueSampleIds;
 
     private QueueGrouping queueGrouping;
 
@@ -49,6 +52,7 @@ public class QueueActionBean extends CoreActionBean {
 
     @Inject
     private BSPUserList userList;
+    private static final String READABLE_TEXT = "Manually added on ";
 
 
     @DefaultHandler
@@ -116,12 +120,23 @@ public class QueueActionBean extends CoreActionBean {
     public Resolution excludeLabVessels() {
         MessageCollection messageCollection = new MessageCollection();
 
-        String[] barcodes = excludeVessels.trim().toUpperCase().split("\\n");
-
-        queueEjb.excludeItemsById(Arrays.asList(barcodes), queueType, messageCollection);
+        queueEjb.excludeItemsById(excludeVessels, queueType, messageCollection);
 
         queue = queueEjb.findQueueByType(queueType);
         addMessages(messageCollection);
+        return showQueuePage();
+    }
+
+    @HandlesEvent("enqueueLabVessels")
+    public Resolution enqueueLabVessels() {
+
+        MessageCollection messageCollection = new MessageCollection();
+
+        String readableText = READABLE_TEXT + DateUtils.convertDateTimeToString(new Date());
+        queueEjb.enqueueBySampleIdList(enqueueSampleIds, queueType, readableText, messageCollection, QueueOrigin.OTHER);
+        queue = queueEjb.findQueueByType(queueType);
+        addMessages(messageCollection);
+
         return showQueuePage();
     }
 

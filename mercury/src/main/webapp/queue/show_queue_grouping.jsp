@@ -17,6 +17,7 @@
         <table class="table simple dataTable" id="queueGroupingTable">
             <thead>
             <tr>
+                <%-- TODO: Show container, position in container and in additiona to the label show the SM ID --%>
                 <th>Vessel Barcode</th><th>Storage Location</th><th>Status</th><th>Completed On</th><th>Completed By</th>
             </tr>
             </thead>
