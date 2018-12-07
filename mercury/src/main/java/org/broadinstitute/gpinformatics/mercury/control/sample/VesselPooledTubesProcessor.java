@@ -148,6 +148,63 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
     }
 
     /**
+     * Adds an error message if a field contains some characters that it shouldn't. Fields that
+     * are entity keys (like analysisType), numerics, and categorical values are checked elsewhere.
+     */
+    @Override
+    public void validateCharacterSet(List<SampleInstanceEjb.RowDto> dtos, MessageCollection messages) {
+        for (SampleInstanceEjb.RowDto dto : dtos) {
+            if (!StringUtils.containsOnly(dto.getBarcode(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.TUBE_BARCODE.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (!StringUtils.containsOnly(dto.getLibraryName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.LIBRARY_NAME.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (!StringUtils.containsOnly(dto.getSampleName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.BROAD_SAMPLE_ID.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getRootSampleName()) &&
+                    !StringUtils.containsOnly(dto.getRootSampleName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.ROOT_SAMPLE_ID.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getAggregationParticle()) &&
+                    !StringUtils.containsOnly(dto.getAggregationParticle(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.DATA_AGGREGATOR.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getCollaboratorSampleId()) &&
+                    !StringUtils.containsOnly(dto.getCollaboratorSampleId(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.COLLABORATOR_SAMPLE_ID.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getCollaboratorParticipantId()) &&
+                    !StringUtils.containsOnly(dto.getCollaboratorParticipantId(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.COLLABORATOR_PARTICIPANT_ID.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getParticipantId()) &&
+                    !StringUtils.containsOnly(dto.getParticipantId(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.BROAD_PARTICIPANT_ID.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getOrganism()) &&
+                    !StringUtils.containsOnly(dto.getOrganism(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.SPECIES.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getLsid()) &&
+                    !StringUtils.containsOnly(dto.getLsid(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.LSID.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+        }
+    }
+
+    /**
      * Does self-consistency and other validation checks on the data.
      * Entities fetched for the row data are accessed through maps referenced in the dtos.
      */
@@ -159,9 +216,6 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
         Set<String> uniqueSampleAndMis = new HashSet<>();
 
         for (SampleInstanceEjb.RowDto dto : dtos) {
-            // Checks that field values contain only a specified character set.
-            validateCharSet(dto, messages);
-
             // If the sample appears in multiple spreadsheet rows, the sample metadata values must match the
             // first occurrence, or be blank. The first occurrence must have all of the sample metadata.
             if (StringUtils.isNotBlank(dto.getSampleName())) {
@@ -249,29 +303,6 @@ public class VesselPooledTubesProcessor extends ExternalLibraryProcessor {
                     !getValidAggregationDataTypes().contains(dto.getAggregationDataType())) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         VesselPooledTubesProcessor.Headers.AGGREATION_DATA_TYPE.getText(), "Mercury"));
-            }
-        }
-    }
-
-    /** Errors if a field contains some characters that it shouldn't. */
-    private void validateCharSet(SampleInstanceEjb.RowDto dto, MessageCollection messages) {
-        String[][] tests = {
-                {dto.getBarcode(), Headers.TUBE_BARCODE.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
-                {dto.getBarcode(), Headers.TUBE_BARCODE.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
-                {dto.getLibraryName(), Headers.LIBRARY_NAME.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
-                {dto.getSampleName(), Headers.BROAD_SAMPLE_ID.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
-                {dto.getRootSampleName(), Headers.ROOT_SAMPLE_ID.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
-                {dto.getAggregationParticle(), Headers.DATA_AGGREGATOR.getText(), SampleInstanceEjb.RESTRICTED_CHARS},
-                {dto.getLsid(), Headers.LSID.getText(), SampleInstanceEjb.ALIAS_CHARS},
-                {dto.getOrganism(), Headers.SPECIES.getText(), SampleInstanceEjb.ALIAS_CHARS},
-                {dto.getCollaboratorSampleId(), Headers.COLLABORATOR_SAMPLE_ID.getText(),
-                        SampleInstanceEjb.ALIAS_CHARS},
-                {dto.getCollaboratorParticipantId(), Headers.COLLABORATOR_PARTICIPANT_ID.getText(),
-                        SampleInstanceEjb.ALIAS_CHARS}
-        };
-        for (String[] test : tests) {
-            if (!StringUtils.containsOnly(test[0], test[2])) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(), test[1], test[2]));
             }
         }
     }

@@ -418,6 +418,11 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     /**
+     * Does character set validation checks on the data.
+     */
+    abstract public void validateCharacterSet(List<SampleInstanceEjb.RowDto> dtos, MessageCollection messages);
+
+    /**
      * Does self-consistency and other validation checks on the data.
      * Entities fetched for the row data are accessed through maps referenced in the dtos.
      */

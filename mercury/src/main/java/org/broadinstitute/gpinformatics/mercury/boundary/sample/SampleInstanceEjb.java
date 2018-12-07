@@ -197,6 +197,8 @@ public class SampleInstanceEjb {
             } else {
                 // Makes maps of samples, vessels, and other primary entities.
                 makeEntityMaps(processor, rowDtos, messages);
+                // Validates the character set used in spreadsheet values that get passed on as-is.
+                processor.validateCharacterSet(rowDtos, messages);
                 // Validates the data.
                 processor.validateAllRows(rowDtos, overwrite, messages);
                 if (!messages.hasErrors()) {
