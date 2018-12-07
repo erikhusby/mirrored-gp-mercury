@@ -261,7 +261,9 @@ public class DesignationUtils {
                     dto.setLoadingConc(product.getLoadingConcentration());
                 }
                 if (dto.getIndexType() == null) {
-                    dto.setIndexType(product.getIndexType());
+                    FlowcellDesignation.IndexType indexType = (product.getIndexType() != null) ?
+                            product.getIndexType() : FlowcellDesignation.IndexType.DUAL;
+                    dto.setIndexType(indexType);
                 }
             } else {
                 productName = "[" + bucketEntry.getProductOrder().getJiraTicketKey() + "]";

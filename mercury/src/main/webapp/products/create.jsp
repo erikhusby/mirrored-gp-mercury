@@ -664,7 +664,7 @@
 
                 <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                     <div class="control-group">
-                        <stripes:label for="`" class="control-label">
+                        <stripes:label for="workflow" class="control-label">
                             Workflow
                         </stripes:label>
                         <div class="controls">
