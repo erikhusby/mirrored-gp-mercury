@@ -1671,6 +1671,16 @@
             commit;
         </sql>
     </changeSet>
+    <changeSet id="GPLIM-5839a" author="jsacco">
+        <sql>
+            update lab_vessel set tube_type = 'EppendorfFliptop15_Gates' where label = 'SM-7LG4A';
+
+            -- Audit tables will also cause failures
+            update lab_vessel_aud set tube_type = 'EppendorfFliptop20' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where  label = 'SM-7LG4A' );
+            commit;
+        </sql>
+    </changeSet>
     <changeSet id="GPLIM-5122-1" author="thompson">
         <createTable tableName="fingerprint" schemaName="mercury">
             <column name="fingerprint_id" type="number(19,0)">
