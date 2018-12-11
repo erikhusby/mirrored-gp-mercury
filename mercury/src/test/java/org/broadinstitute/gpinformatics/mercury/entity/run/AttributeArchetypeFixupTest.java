@@ -775,4 +775,37 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.flush();
         utx.commit();
     }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/keyValueArchetypeUpdates.txt,
+     * so it can be used for other similar fixups, without writing a new test.  This is used to update key-value
+     * ArchetypeAttribute's.  Example contents of the file are (first line is the fixup commentary,
+     * subsequent lines are comma separated archetype id, old value, new value):
+     * SUPPORT-4632 update hyperprep capture kit
+     * 57760,Illumina TruSeq Rapid Exome Library Prep kit,Nextera Exome Kit (96 Spl)
+     * 57754,FC-144-1004,20020617
+     */
+    @Test(enabled = false)
+    public void fixupSupport4632() throws IOException {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("keyValueArchetypeUpdates.txt"));
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = lines.get(i).split(",");
+            if (fields.length != 3) {
+                throw new RuntimeException("Expected three comma separated fields in " + lines.get(i));
+            }
+            long attributeId = Long.parseLong(fields[0]);
+            ArchetypeAttribute archetypeAttribute = attributeArchetypeDao.findById(ArchetypeAttribute.class, attributeId);
+            Assert.assertNotNull(archetypeAttribute, attributeId + " not found");
+            String oldValue = fields[1].trim();
+            String newValue = fields[2].trim();
+            Assert.assertEquals(oldValue, archetypeAttribute.getAttributeValue());
+            System.out.println("Updating " + attributeId + " from " + oldValue + " to " + newValue);
+            archetypeAttribute.setAttributeValue(newValue);
+        }
+
+        attributeArchetypeDao.persist(new FixupCommentary(lines.get(0)));
+        attributeArchetypeDao.flush();
+    }
 }

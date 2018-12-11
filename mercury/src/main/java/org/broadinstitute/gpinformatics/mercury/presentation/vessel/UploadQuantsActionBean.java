@@ -256,12 +256,13 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_METRICS)
     public Resolution saveMetrics() {
+        MessageCollection messageCollection = new MessageCollection();
         if (selectedConditionalIds.isEmpty()) {
-            addGlobalValidationError("Check at least one box.");
+            messageCollection.addWarning("Check at least one box.");
         } else if (overrideReason == null || overrideReason.trim().isEmpty()) {
-            addValidationError("overrideReason", "Override reason is required");
+            messageCollection.addWarning("Override reason is required.");
         } else if (overrideReason.length() > STRING_LIMIT) {
-            addValidationError("overrideReason", "Override reason is too long. Limit is 255 characters.");
+            messageCollection.addWarning("Override reason is too long. Limit is 255 characters.");
         } else {
             List<LabMetric> selectedLabMetrics = labMetricDao.findListByList(LabMetric.class, LabMetric_.labMetricId,
                     selectedConditionalIds);
@@ -283,6 +284,9 @@ public class UploadQuantsActionBean extends CoreActionBean {
         if( labMetricRunId != null ) {
             labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
             buildColumns();
+        }
+        if (messageCollection.hasWarnings()) {
+            addMessages(messageCollection);
         }
         return new ForwardResolution(VIEW_PAGE);
     }
