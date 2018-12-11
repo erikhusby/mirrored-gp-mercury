@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Dependent
@@ -270,13 +271,15 @@ public class SampleDataFetcher implements Serializable {
             if (!sampleIdsWithBspSource.isEmpty()) {
                 for (Map.Entry<String, BspSampleData> entry : bspSampleDataFetcher.fetchSampleData(
                         sampleIdsWithBspSource, bspSampleSearchColumns).entrySet()) {
-                    BspSampleData bspSampleData = entry.getValue();
+                    Optional<BspSampleData> bspSampleData = Optional.ofNullable(entry.getValue());
                     // Overrides the BSP quant values if the product indicated it.
-                    ProductOrderSample productOrderSample = needsQuantOverride.get(entry.getKey());
-                    if (productOrderSample != null) {
-                        bspSampleData.overrideWithMercuryQuants(productOrderSample);
+                    if (bspSampleData.isPresent()) {
+                        ProductOrderSample productOrderSample = needsQuantOverride.get(entry.getKey());
+                        if (productOrderSample != null) {
+                            bspSampleData.get().overrideWithMercuryQuants(productOrderSample);
+                        }
+                        sampleData.put(entry.getKey(), bspSampleData.get());
                     }
-                    sampleData.put(entry.getKey(), bspSampleData);
                 }
             }
             sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamplesWithMercurySource));

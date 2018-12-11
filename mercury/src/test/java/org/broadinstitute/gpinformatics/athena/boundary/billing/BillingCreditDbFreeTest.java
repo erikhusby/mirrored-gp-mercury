@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductE
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
@@ -137,9 +136,9 @@ public class BillingCreditDbFreeTest {
         Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
             Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
             Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class))).thenReturn("workId-" + quoteId);
-        Mockito.when(productOrderEjb.areProductsBlocked(Mockito.anySetOf(AccessItem.class))).thenReturn(false);
-        Mockito.when(productOrderEjb.isOrderEligibleForSAP(Mockito.any(ProductOrder.class), Mockito.any(Date.class)))
-            .thenReturn(true);
+//        Mockito.when(productOrderEjb.areProductsBlocked(Mockito.anySetOf(AccessItem.class))).thenReturn(false);
+//        Mockito.when(productOrderEjb.isOrderEligibleForSAP(Mockito.any(ProductOrder.class), Mockito.any(Date.class)))
+//            .thenReturn(true);
 
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
             SapIntegrationClientImpl.SAPCompanyConfiguration.class)))

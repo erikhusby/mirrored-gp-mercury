@@ -6,7 +6,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -34,9 +33,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
@@ -1213,14 +1210,14 @@ public class ProductOrderEjbTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString())).thenReturn(testSingleSourceQuote);
 
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
-        try {
-            productOrderEjb.isOrderEligibleForSAP(conversionPdo);
-            Assert.fail("Differences in prices should have thrown an error");
-        } catch (QuoteServerException | QuoteNotFoundException e) {
-            Assert.fail("Differences in prices should have thrown an InvalidProductException");
-        } catch (InvalidProductException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            productOrderEjb.isOrderEligibleForSAP(conversionPdo);
+//            Assert.fail("Differences in prices should have thrown an error");
+//        } catch (QuoteServerException | QuoteNotFoundException e) {
+//            Assert.fail("Differences in prices should have thrown an InvalidProductException");
+//        } catch (InvalidProductException e) {
+//            e.printStackTrace();
+//        }
 
         MessageCollection messageCollection = new MessageCollection();
 

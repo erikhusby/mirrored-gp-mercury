@@ -821,6 +821,7 @@
             var skipQuoteDiv = $j("#skipQuoteDiv");
             var quoteDiv = $j("#quote");
             if (data.supportsSkippingQuote) {
+
                 skipQuoteDiv.show();
                 quoteDiv.hide();
             }
@@ -1048,10 +1049,12 @@
         function updateFundsRemaining() {
             var quoteIdentifier = $j("#quote").val().trim();
             var quoteTitle = $j("#quote").attr('title');
+            var quoteType = $j("#quoteSource").find(":selected").text();
             var productOrderKey = $j("input[name='productOrder']").val();
             if (quoteIdentifier && quoteIdentifier !== quoteTitle) {
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier + "&productOrder=" + productOrderKey,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier +
+                        "&productOrder=" + productOrderKey + "&quoteSource=" + quoteType,
                     dataType: 'json',
                     success: updateFunds
                 });
@@ -1646,6 +1649,19 @@
                     <div class="controls">
                         <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
                                       title="Enter Number of Lanes"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="quoteSource" class="control-label">
+                        Quote Source
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:select name="editOrder.quoteSource" id="quoteSource" onchange="updateFundsRemaining()">
+                            <stripes:option value="">Select a Source For the Quote</stripes:option>
+                            <stripes:options-collection collection="${actionBean.quoteSources}" label="displayName"
+                                                        value="displayName"/>
+                        </stripes:select>
                     </div>
                 </div>
 

@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
@@ -39,7 +40,17 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
+    public String createOrderWithQuote(ProductOrder placedOrder) throws SAPIntegrationException {
+        throw new SAPIntegrationException("SAP Quotes nto available at this time");
+    }
+
+    @Override
     public void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
+    }
+
+    @Override
+    public void updateOrderWithQuote(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
+        throw new SAPIntegrationException("SAP Quotes nto available at this time");
     }
 
     @Override
@@ -298,5 +309,10 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     public OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId,
                                                           ProductOrder productOrder) throws SAPIntegrationException {
         return new OrderCalculatedValues(BigDecimal.ONE, Collections.<OrderValue>emptySet());
+    }
+
+    @Override
+    public Quote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
+        return null;
     }
 }

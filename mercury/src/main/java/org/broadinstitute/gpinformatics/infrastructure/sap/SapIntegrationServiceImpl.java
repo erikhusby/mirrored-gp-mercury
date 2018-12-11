@@ -135,6 +135,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
+    public String createOrderWithQuote(ProductOrder placedOrder) throws SAPIntegrationException {
+        throw new SAPIntegrationException("SAP Quotes are not available at this time");
+    }
+
+    @Override
     public void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
 
         SAPOrder newOrder = initializeSAPOrder(placedOrder, false, closingOrder);
@@ -146,6 +151,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newOrder.setSapOrderNumber(placedOrder.getSapOrderNumber());
 
         getClient().updateSAPOrder(newOrder);
+    }
+
+    @Override
+    public void updateOrderWithQuote(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
+        throw new SAPIntegrationException("SAP Quotes are not available at this time");
     }
 
     /**
@@ -513,6 +523,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                             potentialOrderCriteria);
         }
         return orderCalculatedValues;
+    }
+
+    @Override
+    public Quote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
+        final SapIntegrationClientImpl sapClient = getClient();
+
+        throw new SAPIntegrationException("SAP Quotes are not available at this time");
     }
 
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {

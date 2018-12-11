@@ -1582,9 +1582,12 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
         <div class="controls">
             <div class="form-value">
-                <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                        ${actionBean.editOrder.quoteId}
-                </a>
+                <c:if test="${actionBean.editOrder.quoteIdSet}">
+                    ${actionBean.editOrder.quoteSource}:
+                    <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
+                            ${actionBean.editOrder.quoteId}
+                    </a>
+                </c:if>
                 <div id="fundsRemaining"></div>
             </div>
         </div>

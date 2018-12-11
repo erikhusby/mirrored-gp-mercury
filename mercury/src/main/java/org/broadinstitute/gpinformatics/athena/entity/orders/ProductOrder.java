@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -286,6 +287,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
+
+    @Column(name="QUOTE_SOURCE")
+    private String quoteSource = QuoteSourceType.QUOTE_SERVER.getDisplayName();
+
 
     @Transient
     private Quote cachedQuote;
@@ -820,6 +825,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             cachedQuote = null;
         }
         this.quoteId = quoteId;
+    }
+
+    public boolean isQuoteIdSet() {
+        return StringUtils.isNotBlank(this.quoteId);
     }
 
     public OrderStatus getOrderStatus() {
@@ -2479,6 +2488,54 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return foundType;
         }
     }
+
+    public enum QuoteSourceType implements Displayable {
+        QUOTE_SERVER("Quote Server Quote"),
+        SAP_SOURCE("SAP Quote");
+
+        private String displayName;
+
+        QuoteSourceType(String source) {
+            displayName = source;
+        }
+
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public QuoteSourceType getByTypeName(String name) {
+
+            QuoteSourceType foundValue = null;
+            if(StringUtils.isNotBlank(name)) {
+                foundValue = QuoteSourceType.valueOf(name);
+            }
+
+            return foundValue;
+        }
+
+        public QuoteSourceType getByDisplayName(String displayName) {
+            QuoteSourceType foundValue = null;
+
+            for (QuoteSourceType value : QuoteSourceType.values()) {
+                if(StringUtils.equals(value.getDisplayName(), displayName)) {
+                    foundValue = value;
+                }
+            }
+
+            return foundValue;
+
+        }
+    }
+
+    public String getQuoteSource() {
+        return quoteSource;
+    }
+
+    public void setQuoteSource(String quoteSource) {
+        this.quoteSource = quoteSource;
+    }
+
     public boolean needsCustomization(Product product) {
         if(getProduct().equals(product)) {
             return getSinglePriceAdjustment() != null;
@@ -2552,6 +2609,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return companyCode;
     }
 
-
+    public boolean hasSapQuote() {
+        return StringUtils.equals(quoteSource, QuoteSourceType.SAP_SOURCE.getDisplayName()) &&
+               StringUtils.isNotBlank(quoteSource);
+    }
 
 }

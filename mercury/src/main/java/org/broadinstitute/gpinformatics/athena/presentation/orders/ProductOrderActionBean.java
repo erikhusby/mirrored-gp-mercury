@@ -82,6 +82,9 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -89,9 +92,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -105,7 +105,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -219,6 +218,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String sampleSummary;
     private State state;
+    private String quoteSource;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -789,13 +789,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
-            if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+//            if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
-            }
+//            }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
-        } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
         } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " +
                                      editOrder.getQuoteId() +": " +e.getMessage());
@@ -1413,54 +1411,56 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         try {
             item.put("key", quoteIdentifier);
-            if (quoteIdentifier != null) {
-                Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
-                final QuoteFunding quoteFunding = quote.getQuoteFunding();
-                double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
-                item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
-                item.put("status", quote.getApprovalStatus().getValue());
+            if (StringUtils.isNotBlank(quoteIdentifier)) {
+                if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName()) ) {
+                    Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
+                    final QuoteFunding quoteFunding = quote.getQuoteFunding();
+                    double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
+                    item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
+                    item.put("status", quote.getApprovalStatus().getValue());
 
-                double outstandingOrdersValue = estimateOutstandingOrders(quote, 0, null);
-                item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
-                        outstandingOrdersValue));
-                JSONArray fundingDetails = new JSONArray();
+                    double outstandingOrdersValue = estimateOutstandingOrders(quote, 0, null);
+                    item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
+                            outstandingOrdersValue));
+                    JSONArray fundingDetails = new JSONArray();
 
-                final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
+                    final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
-                if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
-                    for (FundingLevel fundingLevel : quoteFunding.getFundingLevel(true)) {
+                    if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
+                        for (FundingLevel fundingLevel : quoteFunding.getFundingLevel(true)) {
 
-                        if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
-                            for (Funding funding:fundingLevel.getFunding()) {
-                                if (StringUtils.isNotBlank(funding.getFundingType())) {
-                                    if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                                        JSONObject fundingInfo = new JSONObject();
-                                        fundingInfo.put("grantTitle", funding.getDisplayName());
-                                        fundingInfo.put("grantEndDate",
-                                                DateUtils.getDate(funding.getGrantEndDate()));
-                                        fundingInfo.put("grantNumber", funding.getGrantNumber());
-                                        fundingInfo.put("grantStatus", funding.getGrantStatus());
+                            if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
+                                for (Funding funding:fundingLevel.getFunding()) {
+                                    if (StringUtils.isNotBlank(funding.getFundingType())) {
+                                        if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                                            JSONObject fundingInfo = new JSONObject();
+                                            fundingInfo.put("grantTitle", funding.getDisplayName());
+                                            fundingInfo.put("grantEndDate",
+                                                    DateUtils.getDate(funding.getGrantEndDate()));
+                                            fundingInfo.put("grantNumber", funding.getGrantNumber());
+                                            fundingInfo.put("grantStatus", funding.getGrantStatus());
 
-                                        final Date today = new Date();
-                                        fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,funding)));
-                                        fundingInfo.put("daysTillExpire",
-                                                DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
-                                        fundingDetails.put(fundingInfo);
+                                            final Date today = new Date();
+                                            fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,funding)));
+                                            fundingInfo.put("daysTillExpire",
+                                                    DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
+                                            fundingDetails.put(fundingInfo);
+                                        }
                                     }
-                                }
-                        /*
-                        This really only needs to loop once since the information that is retrieved will be the same for each
-                        funding instance under fundingLevel
-                        */
+                            /*
+                            This really only needs to loop once since the information that is retrieved will be the same for each
+                            funding instance under fundingLevel
+                            */
 
-                                break;
+                                    break;
+                                }
                             }
                         }
+                    } else {
+                        item.put("error", "This quote has no active Funding Sources.");
                     }
-                } else {
-                    item.put("error", "This quote has no active Funding Sources.");
+                    item.put("fundingDetails", fundingDetails);
                 }
-                item.put("fundingDetails", fundingDetails);
             }
 
         } catch (Exception ex) {
@@ -1606,7 +1606,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution publishProductOrderToSAP() throws SAPInterfaceException {
         MessageCollection placeOrderMessageCollection = new MessageCollection();
 
-        productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection, true);
+        if (editOrder.hasSapQuote()) {
+            productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection, true);
+        } else {
+            addGlobalValidationError("This order does not have an SAP quote so it is not eligible to be an SAP order");
+        }
 
         addMessages(placeOrderMessageCollection);
         return createViewResolution(editOrder.getBusinessKey());
@@ -1629,7 +1633,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
-            productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
+            if (editOrder.hasSapQuote()) {
+                productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
+            }
             addMessages(placeOrderMessageCollection);
 
             /*
@@ -1783,13 +1789,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if this order is not destined to go to SAP, validate Quote order values and only send a warning if
             there is an issue
             */
-            if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(editOrder, ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
-            }
-        } catch (QuoteServerException e) {
-            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
-        } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+                validateQuoteDetails(editOrder, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey());
         } catch (InvalidProductException | SAPIntegrationException ipe) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
         }
@@ -2664,14 +2664,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = ADD_SAMPLES_ACTION)
     public void addSampleExtraValidations() throws Exception {
         try {
-            if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetailsWithAddedSamples(editOrder, ErrorLevel.ERROR,
                         !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());
-            }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
-        } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
         } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +e.getMessage());
         }
@@ -3811,5 +3807,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public Collection<DisplayableItem> getReagentDesigns() {
         return makeDisplayableItemCollection(reagentDesignDao.findAll());
+    }
+
+    public List<ProductOrder.QuoteSourceType> getQuoteSources() {
+        return Arrays.asList(ProductOrder.QuoteSourceType.values());
+    }
+
+    public String getQuoteSource() {
+        return quoteSource;
+    }
+
+    public void setQuoteSource(String quoteSource) {
+        this.quoteSource = quoteSource;
     }
 }
