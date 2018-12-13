@@ -294,8 +294,8 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
                 }
             }
         } catch ( Exception ae ) {
-            errorException = new Exception( "Failure in FixUpEtl - ignoring FixupCommentary ID " + currentRevision, ae );
-            errorIds.add(currentRevision);
+            errorException = new Exception( ae.getClass().getSimpleName() + " failure in FixUpEtl.  Ignoring FixupCommentary ID " + fixupId + ".  May require manual event_fact and sequencing_sample_fact refresh.", ae );
+            errorIds.add(fixupId);
         }
 
         return records;
