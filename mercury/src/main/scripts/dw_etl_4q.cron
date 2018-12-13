@@ -90,11 +90,12 @@ do
 
   # If the hour value is greater than this hour (e.g. it's midnight (hour=0) and we want
   # hours 17-23, then look in yesterday's log.
-  if (( $hour > $thisHour )); then
-    logfile=${SERVERLOG_DIR}/server.log.`date --date="yesterday" +%Y-%m-%d`
-  else
-    logfile=${SERVERLOG_DIR}/server.log
-  fi
+  # TODO:  A recurring failure will cause continuous log entries so shouldn't be a problem, but how to deal with logfiles configured with a size rollover?
+  # if (( $hour > $thisHour )); then
+  #   logfile=${SERVERLOG_DIR}/etl.log.`date --date="yesterday" +%Y-%m-%d`
+  # else
+    logfile=${SERVERLOG_DIR}/etl.log
+  #fi
 
   if [ ! -e ${logfile} ]; then
     echo "Cannot check the Mercury logfile for ETL errors. Expected logfile is missing: ${logfile}" >&2
