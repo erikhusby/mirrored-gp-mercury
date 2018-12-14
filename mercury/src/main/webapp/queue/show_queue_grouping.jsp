@@ -12,20 +12,33 @@
         <p>
             Queue: ${actionBean.queueType.textName}<br />
             Queue Grouping: ${actionBean.queueGrouping.queueGroupingText}
+            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
+                <stripes:param name="queueType" />
+                <stripes:param name="queueGroupingId" />
+                <stripes:param name="downloadGroupingData" />
+                Download Details
+            </stripes:link>
         </p>
 
         <table class="table simple dataTable" id="queueGroupingTable">
             <thead>
             <tr>
-                <%-- TODO: Show container, position in container and in additiona to the label show the SM ID --%>
-                <th>Vessel Barcode</th><th>Storage Location</th><th>Status</th><th>Completed On</th><th>Completed By</th>
+                <th>Tube Vessel Barcode</th><th>Sample ID</th><th>Mercury Storage Location</th>
+                <th>BSP Storage Location</th><th>Collection</th><th>Sample Data Source System</th><th>Queue Status</th>
+                <th>Completed On</th><th>Completed By</th>
             </tr>
             </thead>
             <tbody>
             <c:forEach items="${actionBean.queueGrouping.queuedEntities}" var="queueEntity">
+                <c:set value="${actionBean.labVesselIdToSampleId[queueEntity.labVessel.labVesselId]}" var="sampleId" />
+
                 <tr>
                     <td>${queueEntity.labVessel.label}</td>
+                    <td>${sampleId}</td>
                     <td>${queueEntity.labVessel.storageLocation.buildLocationTrail()}</td>
+                    <td>${actionBean.sampleIdToSampleData[sampleId].bspStorageLocation}</td>
+                    <td>${actionBean.sampleIdToSampleData[sampleId].collection}</td>
+                    <td>${actionBean.labVesselIdToMercurySample[queueEntity.labVessel.labVesselId].metadataSource.displayName}</td>
                     <td>${queueEntity.queueStatus.name}</td>
                     <td>${queueEntity.completedOn}</td>
                     <td>${actionBean.userIdToUsername[queueEntity.completedBy].fullName}</td>

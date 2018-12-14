@@ -117,4 +117,14 @@ public interface SampleData {
     String getSampleKitId();
 
     String getSampleStatus();
+
+    String containerName();
+
+    String getManufacturerBarcode();
+
+    String getPosition();
+
+    String getBspStorageLocation();
+
+    String getMercuryStorageLocation();
 }

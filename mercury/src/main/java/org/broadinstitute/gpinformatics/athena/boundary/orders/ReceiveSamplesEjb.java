@@ -16,14 +16,15 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.PicoEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceivedBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -136,8 +137,11 @@ public class ReceiveSamplesEjb {
                         vesselsForPico.add(labVessel);
                     }
                 }
+                QueueSpecialization queueSpecialization =
+                        PicoEnqueueOverride.determinePicoQueueSpecialization(vesselsForPico);
                 queueEjb.enqueueLabVessels(vesselsForPico, QueueType.PICO,
-                        "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection, QueueOrigin.RECEIVING);
+                        "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
+                        QueueOrigin.RECEIVING, queueSpecialization);
             }
         }
 
@@ -182,8 +186,11 @@ public class ReceiveSamplesEjb {
                             vesselsForPico.add(labVessel);
                         }
                     }
+                    QueueSpecialization queueSpecialization =
+                            PicoEnqueueOverride.determinePicoQueueSpecialization(vesselsForPico);
                     queueEjb.enqueueLabVessels(vesselsForPico, QueueType.PICO,
-                            "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection, QueueOrigin.RECEIVING);
+                            "Received on " + DateUtils.convertDateTimeToString(new Date()),
+                            messageCollection, QueueOrigin.RECEIVING, queueSpecialization);
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
                             parentVesselBeans, bspUser.getUsername());
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);

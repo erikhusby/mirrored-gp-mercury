@@ -63,13 +63,17 @@ public class QueueGrouping {
     @Enumerated(EnumType.STRING)
     private QueuePriority queuePriority;
 
+    @Column(name = "queue_specialization")
+    private QueueSpecialization queueSpecialization;
+
     public QueueGrouping() {
     }
 
-    public QueueGrouping(String readableText, GenericQueue genericQueue) {
+    public QueueGrouping(String readableText, GenericQueue genericQueue, QueueSpecialization queueSpecialization) {
         this.queueGroupingText = readableText;
         this.sortOrder = Long.MAX_VALUE;
         this.associatedQueue = genericQueue;
+        this.queueSpecialization = queueSpecialization;
 
         this.queuedEntities = new ArrayList<>();
     }
@@ -124,6 +128,18 @@ public class QueueGrouping {
 
     public static final BySortOrder BY_SORT_ORDER = new BySortOrder();
 
+    public boolean shouldSkipPriorityCheck() {
+        boolean isRepeat = false;
+        for (QueueEntity queueEntity : getQueuedEntities()) {
+            if (queueEntity.getQueueStatus() == QueueStatus.Repeat) {
+                isRepeat = true;
+                break;
+            }
+        }
+
+        return getQueuePriority().shouldSkipPriorityCheck() || isRepeat;
+    }
+
     public static class BySortOrder implements Comparator<QueueGrouping> {
         @Override
         public int compare(QueueGrouping o1, QueueGrouping o2) {
@@ -153,5 +169,13 @@ public class QueueGrouping {
 
     public void setQueueOrigin(QueueOrigin queueOrigin) {
         this.queueOrigin = queueOrigin;
+    }
+
+    public QueueSpecialization getQueueSpecialization() {
+        return queueSpecialization;
+    }
+
+    public void setQueueSpecialization(QueueSpecialization queueSpecialization) {
+        this.queueSpecialization = queueSpecialization;
     }
 }

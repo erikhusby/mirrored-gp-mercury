@@ -6,6 +6,7 @@ import org.broadinstitute.bsp.client.response.EnqueueResponse;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -49,7 +50,7 @@ public class QueueResource {
             queueOrigin = QueueOrigin.EXTRACTION;
         }
         Long queueGroupingId = queueEjb.enqueueLabVessels(labVessels, queueType, enqueueContents.getReadableName(),
-                messageCollection, queueOrigin);
+                messageCollection, queueOrigin, QueueSpecialization.valueOf(enqueueContents.getQueueSpecialization()));
 
         EnqueueResponse enqueueResponse = new EnqueueResponse(queueGroupingId, messageCollection);
         return Response.status(Response.Status.OK).entity(enqueueResponse).type(MediaType.APPLICATION_XML).build();

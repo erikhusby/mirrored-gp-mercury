@@ -150,7 +150,7 @@ public abstract class AbstractEnqueueOverride {
         List<QueueGrouping> queueGroupings = new ArrayList<>(newGrouping.getAssociatedQueue().getQueueGroupings());
         for (QueueGrouping existingGrouping : queueGroupings) {
 
-            if (existingGrouping.getQueuePriority().shouldSkipPriorityCheck()) {
+            if (existingGrouping.shouldSkipPriorityCheck()) {
                 existingGrouping.setSortOrder(currentSortOrder++);
             } else {
 

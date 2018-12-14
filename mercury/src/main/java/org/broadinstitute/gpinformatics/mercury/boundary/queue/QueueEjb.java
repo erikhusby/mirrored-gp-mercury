@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 
 import org.broadinstitute.bsp.client.queue.DequeueingOptions;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.AbstractDataDumpGenerator;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.QueueValidationHandler;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -58,6 +60,7 @@ public class QueueEjb {
      * Adds a list of lab vessel of any type to a queue as a
      * single queue group.  The general intent is for all lab vessels added together to stay together.
      *
+     * @param queueSpecialization
      * @param sampleIds             String containing the sample Ids
      * @param queueType             Type of Queue to add the lab vessels to.
      * @param readableText          Text displayed on the queue row for this item.  If none is there, default text will be
@@ -67,15 +70,16 @@ public class QueueEjb {
      * @return                      the Database ID of the newly created QueueGrouping.
      */
     public Long enqueueBySampleIdList(String sampleIds, QueueType queueType, @Nullable String readableText,
-                                      @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin) {
+                                      @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
         final List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleIds.trim().toUpperCase());
-        return enqueueBySampleIdList(sampleNames, queueType, readableText, messageCollection, queueOrigin);
+        return enqueueBySampleIdList(sampleNames, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
     }
 
     /**
      * Adds a list of lab vessel of any type to a queue as a
      * single queue group.  The general intent is for all lab vessels added together to stay together.
      *
+     * @param queueSpecialization
      * @param sampleIds             List of sample ids to be added to the Queue.
      * @param queueType             Type of Queue to add the lab vessels to.
      * @param readableText          Text displayed on the queue row for this item.  If none is there, default text will be
@@ -85,15 +89,16 @@ public class QueueEjb {
      * @return                      the Database ID of the newly created QueueGrouping.
      */
     public Long enqueueBySampleIdList(List<String> sampleIds, QueueType queueType, @Nullable String readableText,
-                                      @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin) {
+                                      @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
         List<LabVessel> labVessels = labVesselDao.findBySampleKeyList(sampleIds);
-        return enqueueLabVessels(labVessels, queueType, readableText, messageCollection, queueOrigin);
+        return enqueueLabVessels(labVessels, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
     }
 
     /**
      * Adds a list of lab vessel of any type to a queue as a
      * single queue group.  The general intent is for all lab vessels added together to stay together.
      *
+     * @param queueSpecialization
      * @param vesselList            List of vessels to queue up as a single group.
      * @param readableText          Text displayed on the queue row for this item.  If none is there, default text will be
      *                              provided.  Recommended that if a single container is utilized, you use the barcode of
@@ -104,7 +109,7 @@ public class QueueEjb {
      */
     public Long enqueueLabVessels(@Nonnull Collection<LabVessel> vesselList,
                                   @Nonnull QueueType queueType, @Nullable String readableText,
-                                  @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin) {
+                                  @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
 
         GenericQueue genericQueue = findQueueByType(queueType);
 
@@ -139,7 +144,7 @@ public class QueueEjb {
         }
 
         if (isUniqueSetOfActiveVessels) {
-            QueueGrouping queueGrouping = createGroupingAndSetInitialOrder(readableText, genericQueue, vesselList);
+            QueueGrouping queueGrouping = createGroupingAndSetInitialOrder(readableText, genericQueue, vesselList, queueSpecialization);
             queueGrouping.setQueueOrigin(queueOrigin);
 
             genericQueue.getQueueGroupings().add(queueGrouping);
@@ -260,6 +265,10 @@ public class QueueEjb {
      */
     public void reOrderQueue(Long queueGroupingId, Integer positionToMoveTo, QueueType queueType, MessageCollection messageCollection) {
 
+        if (positionToMoveTo == null) {
+            messageCollection.addInfo("Failed to make the changes as no position to move to was provided.");
+            return;
+        }
         GenericQueue genericQueue = findQueueByType(queueType);
 
         long currentIndex = 1;
@@ -333,13 +342,17 @@ public class QueueEjb {
     /**
      * Creates a queueGrouping and adds it to the queue in the proper placement.
      *
-     * @param readableText      Readable text for the Queue Grouping
-     * @param genericQueue      Queue to add the new grouping to
-     * @param vesselList        List of LabVessels to add the to the queue
-     * @return                  Newly created Queue Grouping.
+     * @param readableText          Readable text for the Queue Grouping
+     * @param genericQueue          Queue to add the new grouping to
+     * @param vesselList            List of LabVessels to add the to the queue
+     * @param queueSpecialization   Queue Specialization to be set.
+     * @return                      Newly created Queue Grouping.
      */
-    public QueueGrouping createGroupingAndSetInitialOrder(@Nullable String readableText, GenericQueue genericQueue, Collection<LabVessel> vesselList) {
-        QueueGrouping queueGrouping = new QueueGrouping(readableText, genericQueue);
+    private QueueGrouping createGroupingAndSetInitialOrder(@Nullable String readableText, GenericQueue genericQueue,
+                                                           Collection<LabVessel> vesselList,
+                                                           QueueSpecialization queueSpecialization) {
+
+        QueueGrouping queueGrouping = new QueueGrouping(readableText, genericQueue, queueSpecialization);
 
         queueGrouping.setAssociatedQueue(genericQueue);
         persist(queueGrouping);
@@ -471,5 +484,23 @@ public class QueueEjb {
 
     public GenericQueue findQueueByType(QueueType queueType) {
         return genericQueueDao.findQueueByType(queueType);
+    }
+
+    public Object[][] generateDataDump(QueueType queueType, QueueGrouping queueGrouping) throws Exception {
+        try {
+            AbstractDataDumpGenerator dataDumpGenerator = queueType.getDataDumpGenerator().newInstance();
+            return dataDumpGenerator.generateSpreadsheet(queueGrouping);
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new Exception(e);
+        }
+    }
+
+    public Object[][] generateDataDump(QueueType queueType, GenericQueue genericQueue) throws Exception {
+        try {
+            AbstractDataDumpGenerator dataDumpGenerator = queueType.getDataDumpGenerator().newInstance();
+            return dataDumpGenerator.generateSpreadsheet(genericQueue.getQueueGroupings());
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new Exception(e);
+        }
     }
 }

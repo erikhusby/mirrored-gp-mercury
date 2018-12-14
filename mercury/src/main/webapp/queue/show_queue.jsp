@@ -65,7 +65,8 @@
                                     ${queueGrouping.queueGroupingText}
                                 </stripes:link>
                             </td>
-                            <td>${queueGrouping.queuePriority.displayName}</td><td>${queueGrouping.queueOrigin.displayName}</td>
+                            <td>${queueGrouping.queuePriority.displayName}</td>
+                            <td>${queueGrouping.queueOrigin.displayName}</td>
 
                             <c:set var="doNotNeedPico" value="${fn:length(queueGrouping.queuedEntities) - queueGrouping.remainingEntities}" />
                             <c:set var="needPico" value="${queueGrouping.remainingEntities}" />
@@ -96,6 +97,15 @@
                         </tr>
                     </c:forEach>
                 </tbody>
+                <tfoot>
+                <tr><td colspan="5">
+                        Total Vessels Needing Pico: ${actionBean.totalNeedPico}<br />
+                        Exome Express Vessels: ${actionBean.totalExomeExpress}<br />
+                        Clinical Vessels: ${actionBean.totalClinical}<br />
+                        Total Vessels in Rework: ${actionBean.totalNeedRework}
+                    </td>
+                </tr>
+                </tfoot>
             </table>
 
             Position to move Selected Items to: <input type="text" name="positionToMoveTo" value="" />
@@ -113,7 +123,20 @@
             <stripes:hidden name="queueType" />
             Enter the barcodes of the vessels to Add to the Queue.  One per line.
             <stripes:textarea name="enqueueSampleIds" /><br />
+            <c:if test="${fn:length(actionBean.allowedQueueSpecializations) > 0}">
+            Select applicable Queue Specialization:
+            <stripes:select name="queueSpecialization">
+                <stripes:option label="Select One: " />
+                <stripes:options-collection collection="${actionBean.allowedQueueSpecializations}" value="name" label="displayName" />
+            </stripes:select><br />
+            </c:if>
             <stripes:submit name="enqueueLabVessels" value="Add Vessels" />
         </stripes:form>
+
+        <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
+            <stripes:param name="queueType" />
+            <stripes:param name="downloadFullQueueData" />
+            Download Data Dump
+        </stripes:link>
     </stripes:layout-component>
 </stripes:layout-render>

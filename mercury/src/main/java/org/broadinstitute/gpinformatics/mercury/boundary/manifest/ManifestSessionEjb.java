@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.PicoEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -24,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
@@ -265,9 +267,11 @@ public class ManifestSessionEjb {
         }
 
         MessageCollection messageCollection = new MessageCollection();
+
+        QueueSpecialization queueSpecialization = PicoEnqueueOverride.determinePicoQueueSpecialization(accessionedVessels);
         queueEjb.enqueueLabVessels(accessionedVessels, QueueType.PICO,
                 "Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
-                QueueOrigin.RECEIVING);
+                QueueOrigin.RECEIVING, queueSpecialization);
         for (String error : messageCollection.getErrors()) {
             logger.debug("Error Occurred in Enqueue to pico queue:  " + error);
         }

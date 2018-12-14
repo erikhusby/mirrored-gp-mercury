@@ -4,13 +4,16 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.PicoEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import java.util.Date;
+import java.util.Set;
 
 /**
  * BettaLims messages that are processed in mercury are, for the most part, generic.  There is no specific validation
@@ -85,9 +88,13 @@ public class EventHandlerSelector {
                 && targetEvent.getLabEventType().getResultingMaterialType().containsIgnoringCase("dna")) {
 
             MessageCollection messageCollection = new MessageCollection();
-            queueEjb.enqueueLabVessels(targetEvent.getTargetLabVessels(), QueueType.PICO, "Extracted" +
+            Set<LabVessel> targetLabVessels = targetEvent.getTargetLabVessels();
+
+            QueueSpecialization queueSpecialization = PicoEnqueueOverride.determinePicoQueueSpecialization(targetLabVessels);
+
+            queueEjb.enqueueLabVessels(targetLabVessels, QueueType.PICO, "Extracted" +
                     " on " + DateUtils.convertDateTimeToString(targetEvent.getEventDate()), messageCollection,
-                    QueueOrigin.EXTRACTION);
+                    QueueOrigin.EXTRACTION, queueSpecialization);
         }
     }
 

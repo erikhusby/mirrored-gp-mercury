@@ -428,6 +428,11 @@ public class BspSampleData implements SampleData {
     }
 
     @Override
+    public String containerName() {
+        return getValue(BSPSampleSearchColumn.CONTAINER_NAME);
+    }
+
+    @Override
     public MaterialType getMaterialTypeObject() {
         String materialType = getMaterialType();
         return StringUtils.isBlank(materialType) ? null : new MaterialType(materialType);
@@ -559,5 +564,25 @@ public class BspSampleData implements SampleData {
 
     private static BigDecimal convertNgToUg(BigDecimal ng) {
         return ng.divide(ONE_THOUSAND);
+    }
+
+    @Override
+    public String getManufacturerBarcode() {
+        return getValue(BSPSampleSearchColumn.MANUFACTURER_BARCODE);
+    }
+
+    @Override
+    public String getPosition() {
+        return getValue(BSPSampleSearchColumn.POSITION);
+    }
+
+    @Override
+    public String getBspStorageLocation() {
+        return getValue(BSPSampleSearchColumn.LOCATION);
+    }
+
+    @Override
+    public String getMercuryStorageLocation() {
+        return "";
     }
 }

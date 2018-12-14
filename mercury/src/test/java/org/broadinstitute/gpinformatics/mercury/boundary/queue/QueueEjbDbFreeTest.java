@@ -34,7 +34,7 @@ public class QueueEjbDbFreeTest {
 
         MessageCollection messageCollection = new MessageCollection();
         queueEjb.enqueueLabVessels(Arrays.asList(labVessel, labVessel2), QueueType.PICO,
-                        null, messageCollection, QueueOrigin.EXTRACTION);
+                        null, messageCollection, QueueOrigin.EXTRACTION, null);
         GenericQueue picoQueue = queueEjb.findQueueByType(QueueType.PICO);
         int foundItems = 0;
         for (QueueGrouping queueGrouping : picoQueue.getQueueGroupings()) {
@@ -140,7 +140,7 @@ public class QueueEjbDbFreeTest {
 
         MessageCollection messageCollection = new MessageCollection();
         queueEjb.enqueueLabVessels(Collections.singletonList(labVessel), QueueType.PICO,
-                null, messageCollection, QueueOrigin.RECEIVING);
+                null, messageCollection, QueueOrigin.RECEIVING, null);
 
         queueEjb.excludeItems(Collections.singletonList(labVessel), QueueType.PICO, messageCollection);
 

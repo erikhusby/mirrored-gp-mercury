@@ -1,21 +1,38 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump;
 
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 
 public class PicoDataDumpGenerator extends AbstractDataDumpGenerator {
 
     @Override
-    protected Object[] generateData(LabVessel labVessel) {
+    protected Object[] extractData(SampleData sampleData) {
+        int index = 0;
+        Object[] objects = new Object[getSearchColumns().length];
+        objects[index++] = sampleData.getSampleId();
+        objects[index++] = sampleData.getSampleStatus();
+        objects[index++] = sampleData.getRootSample();
+        objects[index++] = sampleData.getSampleKitId();
+        objects[index++] = sampleData.getPatientId();
+        objects[index++] = sampleData.getCollection();
+        objects[index++] = sampleData.getOriginalMaterialType();
+        objects[index++] = sampleData.getMaterialType();
+        objects[index++] = sampleData.getVolume();
+        objects[index++] = sampleData.getConcentration();
+        objects[index++] = sampleData.getManufacturerBarcode();
+        objects[index++] = sampleData.getContainerId();
+        objects[index++] = sampleData.getPosition();
+        objects[index++] = sampleData.getBspStorageLocation();
+        objects[index++] = sampleData.containerName();
+        objects[index++] = sampleData.getCollaboratorParticipantId();
+        //noinspection UnusedAssignment
+        objects[index++] = sampleData.getCollaboratorsSampleName();
 
-        return null;
+        return objects;
     }
 
     @Override
-    protected String[] generateHeaderRow() {
-        return new String[]{
-                "Sample ID", "Sample Status", "Root Sample(s)", "Sample Kit", "Participant ID(s)", "Collection",
-                "Original Material Type", "Material Type", "Volume", "Conc", "Manufacturer Tube Barcode", "Container",
-                "Position", "Location", "Container Name", "Collaborator Participant ID", "Collaborator Sample ID"
-        };
+    protected BSPSampleSearchColumn[] getSearchColumns() {
+        return BSPSampleSearchColumn.PICO_QUEUE_DATA_DUMP;
     }
 }

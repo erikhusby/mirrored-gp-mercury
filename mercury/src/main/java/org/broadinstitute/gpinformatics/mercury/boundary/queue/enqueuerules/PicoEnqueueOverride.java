@@ -3,17 +3,26 @@ package org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Logic for overriding default handling for enqueueing for the Pico Queue.
@@ -30,6 +39,29 @@ public class PicoEnqueueOverride extends AbstractEnqueueOverride {
     }
 
     private BSPRestClient bspRestClientImpl;
+
+    @Nullable
+    public static QueueSpecialization determinePicoQueueSpecialization(Collection<LabVessel> targetLabVessels) {
+        List<MercurySample> mercurySamples = new ArrayList<>();
+
+        QueueSpecialization queueSpecialization = null;
+
+        for (LabVessel labVessel : targetLabVessels) {
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                mercurySamples.add(sampleInstanceV2.getNearestMercurySample());
+            }
+        }
+
+        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(mercurySamples, BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE);
+
+        for (SampleData sampleData : sampleDataMap.values()) {
+            if (sampleData.getFfpeStatus()) {
+                queueSpecialization = QueueSpecialization.FFPE;
+            }
+        }
+        return queueSpecialization;
+    }
 
     @NotNull
     @Override

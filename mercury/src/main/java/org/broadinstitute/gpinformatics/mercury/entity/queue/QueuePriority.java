@@ -13,8 +13,7 @@ public enum QueuePriority {
     STANDARD("Standard"),
     EXOME_EXPRESS("Exome Express"),
     CLIA("Clinical"),
-    ALTERED("Expedited"),
-    REPEAT("Contains Repeats");
+    ALTERED("Expedited");
 
     private final String displayName;
 
@@ -27,6 +26,6 @@ public enum QueuePriority {
     }
 
     public boolean shouldSkipPriorityCheck() {
-        return this == REPEAT || this == ALTERED;
+        return this == ALTERED;
     }
 }

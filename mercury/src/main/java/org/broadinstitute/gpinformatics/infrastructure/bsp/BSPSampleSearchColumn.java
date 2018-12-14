@@ -37,7 +37,10 @@ public enum BSPSampleSearchColumn {
     PICO_RUN_DATE("Pico Run Date"),
     RECEIPT_DATE("Receipt Date"),
     ORIGINAL_MATERIAL_TYPE("Original Material Type"),
-    DV200("DV200");
+    DV200("DV200"),
+    MANUFACTURER_BARCODE("Manufacturer Tube Barcode"),
+    POSITION("Position"),
+    LOCATION("Location");
 
     private final String columnName;
     public String columnName() { return columnName; }
@@ -92,6 +95,12 @@ public enum BSPSampleSearchColumn {
 
     public static final BSPSampleSearchColumn[] BUCKET_PAGE_COLUMNS = {
             COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE, RECEIPT_DATE, ROOT_SAMPLE
+    };
+
+    public static final BSPSampleSearchColumn[] PICO_QUEUE_DATA_DUMP = {
+            SAMPLE_ID, SAMPLE_STATUS, ROOT_SAMPLE, SAMPLE_KIT, PARTICIPANT_ID, COLLECTION, ORIGINAL_MATERIAL_TYPE,
+            MATERIAL_TYPE, VOLUME, CONCENTRATION, /* Manufacturer Barcode */ CONTAINER_ID, /* POSITION */
+            /* Location */ CONTAINER_NAME, COLLABORATOR_PARTICIPANT_ID, COLLABORATOR_SAMPLE_ID
     };
 
     public static boolean isQuantColumn(BSPSampleSearchColumn bspSampleSearchColumn) {
