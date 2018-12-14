@@ -24,11 +24,13 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -85,6 +87,9 @@ public class LedgerEntryFixupTest extends Arquillian {
 
     @Inject
     private BillingEjb billingEjb;
+
+    @Inject
+    private SapIntegrationService sapService;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -399,7 +404,7 @@ public class LedgerEntryFixupTest extends Arquillian {
         try {
             final List<QuoteImportItem> quoteImportItems = collectedEntriesByQuoteId.getQuoteImportItems(priceListCache);
             for (QuoteImportItem item : quoteImportItems) {
-                Quote quote = item.getProductOrder().getQuote(quoteService);
+                Quote quote = item.getProductOrder().hasSapQuote()?item.getProductOrder().getSAPQuote(sapService):item.getProductOrder().getQuote(quoteService);
 
                 System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
                                    + item.getLedgerItems().size() + " ledger entries: "
@@ -419,7 +424,7 @@ public class LedgerEntryFixupTest extends Arquillian {
                         item.getSapItems());
             }
 
-        } catch (QuoteNotFoundException | QuoteServerException e) {
+        } catch (QuoteNotFoundException | QuoteServerException | SAPIntegrationException e) {
             Assert.fail();
         }
         ledgerEntryFixupDao.persist(new FixupCommentary("SUPPORT-4208 Replaced work item references " +

@@ -372,7 +372,7 @@ public class ProductOrderEjb {
 
         final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
         try {
-            Quote quote = orderToPublish.getQuote(quoteService);
+            Quote quote = orderToPublish.hasSapQuote()?orderToPublish.getSAPQuote(sapService):orderToPublish.getQuote(quoteService);
 
             final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
                                           !orderToPublish.getQuoteId()
@@ -568,11 +568,15 @@ public class ProductOrderEjb {
      * Looks up the quote for the pdo (if the pdo has one) in the
      * quote server.
      */
-    void validateQuote(ProductOrder productOrder, QuoteService quoteService) throws QuoteNotFoundException {
+    void validateQuote(ProductOrder productOrder) throws QuoteNotFoundException {
         if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
             try {
-                productOrder.getQuote(quoteService);
-            } catch (QuoteServerException e) {
+                if(productOrder.hasSapQuote()) {
+                    productOrder.getSAPQuote(sapService);
+                } else {
+                    productOrder.getQuote(quoteService);
+                }
+            } catch (QuoteServerException |SAPIntegrationException e) {
                 throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(), e);
             }
         }
@@ -737,7 +741,7 @@ public class ProductOrderEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
-        validateQuote(productOrder, quoteService);
+        validateQuote(productOrder);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
                 JiraTransition.DEVELOPER_EDIT.getStateName());
@@ -1693,10 +1697,12 @@ public class ProductOrderEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
-            throws ValidationWithRollbackException, QuoteNotFoundException, QuoteServerException {
+            throws ValidationWithRollbackException, QuoteNotFoundException, QuoteServerException,
+            SAPIntegrationException {
         List<String> errorMessages = new ArrayList<>();
 
         Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
+        Map<String, Quote> usedSAPQuotesMiniCache = new HashMap<>();
 
         Map<String, Boolean> updatedOrderMap = new HashMap<>();
 
@@ -1710,8 +1716,13 @@ public class ProductOrderEjb {
                 Quote orderQuote = usedQuotesMiniCache.get(productOrderSample.getProductOrder().getQuoteId());
 
                 if(orderQuote == null) {
-                    orderQuote = quoteService.getQuoteByAlphaId(productOrderSample.getProductOrder().getQuoteId());
-                    usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
+                    if(productOrderSample.getProductOrder().hasSapQuote()) {
+                        orderQuote = sapService.findSapQuote(productOrderSample.getProductOrder().getQuoteId());
+                        usedSAPQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
+                    } else {
+                        orderQuote = quoteService.getQuoteByAlphaId(productOrderSample.getProductOrder().getQuoteId());
+                        usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
+                    }
                 }
 
                 updatedOrderMap.put(productOrderSample.getProductOrder().getBusinessKey(), Boolean.TRUE);

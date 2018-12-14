@@ -20,8 +20,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.sap.entity.Condition;
@@ -173,9 +171,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         Quote foundQuote = null;
         try {
-            foundQuote = orderToUpdate.getQuote(quoteService);
-        } catch (QuoteServerException | QuoteNotFoundException e) {
-            throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
+            foundQuote = findSapQuote(orderToUpdate.getQuoteId());
+        } catch (SAPIntegrationException e) {
+            throw new SAPIntegrationException("Unable to get information for the Quote from SAP", e);
         }
 
         SAPOrder newOrder =
@@ -557,8 +555,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         if (!forOrderValueQuery) {
             Quote foundQuote = null;
             try {
-                foundQuote = productOrder.getQuote(quoteService);
-            } catch (QuoteServerException | QuoteNotFoundException e) {
+                foundQuote = findSapQuote(productOrder.getQuoteId());
+            } catch (SAPIntegrationException e) {
                 throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
             }
             FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();

@@ -37,12 +37,14 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -113,6 +115,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
         if (cachedQuote == null) {
             cachedQuote = quoteService.getQuoteByAlphaId(quoteId);
+        }
+        return cachedQuote;
+    }
+
+    public Quote getSAPQuote(SapIntegrationService sapService) throws SAPIntegrationException {
+        if (cachedQuote == null) {
+            cachedQuote = sapService.findSapQuote(quoteId);
         }
         return cachedQuote;
     }
@@ -289,7 +298,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String reagentDesignKey;
 
     @Column(name="QUOTE_SOURCE")
-    private String quoteSource = QuoteSourceType.QUOTE_SERVER.getDisplayName();
+    private String quoteSource;
 
 
     @Transient
@@ -331,6 +340,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
                 new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
                 toClone.getResearchProject());
+        cloned.setQuoteSource(toClone.getQuoteSource());
         List<Product> potentialAddons = new ArrayList<>();
 
         for (ProductOrderAddOn cloneAddon : toClone.getAddOns()) {
@@ -2504,7 +2514,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return displayName;
         }
 
-        public QuoteSourceType getByTypeName(String name) {
+        public static QuoteSourceType getByTypeName(String name) {
 
             QuoteSourceType foundValue = null;
             if(StringUtils.isNotBlank(name)) {
@@ -2514,7 +2524,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return foundValue;
         }
 
-        public QuoteSourceType getByDisplayName(String displayName) {
+        public static QuoteSourceType getByDisplayName(String displayName) {
             QuoteSourceType foundValue = null;
 
             for (QuoteSourceType value : QuoteSourceType.values()) {
@@ -2530,6 +2540,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public String getQuoteSource() {
         return quoteSource;
+    }
+
+    public QuoteSourceType getQuoteSourceType() {
+        return QuoteSourceType.getByDisplayName(quoteSource);
     }
 
     public void setQuoteSource(String quoteSource) {
@@ -2610,8 +2624,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public boolean hasSapQuote() {
-        return StringUtils.equals(quoteSource, QuoteSourceType.SAP_SOURCE.getDisplayName()) &&
-               StringUtils.isNotBlank(quoteSource);
+        return QuoteSourceType.SAP_SOURCE == getQuoteSourceType();
     }
 
 }
