@@ -56,6 +56,7 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
     // Fixup events are layered on top of existing lab event output
     public final String ancestorFileName = "library_ancestry";
     public final String seqSampleFactFileName = "sequencing_sample_fact";
+    public final String arrayProcessFileName = "array_process";
 
 
     @Inject
@@ -63,6 +64,9 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
 
     @Inject
     SequencingSampleFactEtl sequencingSampleFactEtl;
+
+    @Inject
+    ArrayProcessFlowEtl arrayProcessFlowEtl;
 
     @Override
     Long entityId(FixupCommentary entity) {
@@ -102,6 +106,7 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
         DataFile eventDataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
         DataFile ancestryDataFile = new DataFile(dataFilename(etlDateStr, ancestorFileName));
         DataFile seqSampleDataFile = new DataFile(dataFilename(etlDateStr, seqSampleFactFileName));
+        DataFile arrayProcessDataFile = new DataFile(dataFilename(etlDateStr, arrayProcessFileName));
         int count = 0;
 
         try {
@@ -110,7 +115,7 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
 
                 try {
                     for (String record : dataRecords(etlDateStr, false, entity)) {
-                        // Split file writes between events and ancestry ...
+                        // Split file writes: E = event_fact, A = library_ancestry, S = sequencing_sample_fact, I = array_process
                         if( record.endsWith("E") ) {
                             eventDataFile.write(record);
                             count++;
@@ -119,6 +124,9 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
                             count++;
                         } else if ( record.endsWith("S") ) {
                             seqSampleDataFile.write(record);
+                            count++;
+                        } else if ( record.endsWith("I") ) {
+                            arrayProcessDataFile.write(record);
                             count++;
                         }
                     }
@@ -139,6 +147,7 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
             eventDataFile.close();
             ancestryDataFile.close();
             seqSampleDataFile.close();
+            arrayProcessDataFile.close();
         }
         return count;
     }
@@ -172,10 +181,13 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
 
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, FixupCommentary fixupCommentary) {
+
         Collection<String> records = new ArrayList<>();
         if (fixupCommentary == null) {
             return records;
         }
+
+        boolean coreEntitiesAreDetached = false;
 
         // Revision number of oldest (create) fixup is all we're interested in (otherwise we're handling a fixup of a fixup)
         Long fixupId = fixupCommentary.getFixupCommentaryId();
@@ -183,64 +195,107 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
         List<Number> revisions = auditReader.getRevisions(FixupCommentary.class, fixupId);
         long currentRevision = revisions.iterator().next().longValue();
 
-        // What entities changed at that revision?
-        CrossTypeRevisionChangesReader changesReader = auditReader.getCrossTypeRevisionChangesReader();
-        Map<RevisionType,List<Object>> fixupObjects = changesReader.findEntitiesGroupByRevisionType(Long.valueOf(currentRevision));
+        /*
+         * Can't control envers, a simple lab event delete (See LabEventFixupTest.fixupGplim4104()) makes entries in lab_vessel_aud with dtype='LabVessel'
+         * Catch and ignore or entire ETL batch cycle fails repeatedly
+         *
+         * [hibernate-envers-4.0.1.Final.jar:4.0.1.Final] Blows up on NPE at
+         * FixUpEtl for method public int org.broadinstitute.gpinformatics.infrastructure.datawh.GenericEntityEtl.doIncrementalEtl(java.util.Set,java.lang.String) throws java.lang.Exception: java.lang.RuntimeException: org.hibernate.envers.exception.AuditException: java.lang.NullPointerException
+         *   Caused by: org.hibernate.envers.exception.AuditException: java.lang.NullPointerException
+         *       at org.hibernate.envers.entities.EntityInstantiator.createInstanceFromVersionsEntity(EntityInstantiator.java:92)
+         *       at org.hibernate.envers.entities.EntityInstantiator.addInstancesFromVersionsEntities(EntityInstantiator.java:112)
+         *       at org.hibernate.envers.query.impl.EntitiesModifiedAtRevisionQuery.list(EntitiesModifiedAtRevisionQuery.java:58)
+         *       at org.hibernate.envers.query.impl.AbstractAuditQuery.getResultList(AbstractAuditQuery.java:102)
+         *       at org.hibernate.envers.reader.CrossTypeRevisionChangesReaderImpl.findEntitiesGroupByRevisionType(CrossTypeRevisionChangesReaderImpl.java:67)
+         *       at org.broadinstitute.gpinformatics.infrastructure.datawh.FixUpEtl.dataRecords(FixUpEtl.java:188) [classes:]
+         *   Caused by: java.lang.NullPointerException
+	     *       at org.hibernate.envers.entities.EntityInstantiator.createInstanceFromVersionsEntity(EntityInstantiator.java:90)
+	     *
+         *   org.hibernate.internal.util.ReflectHelper
+         *   public static Constructor getDefaultConstructor(Class clazz) throws PropertyNotFoundException {
+         *           if ( isAbstractClass( clazz ) ) {  <-- LabVessel is an Interface!!!
+         *               return null;  <-- Causes NPE!
+         *           }
+         *           .....
+         */
+        try {
 
-        // Look through for entities of interest and translate into events to use as a basis for refresh
-        Set<LabEvent> coreAuditEvents = new HashSet<>();
-        for( Map.Entry<RevisionType,List<Object>> mapEntry : fixupObjects.entrySet() ) {
-            RevisionType revType = mapEntry.getKey();
-            for( Object entity : mapEntry.getValue() ) {
-                if( OrmUtil.proxySafeIsInstance(entity, LabEvent.class) ) {
-                    LabEvent auditEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
-                    getCoreEventsFromAudit( auditEvent, revType, currentRevision, auditReader, coreAuditEvents );
-                } else if( OrmUtil.proxySafeIsInstance(entity, MercurySample.class) ) {
-                    MercurySample auditSample = OrmUtil.proxySafeCast(entity, MercurySample.class);
-                    getCoreEventsFromAudit( auditSample, revType, currentRevision, auditReader, coreAuditEvents );
-                } else if( OrmUtil.proxySafeIsInstance(entity, LabBatchStartingVessel.class) ) {
-                    LabBatchStartingVessel auditBatchVessel = OrmUtil.proxySafeCast(entity, LabBatchStartingVessel.class);
-                    getCoreEventsFromAudit( auditBatchVessel, revType, currentRevision, auditReader, coreAuditEvents );
-                } else if( OrmUtil.proxySafeIsInstance(entity, ProductOrderSample.class) ) {
-                    ProductOrderSample auditPdoSample = OrmUtil.proxySafeCast(entity, ProductOrderSample.class);
-                    MercurySample auditSample = auditPdoSample.getMercurySample();
-                    getCoreEventsFromAudit( auditSample, revType, currentRevision, auditReader, coreAuditEvents );
-                } else if ( OrmUtil.proxySafeIsInstance(entity, BucketEntry.class) ) {
-                    BucketEntry auditBucketEntry = OrmUtil.proxySafeCast(entity, BucketEntry.class);
-                    getCoreEventsFromAudit( auditBucketEntry, revType, currentRevision, auditReader, coreAuditEvents );
+            // What entities changed at that revision?
+            CrossTypeRevisionChangesReader changesReader = auditReader.getCrossTypeRevisionChangesReader();
+            Map<RevisionType,List<Object>> fixupObjects = changesReader.findEntitiesGroupByRevisionType(Long.valueOf(currentRevision));
+
+            // Look through for entities of interest and translate into events to use as a basis for refresh
+            Set<LabEvent> coreAuditEvents = new HashSet<>();
+            for( Map.Entry<RevisionType,List<Object>> mapEntry : fixupObjects.entrySet() ) {
+                RevisionType revType = mapEntry.getKey();
+                for( Object entity : mapEntry.getValue() ) {
+                    if( OrmUtil.proxySafeIsInstance(entity, LabEvent.class) ) {
+                        LabEvent auditEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
+                        getCoreEventsFromAudit( auditEvent, revType, currentRevision, auditReader, coreAuditEvents );
+                    } else if( OrmUtil.proxySafeIsInstance(entity, MercurySample.class) ) {
+                        MercurySample auditSample = OrmUtil.proxySafeCast(entity, MercurySample.class);
+                        getCoreEventsFromAudit( auditSample, revType, currentRevision, auditReader, coreAuditEvents );
+                    } else if( OrmUtil.proxySafeIsInstance(entity, LabBatchStartingVessel.class) ) {
+                        LabBatchStartingVessel auditBatchVessel = OrmUtil.proxySafeCast(entity, LabBatchStartingVessel.class);
+                        getCoreEventsFromAudit( auditBatchVessel, revType, currentRevision, auditReader, coreAuditEvents );
+                    } else if( OrmUtil.proxySafeIsInstance(entity, ProductOrderSample.class) ) {
+                        ProductOrderSample auditPdoSample = OrmUtil.proxySafeCast(entity, ProductOrderSample.class);
+                        MercurySample auditSample = auditPdoSample.getMercurySample();
+                        getCoreEventsFromAudit( auditSample, revType, currentRevision, auditReader, coreAuditEvents );
+                    } else if ( OrmUtil.proxySafeIsInstance(entity, BucketEntry.class) ) {
+                        BucketEntry auditBucketEntry = OrmUtil.proxySafeCast(entity, BucketEntry.class);
+                        getCoreEventsFromAudit( auditBucketEntry, revType, currentRevision, auditReader, coreAuditEvents );
+                    }
                 }
             }
-        }
 
-        // Using base events, traverse target vessel descendant events and refresh all
-        Collection<LabEvent> eventsToRefresh = getEventsRelatedToAuditEvents( coreAuditEvents );
-        Set<SequencingRun> sequencingRunsToRefresh = new HashSet<>();
-        for( LabEvent evt : eventsToRefresh ) {
-            records.addAll( labEventEtl.dataRecords(etlDateStr, isDelete, evt) );
-
-            // Capture sequencing runs in order to refresh sequencing sample fact data
-            LabVessel flowcell = null;
-            if( evt.getLabEventType() == LabEventType.FLOWCELL_TRANSFER ||
-                    evt.getLabEventType() == LabEventType.DILUTION_TO_FLOWCELL_TRANSFER  ||
-                    evt.getLabEventType() == LabEventType.DENATURE_TO_FLOWCELL_TRANSFER ) {
-                flowcell = evt.getTargetLabVessels().iterator().next();
-            } else if( evt.getLabEventType() == LabEventType.FLOWCELL_LOADED ) {
-                flowcell = evt.getInPlaceLabVessel();
+            // Split the above into batches or this process will hoover up all the server memory on large fixups
+            //   , especially on events early in workflows
+            int count = 0;
+            for( Map.Entry<RevisionType,List<Object>> mapEntry : fixupObjects.entrySet() ) {
+                count += mapEntry.getValue().size();
             }
-            // Collects sequencing runs and build sequencing sample fact data from any descendant flowcells.
-            if (OrmUtil.proxySafeIsInstance(flowcell, RunCartridge.class)) {
-                RunCartridge runCartridge = OrmUtil.proxySafeCast(flowcell, RunCartridge.class );
-                sequencingRunsToRefresh.addAll(runCartridge.getSequencingRuns());
+            if( count > ( JPA_CLEAR_THRESHOLD ) ) {
+                coreEntitiesAreDetached = true;
+                dao.clear();
             }
 
-        }
+            // Using base events, traverse target vessel descendant events and refresh all
+            Collection<LabEvent> eventsToRefresh = getEventsRelatedToAuditEvents( coreAuditEvents, coreEntitiesAreDetached );
+            Set<SequencingRun> sequencingRunsToRefresh = new HashSet<>();
+            for( LabEvent evt : eventsToRefresh ) {
+                records.addAll( labEventEtl.dataRecords(etlDateStr, isDelete, evt) );
+                for( String arrayRecord : arrayProcessFlowEtl.dataRecords(etlDateStr, isDelete, evt) ) {
+                    records.add(arrayRecord + ",I");
+                }
 
-        for (SequencingRun seqRun : sequencingRunsToRefresh) {
-            for( String etlData : sequencingSampleFactEtl.dataRecords( etlDateStr, false, seqRun ) ) {
-                // Suffix record with S to differentiate sequencing_sample_fact
-                // (vs. E for event_fact and A for library_ancestry)
-                records.add( etlData + ",S");
+                // Capture sequencing runs in order to refresh sequencing sample fact data
+                LabVessel flowcell = null;
+                if( evt.getLabEventType() == LabEventType.FLOWCELL_TRANSFER ||
+                        evt.getLabEventType() == LabEventType.DILUTION_TO_FLOWCELL_TRANSFER  ||
+                        evt.getLabEventType() == LabEventType.DENATURE_TO_FLOWCELL_TRANSFER ) {
+                    flowcell = evt.getTargetLabVessels().iterator().next();
+                } else if( evt.getLabEventType() == LabEventType.FLOWCELL_LOADED ) {
+                    flowcell = evt.getInPlaceLabVessel();
+                }
+                // Collects sequencing runs and build sequencing sample fact data from any descendant flowcells.
+                if (OrmUtil.proxySafeIsInstance(flowcell, RunCartridge.class)) {
+                    RunCartridge runCartridge = OrmUtil.proxySafeCast(flowcell, RunCartridge.class );
+                    sequencingRunsToRefresh.addAll(runCartridge.getSequencingRuns());
+                }
+
             }
+
+            for (SequencingRun seqRun : sequencingRunsToRefresh) {
+                for (String etlData : sequencingSampleFactEtl.dataRecords(etlDateStr, false, seqRun)) {
+                    // Suffix record with S to differentiate sequencing_sample_fact
+                    // (vs. E for event_fact and A for library_ancestry)
+                    records.add(etlData + ",S");
+                }
+            }
+        } catch ( Exception ae ) {
+            errorException = new Exception( "Failure in FixUpEtl - ignoring FixupCommentary ID " + currentRevision, ae );
+            errorIds.add(currentRevision);
         }
 
         return records;
@@ -366,10 +421,19 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
     /**
      * Given a list of events pulled from audit trail, return production events which require ETL refresh
      */
-    private Collection<LabEvent> getEventsRelatedToAuditEvents(Set<LabEvent> auditEvents ){
+    private Collection<LabEvent> getEventsRelatedToAuditEvents(Set<LabEvent> auditEvents, boolean coreEntitiesAreDetached ){
         TransferTraverserCriteria.LabEventDescendantCriteria eventCriteria = new TransferTraverserCriteria.LabEventDescendantCriteria();
+        int count = 0;
 
         for( LabEvent evt : auditEvents ) {
+            count++;
+            if( coreEntitiesAreDetached && count % JPA_CLEAR_THRESHOLD == 0 ) {
+                dao.clear();
+            }
+
+            if( coreEntitiesAreDetached ) {
+                evt = dao.findById( LabEvent.class, evt.getLabEventId() );
+            }
 
             // Here is where we have to divert from envers.
             // We need to capture events/vessels created AFTER the fixup revision point in time)
@@ -442,7 +506,7 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
     /**
      * Need to be able to get previous revisions to refresh based upon prior state
      */
-    private <T> T getPreviousEntityRevision(Class<T> clazz, AuditReader auditReader, Long auditEventId, long latestRevision ) {
+    private <T> T getPreviousEntityRevision(Class < T > clazz, AuditReader auditReader, Long auditEventId, long latestRevision ) {
         long priorRevision = 0L;
 
         // List ordered by older revisions first

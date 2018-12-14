@@ -8,11 +8,12 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -24,7 +25,8 @@ import java.util.List;
 /**
  * This class provides Mercury with a way to send volume and concentration to BSP.
  */
-@Impl
+@Dependent
+@Default
 public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BSPSetVolumeConcentration {
 
     private static final long serialVersionUID = -2649024856161379565L;
@@ -32,7 +34,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
     private static final String VOLUME_CONCENTRATION_URL = "sample/setVolumeConcentration";
 
     /**
-     * Required for @Impl class.
+     * Required for CDI
      */
     @SuppressWarnings("unused")
     public BSPSetVolumeConcentrationImpl() {
@@ -53,7 +55,8 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
      * @return queryString to pass to the web service.
      */
     private static String getQueryString(@Nonnull String barcode, @Nullable BigDecimal volume,
-                                         @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight)
+                                         @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight,
+                                         @Nullable Boolean terminateDepleted)
             throws ValidationException {
         List<NameValuePair> parameters = new ArrayList<>();
 
@@ -69,6 +72,10 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
             parameters.add(new BasicNameValuePair("receptacle_weight", String.valueOf(receptacleWeight)));
         }
 
+        if (terminateDepleted != null && terminateDepleted) {
+            parameters.add(new BasicNameValuePair("terminate_depleted", "true"));
+        }
+
         if (parameters.isEmpty()) {
             throw new ValidationException("A value for volume, concentration or receptacleWeight is required.");
         }
@@ -82,18 +89,20 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
      * Call BSP WebService which sets the volume and or the concentration of the thing barcoded.
      * At lease one of must be Nonnull.
      *
-     * @param barcode       The thing having its quant updated. In BSP this currently can be a SM id or a manufacturer
-     *                      barcode.
-     * @param volume        new volume of the sample. Can be null.
-     * @param concentration the new concentration of the sample. Can be null.
+     * @param barcode         The thing having its quant updated. In BSP this currently can be a SM id or a manufacturer
+     *                        barcode.
+     * @param volume          New volume of the sample. Can be null.
+     * @param concentration   The new concentration of the sample. Can be null.
+     * @param terminateAction Whether to terminate the sample if it is depleted or leave the sample in the same state.
      */
     @Override
     public String setVolumeAndConcentration(@Nonnull String barcode, @Nullable BigDecimal volume,
-                                            @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight) {
+                                            @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight,
+                                            @Nullable TerminateAction terminateAction) {
         BufferedReader rdr = null;
         String result;
         try {
-            String queryString = getQueryString(barcode, volume, concentration, receptacleWeight);
+            String queryString = getQueryString(barcode, volume, concentration, receptacleWeight, terminateAction.getTerminateDepleted());
             String urlString = getUrl(queryString);
 
             WebResource webResource = getJerseyClient().resource(urlString);

@@ -353,7 +353,11 @@ public class AbandonVesselActionBean extends CoreActionBean {
     }
 
     public String getRackScanData() {
-        return rackScanData;
+        if( rackScanData != null ) {
+            return rackScanData;
+        } else {
+            return "";
+        }
     }
 
     public VesselGeometry getVesselGeometry() {

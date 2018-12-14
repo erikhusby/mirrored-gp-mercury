@@ -6,12 +6,14 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
@@ -26,7 +28,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Tests the GenotypingChip, its related entities, and its dao.
  */
 @Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
+@Dependent
 public class GenotypingChipDbTest extends Arquillian {
+
+    public GenotypingChipDbTest(){}
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -201,5 +206,12 @@ public class GenotypingChipDbTest extends Arquillian {
         return chip;
     }
 
-
+    /** Tests a KeyValueMapping. */
+    // todo enable this test after GPLIM-4205 fixup test is run.
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = false)
+    public void testKeyValueMapping() {
+        Map<String, String> map = dao.findKeyValueMap(KeyValueMapping.BAIT_PRODUCT_MAPPING);
+        Assert.assertNotNull(map);
+        Assert.assertFalse(map.isEmpty());
+    }
 }

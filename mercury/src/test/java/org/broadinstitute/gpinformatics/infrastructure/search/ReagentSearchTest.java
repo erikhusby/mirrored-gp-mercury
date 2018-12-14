@@ -34,7 +34,8 @@ public class ReagentSearchTest extends Arquillian {
     /**
      * Validate rejection of a search with any other term(s) in addition to one declared as exclusive
      */
-    @Test( expectedExceptions = {InformaticsServiceException.class},expectedExceptionsMessageRegExp = ".*exclusive.*")
+    // Bug testng 6.10 - expected exception isn't caught!:
+    // @Test(expectedExceptions = {InformaticsServiceException.class}, expectedExceptionsMessageRegExp = ".* exclusive .*" )
     public void testLcsetTermIsExclusive() {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 SearchDefinitionFactory.getForEntity(ColumnEntity.REAGENT.getEntityName());
@@ -52,13 +53,17 @@ public class ReagentSearchTest extends Arquillian {
 
         searchInstance.establishRelationships(configurableSearchDefinition);
 
-        ConfigurableListFactory.FirstPageResults firstPageResults =
-                configurableListFactory.getFirstResultsPage(
-                        searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
+        try {
+            ConfigurableListFactory.FirstPageResults firstPageResults =
+                    configurableListFactory.getFirstResultsPage(
+                            searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
+        } catch ( InformaticsServiceException ex ) {
+            // Do this manually because testng 6.10 doesn't ignore expectedExceptionsMessageRegExp
+            Assert.assertTrue(ex.getMessage().contains( " exclusive "), "Expected an exception refererencing exclusive search term mis-use.");
+            return;
+        }
 
-        // Will blow up on non-exclusive terms before this happens
-        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 117);
-
+        Assert.fail( "Expected exclusive search term exception is not thrown.");
     }
 
     /**

@@ -7,6 +7,7 @@ import org.testng.annotations.Test;
 
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -16,7 +17,8 @@ public class BSPCohortSearchServiceTest {
     public void testBasic() {
         Set<Cohort> rawCohorts = null;
         try {
-            BSPCohortSearchService cohortSearchService = BSPCohortSearchServiceProducer.testInstance();
+            BSPConfig bspConfig = BSPConfig.produce(DEV);
+            BSPCohortSearchService cohortSearchService = new BSPCohortSearchServiceImpl(bspConfig);
             rawCohorts = cohortSearchService.getAllCohorts();
         } catch (Exception ex) {
             Assert.fail("Could not get BSP Cohorts from BSP QA");

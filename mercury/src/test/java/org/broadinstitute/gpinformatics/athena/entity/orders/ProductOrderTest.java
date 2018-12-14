@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -138,6 +139,8 @@ public class ProductOrderTest {
                 .ignoreProperty("quotePriceMatchAdjustments")
                 .ignoreProperty("orderType")
                 .ignoreProperty("clinicalAttestationConfirmed")
+                .ignoreProperty("analyzeUmiOverride")
+                .ignoreProperty("reagentDesignKey")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
@@ -499,34 +502,45 @@ public class ProductOrderTest {
         assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber+"2")));
     }
 
+    // This is a utility method and NOT a test method.  Will FAIL with arguments as it should.
+    @Test(enabled = false)
     public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
 
-        LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
-                productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
-        primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+        billSamplesOut(productOrder, Collections.singleton(sample), expected);
 
-        LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
-                productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
-                new Date(), /*productOrder.getProduct(),*/ 1);
-        addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
-        sample.getLedgerItems().add(primaryItemSampleEntry);
-        sample.getLedgerItems().add(addonItemSampleEntry);
+    }
 
+    @Test(enabled = false)
+    public static void billSamplesOut(ProductOrder productOrder, Collection<ProductOrderSample> samples, int expected) {
+        BillingSession billingSession = null;
+        for (ProductOrderSample sample : samples) {
+            LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
+                    productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
+            primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+
+            LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
+                    productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
+                    new Date(), /*productOrder.getProduct(),*/ 1);
+            addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
+            sample.getLedgerItems().add(primaryItemSampleEntry);
+            sample.getLedgerItems().add(addonItemSampleEntry);
+
+            Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
+
+            billingSession = new BillingSession(4L, sample.getLedgerItems());
+        }
 
         Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
 
+        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
+            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+        }
 
-        BillingSession billingSession =
-                new BillingSession(4L, sample.getLedgerItems());
-
-
-        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
-
-
-        addonItemSampleEntry.setBillingMessage(BillingSession.SUCCESS);
-        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
-        primaryItemSampleEntry.setBillingMessage(BillingSession.SUCCESS);
+        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected-samples.size());
         billingSession.setBilledDate(new Date());
+        if(productOrder.isSavedInSAP()) {
+            productOrder.latestSapOrderDetail().addLedgerEntries(billingSession.getLedgerEntryItems());
+        }
     }
 
     public void testQuoteGrantValidityWithUnallocatedFundingSources() throws Exception{
@@ -547,10 +561,8 @@ public class ProductOrderTest {
         Quote expiringNowQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
         for (FundingLevel fundingLevel : expiringNowQuote.getQuoteFunding().getFundingLevel()) {
             for (Funding funding : fundingLevel.getFunding()) {
-
                 funding.setGrantEndDate( DateUtils.truncate(new Date(), Calendar.DATE));
             }
-
         }
 
         try {
@@ -573,7 +585,10 @@ public class ProductOrderTest {
     public void testGuardCompanyCodeSwtiching() throws Exception {
         ProductOrder testProductOrder = ProductOrderTestFactory.createDummyProductOrder();
 
-        testProductOrder.addSapOrderDetail(new SapOrderDetail("test number", testProductOrder.getSampleCount(), testProductOrder.getQuoteId(), testProductOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
+        testProductOrder.addSapOrderDetail(new SapOrderDetail("test number",
+                testProductOrder.getSampleCount(), testProductOrder.getQuoteId(),
+                testProductOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "",
+                ""));
 
         assertThat(testProductOrder.getSapCompanyConfigurationForProductOrder(), is(equalTo(
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD)) );

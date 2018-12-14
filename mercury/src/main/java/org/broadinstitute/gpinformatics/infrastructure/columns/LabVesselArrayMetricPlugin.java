@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import oracle.sql.DATE;
 import org.apache.commons.collections4.ListValuedMap;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
@@ -157,11 +156,22 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
 
             ConfigurableList.Row row = new ConfigurableList.Row(labVessel.getLabel());
             metricRows.add(row);
+
+            // Reused throughout this row of data
+            String value;
+
+            value = null;
+            if( vesselAbandons != null && !vesselAbandons.isEmpty() ) {
+                for( AbandonVessel abandonVessel : vesselAbandons ) {
+                    value = (value==null?"":value+" ") + ColumnValueType.DATE.format(abandonVessel.getAbandonedOn(), "") + "-" + abandonVessel.getReason().getDisplayName();
+                }
+            }
+            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.LAB_ABANDON.getResultHeader(), value, value));
+
             if (arraysQc == null) {
                 continue;
             }
 
-            String value = null;
             BigDecimal autocallCallRate = arraysQc.getAutocallCallRate();
             if (autocallCallRate != null) {
                 value = ColumnValueType.THREE_PLACE_DECIMAL.format(
@@ -283,13 +293,6 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
                         value, value));
             }
 
-            value = null;
-            if( vesselAbandons != null && !vesselAbandons.isEmpty() ) {
-                for( AbandonVessel abandonVessel : vesselAbandons ) {
-                    value = (value==null?"":value+" ") + ColumnValueType.DATE.format(abandonVessel.getAbandonedOn(), "") + "-" + abandonVessel.getReason().getDisplayName();
-                }
-            }
-            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.LAB_ABANDON.getResultHeader(), value, value));
         } /* End LabVessel loop */
 
         return metricRows;

@@ -4,12 +4,15 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMap
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip_;
-import org.jetbrains.annotations.Nullable;
+import org.broadinstitute.gpinformatics.mercury.entity.run.WorkflowMetadata;
+import org.broadinstitute.gpinformatics.mercury.entity.run.WorkflowMetadata_;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -101,7 +104,7 @@ public class AttributeArchetypeDao extends GenericDao {
     }
 
     /** Returns the chip type */
-    public GenotypingChip findGenotypingChip(@NotNull String chipFamily, String chipName) {
+    public GenotypingChip findGenotypingChip(String chipFamily, String chipName) {
         for (GenotypingChip chip : findList(GenotypingChip.class, GenotypingChip_.archetypeName, chipName)) {
             if (chip.getChipTechnology().equals(chipFamily)) {
                 return chip;
@@ -118,7 +121,7 @@ public class AttributeArchetypeDao extends GenericDao {
      * @param effectiveDate comparison date. If null, returns the latest mappings, possibly inactive.
      * @return list of mappings
      */
-    public Set<GenotypingChipMapping> getMappingsAsOf(@Nullable Date effectiveDate) {
+    public Set<GenotypingChipMapping> getMappingsAsOf(Date effectiveDate) {
         Set<GenotypingChipMapping> activeMappings = new HashSet<>();
 
         Map<String, List<GenotypingChipMapping>> lookupKeyMappings = new HashMap<>();
@@ -165,7 +168,11 @@ public class AttributeArchetypeDao extends GenericDao {
                 productOrderId.toString());
     }
 
-    public Map<String, AttributeDefinition> findAttributeGroupByTypeAndName(
+    public WorkflowMetadata findWorkflowMetadata(String workflowName) {
+        return findSingle(WorkflowMetadata.class, WorkflowMetadata_.archetypeName, workflowName);
+    }
+
+    public Map<String, AttributeDefinition> findAttributeNamesByTypeAndGroup(
             AttributeDefinition.DefinitionType definitionType, String group) {
         Map<String, AttributeDefinition> map = new HashMap<>();
         for (AttributeDefinition def : findAttributeDefinitions(definitionType)) {
@@ -175,4 +182,29 @@ public class AttributeArchetypeDao extends GenericDao {
         }
         return map;
     }
+
+    /** Returns all key-value mapping entities for the given mapping name. */
+    public List<KeyValueMapping> findKeyValueMappings(String mappingName) {
+        return findList(KeyValueMapping.class, KeyValueMapping_.group, mappingName);
+    }
+
+    /** Returns one key-value mapping entities for the key and mapping name, or null if none found. */
+    public KeyValueMapping findKeyValueByKeyAndMappingName(String key, String mappingName) {
+        for (KeyValueMapping keyValueMapping : findKeyValueMappings(mappingName)) {
+            if (keyValueMapping.getArchetypeName().equals(key)) {
+                return keyValueMapping;
+            }
+        }
+        return null;
+    }
+
+    /** Returns a Map for the given mapping name. */
+    public Map<String, String> findKeyValueMap(String mappingName) {
+        Map<String, String> map = new HashMap<>();
+        for (KeyValueMapping keyValueMapping : findKeyValueMappings(mappingName)) {
+            map.put(keyValueMapping.getKey(), keyValueMapping.getValue());
+        }
+        return map;
+    }
+
 }

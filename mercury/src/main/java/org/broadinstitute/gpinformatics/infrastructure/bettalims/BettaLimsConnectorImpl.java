@@ -2,19 +2,20 @@ package org.broadinstitute.gpinformatics.infrastructure.bettalims;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.QpcrRunBean;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.net.HttpURLConnection;
 
 /**
  * Implementation of connector to BettaLIMS
  */
-@Impl
+@Dependent
+@Default
 public class BettaLimsConnectorImpl implements BettaLimsConnector {
 
     @Inject

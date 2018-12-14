@@ -16,6 +16,9 @@ public enum Role {
     BillingManager("Mercury-BillingManagers"),
     PipelineManager("Mercury-PipelineAdmins"),
     GPProjectManager("Mercury-GPProjectManagers"),
+    Viewer("Mercury-ViewOnly"),
+    FinanceViewer("Mercury-FinanceViewer"),
+    FingerprintWebService(Constants.FINGERPRINT_WEB_SERVICE),
     All("All");
 
     public final String name;
@@ -43,5 +46,10 @@ public enum Role {
 
     public String getName() {
         return name;
+    }
+
+    /** This is necessary to allow references from annotations. */
+    public static class Constants {
+        public static final String FINGERPRINT_WEB_SERVICE = "Mercury-FingerprintWebService";
     }
 }

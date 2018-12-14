@@ -3,11 +3,16 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 /**
  * Represents a transfer from a tube to all positions (wells) in a (plate) section
@@ -17,21 +22,25 @@ import javax.persistence.*;
 public class VesselToSectionTransfer extends VesselTransfer {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "SOURCE_VESSEL")
     private LabVessel sourceVessel;
+
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "TARGET_VESSEL")
+    private LabVessel targetVessel;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "LAB_EVENT")
+    private LabEvent labEvent;
 
     @Enumerated(EnumType.STRING)
     private SBSSection targetSection;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private LabVessel targetVessel;
-
     /** Typically a RackOfTubes. */
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "ANCILLARY_TARGET_VESSEL")
     private LabVessel ancillaryTargetVessel;
-
-    @Index(name = "ix_vtst_lab_event")
-    @ManyToOne
-    private LabEvent labEvent;
 
     public VesselToSectionTransfer(LabVessel sourceVessel, SBSSection targetSection,
             VesselContainer<?> targetVesselContainer, LabVessel ancillaryTargetVessel, LabEvent labEvent) {

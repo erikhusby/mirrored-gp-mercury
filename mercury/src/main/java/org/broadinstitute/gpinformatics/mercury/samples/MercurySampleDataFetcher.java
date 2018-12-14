@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.samples;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.Map;
 /**
  * Mercury specific version of SampleDataFetcher.
  */
+@Dependent
 public class MercurySampleDataFetcher {
     /**
      * Fetch the sample data for a collection of MercurySamples.

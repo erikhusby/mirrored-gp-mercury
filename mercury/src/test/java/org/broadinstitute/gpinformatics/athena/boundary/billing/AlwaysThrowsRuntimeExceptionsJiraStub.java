@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Tra
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
 import java.util.Collection;
@@ -25,7 +26,10 @@ import java.util.Map;
  * Completely 'angry' JIRA implementation that will throw a {@link RuntimeException} on any method invocation.
  */
 @Alternative
+@Dependent
 class AlwaysThrowsRuntimeExceptionsJiraStub implements JiraService {
+
+    public AlwaysThrowsRuntimeExceptionsJiraStub(){}
 
     /**
      * The invocation count variable feels like something that would normally be accomplished with a mock, but an

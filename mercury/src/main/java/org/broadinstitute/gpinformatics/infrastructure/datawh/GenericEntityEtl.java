@@ -86,10 +86,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         this.auditReaderDao = auditReaderDao;
     }
 
-    /** This class uses Bean Managed Transactions in order to set a longer session timeout. */
-    @Inject
-    private UserTransaction utx;
-
     protected GenericEntityEtl() {
         this(null, null, null, null, null);
     }
@@ -190,10 +186,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public int doIncrementalEtl(Set<Long> revIds, String etlDateStr) throws Exception {
         try {
-            if (utx != null) {
-                utx.begin();
-                utx.setTransactionTimeout(TRANSACTION_TIMEOUT);
-            }
+
             // Retrieves the Envers-formatted list of entity changes in the given revision range.
             // Subclass may add additional entity ids based on custom rev query.
             List<EnversAudit> auditEntities = auditReaderDao.fetchEnversAudits(revIds, entityClass);
@@ -214,10 +207,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         } catch (Exception e) {
             logger.error(getClass().getSimpleName() + " incremental ETL failed", e);
             throw e;
-        } finally {
-            if (utx != null) {
-                utx.rollback();
-            }
         }
     }
 
@@ -251,11 +240,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             return 0;
         }
         try {
-            if (utx != null) {
-                utx.begin();
-                utx.setTransactionTimeout(TRANSACTION_TIMEOUT);
-            }
-
             Collection<Long> auditClassDeletedIds = fetchDeletedEntityIds(startId, endId);
             Collection<Long> auditClassModifiedIds = new ArrayList<>();
 
@@ -278,16 +262,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                 deletedEntityIds.clear();
             }
 
-            if (utx != null) {
-                // Something in the above code block starts a 5 minute timer on the transaction that overrides
-                // any setTransactionTimeout value. This causes the next code block to timeout when there are
-                // many entities to etl. The workaround is to close and reopen the transaction which will then
-                // honor a long timeout setting.
-                utx.rollback();
-                utx.begin();
-                utx.setTransactionTimeout(TRANSACTION_TIMEOUT);
-            }
-
             int count =  writeEtlDataFile(deletedEntityIds, modifiedEntityIds, Collections.<Long>emptyList(),
                     Collections.<RevInfoPair<AUDITED_ENTITY_CLASS>>emptyList(), etlDateStr);
 
@@ -299,9 +273,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             throw e;
 
         } finally {
-            if (utx != null) {
-                utx.rollback();
-            }
             postEtlLogging();
         }
     }

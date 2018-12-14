@@ -20,13 +20,15 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"definitionType", "archetype_group", "attributeName"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"definition_type", "archetype_group", "attribute_name"}))
 public class AttributeDefinition {
 
     public enum DefinitionType {
         GENOTYPING_CHIP,
         GENOTYPING_CHIP_MAPPING,
-        GENOTYPING_PRODUCT_ORDER
+        GENOTYPING_PRODUCT_ORDER,
+        WORKFLOW_METADATA,
+        KEY_VALUE_MAPPING
     }
 
     @SequenceGenerator(name = "seq_attribute_definition", schema = "mercury", sequenceName = "seq_attribute_definition")

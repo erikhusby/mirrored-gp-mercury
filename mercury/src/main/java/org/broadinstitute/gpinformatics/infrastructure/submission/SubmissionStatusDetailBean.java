@@ -35,7 +35,9 @@ public class SubmissionStatusDetailBean implements Serializable {
     private Date lastStatusUpdate;
     @JsonProperty
     private String site;
-    @JsonProperty
+
+    // The status webservice uses all lower case but the submitrequest uses camel case for this field
+    @JsonProperty("submissiondatatype")
     private String submissionDatatype;
     @JsonProperty
     private String submittedVersion;
@@ -159,6 +161,12 @@ public class SubmissionStatusDetailBean implements Serializable {
 
     public void setBioproject(BioProject bioproject) {
         this.bioproject = bioproject;
+    }
+
+    @JsonIgnore
+    public boolean submissionServiceHasRequest() {
+        return getUuid() != null && getStatus() != null && getBioproject() != null && getLastStatusUpdate() != null
+               && getSite() != null && getSubmissionDatatype() != null;
     }
 
     /**

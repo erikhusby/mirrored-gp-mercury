@@ -16,14 +16,15 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Resource;
 import javax.ejb.EJBContext;
-import javax.ejb.Singleton;
+import javax.ejb.Stateless;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,7 +45,8 @@ import java.util.zip.ZipOutputStream;
 /**
  * Archives Infinium idats and other files at some interval (e.g. 10 days) after the pipeline starter has been called.
  */
-@Singleton
+@Stateless
+@Dependent
 @TransactionManagement(TransactionManagementType.BEAN)
 public class InfiniumArchiver {
 
@@ -67,6 +69,9 @@ public class InfiniumArchiver {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private UserBean userBean;
+
     @Resource
     private EJBContext ejbContext;
 
@@ -77,6 +82,7 @@ public class InfiniumArchiver {
             return;
         }
         try {
+            userBean.login("seqsystem");
             GregorianCalendar gregorianCalendar = new GregorianCalendar();
             gregorianCalendar.add(Calendar.DAY_OF_YEAR, -10);
             List<Pair<String, Boolean>> chipsToArchive = findChipsToArchive(

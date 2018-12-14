@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -13,11 +15,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 @Stub
 @Alternative
+@Dependent
 public class SubmissionsServiceStub implements SubmissionsService {
+
+    public SubmissionsServiceStub(){}
+
     public static final String TEST_PROJECT_NAME = "Primary submission";
     public static final String STUB_UPDATE_DATE = "Dec 17, 2001 9:30 AM";
     public static final SubmissionRepository ACTIVE_REPO = new SubmissionRepository("ACTIVE_REPO", "Active Repository", true);
@@ -118,5 +125,10 @@ public class SubmissionsServiceStub implements SubmissionsService {
     @Override
     public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String key) {
         return null;
+    }
+
+    @Override
+    public List<SubmissionTracker> findOrphans(Map<String, SubmissionTracker> submissionTrackerMap) {
+        return Collections.emptyList();
     }
 }

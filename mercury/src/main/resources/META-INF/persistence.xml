@@ -1,61 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<persistence version="2.0" xmlns="http://java.sun.com/xml/ns/persistence"
+<persistence version="2.1"
+             xmlns="http://xmlns.jcp.org/xml/ns/persistence"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
     <persistence-unit name="mercury_pu" transaction-type="JTA">
-        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <jta-data-source>java:jboss/jdbc/mercury_pool</jta-data-source>
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
-            <property name="hibernate.ejb.naming_strategy" value="org.hibernate.cfg.ImprovedNamingStrategy" />
-            <!-- this is set to false by default in Glassfish, and true by default in JBoss, so set it explicitly -->
-            <property name="hibernate.id.new_generator_mappings" value="true"/>
+            <property name="hibernate.archive.autodetection" value="class"/>
+            <!--<property name="hibernate.archive.scanner" value="org.hibernate.boot.archive.scan.internal.StandardScanner"/>-->
+            <property name="hibernate.implicit_naming_strategy" value="org.broadinstitute.gpinformatics.infrastructure.jpa.BroadImplicitNamingStrategy" />
+            <property name="javax.persistence.schema-generation.scripts.action" value="create" />
+            <property name="javax.persistence.schema-generation.scripts.create-target" value="hbm5ddl.sql" />
+            <!--<property name="hibernate.show_sql" value="true" />-->
+            <property name="hibernate.transaction.jta.platform" value="JBossAS" />
             <!-- todo jmt this doesn't seem to work -->
             <property name="org.hibernate.flushMode" value="COMMIT" />
         </properties>
     </persistence-unit>
 
     <persistence-unit name="metrics_pu" transaction-type="JTA">
-        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <jta-data-source>java:jboss/jdbc/metrics_pool</jta-data-source>
-
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
-            <property name="hibernate.ejb.naming_strategy" value="org.hibernate.cfg.ImprovedNamingStrategy" />
             <property name="hibernate.archive.autodetection" value="class"/>
-            <!-- this is set to false by default in Glassfish, and true by default in JBoss, so set it explicitly -->
-            <!--<property name="hibernate.id.new_generator_mappings" value="true"/>-->
-            <!-- todo jmt this doesn't seem to work -->
-            <!--<property name="org.hibernate.flushMode" value="COMMIT" />-->
+            <!--<property name="hibernate.archive.scanner" value="org.hibernate.boot.archive.scan.internal.StandardScanner"/>-->
+            <property name="hibernate.implicit_naming_strategy" value="org.broadinstitute.gpinformatics.infrastructure.jpa.BroadImplicitNamingStrategy" />
+            <property name="javax.persistence.schema-generation.scripts.action" value="create" />
+            <property name="javax.persistence.schema-generation.scripts.create-target" value="hbm5ddl.sql" />
+            <!--<property name="hibernate.show_sql" value="true" />-->
+            <property name="hibernate.transaction.jta.platform" value="JBossAS" />
         </properties>
     </persistence-unit>
 
     <persistence-unit name="analytics_pu" transaction-type="JTA">
-        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <jta-data-source>java:jboss/jdbc/analytics_pool</jta-data-source>
-
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
-            <property name="hibernate.ejb.naming_strategy" value="org.hibernate.cfg.ImprovedNamingStrategy" />
             <property name="hibernate.archive.autodetection" value="class"/>
-            <!-- this is set to false by default in Glassfish, and true by default in JBoss, so set it explicitly -->
-            <!--<property name="hibernate.id.new_generator_mappings" value="true"/>-->
-            <!-- todo jmt this doesn't seem to work -->
-            <!--<property name="org.hibernate.flushMode" value="COMMIT" />-->
+            <!--<property name="hibernate.archive.scanner" value="org.hibernate.boot.archive.scan.internal.StandardScanner"/>-->
+            <property name="hibernate.implicit_naming_strategy" value="org.broadinstitute.gpinformatics.infrastructure.jpa.BroadImplicitNamingStrategy" />
+            <property name="javax.persistence.schema-generation.scripts.action" value="create" />
+            <property name="javax.persistence.schema-generation.scripts.create-target" value="hbm5ddl.sql" />
+            <!--<property name="hibernate.show_sql" value="true" />-->
+            <property name="hibernate.transaction.jta.platform" value="JBossAS" />
         </properties>
     </persistence-unit>
 
-<!--
+    <!--
     This is used only by ImportFromSquidTest.  Deploying the corresponding data source is problematic in CRSP.
-    Phil Shapiro, don't delete it, we still need to import reagents from Squid occasionally.
+    Don't delete it, we may still need to import reagents from Squid occasionally.
     <persistence-unit name="squid_pu" transaction-type="JTA">
-        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <jta-data-source>java:jboss/jdbc/squid_pool</jta-data-source>
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
-            <property name="hibernate.ejb.naming_strategy" value="org.hibernate.cfg.ImprovedNamingStrategy" />
-            <property name="org.hibernate.flushMode" value="COMMIT" />
+            <property name="hibernate.implicit_naming_strategy" value="org.broadinstitute.gpinformatics.infrastructure.jpa.BroadImplicitNamingStrategy" />
+            <property name="org.hibernate.flushMode" value="COMMIT"/>
         </properties>
     </persistence-unit>
--->
+    -->
 </persistence>

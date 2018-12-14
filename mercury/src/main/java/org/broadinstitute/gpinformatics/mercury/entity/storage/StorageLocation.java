@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.storage;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -13,6 +12,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -216,6 +216,7 @@ public class StorageLocation {
     private LocationType locationType;
 
     @ManyToOne
+    @JoinColumn(name = "PARENT_STORAGE_LOCATION")
     private StorageLocation parentStorageLocation;
 
     @OneToMany(mappedBy = "parentStorageLocation", cascade = CascadeType.PERSIST)

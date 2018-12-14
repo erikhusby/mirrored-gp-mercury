@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
 import org.broadinstitute.gpinformatics.infrastructure.submission.ISubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
@@ -45,6 +46,8 @@ public class SubmissionTuple implements ISubmissionTuple {
 
     @JsonProperty
     private String project;
+    @JsonProperty
+    private String mercuryProject;
     @JsonProperty
     private String sampleName;
 
@@ -73,20 +76,24 @@ public class SubmissionTuple implements ISubmissionTuple {
         ObjectMapper objectMapper=new ObjectMapper();
         try {
             tuple = objectMapper.readValue(jsonString, SubmissionTuple.class);
-            initSubmissionTuple(tuple.project, tuple.sampleName, tuple.version, tuple.processingLocation, tuple.dataType);
+            initSubmissionTuple(tuple.project, tuple.mercuryProject, tuple.sampleName, tuple.version,
+                tuple.processingLocation, tuple.dataType);
         } catch (IOException e) {
             log.error(String.format("Could not map JSON String [%s] to SubmissionTuple", jsonString), e);
         }
     }
 
-    public SubmissionTuple(String project, String sampleName, String version, String processingLocation,
+    public SubmissionTuple(String project, String mercuryProject, String sampleName, String version,
+                           String processingLocation,
                            String dataType) {
-        initSubmissionTuple(project, sampleName, version, processingLocation, dataType);
+        initSubmissionTuple(project, mercuryProject, sampleName, version, processingLocation, dataType);
     }
 
-    private void initSubmissionTuple(String project, String sampleName, String version, String processingLocation,
+    private void initSubmissionTuple(String project, String mercuryProject, String sampleName, String version,
+                                     String processingLocation,
                                      String dataType) {
         this.project = project;
+        this.mercuryProject = mercuryProject;
         this.sampleName = sampleName;
         this.version = version;
         this.processingLocation = processingLocation;
@@ -96,6 +103,10 @@ public class SubmissionTuple implements ISubmissionTuple {
     @Override
     public String getProject() {
         return project;
+    }
+
+    public String getMercuryProject() {
+        return mercuryProject;
     }
 
     @Override
@@ -126,7 +137,7 @@ public class SubmissionTuple implements ISubmissionTuple {
         return processingLocation;
     }
 
-    public static List<String> extractSampleNames(List<SubmissionTuple> tuples) {
+    public static List<String> extractSampleNames(Collection<SubmissionTuple> tuples) {
         List<String> samples = new ArrayList<>();
         for (SubmissionTuple tuple : tuples) {
             samples.add(tuple.getSampleName());
@@ -173,6 +184,14 @@ public class SubmissionTuple implements ISubmissionTuple {
         return this;
     }
 
+    @JsonIgnore
+    public boolean isMercuryProject() {
+        if (getProject() != null) {
+            return getProject().equals(getMercuryProject());
+        }
+        return false;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -185,26 +204,32 @@ public class SubmissionTuple implements ISubmissionTuple {
 
         SubmissionTuple that = (SubmissionTuple) o;
 
-        return new EqualsBuilder()
+        EqualsBuilder equalsBuilder = new EqualsBuilder()
             .append(project, that.project)
+            .append(mercuryProject, that.mercuryProject)
             .append(sampleName, that.sampleName)
             .append(fileType, that.fileType)
             .append(version, that.version)
-            .append(processingLocation, that.processingLocation)
-            .append(dataType, that.dataType)
-            .isEquals();
+            .append(processingLocation, that.processingLocation);
+        if (isMercuryProject()) {
+            equalsBuilder.append(dataType, that.dataType);
+        }
+        return equalsBuilder.isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder(17, 37)
             .append(project)
+            .append(mercuryProject)
             .append(sampleName)
             .append(fileType)
             .append(version)
-            .append(processingLocation)
-            .append(dataType)
-            .toHashCode();
+            .append(processingLocation);
+        if (isMercuryProject()) {
+            hashCodeBuilder.append(dataType);
+        }
+        return hashCodeBuilder.toHashCode();
     }
 
     public static Map<String, Collection<SubmissionTuple>> byProject(Collection<SubmissionTuple> tuples) {

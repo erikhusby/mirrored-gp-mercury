@@ -15,6 +15,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -31,6 +33,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private WorkflowConfigLookup workflowConfigLookup;
     private final Collection<EventFactDto> loggingDtos = new ArrayList<>();
@@ -591,7 +594,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     }
 
                     if (StringUtils.isBlank(workflowName) && pdo != null) {
-                        workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
+                        workflowName = pdo.getProduct().getWorkflowName();
                     }
 
                     WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(

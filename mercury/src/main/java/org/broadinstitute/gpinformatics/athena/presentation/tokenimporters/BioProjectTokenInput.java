@@ -17,12 +17,14 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+@Dependent
 public class BioProjectTokenInput extends TokenInput<BioProject> {
     private BioProjectList bioProjectList;
 

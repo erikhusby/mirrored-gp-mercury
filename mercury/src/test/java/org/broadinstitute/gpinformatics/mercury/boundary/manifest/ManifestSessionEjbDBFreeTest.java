@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -17,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -62,16 +64,16 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.FormatStringMatcher.matchesFormatString;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.collection.IsEmptyCollection.emptyCollectionOf;
@@ -393,22 +395,26 @@ public class ManifestSessionEjbDBFreeTest {
         return new Object[][]{
                 {"Not an Excel file", "Your InputStream was neither an OLE2 stream, nor an OOXML stream",
                         "manifest-upload/not-an-excel-file.txt"},
-                {"Missing required field", "Row #1 Required value for Specimen_Number is missing.",
+                {"Missing required field", TableProcessor.getPrefixedMessage(String.format(
+                        TableProcessor.REQUIRED_VALUE_IS_MISSING, "Specimen_Number"), null, 1),
                         "manifest-import/test-manifest-missing-specimen.xlsx"},
-                {"Missing column", "Required header missing: Specimen_Number.",
+                {"Missing column", String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Specimen_Number"),
                         "manifest-upload/manifest-with-missing-column.xlsx"},
                 {"Empty manifest", "The uploaded Manifest has no data.",
                         "manifest-upload/empty-manifest.xlsx"},
                 {"Multiple Bad Columns in Manifest",
-                        "Required headers missing: Specimen_Number, Sex, Patient_ID, Collection_Date, Visit, "
-                        + "SAMPLE_TYPE."
-                        + "\nUnknown headers '[Specimen_Numberz, Patient_Idee, Gender, Date, Visit Type, Sample Type]' "
-                        + "present.",
+                        String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Specimen_Number") + "\n" +
+                                String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Sex") + "\n" +
+                                String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Patient_ID") + "\n" +
+                                String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Collection_Date") + "\n" +
+                                String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Visit") + "\n" +
+                                String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "SAMPLE_TYPE") + "\n" +
+                                "Row #2 Unknown header(s) \"Sample Type\", \"Specimen_Numberz\", \"Date\", \"Gender\", \"Patient_Idee\", \"Visit Type\".",
                         "manifest-upload/manifest-with-multiple-bad-columns.xlsx"},
                 {"Unrecognized Material Types in file",
-                        "Row #7 An unrecognized material type was entered: DNR:Heroic\n"
-                        + "Row #8 An unrecognized material type was entered: Fresh DNA\n"
-                        + "Row #9 An unrecognized material type was entered: Buffy Vampire Coat",
+                        "Row #8 An unrecognized material type was entered: DNR:Heroic\n"
+                        + "Row #9 An unrecognized material type was entered: Fresh DNA\n"
+                        + "Row #10 An unrecognized material type was entered: Buffy Vampire Coat",
                         "manifest-upload/manifest-with-bad-material-type.xlsx"}
         };
         // @formatter:on
@@ -420,7 +426,22 @@ public class ManifestSessionEjbDBFreeTest {
             uploadManifest(pathToManifestFile);
             Assert.fail(description);
         } catch (Exception e) {
-            Assert.assertEquals(e.getMessage(), errorMessage);
+            final String splitOnThis = "Unknown header(s) ";
+            if (e.getMessage().contains(splitOnThis)) {
+                // Checks the part before the header list
+                Assert.assertEquals(StringUtils.substringBefore(e.getMessage(), splitOnThis),
+                        StringUtils.substringBefore(errorMessage, splitOnThis));
+                // Checks the header list, allowing for the headers to be returned in a different order.
+                String[] rawActualHeaders = StringUtils.substringAfter(e.getMessage(), splitOnThis).split(",");
+                String[] rawExpectedHeaders = StringUtils.substringAfter(errorMessage, splitOnThis).split(",");
+                List<String> actualHeaders = Arrays.asList(StringUtils.stripAll(rawActualHeaders, "[\\. ]"));
+                List<String> expectedHeaders = Arrays.asList(StringUtils.stripAll(rawExpectedHeaders, "[\\. ]"));
+                Collections.sort(actualHeaders);
+                Collections.sort(expectedHeaders);
+                Assert.assertEquals(actualHeaders, expectedHeaders);
+            } else {
+                Assert.assertEquals(e.getMessage(), errorMessage);
+            }
         }
     }
 
@@ -1555,7 +1576,7 @@ public class ManifestSessionEjbDBFreeTest {
         BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + SM_1, BarcodedTube.BarcodedTubeType.MatrixTube);
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
-        barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
+        barcodedTube.addInPlaceEvent(collaboratorTransferEvent);
         sample.addLabVessel(barcodedTube);
 
         Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))

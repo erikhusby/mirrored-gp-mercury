@@ -47,8 +47,6 @@ import java.util.List;
  */
 public class ProductPdfFactory {
     private static Log log = LogFactory.getLog(ProductPdfFactory.class);
-    @Inject
-    private ProductDao productDao = new ProductDao();
     public static final String DESCRIPTION = "Description";
 
     public static final String DELIVERABLES = "Deliverables";

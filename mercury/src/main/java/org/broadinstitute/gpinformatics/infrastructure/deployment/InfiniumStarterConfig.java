@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("infiniumStarter")
+@ApplicationScoped
 public class InfiniumStarterConfig extends AbstractConfig implements LoginAndPassword, Serializable {
     private Logger log = Logger.getLogger(InfiniumStarterConfig.class);
     private String dataPath;
@@ -28,6 +30,8 @@ public class InfiniumStarterConfig extends AbstractConfig implements LoginAndPas
     private String login;
     private String password;
     private String passwordFileName;
+
+    public InfiniumStarterConfig(){}
 
     @Inject
     public InfiniumStarterConfig(@Nonnull Deployment deploymentConfig) {

@@ -24,6 +24,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This handles the billing ledger items for product order samples
@@ -67,6 +69,7 @@ public class LedgerEntry implements Serializable {
 
     @Index(name = "ix_ledger_billing_session")
     @ManyToOne
+    @JoinColumn(name="BILLING_SESSION")
     private BillingSession billingSession;
 
     @Column(name = "WORK_COMPLETE_DATE")
@@ -277,8 +280,11 @@ public class LedgerEntry implements Serializable {
     }
 
     public Date getBucketDate() {
-        return billingSession.getBucketDate(workCompleteDate);
-    }
+        Date bucketDate = null;
+        if(billingSession != null) {
+            bucketDate = billingSession.getBucketDate(workCompleteDate);
+        }
+        return bucketDate;    }
 
     public void setSapOrderDetail(SapOrderDetail sapOrderDetail) {
         this.sapOrderDetail = sapOrderDetail;
@@ -286,6 +292,11 @@ public class LedgerEntry implements Serializable {
 
     public SapOrderDetail getSapOrderDetail() {
         return sapOrderDetail;
+    }
+
+    public Set<LedgerEntry> getPreviouslyBilled() {
+        return productOrderSample.getLedgerItems().stream().filter(LedgerEntry::isSuccessfullyBilled)
+            .collect(Collectors.toSet());
     }
 
     /**

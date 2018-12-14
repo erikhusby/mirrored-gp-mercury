@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
+import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.MapKeyColumn;
@@ -72,7 +73,9 @@ public class VesselContainer<T extends LabVessel> {
     * striptube holds tubes, tubes can't be removed, don't have barcodes. */
     @ManyToMany(targetEntity = LabVessel.class, cascade = CascadeType.PERSIST)
     // have to specify name, generated name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "lv_map_position_to_vessel")
+    @JoinTable(schema = "mercury", name = "lv_map_position_to_vessel"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "MAP_POSITION_TO_VESSEL")})
     @MapKeyEnumerated(EnumType.STRING)
     // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")

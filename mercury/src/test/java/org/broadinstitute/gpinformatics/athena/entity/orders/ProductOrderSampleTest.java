@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductE
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
-import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -150,10 +149,12 @@ public class ProductOrderSampleTest {
 
         // credit the price item already billed
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
-        sample.addLedgerItem(new Date(), billedPriceItem, -1/*, sample.getProductOrder().getProduct()*/);
-        LedgerEntry entry = sample.getLedgerItems().iterator().next();
-        entry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
-        entry.setBillingMessage(BillingSession.SUCCESS);
+        sample.addLedgerItem(new Date(), billedPriceItem, -1);
+        // Flag the credit ledger entry as billed successfully
+        for( LedgerEntry entry : sample.getLedgerItems() ) {
+            entry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            entry.setBillingMessage(BillingSession.SUCCESS);
+        }
 
         Assert.assertFalse(sample.isCompletelyBilled());
     }

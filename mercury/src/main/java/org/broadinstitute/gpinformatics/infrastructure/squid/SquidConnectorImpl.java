@@ -9,7 +9,6 @@ import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
 import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
 import edu.mit.broad.prodinfo.bean.generated.OligioGroups;
 import edu.mit.broad.prodinfo.bean.generated.SampleReceptacleGroup;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
@@ -18,6 +17,8 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructur
 import org.broadinstitute.gpinformatics.mercury.squid.generated.SolexaRunSynopsisBean;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -27,7 +28,8 @@ import javax.ws.rs.core.Response;
  *
  *
  */
-@Impl
+@Dependent
+@Default
 public class SquidConnectorImpl implements SquidConnector {
 
     private SquidConfig squidConfig;

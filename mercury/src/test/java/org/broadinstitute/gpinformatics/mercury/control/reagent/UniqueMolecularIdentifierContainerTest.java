@@ -179,7 +179,7 @@ public class UniqueMolecularIdentifierContainerTest extends Arquillian {
         //Check against illumina run query
         for (SequencingTemplateLaneType lane : sequencingTemplateType.getLanes()) {
             String readStructure = lane.getReadStructure();
-            Assert.assertEquals(readStructure, "3M2S151T8B8B3M2S151T");
+            Assert.assertEquals(readStructure, "3M2S146T8B8B3M2S146T");
         }
     }
 

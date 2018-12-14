@@ -12,6 +12,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -31,6 +32,7 @@ public class ProductOrderAddOnPriceAdjustment extends PriceAdjustment{
 
     @Index(name = "ix_pdo_add_on_price_adjustment")
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name="ADD_ON")
     private ProductOrderAddOn addOn;
 
         // number(19,4)  ?

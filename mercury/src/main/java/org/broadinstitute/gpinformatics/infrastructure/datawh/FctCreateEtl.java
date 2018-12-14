@@ -1,26 +1,29 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Tied to LabBatchStartingVessel entity
  * Only interested in ETL of flowcell tickets and vessels as created for MISEQ and FCT batch types.
+ * Catches initial FCT creation via LabBatchStartingVessel
+ * Then when flowcell loaded, catches update of LabBatchStartingVessel with flowcell designation
  */
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBatchStartingVessel> {
 
     FlowcellDesignationEjb flowcellDesignationEjb;
@@ -70,31 +73,26 @@ public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBat
         }
 
         boolean poolTest = false;
+        FlowcellDesignation flowcellDesignation = null;
+        LabVessel dilutionVessel = labBatchStartingVessel.getDilutionVessel();
 
         // Gets pool test from the designation if it exists. Otherwise assumes MiSeq runs are pool tests.
         if( labBatch.getLabBatchType() == LabBatch.LabBatchType.MISEQ ) {
             poolTest = true;
         } else if( labBatchStartingVessel.getFlowcellDesignation() != null ) {
-            poolTest = labBatchStartingVessel.getFlowcellDesignation().isPoolTest();
-        } else {
-            // Designations haven't been assigned to the FCT
-            //   - Use the latest designation created before the FCT batch was created
-            List<FlowcellDesignation> flowcellDesignations = flowcellDesignationEjb.getFlowcellDesignations(
-                    Collections.singleton(labBatchStartingVessel.getLabVessel()));
-            for( FlowcellDesignation flowcellDesignation :  flowcellDesignations ) {
-                if( flowcellDesignation.getCreatedOn().compareTo(labBatch.getCreatedOn()) < 0 ) {
-                    poolTest = flowcellDesignation.isPoolTest();
-                    break;
-                }
-            }
+            // May or may not be preempted by flowcell loading events
+            flowcellDesignation = labBatchStartingVessel.getFlowcellDesignation();
+            poolTest = flowcellDesignation.isPoolTest();
         }
 
         return genericRecord(etlDateStr, isDelete,
                 labBatchStartingVessel.getBatchStartingVesselId(),
+                flowcellDesignation == null?"":flowcellDesignation.getDesignationId(),
                 labBatch.getLabBatchId(),
                 format(labBatch.getBatchName()),
                 format(labBatch.getLabBatchType().toString()),
                 format(labBatchStartingVessel.getLabVessel().getLabel()),
+                dilutionVessel == null?"":dilutionVessel.getLabel(),
                 format(labBatch.getCreatedOn()),
                 format(labBatch.getFlowcellType()!=null?labBatch.getFlowcellType().getDisplayName():""),
                 format(lane),

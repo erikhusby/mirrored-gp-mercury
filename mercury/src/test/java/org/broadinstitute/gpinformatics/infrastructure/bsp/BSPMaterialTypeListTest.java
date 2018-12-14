@@ -1,16 +1,20 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.bsp.client.sample.MaterialType;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.List;
 
 @Test(groups = TestGroups.STUBBY, enabled = true )
-public class BSPMaterialTypeListTest extends ContainerTest {
+@Dependent
+public class BSPMaterialTypeListTest extends StubbyContainerTest {
+
+    public BSPMaterialTypeListTest(){}
 
     @Inject
     BSPMaterialTypeList bspMaterialTypeList;

@@ -32,6 +32,7 @@ import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Dependent
 public class SubmissionDtoFetcher {
     private static final Log log = LogFactory.getLog(SubmissionDtoFetcher.class);
     private AggregationMetricsFetcher aggregationMetricsFetcher;
@@ -128,9 +130,9 @@ public class SubmissionDtoFetcher {
         List<SubmissionTuple> tupleList = new ArrayList<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
             String sampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
+            String mercuryProject = productOrderSample.getProductOrder().getResearchProject().getJiraTicketKey();
             SubmissionTuple submissionTuple =
-                new SubmissionTuple(productOrderSample.getProductOrder().getResearchProject().getJiraTicketKey(),
-                    sampleName, SubmissionTuple.VERSION_UNKNOWN, SubmissionTuple.PROCESSING_LOCATION_UNKNOWN,
+                new SubmissionTuple(mercuryProject, mercuryProject, sampleName, SubmissionTuple.VERSION_UNKNOWN, SubmissionTuple.PROCESSING_LOCATION_UNKNOWN,
                     SubmissionTuple.DATA_TYPE_UNKNOWN);
             tupleList.add(submissionTuple);
         }
@@ -139,7 +141,7 @@ public class SubmissionDtoFetcher {
         aggregationMap.putAll(Maps.uniqueIndex(aggregations, new Function<Aggregation, SubmissionTuple>() {
             @Override
             public SubmissionTuple apply(@Nullable Aggregation aggregation) {
-                return aggregation.getTuple();
+                return aggregation.getSubmissionTuple();
             }
         }));
 
@@ -161,7 +163,11 @@ public class SubmissionDtoFetcher {
             SubmissionTracker submissionTracker = researchProject.getSubmissionTracker(tuple);
             SubmissionStatusDetailBean statusDetailBean = null;
             if (submissionTracker != null) {
-                statusDetailBean = sampleSubmissionMap.get(submissionTracker.createSubmissionIdentifier());
+                try {
+                    statusDetailBean = sampleSubmissionMap.get(submissionTracker.createSubmissionIdentifier());
+                } catch (Exception e) {
+                    messageReporter.addMessage(e.getMessage());
+                }
             }
             results.add(new SubmissionDto(aggregation, statusDetailBean));
         }

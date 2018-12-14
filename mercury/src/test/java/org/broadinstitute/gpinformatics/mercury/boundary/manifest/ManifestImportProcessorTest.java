@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
@@ -25,12 +26,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor.UNKNOWN_HEADER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
@@ -39,8 +42,6 @@ import static org.hamcrest.Matchers.not;
 public class ManifestImportProcessorTest {
     private ManifestImportProcessor processor;
     private Map<String, String> dataRow;
-    protected static final String TEST_UNKNOWN_HEADER_FORMAT =
-            "Row #%d " + ManifestImportProcessor.UNKNOWN_HEADER_FORMAT;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -92,13 +93,15 @@ public class ManifestImportProcessorTest {
         List<String> headers = new ArrayList<>(makeDataRow().keySet());
         List<String> unknownHeaders = Arrays.asList("bad header 1", "bad header 2");
         headers.addAll(unknownHeaders);
-        boolean headersAreValid = processor.validateColumnHeaders(headers);
+        boolean headersAreValid = processor.validateColumnHeaders(headers, 0);
         assertThat(headersAreValid, is(not(true)));
-        assertThat(processor.getMessages(), contains("Unknown headers '[bad header 1, bad header 2]' present."));
+        assertThat(processor.getMessages(), contains(
+                TableProcessor.getPrefixedMessage("Unknown header(s) \"bad header 1\", \"bad header 2\".", null, 1)));
+        assertThat(processor.getWarnings(), hasSize(0));
     }
 
     public void testProcessRowDetailsShouldPass() throws Exception {
-        processor.processRowDetails(dataRow, 0);
+        processor.processRowDetails(dataRow, 0, true);
         processor.getMessages();
         assertThat(processor.getMessages(), is(empty()));
         for (ManifestRecord manifestRecord : processor.getManifestRecords()) {
@@ -117,30 +120,31 @@ public class ManifestImportProcessorTest {
         String unknownMaterial = "Goop";
         dataRow.put(ManifestHeader.MATERIAL_TYPE.getColumnName(), unknownMaterial);
 
-        processor.processRowDetails(dataRow, 0);
+        processor.processRowDetails(dataRow, 0, true);
         processor.getMessages();
+        // A message about the first row in a spreadsheet should display "Row #1"
         assertThat(processor.getMessages(),
-                hasItem(String.format("Row #0 An unrecognized material type was entered: %s", unknownMaterial)));
+                hasItem(String.format("Row #1 An unrecognized material type was entered: %s", unknownMaterial)));
     }
 
     public void testProcessRowDetailsNullMaterialType() throws Exception {
         String nullMaterial = null;
         dataRow.put(ManifestHeader.MATERIAL_TYPE.getColumnName(), nullMaterial);
 
-        processor.processRowDetails(dataRow, 0);
+        processor.processRowDetails(dataRow, 0, true);
         processor.getMessages();
         assertThat(processor.getMessages(),
-                hasItem(String.format("Row #0 An unrecognized material type was entered: %s", nullMaterial)));
+                hasItem(String.format("Row #1 An unrecognized material type was entered: %s", nullMaterial)));
     }
 
 
     public void testProcessHeadersUnknownColumn() throws Exception {
         String unknownHeader = "new to you";
-        int row = 0;
         dataRow.put(unknownHeader, "new to me too!");
-        processor.processHeader(new ArrayList<>(dataRow.keySet()), row);
-        assertThat(processor.getMessages(),
-                hasItem(String.format(TEST_UNKNOWN_HEADER_FORMAT, row, Arrays.asList(unknownHeader))));
+        processor.validateColumnHeaders(new ArrayList<>(dataRow.keySet()), 0);
+        assertThat(processor.getMessages(), hasItem(
+                TableProcessor.getPrefixedMessage(String.format(UNKNOWN_HEADER, unknownHeader), null, 1)));
+        assertThat(processor.getWarnings(), hasSize(0));
     }
 
     public void testGetColumnHeaders() throws Exception {

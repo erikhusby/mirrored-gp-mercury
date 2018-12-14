@@ -28,6 +28,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -94,6 +95,12 @@ public class ContainerActionBeanTest {
 
     @Test
     public void testBuildPositionMapHandleRearrays() {
+        // Put checkout date an hour later than now
+        // (otherwise if within a millisecond, date based treemap iterator will be non-deterministic)
+        Calendar cal = Calendar.getInstance();
+        cal.add( Calendar.HOUR, 1);
+        Date checkoutDate = cal.getTime();
+
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         mapPositionToTube.put(VesselPosition.A01, barcodedTube);
         addEventToRack(rackOfTubes, mapPositionToTube, LabEventType.STORAGE_CHECK_IN);
@@ -104,9 +111,9 @@ public class ContainerActionBeanTest {
         RackOfTubes newRearrayRack = new RackOfTubes("RearrayRack", RackOfTubes.RackType.Matrix48SlotRack2mL);
         rearrayFormation.addRackOfTubes(newRearrayRack);
         newRearrayRack.getTubeFormations().add(rearrayFormation);
-        LabEvent labEvent2 = new LabEvent(LabEventType.STORAGE_CHECK_OUT, new Date(), "UnitTest", 1L, 1L, "UnitTest");
+        LabEvent labEvent2 = new LabEvent(LabEventType.STORAGE_CHECK_OUT, checkoutDate, "UnitTest", 1L, 1L, "UnitTest");
         labEvent2.setInPlaceLabVessel(rearrayFormation);
-        rearrayFormation.getInPlaceLabEvents().add(labEvent2);
+        rearrayFormation.addInPlaceEvent(labEvent2);
 
         actionBean.buildPositionMapping();
         Assert.assertEquals(actionBean.getMapPositionToVessel().isEmpty(), true);
@@ -141,7 +148,7 @@ public class ContainerActionBeanTest {
         rackOfTubes.getTubeFormations().add(tubeFormation);
         LabEvent labEvent = new LabEvent(labEventType, new Date(), "UnitTest", 1L, 1L, "UnitTest");
         labEvent.setInPlaceLabVessel(tubeFormation);
-        tubeFormation.getInPlaceLabEvents().add(labEvent);
+        tubeFormation.addInPlaceEvent(labEvent);
         return labEvent;
     }
 }

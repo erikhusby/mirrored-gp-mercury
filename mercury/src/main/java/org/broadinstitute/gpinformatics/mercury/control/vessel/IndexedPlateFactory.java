@@ -141,7 +141,7 @@ public class IndexedPlateFactory {
             previousWells.add(plateWell);
 
             MolecularIndexingScheme indexingScheme = indexingSchemeFactory.findOrCreateIndexingScheme(
-                    Arrays.asList(plateWellIndex.getPositionPairs()));
+                    Arrays.asList(plateWellIndex.getPositionPairs()), false);
             plateWell.addReagent(new MolecularIndexReagent(indexingScheme));
 
             plate.getContainerRole().addContainedVessel(plateWell, vesselPosition);

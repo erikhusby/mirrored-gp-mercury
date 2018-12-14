@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -54,9 +53,6 @@ public class InfiniumRunStarter {
     @Inject
     private SessionContextUtility sessionContextUtility;
 
-    @Inject
-    private UserBean userBean;
-
     @PostConstruct
     public void initialize() {
         ScheduleExpression expression = new ScheduleExpression();
@@ -84,7 +80,6 @@ public class InfiniumRunStarter {
                     @Override
                     public void apply() {
                         try {
-                            userBean.login("seqsystem");
                             infiniumRunFinder.find();
                         } catch (SystemException e) {
                             log.error("Error finding infinium runs", e);

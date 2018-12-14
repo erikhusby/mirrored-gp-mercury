@@ -5,10 +5,12 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 // Implements Serializable because it's used by a Stateful session bean.
+@Dependent
 public class LabEventHandler implements Serializable {
 
     public enum HandlerResponse {

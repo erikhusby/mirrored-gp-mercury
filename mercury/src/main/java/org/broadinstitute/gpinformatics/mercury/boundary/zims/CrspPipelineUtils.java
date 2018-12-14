@@ -4,20 +4,26 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Dependent
 public class CrspPipelineUtils {
 
     private Deployment deployment;
+
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
 
     @Inject
     public CrspPipelineUtils(@Nonnull Deployment deployment) {
@@ -57,19 +63,6 @@ public class CrspPipelineUtils {
     }
 
     /**
-     * The clinical pipeline requires a product part number, but controls are not associated with PDOs, so derive
-     * the product from the bait.
-     */
-    private Map<String, String> mapBaitToProductPartNumber = new HashMap<String, String>() {{
-        put("Buick_v6_0_2014", "P-EX-0011");
-        put("whole_exome_agilent_1.1_refseq_plus_3_boosters", "P-CLA-0001");
-        put("whole_exome_illumina_coding_v1", "P-CLA-0003");
-        put("eMerge_Oct16_5pad_CDS", "P-VAL-0010");
-        put("Myeloid_Lymphoid_Panel_v1-88774", "P-VAL-0015");
-        put("eMerge_v2_83311", "P-VAL-0016");
-    }};
-
-    /**
      * Overrides various fields with CRSP-specific values
      */
     public void setFieldsForCrsp(
@@ -86,7 +79,13 @@ public class CrspPipelineUtils {
 
         if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
             if (bait != null) {
+                /**
+                 * The clinical pipeline requires a product part number, but controls are
+                 * not associated with PDOs, so derive the product from the bait.
+                 */
                 // todo required by clinical Exome pipeline, not sure about genomes
+                Map<String, String> mapBaitToProductPartNumber =
+                        attributeArchetypeDao.findKeyValueMap(KeyValueMapping.BAIT_PRODUCT_MAPPING);
                 libraryBean.setProductPartNumber(mapBaitToProductPartNumber.get(bait));
             }
         }
@@ -117,8 +116,12 @@ public class CrspPipelineUtils {
      * needs the LSID in this format.  No explicit BSP format check
      * is done here to allow for flexibility in test data.
      */
-    public String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
+    public static String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
         return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
     }
 
+    /** Setter used for dbfree testing. */
+    public void setAttributeArchetypeDao(AttributeArchetypeDao attributeArchetypeDao) {
+        this.attributeArchetypeDao = attributeArchetypeDao;
+    }
 }

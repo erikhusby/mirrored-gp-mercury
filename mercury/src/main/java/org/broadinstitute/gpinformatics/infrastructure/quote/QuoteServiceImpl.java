@@ -16,13 +16,15 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.owasp.encoder.Encode;
 import org.w3c.dom.Document;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -35,8 +37,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-@Impl
+@ApplicationScoped
+@Default
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
+
     public static final String COMMUNICATION_ERROR = "Could not communicate with quote server at %s: %s";
 
     public static final String EXTERNAL_PRICE_LIST_NAME = "GP External Price List";
@@ -46,6 +50,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     public static final String EFFECTIVE_DATE_FORMAT = "dd/MMM/yyyy";
 
     private static final long serialVersionUID = 8458283723746937096L;
+
     @Inject
     private QuoteConfig quoteConfig;
 
@@ -58,7 +63,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     public QuoteServiceImpl() {
     }
 
-    /**\
+    /**
      * Non CDI constructor, all dependencies must be explicitly initialized!
      *
      * @param quoteConfig The configuration.
@@ -310,10 +315,10 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
-                throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
+                throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
             }
         } catch (UniformInterfaceException e) {
-            throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
+            throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
         } catch (ClientHandlerException e) {
             throw new QuoteServerException(String.format(COMMUNICATION_ERROR, url, e.getLocalizedMessage()));
         } catch (UnsupportedEncodingException e) {

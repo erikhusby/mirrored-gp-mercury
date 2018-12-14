@@ -27,8 +27,8 @@ public class LabMetricSampleDataAddRowsListener implements ConfigurableList.AddR
      * If no BSP related columns in requested result columns, then skip the overhead of performing
      * SampleInstancesV2 traversal and related BSP service access
      */
-    private boolean shouldFetchFromBsp(List<ColumnTabulation> columnTabulations ) {
-        for (ColumnTabulation columnTabulation : columnTabulations) {
+    private boolean shouldFetchFromBsp(Map<Integer,ColumnTabulation> columnTabulations ) {
+        for (ColumnTabulation columnTabulation : columnTabulations.values()) {
             String name = columnTabulation.getName();
             if (name.equals(LabMetricSearchDefinition.MultiRefTerm.BSP_MATERIAL.getTermRefName()) ||
                     name.equals(LabMetricSearchDefinition.MultiRefTerm.BSP_PARTICIPANT.getTermRefName())) {
@@ -39,7 +39,7 @@ public class LabMetricSampleDataAddRowsListener implements ConfigurableList.AddR
     }
 
     @Override
-    public void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations) {
+    public void addRows(List<?> entityList, SearchContext context, Map<Integer,ColumnTabulation> nonPluginTabulations) {
 
         if( !shouldFetchFromBsp(nonPluginTabulations)) {
             mapSampleIdToData = Collections.EMPTY_MAP;

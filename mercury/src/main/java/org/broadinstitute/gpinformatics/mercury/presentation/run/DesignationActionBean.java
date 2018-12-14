@@ -76,10 +76,6 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     private Set<LabBatch> loadLcsets = new HashSet<>();
     private Set<LabVessel> loadTubes = new HashSet<>();
     private List<DesignationUtils.LcsetAssignmentDto> tubeLcsetAssignments = new ArrayList<>();
-    private boolean showProcessed;
-    private boolean showAbandoned;
-    private boolean showQueued = true;
-    private boolean append;
     private DesignationUtils utils = new DesignationUtils(this);
 
     private static final EnumSet DESCENDANTS = EnumSet.of(TransferTraverserCriteria.TraversalDirection.Descendants);
@@ -98,15 +94,8 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     @HandlesEvent(VIEW_ACTION)
     @DefaultHandler
     public Resolution view() {
-        // Filters out the unwanted dto's by status.
         for (Iterator<DesignationDto> iter = dtos.iterator(); iter.hasNext(); ) {
             DesignationDto dto = iter.next();
-            if (!showAbandoned && dto.getStatus() == FlowcellDesignation.Status.ABANDONED ||
-                !showProcessed && dto.getStatus() == FlowcellDesignation.Status.IN_FCT ||
-                !showQueued && dto.getStatus() == FlowcellDesignation.Status.QUEUED) {
-                iter.remove();
-                continue;
-            }
             dto.setSelected(false);
         }
         Set<DesignationDto> uniqueDtos = new HashSet<>(dtos);
@@ -174,9 +163,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                 return new ForwardResolution(TUBE_LCSET_PAGE);
             }
         }
-        if (!append) {
-            dtos.clear();
-        }
+        dtos.clear();
         // At this point there should be a single lcset per loading tube.
         makeDtos(loadingTubeLcset);
         return view();
@@ -188,23 +175,10 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     @HandlesEvent(PENDING_ACTION)
     public Resolution loadPendingDesignations() {
         clearValidationErrors();
-        if (!append) {
-            dtos.clear();
-        }
-        List <FlowcellDesignation.Status> statusesToShow = new ArrayList<FlowcellDesignation.Status>(){{
-            if (getShowAbandoned()) {
-                add(FlowcellDesignation.Status.ABANDONED);
-            }
-            if (getShowQueued()) {
-                add(FlowcellDesignation.Status.QUEUED);
-            }
-            if (getShowProcessed()) {
-                add(FlowcellDesignation.Status.IN_FCT);
-            }
-        }};
+        dtos.clear();
         MessageCollection messageCollection = new MessageCollection();
-        tubeLcsetAssignments = utils.makeDtosFromDesignations(designationTubeEjb.existingDesignations(statusesToShow),
-                messageCollection);
+        tubeLcsetAssignments = utils.makeDtosFromDesignations(designationTubeEjb.existingDesignations(
+                Collections.singletonList(FlowcellDesignation.Status.QUEUED)), messageCollection);
         if (tubeLcsetAssignments.size() > 0) {
             return new ForwardResolution(TUBE_LCSET_PAGE);
         }
@@ -532,38 +506,6 @@ public class DesignationActionBean extends CoreActionBean implements Designation
 
     public void setTubeLcsetAssignments(List<DesignationUtils.LcsetAssignmentDto> tubeLcsetAssignments) {
         this.tubeLcsetAssignments = tubeLcsetAssignments;
-    }
-
-    public boolean getShowProcessed() {
-        return showProcessed;
-    }
-
-    public void setShowProcessed(boolean showProcessed) {
-        this.showProcessed = showProcessed;
-    }
-
-    public boolean getShowAbandoned() {
-        return showAbandoned;
-    }
-
-    public void setShowAbandoned(boolean showAbandoned) {
-        this.showAbandoned = showAbandoned;
-    }
-
-    public boolean getShowQueued() {
-        return showQueued;
-    }
-
-    public void setShowQueued(boolean showQueued) {
-        this.showQueued = showQueued;
-    }
-
-    public boolean isAppend() {
-        return append;
-    }
-
-    public void setAppend(boolean append) {
-        this.append = append;
     }
 
     public void setDateRangeStart(Date start) {

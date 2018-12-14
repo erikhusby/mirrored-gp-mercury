@@ -35,6 +35,7 @@ public class RackOfTubes extends LabVessel {
         Conical50ml_8x3rack("Conical50ml_8x3rack", VesselGeometry.G3x8_NUM),
         Eppendorf10x10Box("Eppendorf10x10Box", VesselGeometry.G10x10_NUM),
         Eppendorf12x8Box("Eppendorf12x8Box", VesselGeometry.G12x8),
+        Eppendorf12x8BoxWell("Eppendorf12x8BoxWell", VesselGeometry.G12x8),
         FlipperRackRow8("FlipperRackRow8", VesselGeometry.G8x1, false),
         FlipperRackRow24("FlipperRackRow24", VesselGeometry.G24x1, false),
         FluidX_4x6_Rack("FluidX_4x6_Rack", VesselGeometry.G6x4_ALPHANUM, true),
