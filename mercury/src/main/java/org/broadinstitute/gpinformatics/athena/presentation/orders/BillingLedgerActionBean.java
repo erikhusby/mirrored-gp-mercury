@@ -561,7 +561,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
             ledgerQuantities = productOrderSample.getLedgerQuantities();
 
             for(Map.Entry<PriceItem, ProductOrderSample.LedgerQuantities> quantityEntry: ledgerQuantities.entrySet()) {
-                if(quantityEntry.getValue().getBilled()>0) {
+                if(quantityEntry.getValue().getTotal()>0) {
                     anyQuantitySet = true;
                 }
             }
