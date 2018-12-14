@@ -2340,6 +2340,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
+    public static void checkSapQuoteValidity(Quote quote) throws QuoteServerException {
+        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
+
+        checkSapQuoteValidity(quote, todayTruncated);
+    }
+
+    public static void checkSapQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
+
+    }
+
     /**
      * Helps to determine if all orders associated with a product order (the main order and any "Child" orders created
      * when replacing abandoned orders) are completed.

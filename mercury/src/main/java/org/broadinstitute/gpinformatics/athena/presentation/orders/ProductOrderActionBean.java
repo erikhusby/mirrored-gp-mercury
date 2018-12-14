@@ -768,30 +768,41 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
-        Quote quote = validateQuote(editOrder);
+            Quote quote = null;
+            Quote sapQuote = null;
+        if(editOrder.hasSapQuote()) {
+            sapQuote = validateSapQuote(editOrder);
+        } else {
+            quote = validateQuote(editOrder);
+        }
 
         try {
-            if (quote != null) {
-                ProductOrder.checkQuoteValidity(quote);
-                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
-                    for (Funding funding : fundingLevel.getFunding()) {
-                        if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                            final int numDaysBetween =
-                                    DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
-                            if (numDaysBetween > 0 && numDaysBetween < 45) {
-                                addMessage("The Funding Source " + funding.getDisplayName() + " on " +
-                                           quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
-                                           " days. If it is likely this work will not be completed by then, please work on "
-                                           + "updating the Funding Source so Billing Errors can be avoided.");
+            if (editOrder.hasSapQuote()) {
+                if (sapQuote != null) {
+                    ProductOrder.checkSapQuoteValidity(sapQuote);
+                }
+                validateSapQuoteDetails(sapQuote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
+            } else {
+                if (quote != null) {
+                    ProductOrder.checkQuoteValidity(quote);
+                    for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
+                        for (Funding funding : fundingLevel.getFunding()) {
+                            if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                                final int numDaysBetween =
+                                        DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                                if (numDaysBetween > 0 && numDaysBetween < 45) {
+                                    addMessage("The Funding Source " + funding.getDisplayName() + " on " +
+                                               quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
+                                               " days. If it is likely this work will not be completed by then, please work on "
+                                               + "updating the Funding Source so Billing Errors can be avoided.");
+                                }
                             }
                         }
                     }
                 }
+                validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
 
-//            if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
-//            }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (InvalidProductException | SAPIntegrationException e) {
@@ -820,11 +831,22 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void validateQuoteDetails(ProductOrder productOrder, final ErrorLevel errorLevel, boolean countOpenOrders)
             throws InvalidProductException, SAPIntegrationException {
-        Quote quote = validateQuote(productOrder);
 
-        if (quote != null) {
-            validateQuoteDetails(quote, errorLevel, countOpenOrders, 0);
+        Quote quote = null;
+        Quote sapQuote = null;
+
+        if(productOrder.hasSapQuote()) {
+            sapQuote = validateSapQuote(productOrder);
+            if (sapQuote != null) {
+                validateSapQuoteDetails(quote, errorLevel, countOpenOrders, 0);
+            }
+        } else {
+            quote = validateQuote(productOrder);
+            if (quote != null) {
+                validateQuoteDetails(quote, errorLevel, countOpenOrders, 0);
+            }
         }
+
     }
 
     /**
@@ -843,10 +865,20 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder, final ErrorLevel errorLevel,
                                                       boolean countOpenOrders, int additionalSamplesCount)
             throws InvalidProductException, QuoteServerException, SAPIntegrationException {
-        Quote quote = validateQuote(productOrder);
-        ProductOrder.checkQuoteValidity(quote);
-        if (quote != null) {
-            validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
+        Quote quote = null;
+        Quote sapQuote = null;
+        if(productOrder.hasSapQuote()) {
+            sapQuote = validateSapQuote(productOrder);
+            ProductOrder.checkSapQuoteValidity(sapQuote);
+            if(sapQuote != null) {
+                validateSapQuoteDetails(sapQuote, errorLevel, countOpenOrders, additionalSamplesCount);
+            }
+        } else {
+            quote = validateQuote(productOrder);
+            ProductOrder.checkQuoteValidity(quote);
+            if (quote != null) {
+                validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
+            }
         }
     }
 
@@ -862,6 +894,36 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param additionalSampleCount
      */
     protected void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
+                                      int additionalSampleCount) throws InvalidProductException,
+            SAPIntegrationException {
+        if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
+            String unFundedMessage = "A quote should be funded in order to be used for a product order.";
+            addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
+        }
+
+        double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
+        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
+        double valueOfCurrentOrder = 0;
+
+        if (fundsRemaining <= 0d ||
+            (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
+            String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
+            addMessageBasedOnErrorLevel(errorLevel, inssuficientFundsMessage);
+        }
+    }
+
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote
+     *
+     * @param quote  The quote which the user intends to use.  From this we can determine the collection of orders to
+     *               include in evaluating and the funds remaining
+     * @param errorLevel indicator for if the user should see a validation error or just a warning
+     * @param countCurrentUnPlacedOrder indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     * @param additionalSampleCount
+     */
+    protected void validateSapQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
                                       int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {

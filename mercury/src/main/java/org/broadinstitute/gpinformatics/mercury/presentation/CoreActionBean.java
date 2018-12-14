@@ -645,10 +645,20 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     protected Quote validateQuote(ProductOrder productOrder) {
         Quote quoteDetails = null;
         try {
-            quoteDetails = productOrder.hasSapQuote()?productOrder.getSAPQuote(sapService):productOrder.getQuote(quoteService);
+            quoteDetails = productOrder.getQuote(quoteService);
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", productOrder.getQuoteId(), e.getMessage());
-        } catch (QuoteNotFoundException | SAPIntegrationException e) {
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", productOrder.getQuoteId());
+        }
+        return quoteDetails;
+    }
+
+    protected Quote validateSapQuote(ProductOrder productOrder) {
+        Quote quoteDetails = null;
+        try {
+            quoteDetails = productOrder.getSAPQuote(sapService);
+        } catch (SAPIntegrationException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", productOrder.getQuoteId());
         }
         return quoteDetails;

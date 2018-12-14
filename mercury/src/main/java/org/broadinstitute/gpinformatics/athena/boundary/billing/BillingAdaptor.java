@@ -150,6 +150,7 @@ public class BillingAdaptor implements Serializable {
 
         List<BillingEjb.BillingResult> results = new ArrayList<>();
         Quote quote = null;
+        Quote sapQuote = null;
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
         try {
@@ -178,7 +179,10 @@ public class BillingAdaptor implements Serializable {
                     priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(itemForPriceUpdate));
                     itemForPriceUpdate.setPriceOnWorkDate(priceItemsForDate);
 
-                    quote = itemForPriceUpdate.getProductOrder().hasSapQuote()?itemForPriceUpdate.getProductOrder().getSAPQuote(sapService):itemForPriceUpdate.getProductOrder().getQuote(quoteService);
+                    quote = itemForPriceUpdate.getProductOrder().getQuote(quoteService);
+                    if (itemForPriceUpdate.getProductOrder().hasSapQuote()) {
+                        sapQuote = itemForPriceUpdate.getProductOrder().getSAPQuote(sapService);
+                    }
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
 //                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     itemForPriceUpdate.setQuote(quote);
@@ -225,9 +229,13 @@ public class BillingAdaptor implements Serializable {
 //                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     item.setQuote(quote);
 
-                    if (!item.getProductOrder().hasSapQuote()) {
-                        ProductOrder.checkQuoteValidity(quote,
-                                DateUtils.truncate(item.getWorkCompleteDate(), Calendar.DATE));
+                    if (item.getProductOrder().hasSapQuote()) {
+                        ProductOrder.checkSapQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
+                                Calendar.DATE));
+
+                    } else {
+                        ProductOrder.checkQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
+                                Calendar.DATE));
                     }
 
 //                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
@@ -246,13 +254,10 @@ public class BillingAdaptor implements Serializable {
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     // todo need to set the price on the Price Item before this step
                     QuotePriceItem primaryPriceItemIfReplacement = null;
-                    if (!item.getProductOrder().hasSapQuote()) {
-                        primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate
-                        );
-                    }
+                        primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate);
                     // todo need to set the price on the Price Item before this step
-                    QuotePriceItem primaryPriceItemIfReplacementForSAP =item.getPrimaryForReplacement(priceItemsForDate
-                    );
+                    QuotePriceItem primaryPriceItemIfReplacementForSAP =
+                            item.getPrimaryForReplacement(priceItemsForDate);
 
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
@@ -265,9 +270,7 @@ public class BillingAdaptor implements Serializable {
                         if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
                             quoteItemNames.contains(priceItemBeingBilled.getName()))
                         {
-
                             primaryPriceItemIfReplacement = null;
-
                         }
                     }
 
