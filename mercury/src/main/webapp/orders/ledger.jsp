@@ -456,12 +456,14 @@
             });
 
             ledgerForm.submit(function (event) {
-                var infoMessages = modalMessages("info");
-                var statusNamespace = "updateStatus";
-                infoMessages.add("Updating Ledger", statusNamespace);
 
-                // clear any previous success messages
-                modalMessages('success').clear();
+                // clear any previous messages
+                ['error', 'success', 'info', 'warning'].forEach(function (level) {
+                    modalMessages(level).clear();
+                });
+
+                var statusNamespace = "updateStatus";
+                modalMessages("info").add("Updating Ledger", statusNamespace);
 
                 var formData = $j(event.target).serializeArray();
 
@@ -525,7 +527,7 @@
                                 } else {
                                     message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples, ").concat(rowsRemaining).concat(" remaining.");
                                 }
-                                infoMessages.add(message, statusNamespace);
+                                modalMessages("info").add(message, statusNamespace);
                                 message = "&successMessage=Successfully updated ".concat(totalRowsToUpdate).concat(" ledger entries.");
                                 if (json.redirectOnSuccess) {
                                     modalMessages("info").clear();
@@ -978,8 +980,22 @@
         <tbody>
             <c:forEach items="${actionBean.productOrderSampleLedgerInfos}" var="info">
                 <tr class="${info.sample.deliveryStatus.displayName == 'Abandoned' ? 'abandoned' : ''}">
+
+                    <c:set var="disableAbandon" value="${false}"/>
+                    <c:if test="${info.sample.deliveryStatus.abandoned}">
+                        <c:choose>
+                            <c:when test="${info.anyQuantitySet}">
+                                <c:set var="disableAbandon" value="${false}" />
+                            </c:when>
+                            <c:otherwise>
+                                <c:set var="disableAbandon" value="${true}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </c:if>
                     <td>
-                        <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
+                        <c:if test="${!disableAbandon}">
+                            <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
+                        </c:if>
                     </td>
                     <td>
                         ${info.sample.name}
@@ -1018,10 +1034,17 @@
                                value="${actionBean.ledgerData[info.sample.samplePosition].completeDateFormatted}"/>
                         <c:set var="currentValue"
                                value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
-                        <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
-                               value="${currentValue}" data-rownum = "${info.sample.samplePosition}"
-                               originalValue="${info.dateCompleteFormatted}"
-                               class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
+                        <c:choose>
+                            <c:when test="${disableAbandon}">
+                                ${info.dateCompleteFormatted}
+                            </c:when>
+                            <c:otherwise>
+                                <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
+                                       value="${currentValue}" data-rownum="${info.sample.samplePosition}"
+                                       originalValue="${info.dateCompleteFormatted}"
+                                       class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
+                            </c:otherwise>
+                        </c:choose>
                     </td>
 
                     <c:forEach items="${actionBean.priceItems}" var="priceItem">
@@ -1033,12 +1056,15 @@
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
                                    value="${info.getTotalForPriceItem(priceItem)}"/>
                             <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[priceItem.priceItemId].submittedQuantity}"/>
-                            <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                   name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                   value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
-                                   class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
-                                   priceItemId="${priceItem.priceItemId}"
-                                   billedQuantity="${info.getBilledForPriceItem(priceItem)}">
+                                <c:if test="${!disableAbandon}">
+                                    <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
+                                           name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
+                                           value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
+                                           class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
+                                           priceItemId="${priceItem.priceItemId}"
+                                           billedQuantity="${info.getBilledForPriceItem(priceItem)}">
+
+                                </c:if>
                             <c:if test="${priceItem == actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product) && info.autoFillQuantity != 0}">
                                 <input type="hidden"
                                        name="${info.sample.samplePosition}-autoFill-${info.sample.name}"
