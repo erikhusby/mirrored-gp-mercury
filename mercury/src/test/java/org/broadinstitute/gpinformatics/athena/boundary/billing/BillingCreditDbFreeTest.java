@@ -165,7 +165,7 @@ public class BillingCreditDbFreeTest {
     @Test(dataProvider = "sapOrQuoteProvider")
     public void testCreateBillingCreditRequest(ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        pdo.setQuoteSource(quoteSourceType.getDisplayName());
+        pdo.setQuoteSource(quoteSourceType);
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
@@ -178,7 +178,7 @@ public class BillingCreditDbFreeTest {
         billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 0);
 
-        Mockito.verify(mockEmailSender, Mockito.times(pdo.hasSapQuote()?0:1))
+        Mockito.verify(mockEmailSender, Mockito.times(pdo.hasSapQuote()?1:0))
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyBoolean(), Mockito.anyBoolean());
 
@@ -187,7 +187,7 @@ public class BillingCreditDbFreeTest {
     @Test(dataProvider = "sapOrQuoteProvider")
     public void testNegativeBilling(ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        pdo.setQuoteSource(quoteSourceType.getDisplayName());
+        pdo.setQuoteSource(quoteSourceType);
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
@@ -207,7 +207,7 @@ public class BillingCreditDbFreeTest {
     @Test(dataProvider = "sapOrQuoteProvider")
     public void testPositiveBilling(ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
-        pdo.setQuoteSource(quoteSourceType.getDisplayName());
+        pdo.setQuoteSource(quoteSourceType);
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
@@ -226,6 +226,7 @@ public class BillingCreditDbFreeTest {
     @Test(dataProvider = "sapOrQuoteProvider")
     public void testMoreNegativeThanPositiveBillingPositiveFirst(ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        pdo.setQuoteSource(quoteSourceType);
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, 1d));
 

@@ -340,7 +340,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
                 new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
                 toClone.getResearchProject());
-        cloned.setQuoteSource(toClone.getQuoteSource());
+        cloned.setQuoteSource(toClone.getQuoteSourceType());
         List<Product> potentialAddons = new ArrayList<>();
 
         for (ProductOrderAddOn cloneAddon : toClone.getAddOns()) {
@@ -2558,6 +2558,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setQuoteSource(String quoteSource) {
         this.quoteSource = quoteSource;
+    }
+
+    public void setQuoteSource(QuoteSourceType quoteSourceType) {
+        this.quoteSource = quoteSourceType.getDisplayName();
     }
 
     public boolean needsCustomization(Product product) {
