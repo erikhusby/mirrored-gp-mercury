@@ -372,6 +372,7 @@ public class ProductOrderEjb {
 
         final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
         try {
+            productPriceCache.determineIfProductsExist(allProductsOrdered, editedProductOrder.getSapCompanyConfigurationForProductOrder());
             Quote quote = orderToPublish.hasSapQuote()?orderToPublish.getSAPQuote(sapService):orderToPublish.getQuote(quoteService);
 
             final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
@@ -392,7 +393,7 @@ public class ProductOrderEjb {
 
             }
             productOrderDao.persist(orderToPublish);
-        } catch (SAPIntegrationException | QuoteServerException | QuoteNotFoundException e) {
+        } catch (SAPIntegrationException | QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
             StringBuilder errorMessage = new StringBuilder();
             errorMessage.append("Unable to ");
             if (!orderToPublish.isSavedInSAP()) {
