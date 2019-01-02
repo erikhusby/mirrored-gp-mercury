@@ -557,7 +557,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         }
 
         LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds,
+                Workflow.AGILENT_EXOME_EXPRESS, bucketIds,
                 Collections.<Long>emptyList(), batchName, "", new Date(), "", "jowalsh", bucketName);
         labBatch.setValidationBatch(true);
     }

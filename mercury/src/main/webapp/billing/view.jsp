@@ -99,7 +99,7 @@
                 <th width="60">Quote</th>
                 <th width="250">PDOs</th>
                 <th width="50">Work Items</th>
-                <th width="50">SAP Document ID(s)</th>
+                <th width="90">SAP<br/>Document ID(s)</th>
                 <th>Platform</th>
                 <th>Category</th>
                 <th>Price Item</th>

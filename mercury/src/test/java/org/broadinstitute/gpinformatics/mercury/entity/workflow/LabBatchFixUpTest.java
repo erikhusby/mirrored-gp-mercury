@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -34,6 +35,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -85,6 +87,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -140,6 +143,15 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private SystemRouter systemRouter;
+
+    @Inject
+    private LabEventDao labEventDao;
+
+    @Inject
+    private JiraService jiraService;
+
+    @Inject
+    private UserTransaction utx;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -1793,8 +1805,8 @@ public class LabBatchFixUpTest extends Arquillian {
 
 
     /*
-     * This test removes samples from an LCSET.  It reads its parameters from a file,
-     * testdata/RemoveLabBatchSample.txt, so it can be used for other similar fixups, without writing a new test.
+     * This test removes samples (starting vessels and bucket entries) from an LCSET.
+     * To simplify reuse, parameters come from file testdata/RemoveLabBatchSample.txt
      * The file needs a ticket id, an lcset, and comma-delimited list of samples.
      * For example:
      * SUPPORT-1234
@@ -1813,12 +1825,136 @@ public class LabBatchFixUpTest extends Arquillian {
         LabBatch labBatch = labBatchDao.findByName(lcsetName);
         Assert.assertNotNull(labBatch, "Cannot find LCSET: '" + lcsetName + "'");
         List<String> samplesToRemove = Arrays.asList(lines.get(2).split(","));
-        removeSamples(samplesToRemove, labBatch);
+        removeStartingVesselsAndBucketEntries(samplesToRemove, labBatch);
 
         labBatchDao.persist(new FixupCommentary(lines.get(0) + " Removed samples from " + lcsetName));
         labBatchDao.flush();
         userTransaction.commit();
     }
+
+    private List<LabBatchStartingVessel> removeStartingVesselsAndBucketEntries(List<String> sampleNames,
+            LabBatch labBatch) {
+        List<LabBatchStartingVessel> vesselsToRemove = new ArrayList<>();
+        Set<BucketEntry> bucketEntriesToRemove = new HashSet<>();
+        List<String> sampleNamesFound = new ArrayList<>();
+        for (LabBatchStartingVessel startingVessel : labBatch.getLabBatchStartingVessels()) {
+            Set<SampleInstanceV2> sampleInstances = startingVessel.getLabVessel().getSampleInstancesV2();
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                String sample = sampleInstance.getRootOrEarliestMercurySampleName();
+                if (sampleNames.contains(sample)) {
+                    vesselsToRemove.add(startingVessel);
+                    sampleNamesFound.add(sample);
+                    for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+                        if (bucketEntry.getLabBatch().equals(labBatch)) {
+                            bucketEntriesToRemove.add(bucketEntry);
+                        }
+                    }
+                }
+            }
+        }
+        Assert.assertEquals(sampleNamesFound, sampleNames, labBatch.getBatchName() + " does not contain " +
+                StringUtils.join(CollectionUtils.subtract(sampleNames, sampleNamesFound), ", "));
+
+        System.out.println("Removing starting vessels and bucket entries for samples " +
+                StringUtils.join(sampleNames, ", ") + " from " + labBatch.getBatchName());
+
+        for (LabBatchStartingVessel vesselToRemove : vesselsToRemove) {
+            labBatch.getLabBatchStartingVessels().remove(vesselToRemove);
+            vesselToRemove.getLabVessel().getLabBatchStartingVessels().remove(vesselToRemove);
+        }
+        for (BucketEntry bucketEntry : bucketEntriesToRemove) {
+            labBatch.getBucketEntries().remove(bucketEntry);
+            LabVessel labVessel = bucketEntry.getLabVessel();
+            labVessel.getBucketEntries().remove(bucketEntry);
+            ProductOrder productOrder = bucketEntry.getProductOrder();
+            productOrder.getBucketEntries().remove(bucketEntry);
+            labBatchDao.remove(bucketEntry);
+        }
+        return vesselsToRemove;
+    }
+
+    /**
+     * This test is used to find LabEvents that have more than one LabBatch.  The output is used to create input files
+     * for {@link #consolidateLabBatches()}.
+     */
+    @Test(enabled = false)
+    public void findAmbiguousEvents() {
+        List<LabEvent> labEvents = labEventDao.findByDateAndType(
+                new GregorianCalendar(2018, Calendar.JANUARY, 1).getTime(), new Date(), LabEventType.SHEARING_TRANSFER);
+        List<Long> eventIds = labEvents.stream().map(LabEvent::getLabEventId).collect(Collectors.toList());
+
+        // Clear the session and refetch each event individually, to avoid running out of memory during event traversal
+        labEventDao.clear();
+        for (Long eventId : eventIds) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, eventId);
+            Set<LabBatch> computedLcSets = labEvent.getComputedLcSets();
+            if (computedLcSets.isEmpty()) {
+                System.out.print(labEvent.getLabEventId() + " ");
+                Set<String> batchNames = new HashSet<>();
+                Set<String> controlBatchNames = new HashSet<>();
+                LabVessel labVessel = labEvent.getTargetLabVessels().iterator().next();
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    List<BucketEntry> bucketEntries = sampleInstanceV2.getAllBucketEntries();
+                    if (bucketEntries.isEmpty()) {
+                        for (LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches()) {
+                            controlBatchNames.add(labBatch.getBatchName());
+                        }
+                    } else {
+                        for (BucketEntry bucketEntry : bucketEntries) {
+                            batchNames.add(bucketEntry.getLabBatch().getBatchName() + " " +
+                                    bucketEntry.getLabBatch().getCreatedOn());
+                        }
+                    }
+                }
+                System.out.print("control " + StringUtils.join(controlBatchNames, ", ") + " ");
+                System.out.println("others " + batchNames.stream().sorted().collect(Collectors.joining(",")));
+            }
+            labEventDao.clear();
+        }
+    }
+
+    /**
+     * This test is used to consolidate LabBatches.  For example, some ShearingTransfers have multiple LCSETs; Mercury
+     * cannot infer original vs rework LCSET in the presence of multiple LCSETs, so this test is used to move samples
+     * to a single LCSET.  The samples are not removed from the JIRA ticket, because that would make meaningless any
+     * comments that were made on the ticket.  The test adds to each source ticket a comment with the name of the
+     * destination ticket.
+     * The test reads its input from file mercury/src/test/resources/testdata/UpdateSampleMetadata.txt.
+     * The first line is the fixup commentary.  The second line is the destination LabBatch.  The third and
+     * subsequent lines are the source LabBatches.
+     */
+    @Test(enabled = false)
+    public void consolidateLabBatches() throws IOException, SystemException, NotSupportedException,
+            HeuristicRollbackException, HeuristicMixedException, RollbackException {
+        userBean.loginOSUser();
+        utx.begin();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ConsolidateLabBatches.txt"));
+        String destBatchName = lines.get(1);
+        LabBatch destLabBatch = labBatchDao.findByName(destBatchName);
+        Assert.assertNotNull(destLabBatch, "Failed to find " + destBatchName);
+
+        for (String sourceBatchName : lines.subList(2, lines.size())) {
+            LabBatch sourceLabBatch = labBatchDao.findByName(sourceBatchName);
+            Assert.assertNotNull(sourceLabBatch, "Failed to find " + sourceBatchName);
+            System.out.println("Moving entries from " + sourceLabBatch.getBusinessKey() + " to " +
+                    destLabBatch.getBusinessKey());
+            for (BucketEntry bucketEntry : sourceLabBatch.getBucketEntries()) {
+                destLabBatch.addBucketEntry(bucketEntry);
+            }
+            for (LabBatchStartingVessel labBatchStartingVessel : sourceLabBatch.getLabBatchStartingVessels()) {
+                labBatchStartingVessel.setLabBatch(destLabBatch);
+            }
+        }
+        labBatchDao.persist(new FixupCommentary(lines.get(0)));
+        labBatchDao.flush();
+
+        for (String sourceBatchName : lines.subList(2, lines.size())) {
+            jiraService.addComment(sourceBatchName, "In Mercury database, moved samples to " +
+                    destLabBatch.getBusinessKey() + " to get a single LCSET for the first event.");
+        }
+        utx.commit();
+    }
+
 
     @Test(enabled = false)
     public void backfillInference() throws SystemException, NotSupportedException, HeuristicRollbackException,

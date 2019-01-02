@@ -1338,6 +1338,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>PostSelectionCaptureThermoCyclerLoaded</name>
+                <labEventTypes>POST_SELECTION_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>SelectionCatchPCR</name>
                 <labEventTypes>SELECTION_CATCH_PCR</labEventTypes>
                 <optional>false</optional>
@@ -1648,7 +1655,7 @@
                     <materialTypes>FRESH_FROZEN_BLOOD</materialTypes>
                     <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FRESH</materialTypes>
                     <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FROZEN</materialTypes>
-                    <workflows>CLINICAL_WHOLE_BLOOD_EXTRACTION</workflows>
+                    <workflows>Clinical Whole Blood Extraction</workflows>  <!-- todo jmt why copy workflow name here? -->
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1885,7 +1892,7 @@
                     <materialTypes>CELLS_CELL_LINE_VIABLE</materialTypes>
                     <materialTypes>CELLS_PELLET_FROZEN_IN_X_MEDIA</materialTypes>
                     <materialTypes>CELL_SUSPENSION</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_CELL_PELLETS</workflows>
+                    <workflows>DNA and RNA from Cell Pellets</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2475,7 +2482,7 @@
                     <materialTypes>CELLS_CELL_LINE_VIABLE</materialTypes>
                     <materialTypes>CELLS_PELLET_FROZEN_IN_X_MEDIA</materialTypes>
                     <materialTypes>CELL_SUSPENSION</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_CELL_PELLETS_BSP</workflows>
+                    <workflows>DNA and RNA from Cell Pellets BSP</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -3335,7 +3342,7 @@
                 <bucketEntryEvaluator>
                     <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
                     <materialTypes>TISSUE_OCT_EMBEDDED_TISSUE</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_FROZEN_TISSUE</workflows>
+                    <workflows>DNA and RNA for Frozen Tissue - AllPrep</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -3735,7 +3742,7 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>STOOL_STOOL</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_STOOL</workflows>
+                    <workflows>DNA and RNA from Stool</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -4138,8 +4145,171 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
                     <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>16S</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-10-18T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>16SPCRSetup</name>
+                <labEventTypes>ILLUMINA_16S_PCR_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>16SPrimerAddition</name>
+                <labEventTypes>ILLUMINA_16S_PRIMER_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Illumina16SPcrProductTransfer</name>
+                <labEventTypes>ILLUMINA_16S_PCR_PRODUCT_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>16SCaliperSetup</name>
+                <labEventTypes>ILLUMINA_16S_CALIPER_SETUP</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>16SPoolingTransfer</name>
+                <labEventTypes>ILLUMINA_16S_POOLING_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>16SColumnCleanup</name>
+                <labEventTypes>ILLUMINA_16S_COLUMN_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>TSCA</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2018-10-18T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>TSCAPostNormTransfer</name>
+                <labEventTypes>TSCA_POST_NORM_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAHybSetUp</name>
+                <labEventTypes>TSCA_HYB_SET_UP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>false</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCACATAddition</name>
+                <labEventTypes>TSCA_CAT_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAFLPPrep</name>
+                <labEventTypes>TSCA_FLP_PREP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAHybridizationCleanUp</name>
+                <labEventTypes>TSCA_HYBRIDIZATION_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCASW1Addition1</name>
+                <labEventTypes>TSCA_SW1_ADDITION1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCASW1Addition2</name>
+                <labEventTypes>TSCA_SW1_ADDITION2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAUB1Addition</name>
+                <labEventTypes>TSCA_UB1_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCASW1Addition1</name>
+                <labEventTypes>TSCA_SW1_ADDITION1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAExtensionLigationSetup</name>
+                <labEventTypes>TSCA_EXTENSION_LIGATION_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAIndexRegistration</name>
+                <labEventTypes>TSCA_INDEX_REGISTRATION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAIndexedAmpliconPCR</name>
+                <labEventTypes>TSCA_INDEXED_AMPLICON_PCR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAIndexAddition</name>
+                <labEventTypes>TSCA_INDEX_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>TSCAAmpliconRegistration</name>
+                <labEventTypes>TSCA_AMPLICON_REGISTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -4443,7 +4613,7 @@
     <productWorkflowDefs>
         <name>Whole Genome PCR Free HyperPrep</name>
         <productWorkflowDefVersions>
-            <version>1.0</version>
+            <version>1.2</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
             <batchJiraIssueType>HUMAN_PCR_FREE</batchJiraIssueType>
             <effectiveDate>2016-11-21T22:04:23.932-04:00</effectiveDate>
@@ -4516,7 +4686,7 @@
     <productWorkflowDefs>
         <name>Lasso</name>
         <productWorkflowDefVersions>
-            <version>1.0</version>
+            <version>1.1</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
             <batchJiraIssueType>CDNA_LASSO</batchJiraIssueType>
             <effectiveDate>2018-04-10T10:03:24.085-04:00</effectiveDate>
@@ -4725,6 +4895,45 @@
             <effectiveDate>2018-09-13T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Seq Only</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>16S</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>MISEQ_16S</batchJiraIssueType>
+            <effectiveDate>2018-08-15T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>16S</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>TSCA</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>TSCA</batchJiraIssueType>
+            <effectiveDate>2018-08-15T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>TSCA</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <sequencingConfigDefs>

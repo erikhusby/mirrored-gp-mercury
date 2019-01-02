@@ -64,7 +64,7 @@ public class BillingAdaptor implements Serializable {
 
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
     public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
-    public static final String BILLING_CREDIT_REQUESTED_INDICATOR = "CreditRequested";
+    public static final String BILLING_CREDIT_REQUESTED_INDICATOR = "Credit Requested";
 
     private BillingEjb billingEjb;
 

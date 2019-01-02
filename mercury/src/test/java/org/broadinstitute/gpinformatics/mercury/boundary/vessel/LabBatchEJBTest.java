@@ -1,14 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -51,19 +48,10 @@ public class LabBatchEJBTest extends StubbyContainerTest {
     private UserTransaction utx;
 
     @Inject
-    private BarcodedTubeDao tubeDao;
-
-    @Inject
     private LabBatchDao labBatchDao;
 
     @Inject
     private BucketDao bucketDao;
-
-    @Inject
-    private ProductDao productDao;
-
-    @Inject
-    private ResearchProjectDao researchProjectDao;
 
     @Inject
     LabBatchTestUtils labBatchTestUtils;
@@ -197,7 +185,7 @@ public class LabBatchEJBTest extends StubbyContainerTest {
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                Workflow.ICE_EXOME_EXPRESS, bucketIds, Collections.<Long>emptyList(),
                 "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName );
 
         //link the JIRA tickets for the batch created to the pdo batches.
@@ -237,7 +225,7 @@ public class LabBatchEJBTest extends StubbyContainerTest {
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION, bucketIds, Collections.<Long>emptyList(),
                 "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, EXTRACTION_TO_DNA_BUCKET);
 
         //link the JIRA tickets for the batch created to the pdo batches.
@@ -278,7 +266,7 @@ public class LabBatchEJBTest extends StubbyContainerTest {
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                Workflow.ICE_EXOME_EXPRESS, bucketIds, Collections.<Long>emptyList(),
                 expectedTicketId, "", new Date(), "", scottmat, selectedBucket);
         labBatchDao.flush();
         labBatchDao.clear();
@@ -312,7 +300,7 @@ public class LabBatchEJBTest extends StubbyContainerTest {
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION, bucketIds, Collections.<Long>emptyList(),
                 expectedTicketId,"", new Date(), "", scottmat, EXTRACTION_TO_DNA_BUCKET);
         labBatchDao.flush();
         labBatchDao.clear();

@@ -459,9 +459,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getVolume(), new BigDecimal("0.60"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getExperiment(), "DEV-7501");
-            Assert.assertEquals(entity.getSubTasks().get(0), select(i, "DEV-7538", "DEV-7539"));
-
             Assert.assertEquals(entity.getReadLength().intValue(), new int[]{4, 2}[i]);
             Assert.assertNull(entity.getLibraryType());
             Assert.assertEquals(entity.getAggregationParticle(), select(i, "1", ""));
@@ -479,7 +476,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         // Runs the workflow: PDO creation, LCSET creation, bucketing, pico plating, shearing, LC,
         // HybSelect, QTP, sequencing.
-        Workflow workflow = Workflow.ICE_EXOME_EXPRESS;
+        String workflow = Workflow.ICE_EXOME_EXPRESS;
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(0, "PDO-TEST123");
         Assert.assertTrue(entities.size() <= NUM_POSITIONS_IN_RACK,
                 entities.size() + " samples is more than a single rack " + NUM_POSITIONS_IN_RACK);
@@ -489,7 +486,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         }
         productOrder.setJiraTicketKey(productOrder.getJiraTicketKey());
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        productOrder.getProduct().setWorkflow(workflow);
+        productOrder.getProduct().setWorkflowName(workflow);
         expectedRouting = SystemRouter.System.MERCURY;
 
         LabBatch workflowBatch = new LabBatch("a batch", new HashSet<LabVessel>(mapBarcodeToTube.values()),
@@ -612,10 +609,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
                 VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
-        errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
-        errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                VesselPooledTubesProcessor.Headers.CONDITIONS.getText()));
 
         errorIfMissing(errors, filename, "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
                 VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
@@ -627,7 +620,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_HAVE_BOTH, 7,
                 VesselPooledTubesProcessor.Headers.BAIT.getText(), VesselPooledTubesProcessor.Headers.CAT.getText()));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 7, "DEV-6796"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 7,
                 VesselPooledTubesProcessor.Headers.VOLUME.getText(), 6, "01509634249"));
 
@@ -637,7 +629,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "01509634249"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_HAVE_BOTH, 8,
                 VesselPooledTubesProcessor.Headers.BAIT.getText(), VesselPooledTubesProcessor.Headers.CAT.getText()));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 8, "DEV-6796"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 8,
                 VesselPooledTubesProcessor.Headers.LSID.getText(), 2, "SM-748OO"));
         errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 8,
@@ -649,7 +640,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 VesselPooledTubesProcessor.Headers.READ_LENGTH.getText()));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.NONNEGATIVE_DECIMAL, 9,
                 VesselPooledTubesProcessor.Headers.VOLUME.getText()));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 9, "DEV-6796"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 9,
                 VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
 

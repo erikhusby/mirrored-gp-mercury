@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
@@ -176,6 +177,9 @@ public class MercurySample extends AbstractSample {
 
     private Boolean isRoot;
 
+    @OneToMany(mappedBy = "mercurySample", cascade = CascadeType.PERSIST)
+    private Set<Fingerprint> fingerprints = new HashSet<>();
+
     /**
      * For JPA
      */
@@ -330,6 +334,15 @@ public class MercurySample extends AbstractSample {
 
     public Boolean isRoot() {
         return isRoot;
+    }
+
+    public Set<Fingerprint> getFingerprints() {
+        return fingerprints;
+    }
+
+    // For fixup tests only.
+    void setRoot(Boolean root) {
+        isRoot = root;
     }
 
     /**
