@@ -253,6 +253,7 @@ public class ProductDao extends GenericDao implements Serializable {
         });
     }
 
+    // todo emp this should be replaced with a call to PipelineDataTypeDao when GPLIM-5521 is deployed.
     public List<String> findAggregationDataTypes() {
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
         CriteriaQuery<String> criteriaQuery = criteriaBuilder.createQuery(String.class);

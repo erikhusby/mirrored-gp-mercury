@@ -320,7 +320,7 @@ public class ZimsIlluminaRunFactory {
         Set<String> analysisTypes = new HashSet<>();
         Set<String> referenceSequenceKeys = new HashSet<>();
         Set<String> aggregationDataTypes = new HashSet<>();
-        Set<Integer> insertSizes = new HashSet<>();
+        Set<String> insertSizes = new HashSet<>();
         Set<ResearchProject> positiveControlResearchProjects = new HashSet<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
             String analysisType = sampleInstanceDto.getSampleInstance().getAnalysisType() != null ?
@@ -328,7 +328,7 @@ public class ZimsIlluminaRunFactory {
             String referenceSequence = sampleInstanceDto.getSampleInstance().getReferenceSequence() != null ?
                     sampleInstanceDto.getSampleInstance().getReferenceSequence().getName() : null;
             String aggregationDataType = sampleInstanceDto.getSampleInstance().getAggregationDataType();
-            Integer insertSize = sampleInstanceDto.getSampleInstance().getExpectedInsertSizeInteger();
+            String insertSize = sampleInstanceDto.getSampleInstance().getExpectedInsertSize();
 
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
@@ -348,8 +348,8 @@ public class ZimsIlluminaRunFactory {
                 if (aggregationDataType == null) {
                     aggregationDataType = product.getAggregationDataType();
                 }
-                if (insertSize == null) {
-                    insertSize = product.getInsertSize();
+                if (insertSize == null && product.getInsertSize() != null) {
+                    insertSize = String.valueOf(product.getInsertSize());
                 }
             }
             if (analysisType != null) {
@@ -483,15 +483,15 @@ public class ZimsIlluminaRunFactory {
         return StringUtils.join(components, "__delimiter__");
     }
 
-    private LibraryBean createLibraryBean(
-            SampleInstanceDto sampleInstanceDto, ProductOrder productOrder, SampleData sampleData, String lcSet, String baitName,
-            MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
+    private LibraryBean createLibraryBean(SampleInstanceDto sampleInstanceDto, ProductOrder productOrder,
+            SampleData sampleData, String lcSet, String baitName, MolecularIndexingScheme indexingSchemeEntity,
+            List<String> catNames, String labWorkflow,
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
-            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes, TZDevExperimentData devExperimentData,
-            boolean isPooledTube, WorkflowMetadata workflowMetadata) {
+            Set<ResearchProject> positiveControlProjects, Set<String> insertSizes,
+            TZDevExperimentData devExperimentData, boolean isPooledTube, WorkflowMetadata workflowMetadata) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -512,7 +512,7 @@ public class ZimsIlluminaRunFactory {
         String initiative = null;
         Long workRequest = null;
         Boolean hasIndexingRead = null;
-        Integer expectedInsertSize = null;
+        String expectedInsertSize = null;
         String organism = null;
         String strain = null;
         String rrbsSizeRange = null;
@@ -554,7 +554,7 @@ public class ZimsIlluminaRunFactory {
                             positiveControlProject = positiveControlProjects.iterator().next();
                         }
                         if (insertSizes.size() == 1) {
-                            expectedInsertSize = insertSizes.iterator().next();
+                            expectedInsertSize = String.valueOf(insertSizes.iterator().next());
                         }
                     }
                     break;
@@ -575,8 +575,9 @@ public class ZimsIlluminaRunFactory {
             analysisType = sampleInstanceDto.sampleInstance.getAnalysisType().getBusinessKey();
         }
 
+        // insert size is either a single integer or two integers with a hyphen in between, e.g. "225-350".
         if (expectedInsertSize == null) {
-            expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSizeInteger();
+            expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
         }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
         if (aggregationDataType == null) {
@@ -589,8 +590,8 @@ public class ZimsIlluminaRunFactory {
 
         if (productOrder != null) {
             Product product = productOrder.getProduct();
-            if (expectedInsertSize == null && product.getInsertSize() != null) {
-                expectedInsertSize = product.getInsertSize();
+            if (StringUtils.isBlank(expectedInsertSize) && product.getInsertSize() != null) {
+                expectedInsertSize = String.valueOf(product.getInsertSize());
             }
             if (analyzeUmi == null) {
                 analyzeUmi = productOrder.getAnalyzeUmiOverride();
@@ -632,8 +633,7 @@ public class ZimsIlluminaRunFactory {
         }
 
         LibraryBean libraryBean = new LibraryBean(
-                library, initiative, workRequest, indexingSchemeDto, hasIndexingRead,
-                expectedInsertSize != null ? expectedInsertSize.toString() : null,
+                library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
