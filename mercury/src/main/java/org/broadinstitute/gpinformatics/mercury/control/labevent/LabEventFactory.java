@@ -1558,7 +1558,7 @@ public class LabEventFactory implements Serializable {
         }
 
         Long operator;
-        if (stationEventType instanceof StationSetupEvent) {
+        if (stationEventType instanceof StationSetupEvent && stationEventType.getOperator() == null) {
             operator = labEventRefDataFetcher.getOperator(ACTIVITY_USER_ID).getUserId();
         } else {
             BspUser bspUser = labEventRefDataFetcher.getOperator(stationEventType.getOperator());
