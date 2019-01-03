@@ -66,6 +66,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -418,11 +419,36 @@ public class LabEventFactory implements Serializable {
             LabEventType.ForwardMessage forwardMessage = labEvent.getLabEventType().getForwardMessage();
             switch (forwardMessage) {
                 case BSP:
+                case BSP_APPLY_SM_IDS:
                     BettaLIMSMessage bspBettaLIMSMessage = bspRestSender.bspBettaLIMSMessage(bettaLIMSMessage, labEvents);
                     if (bspBettaLIMSMessage != null) {
-                        bspRestSender.postToBsp(bspBettaLIMSMessage,
+                        TransferReturn transferReturn = bspRestSender.postToBsp(bspBettaLIMSMessage,
                                 BSPRestSender.BSP_TRANSFER_REST_URL);
+
+                        if (forwardMessage == LabEventType.ForwardMessage.BSP_APPLY_SM_IDS) {
+                            // Assign SM-IDs to destinations
+                            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(
+                                    transferReturn.getMapBarcodeToSmId().values());
+                            for (LabEvent event : labEvents) {
+                                for (LabVessel labVessel : event.getTargetLabVessels()) {
+                                    VesselContainer<?> containerRole = labVessel.getContainerRole();
+                                    if (containerRole != null) {
+                                        for (LabVessel vessel : containerRole.getContainedVessels()) {
+                                            String smId = transferReturn.getMapBarcodeToSmId().get(vessel.getLabel());
+                                            if (smId != null) {
+                                                MercurySample mercurySample = mapIdToMercurySample.get(smId);
+                                                if (mercurySample == null) {
+                                                    mercurySample = new MercurySample(smId,MercurySample.MetadataSource.BSP);
+                                                }
+                                                vessel.getMercurySamples().add(mercurySample);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
+
                     break;
                 case GAP:
                     String forwardToGap = null;
@@ -1532,7 +1558,7 @@ public class LabEventFactory implements Serializable {
         }
 
         Long operator;
-        if (stationEventType instanceof StationSetupEvent) {
+        if (stationEventType instanceof StationSetupEvent && stationEventType.getOperator() == null) {
             operator = labEventRefDataFetcher.getOperator(ACTIVITY_USER_ID).getUserId();
         } else {
             BspUser bspUser = labEventRefDataFetcher.getOperator(stationEventType.getOperator());

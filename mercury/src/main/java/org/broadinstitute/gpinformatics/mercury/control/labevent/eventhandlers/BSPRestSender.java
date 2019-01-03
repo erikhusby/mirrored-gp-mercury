@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.TransferReturn;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -79,7 +80,7 @@ public class BSPRestSender implements Serializable {
     @Inject
     private BSPRestClient bspRestClient;
 
-    public void postToBsp(BettaLIMSMessage message, String bspRestUrl) {
+    public TransferReturn postToBsp(BettaLIMSMessage message, String bspRestUrl) {
 
         String urlString = bspRestClient.getUrl(bspRestUrl);
         WebResource webResource = bspRestClient.getWebResource(urlString);
@@ -91,7 +92,7 @@ public class BSPRestSender implements Serializable {
         if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
             throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
         }
-
+        return response.getEntity(TransferReturn.class);
     }
 
     private PlateCherryPickEvent plateTransferToCherryPick(PlateTransferEventType plateTransferEventType,
