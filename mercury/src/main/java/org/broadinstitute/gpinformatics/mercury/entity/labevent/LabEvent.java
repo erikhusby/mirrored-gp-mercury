@@ -214,7 +214,7 @@ public class LabEvent {
     @JoinTable(schema = "mercury", name = "le_computed_lcsets"
             , joinColumns = {@JoinColumn(name = "LAB_EVENT")}
             , inverseJoinColumns = {@JoinColumn(name = "COMPUTED_LCSETS")})
-    private Set<LabBatch> computedLcSets;
+    private Set<LabBatch> computedLcSets = new HashSet<>();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     @BatchSize(size = 20)
@@ -556,7 +556,7 @@ todo jmt adder methods
         if (manualOverrideLcSet != null) {
             return Collections.singleton(manualOverrideLcSet);
         }
-        return Collections.emptySet(); //computeLabBatches();
+        return computedLcSets;
     }
 
 /*
