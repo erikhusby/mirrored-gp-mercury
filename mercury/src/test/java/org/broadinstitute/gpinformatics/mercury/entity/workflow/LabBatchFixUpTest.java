@@ -1960,13 +1960,13 @@ public class LabBatchFixUpTest extends Arquillian {
     public void backfillInference() throws SystemException, NotSupportedException, HeuristicRollbackException,
             HeuristicMixedException, RollbackException, IOException {
         userBean.loginOSUser();
-        userTransaction.begin();
 
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("BackfillLabBatchInference.txt"));
         for (String line : lines) {
             if (line.startsWith("#")) {
                 continue;
             }
+            userTransaction.begin();
             LabBatch labBatch = labBatchDao.findByName(line);
             System.out.println(labBatch.getBatchName());
             for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
@@ -1978,18 +1978,18 @@ public class LabBatchFixUpTest extends Arquillian {
                         LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
 
                         if(contextVesselEvent != null ) {
-                            contextVesselEvent.getLabEvent().computeLabBatches();
+                            compute(contextVesselEvent.getLabEvent());
                         }
 
                         if( contextVessel != null ) {
                             for (LabEvent labEvent : contextVessel.getInPlaceLabEvents()) {
-                                labEvent.computeLabBatches();
+                                compute(labEvent);
                             }
 
                             for (VesselContainer<?> containerVessel : contextVessel.getVesselContainers()) {
                                 // In place events may apply to containers
                                 for (LabEvent labEvent : containerVessel.getEmbedder().getInPlaceLabEvents()) {
-                                    labEvent.computeLabBatches();
+                                    compute(labEvent);
                                 }
                             }
                         }
@@ -1999,16 +1999,16 @@ public class LabBatchFixUpTest extends Arquillian {
                             LabVessel containerVessel = contextVesselContainer.getEmbedder();
                             if (containerVessel != null) {
                                 for (LabEvent labEvent : containerVessel.getInPlaceLabEvents()) {
-                                    labEvent.computeLabBatches();
+                                    compute(labEvent);
                                 }
 
                                 // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
                                 for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
-                                    containerEvent.computeLabBatches();
+                                    compute(containerEvent);
                                     for (LabVessel ancestorLabVessel : containerEvent.getSourceLabVessels()) {
                                         if( ancestorLabVessel.getContainerRole() != null ){
                                             for (LabEvent labEvent : ancestorLabVessel.getContainerRole().getEmbedder().getTransfersTo()) {
-                                                labEvent.computeLabBatches();
+                                                compute(labEvent);
                                             }
                                         }
                                     }
@@ -2027,12 +2027,14 @@ public class LabBatchFixUpTest extends Arquillian {
                 bucketEntry.getLabVessel().evaluateCriteria(transferTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
             }
 
-            labBatchDao.flush();
+            userTransaction.commit();
             labBatchDao.clear();
         }
+    }
 
-        labBatchDao.persist(new FixupCommentary("GPLIM-5849 backfill LabBatch inference"));
-        labBatchDao.flush();
-        userTransaction.commit();
+    private void compute(LabEvent labEvent) {
+        if (!labEvent.isLabBatchComputed()) {
+            labEvent.computeLabBatches();
+        }
     }
 }

@@ -216,6 +216,8 @@ public class LabEvent {
             , inverseJoinColumns = {@JoinColumn(name = "COMPUTED_LCSETS")})
     private Set<LabBatch> computedLcSets = new HashSet<>();
 
+    private Boolean isLabBatchComputed;
+
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     @BatchSize(size = 20)
     @MapKeyEnumerated(EnumType.STRING)
@@ -556,23 +558,26 @@ todo jmt adder methods
         if (manualOverrideLcSet != null) {
             return Collections.singleton(manualOverrideLcSet);
         }
+        if (!isLabBatchComputed()) {
+            computeLabBatches();
+        }
         return computedLcSets;
     }
 
-/*
-    public void addComputedLcSets(Set<LabBatch> lcSets) {
-        if (computedLcSets == null) {
-            computedLcSets = new HashSet<>();
-        }
-        computedLcSets.addAll(lcSets);
+    public boolean isLabBatchComputed() {
+        return isLabBatchComputed == null ? false : isLabBatchComputed;
     }
-*/
 
     public Map<VesselPosition, PositionLabBatches> getMapPositionToLcSets() {
         return mapPositionToLcSets;
     }
 
     public Set<LabBatch> computeLabBatches() {
+        if (LabVessel.DIAGNOSTICS) {
+            System.out.println("Starting computeLabBatches for " + labEventId);
+        }
+        computedLcSets.clear();
+//        isLabBatchComputed = true;  // avoid stack overflow LabEvent.computeLcSetsForCherryPickTransfers / VesselContainer.getSampleInstancesAtPositionV2 / VesselContainer.getAncestorSampleInstances / SampleInstanceV2.applyEvent / LabEvent.getComputedLcSets / LabEvent.computeLabBatches
         if (inPlaceLabVessel != null) {
             // Event in-place vessel is mutually exclusive to any event transfers
             if (inPlaceLabVessel.getContainerRole() != null) {
@@ -586,6 +591,9 @@ todo jmt adder methods
             // Revert to transfers if no LCSET for vessel or container
             if (computedLcSets.isEmpty()) {
                 for (LabEvent xferEvent : inPlaceLabVessel.getTransfersTo()) {
+                    if (!xferEvent.isLabBatchComputed()) {
+                        xferEvent.computeLabBatches();
+                    }
                     computedLcSets.addAll( xferEvent.getComputedLcSets() );
                 }
             }
@@ -644,6 +652,7 @@ todo jmt adder methods
         if (LabVessel.DIAGNOSTICS) {
             System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets);
         }
+        isLabBatchComputed = true;
         return computedLcSets;
     }
 

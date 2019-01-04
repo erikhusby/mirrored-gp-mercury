@@ -2052,5 +2052,15 @@
             <column name="LAB_BATCH"/>
         </createIndex>
     </changeSet>
+    <changeSet id="GPLIM-5849-12" author="thompson">
+        <addColumn tableName="LAB_EVENT" schemaName="MERCURY">
+            <column name="IS_LAB_BATCH_COMPUTED" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5849-13" author="thompson">
+        <addColumn tableName="LAB_EVENT_AUD" schemaName="MERCURY">
+            <column name="IS_LAB_BATCH_COMPUTED" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>
