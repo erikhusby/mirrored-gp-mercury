@@ -959,7 +959,6 @@ public class ProductOrderEjbTest {
 
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
         conversionPdo.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
-        conversionPdo.setPriorToSAP1_5(true);
         conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
@@ -971,8 +970,7 @@ public class ProductOrderEjbTest {
                 new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "5", Collections.<Condition, BigDecimal>emptyMap(),
                         Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                primaryMaterial);
+//        returnMaterials.add(primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
