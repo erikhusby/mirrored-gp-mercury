@@ -308,7 +308,8 @@ public class BSPRestSender implements Serializable {
 
         for (PlateCherryPickEvent plateCherryPickEvent : message.getPlateCherryPickEvent()) {
             LabEventType labEventType = LabEventType.getByName(plateCherryPickEvent.getEventType());
-            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP) {
+            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP  ||
+                    labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP_APPLY_SM_IDS) {
 
                 addSourceHandlingException(labEventType, plateCherryPickEvent.getSourcePlate(), plateCherryPickEvent.getSourcePositionMap());
                 // todo jmt method to filter out clinical samples
@@ -318,7 +319,8 @@ public class BSPRestSender implements Serializable {
         }
         for (PlateTransferEventType plateTransferEventType : message.getPlateTransferEvent()) {
             LabEventType labEventType = LabEventType.getByName(plateTransferEventType.getEventType());
-            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP) {
+            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP ||
+                    labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP_APPLY_SM_IDS) {
                 // If there is a sourcePositionMap create a list to handle.
                 List<PositionMapType> sourcePositionMapList = plateTransferEventType.getSourcePositionMap() != null ?
                         Collections.singletonList(plateTransferEventType.getSourcePositionMap()) : null;
@@ -361,10 +363,11 @@ public class BSPRestSender implements Serializable {
             }
         }
         for (ReceptacleTransferEventType receptacleTransferEventType : message.getReceptacleTransferEvent()) {
-            if(LabEventType.getByName(receptacleTransferEventType.getEventType()).getForwardMessage() ==
-                    LabEventType.ForwardMessage.BSP) {
+            LabEventType labEventType = LabEventType.getByName(receptacleTransferEventType.getEventType());
+            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP ||
+                    labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP_APPLY_SM_IDS) {
                 // todo jmt method to filter out clinical samples
-                addSourceHandlingException(LabEventType.getByName(receptacleTransferEventType.getEventType()), receptacleTransferEventType.getSourceReceptacle());
+                addSourceHandlingException(labEventType, receptacleTransferEventType.getSourceReceptacle());
                 copy.getReceptacleTransferEvent().add(receptacleTransferEventType);
                 atLeastOneEvent = true;
             }
