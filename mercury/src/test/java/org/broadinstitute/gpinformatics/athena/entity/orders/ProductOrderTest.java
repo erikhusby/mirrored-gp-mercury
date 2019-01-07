@@ -572,7 +572,8 @@ public class ProductOrderTest {
             Assert.fail();
         }
     }
-   public void testQuoteGrantValidityWithGrantExpired() throws Exception{
+
+    public void testQuoteGrantValidityWithGrantExpired() throws Exception {
         QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
 
         Quote expiringNowQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
@@ -592,7 +593,7 @@ public class ProductOrderTest {
                 ""));
 
         assertThat(testProductOrder.getSapCompanyConfigurationForProductOrder(), is(equalTo(
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD)) );
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD)));
 
         assertThat(testProductOrder.isSavedInSAP(), is(true));
 
@@ -603,7 +604,7 @@ public class ProductOrderTest {
             testProductOrder.setProduct(externalProduct);
             Assert.fail("Setting an external product on a research order should be an exception");
         } catch (InvalidProductException e) {
-            
+
         }
 
         Product clinicalProduct = ProductTestFactory.createTestProduct();
@@ -614,6 +615,60 @@ public class ProductOrderTest {
         } catch (InvalidProductException e) {
 
         }
+
+    }
+
+    public void testSapOrderStatus() throws Exception {
+        ProductOrder stateCheckOrder = ProductOrderTestFactory.createDummyProductOrder();
+        assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
+
+        stateCheckOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+        assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(true)));
+        assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
+
+        stateCheckOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+        assertThat(stateCheckOrder.hasSapQuote(), is(equalTo(true)));
+        assertThat(stateCheckOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(stateCheckOrder.isQuoteIdSet(), is(equalTo(true)));
+
+    }
+
+    public void testQuoteSet() throws Exception {
+        ProductOrder quoteTestOrder = ProductOrderTestFactory
+                .createDummyProductOrder();
+
+        // Calling create dummy product order with setting the quote specifically to null does no good because the quote
+        // is ALWAYS set to a default value in the create Dummy order method.  Not sure what other test cases may rely
+        // on that so I will null out the value here.
+        quoteTestOrder.setQuoteId(null);
+
+        assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(false)));
+
+        quoteTestOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+        assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(false)));
+
+        quoteTestOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+        assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(false)));
+
+        quoteTestOrder.setQuoteId(QUOTE);
+        assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(true)));
+        assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(true)));
+
+        quoteTestOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+        assertThat(quoteTestOrder.hasSapQuote(), is(equalTo(false)));
+        assertThat(quoteTestOrder.hasQuoteServerQuote(), is(equalTo(true)));
+        assertThat(quoteTestOrder.isQuoteIdSet(), is(equalTo(true)));
+
 
     }
 }
