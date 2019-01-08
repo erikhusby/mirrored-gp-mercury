@@ -87,5 +87,12 @@ public interface SapIntegrationService {
 
     OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId, ProductOrder productOrder) throws SAPIntegrationException;
 
+    /**
+     * Placeholder method for now.  Future inplementation will return a quote object geared toward the information
+     * returned from SAP.
+     * @param sapQuoteId  Singular quote identifier for the desired SAP quote information
+     * @return
+     * @throws SAPIntegrationException
+     */
     Quote findSapQuote(String sapQuoteId) throws SAPIntegrationException;
 }
