@@ -880,7 +880,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     /**
      * Remove all samples from this PDO and detach them from all other objects so they will be deleted.
      */
-    private void removeAllSamples() {
+    public void removeAllSamples() {
         for (ProductOrderSample sample : samples) {
             sample.remove();
         }

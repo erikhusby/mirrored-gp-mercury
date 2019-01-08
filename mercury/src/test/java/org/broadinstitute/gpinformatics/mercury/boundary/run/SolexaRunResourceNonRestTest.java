@@ -48,6 +48,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
@@ -546,7 +547,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
                                 Map<String, BarcodedTube> mapBarcodeToTube) throws ValidationException {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
-        bucketEjb.addSamplesToBucket(productOrder);
+        bucketEjb.addSamplesToBucket(productOrder, productOrder.getSamples(), "Mercury",
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
         List<Long> bucketIds = new ArrayList<>();

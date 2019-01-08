@@ -63,6 +63,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
@@ -314,7 +315,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworks.add(barcodeTubeEntry.getValue());
 
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube2.values());
-        bucketEjb.addSamplesToBucket(productOrder2);
+        bucketEjb.addSamplesToBucket(productOrder2, productOrder2.getSamples(), "Mercury",
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
 
         // Create batch
         String batchName = "LCSET-MsgTest-" + testPrefix;
@@ -805,7 +807,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
                                 Map<String, BarcodedTube> mapBarcodeToTube) throws ValidationException {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
-        bucketEjb.addSamplesToBucket(productOrder);
+        bucketEjb.addSamplesToBucket(productOrder, productOrder.getSamples(), "Mercury",
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
         List<Long> bucketIds = new ArrayList<>();

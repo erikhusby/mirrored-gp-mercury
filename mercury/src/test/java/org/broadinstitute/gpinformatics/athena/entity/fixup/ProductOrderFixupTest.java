@@ -1547,18 +1547,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
         samplesToAdd.asMap().forEach((String pdoKey, Collection<ProductOrderSample> samples) -> {
             ProductOrder pdo = productOrderDao.findByBusinessKey(pdoKey);
-            pdo.addSamples(samples);
-
             pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-
-            productOrderEjb.attachMercurySamples(new ArrayList<>(samples));
-
-            pdo.prepareToSave(userBean.getBspUser());
-            productOrderDao.persist(pdo);
-            productOrderEjb.handleSamplesAdded(pdoKey, samples, MessageReporter.UNUSED);
-
             try {
-                productOrderEjb.updateSamples(pdo, samples, MessageReporter.UNUSED, "added");
+                productOrderEjb.addSamples(pdo, new ArrayList<>(samples), MessageReporter.UNUSED);
             } catch (IOException | ProductOrderEjb.NoSuchPDOException | SAPInterfaceException e) {
                 Assert.fail();
             }

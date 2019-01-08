@@ -1,8 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -27,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -37,15 +37,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,64 +50,47 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow.AGILENT_EXOME_EXPRESS;
 import static org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow.ICE;
-import static org.easymock.EasyMock.anyObject;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.createNiceMock;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
-import static org.easymock.EasyMock.verify;
 
 /**
- * DbFree test of MercuryClientEjb.
+ * DbFree test of BucketEjb.
  */
 // singleThreaded because EasyMock mocks are not thread-safe during recording.
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE, singleThreaded = true)
 public class BucketEjbDbFreeTest {
-    private final LabEventType EVENT_TYPE = LabEventType.PICO_PLATING_BUCKET;
-    private final String EVENT_LOCATION = LabEvent.UI_EVENT_LOCATION;
-
     private final int SAMPLE_SIZE = 5;
 
     private ProductOrder pdo;
-    private List<LabVessel> mockVessels;
     private LabBatch labBatch;
     private WorkflowLoader workflowLoader = new WorkflowLoader();
     private BSPUserList bspUserList;
-    private Bucket bucket;
-    private String pdoCreator;
+    private String username;
     private final Map<String, BspSampleData> bspSampleDataMap = new HashMap<>();
-    private final Collection<ProductOrderSample> expectedSamples = new HashSet<>();
     private final List<LabVessel> labVessels = new ArrayList<>();
+    private List<MercurySample> mercurySamples = new ArrayList<>();
 
     private BucketEjb bucketEjb;
 
-    private LabEventFactory labEventFactory = EasyMock.createNiceMock(LabEventFactory.class);
-    private BucketDao bucketDao = createNiceMock(BucketDao.class);
-    private BucketEntryDao bucketEntryDao = createMock(BucketEntryDao.class);
-    private LabVesselDao labVesselDao = createNiceMock(LabVesselDao.class);
-    private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcherImpl.class);
-    private LabVesselFactory labVesselFactory = createMock(LabVesselFactory.class);
-
-    private Object[] mocks =
-            new Object[]{bucketDao, bucketEntryDao, labVesselDao, bspSampleDataFetcher,
-                    labVesselFactory, labEventFactory};
-    public MercurySampleDao mercurysampleDao;
+    private LabEventFactory labEventFactory = Mockito.mock(LabEventFactory.class);
+    private BucketDao bucketDao = Mockito.mock(BucketDao.class);
+    private BucketEntryDao bucketEntryDao = Mockito.mock(BucketEntryDao.class);
+    private LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
+    private BSPSampleDataFetcher bspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcherImpl.class);
+    private LabVesselFactory labVesselFactory = Mockito.mock(LabVesselFactory.class);
+    public MercurySampleDao mercurysampleDao = Mockito.mock(MercurySampleDao.class);
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     private void beforeClass() {
         bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-        pdoCreator = bspUserList.getById(BSPManagerFactoryStub.QA_DUDE_USER_ID).getUsername();
+        username = bspUserList.getById(BSPManagerFactoryStub.QA_DUDE_USER_ID).getUsername();
         workflowLoader.load();
     }
 
-    private void setUp(String workflow) {
-        reset(mocks);
-
+    // Initializes the samples and sets up mocks.
+    private void setup(String workflow, boolean makeTubes) {
         switch (workflow) {
         case AGILENT_EXOME_EXPRESS:
             labBatch = new LabBatch("ExEx Batch", new HashSet<LabVessel>(), LabBatch.LabBatchType.SAMPLES_RECEIPT);
@@ -122,182 +101,187 @@ public class BucketEjbDbFreeTest {
             pdo = ProductOrderTestFactory.buildIceProductOrder(SAMPLE_SIZE);
             break;
         default:
-            throw new RuntimeException("Unsupported workflow type: " + workflow);
+            Assert.fail("No constructor for " + workflow);
         }
 
-        // Changes the name of the 4th pdo sample to be the vessel barcode.
-        Collection<ProductOrderSample> productOrderSamples = pdo.getSamples();
-        Collection<ProductOrderSample> revisedProductOrderSamples = new ArrayList();
-        for (ProductOrderSample productOrderSample : productOrderSamples) {
-            revisedProductOrderSamples.add(productOrderSample.getName().startsWith("SM-3") ?
-                    new ProductOrderSample("R3", productOrderSample.getSampleData()) : productOrderSample);
-        }
-        pdo.setSamples(revisedProductOrderSamples);
-
-        expectedSamples.clear();
         labVessels.clear();
+        mercurySamples.clear();
         bspSampleDataMap.clear();
         pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
-        setupMercurySamples(pdo, expectedSamples, labVessels);
 
-        bucketEjb = new BucketEjb(labEventFactory, JiraServiceTestProducer.stubInstance(), bucketDao, bucketEntryDao,
-                                  labVesselDao, labVesselFactory, bspSampleDataFetcher,
-                                  bspUserList, workflowLoader, createNiceMock(ProductOrderDao.class), mercurysampleDao);
-    }
+        Map<String, MercurySample> mercurySampleMap = new HashMap<>();
 
-    // Creates test samples and updates expectedSamples and labVessels.
-    private void setupMercurySamples(ProductOrder pdo, Collection<ProductOrderSample> expectedSamples,
-                                     List<LabVessel> labVessels) {
-
-        mercurysampleDao = Mockito.mock(MercurySampleDao.class);
-
-        Map<String, MercurySample> sampleMap = new HashMap<>();
-
-        for (int rackPosition = 1; rackPosition <= pdo.getSamples().size(); ++rackPosition) {
-            ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
-
+        int rackPosition = 1;
+        for (ProductOrderSample pdoSample : pdo.getSamples()) {
             Map<BSPSampleSearchColumn, String> bspData = new HashMap<>();
-            switch (rackPosition) {
-            case 1:
-                // Unreceived root should be rejected.
-                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.DNA_DNA_GENOMIC.getDisplayName());
-                bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
-                bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
-                bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, null);
-                break;
-
-            case 2:
-                // Received root but non-genomic material, should NOT be accepted.
-                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.FRESH_BLOOD.getDisplayName());
-                bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
-                bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
-                bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
-                break;
-
-            case 3:
-                // Received root should be accepted.
-                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.DNA_DNA_GENOMIC.getDisplayName());
-                bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
-                bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
-                bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
-                expectedSamples.add(pdoSample);
-                break;
-
-            default:
-                // FYI case 4 will be a derived sample that Mercury doesn't know about yet.
-                // Non-root samples should all be accepted.
-                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.DNA_DNA_GENOMIC.getDisplayName());
-                bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, "ROOT");
-                bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
-                expectedSamples.add(pdoSample);
-                break;
-            }
+            bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.DNA_DNA_GENOMIC.getDisplayName());
+            bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
+            bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
+            bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
+            // Puts the BSP tube barcode in the SampleData.
+            String tubeBarcode = makeTubeBarcode(rackPosition++);
             BspSampleData bspSampleData = new BspSampleData(bspData);
-            bspSampleData.addPlastic(makeTubeBarcode(rackPosition));
+            bspSampleData.addPlastic(tubeBarcode);
             bspSampleDataMap.put(pdoSample.getName(), bspSampleData);
 
-            LabVessel labVessel = new BarcodedTube(makeTubeBarcode(rackPosition));
-            MercurySample mercurySample = new MercurySample(pdoSample.getName(), bspSampleData);
-            sampleMap.put(pdoSample.getName(), mercurySample);
-            labVessel.addSample(mercurySample);
-            labVessels.add(labVessel);
+            if (makeTubes) {
+                LabVessel labVessel = new BarcodedTube(tubeBarcode);
+                labVessels.add(labVessel);
+                labBatch.addLabVessel(labVessel);
 
-            labBatch.addLabVessel(labVessel);
+                MercurySample mercurySample = new MercurySample(pdoSample.getName(), bspSampleData);
+                mercurySamples.add(mercurySample);
+                mercurySample.addLabVessel(labVessel);
+                mercurySample.addProductOrderSample(pdoSample);
+
+                mercurySampleMap.put(pdoSample.getName(), mercurySample);
+            }
         }
 
-        Mockito.when(mercurysampleDao.findMapIdToMercurySample(Mockito.anyCollection())).thenReturn(sampleMap);
+        bucketEjb = new BucketEjb(labEventFactory, JiraServiceTestProducer.stubInstance(), bucketDao,
+                bucketEntryDao, labVesselDao, labVesselFactory, bspSampleDataFetcher, bspUserList,
+                workflowLoader, Mockito.mock(ProductOrderDao.class), mercurysampleDao);
+
+        Mockito.when(labEventFactory.buildFromBatchRequests(Mockito.anyList(), Mockito.anyObject(),
+                Mockito.anyObject(), Mockito.anyObject(), Mockito.anyObject(), Mockito.anyObject(),
+                Mockito.anyObject(), Mockito.eq(0))).thenReturn(Collections.emptyList());
+
+        Mockito.when(bspSampleDataFetcher.fetchSampleData(Mockito.anyCollection())).thenReturn(bspSampleDataMap);
+
+        Mockito.when(labVesselFactory.buildInitialLabVessels(Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString(), Mockito.any(), Mockito.any())).thenAnswer(invocationOnMock -> {
+            final Object[] arguments = invocationOnMock.getArguments();
+            String barcode = (String)arguments[1];
+            List<LabVessel> tubes = new ArrayList<>();
+            if (StringUtils.isNotBlank(barcode)) {
+                tubes.add(new BarcodedTube(barcode));
+            }
+            return Pair.of(tubes, Collections.emptyList());
+        });
     }
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
-    public void testSamplesToPicoBucket() throws Exception {
-        for (String workflow : (new String[]{AGILENT_EXOME_EXPRESS, ICE})) {
-            setupCoreMocks(workflow, true);
+    public void testCreateInitialVessel() throws Exception {
+        // Doesn't create tubes or mercury samples and leaves the pdo samples unlinked.
+        setup(ICE, false);
 
-            expect(labEventFactory
-                    .buildFromBatchRequests(EasyMock.<List<BucketEntry>>anyObject(), EasyMock.<String>anyObject(),
-                            EasyMock.<LabBatch>anyObject(), EasyMock.<String>anyObject(), EasyMock.<String>anyObject(),
-                            EasyMock.<LabEventType>anyObject(), EasyMock.<Date>anyObject(), eq(0)))
-                    .andReturn(Collections.<LabEvent>emptyList()).anyTimes();
+        // Updates the bspSampleData to indicate a sample is not received.
+        int indexOfBadSample = 4;
+        bspSampleDataMap.get(pdo.getSamples().get(indexOfBadSample).getName()).getColumnToValue().
+                remove(BSPSampleSearchColumn.RECEIPT_DATE);
 
-            expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
-                    .andReturn(bspSampleDataMap);
+        // Non-genomic material should get a new tube.
+        bspSampleDataMap.get(pdo.getSamples().get(1).getName()).getColumnToValue().
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.FRESH_BLOOD.getDisplayName());
 
-            replay(mocks);
+        Collection<LabVessel> vessels;
+        try {
+            vessels = bucketEjb.createInitialVessels(pdo.getSamples().stream().
+                    map(ProductOrderSample::getName).collect(Collectors.toList()), username);
+            Assert.fail("Should have thrown.");
+        } catch (BucketException e) {
+            Assert.assertTrue(e.getMessage().contains(pdo.getSamples().get(indexOfBadSample).getName()));
+        }
+        // Removes the problem sample and tries again.
+        pdo.getSamples().remove(indexOfBadSample);
+        vessels = bucketEjb.createInitialVessels(pdo.getSamples().stream().
+                map(ProductOrderSample::getName).collect(Collectors.toList()), username);
 
-            Map<String, Collection<ProductOrderSample>> samplesByBucket = bucketEjb.addSamplesToBucket(pdo);
-            Collection<ProductOrderSample> addedSamples = samplesByBucket.get("Pico/Plating Bucket");
-            if(addedSamples == null) {
-                System.out.println("added samples are null");
-            }
-            if(expectedSamples == null) {
-                System.out.println("expected samples are null");
-            }
-            Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
+        Assert.assertEquals(vessels.size(), 4);
+        Assert.assertTrue(vessels.stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(1))));
+        Assert.assertTrue(vessels.stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(2))));
+        Assert.assertTrue(vessels.stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(3))));
+        Assert.assertTrue(vessels.stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(4))));
+    }
 
-            verify(mocks);
+    @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
+    public void testBadLabelSamplesToPicoBucket() {
+        // Doesn't create tubes or mercury samples and leaves the pdo samples unlinked.
+        setup(ICE, false);
+
+        // Updates the bspSampleData to indicate a sample has no BSP data.
+        bspSampleDataMap.get(pdo.getSamples().get(2).getName()).getPlasticBarcodes().clear();
+        bspSampleDataMap.get(pdo.getSamples().get(2).getName()).getColumnToValue().clear();
+        try {
+            Collection<LabVessel> vessels = bucketEjb.createInitialVessels(
+                    pdo.getSamples().stream().map(ProductOrderSample::getName).collect(Collectors.toList()), username);
+            Assert.fail("Should have thrown.");
+
+        } catch (BucketException e) {
+            Assert.assertTrue(e.getMessage().contains(pdo.getSamples().get(2).getName()));
         }
     }
 
-    @Test(enabled = true, groups = TestGroups.DATABASE_FREE, dataProvider = "badLabelProvider")
-    public void testBadLabelSamplesToPicoBucket(String badLabelResult) throws Exception {
+    @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
+    public void testAddSamplesToBucket() throws Exception {
         for (String workflow : (new String[]{AGILENT_EXOME_EXPRESS, ICE})) {
-            setupCoreMocks(workflow, false);
+            setup(workflow, true);
 
-            for (BspSampleData sampleDTO : bspSampleDataMap.values()) {
-                sampleDTO.getPlasticBarcodes().clear();
-                sampleDTO.addPlastic(badLabelResult);
-            }
+            // Non-genomic material should not be bucketed.
+            bspSampleDataMap.get(pdo.getSamples().get(1).getName()).getColumnToValue().
+                    put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.FRESH_BLOOD.getDisplayName());
 
-            expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<List<String>>anyObject())).andReturn( bspSampleDataMap);
+            // Changes the name of the pdo sample to be the vessel barcode. It should still be bucketed.
+            pdo.getSamples().get(2).setName(labVessels.get(2).getLabel());
 
-            replay(mocks);
+            // A PDO sample without a LabVessel should not be bucketed.
+            mercurySamples.get(3).removeSampleFromVessels(Collections.singleton(labVessels.get(3)));
 
-            try {
-                bucketEjb.addSamplesToBucket(pdo);
-                Assert.fail("Blank barcodes for bsp samples should throw Bucket exception");
-            } catch (BucketException expected) {
+            // A PDO sample without a MercurySample should not be bucketed.
+            pdo.getSamples().get(4).setMercurySample(null);
 
-            }
+            Mockito.when(labEventFactory.buildFromBatchRequests(Mockito.anyList(), Mockito.anyObject(),
+                    Mockito.anyObject(), Mockito.anyObject(), Mockito.anyObject(), Mockito.anyObject(),
+                    Mockito.anyObject(), Mockito.eq(0))).
+                    thenReturn(Collections.emptyList());
 
-            verify(mocks);
+            // Given a PDO and new PDO samples, the PDO samples' linked MercurySample tubes will be bucketed,
+            // provided the workflow and material types match.
+            Triple<Boolean, Collection<String>, Multimap<String, ProductOrderSample>> triple =
+                    bucketEjb.addSamplesToBucket(pdo, pdo.getSamples(), "Mercury",
+                            ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+
+            // There is a valid workflow.
+            Assert.assertTrue(triple.getLeft());
+
+            // Two PDO samples are not linked to a MercurySample and LabVessel
+            Assert.assertEquals(triple.getMiddle().size(), 2);
+            Assert.assertTrue(triple.getMiddle().contains(pdo.getSamples().get(3).getName()));
+            Assert.assertTrue(triple.getMiddle().contains(pdo.getSamples().get(4).getName()));
+
+            Assert.assertEquals(triple.getRight().keySet().iterator().next(), "Pico/Plating Bucket");
+            Assert.assertEquals(triple.getRight().values().size(), 2);
+            Assert.assertTrue(triple.getRight().values().contains(pdo.getSamples().get(0)));
+            Assert.assertTrue(triple.getRight().values().contains(pdo.getSamples().get(2)));
         }
     }
 
-    @DataProvider(name = "badLabelProvider")
-    public Object[][] badLabelProvider(Method method) {
-        List<Object[]> badLabelInfo = new ArrayList<>();
 
-        badLabelInfo.add(new Object[]{""});
-        badLabelInfo.add(new Object[]{null});
-
-        return badLabelInfo.toArray(new Object[badLabelInfo.size()][]);
-    }
-
+    @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testApplyBucketCriteriaNoWorkflow(){
-        setupCoreMocks(AGILENT_EXOME_EXPRESS, true);
+        setup(AGILENT_EXOME_EXPRESS, true);
         pdo.getProduct().setWorkflowName(Workflow.NONE);
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
-                bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever",
+                bucketEjb.applyBucketCriteria(labVessels, pdo, "whatever",
                         ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION, new Date());
         Collection<BucketEntry> bucketEntries = workflowBucketEntriesPair.getRight();
         Assert.assertTrue(bucketEntries.isEmpty());
     }
 
+    @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testDuplicateSamplesToPicoBucket() throws Exception {
         String workflow = AGILENT_EXOME_EXPRESS;
-        setupCoreMocks(workflow, true);
+        setup(workflow, true);
 
-        expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
-                .andReturn(bspSampleDataMap);
+        Mockito.when(bspSampleDataFetcher.fetchSampleData(Mockito.anyCollection())).thenReturn(bspSampleDataMap);
 
-        replay(mocks);
         ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflow(AGILENT_EXOME_EXPRESS);
 
         WorkflowBucketDef picoBucket = workflowDef.getEffectiveVersion().findBucketDefByName("Pico/Plating Bucket");
 
         Map<WorkflowBucketDef, Collection<LabVessel>> newBucketEntry = new HashMap<>();
-        LabVessel labVessel = mockVessels.get(1);
+        LabVessel labVessel = labVessels.get(1);
         newBucketEntry.put(picoBucket, Collections.singleton(labVessel));
 
         Collection<BucketEntry> bucketEntries = bucketEjb
@@ -315,62 +299,4 @@ public class BucketEjbDbFreeTest {
         return "R" + rackPosition;
     }
 
-    private void setupCoreMocks(String workflow, boolean createVessels) {
-        setUp(workflow);
-        mockVessels = new ArrayList<>();
-        final Multimap<String, LabVessel> sampleKeyToVessels = HashMultimap.create();
-        final Map<String, LabVessel> barcodeToVessel = new HashMap<>();
-
-        // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th samples.
-        // The 4th sample is in house so a standalone vessel/sample should be created.
-        // The 3rd product order sample name is a vessel barcode.
-        for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
-            ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
-            LabVessel labVessel = labVessels.get(rackPosition - 1);
-            if (rackPosition != 1 && rackPosition != 4) {
-                mockVessels.add(labVessel);
-                if (rackPosition != 3) {
-                    sampleKeyToVessels.put(pdoSample.getName(), labVessel);
-                }
-                barcodeToVessel.put(labVessel.getLabel(), labVessel);
-            }
-            if (createVessels) {
-                if (rackPosition == 4) {
-                    List<LabVessel> mockCreatedVessels = new ArrayList<>();
-                    List<LabVessel> secondaryVessels = new ArrayList<>();
-                    Pair<List<LabVessel>,List<LabVessel>> factoryVesselPair = Pair.of(mockCreatedVessels, secondaryVessels);
-                    mockCreatedVessels.add(labVessels.get(rackPosition - 1));
-                    expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getName()),
-                            eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date) anyObject(),
-                            eq(MercurySample.MetadataSource.BSP))).
-                                    andReturn(factoryVesselPair);
-                }
-            }
-        }
-
-        expect(labVesselDao.findBySampleKey(EasyMock.<String>anyObject())).andAnswer(new IAnswer<List<LabVessel>>() {
-            @Override
-            public List<LabVessel> answer() throws Throwable {
-                String sampleKey = (String) EasyMock.getCurrentArguments()[0];
-                return new ArrayList<>(sampleKeyToVessels.get(sampleKey));
-            }
-        }).anyTimes();
-
-        expect(labVesselDao.findByIdentifier(EasyMock.<String>anyObject())).andAnswer(new IAnswer<LabVessel>() {
-            @Override
-            public LabVessel answer() throws Throwable {
-                String barcode = (String) EasyMock.getCurrentArguments()[0];
-                return barcodeToVessel.get(barcode);
-            }
-        }).anyTimes();
-
-        expect(bucketDao.findByName(EasyMock.<String>anyObject())).andAnswer(new IAnswer<Bucket>() {
-            @Override
-            public Bucket answer() throws Throwable {
-                String arg = (String) EasyMock.getCurrentArguments()[0];
-                bucket = new Bucket(arg);
-                return bucket;
-            }
-        }).anyTimes();
-    }
 }

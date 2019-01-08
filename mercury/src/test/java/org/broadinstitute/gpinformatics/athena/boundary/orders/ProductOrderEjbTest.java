@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -51,8 +54,11 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -70,6 +76,9 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -101,6 +110,8 @@ public class ProductOrderEjbTest {
     private PriceListCache priceListCache;
     private SAPProductPriceCache productPriceCache;
     private ProductOrderEjb productOrderEjb;
+    private LabVesselDao mockLabVesselDao;
+    private BucketEjb mockBucketEjb;
 
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
     private ProductOrder productOrder;
@@ -123,10 +134,13 @@ public class ProductOrderEjbTest {
         //  When the full implementation of the fetchMatarials interface for SAP is completed, this will be removed
         mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
         productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
+        mockLabVesselDao = Mockito.mock(LabVesselDao.class);
+        mockBucketEjb = Mockito.mock(BucketEjb.class);
+
         productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, mockQuoteService,
-                JiraServiceTestProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
+                JiraServiceTestProducer.stubInstance(), mockUserBean, null, mockBucketEjb, null, mockMercurySampleDao,
                 new ProductOrderJiraUtil(JiraServiceTestProducer.stubInstance(), mockUserBean),
-                mockSapService, priceListCache, productPriceCache);
+                mockSapService, priceListCache, productPriceCache, mockLabVesselDao);
         mockAppConfig = Mockito.mock(AppConfig.class);
         productOrderEjb.setAppConfig(mockAppConfig);
         mockSapConfig = Mockito.mock(SapConfig.class);
@@ -312,12 +326,17 @@ public class ProductOrderEjbTest {
                 mockQuote);
 
         String[] sampleNames = {"SM-smpl1", "SM-smpl2", "SM-smpl3", "SM-smpl4", "SM-smpl5"};
+        // Initially creates PDO samples that are already linked to Mercury Samples and have Lab Vessels,
+        // then unlinks each PDO sample from its Mercury Sample.
         List<ProductOrderSample> samples = ProductOrderSampleTestFactory.createDBFreeSampleList(sampleNames);
+        samples.forEach(pdoSample -> pdoSample.setMercurySample(null));
+
         Map<String, MercurySample> sampleMap = new HashMap<>();
         for (String sampleName : sampleNames) {
             sampleMap.put(sampleName, new MercurySample(sampleName, MercurySample.MetadataSource.BSP));
         }
-        Mockito.when(mockMercurySampleDao.findMapIdToMercurySample(Mockito.eq(sampleMap.keySet()))).thenReturn(sampleMap);
+        Mockito.when(mockMercurySampleDao.findMapIdToMercurySample(Mockito.eq(Arrays.asList(sampleNames)))).
+                thenReturn(sampleMap);
 
         assertThat(order.getSamples(), is(empty()));
 
@@ -328,8 +347,163 @@ public class ProductOrderEjbTest {
             assertThat(sample.getMercurySample(), is(not(nullValue())));
             assertThat(sample.getMercurySample().getSampleKey(), is(equalTo(sample.getBusinessKey())));
         }
-        Mockito.verify(mockMercurySampleDao).findMapIdToMercurySample(Mockito.eq(sampleMap.keySet()));
+        Mockito.verify(mockMercurySampleDao).findMapIdToMercurySample(Mockito.eq(Arrays.asList(sampleNames)));
         Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
+    }
+
+    public void test_Add_Samples_Using_Barcodes() throws Exception {
+        String jiraTicketKey = "PDO-testMe";
+        MessageReporter mockReporter = Mockito.mock(MessageReporter.class);
+
+        ProductOrder order = ProductOrderTestFactory.createDummyProductOrder(0, jiraTicketKey);
+        order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        Mockito.when(productOrderDaoMock.findByBusinessKey(Mockito.eq(jiraTicketKey))).thenReturn(order);
+        Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
+        Funding funding = new Funding(Funding.PURCHASE_ORDER, "238293", null);
+        funding.setPurchaseOrderContact("Test@broad.com");
+        Set<FundingLevel> fundingLevels = Collections.singleton(new FundingLevel("100", Collections.singleton(funding)));
+        QuoteFunding quoteFunding = new QuoteFunding(fundingLevels);
+        Quote mockQuote =  new Quote(order.getQuoteId(), quoteFunding, ApprovalStatus.FUNDED);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString())).thenReturn(
+                mockQuote);
+
+        String[] sampleNames = {"SM-smpl1", "SM-smpl2", "SM-smpl3", "SM-smpl4", "SM-smpl5"};
+        Map<String, MercurySample> sampleMap = new HashMap<>();
+        Map<String, LabVessel> tubeMap = new HashMap<>();
+
+        // Initially creates PDO samples that are already linked to Mercury Samples and have Lab Vessels.
+        List<ProductOrderSample> samples = ProductOrderSampleTestFactory.createDBFreeSampleList(sampleNames);
+        assertThat(ProductOrderSample.getSampleNames(samples), is(Matchers.equalTo(Arrays.asList(sampleNames))));
+
+        // Two of the PDO sample names are changed to be tube barcodes,
+        // then all PDO samples are unlinked from their Mercury Samples.
+        samples.forEach(pdoSample -> {
+            if (pdoSample.getName().equals(sampleNames[3]) || pdoSample.getName().equals(sampleNames[4])) {
+                LabVessel tube = pdoSample.getMercurySample().getLabVessel().iterator().next();
+                pdoSample.setName(tube.getLabel());
+                tubeMap.put(tube.getLabel(), tube);
+            } else {
+                sampleMap.put(pdoSample.getName(), pdoSample.getMercurySample());
+            }
+            pdoSample.setMercurySample(null);
+        });
+        assertThat(ProductOrderSample.getSampleNames(samples), is(not(Matchers.equalTo(Arrays.asList(sampleNames)))));
+        assertThat(order.getSamples(), is(empty()));
+
+        // This call should only return the three samples named in the PDO sample list, none for the barcodes.
+        Mockito.when(mockMercurySampleDao.findMapIdToMercurySample(Mockito.anyList())).thenReturn(sampleMap);
+
+        // This call should only return the two tubes named in the PDO sample list.
+        Mockito.when(mockLabVesselDao.findByBarcodes(Mockito.anyList())).thenReturn(tubeMap);
+
+        // Returns the bucketed PDO samples.
+        Multimap<String, ProductOrderSample> bucketed = ArrayListMultimap.create();
+        samples.stream().forEach(pdoSample -> bucketed.put("Pico Bucket", pdoSample));
+        Mockito.when(mockBucketEjb.addSamplesToBucket(Mockito.eq(order), Mockito.eq(samples),
+                Mockito.anyString(), Mockito.anyObject())).
+                thenReturn(Triple.of(true, Collections.emptyList(), bucketed));
+
+        productOrderEjb.addSamples(jiraTicketKey, samples, mockReporter);
+        assertThat(order.getSamples(), is(not(empty())));
+        assertThat(order.getSamples().size(), is(Matchers.equalTo(5)));
+        for (ProductOrderSample sample : order.getSamples()) {
+            assertThat(sample.getMercurySample(), is(not(nullValue())));
+            assertThat("Either sample name or tube label",
+                    sample.getBusinessKey().equals(sample.getMercurySample().getSampleKey()) ||
+                            sample.getBusinessKey().equals(sample.getMercurySample().
+                                    getLabVessel().iterator().next().getLabel()));
+        }
+        Mockito.verify(mockMercurySampleDao).findMapIdToMercurySample(Mockito.anyList());
+        Mockito.verify(mockLabVesselDao).findByBarcodes(Mockito.anyList());
+        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
+    }
+
+    public void test_Add_Samples_Only_In_BSP() throws Exception {
+        String jiraTicketKey = "PDO-testMe";
+        MessageReporter mockReporter = Mockito.mock(MessageReporter.class);
+
+        ProductOrder order = ProductOrderTestFactory.createDummyProductOrder(0, jiraTicketKey);
+
+        Mockito.when(productOrderDaoMock.findByBusinessKey(Mockito.eq(jiraTicketKey))).thenReturn(order);
+        Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
+        Funding funding = new Funding(Funding.PURCHASE_ORDER, "238293", null);
+        funding.setPurchaseOrderContact("Test@broad.com");
+        Set<FundingLevel> fundingLevels = Collections.singleton(new FundingLevel("100", Collections.singleton(funding)));
+        QuoteFunding quoteFunding = new QuoteFunding(fundingLevels);
+        Quote mockQuote =  new Quote(order.getQuoteId(), quoteFunding, ApprovalStatus.FUNDED);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString())).thenReturn(
+                mockQuote);
+
+
+        String[] sampleNames = {"SM-smpl1", "SM-smpl2", "SM-smpl3", "SM-smpl4", "SM-smpl5"};
+        List<ProductOrderSample> samples = ProductOrderSampleTestFactory.createDBFreeSampleList(sampleNames);
+
+        List<LabVessel> tubes = new ArrayList<>();
+        Map<String, MercurySample> mercurySamples = new HashMap<>();
+        Map<String, LabVessel> nullVessels = new HashMap<>();
+        Map<String, MercurySample> nullSamples = new HashMap<>();
+
+        samples.stream().forEach(pdoSample -> {
+            String name = pdoSample.getName();
+            mercurySamples.put(name, pdoSample.getMercurySample());
+            nullSamples.put(name, null);
+            tubes.addAll(pdoSample.getMercurySample().getLabVessel());
+            // For all of the samples, unlink the PDO Sample from the Mercury Sample.
+            pdoSample.setMercurySample(null);
+        });
+
+        // For this call, return null MercurySamples (i.e. no MercurySamples match the PDO sample names).
+        Mockito.when(mockMercurySampleDao.findMapIdToMercurySample(Mockito.eq(Arrays.asList(sampleNames)))).
+                thenReturn(nullSamples);
+        // Also return null LabVessels (i.e. no tube barcodes match the PDO sample names).
+        Mockito.when(mockLabVesselDao.findByBarcodes(Mockito.eq(Arrays.asList(sampleNames)))).
+                thenReturn(nullVessels);
+        // Returns "new" tubes made from the BSP sample, linked with "new" MercurySamples.
+        Mockito.when(mockBucketEjb.createInitialVessels(Mockito.eq(Arrays.asList(sampleNames)), Mockito.anyString())).
+                thenReturn(tubes);
+
+        assertThat(order.getSamples(), is(empty()));
+
+        productOrderEjb.addSamples(jiraTicketKey, samples, mockReporter);
+        assertThat(order.getSamples(), is(not(empty())));
+        assertThat(order.getSamples().size(), is(Matchers.equalTo(5)));
+        for (ProductOrderSample sample : order.getSamples()) {
+            assertThat(sample.getMercurySample(), is(not(nullValue())));
+            assertThat(sample.getMercurySample().getSampleKey(), is(equalTo(sample.getBusinessKey())));
+            assertThat(sample.getMercurySample().getLabVessel().size(), is(equalTo(1)));
+        }
+        Mockito.verify(mockMercurySampleDao).findMapIdToMercurySample(Mockito.eq(Arrays.asList(sampleNames)));
+        Mockito.verify(mockQuoteService, Mockito.times(1)).getQuoteByAlphaId(Mockito.anyString());
+    }
+
+    public void testAddSamplesMessages() throws Exception {
+        String jiraTicketKey = "PDO-testMe";
+        List<String> messages = new ArrayList<>();
+        MessageReporter reporter = (message, arguments) -> {
+            String formattedMessage = MessageFormat.format(message, arguments);
+            messages.add(formattedMessage);
+            return formattedMessage;
+        };
+
+        ProductOrder order = ProductOrderTestFactory.createDummyProductOrder(0, jiraTicketKey);
+        order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        Mockito.when(productOrderDaoMock.findByBusinessKey(Mockito.eq(jiraTicketKey))).thenReturn(order);
+        Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
+
+        String[] sampleNames = {"SM-smpl1", "SM-smpl2", "SM-smpl3", "SM-smpl4", "SM-smpl5"};
+        List<ProductOrderSample> samples = ProductOrderSampleTestFactory.createDBFreeSampleList(sampleNames);
+        List<String> unlinked = new ArrayList<>();
+        unlinked.add(sampleNames[0]);
+        Multimap<String, ProductOrderSample> bucketed = ArrayListMultimap.create();
+        bucketed.put("Pico Bucket", samples.get(1));
+        Mockito.when(mockBucketEjb.addSamplesToBucket(Mockito.eq(order), Mockito.eq(samples),
+                Mockito.anyString(), Mockito.anyObject())).
+                thenReturn(Triple.of(true, unlinked, bucketed));
+
+        productOrderEjb.addSamplesToBucket(order, samples, reporter);
+        assertThat(messages.get(0), is("1 samples have been added to the Pico Bucket."));
+        assertThat(messages.get(1), is("Unknown PDO sample names: SM-smpl1"));
+        assertThat(messages.get(2), is("No valid buckets found for SM-smpl3, SM-smpl4, SM-smpl5"));
     }
 
     public void testCreateOrderInSap() throws Exception {

@@ -74,8 +74,8 @@ public class BspSampleData implements SampleData {
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 
-    // package-local for test
-    Map<BSPSampleSearchColumn, String> getColumnToValue() {
+    /** For test purposes. */
+    public Map<BSPSampleSearchColumn, String> getColumnToValue() {
         return columnToValue;
     }
 

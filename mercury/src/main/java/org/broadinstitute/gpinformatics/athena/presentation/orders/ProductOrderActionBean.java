@@ -82,6 +82,9 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -89,9 +92,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -1641,7 +1641,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             Hibernate.initialize(editOrder.getChildOrders());
             Hibernate.initialize(editOrder.getSapReferenceOrders());
 
-            productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
+            productOrderEjb.addSamples(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
 
         } catch (Exception e) {
@@ -2531,8 +2531,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(ADD_SAMPLES_TO_BUCKET)
     public Resolution addSamplesToBucket() {
         try {
-            productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
-        } catch (BucketException e) {
+            productOrderEjb.attachMercurySamples(editOrder.getSamples());
+            productOrderEjb.addSamplesToBucket(editOrder, editOrder.getSamples(), this);
+        } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
         }
         return new ForwardResolution(ORDER_VIEW_PAGE);

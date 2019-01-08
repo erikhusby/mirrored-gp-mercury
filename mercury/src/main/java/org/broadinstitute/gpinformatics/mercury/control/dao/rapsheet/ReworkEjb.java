@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -337,12 +338,16 @@ public class ReworkEjb {
         return candidateVessel;
     }
 
-    private LabVessel getLabVessel(String tubeBarcode, String sampleKey, String userName) {
+    private LabVessel getLabVessel(String tubeBarcode, String sampleKey, String userName) throws ValidationException {
         LabVessel reworkVessel = labVesselDao.findByIdentifier(tubeBarcode);
 
         if (reworkVessel == null) {
-            reworkVessel = bucketEjb.createInitialVessels(Collections.singleton(sampleKey),
-                    userName).iterator().next();
+            try {
+                reworkVessel = bucketEjb.createInitialVessels(Collections.singleton(sampleKey),
+                        userName).iterator().next();
+            } catch (BucketException e) {
+                throw new ValidationException(e);
+            }
         }
         return reworkVessel;
     }

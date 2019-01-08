@@ -1,14 +1,14 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -58,11 +58,14 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
+import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -95,7 +98,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
@@ -152,6 +154,8 @@ public class ProductOrderEjb {
 
     private SAPProductPriceCache productPriceCache;
 
+    private LabVesselDao labVesselDao;
+
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
@@ -169,7 +173,7 @@ public class ProductOrderEjb {
                            MercurySampleDao mercurySampleDao,
                            ProductOrderJiraUtil productOrderJiraUtil,
                            SapIntegrationService sapService, PriceListCache priceListCache,
-                           SAPProductPriceCache productPriceCache) {
+                           SAPProductPriceCache productPriceCache, LabVesselDao labVesselDao) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -183,6 +187,7 @@ public class ProductOrderEjb {
         this.sapService = sapService;
         this.priceListCache = priceListCache;
         this.productPriceCache = productPriceCache;
+        this.labVesselDao = labVesselDao;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -284,11 +289,17 @@ public class ProductOrderEjb {
             }
             publishProductOrderToSAP(editedProductOrder, messageCollection, false);
         }
-        attachMercurySamples(editedProductOrder.getSamples());
-        for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
-            attachMercurySamples(childProductOrder.getSamples());
-        }
 
+/* xxx Why does it need to link? if it throws, there is a hibernate or wildfly exception.
+        try {
+            attachMercurySamples(editedProductOrder.getSamples());
+            for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
+                attachMercurySamples(childProductOrder.getSamples());
+            }
+        } catch (BucketException e) {
+            messageCollection.addError(e.getMessage());
+        }
+*/
         productOrderDao.persist(editedProductOrder);
     }
 
@@ -322,8 +333,14 @@ public class ProductOrderEjb {
 
             publishProductOrderToSAP(editedProductOrder, messageCollection, false);
         }
-        attachMercurySamples(editedProductOrder.getSamples());
 
+/* xxx Why does it need to link? if it throws, there is a hibernate or wildfly exception.
+        try {
+            attachMercurySamples(editedProductOrder.getSamples());
+        } catch (BucketException e) {
+            messageCollection.addError(e.getMessage());
+        }
+*/
         productOrderDao.persist(editedProductOrder.getParentOrder());
     }
 
@@ -803,29 +820,44 @@ public class ProductOrderEjb {
                 username, isRisk, sampleCount, comment);
     }
 
+    /**
+     * Adds samples to the appropriate LIMS bucket if the order is ready for lab work, the product
+     * is supported in Mercury, and the PDO sample is linked to a Mercury Sample and lab vessel.
+     */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
+    public void addSamplesToBucket(@Nonnull ProductOrder order, @Nonnull Collection<ProductOrderSample> newSamples,
                                    @Nonnull MessageReporter reporter) {
-        ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-        // Only add samples to the LIMS bucket if the order is ready for lab work.
         if (order.getOrderStatus().readyForLab()) {
-            Map<String, Collection<ProductOrderSample>> samples = bucketEjb.addSamplesToBucket(order, newSamples,
-                    ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
-            if (!samples.isEmpty()) {
-                Set<String> bucketedSampleNames = new HashSet<>();
-                for (Map.Entry<String, Collection<ProductOrderSample>> bucketSampleEntry : samples.entrySet()) {
-                    String bucketName = bucketSampleEntry.getKey();
-                    bucketedSampleNames.addAll(ProductOrderSample.getSampleNames(bucketSampleEntry.getValue()));
-                    bucketName = bucketName.toLowerCase().endsWith("bucket") ? bucketName : bucketName + " Bucket";
+            Triple<Boolean, Collection<String>, Multimap<String, ProductOrderSample>> triple =
+                    bucketEjb.addSamplesToBucket(order, newSamples, getUserName(),
+                            ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+            if (!triple.getLeft()) {
+                reporter.addMessage("No product workflow is configured for " + order.getName());
+            } else {
+                for (String bucketName : triple.getRight().keySet()) {
                     reporter.addMessage("{0} samples have been added to the {1}.",
-                            bucketSampleEntry.getValue().size(), bucketName);
+                            triple.getRight().get(bucketName).size(),
+                            bucketName.toLowerCase().endsWith("bucket") ? bucketName : bucketName + " Bucket");
                 }
-
-                Collection<String> unBucketedSamples =
-                        CollectionUtils.subtract(ProductOrderSample.getSampleNames(newSamples), bucketedSampleNames);
-                if (!unBucketedSamples.isEmpty()) {
-                    reporter.addMessage("No valid buckets found {0}", unBucketedSamples);
-                }
+            }
+            final long maxCount = 10;
+            // Reports the PDO samples that were not linked to Mercury Sample and Lab Vessel and infers
+            // that these must be unknown to Mercury.
+            if (!triple.getMiddle().isEmpty()) {
+                String unlinkedSamples = triple.getMiddle().stream().limit(maxCount).collect(Collectors.joining(", "));
+                reporter.addMessage("Unknown PDO sample names: {0}", (triple.getMiddle().size() > maxCount) ?
+                        unlinkedSamples + " and " + (triple.getMiddle().size() - maxCount) + " others" :
+                        unlinkedSamples);
+            }
+            // Reports the PDO samples that were not put in a bucket and not found to be unlinked, and infers
+            // that there must be no valid bucket for these.
+            List<String> unBucketedSamples = CollectionUtils.subtract(ProductOrderSample.getSampleNames(
+                    CollectionUtils.subtract(newSamples, triple.getRight().values())), triple.getMiddle()).
+                    stream().sorted().collect(Collectors.toList());
+            if (!unBucketedSamples.isEmpty()) {
+                String sampleNames = unBucketedSamples.stream().limit(maxCount).collect(Collectors.joining(", "));
+                reporter.addMessage("No valid buckets found for {0}", (unBucketedSamples.size() > maxCount) ?
+                        (sampleNames + " and " + (unBucketedSamples.size() - maxCount) + " others") : sampleNames);
             }
         }
     }
@@ -1563,10 +1595,15 @@ public class ProductOrderEjb {
     public void addSamples(@Nonnull String jiraTicketKey, @Nonnull List<ProductOrderSample> samples,
                            @Nonnull MessageReporter reporter)
             throws NoSuchPDOException, IOException, SAPInterfaceException {
-        ProductOrder order = findProductOrder(jiraTicketKey);
-        order.addSamples(samples);
+        addSamples(findProductOrder(jiraTicketKey), samples, reporter);
+    }
 
-        attachMercurySamples(samples);
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void addSamples(@Nonnull ProductOrder order, @Nonnull List<ProductOrderSample> samples,
+                           @Nonnull MessageReporter reporter)
+            throws NoSuchPDOException, IOException, SAPInterfaceException, BucketException {
+
+        order.addSamples(samples);
 
         if(order.getOrderStatus() == OrderStatus.Completed) {
             order.setOrderStatus(OrderStatus.Submitted);
@@ -1574,7 +1611,10 @@ public class ProductOrderEjb {
 
         order.prepareToSave(userBean.getBspUser());
         productOrderDao.persist(order);
-        handleSamplesAdded(jiraTicketKey, samples, reporter);
+
+/* xxx if this throws there's a hibernate error */
+        attachMercurySamples(samples);
+        addSamplesToBucket(order, samples, reporter);
 
         updateSamples(order, samples, reporter, "added");
     }
@@ -1593,40 +1633,70 @@ public class ProductOrderEjb {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void addSamplesNoSap(@Nonnull String jiraTicketKey, @Nonnull List<ProductOrderSample> samples,
                            @Nonnull MessageReporter reporter)
-            throws NoSuchPDOException, IOException, SAPInterfaceException {
+            throws NoSuchPDOException, IOException, SAPInterfaceException, BucketException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
 
-        attachMercurySamples(samples);
-
         order.prepareToSave(userBean.getBspUser());
         productOrderDao.persist(order);
-        handleSamplesAdded(jiraTicketKey, samples, reporter);
+/* xxx if this throws there's a hibernate error */
+        attachMercurySamples(samples);
+        addSamplesToBucket(order, samples, reporter);
 
         updateSamplesNoSap(order, samples, reporter, "added");
     }
 
 
     /**
-     * Makes the association between ProductOrderSample and MercurySample.
+     * Links a MercurySample to each ProductOrderSample. Tries to match the PDO sample name
+     * to a MercurySample name, then to a LabVessel label, then looks to BSP and uses its
+     * plasticware barcode. Throws BucketException if one or more PDO samples cannot be linked.
      */
-    public void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) {
-        ImmutableListMultimap<String, ProductOrderSample> samplesBySampleId =
-                Multimaps.index(samples, new Function<ProductOrderSample, String>() {
-                    @Override
-                    public String apply(ProductOrderSample productOrderSample) {
-                        return productOrderSample.getSampleKey();
-                    }
-                });
+    public void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) throws BucketException {
+        Multimap<String, ProductOrderSample> samplesBySampleId = Multimaps.index(samples,
+                ProductOrderSample::getSampleKey);
 
-        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(
-                samplesBySampleId.keySet());
-
+        // Looks up unlinked PDO samples where PDO sample name is also the Mercury Sample name.
+        List<String> needsLookup = samples.stream().
+                filter(productOrderSample -> productOrderSample.getMercurySample() == null).
+                map(ProductOrderSample::getName).
+                collect(Collectors.toList());
+        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(needsLookup);
         for (Map.Entry<String, ProductOrderSample> sampleMapEntry : samplesBySampleId.entries()) {
             MercurySample mercurySample = mercurySampleMap.get(sampleMapEntry.getKey());
             if (sampleMapEntry.getValue().getMercurySample() == null && mercurySample != null) {
                 mercurySample.addProductOrderSample(sampleMapEntry.getValue());
             }
+        }
+
+        // Looks up any still unlinked PDO samples where PDO sample name is the tube barcode.
+        needsLookup = samples.stream().filter(productOrderSample -> productOrderSample.getMercurySample() == null).
+                map(ProductOrderSample::getName).collect(Collectors.toList());
+        labVesselDao.findByBarcodes(needsLookup).entrySet().forEach(mapEntry -> {
+            LabVessel labVessel = mapEntry.getValue();
+            if (labVessel != null) {
+                labVessel.getMercurySamples().forEach((MercurySample mercurySample) -> {
+                    samplesBySampleId.get(mapEntry.getKey()).forEach(pdoSample ->
+                            mercurySample.addProductOrderSample(pdoSample));
+                });
+            }
+        });
+
+        // For the PDO samples that still aren't linked to a Mercury Sample, either the user provided
+        // invalid input, the sample has not been received, or the sample is a derived stock that has
+        // not been seen by Mercury. Creates both standalone vessel and MercurySample for the latter.
+        // An unchecked exception is thrown if there is an unknown sample.
+        needsLookup = samples.stream().filter(productOrderSample -> productOrderSample.getMercurySample() == null).
+                map(ProductOrderSample::getName).collect(Collectors.toList());
+        Collection<LabVessel> vessels = bucketEjb.createInitialVessels(needsLookup, getUserName());
+        Collection<MercurySample> mercurySamples = vessels.stream().
+                flatMap(labVessel -> labVessel.getMercurySamples().stream()).collect(Collectors.toList());
+        for (MercurySample mercurySample : mercurySamples) {
+            Collection<ProductOrderSample> pdoSamples = samplesBySampleId.get(mercurySample.getSampleKey());
+            // Links PDO samples to the Mercury Sample having the same name.
+            pdoSamples.stream().
+                    filter(pdoSample -> pdoSample.getMercurySample() == null).
+                    forEach(pdoSample -> mercurySample.addProductOrderSample(pdoSample));
         }
     }
 
