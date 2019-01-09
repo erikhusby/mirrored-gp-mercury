@@ -1353,6 +1353,18 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="jowalsh" id="GPLIM-5893-1">
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="INDEX_TYPE" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-5893-2">
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="INDEX_TYPE" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
     <changeSet author="scottmat" id="GPLIM-5813-1">
         <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
             <column name="QUOTE_SOURCE" type="VARCHAR2(200)" />

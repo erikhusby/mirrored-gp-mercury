@@ -123,7 +123,7 @@ public class FingerprintingPlateFactory {
                             if (OrmUtil.proxySafeIsInstance(reagent, ControlReagent.class)) {
                                 ControlReagent controlReagent = OrmUtil.proxySafeCast(reagent, ControlReagent.class);
                                 if (controlReagent.getControl().getType() == Control.ControlType.POSITIVE) {
-                                    sampleName = NA12878;
+                                    sampleName = controlReagent.getControl().getCollaboratorParticipantId();
                                     positiveControl = true;
                                 } else if (controlReagent.getControl().getType() == Control.ControlType.NEGATIVE) {
                                     sampleName = NEGATIVE_CONTROL;
