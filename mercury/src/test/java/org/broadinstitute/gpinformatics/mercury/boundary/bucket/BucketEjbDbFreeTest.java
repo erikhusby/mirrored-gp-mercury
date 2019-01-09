@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSample
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -25,7 +24,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -174,24 +172,15 @@ public class BucketEjbDbFreeTest {
         bspSampleDataMap.get(pdo.getSamples().get(1).getName()).getColumnToValue().
                 put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.FRESH_BLOOD.getDisplayName());
 
-        Collection<LabVessel> vessels;
-        try {
-            vessels = bucketEjb.createInitialVessels(pdo.getSamples().stream().
-                    map(ProductOrderSample::getName).collect(Collectors.toList()), username);
-            Assert.fail("Should have thrown.");
-        } catch (BucketException e) {
-            Assert.assertTrue(e.getMessage().contains(pdo.getSamples().get(indexOfBadSample).getName()));
-        }
-        // Removes the problem sample and tries again.
-        pdo.getSamples().remove(indexOfBadSample);
-        vessels = bucketEjb.createInitialVessels(pdo.getSamples().stream().
+        Pair<Collection<LabVessel>, String> pair = bucketEjb.createInitialVessels(pdo.getSamples().stream().
                 map(ProductOrderSample::getName).collect(Collectors.toList()), username);
+        Assert.assertTrue(pair.getRight().contains(pdo.getSamples().get(indexOfBadSample).getName()));
 
-        Assert.assertEquals(vessels.size(), 4);
-        Assert.assertTrue(vessels.stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(1))));
-        Assert.assertTrue(vessels.stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(2))));
-        Assert.assertTrue(vessels.stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(3))));
-        Assert.assertTrue(vessels.stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(4))));
+        Assert.assertEquals(pair.getLeft().size(), 4);
+        Assert.assertTrue(pair.getLeft().stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(1))));
+        Assert.assertTrue(pair.getLeft().stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(2))));
+        Assert.assertTrue(pair.getLeft().stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(3))));
+        Assert.assertTrue(pair.getLeft().stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(4))));
     }
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
@@ -200,16 +189,18 @@ public class BucketEjbDbFreeTest {
         setup(ICE, false);
 
         // Updates the bspSampleData to indicate a sample has no BSP data.
-        bspSampleDataMap.get(pdo.getSamples().get(2).getName()).getPlasticBarcodes().clear();
-        bspSampleDataMap.get(pdo.getSamples().get(2).getName()).getColumnToValue().clear();
-        try {
-            Collection<LabVessel> vessels = bucketEjb.createInitialVessels(
-                    pdo.getSamples().stream().map(ProductOrderSample::getName).collect(Collectors.toList()), username);
-            Assert.fail("Should have thrown.");
+        int indexOfBadSample = 2;
+        bspSampleDataMap.get(pdo.getSamples().get(indexOfBadSample).getName()).getPlasticBarcodes().clear();
+        bspSampleDataMap.get(pdo.getSamples().get(indexOfBadSample).getName()).getColumnToValue().clear();
+        Pair<Collection<LabVessel>, String> pair = bucketEjb.createInitialVessels(pdo.getSamples().stream().
+                map(ProductOrderSample::getName).collect(Collectors.toList()), username);
 
-        } catch (BucketException e) {
-            Assert.assertTrue(e.getMessage().contains(pdo.getSamples().get(2).getName()));
-        }
+        Assert.assertTrue(pair.getRight().contains(pdo.getSamples().get(indexOfBadSample).getName()));
+        Assert.assertEquals(pair.getLeft().size(), 4);
+        Assert.assertTrue(pair.getLeft().stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(1))));
+        Assert.assertTrue(pair.getLeft().stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(2))));
+        Assert.assertTrue(pair.getLeft().stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(4))));
+        Assert.assertTrue(pair.getLeft().stream().map(LabVessel::getLabel).anyMatch(s -> s.equals(makeTubeBarcode(5))));
     }
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)

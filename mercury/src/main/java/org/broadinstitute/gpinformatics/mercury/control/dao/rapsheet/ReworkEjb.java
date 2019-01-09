@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -23,7 +24,6 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -342,11 +342,12 @@ public class ReworkEjb {
         LabVessel reworkVessel = labVesselDao.findByIdentifier(tubeBarcode);
 
         if (reworkVessel == null) {
-            try {
-                reworkVessel = bucketEjb.createInitialVessels(Collections.singleton(sampleKey),
-                        userName).iterator().next();
-            } catch (BucketException e) {
-                throw new ValidationException(e);
+            Pair<Collection<LabVessel>, String> pair =
+                    bucketEjb.createInitialVessels(Collections.singleton(sampleKey), userName);
+            if (StringUtils.isNotBlank(pair.getRight())) {
+                throw new ValidationException(pair.getRight());
+            } else if (!pair.getLeft().isEmpty()) {
+                reworkVessel = pair.getLeft().iterator().next();
             }
         }
         return reworkVessel;

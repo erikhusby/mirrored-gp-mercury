@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -327,8 +326,8 @@ public class BucketEjb {
     }
 
     /**
-     * Puts product order samples into the appropriate bucket.  Does nothing if the product is not supported
-     * in Mercury, or if the PDO sample isn't linked to a lab vessel.
+     * Puts product order samples into the appropriate bucket. Returns a status but does not add to a bucket
+     * if the product is not supported in Mercury, or if the PDO sample isn't linked to a lab vessel.
      *
      * @param order the ProductOrder to add to.
      * @param pdoSamples  the new ProductOrderSamples to add.
@@ -424,23 +423,24 @@ public class BucketEjb {
 
     /**
      * Creates LabVessels with BSP receptacle barcodes for the given BSP sample IDs.
-     * Throws exception if BSP does not know about all of the sample IDs.
+     * Since a PDO Sample will normally be unknown sometimes, it must not cause an
+     * exception to be thrown here, which would stop Hibernate commits.
      *
-     * @param samplesWithoutVessel BSP sample IDs that need LabVessels
-     * @param username             the user performing the operation leading to the LabVessels being created
+     * @param pdoSampleNames BSP sample IDs that need LabVessels
+     * @param username       the user performing the operation leading to the LabVessels being created
      *
-     * @return the created LabVessels
+     * @return Pair of the created LabVessels and a error string (blank if no errors).
      */
-    public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username)
-            throws BucketException {
+    public Pair<Collection<LabVessel>, String> createInitialVessels(Collection<String> pdoSampleNames,
+            String username) {
 
-        Map<String, BspSampleData> bspSampleDataMap = bspSampleDataFetcher.fetchSampleData(samplesWithoutVessel);
+        Map<String, BspSampleData> bspSampleDataMap = bspSampleDataFetcher.fetchSampleData(pdoSampleNames);
         Collection<LabVessel> vessels = new ArrayList<>();
         List<String> notInBsp = new ArrayList<>();
         List<String> noPlasticware = new ArrayList<>();
         List<String> notReceived = new ArrayList<>();
 
-        for (String sampleName : samplesWithoutVessel) {
+        for (String sampleName : pdoSampleNames) {
             BspSampleData bspSampleData = bspSampleDataMap.get(sampleName);
 
             if (bspSampleData != null) {
@@ -461,9 +461,9 @@ public class BucketEjb {
                 notInBsp.add(sampleName);
             }
         }
-
+        String message = "";
         if (!notInBsp.isEmpty() || !noPlasticware.isEmpty() || !notReceived.isEmpty()) {
-            String message = "Some of the samples could not be added to the bucket. ";
+            message = "Some of the samples could not be added to the bucket. ";
             if (!notInBsp.isEmpty()) {
                 message += "Neither Mercury nor BSP know " + StringUtils.join(notInBsp, ", ") + ". ";
             }
@@ -473,14 +473,13 @@ public class BucketEjb {
             if (!notReceived.isEmpty()) {
                 message += "BSP has not received " + StringUtils.join(notReceived, ", ") + ". ";
             }
-            throw new BucketException(message);
         }
 
         if (!vessels.isEmpty()) {
             labVesselDao.persistAll(vessels);
             labVesselDao.flush();
         }
-        return vessels;
+        return Pair.of(vessels, message);
     }
 
 }

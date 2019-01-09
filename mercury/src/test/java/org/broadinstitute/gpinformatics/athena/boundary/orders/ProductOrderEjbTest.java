@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -195,6 +196,9 @@ public class ProductOrderEjbTest {
         kitDetailSet.add(null);
         kitDetailSet.add(kitDetailChange2);
 
+        Mockito.when(mockBucketEjb.createInitialVessels(Mockito.anyCollection(), Mockito.anyString())).
+                thenReturn(Pair.of(Collections.emptyList(), ""));
+
         productOrderEjb.persistProductOrder(ProductOrder.SaveType.UPDATING, productOrder, Collections.singleton("2243"),
                 kitDetailSet);
 
@@ -338,6 +342,9 @@ public class ProductOrderEjbTest {
         Mockito.when(mockMercurySampleDao.findMapIdToMercurySample(Mockito.eq(Arrays.asList(sampleNames)))).
                 thenReturn(sampleMap);
 
+        Mockito.when(mockBucketEjb.createInitialVessels(Mockito.anyCollection(), Mockito.anyString())).
+                thenReturn(Pair.of(Collections.emptyList(), ""));
+
         assertThat(order.getSamples(), is(empty()));
 
         productOrderEjb.addSamples(jiraTicketKey, samples, mockReporter);
@@ -403,6 +410,9 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(), Mockito.anyObject())).
                 thenReturn(Triple.of(true, Collections.emptyList(), bucketed));
 
+        Mockito.when(mockBucketEjb.createInitialVessels(Mockito.anyCollection(), Mockito.anyString())).
+                thenReturn(Pair.of(Collections.emptyList(), ""));
+
         productOrderEjb.addSamples(jiraTicketKey, samples, mockReporter);
         assertThat(order.getSamples(), is(not(empty())));
         assertThat(order.getSamples().size(), is(Matchers.equalTo(5)));
@@ -460,7 +470,7 @@ public class ProductOrderEjbTest {
                 thenReturn(nullVessels);
         // Returns "new" tubes made from the BSP sample, linked with "new" MercurySamples.
         Mockito.when(mockBucketEjb.createInitialVessels(Mockito.eq(Arrays.asList(sampleNames)), Mockito.anyString())).
-                thenReturn(tubes);
+                thenReturn(Pair.of(tubes, "this error string should be ignored"));
 
         assertThat(order.getSamples(), is(empty()));
 

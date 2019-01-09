@@ -115,7 +115,6 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
-import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -2683,9 +2682,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         try {
             productOrderEjb.addSamples(editOrder.getJiraTicketKey(), samplesToAdd, this);
-        } catch (BucketException e) {
-            logger.error("Problem adding samples to bucket", e);
-            addGlobalValidationError(e.getMessage());
         } catch (SAPInterfaceException sie) {
             logger.error("Error from SAP when attempting to add samples");
             addGlobalValidationError(sie.getMessage());
