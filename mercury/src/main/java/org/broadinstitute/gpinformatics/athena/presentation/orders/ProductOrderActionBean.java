@@ -772,7 +772,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             Quote sapQuote = null;
         if(editOrder.hasSapQuote()) {
             sapQuote = validateSapQuote(editOrder);
-        } else {
+        } else if (editOrder.hasQuoteServerQuote()) {
             quote = validateQuote(editOrder);
         }
 
@@ -782,7 +782,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     ProductOrder.checkSapQuoteValidity(sapQuote);
                 }
                 validateSapQuoteDetails(sapQuote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
-            } else {
+            } else if (editOrder.hasQuoteServerQuote()) {
                 if (quote != null) {
                     ProductOrder.checkQuoteValidity(quote);
                     for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
@@ -3389,6 +3389,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateQuoteOptions(String action) {
+
+        if(action.equals(PLACE_ORDER_ACTION)) {
+            requireField(editOrder.getQuoteSourceType(), " a quote source type selected", action);
+        }
+
         if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER) ||
             (action.equals(SAVE_ACTION) && editOrder.isSubmitted())) {
             boolean hasQuote = !StringUtils.isBlank(editOrder.getQuoteId());
