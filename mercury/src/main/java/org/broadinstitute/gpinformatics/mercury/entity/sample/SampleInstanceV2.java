@@ -624,7 +624,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         }
         // Multiple workflow batches need help.
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
-        else if (singleWorkflowBatch == null) {
+        else if (singleWorkflowBatch == null && !allBucketEntries.isEmpty()) {
             Set<LabBatch> computedLcsets = vesselEvent.getLabEvent().getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
             if (computedLcsets.size() != 1) {
