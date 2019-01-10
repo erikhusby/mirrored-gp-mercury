@@ -1363,9 +1363,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public String getAggregationParticle() {
         if (cachedAggregationParticle == null) {
             cachedAggregationParticle = aggregationParticle;
-            Product.AggregationParticle defaultAggregationParticle = productOrder.getDefaultAggregationParticle();
-            if (defaultAggregationParticle != null) {
-                cachedAggregationParticle = defaultAggregationParticle.fromSample(this);
+            if (cachedAggregationParticle == null) {
+                Product.AggregationParticle defaultAggregationParticle = productOrder.getDefaultAggregationParticle();
+                if (defaultAggregationParticle != null) {
+                    cachedAggregationParticle = defaultAggregationParticle.fromSample(this);
+                }
             }
         }
         return cachedAggregationParticle;
