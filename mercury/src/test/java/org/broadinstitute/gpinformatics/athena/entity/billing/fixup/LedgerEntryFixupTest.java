@@ -404,7 +404,7 @@ public class LedgerEntryFixupTest extends Arquillian {
         try {
             final List<QuoteImportItem> quoteImportItems = collectedEntriesByQuoteId.getQuoteImportItems(priceListCache);
             for (QuoteImportItem item : quoteImportItems) {
-                Quote quote = item.getProductOrder().hasSapQuote()?item.getProductOrder().getSAPQuote(sapService):item.getProductOrder().getQuote(quoteService);
+                Quote quote = item.getProductOrder().hasSapQuote()?item.getProductOrder().getSapQuote(sapService):item.getProductOrder().getQuote(quoteService);
 
                 System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
                                    + item.getLedgerItems().size() + " ledger entries: "

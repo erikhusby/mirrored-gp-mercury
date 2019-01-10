@@ -119,7 +119,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return cachedQuote;
     }
 
-    public Quote getSAPQuote(SapIntegrationService sapService) throws SAPIntegrationException {
+    public Quote getSapQuote(SapIntegrationService sapService) throws SAPIntegrationException {
         if (cachedQuote == null) {
             cachedQuote = sapService.findSapQuote(quoteId);
         }

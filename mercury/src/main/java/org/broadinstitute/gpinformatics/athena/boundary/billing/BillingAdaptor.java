@@ -181,7 +181,7 @@ public class BillingAdaptor implements Serializable {
 
                     quote = itemForPriceUpdate.getProductOrder().getQuote(quoteService);
                     if (itemForPriceUpdate.getProductOrder().hasSapQuote()) {
-                        sapQuote = itemForPriceUpdate.getProductOrder().getSAPQuote(sapService);
+                        sapQuote = itemForPriceUpdate.getProductOrder().getSapQuote(sapService);
                     }
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
 //                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
@@ -224,7 +224,7 @@ public class BillingAdaptor implements Serializable {
                         item.setPriceOnWorkDate(priceItemsForDate);
                     }
 
-                    quote = item.getProductOrder().hasSapQuote()?item.getProductOrder().getSAPQuote(sapService):item.getProductOrder().getQuote(quoteService);
+                    quote = item.getProductOrder().hasSapQuote()?item.getProductOrder().getSapQuote(sapService):item.getProductOrder().getQuote(quoteService);
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
 //                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     item.setQuote(quote);

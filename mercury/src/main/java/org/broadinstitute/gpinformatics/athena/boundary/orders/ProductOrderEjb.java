@@ -366,14 +366,14 @@ public class ProductOrderEjb {
         ProductOrder orderToPublish = editedProductOrder;
 
         if (!editedProductOrder.hasSapQuote()) {
-            throw new SAPInterfaceException("This order is inelligible to place to SAP since it is not associated with "
+            throw new SAPInterfaceException("This order is ineligible to create in SAP since it is not associated with "
                                             + "an SAP quote");
         }
 
-        final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
+        List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
         try {
             productPriceCache.determineIfProductsExist(allProductsOrdered, editedProductOrder.getSapCompanyConfigurationForProductOrder());
-            Quote quote = orderToPublish.hasSapQuote()?orderToPublish.getSAPQuote(sapService):orderToPublish.getQuote(quoteService);
+            Quote quote = orderToPublish.hasSapQuote()?orderToPublish.getSapQuote(sapService):orderToPublish.getQuote(quoteService);
 
             final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
                                           !orderToPublish.getQuoteId()
@@ -573,7 +573,7 @@ public class ProductOrderEjb {
         if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
             try {
                 if(productOrder.hasSapQuote()) {
-                    productOrder.getSAPQuote(sapService);
+                    productOrder.getSapQuote(sapService);
                 } else {
                     productOrder.getQuote(quoteService);
                 }
