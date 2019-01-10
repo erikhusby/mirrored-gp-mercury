@@ -1389,6 +1389,80 @@ public class ProductOrderActionBeanTest {
 
     }
 
+
+    public void testEstimateCustomHigherThanQuote() throws Exception {
+
+        final String testQuoteIdentifier = "testQuote";
+        Quote testQuote = buildSingleTestQuote(testQuoteIdentifier, "12000");
+
+        Product primaryProduct = new Product();
+        primaryProduct.setPartNumber("P-Test_primary");
+        primaryProduct.setPrimaryPriceItem(new PriceItem("primary", "Genomics Platform", "Primary testing size",
+                "Thousand dollar Genome price"));
+        primaryProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName()));
+
+
+        testOrder = new ProductOrder();
+        testOrder.setJiraTicketKey("PDO-TESTPDOValue");
+        testOrder.setProduct(primaryProduct);
+        testOrder.setQuoteId(testQuoteIdentifier);
+        List<ProductOrderSample> sampleList = new ArrayList<>();
+
+        for (int i = 0; i < 75;i++) {
+            sampleList.add(new ProductOrderSample("SM-Test"+i));
+        }
+
+        testOrder.setSamples(sampleList);
+//        SapOrderDetail sapReference = new SapOrderDetail("test001", 75, testOrder.getQuoteId(),
+//                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(),"","");
+//        testOrder.addSapOrderDetail(sapReference);
+
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> returnMaterials = new HashSet<>();
+
+
+        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, testOrder.getProduct(), "2000", "2000",
+                "2000");
+
+//        final SAPMaterial primaryMaterial =
+//                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
+//                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
+//        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+//        returnMaterials.add(primaryMaterial);
+
+        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        stubProductPriceCache.refreshCache();
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
+
+        Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Collections.singletonList(
+                testOrder));
+
+/**       return calculation from SAP   **/
+//        final Set<OrderValue> sapOrderValues = new HashSet<>();
+//        sapOrderValues.add(new OrderValue("Test_listed_1", BigDecimal.TEN));
+//        sapOrderValues.add(new OrderValue("Test_listed_2", new BigDecimal(23)));
+//        sapOrderValues.add(new OrderValue("Test_listed_3", new BigDecimal(49)));
+//
+//        final int overrideCalculatedOrderValue = 70000;
+//        sapOrderValues.add(new OrderValue("test001", new BigDecimal(overrideCalculatedOrderValue)));
+//
+//        final OrderCalculatedValues testCalculatedValues = new OrderCalculatedValues(
+//                new BigDecimal(overrideCalculatedOrderValue), sapOrderValues);
+//
+//        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(),
+//                Mockito.anyString(), Mockito.any(ProductOrder.class)
+//        )).thenReturn(
+//                testCalculatedValues);
+/******                                                   *****/
+
+        actionBean.validateQuoteDetails(testQuote, CoreActionBean.ErrorLevel.ERROR, true, 0);
+
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
+    }
+
+
     private void addPriceItemForProduct(String testQuoteIdentifier, PriceList priceList,
                                         Collection<QuoteItem> quoteItems, Product primaryOrderProduct,
                                         String priceItemPrice, String quoteItemQuantity, String quoteItemPrice) {
