@@ -1750,6 +1750,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (StringUtils.isNotBlank(customizationJsonString)) {
                 buildJsonObjectFromEditOrderProductCustomizations();
             }
+            if (editOrder.getProduct().getDefaultAggregationParticle() != null
+                && editOrder.getOrderStatus().canPlace()) {
+                editOrder.setDefaultAggregationParticle(editOrder.getProduct().getDefaultAggregationParticle());
+            }
         }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {

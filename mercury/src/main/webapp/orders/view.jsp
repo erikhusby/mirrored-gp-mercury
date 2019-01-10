@@ -22,6 +22,7 @@
     <c:set var="columnHeaderCollaboratorSampleId" value="<%= ProductOrderSampleBean.COLLABORATOR_SAMPLE_ID %>"/>
     <c:set var="columnHeaderCollaboratorParticipantId" value="<%= ProductOrderSampleBean.COLLABORATOR_PARTICIPANT_ID %>"/>
     <c:set var="columnHeaderParticipantId" value="<%= ProductOrderSampleBean.PARTICIPANT_ID %>"/>
+    <c:set var="columnHeaderAggregationParticle" value="<%= ProductOrderSampleBean.AGGREGATION_PARTICLE %>"/>
     <c:set var="columnHeaderVolume" value="<%= ProductOrderSampleBean.VOLUME %>"/>
     <c:set var="columnHeaderReceivedDate" value="<%= ProductOrderSampleBean.RECEIVED_DATE %>"/>
     <c:set var="columnHeaderSampleType" value="<%= ProductOrderSampleBean.SAMPLE_TYPE %>"/>
@@ -249,6 +250,7 @@ $j(document).ready(function () {
                 {"data": "${columnHeaderCollaboratorSampleId}", "title": "${columnHeaderCollaboratorSampleId}", "class": "${fn:replace(columnHeaderCollaboratorSampleId,' ','').trim()}"},
                 {"data": "${columnHeaderParticipantId}", "title": "${columnHeaderParticipantId}"},
                 {"data": "${columnHeaderCollaboratorParticipantId}", "title": "${columnHeaderCollaboratorParticipantId}"},
+                {"data": "${columnHeaderAggregationParticle}", "title": "${columnHeaderAggregationParticle}"},
                 </security:authorizeBlock>
 
                 {"data": "${columnHeaderShippedDate}", "title": "${columnHeaderShippedDate}"},
@@ -1696,6 +1698,13 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         </div>
     </div>
 </c:if>
+<div class="view-control-group control-group">
+    <label title="Applies to all samples in this order except for cases where samples were indivdually set."
+           class="control-label label-form">Aggregation Particle</label>
+    <div class="controls">
+        <div class="form-value">${actionBean.editOrder.defaultAggregationParticle.displayName}</div>
+    </div>
+</div>
 <div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 

@@ -127,7 +127,7 @@
                 return confirm(numberOfLanes.val() + " for the total number of lanes on the order\n\n" +
                     "By Clicking 'OK' you are declaring that you wish to accept the entered number of lanes for the entire order.  Do you wish to continue?")
             }
-            
+
             return true;
         }
         $j(document).ready(
@@ -1421,7 +1421,7 @@
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
-            <div class="form-horizontal span6">
+            <security:authorizeBlock class="form-horizontal span6">
                 <stripes:hidden name="productOrder"/>
                 <stripes:hidden name="submitString"/>
                 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
@@ -1603,7 +1603,22 @@
                     </div>
                 </div>
 
-
+            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                <c:if test="${!actionBean.editOrder.orderStatus.canPlace()}">
+                    <div class="control-group">
+                        <stripes:label for="aggregationParticle" name="aggregationParticle" class="control-label"/>
+                        <div class="controls">
+                            <stripes:select style="width: auto;" id="aggregationParticle"
+                                            name="editOrder.defaultAggregationParticle"
+                                            title="Enter the aggregation particle to use when aggregating">
+                                <stripes:option value="">None</stripes:option>
+                                <stripes:options-enumeration label="displayName"
+                                                             enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+                </c:if>
+            </security:authorizeBlock>
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
                 <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
                     <div class="control-group">
@@ -1613,7 +1628,7 @@
                             <div class="form-value" id="customizationContent"></div>
                         </div>
                     </div>
-                    
+
                 </c:if>
             </security:authorizeBlock>
 

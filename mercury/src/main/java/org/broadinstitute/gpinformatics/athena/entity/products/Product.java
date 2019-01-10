@@ -4,7 +4,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
@@ -129,6 +131,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Enumerated(EnumType.STRING)
     private FlowcellDesignation.IndexType indexType;
 
+    @Enumerated(EnumType.STRING)
+    private AggregationParticle defaultAggregationParticle;
     /**
      * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
      * performance hit of looking for Mercury quants in Products that don't have them.
@@ -418,6 +422,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setIndexType(FlowcellDesignation.IndexType indexType) {
         this.indexType = indexType;
+    }
+
+    public AggregationParticle getDefaultAggregationParticle() {
+        return defaultAggregationParticle;
+    }
+
+    public void setDefaultAggregationParticle(AggregationParticle defaultAggregationParticle) {
+        this.defaultAggregationParticle = defaultAggregationParticle;
     }
 
     public boolean isTopLevelProduct() {
@@ -1012,5 +1024,41 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             }
         }
         return fee;
+    }
+
+    public enum AggregationParticle implements Displayable {
+        PDO("PDO (PDO-1243)"),
+        PDO_ALIQUOT("PDO, ALIQUOT (PDO-1243_SM-1234)"),
+        PDO_ALIQUOT_POSITION("PDO, ALIQUOT, POSITION (PDO-1243_SM-1234_1)");
+
+        private final String displayName;
+
+        AggregationParticle(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public String fromSample(ProductOrderSample productOrderSample) {
+            switch (this) {
+            case PDO:
+                return productOrderSample.getProductOrder().getJiraTicketKey();
+            case PDO_ALIQUOT:
+                return String.format("%s_%s",
+                    productOrderSample.getProductOrder().getJiraTicketKey(),
+                    productOrderSample.getSampleKey()
+                );
+            case PDO_ALIQUOT_POSITION:
+                return String.format("%s_%s_%02d",
+                    productOrderSample.getProductOrder().getJiraTicketKey(),
+                    productOrderSample.getSampleKey(),
+                    productOrderSample.getSamplePosition() + 1
+                );
+            }
+            return null;
+        }
     }
 }

@@ -40,6 +40,7 @@ public class ProductOrderSampleBean {
     public static final String SAMPLE_ID = "ID";
     public static final String PRODUCT_ORDER_SAMPLE_ID = "PRODUCT_ORDER_SAMPLE_ID";
     public static final String SAMPLE_LINK = "SAMPLE_LINK";
+    public static final String AGGREGATION_PARTICLE = "Aggregation Particle";
     public static final String COLLABORATOR_SAMPLE_ID = "Collaborator Sample ID";
     public static final String PARTICIPANT_ID = "Participant ID";
     public static final String COLLABORATOR_PARTICIPANT_ID = "Collaborator Participant ID";
@@ -73,6 +74,8 @@ public class ProductOrderSampleBean {
 
     @JsonProperty(COLLABORATOR_SAMPLE_ID)
     private String collaboratorSampleId = "";
+    @JsonProperty(AGGREGATION_PARTICLE)
+    private String aggregationParticle = "";
     @JsonProperty(PRODUCT_ORDER_SAMPLE_ID)
     private Long productOrderSampleId;
     @JsonProperty(UNIQUE_ROW_IDENTIFIER)
@@ -208,6 +211,9 @@ public class ProductOrderSampleBean {
             SampleData sampleData = sample.getSampleData();
             if (preferenceSaver.showColumn(COLLABORATOR_SAMPLE_ID)) {
                 collaboratorSampleId = sampleData.getCollaboratorsSampleName();
+            }
+            if (preferenceSaver.showColumn(AGGREGATION_PARTICLE)) {
+                aggregationParticle = sample.getAggregationParticle();
             }
             if (preferenceSaver.showColumn(PARTICIPANT_ID)) {
                 patientId = sampleData.getPatientId();

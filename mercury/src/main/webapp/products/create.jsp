@@ -691,6 +691,18 @@
                         </div>
 
                         <div class="control-group">
+                            <stripes:label for="aggregationParticle" name="aggregationParticle" class="control-label"/>
+                            <div class="controls">
+                                <stripes:select style="width: auto;" id="aggregationParticle" name="editProduct.defaultAggregationParticle"
+                                                title="Enter the aggregation particle to use when aggregating">
+                                    <stripes:option value="">None</stripes:option>
+                                    <stripes:options-enumeration label="displayName"
+                                            enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
+                                </stripes:select>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
                             <stripes:label for="analysisTypeKey" name="Analysis Type" class="control-label"/>
                             <div class="controls">
                                 <stripes:select id="analysisTypeKey" name="editProduct.analysisTypeKey">
