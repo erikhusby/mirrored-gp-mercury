@@ -1750,10 +1750,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (StringUtils.isNotBlank(customizationJsonString)) {
                 buildJsonObjectFromEditOrderProductCustomizations();
             }
-            if (editOrder.getProduct().getDefaultAggregationParticle() != null
-                && editOrder.getOrderStatus().canPlace()) {
-                editOrder.setDefaultAggregationParticle(editOrder.getProduct().getDefaultAggregationParticle());
-            }
         }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
@@ -2425,7 +2421,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if(productEntity.isClinicalProduct()) {
                 priceTitle = "clinicalPrice";
             }
-
+            productInfo.put("productAgp", productEntity.getDefaultAggregationParticle());
             BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
             productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
 //            String externalPrice = null;

@@ -909,6 +909,11 @@
 
                 priceListText += "Clinical list price: " + data.clinicalPrice;
             }
+
+            if (data.productAgp !== undefined && $j("#aggregationParticle").val() === "") {
+                $j("#aggregationParticle").val(data.productAgp);
+            }
+
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
                 $j("#primaryProductListPrice").show();
@@ -1421,7 +1426,7 @@
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
-            <security:authorizeBlock class="form-horizontal span6">
+            <div class="form-horizontal span6">
                 <stripes:hidden name="productOrder"/>
                 <stripes:hidden name="submitString"/>
                 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
@@ -1604,20 +1609,18 @@
                 </div>
 
             <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                <c:if test="${!actionBean.editOrder.orderStatus.canPlace()}">
-                    <div class="control-group">
-                        <stripes:label for="aggregationParticle" name="aggregationParticle" class="control-label"/>
-                        <div class="controls">
-                            <stripes:select style="width: auto;" id="aggregationParticle"
-                                            name="editOrder.defaultAggregationParticle"
-                                            title="Enter the aggregation particle to use when aggregating">
-                                <stripes:option value="">None</stripes:option>
-                                <stripes:options-enumeration label="displayName"
-                                                             enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
-                            </stripes:select>
-                        </div>
+                <div class="control-group">
+                    <stripes:label for="aggregationParticle" name="aggregationParticle" class="control-label"/>
+                    <div class="controls">
+                        <stripes:select style="width: auto;" id="aggregationParticle"
+                                        name="editOrder.defaultAggregationParticle"
+                                        title="Enter the aggregation particle to use when aggregating">
+                            <stripes:option value="">None</stripes:option>
+                            <stripes:options-enumeration label="displayName"
+                                                         enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
+                        </stripes:select>
                     </div>
-                </c:if>
+                </div>
             </security:authorizeBlock>
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
                 <c:if test="${!actionBean.editOrder.priorToSAP1_5}">

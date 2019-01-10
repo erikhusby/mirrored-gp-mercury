@@ -1027,9 +1027,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public enum AggregationParticle implements Displayable {
-        PDO("PDO (PDO-1243)"),
-        PDO_ALIQUOT("PDO, ALIQUOT (PDO-1243_SM-1234)"),
-        PDO_ALIQUOT_POSITION("PDO, ALIQUOT, POSITION (PDO-1243_SM-1234_1)");
+        PDO("PDO (eg: PDO-1243)"),
+        PDO_ALIQUOT("PDO, Aliquot (eg: PDO-12_SM-34)"),
+        PDO_ALIQUOT_POSITION("PDO, Aliquot, Position (eg: PDO-12_SM-34_01)");
 
         private final String displayName;
 

@@ -212,7 +212,7 @@ public class ProductOrderSampleBean {
             if (preferenceSaver.showColumn(COLLABORATOR_SAMPLE_ID)) {
                 collaboratorSampleId = sampleData.getCollaboratorsSampleName();
             }
-            if (preferenceSaver.showColumn(AGGREGATION_PARTICLE)) {
+            if (sample.getProductOrder().getJiraTicketKey()!=null && preferenceSaver.showColumn(AGGREGATION_PARTICLE)) {
                 aggregationParticle = sample.getAggregationParticle();
             }
             if (preferenceSaver.showColumn(PARTICIPANT_ID)) {
