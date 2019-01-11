@@ -40,22 +40,32 @@ public class AggregationParticleDbFreeTest {
     public void testFindAgpNullSample(){
         productOrder.setDefaultAggregationParticle(Product.AggregationParticle.PDO);
         assertThat(productOrderSample.getAggregationParticle(), equalTo(PDO_12345));
+        assertThat(productOrderSample.getAggregationParticleDisplayValue(), equalTo(PDO_12345));
     }
 
     public void testFindAgpInSampleNullOrder(){
         productOrderSample.setAggregationParticle(SM_1234);
         assertThat(productOrderSample.getAggregationParticle(), equalTo(SM_1234));
+        assertThat(productOrderSample.getAggregationParticleDisplayValue(), equalTo(customValue(SM_1234)));
     }
 
     public void testFindAgpNullSampleAndOrder(){
         assertThat(productOrderSample.getAggregationParticle(), nullValue());
+        assertThat(productOrderSample.getAggregationParticleDisplayValue(), nullValue());
     }
 
     public void testFindAgpSetInSampleThenChangeOrderAgp(){
         productOrderSample.setAggregationParticle(SM_1234);
         assertThat(productOrderSample.getAggregationParticle(), equalTo(SM_1234));
+        assertThat(productOrderSample.getAggregationParticleDisplayValue(), equalTo(customValue(SM_1234)));
 
         productOrder.setDefaultAggregationParticle(Product.AggregationParticle.PDO);
         assertThat(productOrderSample.getAggregationParticle(), equalTo(SM_1234));
+        assertThat(productOrderSample.getAggregationParticleDisplayValue(), equalTo(customValue(SM_1234)));
+    }
+
+
+    private String customValue(String particle) {
+        return "<span class='custom_agp'>" + particle + "</span>";
     }
 }

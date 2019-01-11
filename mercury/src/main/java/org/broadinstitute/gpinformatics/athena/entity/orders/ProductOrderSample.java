@@ -1367,6 +1367,16 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return aggregationParticle;
     }
 
+    public String getAggregationParticleDisplayValue() {
+        String agpValue = getAggregationParticle();
+        boolean hasCustomAgp = this.aggregationParticle != null;
+
+        if (hasCustomAgp) {
+            agpValue = "<span class='custom_agp'>" + agpValue + "</span>";
+        }
+        return agpValue;
+    }
+
     public void setAggregationParticle(String aggregationParticle) {
         this.aggregationParticle = aggregationParticle;
     }

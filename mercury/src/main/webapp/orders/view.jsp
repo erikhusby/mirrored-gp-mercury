@@ -75,6 +75,10 @@
             font-size: 12px;
             font-style: oblique;
         }
+        span.custom_agp:after {
+            content: ' *';
+        }
+
         .ui-progressbar { height:15px}
         #sampleData_info {font-weight: bold}
     </style>
@@ -335,6 +339,12 @@ $j(document).ready(function () {
                 }
                 loadBspData(settings);
                 initColumnVisibility(settings);
+
+                $j("span.custom_agp").tooltip({
+                    delay:800,
+                    title:"Has custom Aggregation Particle"
+                });
+
 
 //                postLoadSampleInfo();
                 // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
