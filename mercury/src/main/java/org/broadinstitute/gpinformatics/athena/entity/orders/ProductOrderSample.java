@@ -123,9 +123,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     private String aggregationParticle;
 
-    @Transient
-    private String cachedAggregationParticle;
-
     /**
      * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
      * reference would otherwise keep this sample alive.
@@ -1361,16 +1358,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     public String getAggregationParticle() {
-        if (cachedAggregationParticle == null) {
-            cachedAggregationParticle = aggregationParticle;
-            if (cachedAggregationParticle == null) {
+            if (aggregationParticle == null) {
                 Product.AggregationParticle defaultAggregationParticle = productOrder.getDefaultAggregationParticle();
                 if (defaultAggregationParticle != null) {
-                    cachedAggregationParticle = defaultAggregationParticle.fromSample(this);
+                    return defaultAggregationParticle.fromSample(this);
                 }
             }
-        }
-        return cachedAggregationParticle;
+        return aggregationParticle;
     }
 
     public void setAggregationParticle(String aggregationParticle) {

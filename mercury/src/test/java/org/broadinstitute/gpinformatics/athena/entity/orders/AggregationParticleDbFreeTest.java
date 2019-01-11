@@ -50,4 +50,12 @@ public class AggregationParticleDbFreeTest {
     public void testFindAgpNullSampleAndOrder(){
         assertThat(productOrderSample.getAggregationParticle(), nullValue());
     }
+
+    public void testFindAgpSetInSampleThenChangeOrderAgp(){
+        productOrderSample.setAggregationParticle(SM_1234);
+        assertThat(productOrderSample.getAggregationParticle(), equalTo(SM_1234));
+
+        productOrder.setDefaultAggregationParticle(Product.AggregationParticle.PDO);
+        assertThat(productOrderSample.getAggregationParticle(), equalTo(SM_1234));
+    }
 }
