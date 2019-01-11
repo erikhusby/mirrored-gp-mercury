@@ -287,6 +287,15 @@ public class BSPRestSender implements Serializable {
                 sourceReceptacleType.setVolume(BigDecimal.ZERO);
             }
         }
+
+        // If the lab event is flagged to remove volume from the source then set it here.
+        if(targetEventType.getManualTransferDetails() != null && targetEventType.removeDestVolFromSource()) {
+            MetadataType metadataType = new MetadataType();
+            // Always add the 'Terminate Depleted' enum display name as BSP will handle termination if the volume is zero.
+            metadataType.setName(LabEventType.SourceHandling.SUBTRACT_DESTINATION_AMOUNT.getDisplayName());
+            metadataType.setValue(Boolean.TRUE.toString());
+            sourceReceptacleType.getMetadata().add(metadataType);
+        }
     }
 
     private Map<VesselPosition, ReceptacleType> buildMapPosToReceptacle(List<PositionMapType> positionMaps) {

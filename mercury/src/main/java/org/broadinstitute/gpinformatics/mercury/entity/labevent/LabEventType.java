@@ -16,6 +16,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -336,9 +337,8 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.BSP_AND_MERCURY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
-                    RackOfTubes.RackType.values())
-            .sourceVolume(true).targetVolume(true).requireSingleParticipant(true).build(), LibraryType.NONE_ASSIGNED,
-            SourceHandling.TERMINATE_DEPLETED),
+                    RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).requireSingleParticipant(true)
+                .build(), LibraryType.NONE_ASSIGNED, SourceHandling.TERMINATE_DEPLETED, true, true),
 
     // Dev Samples
     DEV("DevCherryPick",
@@ -2549,6 +2549,7 @@ public enum LabEventType {
     public enum SourceHandling {
         DEPLETE("Deplete Well"),                    // Expect to deplete the source(s) of the transfer.
         TERMINATE_DEPLETED("Terminate Depleted"),   // Expected to terminate source(s) if the vol/mass reaches zero due to the transfer.
+        SUBTRACT_DESTINATION_AMOUNT("Subtract Destination Amount"), // Expected to subtract destination vol/mass from source.
         NONE("None");                               // No special changes to the source(s) of the transfer.
 
         String displayName;
@@ -2562,6 +2563,46 @@ public enum LabEventType {
         }
     }
 
+    /**
+     * Used to track allowed Stock Types to be used when passing to BSP if necessary.
+     */
+    public enum StockSampleType {
+        None("Not Stock"),
+        ActiveStock("Active Stock"),
+        BackupStock("Backup Stock"),
+        ReservedStock("Reserved Stock");
+
+        private final String name; // the charge type associated with the sample kit type
+
+        /**
+         * Constructor that sets a charge type for the enum.
+         */
+        private StockSampleType(String name) {
+            this.name = name;
+        }
+
+        public String getEnumName() {
+            return name();
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public static StockSampleType getByName(String name) {
+            for (StockSampleType stockSampleType : StockSampleType.values()) {
+                if (stockSampleType.getName().equals(name)) {
+                    return stockSampleType;
+                }
+            }
+            return null;
+        }
+    }
+
+    public List<StockSampleType> getStockTypes() {
+        return Arrays.asList(StockSampleType.values());
+    }
+
     private final LibraryType libraryType;
 
     private String collabSampleSuffix;
@@ -2571,6 +2612,10 @@ public enum LabEventType {
     private String metadataValue;
 
     private SourceHandling sourceHandling;
+
+    private boolean removeDestVolFromSource;
+
+    private boolean enableStockTypeSelection;
 
     /**
      * Determines what metadata is added to messages forwarded to BSP.
@@ -3183,11 +3228,13 @@ public enum LabEventType {
                  SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
                  PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
-                 SourceHandling sourceHandling) {
+                 SourceHandling sourceHandling, boolean removeDestVolFromSource, boolean enableStockTypeSelection) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null, libraryType);
 
         this.sourceHandling = sourceHandling;
+        this.removeDestVolFromSource = removeDestVolFromSource;
+        this.enableStockTypeSelection = enableStockTypeSelection;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -3345,6 +3392,16 @@ public enum LabEventType {
     public SourceHandling getSourceHandling() {
         return sourceHandling;
     }
+
+    /**
+     * @return true if we expect the transfers to remove the destination volume from the source.
+     */
+    public boolean removeDestVolFromSource() { return removeDestVolFromSource; }
+
+    /**
+     * @return true if the event is expected to mark destination samples as Active Stock in BSP.
+     */
+    public boolean enableStockTypeSelection() { return enableStockTypeSelection; }
 
     /**
      * Check whether this event type expects to deplete all sources (if there are any transfers).

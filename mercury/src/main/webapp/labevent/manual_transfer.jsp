@@ -386,6 +386,10 @@
                                                     <c:set var="plate" value="${plateTransfer.sourcePlate}" scope="request"/>
                                                     <c:set var="positionMap" value="${plateTransfer.sourcePositionMap}" scope="request"/>
                                                     <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
+                                                    <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
+                                                    <c:set var="source" value="${true}" scope="request"/>
+                                                    <c:set var="tableName" value="sourceTable" scope="request"/>
+                                                    <c:set var="transferType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
 
                                                     <c:choose>
                                                         <c:when test="${not empty actionBean.selectedSourceGeometry}">
@@ -395,10 +399,6 @@
                                                             <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
                                                         </c:otherwise>
                                                     </c:choose>
-                                                    <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
-                                                    <c:set var="source" value="${true}" scope="request"/>
-                                                    <c:set var="tableName" value="sourceTable" scope="request"/>
-                                                    <c:set var="transferType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
 
                                                     <c:choose>
                                                         <c:when test="${ stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
@@ -429,16 +429,9 @@
                                                 <c:set var="plate" value="${plateTransfer.plate}" scope="request"/>
                                                 <c:set var="positionMap" value="${plateTransfer.positionMap}" scope="request"/>
                                                 <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
-
-                                                <c:if test="${not empty actionBean.selectableTargetTubeTypeOptions}">
-                                                    <stripes:label for="selectedTargetTubeType">Destination Tube Type </stripes:label>
-                                                    <stripes:select name="selectedTargetTubeType"
-                                                                    id="selectedTargetTubeType">
-                                                        <stripes:option value="">Select One</stripes:option>
-                                                        <stripes:options-collection collection="${actionBean.selectableTargetTubeTypeOptions}"/>
-                                                    </stripes:select>
-                                                </c:if>
-
+                                                <c:set var="eventType" value="${stationEvent.eventType}" scope="request"/>
+                                                <c:set var="section" value="${actionBean.manualTransferDetails.targetSection}" scope="request"/>
+                                                <c:set var="source" value="${false}" scope="request"/>
                                                 <c:choose>
                                                     <c:when test="${not empty actionBean.selectedTargetGeometry}">
                                                         <c:set var="vesselTypeGeometry" value="${actionBean.selectedTargetGeometry}" scope="request"/>
@@ -447,9 +440,6 @@
                                                         <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
                                                     </c:otherwise>
                                                 </c:choose>
-                                                <c:set var="eventType" value="${stationEvent.eventType}" scope="request"/>
-                                                <c:set var="section" value="${actionBean.manualTransferDetails.targetSection}" scope="request"/>
-                                                <c:set var="source" value="${false}" scope="request"/>
 
                                                 <c:choose>
                                                     <c:when test = "${eventType.equals('StripTubeBTransfer')}">

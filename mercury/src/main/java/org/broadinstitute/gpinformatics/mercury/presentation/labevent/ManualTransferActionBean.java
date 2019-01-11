@@ -48,6 +48,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -58,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -177,10 +179,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     private VesselTypeGeometry selectedTargetGeometry;
 
-    private List<BarcodedTube.BarcodedTubeType> selectableTargetTubeTypeOptions = new ArrayList<>();
-
-    private String selectedTargetTubeType;
-
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
@@ -266,18 +264,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
         String targetVesselTypeGeometryString = getContext().getRequest().getParameter("stationEvents[0].plate[0].physType");
         if (targetVesselTypeGeometryString != null) {
             selectedTargetGeometry = RackOfTubes.RackType.getByName(targetVesselTypeGeometryString);
-        }
-
-        // Ensure that we keep track of the selected target tube type.
-        if (selectedTargetGeometry != null) {
-            RackOfTubes.RackType selectedTargetRackType =
-                    RackOfTubes.RackType.getByName(selectedTargetGeometry.getDisplayName());
-            List<BarcodedTube.BarcodedTubeType> allowedTargetBarcodedTubeTypes =
-                    selectedTargetRackType.getAllowedChildTypes();
-            if (!CollectionUtils.isEmpty(allowedTargetBarcodedTubeTypes)) {
-                selectableTargetTubeTypeOptions.clear();
-                selectableTargetTubeTypeOptions.addAll(allowedTargetBarcodedTubeTypes);
-            }
         }
     }
 
@@ -661,7 +647,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 for (StationEventType stationEvent : stationEvents) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
                     loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, null, labBatch,
-                            messageCollection, Direction.SOURCE);
+                            messageCollection, Direction.SOURCE, false);
                 }
                 break;
             case PLATE_TRANSFER_EVENT:
@@ -669,7 +655,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                     Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateTransferEventType.getSourcePlate(),
                             plateTransferEventType.getSourcePositionMap(), true, null, labBatch, messageCollection,
-                            Direction.SOURCE);
+                            Direction.SOURCE, false);
                     LabEventType repeatedEvent = manualTransferDetails.getRepeatedEvent();
                     if (repeatedEvent != null) {
                         validateRepeatedEvent(plateTransferEventType, mapBarcodeToVessel, repeatedEvent,
@@ -678,7 +664,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(),
                             manualTransferDetails.isTargetExpectedToExist(),
                             manualTransferDetails.isTargetExpectedEmpty(), labBatch, messageCollection,
-                            Direction.TARGET);
+                            Direction.TARGET, false);
                 }
                 break;
             case STATION_SETUP_EVENT:
@@ -689,11 +675,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
                             plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
-                            Direction.SOURCE);
+                            Direction.SOURCE, false);
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
                             false, null, labBatch, messageCollection,
-                            Direction.TARGET);
+                            Direction.TARGET, false);
 
                     if (messageCollection.hasErrors() || isValidation) {
                         break;
@@ -711,7 +697,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     if (manualTransferDetails.getSecondaryEvent() == null || eventIndex == 0) {
                         Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
                                 plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
-                                Direction.SOURCE);
+                                Direction.SOURCE, false);
 
                         //Check for duplicate molecular indexes in source tubes.
                         Set<String> molIndexSchemes = new HashSet<>();
@@ -795,9 +781,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             }
                         }
                     }
-
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
-                            false, null, labBatch, messageCollection, Direction.TARGET);
+                            false, null, labBatch, messageCollection, Direction.TARGET, true);
+                    verifyCherryPickDestinations(plateCherryPickEvent.getSource(), plateCherryPickEvent.getPositionMap().get(0), messageCollection);
                 }
                 break;
             case RECEPTACLE_PLATE_TRANSFER_EVENT:
@@ -818,6 +804,41 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 break;
         }
     }
+
+    /**
+     * Verify that none of the destinations in the cherry pick exist.
+     *
+     * @param plateCherryPicks      List of cherry pick events.
+     * @param targetPositionMapType Mapping of the destination tubes.
+     * @param messageCollection     Message collection object used to give information back to the user.
+     */
+    private void verifyCherryPickDestinations(List<CherryPickSourceType> plateCherryPicks,
+                                              PositionMapType targetPositionMapType,
+                                              MessageCollection messageCollection) {
+        for (CherryPickSourceType plateCherryPick : plateCherryPicks) {
+
+            ReceptacleType receptacleType = findReceptacleAtPosition(targetPositionMapType, plateCherryPick.getDestinationWell());
+            LabVessel labVessel = labVesselDao.findByIdentifier(receptacleType.getBarcode());
+
+            if (labVessel != null && !labVessel.getTransfersTo().isEmpty()) {
+                for (LabEvent labEvent : labVessel.getTransfersTo()) {
+                    if (!labEvent.getCherryPickTransfers().isEmpty()) {
+                        for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
+                            // For each cherry pick transfer determine if the target tube exists.
+                            VesselContainer<?> containerRole = cherryPickTransfer.getTargetVessel().getContainerRole();
+                            LabVessel targetVessel = containerRole.getVesselAtPosition(cherryPickTransfer.getTargetPosition());
+                            if (targetVessel != null && targetVessel.getLabel().compareToIgnoreCase(labVessel.getLabel()) == 0) {
+                                messageCollection.addError("Destination " + labVessel.getLabel()
+                                                           + " is in the database and has seen transfers.");
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
 
     /**
      * Validate that the sources and destinations in a repeated event are the same as those in the event that it
@@ -938,8 +959,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     private Map<String, LabVessel> loadPlateFromDb(PlateType plateType, PositionMapType positionMapType,
-            boolean required, Boolean expectedEmpty, @Nullable LabBatch labBatch, MessageCollection messageCollection,
-            Direction direction) {
+                                                   boolean required, Boolean expectedEmpty, @Nullable LabBatch labBatch,
+                                                   MessageCollection messageCollection,
+                                                   Direction direction, boolean allowKnownDestinations) {
         Map<String, LabVessel> returnMapBarcodeToVessel = new HashMap<>();
         if (plateType != null) {
             String barcode = plateType.getBarcode();
@@ -980,7 +1002,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     String message = direction.getText() + " " + barcode + " is in the database";
                     if (required) {
                         messageCollection.addInfo(message);
-                    } else {
+                    } else if (!allowKnownDestinations){
                         messageCollection.addError(message);
                     }
                     if (expectedEmpty != null) {
@@ -1207,12 +1229,27 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 manualTransferDetails.getSourceVesselTypeGeometry());
                     }
 
+                    if (labEventType.removeDestVolFromSource()) {
+                        boolean depleteAll = getDepleteAll() != null && getDepleteAll().containsKey(eventIndex) &&
+                                             getDepleteAll().get(eventIndex);
+                        addDepleteMetadata(plateCherryPickEvent.getSourcePositionMap().get(0), depleteAll);
+                    }
+
+                    if (labEventType.enableStockTypeSelection()) {
+                        if(StringUtils.isBlank(getSelectedStockType())) {
+                            addGlobalValidationError("No Stock Type selected to assign to destination samples.");
+                            // Might need to change to be using "addGlobalValidationError" instead. it didn't catch this exception
+                        } else {
+                            addSelectedStockMetadata(plateCherryPickEvent.getPositionMap().get(0), getSelectedStockType());
+                        }
+                    }
+
                     // If there was a selected geometry then we have to specifically set the tube type in the message.
                     if (selectedSourceGeometry != null ) {
 
                         Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
                                 plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
-                                Direction.SOURCE);
+                                Direction.SOURCE, false);
                         // Look up each sample and get the receptacle type.
                         for (ReceptacleType receptacleType : plateCherryPickEvent.getSourcePositionMap().get(0)
                                 .getReceptacle()) {
@@ -1222,18 +1259,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             }
                             if(receptacleType.getReceptacleType() == null) {
                                 receptacleType.setReceptacleType(((BarcodedTube) currentLabVessel).getTubeType().toString());
-                            }
-                        }
-                    }
-
-                    // If there was a selected tube type, update the position map to use it (if the values are null).
-                    if (selectedTargetTubeType != null) {
-                        // Loop through destination types and set their tube type to the selected type
-
-                        PositionMapType positionMapType = plateCherryPickEvent.getPositionMap().get(0);
-                        for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-                            if (receptacleType.getReceptacleType() == null) {
-                                receptacleType.setReceptacleType(selectedTargetTubeType);
                             }
                         }
                     }
@@ -1318,6 +1343,21 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 depleteMeta.setValue(String.valueOf(depleteFlag));
                 receptacleType.getMetadata().add(depleteMeta);
             }
+        }
+    }
+
+    /**
+     * Adds selected stock type to the metadata for all of the given position map entrees.
+     *
+     * @param positionMapType   - position map to update receptacle metadata tag.
+     * @param selectedStockType - Stock type selected.
+     */
+    private void addSelectedStockMetadata(PositionMapType positionMapType, String selectedStockType) {
+        for (ReceptacleType receptacleType: positionMapType.getReceptacle()) {
+            MetadataType metadataType = new MetadataType();
+            metadataType.setName(Metadata.Key.STOCK_TYPE.getDisplayName());
+            metadataType.setValue(String.valueOf(selectedStockType));
+            receptacleType.getMetadata().add(metadataType);
         }
     }
 
@@ -1511,6 +1551,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return depleteAll;
     }
 
+    public String selectedStockType;
+
+    public void setSelectedStockType(String selectedStockType) { this.selectedStockType = selectedStockType; }
+
+    public String getSelectedStockType() { return this.selectedStockType; }
+
     public void setDepleteAll(Map<Integer, Boolean> depleteAll) {
         this.depleteAll = depleteAll;
     }
@@ -1526,15 +1572,4 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     public void setSelectedTargetGeometry(VesselTypeGeometry selectedTargetGeometry) { this.selectedTargetGeometry = selectedTargetGeometry; }
-
-    public List<BarcodedTube.BarcodedTubeType> getSelectableTargetTubeTypeOptions() {
-        return selectableTargetTubeTypeOptions;
-    }
-
-    public String getSelectedTargetTubeType() {
-        return selectedTargetTubeType;
-    }
-
-    public void setSelectedTargetTubeType(String selectedTargetTubeType) { this.selectedTargetTubeType =
-            selectedTargetTubeType; }
 }
