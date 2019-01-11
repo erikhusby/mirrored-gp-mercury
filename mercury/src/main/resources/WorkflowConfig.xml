@@ -1648,7 +1648,7 @@
                     <materialTypes>FRESH_FROZEN_BLOOD</materialTypes>
                     <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FRESH</materialTypes>
                     <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FROZEN</materialTypes>
-                    <workflows>CLINICAL_WHOLE_BLOOD_EXTRACTION</workflows>
+                    <workflows>Clinical Whole Blood Extraction</workflows>  <!-- todo jmt why copy workflow name here? -->
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1885,7 +1885,7 @@
                     <materialTypes>CELLS_CELL_LINE_VIABLE</materialTypes>
                     <materialTypes>CELLS_PELLET_FROZEN_IN_X_MEDIA</materialTypes>
                     <materialTypes>CELL_SUSPENSION</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_CELL_PELLETS</workflows>
+                    <workflows>DNA and RNA from Cell Pellets</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2475,7 +2475,7 @@
                     <materialTypes>CELLS_CELL_LINE_VIABLE</materialTypes>
                     <materialTypes>CELLS_PELLET_FROZEN_IN_X_MEDIA</materialTypes>
                     <materialTypes>CELL_SUSPENSION</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_CELL_PELLETS_BSP</workflows>
+                    <workflows>DNA and RNA from Cell Pellets BSP</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -3335,7 +3335,7 @@
                 <bucketEntryEvaluator>
                     <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
                     <materialTypes>TISSUE_OCT_EMBEDDED_TISSUE</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_FROZEN_TISSUE</workflows>
+                    <workflows>DNA and RNA for Frozen Tissue - AllPrep</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -3735,7 +3735,7 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>STOOL_STOOL</materialTypes>
-                    <workflows>DNA_RNA_EXTRACTION_STOOL</workflows>
+                    <workflows>DNA and RNA from Stool</workflows>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>

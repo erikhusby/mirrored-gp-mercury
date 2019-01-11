@@ -441,6 +441,7 @@ public class LabVesselSearchDefinition {
                 return SearchDefinitionFactory.buildDrillDownLink("", drillDownOption.getTargetEntity(), drillDownOption.getPreferenceScope().name() + "|" + drillDownOption.getPreferenceName() + "|" + drillDownOption.getSearchName(), terms, context);
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerm.setResultParamConfigurationExpression(
             new SearchTerm.Evaluator<ResultParamConfiguration>() {
 
@@ -1902,6 +1903,7 @@ public class LabVesselSearchDefinition {
                 return null;
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -2219,6 +2221,7 @@ public class LabVesselSearchDefinition {
                 return SearchDefinitionFactory.buildDrillDownLink(barcode.toString(), ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context);
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -2247,6 +2250,7 @@ public class LabVesselSearchDefinition {
                 return SearchDefinitionFactory.buildDrillDownLink(barcode, ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context);
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -2304,6 +2308,7 @@ public class LabVesselSearchDefinition {
                 return results.toString();
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();

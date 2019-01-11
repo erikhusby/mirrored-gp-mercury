@@ -83,8 +83,8 @@ public class WorkflowConfig implements PreferenceDefinitionValue, Serializable {
         return sequencingConfigDef;
     }
 
-    public ProductWorkflowDef getWorkflow(@Nonnull Workflow workflow) {
-        return getWorkflowByName(workflow.getWorkflowName());
+    public ProductWorkflowDef getWorkflow(@Nonnull String workflow) {
+        return getWorkflowByName(workflow);
     }
 
     public ProductWorkflowDef getWorkflowByName(String workflowName) {
@@ -204,9 +204,8 @@ public class WorkflowConfig implements PreferenceDefinitionValue, Serializable {
     }
 
     public WorkflowBucketDef findWorkflowBucketDef(@Nonnull ProductOrder productOrder, String bucketName) {
-        for (Workflow productWorkflow : productOrder.getProductWorkflows()) {
-            ProductWorkflowDefVersion workflowDefVersion = getWorkflow(productWorkflow)
-                    .getEffectiveVersion();
+        for (String productWorkflow : productOrder.getProductWorkflows()) {
+            ProductWorkflowDefVersion workflowDefVersion = getWorkflowVersionByName(productWorkflow, new Date());
             WorkflowBucketDef bucketDef = workflowDefVersion.findBucketDefByName(bucketName);
             if (bucketDef != null) {
                 return bucketDef;

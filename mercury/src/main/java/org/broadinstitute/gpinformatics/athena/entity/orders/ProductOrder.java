@@ -42,7 +42,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanc
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -528,20 +527,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
         }
 
-        // In order to do risk calculation on a new PDO sample the FFPE status is fetched for BSP
-        // samples though it's not needed for Mercury samples.
+        // The ProductOrderSample may be a tube barcode, so translate it to its MercurySample
         Map<String, MercurySample> pdoSampleToMercurySample = new HashMap<>();
         for (ProductOrderSample productOrderSample : samples) {
             MercurySample mercurySample = productOrderSample.getMercurySample();
-            if (mercurySample != null && mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+            if (mercurySample != null) {
                 pdoSampleToMercurySample.put(productOrderSample.getName(), mercurySample);
             }
-        }
-
-        if (pdoSampleToMercurySample.isEmpty()) {
-            // This early return is needed to avoid making a unnecessary injection, which could cause
-            // DB Free automated tests to fail.
-            return;
         }
 
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
@@ -2054,17 +2046,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      *
      * @return List of all Workflows associated with the ProductOrder
      */
-    public List<Workflow> getProductWorkflows() {
-        List<Workflow> workflows = new ArrayList<>();
+    public List<String> getProductWorkflows() {
+        List<String> workflows = new ArrayList<>();
         for (ProductOrderAddOn addOn : getAddOns()) {
-            Workflow addOnWorkflow = addOn.getAddOn().getWorkflow();
-            if (addOnWorkflow != Workflow.NONE) {
+            String addOnWorkflow = addOn.getAddOn().getWorkflowName();
+            if (addOnWorkflow != null) {
                 workflows.add(addOnWorkflow);
             }
         }
 
-        Workflow workflow = getProduct().getWorkflow();
-        if (workflow != Workflow.NONE) {
+        String workflow = getProduct().getWorkflowName();
+        if (workflow != null) {
             workflows.add(workflow);
         }
         return workflows;

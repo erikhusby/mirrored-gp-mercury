@@ -49,7 +49,7 @@
                 //alert(barcodes);
                 // Post the scans back
                 $j('#rackScanData').val(barcodes);
-                $j('#abandonForm').attr('action', 'AbandonVessel.action?processRackScan=');
+                $j('#requestedActionType').attr('name', 'processRackScan');
                 $j('#abandonForm').submit();
             }
 
@@ -74,7 +74,7 @@
                     $j( '#abandonDialogOverlay').dialog( "open" );
                     return;
                 } else if( clickedButtonEvent.delegateTarget.id === 'unabandonBtn') {
-                    $j('#abandonForm').attr('action', 'AbandonVessel.action?unabandon=');
+                    $j('#requestedActionType').attr('name', 'unabandon');
                     // Continue on to submit logic
                 } else if( clickedButtonEvent.delegateTarget.id === 'abandonAcceptBtn' ) {
 
@@ -86,7 +86,7 @@
                     }
                     overlay.dialog( 'close' );
 
-                    $j('#abandonForm').attr('action', 'AbandonVessel.action?abandon=');
+                    $j('#requestedActionType').attr('name', 'abandon');
                     $j('#abandonActionReason').val( $j( '#reasonCode').val());
                     // Continue on to submit logic
                 } else {
@@ -105,7 +105,7 @@
             $j(document).ready(function () {
                 // Only valid if a layout exists
                 <c:if test="${actionBean.doLayout}">
-                var json = {"layout": ${actionBean.layoutMap}};
+                var json = {"layout": <enhance:out escapeXml="false">${actionBean.layoutMap}</enhance:out>};
                 console.log(json);
                 $j('#layoutMap').layoutMap(json);
 
@@ -118,7 +118,7 @@
 
     </stripes:layout-component>
     <stripes:layout-component name="content">
-        <stripes:form id="abandonForm" enctype="multipart/form-data" action="AbandonVessel.action" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean" method="post">
+        <stripes:form id="abandonForm" enctype="multipart/form-data" action="AbandonVessel.action" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean" method="POST">
 
         <div id="searchInput" class="form-horizontal">
         <label for="vesselBarcode">Vessel Barcode</label>
@@ -128,6 +128,7 @@
         <input type="hidden" name="redisplayVesselBarcode" id="redisplayVesselBarcode" value="${actionBean.vesselBarcode}"/>
         <input type="hidden" name="abandonActionJson" id="abandonActionJson"/>
         <input type="hidden" name="abandonActionReason" id="abandonActionReason"/>
+        <input type="hidden" name="toBeChanged" id="requestedActionType"/>
         </div>
 
         </stripes:form>

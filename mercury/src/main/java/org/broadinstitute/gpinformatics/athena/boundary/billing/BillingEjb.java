@@ -23,17 +23,22 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.sap.entity.DeliveryCondition;
+import org.broadinstitute.sap.entity.SAPMaterial;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -119,8 +124,10 @@ public class BillingEjb {
     private TemplateEngine templateEngine;
     private BSPUserList bspUserList;
 
+    private SAPProductPriceCache productPriceCache;
+
     public BillingEjb() {
-        this(null, null, null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null, null, null, null);
     }
 
     @Inject
@@ -132,7 +139,8 @@ public class BillingEjb {
                       AppConfig appConfig, SapConfig sapConfig,
                       EmailSender emailSender,
                       TemplateEngine templateEngine,
-                      BSPUserList bspUserList) {
+                      BSPUserList bspUserList,
+                      SAPProductPriceCache productPriceCache) {
 
         this.priceListCache = priceListCache;
         this.billingSessionDao = billingSessionDao;
@@ -144,6 +152,7 @@ public class BillingEjb {
         this.emailSender = emailSender;
         this.templateEngine = templateEngine;
         this.bspUserList = bspUserList;
+        this.productPriceCache = productPriceCache;
     }
 
     /**
@@ -351,10 +360,25 @@ public class BillingEjb {
             .filter(StringUtils::isNotBlank).distinct()
             .collect(Collectors.joining("<br/>"));
 
+        StringBuilder discountText = new StringBuilder();
+        if (StringUtils.equals(quoteImportItem.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
+            discountText.append(Boolean.TRUE.toString()).append(" -- ");
+            final SAPMaterial discountedMaterial = productPriceCache.findByProduct(quoteImportItem.getProduct(),
+                    quoteImportItem.getProductOrder().getSapCompanyConfigurationForProductOrder());
+            final BigDecimal discount = discountedMaterial.getPossibleDeliveryConditions().get(
+                    DeliveryCondition.LATE_DELIVERY_DISCOUNT);
+
+            discountText.append(NumberFormat.getCurrencyInstance().format(discount.doubleValue()));
+
+        } else {
+            discountText.append(Boolean.FALSE.toString());
+        }
+
         rootMap.put("mercuryOrder", quoteImportItem.getProductOrder().getJiraTicketKey());
         rootMap.put("material", quoteImportItem.getProduct().getDisplayName());
         rootMap.put("sapOrderNumber", quoteImportItem.getProductOrder().getSapOrderNumber());
         rootMap.put("sapDeliveryDocuments", sapDocuments);
+        rootMap.put("deliveryDiscount", discountText.toString());
         rootMap.put("quantity", quoteImportItem.getQuantity());
 
         String body;

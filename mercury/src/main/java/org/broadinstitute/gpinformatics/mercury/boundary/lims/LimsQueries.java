@@ -464,11 +464,17 @@ public class LimsQueries {
                 if (pdoSampleForSingleBucket == null) {
                     for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
                         if (productOrderSample.getProductOrder().getProduct() != null) {
-                            reagentDesigns.add(productOrderSample.getProductOrder().getReagentDesignKey());
+                            String reagentDesignKey = productOrderSample.getProductOrder().getReagentDesignKey();
+                            if (StringUtils.isNotBlank(reagentDesignKey)) {
+                                reagentDesigns.add(reagentDesignKey);
+                            }
                         }
                     }
                 } else {
-                    reagentDesigns.add(pdoSampleForSingleBucket.getProductOrder().getReagentDesignKey());
+                    String reagentDesignKey = pdoSampleForSingleBucket.getProductOrder().getReagentDesignKey();
+                    if (StringUtils.isNotBlank(reagentDesignKey)) {
+                        reagentDesigns.add(reagentDesignKey);
+                    }
                 }
             }
             if (reagentDesigns.size() == 0) {

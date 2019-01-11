@@ -37,7 +37,7 @@ public class LabBatchTest {
     private String testLCSetTicketKey;
     private String pdoBusinessName;
     private List<String> pdoNames;
-    private Workflow workflow;
+    private String workflow;
     private Map<String, BarcodedTube> mapBarcodeToTube;
 
     @BeforeMethod
@@ -113,7 +113,7 @@ public class LabBatchTest {
 
 
         Assert.assertNotNull(testBatch.getBatchName());
-        Assert.assertEquals(workflow.getWorkflowName() + ": " + pdoBusinessName, testBatch.getBatchName());
+        Assert.assertEquals(workflow + ": " + pdoBusinessName, testBatch.getBatchName());
 
         Assert.assertNotNull(testBatch.getStartingBatchLabVessels());
         Assert.assertEquals(6, testBatch.getStartingBatchLabVessels().size());

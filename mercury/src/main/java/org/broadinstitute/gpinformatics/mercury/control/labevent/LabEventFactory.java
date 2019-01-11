@@ -579,6 +579,7 @@ public class LabEventFactory implements Serializable {
             extractBarcodes(barcodes, extractPositionMaps);
 
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
 
@@ -1060,9 +1061,43 @@ public class LabEventFactory implements Serializable {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+        trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
+
         LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
         labEvent.setStationEventType(plateTransferEvent);
         return labEvent;
+    }
+
+    /**
+     * In extractions, it is sometimes easier to scan the SM-ID than the manufacturer barcode.  If a barcode starts
+     * with SM-, and it wasn't found when fetched by label, try fetching by sample ID.
+     * @param barcodes           barcodes from the message
+     * @param mapBarcodeToVessel vessels already fetched by manufacturer barcode, added to if fetch by SM-ID is
+     *                           successful
+     * @param mercurySampleDao   used to fetch
+     */
+    public static void trySampleIds(List<String> barcodes, Map<String, LabVessel> mapBarcodeToVessel,
+            MercurySampleDao mercurySampleDao) {
+        List<String> sampleIds = new ArrayList<>();
+        for (String barcode : barcodes) {
+            if (barcode.startsWith("SM-")) {
+                if (mapBarcodeToVessel.get(barcode) == null) {
+                    sampleIds.add(barcode);
+                }
+            }
+        }
+        if (!sampleIds.isEmpty()) {
+            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+            for (Map.Entry<String, MercurySample> sampleIdSampleEntry : mapIdToMercurySample.entrySet()) {
+                MercurySample mercurySample = sampleIdSampleEntry.getValue();
+                if (mercurySample != null) {
+                    Set<LabVessel> labVessel = mercurySample.getLabVessel();
+                    if (labVessel.size() == 1) {
+                        mapBarcodeToVessel.put(sampleIdSampleEntry.getKey(), labVessel.iterator().next());
+                    }
+                }
+            }
+        }
     }
 
     /**
