@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessCo
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -1387,6 +1388,57 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 
+    }
+
+
+    public void testEstimateCustomHigherThanQuote() throws Exception {
+
+        final String testQuoteIdentifier = "testQuote";
+        Quote testQuote = buildSingleTestQuote(testQuoteIdentifier, "12000");
+
+        Product primaryProduct = new Product();
+        primaryProduct.setPartNumber("P-Test_primary");
+        primaryProduct.setPrimaryPriceItem(new PriceItem("primary", "Genomics Platform", "Primary testing size",
+                "Thousand dollar Genome price"));
+        primaryProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName()));
+
+
+        testOrder = new ProductOrder();
+        testOrder.setJiraTicketKey("PDO-TESTPDOValue");
+        testOrder.setProduct(primaryProduct);
+        testOrder.setQuoteId(testQuoteIdentifier);
+        List<ProductOrderSample> sampleList = new ArrayList<>();
+
+        for (int i = 0; i < 75;i++) {
+            sampleList.add(new ProductOrderSample("SM-Test"+i));
+        }
+
+        testOrder.setSamples(sampleList);
+//        SapOrderDetail sapReference = new SapOrderDetail("test001", 75, testOrder.getQuoteId(),
+//                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(),"","");
+//        testOrder.addSapOrderDetail(sapReference);
+
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> returnMaterials = new HashSet<>();
+
+
+        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, testOrder.getProduct(), "2000", "2000",
+                "2000");
+
+        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        stubProductPriceCache.refreshCache();
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
+
+        Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Collections.singletonList(
+                testOrder));
+
+        testOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(new BigDecimal(160.00),null, null));
+
+        actionBean.validateQuoteDetails(testQuote, CoreActionBean.ErrorLevel.ERROR, true, 0);
+
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
     }
 
     private void addPriceItemForProduct(String testQuoteIdentifier, PriceList priceList,
