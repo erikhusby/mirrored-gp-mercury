@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessCo
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -1425,12 +1426,6 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, testOrder.getProduct(), "2000", "2000",
                 "2000");
 
-//        final SAPMaterial primaryMaterial =
-//                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
-//                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-//        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-//        returnMaterials.add(primaryMaterial);
-
         Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
@@ -1439,29 +1434,12 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Collections.singletonList(
                 testOrder));
 
-/**       return calculation from SAP   **/
-//        final Set<OrderValue> sapOrderValues = new HashSet<>();
-//        sapOrderValues.add(new OrderValue("Test_listed_1", BigDecimal.TEN));
-//        sapOrderValues.add(new OrderValue("Test_listed_2", new BigDecimal(23)));
-//        sapOrderValues.add(new OrderValue("Test_listed_3", new BigDecimal(49)));
-//
-//        final int overrideCalculatedOrderValue = 70000;
-//        sapOrderValues.add(new OrderValue("test001", new BigDecimal(overrideCalculatedOrderValue)));
-//
-//        final OrderCalculatedValues testCalculatedValues = new OrderCalculatedValues(
-//                new BigDecimal(overrideCalculatedOrderValue), sapOrderValues);
-//
-//        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(),
-//                Mockito.anyString(), Mockito.any(ProductOrder.class)
-//        )).thenReturn(
-//                testCalculatedValues);
-/******                                                   *****/
+        testOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(new BigDecimal(160.00),null, null));
 
         actionBean.validateQuoteDetails(testQuote, CoreActionBean.ErrorLevel.ERROR, true, 0);
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
     }
-
 
     private void addPriceItemForProduct(String testQuoteIdentifier, PriceList priceList,
                                         Collection<QuoteItem> quoteItems, Product primaryOrderProduct,

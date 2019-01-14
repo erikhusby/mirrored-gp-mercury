@@ -82,6 +82,9 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -89,9 +92,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -609,6 +609,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
+
+        // adding customizations in order to allow it to be validated against the quote.
+        if (StringUtils.isNotBlank(customizationJsonString)) {
+            buildJsonObjectFromEditOrderProductCustomizations();
+            editOrder.updateCustomSettings(productCustomizations);
+        }
 
         if(editOrder.getProduct() != null) {
             if(ProductOrder.OrderAccessType.COMMERCIAL.getDisplayName().equals(orderType) &&
@@ -1747,9 +1753,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                         editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
 //                }
             }
-            if (StringUtils.isNotBlank(customizationJsonString)) {
-                buildJsonObjectFromEditOrderProductCustomizations();
-            }
         }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
@@ -1759,7 +1762,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         try {
             productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
-                    productCustomizations, saveOrderMessageCollection);
+                    saveOrderMessageCollection);
             originalBusinessKey = null;
 
 
