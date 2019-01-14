@@ -59,6 +59,14 @@ plate / rack.
     }
 
 </style>
+<script type="text/javascript">
+    $j(document).ready(function () {
+        // Update the destination fields with the value entered in the update all destinations field.
+        $j('#updateAllDestinationVolumes').change(function () {
+            $j('[id^=destRcpVol]').val($(this).val());
+        });
+    });
+</script>
 
 <c:set var="sourceVolRemove" value="${source and actionBean.labEventType.removeDestVolFromSource()}"/>
 <%-- todo jmt id is not unique --%>
@@ -77,6 +85,12 @@ plate / rack.
                        <c:if test="${stockType.name == actionBean.selectedStockType}">checked</c:if>
                 />
             </c:forEach>
+        </p>
+    </c:if>
+
+    <c:if test="${!source}">
+        <p class="control-group">
+            <label for="updateAllDestinationVolumes">Update All Destination Volumes:</label><input type="text" id="updateAllDestinationVolumes"/>
         </p>
     </c:if>
 
