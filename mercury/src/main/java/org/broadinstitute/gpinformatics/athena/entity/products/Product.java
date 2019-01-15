@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.SAPMaterial;
@@ -21,6 +22,8 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -122,6 +125,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private Integer insertSize;
     private BigDecimal loadingConcentration;
     private Boolean pairedEndRead;
+
+    @Enumerated(EnumType.STRING)
+    private FlowcellDesignation.IndexType indexType;
 
     /**
      * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
@@ -248,6 +254,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         clonedProduct.setInsertSize(productToClone.getInsertSize());
         clonedProduct.setLoadingConcentration(productToClone.getLoadingConcentration());
         clonedProduct.setPairedEndRead(productToClone.getPairedEndRead());
+        clonedProduct.setIndexType(productToClone.getIndexType());
         clonedProduct.setClinicalProduct(productToClone.isClinicalProduct());
 
         for (RiskCriterion riskCriterion : productToClone.getRiskCriteria()) {
@@ -403,6 +410,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public void setPairedEndRead(Boolean pairedEndRead) {
         // Disallows setting a non-null value to null.
         this.pairedEndRead = (this.pairedEndRead != null) ? Boolean.TRUE.equals(pairedEndRead) : pairedEndRead;
+    }
+
+    public FlowcellDesignation.IndexType getIndexType() {
+        return indexType == null ? FlowcellDesignation.IndexType.DUAL : indexType;
+    }
+
+    public void setIndexType(FlowcellDesignation.IndexType indexType) {
+        this.indexType = indexType;
     }
 
     public boolean isTopLevelProduct() {
