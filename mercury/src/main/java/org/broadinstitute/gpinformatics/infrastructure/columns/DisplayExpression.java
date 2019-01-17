@@ -291,6 +291,13 @@ public enum DisplayExpression {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getOriginalMaterialType();
         }
+    }),
+    SPECIES(SampleData.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            SampleData sampleData = (SampleData) entity;
+            return sampleData.getOrganism();
+        }
     });
 
     private final Class<?> expressionClass;

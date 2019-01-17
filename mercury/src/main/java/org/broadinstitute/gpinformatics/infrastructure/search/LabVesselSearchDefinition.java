@@ -686,6 +686,11 @@ public class LabVesselSearchDefinition {
             searchTerm.setDisplayExpression(DisplayExpression.ORIGINAL_MATERIAL_TYPE);
             searchTerms.add(searchTerm);
         }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.SPECIES);
+            searchTerm.setDisplayExpression(DisplayExpression.SPECIES);
+            searchTerms.add(searchTerm);
+        }
         return searchTerms;
     }
 
@@ -1720,13 +1725,35 @@ public class LabVesselSearchDefinition {
 
         // ******** Allow individual selectable result columns for each sample metadata value *******
         for (Metadata.Key meta : Metadata.Key.values()) {
-            if (meta.getCategory() == Metadata.Category.SAMPLE) {
+            if (meta.getCategory() == Metadata.Category.SAMPLE &&
+                BSPSampleSearchColumn.getByName(meta.getDisplayName()) == null)
+            {
                 searchTerm = new SearchTerm();
                 searchTerm.setName(meta.getDisplayName());
                 searchTerm.setDisplayExpression(DisplayExpression.METADATA);
                 searchTerms.add(searchTerm);
             }
         }
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Metadata Source");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> sources = new HashSet<>();
+                if (labVessel != null) {
+                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                        if (!sampleInstanceV2.isReagentOnly()) {
+                            sources.add(sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource().getDisplayName());
+                        }
+                    }
+
+                }
+                return sources;
+            }
+        });
+        searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Abandon Reason");
