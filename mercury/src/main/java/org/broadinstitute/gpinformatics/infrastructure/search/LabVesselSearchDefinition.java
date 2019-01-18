@@ -1737,22 +1737,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Metadata Source");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                LabVessel labVessel = (LabVessel) entity;
-                Set<String> sources = new HashSet<>();
-                if (labVessel != null) {
-                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        if (!sampleInstanceV2.isReagentOnly()) {
-                            sources.add(sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource().getDisplayName());
-                        }
-                    }
-
-                }
-                return sources;
-            }
-        });
+        searchTerm.setDisplayExpression(DisplayExpression.METADATA_SOURCE);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
