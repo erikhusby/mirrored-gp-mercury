@@ -3,8 +3,9 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -1028,8 +1029,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public enum AggregationParticle implements Displayable {
         PDO("PDO (eg: PDO-1243)"),
-        PDO_ALIQUOT("PDO, Aliquot (eg: PDO-12_SM-34)"),
-        PDO_ALIQUOT_POSITION("PDO, Aliquot, Position (eg: PDO-12_SM-34_01)");
+        PDO_ALIQUOT("PDO, Aliquot (eg: PDO-12.SM-34)");
+        private static final Log log = LogFactory.getLog(AggregationParticle.class);
 
         private final String displayName;
 
@@ -1042,21 +1043,19 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             return displayName;
         }
 
-        public String fromSample(ProductOrderSample productOrderSample) {
+        public String build(String sampleId, String productOrderKey) {
+
             switch (this) {
             case PDO:
-                return productOrderSample.getProductOrder().getJiraTicketKey();
+                return productOrderKey;
             case PDO_ALIQUOT:
-                return String.format("%s_%s",
-                    productOrderSample.getProductOrder().getJiraTicketKey(),
-                    productOrderSample.getSampleKey()
-                );
-            case PDO_ALIQUOT_POSITION:
-                return String.format("%s_%s_%02d",
-                    productOrderSample.getProductOrder().getJiraTicketKey(),
-                    productOrderSample.getSampleKey(),
-                    productOrderSample.getSamplePosition() + 1
-                );
+                if (!StringUtils.isAnyBlank(sampleId, productOrderKey)) {
+                    return String.format("%s.%s", productOrderKey, sampleId);
+                } else {
+                    log.error(String.format(
+                        "null value passed into AggregationParticle.build [sampleId: %s, productOrderKey: %s]",
+                        sampleId, productOrderKey));
+                }
             }
             return null;
         }

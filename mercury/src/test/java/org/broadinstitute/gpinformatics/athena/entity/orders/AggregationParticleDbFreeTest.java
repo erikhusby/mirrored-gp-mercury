@@ -13,59 +13,34 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class AggregationParticleDbFreeTest {
 
     public static final String PDO_12345 = "PDO-12345";
     public static final String SM_1234 = "SM-1234";
-    ProductOrderSample productOrderSample;
-    ProductOrder productOrder;
 
-    @BeforeMethod
-    public void setUp() {
-        productOrderSample = ProductOrderSampleTestFactory.createDBFreeSampleList(SM_1234).iterator().next();
-        productOrder = ProductOrderTestFactory.createDummyProductOrder(PDO_12345);
-        productOrder.addSample(productOrderSample);
+    public void testFindAgpWithPdo(){
+        assertThat(Product.AggregationParticle.PDO.build(SM_1234, PDO_12345), equalTo(PDO_12345));
+    }
+
+    public void testFindAgpWithPdoAliquot(){
+        assertThat(Product.AggregationParticle.PDO_ALIQUOT.build(SM_1234, PDO_12345), equalTo(PDO_12345 + "." + SM_1234));
     }
 
     public void testFindAgpNullSample(){
-        productOrder.setDefaultAggregationParticle(Product.AggregationParticle.PDO);
-        assertThat(productOrderSample.getAggregationParticle(), equalTo(PDO_12345));
-        assertThat(productOrderSample.getAggregationParticleDisplayValue(), equalTo(PDO_12345));
+        assertThat(Product.AggregationParticle.PDO_ALIQUOT.build(null,PDO_12345), equalTo(null));
     }
 
-    public void testFindAgpInSampleNullOrder(){
-        productOrderSample.setAggregationParticle(SM_1234);
-        assertThat(productOrderSample.getAggregationParticle(), equalTo(SM_1234));
-        assertThat(productOrderSample.getAggregationParticleDisplayValue(), equalTo(customValue(SM_1234)));
+    public void testFindAgpNullOrder(){
+        assertThat(Product.AggregationParticle.PDO_ALIQUOT.build(SM_1234,null), equalTo(null));
     }
 
     public void testFindAgpNullSampleAndOrder(){
-        assertThat(productOrderSample.getAggregationParticle(), nullValue());
-        assertThat(productOrderSample.getAggregationParticleDisplayValue(), nullValue());
-    }
-
-    public void testFindAgpSetInSampleThenChangeOrderAgp(){
-        productOrderSample.setAggregationParticle(SM_1234);
-        assertThat(productOrderSample.getAggregationParticle(), equalTo(SM_1234));
-        assertThat(productOrderSample.getAggregationParticleDisplayValue(), equalTo(customValue(SM_1234)));
-
-        productOrder.setDefaultAggregationParticle(Product.AggregationParticle.PDO);
-        assertThat(productOrderSample.getAggregationParticle(), equalTo(SM_1234));
-        assertThat(productOrderSample.getAggregationParticleDisplayValue(), equalTo(customValue(SM_1234)));
-    }
-
-
-    private String customValue(String particle) {
-        return "<span class='custom_agp'>" + particle + "</span>";
+        assertThat(Product.AggregationParticle.PDO_ALIQUOT.build(null,null), equalTo(null));
     }
 }

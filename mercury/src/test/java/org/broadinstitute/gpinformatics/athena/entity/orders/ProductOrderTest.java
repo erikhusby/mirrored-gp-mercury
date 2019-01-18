@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFa
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
@@ -141,6 +140,7 @@ public class ProductOrderTest {
                 .ignoreProperty("clinicalAttestationConfirmed")
                 .ignoreProperty("analyzeUmiOverride")
                 .ignoreProperty("reagentDesignKey")
+                .ignoreProperty("defaultAggregationParticle")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 

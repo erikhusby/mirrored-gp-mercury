@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefData
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -39,7 +40,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
-import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -88,10 +88,10 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 // TODO: extend and use capabilities of BaseEventTest
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -209,7 +209,7 @@ public class ZimsIlluminaRunFactoryTest {
         testProductOrder =
                 new ProductOrder(101L, "Test Order", pdoSamples, "Quote-1", testProduct, testResearchProject);
         testProductOrder.setJiraTicketKey("TestPDO-1");
-
+        testProductOrder.setDefaultAggregationParticle(Product.AggregationParticle.PDO_ALIQUOT);
         Mockito.when(productOrderDao.findByBusinessKey(PRODUCT_ORDER_KEY)).thenReturn(testProductOrder);
 
         reagents = makeTestReagents(testSampleIds.size(), false);
@@ -280,12 +280,15 @@ public class ZimsIlluminaRunFactoryTest {
             String sampleId = testSampleIds.get(sampleIdx);
             MercurySample mercurySample = new MercurySample(sampleId,
                     MercurySample.MetadataSource.BSP);
+            ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
+            mercurySample.addProductOrderSample(productOrderSample);
+            testProductOrder.addSample(productOrderSample);
             testTube.addSample(mercurySample);
 
             if (!isPositiveControl(sampleId)) {
                 BucketEntry bucketEntry =
-                        new BucketEntry(testTube, testProductOrder, null, BucketEntry.BucketEntryType.PDO_ENTRY);
-
+                        new BucketEntry(testTube, testProductOrder, new Bucket("Pico/Plating Bucket"), BucketEntry.BucketEntryType.PDO_ENTRY);
+                testTube.addBucketEntry(bucketEntry);
                 for (int batchTypeIdx = 0; batchTypeIdx < testLabBatchTypes.length; batchTypeIdx++) {
                     LabBatch.LabBatchType testLabBatchType = testLabBatchTypes[batchTypeIdx];
                     int suffix = batchTypeIdx + 1;
@@ -295,12 +298,6 @@ public class ZimsIlluminaRunFactoryTest {
                     }
                     LabBatch batch = new LabBatch(batchName, Collections.<LabVessel>singleton(testTube), testLabBatchType);
 
-                    SampleInstanceV2 instance = new SampleInstanceV2(testTube);
-                    instance.addReagent(reagents.get(sampleIdx));
-                    if (addBait) {
-                        instance.addReagent(designedReagent);
-                    }
-
                     if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
                         JiraTicket lcSetTicket = new JiraTicket(mockJiraService, batchName);
                         batch.setJiraTicket(lcSetTicket);
@@ -308,6 +305,13 @@ public class ZimsIlluminaRunFactoryTest {
                         batch.addBucketEntry(bucketEntry);
                         bucketEntry.setLabBatch(batch);
                     }
+
+                    SampleInstanceV2 instance = new SampleInstanceV2(testTube);
+                    instance.addReagent(reagents.get(sampleIdx));
+                    if (addBait) {
+                        instance.addReagent(designedReagent);
+                    }
+
                     sampleInstanceDtoList.add(new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance,
                             sampleId, getPdoKeyForSample(sampleId), null, null, mercurySample.getSampleKey(),
                             areCrspSamples,metadataSourceForPipeline));
@@ -639,6 +643,7 @@ public class ZimsIlluminaRunFactoryTest {
                 Assert.assertEquals(libraryBean.getReferenceSequence(), "Homo_sapiens_assembly19");
                 Assert.assertEquals(libraryBean.getReferenceSequenceVersion(), "1");
                 Assert.assertEquals(libraryBean.getAligner(), "bwa");
+                Assert.assertEquals(libraryBean.getAggregationParticle(), sampleId + "." + "TestPDO-1");
             }
             else {
                 numPositiveControls++;

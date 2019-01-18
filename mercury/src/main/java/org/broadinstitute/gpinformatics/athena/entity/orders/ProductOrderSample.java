@@ -1358,12 +1358,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     public String getAggregationParticle() {
-            if (aggregationParticle == null) {
-                Product.AggregationParticle defaultAggregationParticle = productOrder.getDefaultAggregationParticle();
-                if (defaultAggregationParticle != null) {
-                    return defaultAggregationParticle.fromSample(this);
-                }
-            }
         return aggregationParticle;
     }
 

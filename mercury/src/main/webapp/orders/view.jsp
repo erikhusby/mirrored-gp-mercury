@@ -22,7 +22,6 @@
     <c:set var="columnHeaderCollaboratorSampleId" value="<%= ProductOrderSampleBean.COLLABORATOR_SAMPLE_ID %>"/>
     <c:set var="columnHeaderCollaboratorParticipantId" value="<%= ProductOrderSampleBean.COLLABORATOR_PARTICIPANT_ID %>"/>
     <c:set var="columnHeaderParticipantId" value="<%= ProductOrderSampleBean.PARTICIPANT_ID %>"/>
-    <c:set var="columnHeaderAggregationParticle" value="<%= ProductOrderSampleBean.AGGREGATION_PARTICLE %>"/>
     <c:set var="columnHeaderVolume" value="<%= ProductOrderSampleBean.VOLUME %>"/>
     <c:set var="columnHeaderReceivedDate" value="<%= ProductOrderSampleBean.RECEIVED_DATE %>"/>
     <c:set var="columnHeaderSampleType" value="<%= ProductOrderSampleBean.SAMPLE_TYPE %>"/>
@@ -74,9 +73,6 @@
             margin-left: 1em;
             font-size: 12px;
             font-style: oblique;
-        }
-        span.custom_agp:after {
-            content: ' *';
         }
 
         .ui-progressbar { height:15px}
@@ -254,7 +250,6 @@ $j(document).ready(function () {
                 {"data": "${columnHeaderCollaboratorSampleId}", "title": "${columnHeaderCollaboratorSampleId}", "class": "${fn:replace(columnHeaderCollaboratorSampleId,' ','').trim()}"},
                 {"data": "${columnHeaderParticipantId}", "title": "${columnHeaderParticipantId}"},
                 {"data": "${columnHeaderCollaboratorParticipantId}", "title": "${columnHeaderCollaboratorParticipantId}"},
-                {"data": "${columnHeaderAggregationParticle}", "title": "${columnHeaderAggregationParticle}"},
                 </security:authorizeBlock>
 
                 {"data": "${columnHeaderShippedDate}", "title": "${columnHeaderShippedDate}"},
@@ -339,11 +334,6 @@ $j(document).ready(function () {
                 }
                 loadBspData(settings);
                 initColumnVisibility(settings);
-
-                $j("span.custom_agp").tooltip({
-                    delay:800,
-                    title:"Has custom Aggregation Particle"
-                });
 
 
 //                postLoadSampleInfo();
