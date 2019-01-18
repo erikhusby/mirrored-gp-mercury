@@ -1583,7 +1583,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <div class="controls">
             <div class="form-value">
                 <c:if test="${actionBean.editOrder.quoteIdSet}">
-                    ${actionBean.editOrder.quoteSource}:
                     <c:if test="${ not actionBean.editOrder.hasSapQuote()}">
                         <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                     </c:if>

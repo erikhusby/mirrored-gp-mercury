@@ -316,7 +316,7 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    if (item.getProductOrder().getQuoteSourceType() != null) {
+                    if (item.getProductOrder().getQuoteSource() != null) {
                         if (!item.getProductOrder().hasSapQuote()) {
 
                             PriceAdjustment singlePriceAdjustment =

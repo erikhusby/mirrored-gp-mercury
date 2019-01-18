@@ -3391,7 +3391,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void validateQuoteOptions(String action) {
 
         if(action.equals(PLACE_ORDER_ACTION)) {
-            requireField(editOrder.getQuoteSourceType(), " a quote source type selected", action);
+            requireField(editOrder.getQuoteSource(), " a quote source type selected", action);
         }
 
         if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER) ||

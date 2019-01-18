@@ -1659,8 +1659,7 @@
                     <div class="controls">
                         <stripes:select name="editOrder.quoteSource" id="quoteSource" onchange="updateFundsRemaining()">
                             <stripes:option value="">Select a Source For the Quote</stripes:option>
-                            <stripes:options-collection collection="${actionBean.quoteSources}" label="displayName"
-                                                        value="displayName"/>
+                            <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.QuoteSourceType" label="displayName" />
                         </stripes:select>
                     </div>
                 </div>

@@ -297,8 +297,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
 
+    @Enumerated(EnumType.STRING)
     @Column(name="QUOTE_SOURCE")
-    private String quoteSource;
+    private QuoteSourceType quoteSource;
 
 
     @Transient
@@ -340,7 +341,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
                 new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
                 toClone.getResearchProject());
-        cloned.setQuoteSource(toClone.getQuoteSourceType());
+        cloned.setQuoteSource(toClone.getQuoteSource());
         List<Product> potentialAddons = new ArrayList<>();
 
         for (ProductOrderAddOn cloneAddon : toClone.getAddOns()) {
@@ -2548,20 +2549,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
-    public String getQuoteSource() {
+    public QuoteSourceType getQuoteSource() {
         return quoteSource;
     }
 
-    public QuoteSourceType getQuoteSourceType() {
-        return QuoteSourceType.getByDisplayName(quoteSource);
-    }
-
-    public void setQuoteSource(String quoteSource) {
-        this.quoteSource = quoteSource;
-    }
-
     public void setQuoteSource(QuoteSourceType quoteSourceType) {
-        this.quoteSource = quoteSourceType.getDisplayName();
+        this.quoteSource = quoteSourceType;
     }
 
     public boolean needsCustomization(Product product) {
@@ -2638,11 +2631,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public boolean hasSapQuote() {
-        return isQuoteIdSet() && QuoteSourceType.SAP_SOURCE == getQuoteSourceType();
+        return isQuoteIdSet() && QuoteSourceType.SAP_SOURCE == getQuoteSource();
     }
 
     public boolean hasQuoteServerQuote() {
-        return isQuoteIdSet() && QuoteSourceType.QUOTE_SERVER == getQuoteSourceType();
+        return isQuoteIdSet() && QuoteSourceType.QUOTE_SERVER == getQuoteSource();
     }
 
 }
