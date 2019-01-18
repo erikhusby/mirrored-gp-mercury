@@ -70,7 +70,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -805,14 +804,19 @@ public class LabEventFactory implements Serializable {
      * @param positionMapType from message
      * @param mapBarcodeToVessel previously fetched tubes (allows use of Mercury Sample key or vessel barcode)
      */
-    @NotNull
     private String makeDigest(PositionMapType positionMapType, Map<String, LabVessel> mapBarcodeToVessel) {
         List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
         for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-            LabVessel labVessel = mapBarcodeToVessel.get(receptacleType.getBarcode());
+            String barcode = receptacleType.getBarcode();
+            // A ReceptacleType with no barcode (position only) is used to set volumes on plate wells, but there is
+            // no digest for this.
+            if (barcode == null) {
+                return null;
+            }
+            LabVessel labVessel = mapBarcodeToVessel.get(barcode);
             positionBarcodeList.add(new ImmutablePair<>(
                     VesselPosition.getByName(receptacleType.getPosition()),
-                    labVessel ==  null ? receptacleType.getBarcode() : labVessel.getLabel()));
+                    labVessel ==  null ? barcode : labVessel.getLabel()));
         }
         return TubeFormation.makeDigest(positionBarcodeList);
     }
@@ -1101,7 +1105,9 @@ public class LabEventFactory implements Serializable {
     private void findTubeFormations(List<PositionMapType> positionMaps, Map<String, LabVessel> mapBarcodeToVessel) {
         for (PositionMapType positionMap : positionMaps) {
             String digest = makeDigest(positionMap, mapBarcodeToVessel);
-            mapBarcodeToVessel.put(digest, tubeFormationDao.findByDigest(digest));
+            if (digest != null) {
+                mapBarcodeToVessel.put(digest, tubeFormationDao.findByDigest(digest));
+            }
         }
     }
 
