@@ -643,7 +643,7 @@ public class ZimsIlluminaRunFactoryTest {
                 Assert.assertEquals(libraryBean.getReferenceSequence(), "Homo_sapiens_assembly19");
                 Assert.assertEquals(libraryBean.getReferenceSequenceVersion(), "1");
                 Assert.assertEquals(libraryBean.getAligner(), "bwa");
-                Assert.assertEquals(libraryBean.getAggregationParticle(), sampleId + "." + "TestPDO-1");
+                Assert.assertEquals(libraryBean.getAggregationParticle(), "TestPDO-1" + "." + sampleId);
             }
             else {
                 numPositiveControls++;
