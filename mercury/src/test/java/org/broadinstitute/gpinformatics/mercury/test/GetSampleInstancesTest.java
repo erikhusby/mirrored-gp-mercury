@@ -721,4 +721,102 @@ public class GetSampleInstancesTest {
 
         BaseEventTest.runTransferVisualizer(l1T1);
     }
+
+    /**
+     * Test LCSET inference for an Ultra Low Pass Genome, followed by a Custom Panel on the Ponds.
+     * E.g. GPLIM-5727
+     */
+    @Test
+    public void testUlpThenExomeOnPonds() {
+        // DNA Tubes
+        BarcodedTube dnaTube1 = new BarcodedTube("DNA1");
+        dnaTube1.addSample(new MercurySample("SM-1", MercurySample.MetadataSource.BSP));
+        BarcodedTube dnaTube2 = new BarcodedTube("DNA2");
+        dnaTube2.addSample(new MercurySample("SM-2", MercurySample.MetadataSource.BSP));
+
+        // ULP LCSET
+        HashSet<LabVessel> ulpStarterVessels = new HashSet<>();
+        ulpStarterVessels.add(dnaTube1);
+        ulpStarterVessels.add(dnaTube2);
+        LabBatch ulpLcset = new LabBatch("LCSET-1", ulpStarterVessels, LabBatch.LabBatchType.WORKFLOW);
+        ulpLcset.setWorkflowName(Workflow.WHOLE_GENOME); // todo jmt ULP workflow?
+        Bucket bucket = new Bucket("Pico");
+        ProductOrder ulpPdo = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-ULP",
+                Workflow.WHOLE_GENOME, 101L, "Test research project", "Test research project", false, "UlpWgs", "1",
+                "UlpWgsQuoteId");
+        ulpLcset.addBucketEntry(new BucketEntry(dnaTube1, ulpPdo, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+        ulpLcset.addBucketEntry(new BucketEntry(dnaTube2, ulpPdo, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 2));
+
+        // DNA Rack
+        HashMap<VesselPosition, BarcodedTube> dnaMapPositionToTube = new HashMap<>();
+        dnaMapPositionToTube.put(VesselPosition.A01, dnaTube1);
+        dnaMapPositionToTube.put(VesselPosition.A02, dnaTube2);
+        TubeFormation dnaTf = new TubeFormation(dnaMapPositionToTube, RackOfTubes.RackType.Matrix96);
+
+        // Pond Rack
+        BarcodedTube pondTube1 = new BarcodedTube("POND1");
+        BarcodedTube pondTube2 = new BarcodedTube("POND2");
+        HashMap<VesselPosition, BarcodedTube> pondMapPositionToTube = new HashMap<>();
+        pondMapPositionToTube.put(VesselPosition.A01, pondTube1);
+        pondMapPositionToTube.put(VesselPosition.A02, pondTube2);
+        TubeFormation pondTf = new TubeFormation(pondMapPositionToTube, RackOfTubes.RackType.Matrix96);
+
+        // PondRegistration
+        LabEvent pondReg = new LabEvent(LabEventType.POND_REGISTRATION, new Date(), "BATMAN", 1L, 1L, "Bravo");
+        pondReg.getSectionTransfers().add(new SectionTransfer(dnaTf.getContainerRole(), SBSSection.ALL96, null,
+                pondTf.getContainerRole(), SBSSection.ALL96, null, pondReg));
+
+        // Pool rack
+        BarcodedTube ulpPoolTube = new BarcodedTube("Pool");
+        HashMap<VesselPosition, BarcodedTube> poolMapPositionToTube = new HashMap<>();
+        poolMapPositionToTube.put(VesselPosition.A01, ulpPoolTube);
+        TubeFormation poolTf = new TubeFormation(poolMapPositionToTube, RackOfTubes.RackType.Matrix96);
+
+        // Pooling Transfer
+        LabEvent poolingEvnt = new LabEvent(LabEventType.POOLING_TRANSFER, new Date(), "BATMAN", 1L, 1L, "Hamilton");
+        poolingEvnt.getCherryPickTransfers().add(new CherryPickTransfer(pondTf.getContainerRole(), VesselPosition.A01,
+                null, poolTf.getContainerRole(), VesselPosition.A01, null, poolingEvnt));
+        poolingEvnt.getCherryPickTransfers().add(new CherryPickTransfer(pondTf.getContainerRole(), VesselPosition.A02,
+                null, poolTf.getContainerRole(), VesselPosition.A01, null, poolingEvnt));
+
+        // Exome LCSET
+        HashSet<LabVessel> exomeStarterVessels = new HashSet<>();
+        exomeStarterVessels.add(pondTube1);
+        exomeStarterVessels.add(pondTube2);
+        LabBatch exomeLcset = new LabBatch("LCSET-2", exomeStarterVessels, LabBatch.LabBatchType.WORKFLOW);
+        exomeLcset.setWorkflowName(Workflow.ICE_EXOME_EXPRESS); // todo jmt custom panel workflow?
+        Bucket iceBucket = new Bucket("ICE");
+        ProductOrder icePdo = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-EXOME",
+                Workflow.ICE_EXOME_EXPRESS, 101L, "Test research project", "Test research project", false, "Exome", "1",
+                "ExomeQuoteId");
+        exomeLcset.addBucketEntry(new BucketEntry(pondTube1, icePdo, iceBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+        exomeLcset.addBucketEntry(new BucketEntry(pondTube2, icePdo, iceBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 2));
+
+        // Selection Pool rack
+        BarcodedTube selPoolTube = new BarcodedTube("Pool");
+        HashMap<VesselPosition, BarcodedTube> selPoolMapPositionToTube = new HashMap<>();
+        selPoolMapPositionToTube.put(VesselPosition.A01, selPoolTube);
+        TubeFormation selPoolTf = new TubeFormation(selPoolMapPositionToTube, RackOfTubes.RackType.Matrix96);
+
+        // SelectionPoolingTransfer
+        LabEvent selPoolingEvnt = new LabEvent(LabEventType.SELECTION_POOLING, new Date(), "BATMAN", 1L, 1L, "Hamilton");
+        selPoolingEvnt.getCherryPickTransfers().add(new CherryPickTransfer(pondTf.getContainerRole(), VesselPosition.A01,
+                null, selPoolTf.getContainerRole(), VesselPosition.A01, null, selPoolingEvnt));
+        selPoolingEvnt.getCherryPickTransfers().add(new CherryPickTransfer(pondTf.getContainerRole(), VesselPosition.A02,
+                null, selPoolTf.getContainerRole(), VesselPosition.A01, null, selPoolingEvnt));
+
+        // SelectionCatchRegistration
+        // PoolingTransfer
+
+        // Validate all transfers
+        Set<SampleInstanceV2> ulpSampleInstances = ulpPoolTube.getSampleInstancesV2();
+        Assert.assertEquals(ulpSampleInstances.size(), 2);
+        // todo jmt single bucket entry?
+        Assert.assertEquals(ulpSampleInstances.iterator().next().getSingleBatch().getBatchName(), ulpLcset.getBatchName());
+
+        Set<SampleInstanceV2> exomeSampleInstances = selPoolTube.getSampleInstancesV2();
+        Assert.assertEquals(exomeSampleInstances.size(), 2);
+        // todo jmt single bucket entry?
+        Assert.assertEquals(exomeSampleInstances.iterator().next().getSingleBatch().getBatchName(), exomeLcset.getBatchName());
+    }
 }

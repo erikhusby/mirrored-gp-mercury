@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
@@ -626,6 +627,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         // Multiple workflow batches need help.
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
         else if (singleWorkflowBatch == null) {
+            /* todo jmt if event matches any workflows unambiguously */
+            new WorkflowLoader().load().getWorkflowByName().getEffectiveVersion(labEvent.getEventDate()).findStepByEventType(labEventType.getName()).getPredecessors();
             Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
             if (computedLcsets.size() != 1) {
