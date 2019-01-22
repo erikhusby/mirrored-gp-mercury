@@ -264,7 +264,13 @@ public class ZimsIlluminaRunFactoryTest {
 
     /** Creates multiple dtos, one for each combination of testSampleId and testLabBatchType. */
     private List<ZimsIlluminaRunFactory.SampleInstanceDto> createSampleInstanceDto(
-            boolean areCrspSamples, boolean addBait, LabBatch.LabBatchType... testLabBatchTypes) {
+        boolean areCrspSamples, boolean addBait, LabBatch.LabBatchType... testLabBatchTypes) {
+        return createSampleInstanceDto(areCrspSamples, addBait, null, testLabBatchTypes);
+    }
+
+    private List<ZimsIlluminaRunFactory.SampleInstanceDto> createSampleInstanceDto(
+        boolean areCrspSamples, boolean addBait, String aggregationParticle,
+        LabBatch.LabBatchType... testLabBatchTypes) {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> sampleInstanceDtoList = new ArrayList<>();
         String metadataSourceForPipeline = MercurySample.BSP_METADATA_SOURCE;
         if (areCrspSamples) {
@@ -282,6 +288,7 @@ public class ZimsIlluminaRunFactoryTest {
                     MercurySample.MetadataSource.BSP);
             ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
             mercurySample.addProductOrderSample(productOrderSample);
+            productOrderSample.setAggregationParticle(aggregationParticle);
             testProductOrder.addSample(productOrderSample);
             testTube.addSample(mercurySample);
 
@@ -652,6 +659,42 @@ public class ZimsIlluminaRunFactoryTest {
         Assert.assertEquals(numPositiveControls,1);
         Assert.assertTrue(foundNonControlSamples);
     }
+
+    public void testAggregationParticleDefaultOnPdoButCustomOnPdoSample() {
+        final int numberOfBatchTypeParameters = 2;
+        String aggregationParticle = "agg_particle";
+        List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
+                createSampleInstanceDto(false, true, aggregationParticle, LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.BSP);
+        int numSampleInstancesExpected = (testSampleIds.size() * numberOfBatchTypeParameters) - 1; // subtract out the control since it's not in a batch
+        assertThat(instanceDtoList.size(), equalTo(numSampleInstancesExpected));
+
+        mapKeyToProductOrder.values().forEach(productOrder -> productOrder.setDefaultAggregationParticle(
+            Product.AggregationParticle.PDO_ALIQUOT));
+
+        List<LibraryBean>  zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, mapWorkflowToMetadata);
+
+        boolean assertionTested = false;
+        for (LibraryBean libraryBean : zimsIlluminaRuns) {
+            String sampleId = libraryBean.getSampleId();
+            int testSampleIdsIndex = findSampleIndex(sampleId);
+            Assert.assertTrue(testSampleIdsIndex >= 0, "Unknown sampleId " + sampleId);
+            String reagentIndexName = reagents.get(testSampleIdsIndex).getMolecularIndexingScheme().getName();
+            Assert.assertNotNull(reagentIndexName, "no index for " + sampleId);
+            String tubeBarcode = "testTube" + testSampleIdsIndex;
+
+            if (!isPositiveControl(sampleId)) {
+                Assert.assertEquals(libraryBean.getAggregationParticle(), aggregationParticle);
+                assertionTested = true;
+            }
+//            else {
+//                numPositiveControls++;
+//            }
+        }
+//        Assert.assertEquals(numPositiveControls,1);
+        Assert.assertTrue(assertionTested);
+    }
+
 
     public void testUnalignedLibraryBean() {
         testProductOrder.setResearchProject(noRefSeqResearchProject);
