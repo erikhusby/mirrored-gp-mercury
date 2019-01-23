@@ -538,7 +538,7 @@
                         <c:choose>
                             <%--If there are multiple source & target vessel geometries allowed and one hasn't been selected, we need to be able to select the option and re-display the page.--%>
                             <c:when test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometries && not empty actionBean.manualTransferDetails.targetVesselTypeGeometries && empty actionBean.selectedSourceGeometry}">
-                                <stripes:submit name="viewTransfer" value="View Transfer" class="btn"/>
+                                <stripes:submit name="viewTransfer" id="viewTransfer" value="View Transfer" class="btn"/>
                             </c:when>
                             <c:otherwise>
 
