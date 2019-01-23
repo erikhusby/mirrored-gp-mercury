@@ -48,7 +48,10 @@ public class FingerprintFixupTest extends Arquillian {
 
     /**
      * Run to delete fingerprint when consent is withdrawn.  This test reads its input from a file,
-     * mercury/src/test/resources/testdata/DeleteFingerprints.txt, so it can be re-used.
+     * mercury/src/test/resources/testdata/DeleteFingerprints.txt, so it can be re-used.  The format is as follows:
+     * SUPPORT-4812 consent withdrawal
+     * broadinstitute.org:bsp.prod.sample:GJMGD
+     * broadinstitute.org:bsp.prod.sample:GHRIH
      */
     @Test(enabled = false)
     public void support4812DeleteFingerprint()
