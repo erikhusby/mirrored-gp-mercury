@@ -661,38 +661,55 @@ public class ZimsIlluminaRunFactoryTest {
     }
 
     public void testAggregationParticleDefaultOnPdoButCustomOnPdoSample() {
-        final int numberOfBatchTypeParameters = 2;
-        String aggregationParticle = "agg_particle";
+        final String aggregationParticle = "agg_particle";
         List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
                 createSampleInstanceDto(false, true, aggregationParticle, LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.BSP);
-        int numSampleInstancesExpected = (testSampleIds.size() * numberOfBatchTypeParameters) - 1; // subtract out the control since it's not in a batch
-        assertThat(instanceDtoList.size(), equalTo(numSampleInstancesExpected));
+
+        List<LibraryBean>  zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.emptyMap(), mapWorkflowToMetadata);
+
+        // No default AGP, result should be "agg_particle"
+        zimsIlluminaRuns.forEach(libraryBean -> validateAgp(libraryBean, aggregationParticle));
+
+        // Test that setting a default on the PDO doesn't change the expected value
+        mapKeyToProductOrder.values().forEach(productOrder -> productOrder.setDefaultAggregationParticle(
+            Product.AggregationParticle.PDO_ALIQUOT));
+
+        zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.emptyMap(), mapWorkflowToMetadata);
+
+        // Even with default AGP, result should be "agg_particle" since an AGP on the sample takes priority
+        zimsIlluminaRuns.forEach(libraryBean -> validateAgp(libraryBean, aggregationParticle));
+    }
+
+    public void testAggregationParticleDefaultOnPdoChangeDefault() {
+        List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
+                createSampleInstanceDto(false, true, LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.BSP);
+
+        mapKeyToProductOrder.values().forEach(productOrder -> productOrder.setDefaultAggregationParticle(
+            Product.AggregationParticle.PDO));
+
+        List<LibraryBean> zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.emptyMap(), mapWorkflowToMetadata);
+
+        // No AGP on Sample result will be the default (PDO)
+        zimsIlluminaRuns.forEach(libraryBean -> validateAgp(libraryBean,libraryBean.getProductOrderKey()));
 
         mapKeyToProductOrder.values().forEach(productOrder -> productOrder.setDefaultAggregationParticle(
             Product.AggregationParticle.PDO_ALIQUOT));
 
-        List<LibraryBean>  zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
-                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, mapWorkflowToMetadata);
+        zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.emptyMap(), mapWorkflowToMetadata);
 
-        boolean assertionTested = false;
-        for (LibraryBean libraryBean : zimsIlluminaRuns) {
-            String sampleId = libraryBean.getSampleId();
-            int testSampleIdsIndex = findSampleIndex(sampleId);
-            Assert.assertTrue(testSampleIdsIndex >= 0, "Unknown sampleId " + sampleId);
-            String reagentIndexName = reagents.get(testSampleIdsIndex).getMolecularIndexingScheme().getName();
-            Assert.assertNotNull(reagentIndexName, "no index for " + sampleId);
-            String tubeBarcode = "testTube" + testSampleIdsIndex;
+        // No AGP on Sample default changed so the result will change as well (PDO-SMID)
+        zimsIlluminaRuns.forEach(libraryBean -> validateAgp(libraryBean,
+            String.format("%s.%s", libraryBean.getProductOrderKey(), libraryBean.getSampleId())));
+    }
 
-            if (!isPositiveControl(sampleId)) {
-                Assert.assertEquals(libraryBean.getAggregationParticle(), aggregationParticle);
-                assertionTested = true;
-            }
-//            else {
-//                numPositiveControls++;
-//            }
+    private void validateAgp(LibraryBean libraryBean, String aggregationParticle) {
+        if (!isPositiveControl(libraryBean.getSampleId())) {
+            Assert.assertEquals(libraryBean.getAggregationParticle(), aggregationParticle);
         }
-//        Assert.assertEquals(numPositiveControls,1);
-        Assert.assertTrue(assertionTested);
     }
 
 
