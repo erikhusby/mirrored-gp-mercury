@@ -1918,4 +1918,9 @@
             <column name="FP_GENOTYPE_ID"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="GPLIM-6005-001" author="epolk">
+        <dropNotNullConstraint columnName="research_project_id" schemaName="mercury" tableName="manifest_session"/>
+    </changeSet>
+
 </databaseChangeLog>

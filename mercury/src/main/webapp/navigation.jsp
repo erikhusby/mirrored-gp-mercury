@@ -337,6 +337,11 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
                                       event="bySkId">Receive By SK-ID</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="receiveMayoPkg"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoReceivingActionBean"
+                                      event="view">Receive Mayo Package</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>

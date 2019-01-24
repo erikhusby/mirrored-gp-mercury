@@ -340,6 +340,35 @@ sap:
       password:   SAPERP300!
       sapSupportEmail: BUSSYS@broadinstitute.org
       sapSupportEmailSubjectPrefix: "SAP Order"
+
+MayoManifestGoogleStorage:
+    DEV:
+        credentialDirectory: /Users/epolk/GoogleCloudStorage
+        credentialFilename: mercurymayoreader.json
+        project: ancient-snow-228719
+        bucketName: ep-test-spreadsheets-2019
+    TEST:
+        credentialDirectory: /Users/epolk/GoogleCloudStorage
+        credentialFilename: mercurymayoreader.json
+        project: ancient-snow-228719
+        bucketName: ep-test-spreadsheets-2019
+    QA:
+        credentialDirectory: /Users/epolk/GoogleCloudStorage
+        credentialFilename: mercurymayoreader.json
+        project: ancient-snow-228719
+        bucketName: ep-test-spreadsheets-2019
+    RC:
+        credentialDirectory: /Users/epolk/GoogleCloudStorage
+        credentialFilename: mercurymayoreader.json
+        project: ancient-snow-228719
+        bucketName: ep-test-spreadsheets-2019
+    PROD:
+        credentialDirectory: /Users/epolk/GoogleCloudStorage
+        credentialFilename: mercurymayoreader.json
+        project: ancient-snow-228719
+        bucketName: ep-test-spreadsheets-2019
+
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
@@ -362,7 +391,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
-
+      MayoManifestGoogleStorage: DEV
 
     AUTO_BUILD:
 
@@ -383,6 +412,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      MayoManifestGoogleStorage: DEV
 
     TEST:
 
@@ -403,6 +433,7 @@ mercury:
       infiniumStarter: DEV
       sap:  RC
       decoder: DEV
+      MayoManifestGoogleStorage: TEST
 
     QA:
       app:      QA
@@ -422,6 +453,7 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
+      MayoManifestGoogleStorage: QA
 
     RC:
 
@@ -442,7 +474,7 @@ mercury:
       infiniumStarter: QA
       sap:  RC
       decoder: QA
-
+      MayoManifestGoogleStorage: RC
 
     PROD:
 
@@ -463,4 +495,4 @@ mercury:
       infiniumStarter: PROD
       sap:  PROD
       decoder: PROD
-
+      MayoManifestGoogleStorage: PROD

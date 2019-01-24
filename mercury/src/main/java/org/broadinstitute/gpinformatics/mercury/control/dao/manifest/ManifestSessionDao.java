@@ -84,4 +84,9 @@ public class ManifestSessionDao extends GenericDao {
                     }
                 });
     }
+
+    /** Returns the manifests that contain the given package id. */
+    public List<ManifestSession> getSessionsForPackage(String packageId) {
+        return findList(ManifestSession.class, ManifestSession_.sessionPrefix, packageId);
+    }
 }

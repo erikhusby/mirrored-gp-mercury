@@ -4,9 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
-import org.apache.poi.hssf.usermodel.HSSFPalette;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -94,11 +92,18 @@ public final class PoiSpreadsheetParser {
             Row row = rows.next();
             // Creates a mapping of the header name to data cell value.
             Map<String, String> dataByHeader = new HashMap<>();
-            for (int i = 0; i < processor.getHeaderNames().size(); i++) {
-                String headerName = processor.getHeaderNames().get(i);
-                ColumnHeader columnHeader = processor.findColumnHeaderByName(headerName);
-                // Columns not found in the Headers enum are still mapped, and are treated as string values.
-                dataByHeader.put(headerName, extractCellContent(row, i, columnHeader));
+            if (processor.getHeaderNames().isEmpty()) {
+                for (int i = 0; i < row.getLastCellNum(); ++i) {
+                    // Preserves the column order when there are no pre-defined header names.
+                    dataByHeader.put(String.format("%02d", i), extractCellContent(row, i, null));
+                }
+            } else {
+                for (int i = 0; i < processor.getHeaderNames().size(); i++) {
+                    String headerName = processor.getHeaderNames().get(i);
+                    ColumnHeader columnHeader = processor.findColumnHeaderByName(headerName);
+                    // Columns not found in the Headers enum are still mapped, and are treated as string values.
+                    dataByHeader.put(headerName, extractCellContent(row, i, columnHeader));
+                }
             }
 
             if (processor.quitOnMatch(dataByHeader.values())) {
@@ -267,6 +272,12 @@ public final class PoiSpreadsheetParser {
         // todo jmt this could all be replaced with return new HSSFDataFormatter().formatCellValue( cell );
     }
 
+    public static String convertDoubleStringToDateString(String numericValue) {
+        Cell cell = (new HSSFWorkbook()).createSheet().createRow(0).createCell(0, Cell.CELL_TYPE_NUMERIC);
+        cell.setCellValue(Double.parseDouble(numericValue));
+        return DATE_FORMATTER.format(cell.getDateCellValue());
+    }
+
     /**
      * Get the names of all the worksheets in the tracker file.
      *
@@ -294,8 +305,7 @@ public final class PoiSpreadsheetParser {
         Workbook workbook = WorkbookFactory.create(inputStream);
         int numberOfSheets = workbook.getNumberOfSheets();
         for (int i = 0; i < numberOfSheets; i++) {
-            Sheet sheet = workbook.getSheetAt(i);
-            sheetNames.add(sheet.getSheetName());
+            sheetNames.add(workbook.getSheetName(i));
         }
 
         return sheetNames;
