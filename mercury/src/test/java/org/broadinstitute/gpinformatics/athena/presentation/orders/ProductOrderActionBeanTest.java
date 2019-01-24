@@ -70,7 +70,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
@@ -87,6 +86,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;
@@ -116,6 +116,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -1384,7 +1385,7 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 
-        actionBean.validateQuoteDetails(testQuote, CoreActionBean.ErrorLevel.ERROR, true, 0);
+        actionBean.validateQuoteDetails(testQuote, true, 0);
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 
@@ -1568,5 +1569,82 @@ public class ProductOrderActionBeanTest {
         return samples;
     }
 
+    public void testQuoteOptionsFundsReservation() throws Exception {
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
+        funding.setGrantNumber("1234");
+        funding.setGrantStartDate(new Date());
+        Date oneWeek = DateUtils.getOneWeek();
+        funding.setGrantEndDate(oneWeek);
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel.setPercent("100");
+
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteService(mockQuoteService);
+
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
+
+        assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
+        assertThat(fundingDetails.get("grantEndDate"), equalTo(DateUtils.getDate(oneWeek)));
+        assertThat(fundingDetails.get("activeGrant"), is(true));
+        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7));
+    }
+
+    public void testQuoteOptionsPurchaseOrder() throws Exception {
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.PURCHASE_ORDER, "test", "c333");
+        funding.setPurchaseOrderNumber("1234");
+        funding.setGrantStartDate(new Date());
+        Date oneWeek = DateUtils.getOneWeek();
+        funding.setGrantEndDate(oneWeek);
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel.setPercent("100");
+
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteService(mockQuoteService);
+
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
+        assertThat(quoteFundingJson.getString("key"), is(quoteId));
+        assertThat(quoteFundingJson.getString("fundsRemaining"), equalTo("$100.00"));
+        assertThat(quoteFundingJson.getString("status"), equalTo("Funded"));
+
+        // Purchase Orders do not have funding details
+        assertThat(fundingDetails.length(), is(0));
+
+    }
+
+    public void testQuoteOptionsNoFunding() throws Exception {
+         String quoteId = "DNA4JD";
+         testOrder = new ProductOrder();
+         FundingLevel fundingLevel = new FundingLevel();
+         Funding funding = new Funding();
+         fundingLevel.setFunding(Collections.singleton(funding));
+         QuoteFunding quoteFunding = new QuoteFunding();
+         Quote testQuote = buildSingleTestQuote(quoteId, "2");
+         testQuote.setQuoteFunding(quoteFunding);
+         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+         actionBean.setQuoteIdentifier(quoteId);
+         actionBean.setQuoteService(mockQuoteService);
+
+         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        assertThat(quoteFundingJson.getString("error"), is("Unable to complete evaluating order values:  null"));
+         assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
+     }
 
 }
