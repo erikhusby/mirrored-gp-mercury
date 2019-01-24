@@ -766,15 +766,15 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     public String getAggregationParticle() {
         ProductOrderSample productOrderSample = getProductOrderSampleForSingleBucket();
         if (productOrderSample != null) {
-            if (productOrderSample.getAggregationParticle() != null) {
-                return productOrderSample.getAggregationParticle();
-            } else {
+            if (productOrderSample.getAggregationParticle() == null) {
                 ProductOrder productOrder = productOrderSample.getProductOrder();
                 Product.AggregationParticle defaultAggregationParticle = productOrder.getDefaultAggregationParticle();
                 if (defaultAggregationParticle != null) {
                     return defaultAggregationParticle
                         .build(getNearestMercurySampleName(), productOrder.getJiraTicketKey());
                 }
+            } else {
+                return productOrderSample.getAggregationParticle();
             }
         }
 
