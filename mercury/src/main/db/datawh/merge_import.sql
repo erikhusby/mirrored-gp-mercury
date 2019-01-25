@@ -78,7 +78,7 @@ AS
 
       DELETE FROM flowcell_designation
       WHERE designation_id IN (
-        SELECT designation_id
+        SELECT batch_starting_vessel_id
         FROM im_fct_create
         WHERE is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' flowcell_designation (lab batch vessel ETL) rows' );
@@ -2016,13 +2016,13 @@ AS
           SELECT MAX(ETL_DATE)
           INTO V_LATEST_ETL_DATE
           FROM flowcell_designation
-          WHERE batch_starting_vessel_id = new.batch_starting_vessel_id;
+          WHERE designation_id = new.batch_starting_vessel_id;
 
           -- Do an update only if this ETL date greater than what's in DB already
           IF new.etl_date > V_LATEST_ETL_DATE THEN
-            -- Update/Insert
+            -- Update/Insert  Note:  designation_id and batch_starting_vessel_id are synonymous
             UPDATE flowcell_designation
-            SET designation_id    = new.designation_id,
+            SET designation_id    = new.batch_starting_vessel_id,
               fct_id              = new.fct_id,
               fct_name            = new.fct_name,
               fct_type            = new.fct_type,
@@ -2034,10 +2034,11 @@ AS
               concentration       = new.concentration,
               is_pool_test        = new.is_pool_test,
               etl_date            = new.etl_date
-            WHERE batch_starting_vessel_id = new.batch_starting_vessel_id;
+            WHERE designation_id = new.batch_starting_vessel_id;
 
             V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
           ELSIF V_LATEST_ETL_DATE IS NULL THEN
+            -- Note:  designation_id and batch_starting_vessel_id are synonymous
             INSERT INTO flowcell_designation (
               batch_starting_vessel_id, designation_id, fct_id,
               fct_name, fct_type,
@@ -2045,12 +2046,11 @@ AS
               flowcell_type, lane, concentration,
               is_pool_test, etl_date  )
             VALUES(
-              new.batch_starting_vessel_id,
-              new.designation_id, new.fct_id,
-                                  new.fct_name, new.fct_type,
-                                  new.designation_library, new.loading_vessel, new.creation_date,
-                                  new.flowcell_type, new.lane, new.concentration,
-                                  new.is_pool_test, new.etl_date
+              new.batch_starting_vessel_id, new.batch_starting_vessel_id, new.fct_id,
+              new.fct_name, new.fct_type,
+              new.designation_library, new.loading_vessel, new.creation_date,
+              new.flowcell_type, new.lane, new.concentration,
+              new.is_pool_test, new.etl_date
             );
             V_INS_COUNT := V_INS_COUNT  + SQL%ROWCOUNT;
             -- ELSE ignore older ETL extract
@@ -2082,7 +2082,7 @@ AS
           SELECT COUNT(*)
           INTO V_COUNT
           FROM flowcell_designation
-          WHERE batch_starting_vessel_id = new.batch_starting_vessel_id;
+          WHERE designation_id = new.batch_starting_vessel_id;
 
           IF V_COUNT = 0 THEN
             DBMS_OUTPUT.PUT_LINE( TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_fct_load.dat (FCT load event ETL) line '
@@ -2092,7 +2092,7 @@ AS
             -- Update only
             UPDATE flowcell_designation
             SET flowcell_barcode = new.flowcell_barcode
-            WHERE batch_starting_vessel_id   = new.batch_starting_vessel_id;
+            WHERE designation_id   = new.batch_starting_vessel_id;
             V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
           END IF;
 

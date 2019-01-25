@@ -560,6 +560,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
             ledgerQuantities = productOrderSample.getLedgerQuantities();
 
+            for(Map.Entry<PriceItem, ProductOrderSample.LedgerQuantities> quantityEntry: ledgerQuantities.entrySet()) {
+                if(quantityEntry.getValue().getTotal()>0) {
+                    anyQuantitySet = true;
+                }
+            }
+
             boolean primaryBilled = false;
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
                 PriceItem priceItem = ledgerEntry.getPriceItem();
@@ -568,9 +574,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 if (priceItemType == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM
                     || priceItemType == LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM) {
                     primaryBilled = true;
-                }
-                if(ledgerEntry.getQuantity()>0) {
-                    anyQuantitySet = true;
                 }
             }
 
@@ -649,6 +652,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public void setQuantities(Map<Long, ProductOrderSampleQuantities> quantities) {
             this.quantities = quantities;
         }
+
     }
 
     /**

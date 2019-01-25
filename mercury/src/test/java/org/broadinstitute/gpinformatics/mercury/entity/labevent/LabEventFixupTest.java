@@ -1958,6 +1958,31 @@ public class LabEventFixupTest extends Arquillian {
     }
 
     /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ClearManualOverrideLabEvents.txt,
+     * so it can be used for other similar fixups, without writing a new test.  It is used to clear previous LabBatch
+     * manual overrides of LabEvents.  Example contents of the file are:
+     * GPLIM-5906
+     * 3117214
+     */
+    @Test(enabled = false)
+    public void fixupGplim5906() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ClearManualOverrideLabEvents.txt"));
+        String jiraTicket = lines.get(0);
+        for (String id : lines.subList(1, lines.size())) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
+            labEvent.setManualOverrideLcSet(null);
+            System.out.println("Lab event " + labEvent.getLabEventId() + " clear manual override");
+        }
+
+        labEventDao.persist(new FixupCommentary(jiraTicket + " clear manual override"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    /**
      * A Pond Registration in PCR Plus workflow must be PCR Plus Pond Registration in order to ETL the library name <br/>
      * ETL refresh events 1982110 and 1983690 after ticket deployed and this test is run
      */

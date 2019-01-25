@@ -732,7 +732,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                     }
                                     for (SampleInstanceV2 sample : currentLabVessel.getSampleInstancesV2()) {
                                         String rootSampleName = sample.getMercuryRootSampleName();
-                                        rootSampleIds.add(rootSampleName);
+                                        if (rootSampleName == null) {
+                                            messageCollection.addError("No root sample for " +
+                                                    currentLabVessel.getLabel());
+                                        } else {
+                                            rootSampleIds.add(rootSampleName);
+                                        }
                                         mapPositionToSampleIds.put(receptacleType.getPosition(), rootSampleName);
                                     }
                                 }
