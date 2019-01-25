@@ -35,11 +35,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
-import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -68,6 +66,7 @@ public class MayoManifestEjb {
     public static final String NOT_A_TUBE = "Tube %s matches an existing vessel but it is not a tube.";
     public static final String JIRA_PROBLEM = "Problem creating or updating RCT ticket: %s";
     public static final BarcodedTube.BarcodedTubeType DEFAULT_TUBE_TYPE = BarcodedTube.BarcodedTubeType.MatrixTube;
+    public static final RackOfTubes.RackType DEFAULT_RACK_TYPE = RackOfTubes.RackType.Matrix96;
 
     private ManifestSessionDao manifestSessionDao;
     private GoogleBucketDao googleBucketDao;
@@ -333,76 +332,93 @@ public class MayoManifestEjb {
             tubeMap.get(sampleToTube.get(sampleName)).addSample(mercurySample);
         }
 
-        try {
-            JiraTicket jiraTicket = makeOrUpdateRct(packageBarcode, rack, reverseRackScan.keySet(), sampleMap.keySet());
+        JiraTicket jiraTicket = makeOrUpdateRct(packageBarcode, rack, reverseRackScan.keySet(), sampleMap.keySet(),
+                messages);
+        if (jiraTicket != null) {
             newEntities.add(jiraTicket);
-            messages.addInfo("Created " + jiraTicket.getBrowserUrl());
-
             labVesselDao.persistAll(newEntities);
+        }
+    }
+
+    // Infers the rack type from the vessel positions in the rackScan.
+    public RackOfTubes.RackType inferRackType(Collection<String> positionNames) {
+        // Prefers the default rack type over any others.
+        List<RackOfTubes.RackType> searchList = new ArrayList<>();
+        searchList.add(DEFAULT_RACK_TYPE);
+        searchList.addAll(Arrays.asList(RackOfTubes.RackType.values()));
+
+        Set<VesselPosition> positions = positionNames.stream().
+                map(VesselPosition::getByName).
+                collect(Collectors.toSet());
+
+        return searchList.stream().
+                filter(type -> type.isRackScannable() && CollectionUtils.isSubCollection(positions,
+                        Arrays.asList(type.getVesselGeometry().getVesselPositions()))).
+                findFirst().
+                orElse(null);
+    }
+
+    private JiraTicket makeOrUpdateRct(String packageBarcode, RackOfTubes rack, final Collection<String> tubeBarcodes,
+            final Collection<String> sampleNames, MessageCollection messages) {
+
+        List<CustomField> customFieldList = new ArrayList<CustomField>() {{
+            add(new CustomField(new CustomFieldDefinition("customfield_15660", "Material Type Counts", true),
+                    String.valueOf(tubeBarcodes.size())));
+            add(new CustomField(new CustomFieldDefinition("customfield_15661", "Shipment Condition", true),
+                    "ok"));
+        }};
+        JiraTicket jiraTicket = null;
+        try {
+            // Checks the rack for an existing RCT ticket. Every Mayo rack should have a linked RCT ticket
+            // so that Mercury can easily tell if it's a Mayo rack. There shouldn't be more than one but if
+            // there is just use the most recent one.
+            jiraTicket = rack.getJiraTickets().stream().
+                    filter(t -> t.getTicketName().startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
+                    sorted(Comparator.comparing(JiraTicket::getTicketName).reversed()).
+                    findFirst().orElse(null);
+            JiraIssue jiraIssue;
+            String title = String.format("Mayo rack %s, package %s", rack.getLabel(), packageBarcode);
+            String comment;
+            String issueStatus = null;
+            if (jiraTicket != null) {
+                jiraIssue = jiraService.getIssue(jiraTicket.getTicketId());
+                JiraIssue issueInfo = jiraService.getIssueInfo(jiraIssue.getKey());
+                issueStatus = issueInfo.getStatus();
+                messages.addInfo("Updated " + urlLink(jiraTicket));
+            } else {
+                jiraIssue = jiraService.createIssue(CreateFields.ProjectType.RECEIPT_PROJECT,
+                        userBean.getLoginUserName(), CreateFields.IssueType.RECEIPT, title, customFieldList);
+                // Writes the RCT title which for some reason gets ignored in the create.
+                CustomFieldDefinition summaryDef = new CustomFieldDefinition("summary", "Summary", true);
+                jiraService.updateIssue(jiraIssue.getKey(), Collections.singleton(new CustomField(summaryDef, title)));
+                // Links RCT ticket to the rack.
+                jiraTicket = new JiraTicket(jiraService, jiraIssue.getKey());
+                rack.addJiraTicket(jiraTicket);
+                messages.addInfo("Created " + urlLink(jiraTicket));
+            }
+
+            // Writes a comment and transition that depends on if samples are known.
+            if (sampleNames.isEmpty()) {
+                comment = String.format("Vessels from Mayo package %s have been received, but " +
+                        "samples could not be accessioned because the manifest was not found.", packageBarcode);
+            } else if (ManifestSessionEjb.JiraTransition.ACCESSIONED.getStateName().equals(issueStatus)) {
+                comment = String.format("Samples from Mayo package %s have been re-accessioned: %s",
+                        packageBarcode, sampleNames.stream().sorted().collect(Collectors.joining(", ")));
+            } else {
+                comment = String.format("Samples from Mayo package %s have been accessioned: %s",
+                        packageBarcode, sampleNames.stream().sorted().collect(Collectors.joining(", ")));
+                jiraIssue.postTransition(ManifestSessionEjb.JiraTransition.ACCESSIONED.getStateName(), comment);
+            }
+            jiraIssue.addComment(comment);
 
         } catch (Exception e) {
             logger.error(JIRA_PROBLEM, e);
             messages.addError(JIRA_PROBLEM, e.toString());
         }
-    }
-
-    // Looks at the vessel positions in the rackScan and infers the rack type.
-    public RackOfTubes.RackType inferRackType(Collection<String> positionNames) {
-        Set<VesselPosition> positions = positionNames.stream().
-                map(VesselPosition::getByName).
-                collect(Collectors.toSet());
-
-        for (RackOfTubes.RackType rackType : RackOfTubes.RackType.values()) {
-            if (rackType.isRackScannable() &&
-                    CollectionUtils.isSubCollection(positions,
-                    Arrays.asList(rackType.getVesselGeometry().getVesselPositions()))) {
-                return rackType;
-            }
-        }
-        return null;
-    }
-
-    private JiraTicket makeOrUpdateRct(String packageBarcode, RackOfTubes rack, final Collection<String> tubeBarcodes,
-            final Collection<String> sampleNames) throws IOException {
-
-        // Every Mayo rack gets an RCT ticket linked to it.
-        JiraTicket jiraTicket = rack.getJiraTickets().stream().
-                filter(t -> t.getTicketId().startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
-                sorted(Comparator.comparing(JiraTicket::getTicketId).reversed()).
-                findFirst().orElse(null);
-        JiraIssue jiraIssue;
-        if (jiraTicket != null) {
-            jiraIssue = jiraService.getIssue(jiraTicket.getTicketId());
-        } else {
-            CustomFieldDefinition countsDef = new CustomFieldDefinition("customfield_15660", "Material Type Counts",
-                    true);
-            CustomFieldDefinition conditionDef = new CustomFieldDefinition("customfield_15661", "Shipment Condition",
-                    true);
-            CustomFieldDefinition titleDef = new CustomFieldDefinition("title", "Title", true);
-            List<CustomField> customFieldList = new ArrayList<CustomField>() {{
-                add(new CustomField(countsDef, String.valueOf(tubeBarcodes.size())));
-                add(new CustomField(conditionDef, "ok"));
-            }};
-
-            jiraIssue = jiraService.createIssue(CreateFields.ProjectType.RECEIPT_PROJECT,
-                    userBean.getLoginUserName(), CreateFields.IssueType.RECEIPT,
-                    "Received Mayo rack " + rack.getLabel(), customFieldList);
-
-//xxx            jiraService.updateIssue(jiraIssue.getKey(), Collections.singleton(new CustomField(titleDef,
-//                    "Received Mayo rack " + rack.getLabel() + " in pkg " + packageBarcode)));
-            jiraTicket = new JiraTicket(jiraService, jiraIssue.getKey());
-
-            rack.addJiraTicket(jiraTicket);
-        }
-        // Only transitions the ticket if the manifest is present and sample names are known.
-        if (jiraIssue != null && !sampleNames.isEmpty()) {
-            String comment = String.format("Samples in Mayo package %s have been accessioned: %s",
-                    packageBarcode,
-                    sampleNames.stream().sorted().collect(Collectors.joining(", ")));
-
-            jiraIssue.postTransition(ManifestSessionEjb.JiraTransition.ACCESSIONED.getStateName(), comment);
-            jiraIssue.addComment(comment);
-        }
         return jiraTicket;
+    }
+
+    private String urlLink(JiraTicket jiraTicket) {
+        return "<a href=" + jiraTicket.getBrowserUrl() + ">" + jiraTicket.getTicketName() + "</a>";
     }
 }

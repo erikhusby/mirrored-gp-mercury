@@ -2,7 +2,7 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoReceivingActionBean"/>
-<stripes:layout-render name="/layout.jsp" pageTitle="Mayo Sample Receipt" sectionTitle="Mayo Sample Receipt">
+<stripes:layout-render name="/layout.jsp" pageTitle="Mayo Sample Receipt" sectionTitle="Mayo Sample Receipt Rack Scan">
     <stripes:layout-component name="content">
 
         <p>Package ${actionBean.packageBarcode}</p>
@@ -41,17 +41,16 @@
                 <stripes:hidden name="rackScanEntries[${item.index}]" value="${mapEntry}"/>
             </c:forEach>
 
-            <!-- The Overwrite checkbox. -->
-            <c:if test="${actionBean.canOverwrite}">
-                <div style="margin-top: 20px;">
-                    <stripes:label for="overwriteFlag">
-                        A Mayo rack with this barcode was already uploaded. Check to overwrite it.
-                    </stripes:label>
-                    <stripes:checkbox id="overwriteFlag" name="overwriteFlag"/>
-                </div>
-            </c:if>
-
             <div style="margin-top: 20px;">
+                <!-- The Overwrite checkbox. -->
+                <c:if test="${actionBean.canOverwrite}">
+                    <span>
+                        <stripes:checkbox id="overwriteFlag" name="overwriteFlag" style="align-vertical: center"/>
+                        A Mayo rack having this barcode was already uploaded. Check to overwrite it.
+                    </span>
+                </c:if>
+            </div>
+            <div style="margin-top: 10px;">
                 <!-- The Save and Cancel buttons. -->
                 <stripes:submit id="saveBtn" name="saveBtn" value="Save" class="btn btn-primary"
                                 title="Save the rack, tubes, and samples in Mercury."/>
