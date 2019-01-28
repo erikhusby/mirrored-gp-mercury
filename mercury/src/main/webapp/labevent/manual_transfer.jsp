@@ -1,4 +1,3 @@
-<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean" %>
 <%--
   This page allows the user to record a manual transfer, i.e. a transfer not done on a liquid handling deck with
   messaging.

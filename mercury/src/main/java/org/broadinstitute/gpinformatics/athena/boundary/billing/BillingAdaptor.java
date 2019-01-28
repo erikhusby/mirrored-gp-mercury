@@ -3,10 +3,10 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import com.google.common.collect.HashMultimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -24,12 +23,11 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -40,6 +38,7 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -148,12 +147,13 @@ public class BillingAdaptor implements Serializable {
         boolean errorsInBilling = false;
 
         List<BillingEjb.BillingResult> results = new ArrayList<>();
-        Quote quote;
+        Quote quote = null;
+        Quote sapQuote = null;
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
         try {
             List<QuoteImportItem> unBilledQuoteImportItems = null;
-            PriceList priceItemsForDate;
+            PriceList priceItemsForDate = null;
             try {
                 unBilledQuoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
             } catch (QuoteServerException e) {
@@ -165,10 +165,9 @@ public class BillingAdaptor implements Serializable {
                 throw new BillingException(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
             }
 
-            for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
-                final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(itemForPriceUpdate.getProductOrder());
-                List<String> effectivePricesForProducts;
+            //**************************** Temporarily Re-adding **********************************
 
+            for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
                 try {
 
                     // get and set the priceItem (reallly PriceList) for this quoteImportItem
@@ -176,50 +175,13 @@ public class BillingAdaptor implements Serializable {
                     itemForPriceUpdate.setPriceOnWorkDate(priceItemsForDate);
 
                     quote = itemForPriceUpdate.getProductOrder().getQuote(quoteService);
-                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
-                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
+                    if (itemForPriceUpdate.getProductOrder().hasSapQuote()) {
+                        sapQuote = itemForPriceUpdate.getProductOrder().getSapQuote(sapService);
+                    }
+
                     itemForPriceUpdate.setQuote(quote);
 
-                    // Test if quote is valid only if we are billing a positive amount
-                    if (!itemForPriceUpdate.isBillingCredit()) {
-                        ProductOrder.checkQuoteValidity(quote);
-                    }
-
-                    // publish order to SAP if ...
-                    // 1 products are not blacklisted
-                    // 2 Prices are valid and products are not black listed
-                    // 3 order is in sap
-                    // ?? does funding matter here ??
-                    if (productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder())
-                        && itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
-                        MessageCollection messageCollection = new MessageCollection();
-                        effectivePricesForProducts = getEffectivePricesForProducts(allProductsOrdered, quote, priceItemsForDate,
-                                itemForPriceUpdate.getProductOrder());
-                        if (itemForPriceUpdate.getProductOrder().isPriorToSAP1_5()) {
-
-                            // price and effective prices differ
-                            if (!StringUtils.equals(itemForPriceUpdate.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
-                                    TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))) {
-                                productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true);
-                            }
-                        } else {
-                            final String price =
-                                    priceListCache.findByKeyFields(itemForPriceUpdate.getPriceItem()).getPrice();
-
-                            BigDecimal listPrice = new BigDecimal(price);
-                            BigDecimal effectivePrice = new BigDecimal(itemForPriceUpdate.getEffectivePrice());
-
-                            // not commercial
-                            // not custom
-                            // list and effective prices differ
-                            if(!itemForPriceUpdate.getProductOrder().isCommercial()
-                               && !itemForPriceUpdate.needsCustomization() && listPrice.compareTo(effectivePrice) != 0) {
-                                itemForPriceUpdate.getProductOrder().addQuoteAdjustment(itemForPriceUpdate.getProduct(), effectivePrice, listPrice);
-                            }
-                            productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, false);
-                        }
-                    }
-                } catch (QuoteServerException|QuoteNotFoundException|InvalidProductException|SAPInterfaceException e) {
+                } catch (QuoteServerException|QuoteNotFoundException| SAPIntegrationException e) {
                     BillingEjb.BillingResult result = new BillingEjb.BillingResult(itemForPriceUpdate);
 
                     final String errorMessage = "Failed Price check for " +itemForPriceUpdate.getProductOrder().getBusinessKey()+": "+e.getMessage();
@@ -237,40 +199,56 @@ public class BillingAdaptor implements Serializable {
                 throw new BillingException("Pricing Validation Failed.  Unable to complete Billing Session at this time");
             }
 
+            //**************************************************************************
+
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
                 results.add(result);
 
-                quote = null;
                 String sapBillingId = null;
                 String workId = null;
                 boolean isQuoteFunded = false;
                 try {
-                    priceItemsForDate = item.getPriceOnWorkDate();
-                    quote = item.getQuote();
+
+                    if (!item.getProductOrder().hasSapQuote()) {
+                        priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
+                        item.setPriceOnWorkDate(priceItemsForDate);
+                    }
+
+                    quote = item.getProductOrder().hasSapQuote()?item.getProductOrder().getSapQuote(sapService):item.getProductOrder().getQuote(quoteService);
+                    item.setQuote(quote);
                     isQuoteFunded = quote.isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
+                    // TODO SGM -- Need an isfunded for SAP /\
+                    if(!item.isBillingCredit()) {
+                        if (item.getProductOrder().hasSapQuote()) {
+                            ProductOrder.checkSapQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
+                                    Calendar.DATE));
 
-//                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
-//                    quote.setAlphanumericId(item.getQuoteId());
+                        } else {
+                            ProductOrder.checkQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
+                                    Calendar.DATE));
+                        }
+                    }
 
-                    workId = CollectionUtils.isEmpty(item.getWorkItems())? null: item.getWorkItems().toArray(new String[0])[0];
-                    sapBillingId = quote.isEligibleForSAP() && isQuoteFunded ? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
+                    workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
+                    sapBillingId = item.getProductOrder().hasSapQuote()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
 
                     // The price item that we are billing.
-                    // todo need to set the price on the Price Item before this step
+                    // need to set the price on the Price Item before this step
                     QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
                     //Replace with the New price list call for effective date
                     String price = item.getEffectivePrice();
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
-                    // todo need to set the price on the Price Item before this step
-                    QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate);
-
-                    // todo need to set the price on the Price Item before this step
-                    QuotePriceItem primaryPriceItemIfReplacementForSAP =item.getPrimaryForReplacement(priceItemsForDate);
+                    // need to set the price on the Price Item before this step
+                    QuotePriceItem primaryPriceItemIfReplacement = null;
+                        primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate);
+                    // need to set the price on the Price Item before this step
+                    QuotePriceItem primaryPriceItemIfReplacementForSAP =
+                            item.getPrimaryForReplacement(priceItemsForDate);
 
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
@@ -281,9 +259,9 @@ public class BillingAdaptor implements Serializable {
                     // set the primary to null so it will be billed as if it is a primary.
                     if (primaryPriceItemIfReplacement != null) {
                         if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
-                            quoteItemNames.contains(priceItemBeingBilled.getName())) {
+                            quoteItemNames.contains(priceItemBeingBilled.getName()))
+                        {
                             primaryPriceItemIfReplacement = null;
-
                         }
                     }
 
@@ -300,12 +278,11 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    boolean orderEligibleForSAP = productOrderEjb.isOrderEligibleForSAP(item.getProductOrder());
-                    boolean canBeBilledInSap = !item.getProductOrder().getOrderStatus().canPlace() &&
-                                   StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber()) &&
-                                   StringUtils.isBlank(item.getSapItems());
+                    if(item.getProductOrder().hasSapQuote()
+                       && !item.getProductOrder().getOrderStatus().canPlace()
+                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                       && StringUtils.isBlank(item.getSapItems())) {
 
-                    if(orderEligibleForSAP && canBeBilledInSap) {
                         final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
                                 item.getProductOrder().getSapCompanyConfigurationForProductOrder());
 
@@ -328,84 +305,83 @@ public class BillingAdaptor implements Serializable {
                                         + item.getProduct().getPartNumber());
                             }
                         }
-
                     }
 
-                    if (StringUtils.isBlank(workId)) {
+                    if (item.getProductOrder().getQuoteSource() != null) {
+                        if (!item.getProductOrder().hasSapQuote()) {
+                            if(StringUtils.isBlank(workId)) {
+                                PriceAdjustment singlePriceAdjustment =
+                                        item.getProductOrder().getAdjustmentForProduct(item.getProduct());
 
-                        PriceAdjustment singlePriceAdjustment =
-                                item.getProductOrder().getAdjustmentForProduct(item.getProduct());
+                                if (singlePriceAdjustment == null) {
+                                    workId = quoteService
+                                            .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                                    item.getWorkCompleteDate(), item.getQuantity(),
+                                                    pageUrl, "billingSession", sessionKey, null);
+                                } else {
+                                    workId = quoteService
+                                            .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                                    item.getWorkCompleteDate(), item.getQuantity(),
+                                                    pageUrl, "billingSession", sessionKey,
+                                                    singlePriceAdjustment.getAdjustmentValue());
+                                }
 
-                        if (orderEligibleForSAP && item.getProductOrder().isSavedInSAP()) {
-                            if (singlePriceAdjustment == null) {
-                                workId = quoteService
-                                        .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                                item.getWorkCompleteDate(), item.getQuantity(),
-                                                pageUrl, "billingSession", sessionKey, null);
-                            } else {
-                                workId = quoteService
-                                        .registerNewSAPWork(quote, priceItemBeingBilled,
-                                                primaryPriceItemIfReplacement,
-                                                item.getWorkCompleteDate(), item.getQuantity(),
-                                                pageUrl, "billingSession", sessionKey,
-                                                singlePriceAdjustment.getAdjustmentValue());
-                            }
-                        } else {
-                            if (singlePriceAdjustment == null) {
-                                workId = quoteService
-                                        .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                                item.getWorkCompleteDate(), item.getQuantity(),
-                                                pageUrl, "billingSession", sessionKey, null);
-                            } else {
-                                workId = quoteService
-                                        .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                                item.getWorkCompleteDate(), item.getQuantity(),
-                                                pageUrl, "billingSession", sessionKey,
-                                                singlePriceAdjustment.getAdjustmentValue());
-                            }
-                        }
-
-                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
-                                BillingSession.BILLED_FOR_QUOTES);
-                    }
-
-                    if (orderEligibleForSAP && canBeBilledInSap  && (quote.isFunded(item.getWorkCompleteDate()) || item.isBillingCredit())) {
-                        if (quantityForSAP > 0) {
-                            sapBillingId = sapService.billOrder(item, replacementMultiplier, new Date());
-                            result.setSAPBillingId(sapBillingId);
-                            billingEjb
-                                .updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
-                                    BillingSession.BILLED_FOR_SAP + " " + BillingSession.BILLED_FOR_QUOTES);
-                        } else {
-                            Set<LedgerEntry> priorSapBillings = new HashSet<>();
-                            item.getBillingCredits().stream()
-                                .filter(ledgerEntry -> ledgerEntry.getPriceItem().equals(item.getPriceItem()))
-                                .forEach(ledgerEntry -> {
-                                    priorSapBillings.addAll(ledgerEntry.getPreviouslyBilled().stream()
-                                        .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId() != null)
-                                        .collect(Collectors.toSet()));
-                                });
-
-                            // Negative billing is allowed if the same positive number has been previously billed.
-                            // When this is not the case throw an exception.
-                            double previouslyBilledQty =
-                                priorSapBillings.stream().map(LedgerEntry::getQuantity).mapToDouble(Double::doubleValue)
-                                    .sum();
-                            if (quantityForSAP + previouslyBilledQty < 0) {
-                                result.setErrorMessage(NEGATIVE_BILL_ERROR);
-                                throw new BillingException(NEGATIVE_BILL_ERROR);
-                            } else if (item.isBillingCredit()) {
-                                billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings, billingSession.getCreatedBy());
-                                item.setBillingMessages(BillingSession.BILLING_CREDIT);
-                                sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
-                                result.setSAPBillingId(sapBillingId);
                                 billingEjb
-                                    .updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
-                                        BillingSession.BILLING_CREDIT);
+                                        .updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
+                                                BillingSession.BILLED_FOR_QUOTES);
                             }
                         }
-                        item.getProductOrder().latestSapOrderDetail().addLedgerEntries(item.getLedgerItems());
+
+                        if(StringUtils.isBlank(sapBillingId)){
+
+                            if (item.getProductOrder().hasSapQuote()
+                                && !item.getProductOrder().getOrderStatus().canPlace()
+                                && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                                && StringUtils.isBlank(item.getSapItems())) {
+
+                                if (quantityForSAP > 0) {
+                                    sapBillingId = sapService.billOrder(item, replacementMultiplier, new Date());
+                                    result.setSAPBillingId(sapBillingId);
+                                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId,
+                                            sapBillingId,
+                                            BillingSession.BILLED_FOR_SAP + " " + BillingSession.BILLED_FOR_QUOTES);
+                                } else {
+                                    Set<LedgerEntry> priorSapBillings = new HashSet<>();
+                                    item.getBillingCredits().stream()
+                                            .filter(ledgerEntry -> ledgerEntry.getPriceItem().equals(item.getPriceItem()))
+                                            .forEach(ledgerEntry -> {
+                                                ledgerEntry.getPreviouslyBilled().stream()
+                                                        .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId()
+                                                                                  != null)
+                                                        .collect(Collectors.toCollection(() -> priorSapBillings));
+                                            });
+
+                                    // Negative billing is allowed if the same positive number has been previously billed.
+                                    // When this is not the case throw an exception.
+                                    double previouslyBilledQty =
+                                            priorSapBillings.stream().map(LedgerEntry::getQuantity)
+                                                    .mapToDouble(Double::doubleValue)
+                                                    .sum();
+                                    if (quantityForSAP + previouslyBilledQty < 0) {
+                                        result.setErrorMessage(NEGATIVE_BILL_ERROR);
+                                        throw new BillingException(NEGATIVE_BILL_ERROR);
+                                    } else if (quantityForSAP < 0) {
+                                        billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings,
+                                                billingSession.getCreatedBy());
+                                        item.setBillingMessages(BillingSession.BILLING_CREDIT);
+                                        sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
+                                        result.setSAPBillingId(sapBillingId);
+                                        billingEjb
+                                                .updateLedgerEntries(item, primaryPriceItemIfReplacement, workId,
+                                                        sapBillingId,
+                                                        BillingSession.BILLING_CREDIT);
+                                    }
+                                }
+                                item.getProductOrder().latestSapOrderDetail().addLedgerEntries(item.getLedgerItems());
+                            }
+                        }
                     }
+
 
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
 
@@ -569,22 +545,6 @@ public class BillingAdaptor implements Serializable {
             }
         }
         return price;
-    }
-
-    public List<String> getEffectivePricesForProducts(List<Product> products, Quote orderQuote,
-                                                      PriceList sourceOfPrices,
-                                                      ProductOrder order)
-            throws InvalidProductException {
-        List<String> orderedPrices = new ArrayList<>();
-
-        for (Product product : products) {
-
-            PriceItem priceItem = order.determinePriceItemByCompanyCode(product);
-
-            orderedPrices.add(getEffectivePrice(priceItem, orderQuote, sourceOfPrices));
-        }
-
-        return orderedPrices;
     }
 
     @Inject

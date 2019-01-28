@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -36,12 +37,14 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -113,6 +116,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
         if (cachedQuote == null) {
             cachedQuote = quoteService.getQuoteByAlphaId(quoteId);
+        }
+        return cachedQuote;
+    }
+
+    public Quote getSapQuote(SapIntegrationService sapService) throws SAPIntegrationException {
+        if (cachedQuote == null) {
+            cachedQuote = sapService.findSapQuote(quoteId);
         }
         return cachedQuote;
     }
@@ -288,6 +298,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
     private String reagentDesignKey;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name="QUOTE_SOURCE")
+    private QuoteSourceType quoteSource;
+
+
     @Transient
     private Quote cachedQuote;
 
@@ -327,6 +342,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
                 new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
                 toClone.getResearchProject());
+        cloned.setQuoteSource(toClone.getQuoteSource());
         List<Product> potentialAddons = new ArrayList<>();
 
         for (ProductOrderAddOn cloneAddon : toClone.getAddOns()) {
@@ -821,6 +837,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             cachedQuote = null;
         }
         this.quoteId = quoteId;
+    }
+
+    public boolean isQuoteIdSet() {
+        return StringUtils.isNotBlank(this.quoteId);
     }
 
     public OrderStatus getOrderStatus() {
@@ -2333,6 +2353,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
+    public static void checkSapQuoteValidity(Quote quote) throws QuoteServerException {
+        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
+
+        checkSapQuoteValidity(quote, todayTruncated);
+    }
+
+    public static void checkSapQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
+
+    }
+
     /**
      * Helps to determine if all orders associated with a product order (the main order and any "Child" orders created
      * when replacing abandoned orders) are completed.
@@ -2491,6 +2521,54 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return foundType;
         }
     }
+
+    public enum QuoteSourceType implements Displayable {
+        QUOTE_SERVER("Quote Server Quote"),
+        SAP_SOURCE("SAP Quote");
+
+        private String displayName;
+
+        QuoteSourceType(String source) {
+            displayName = source;
+        }
+
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public static QuoteSourceType getByTypeName(String name) {
+
+            QuoteSourceType foundValue = null;
+            if(StringUtils.isNotBlank(name)) {
+                foundValue = QuoteSourceType.valueOf(name);
+            }
+
+            return foundValue;
+        }
+
+        public static QuoteSourceType getByDisplayName(String displayName) {
+            QuoteSourceType foundValue = null;
+
+            for (QuoteSourceType value : QuoteSourceType.values()) {
+                if(StringUtils.equals(value.getDisplayName(), displayName)) {
+                    foundValue = value;
+                }
+            }
+
+            return foundValue;
+
+        }
+    }
+
+    public QuoteSourceType getQuoteSource() {
+        return quoteSource;
+    }
+
+    public void setQuoteSource(QuoteSourceType quoteSourceType) {
+        this.quoteSource = quoteSourceType;
+    }
+
     public boolean needsCustomization(Product product) {
         if(getProduct().equals(product)) {
             return getSinglePriceAdjustment() != null;
@@ -2564,6 +2642,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return companyCode;
     }
 
+    public boolean hasSapQuote() {
+        return isQuoteIdSet() && QuoteSourceType.SAP_SOURCE == getQuoteSource();
+    }
 
+    public boolean hasQuoteServerQuote() {
+        return isQuoteIdSet() && QuoteSourceType.QUOTE_SERVER == getQuoteSource();
+    }
 
 }

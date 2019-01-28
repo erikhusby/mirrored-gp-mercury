@@ -6,7 +6,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -20,8 +19,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.sap.entity.Condition;
@@ -135,6 +132,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
+    public String createOrderWithQuote(ProductOrder placedOrder) throws SAPIntegrationException {
+        throw new SAPIntegrationException("SAP Quotes are not available at this time");
+    }
+
+    @Override
     public void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
 
         SAPOrder newOrder = initializeSAPOrder(placedOrder, false, closingOrder);
@@ -146,6 +148,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newOrder.setSapOrderNumber(placedOrder.getSapOrderNumber());
 
         getClient().updateSAPOrder(newOrder);
+    }
+
+    @Override
+    public void updateOrderWithQuote(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException {
+        throw new SAPIntegrationException("SAP Quotes are not available at this time");
     }
 
     /**
@@ -161,13 +168,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         ProductOrder orderToUpdate = placedOrder;
 
-        Quote foundQuote = null;
-        try {
-            foundQuote = orderToUpdate.getQuote(quoteService);
-        } catch (QuoteServerException | QuoteNotFoundException e) {
-            throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
-        }
-
         SAPOrder newOrder =
                 new SAPOrder(SapIntegrationClientImpl.SystemIdentifier.MERCURY, orderToUpdate.getSapCompanyConfigurationForProductOrder(),
                         orderToUpdate.getQuoteId(), bspUserList.getUserFullName(orderToUpdate.getCreatedBy()),
@@ -175,39 +175,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         newOrder.setExternalOrderNumber(orderToUpdate.getJiraTicketKey());
 
-        FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
-
-        if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
-            // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
-            // of funding
-            throw new SAPIntegrationException(
-                    "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
-        }
-
-        for (Funding funding:fundingLevel.getFunding()) {
-            if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                String customerNumber = findCustomer(orderToUpdate.getSapCompanyConfigurationForProductOrder(), fundingLevel);
-
-                newOrder.setSapCustomerNumber(customerNumber);
-                newOrder.setFundingSource(funding.getPurchaseOrderNumber(), SAPOrder.FundingType.PURCHASE_ORDER);
-            } else {
-                newOrder.setFundingSource(funding.getFundsReservationNumber(), SAPOrder.FundingType.FUNDS_RESERVATION);
-            }
-
-            /*
-            This really only needs to loop once since the information that is retrieved will be the same for each
-            funding instance under fundingLevel
-             */
-            break;
-        }
-
         newOrder.setResearchProjectNumber(orderToUpdate.getResearchProject().getJiraTicketKey());
 
         Product primaryProduct = placedOrder.getProduct();
-        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, foundQuote, 0, creatingOrder, closingOrder));
+        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, 0, creatingOrder, closingOrder));
 
         for (ProductOrderAddOn addon : placedOrder.getAddOns()) {
-            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn(), foundQuote, 0, creatingOrder,
+            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn(), 0, creatingOrder,
                     closingOrder));
         }
 
@@ -219,35 +193,24 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * is expected to be charged
      * @param placedOrder Order from which the quantities are defined
      * @param product Product that is to be eventually charged when work on the product order is completed
-     * @param quote
      * @param additionalSampleCount
      * @param creatingNewOrder
      * @param closingOrder
      * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
      * is expected of it.
      */
-    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, Quote quote,
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product,
                                         int additionalSampleCount, boolean creatingNewOrder, boolean closingOrder) throws SAPIntegrationException {
-        try {
-            String price = priceListCache.getEffectivePrice(placedOrder.determinePriceItemByCompanyCode(product),
-                    quote);
-
             BigDecimal sampleCount =
                 getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder);
 
             final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(), sampleCount);
 
-            if(placedOrder.isPriorToSAP1_5()) {
-                sapOrderItem.addCondition(Condition.MATERIAL_PRICE, new BigDecimal(price));
-            } else {
+
                 defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
-            }
 
             return sapOrderItem;
 
-        } catch (InvalidProductException e) {
-            throw new SAPIntegrationException("For " + product.getPartNumber() + " " + e.getMessage());
-        }
     }
 
     private void defineConditionsForOrderItem(ProductOrder placedOrder, Product product, SAPOrderItem sapOrderItem) {
@@ -515,6 +478,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return orderCalculatedValues;
     }
 
+    @Override
+    public Quote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
+        final SapIntegrationClientImpl sapClient = getClient();
+
+        throw new SAPIntegrationException("SAP Quotes are not available at this time");
+    }
+
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
         return generateOrderCriteria(productOrder, 0, false);
     }
@@ -540,8 +510,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         if (!forOrderValueQuery) {
             Quote foundQuote = null;
             try {
-                foundQuote = productOrder.getQuote(quoteService);
-            } catch (QuoteServerException | QuoteNotFoundException e) {
+                foundQuote = findSapQuote(productOrder.getQuoteId());
+            } catch (SAPIntegrationException e) {
                 throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
             }
             FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();

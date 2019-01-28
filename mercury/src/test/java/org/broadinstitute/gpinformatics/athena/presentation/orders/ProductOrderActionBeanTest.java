@@ -512,33 +512,83 @@ public class ProductOrderActionBeanTest {
         String testReason = "The dog ate my quote.";
         String testQuote = "SomeQuote";
         return new Object[][]{
-                {ProductOrderActionBean.SAVE_ACTION, null, "", true, "Saving any order should succeed."},
-                {ProductOrderActionBean.SAVE_ACTION, "", "", true, "Saving any order should succeed."},
-                {ProductOrderActionBean.PLACE_ORDER_ACTION, null, "", false, "No Quote and No reason should fail."},
-                {ProductOrderActionBean.SAVE_ACTION, null, testReason, true, "Saving any order should succeed."},
+                {ProductOrderActionBean.SAVE_ACTION, null, "", true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.SAVE_ACTION, null, "", true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
+                {ProductOrderActionBean.SAVE_ACTION, "", "", true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.SAVE_ACTION, "", "", true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, null, "", false, "No Quote and No reason should fail.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, null, "", false, "No Quote and No reason should fail.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
+                {ProductOrderActionBean.SAVE_ACTION, null, testReason, true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.SAVE_ACTION, null, testReason, true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
                 {ProductOrderActionBean.PLACE_ORDER_ACTION, null, testReason, true,
-                        "No Quote but with reason should succeed."},
-                {ProductOrderActionBean.SAVE_ACTION, testQuote, "", true, "Saving any order should succeed."},
-                {ProductOrderActionBean.SAVE_ACTION, testQuote, null, true, "Saving any order should succeed."},
+                        "No Quote but with reason should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, null, testReason, true,
+                        "No Quote but with reason should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, "", true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, "", true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, null, true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, null, true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
                 {ProductOrderActionBean.PLACE_ORDER_ACTION, testQuote, "", true,
-                        "A good quote but blank reason should succeed."},
+                        "A good quote but blank reason should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, testQuote, "", true,
+                        "A good quote but blank reason should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
                 {ProductOrderActionBean.PLACE_ORDER_ACTION, testQuote, null, true,
-                        "A good quote but null reason should succeed."},
-                {ProductOrderActionBean.SAVE_ACTION, testQuote, testReason, true, "Saving any order should succeed."},
+                        "A good quote but null reason should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, testQuote, null, true,
+                        "A good quote but null reason should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, testReason, true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, testReason, true, "Saving any order should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
                 {ProductOrderActionBean.PLACE_ORDER_ACTION, testQuote, testReason, true,
-                        "A good quote and a reason should succeed."},
+                        "A good quote and a reason should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, testQuote, testReason, true,
+                        "A good quote and a reason should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
                 {ProductOrderActionBean.VALIDATE_ORDER, testQuote, testReason, true,
-                        "A good quote and a reason should succeed."},
+                        "A good quote and a reason should succeed.",
+                    ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.VALIDATE_ORDER, testQuote, testReason, true,
+                        "A good quote and a reason should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
                 {ProductOrderActionBean.VALIDATE_ORDER, null, testReason, true,
-                        "A good quote and a reason should succeed."},
-                {ProductOrderActionBean.VALIDATE_ORDER, null, null, false, "No quote or reason should fail."}
+                        "A good quote and a reason should succeed.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.VALIDATE_ORDER, null, testReason, true,
+                        "A good quote and a reason should succeed.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE},
+                {ProductOrderActionBean.VALIDATE_ORDER, null, null, false, "No quote or reason should fail.",
+                        ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrderActionBean.VALIDATE_ORDER, null, null, false, "No quote or reason should fail.",
+                        ProductOrder.QuoteSourceType.SAP_SOURCE}
         };
     }
 
     @Test(dataProvider = "quoteOptionsDataProvider")
     public void testQuoteSkippingValidation(String action, String quoteId, String reason,
-                                            boolean expectedToPassValidation, String testErrorMessage) {
+                                            boolean expectedToPassValidation, String testErrorMessage,
+                                            ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrder pdo = ProductOrderTestFactory.buildSampleInitiationProductOrder(22);
+        pdo.setQuoteSource(quoteSourceType);
         pdo.setSkipQuoteReason(reason);
         pdo.setQuoteId(quoteId);
         actionBean.clearValidationErrors();
@@ -1437,7 +1487,7 @@ public class ProductOrderActionBeanTest {
 
         testOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(new BigDecimal(160.00),null, null));
 
-        actionBean.validateQuoteDetails(testQuote, CoreActionBean.ErrorLevel.ERROR, true, 0);
+        actionBean.validateQuoteDetails(testQuote,true, 0);
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
     }
@@ -1572,6 +1622,7 @@ public class ProductOrderActionBeanTest {
     public void testQuoteOptionsFundsReservation() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
         funding.setGrantNumber("1234");
@@ -1588,6 +1639,7 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteService(mockQuoteService);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
@@ -1601,6 +1653,7 @@ public class ProductOrderActionBeanTest {
     public void testQuoteOptionsPurchaseOrder() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.PURCHASE_ORDER, "test", "c333");
         funding.setPurchaseOrderNumber("1234");
@@ -1617,6 +1670,7 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteService(mockQuoteService);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
@@ -1630,21 +1684,23 @@ public class ProductOrderActionBeanTest {
     }
 
     public void testQuoteOptionsNoFunding() throws Exception {
-         String quoteId = "DNA4JD";
-         testOrder = new ProductOrder();
-         FundingLevel fundingLevel = new FundingLevel();
-         Funding funding = new Funding();
-         fundingLevel.setFunding(Collections.singleton(funding));
-         QuoteFunding quoteFunding = new QuoteFunding();
-         Quote testQuote = buildSingleTestQuote(quoteId, "2");
-         testQuote.setQuoteFunding(quoteFunding);
-         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
-         actionBean.setQuoteIdentifier(quoteId);
-         actionBean.setQuoteService(mockQuoteService);
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding();
+        fundingLevel.setFunding(Collections.singleton(funding));
+        QuoteFunding quoteFunding = new QuoteFunding();
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteService(mockQuoteService);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
-         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         assertThat(quoteFundingJson.getString("error"), is("Unable to complete evaluating order values:  null"));
-         assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
+        assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
      }
 
 }

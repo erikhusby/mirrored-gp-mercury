@@ -1365,4 +1365,16 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-5813-1">
+        <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
+            <column name="QUOTE_SOURCE" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-5813-2">
+        <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
+            <column name="QUOTE_SOURCE" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

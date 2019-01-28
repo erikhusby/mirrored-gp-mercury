@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
@@ -33,6 +34,8 @@ public interface SapIntegrationService {
      */
     String createOrder(ProductOrder placedOrder) throws SAPIntegrationException;
 
+    String createOrderWithQuote(ProductOrder placedOrder) throws SAPIntegrationException;
+
     /**
      * For a given ProductOrder that is already represented in SAP, this method will communicate to SAP any changes to
      * be made for that order
@@ -42,6 +45,8 @@ public interface SapIntegrationService {
      * @throws SAPIntegrationException
      */
     void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException;
+
+    void updateOrderWithQuote(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException;
 
     /**
      * For Phase 1 of the SAP/GP integration, Orders placed in SAP need to have reference to the customer number found
@@ -81,4 +86,13 @@ public interface SapIntegrationService {
     Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException;
 
     OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId, ProductOrder productOrder) throws SAPIntegrationException;
+
+    /**
+     * Placeholder method for now.  Future inplementation will return a quote object geared toward the information
+     * returned from SAP.
+     * @param sapQuoteId  Singular quote identifier for the desired SAP quote information
+     * @return
+     * @throws SAPIntegrationException
+     */
+    Quote findSapQuote(String sapQuoteId) throws SAPIntegrationException;
 }

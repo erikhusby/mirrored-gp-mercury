@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductE
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
@@ -51,6 +50,7 @@ import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
@@ -72,6 +72,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingCreditDbFreeTest {
@@ -140,11 +141,8 @@ public class BillingCreditDbFreeTest {
         Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
             Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
             Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class))).thenReturn("workId-" + quoteId);
-        Mockito.when(productOrderEjb.areProductsBlocked(Mockito.anySetOf(AccessItem.class))).thenReturn(false);
-        Mockito.when(productOrderEjb.isOrderEligibleForSAP(Mockito.any(ProductOrder.class)))
-            .thenReturn(true);
         Mockito.when(productOrderEjb.isOrderFunded(Mockito.any(ProductOrder.class), Mockito.any(Date.class)))
-            .thenReturn(true);
+                .thenReturn(true);
 
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
             SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
@@ -161,8 +159,18 @@ public class BillingCreditDbFreeTest {
         billingAdaptor.setProductOrderEjb(productOrderEjb);
     }
 
-    public void testCreateBillingCreditRequest() {
+    @DataProvider
+    public Object [][] sapOrQuoteProvider() {
+        return new Object[][] {
+                new Object[]{ProductOrder.QuoteSourceType.SAP_SOURCE},
+                new Object[]{ProductOrder.QuoteSourceType.QUOTE_SERVER}
+        };
+    }
+
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testCreateBillingCreditRequest(ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        pdo.setQuoteSource(quoteSourceType);
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
@@ -175,14 +183,17 @@ public class BillingCreditDbFreeTest {
         billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 0);
 
-        Mockito.verify(mockEmailSender, Mockito.times(1))
+        Mockito.verify(mockEmailSender, Mockito.times((quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE)?1:0))
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyBoolean(), Mockito.anyBoolean());
 
     }
 
-    public void testCreateBillingCreditRequestNoFunding() throws QuoteNotFoundException, QuoteServerException {
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testCreateBillingCreditRequestNoFunding(ProductOrder.QuoteSourceType quoteSourceType)
+            throws QuoteNotFoundException, QuoteServerException {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        pdo.setQuoteSource(quoteSourceType);
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
@@ -204,21 +215,25 @@ public class BillingCreditDbFreeTest {
         billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 0);
 
-        Mockito.verify(mockEmailSender, Mockito.times(1))
+        Mockito.verify(mockEmailSender, Mockito.times(pdo.hasSapQuote()?1:0))
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyBoolean(), Mockito.anyBoolean());
 
     }
 
-    public void testNegativeBilling() {
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testNegativeBilling(ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        pdo.setQuoteSource(quoteSourceType);
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
 
-        billingResults.forEach(
-            billingResult -> assertThat(billingResult.getErrorMessage(), endsWith(BillingAdaptor.NEGATIVE_BILL_ERROR)));
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            billingResults.forEach(
+                billingResult -> assertThat(billingResult.getErrorMessage(), endsWith(BillingAdaptor.NEGATIVE_BILL_ERROR)));
+        }
 
         Mockito.verify(mockEmailSender, Mockito.never())
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
@@ -226,8 +241,10 @@ public class BillingCreditDbFreeTest {
 
     }
 
-    public void testPositiveBilling() {
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testPositiveBilling(ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        pdo.setQuoteSource(quoteSourceType);
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
@@ -235,7 +252,7 @@ public class BillingCreditDbFreeTest {
         billingResults.forEach(
             billingResult -> {
                 assertThat(billingResult.getErrorMessage(), blankOrNullString());
-                assertThat(billingResult.getSAPBillingId(), not(blankOrNullString()));
+                assertThat(billingResult.getSAPBillingId(), pdo.hasSapQuote()?not(blankOrNullString()):is(blankOrNullString()));
             });
 
         Mockito.verify(mockEmailSender, Mockito.never())
@@ -243,8 +260,10 @@ public class BillingCreditDbFreeTest {
                 Mockito.anyBoolean(), Mockito.anyBoolean());
     }
 
-    public void testMoreNegativeThanPositiveBillingPositiveFirst() {
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testMoreNegativeThanPositiveBillingPositiveFirst(ProductOrder.QuoteSourceType quoteSourceType) {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        pdo.setQuoteSource(quoteSourceType);
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, 1d));
 
@@ -255,8 +274,10 @@ public class BillingCreditDbFreeTest {
         billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
         billingResults = bill(billingMap);
 
-        billingResults.forEach(
-            billingResult -> assertThat(billingResult.getErrorMessage(), endsWith(BillingAdaptor.NEGATIVE_BILL_ERROR)));
+        if (quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE) {
+            billingResults.forEach(
+                billingResult -> assertThat(billingResult.getErrorMessage(), endsWith(BillingAdaptor.NEGATIVE_BILL_ERROR)));
+        }
 
         Mockito.verify(mockEmailSender, Mockito.never())
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
@@ -268,7 +289,8 @@ public class BillingCreditDbFreeTest {
         results.stream().filter(result -> !result.isError())
             .forEach(billingResult -> {
                 assertThat(billingResult.isError(), is(false));
-                assertThat(billingResult.getSAPBillingId(), notNullValue());
+                assertThat(billingResult.getSAPBillingId(),
+                        sample.getProductOrder().hasSapQuote()?notNullValue():nullValue());
             });
         Double totalBilled =
             sample.getLedgerItems().stream().filter(LedgerEntry::isSuccessfullyBilled)
