@@ -456,6 +456,15 @@ public class ProductOrderEjb {
         return sapOrderIdentifier;
     }
 
+    public boolean isOrderFunded(ProductOrder productOrder) throws QuoteNotFoundException, QuoteServerException {
+        return isOrderFunded(productOrder, new Date());
+    }
+
+    public boolean isOrderFunded(ProductOrder productOrder, Date effectiveDate) throws QuoteNotFoundException, QuoteServerException {
+        Quote orderQuote = productOrder.getQuote(quoteService);
+        return orderQuote.isFunded(effectiveDate);
+    }
+
     public boolean areProductPricesValid(ProductOrder editedProductOrder, Set<AccessItem> priceItemNameList,
                                          Quote orderQuote)
             throws InvalidProductException {

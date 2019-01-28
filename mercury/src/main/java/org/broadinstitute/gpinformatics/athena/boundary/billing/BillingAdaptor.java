@@ -7,7 +7,6 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
@@ -16,7 +15,6 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -170,9 +168,6 @@ public class BillingAdaptor implements Serializable {
             //**************************** Temporarily Re-adding **********************************
 
             for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
-                final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(itemForPriceUpdate.getProductOrder());
-                List<String> effectivePricesForProducts;
-
                 try {
 
                     // get and set the priceItem (reallly PriceList) for this quoteImportItem
@@ -184,13 +179,9 @@ public class BillingAdaptor implements Serializable {
                         sapQuote = itemForPriceUpdate.getProductOrder().getSapQuote(sapService);
                     }
 
-                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
-//                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     itemForPriceUpdate.setQuote(quote);
 
-                } catch (QuoteServerException|QuoteNotFoundException| SAPIntegrationException
-//                        |InvalidProductException|SAPInterfaceException
-                        e) {
+                } catch (QuoteServerException|QuoteNotFoundException| SAPIntegrationException e) {
                     BillingEjb.BillingResult result = new BillingEjb.BillingResult(itemForPriceUpdate);
 
                     final String errorMessage = "Failed Price check for " +itemForPriceUpdate.getProductOrder().getBusinessKey()+": "+e.getMessage();
@@ -227,38 +218,35 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     quote = item.getProductOrder().hasSapQuote()?item.getProductOrder().getSapQuote(sapService):item.getProductOrder().getQuote(quoteService);
-                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
-//                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     item.setQuote(quote);
                     isQuoteFunded = quote.isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
                     // TODO SGM -- Need an isfunded for SAP /\
-                    if (item.getProductOrder().hasSapQuote()) {
-                        ProductOrder.checkSapQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
-                                Calendar.DATE));
+                    if(!item.isBillingCredit()) {
+                        if (item.getProductOrder().hasSapQuote()) {
+                            ProductOrder.checkSapQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
+                                    Calendar.DATE));
 
-                    } else {
-                        ProductOrder.checkQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
-                                Calendar.DATE));
+                        } else {
+                            ProductOrder.checkQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
+                                    Calendar.DATE));
+                        }
                     }
-
-//                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
-//                    quote.setAlphanumericId(item.getQuoteId());
 
                     workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
                     sapBillingId = item.getProductOrder().hasSapQuote()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
 
                     // The price item that we are billing.
-                    // todo need to set the price on the Price Item before this step
+                    // need to set the price on the Price Item before this step
                     QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
                     //Replace with the New price list call for effective date
                     String price = item.getEffectivePrice();
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
-                    // todo need to set the price on the Price Item before this step
+                    // need to set the price on the Price Item before this step
                     QuotePriceItem primaryPriceItemIfReplacement = null;
                         primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate);
-                    // todo need to set the price on the Price Item before this step
+                    // need to set the price on the Price Item before this step
                     QuotePriceItem primaryPriceItemIfReplacementForSAP =
                             item.getPrimaryForReplacement(priceItemsForDate);
 
@@ -295,7 +283,6 @@ public class BillingAdaptor implements Serializable {
                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
                        && StringUtils.isBlank(item.getSapItems())) {
 
-                    if(orderEligibleForSAP && canBeBilledInSap) {
                         final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
                                 item.getProductOrder().getSapCompanyConfigurationForProductOrder());
 
@@ -322,9 +309,9 @@ public class BillingAdaptor implements Serializable {
 
                     if (item.getProductOrder().getQuoteSource() != null) {
                         if (!item.getProductOrder().hasSapQuote()) {
-
-                            PriceAdjustment singlePriceAdjustment =
-                                    item.getProductOrder().getAdjustmentForProduct(item.getProduct());
+                            if(StringUtils.isBlank(workId)) {
+                                PriceAdjustment singlePriceAdjustment =
+                                        item.getProductOrder().getAdjustmentForProduct(item.getProduct());
 
                                 if (singlePriceAdjustment == null) {
                                     workId = quoteService
@@ -339,8 +326,10 @@ public class BillingAdaptor implements Serializable {
                                                     singlePriceAdjustment.getAdjustmentValue());
                                 }
 
-                            billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
-                                    BillingSession.BILLED_FOR_QUOTES);
+                                billingEjb
+                                        .updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
+                                                BillingSession.BILLED_FOR_QUOTES);
+                            }
                         }
 
                         if(StringUtils.isBlank(sapBillingId)){

@@ -1487,7 +1487,7 @@ public class ProductOrderActionBeanTest {
 
         testOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(new BigDecimal(160.00),null, null));
 
-        actionBean.validateQuoteDetails(testQuote, CoreActionBean.ErrorLevel.ERROR, true, 0);
+        actionBean.validateQuoteDetails(testQuote,true, 0);
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
     }
@@ -1622,6 +1622,7 @@ public class ProductOrderActionBeanTest {
     public void testQuoteOptionsFundsReservation() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
         funding.setGrantNumber("1234");
@@ -1638,6 +1639,7 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteService(mockQuoteService);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
@@ -1651,6 +1653,7 @@ public class ProductOrderActionBeanTest {
     public void testQuoteOptionsPurchaseOrder() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.PURCHASE_ORDER, "test", "c333");
         funding.setPurchaseOrderNumber("1234");
@@ -1667,6 +1670,7 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteService(mockQuoteService);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
@@ -1680,21 +1684,23 @@ public class ProductOrderActionBeanTest {
     }
 
     public void testQuoteOptionsNoFunding() throws Exception {
-         String quoteId = "DNA4JD";
-         testOrder = new ProductOrder();
-         FundingLevel fundingLevel = new FundingLevel();
-         Funding funding = new Funding();
-         fundingLevel.setFunding(Collections.singleton(funding));
-         QuoteFunding quoteFunding = new QuoteFunding();
-         Quote testQuote = buildSingleTestQuote(quoteId, "2");
-         testQuote.setQuoteFunding(quoteFunding);
-         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
-         actionBean.setQuoteIdentifier(quoteId);
-         actionBean.setQuoteService(mockQuoteService);
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding();
+        fundingLevel.setFunding(Collections.singleton(funding));
+        QuoteFunding quoteFunding = new QuoteFunding();
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteService(mockQuoteService);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
-         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         assertThat(quoteFundingJson.getString("error"), is("Unable to complete evaluating order values:  null"));
-         assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
+        assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
      }
 
 }

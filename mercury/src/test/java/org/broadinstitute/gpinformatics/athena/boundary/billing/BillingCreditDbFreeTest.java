@@ -183,14 +183,17 @@ public class BillingCreditDbFreeTest {
         billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, 0);
 
-        Mockito.verify(mockEmailSender, Mockito.times(1))
+        Mockito.verify(mockEmailSender, Mockito.times((quoteSourceType == ProductOrder.QuoteSourceType.SAP_SOURCE)?1:0))
             .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyBoolean(), Mockito.anyBoolean());
 
     }
 
-    public void testCreateBillingCreditRequestNoFunding() throws QuoteNotFoundException, QuoteServerException {
+    @Test(dataProvider = "sapOrQuoteProvider")
+    public void testCreateBillingCreditRequestNoFunding(ProductOrder.QuoteSourceType quoteSourceType)
+            throws QuoteNotFoundException, QuoteServerException {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+        pdo.setQuoteSource(quoteSourceType);
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));

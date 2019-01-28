@@ -773,20 +773,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
-            Quote quote = null;
-            Quote sapQuote = null;
-        if(editOrder.hasSapQuote()) {
-            sapQuote = validateSapQuote(editOrder);
-        } else if (editOrder.hasQuoteServerQuote()) {
-            quote = validateQuote(editOrder);
-        }
+        final Quote quote = (editOrder.hasQuoteServerQuote())?validateQuote(editOrder):null;
+        final Quote sapQuote = (editOrder.hasSapQuote())?validateSapQuote(editOrder):null;
 
         try {
             if (editOrder.hasSapQuote()) {
                 if (sapQuote != null) {
                     ProductOrder.checkSapQuoteValidity(sapQuote);
                 }
-                validateSapQuoteDetails(sapQuote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
+                validateSapQuoteDetails(sapQuote, !editOrder.hasJiraTicketKey(), 0);
             } else if (editOrder.hasQuoteServerQuote()) {
                 if (quote != null) {
                     ProductOrder.checkQuoteValidity(quote);
@@ -1475,37 +1470,40 @@ public class ProductOrderActionBean extends CoreActionBean {
                     item.put("status", quote.getApprovalStatus().getValue());
 
                     double outstandingOrdersValue = estimateOutstandingOrders(quote, 0, null);
-                    item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
+                    item.put("outstandingEstimate", NumberFormat.getCurrencyInstance().format(
                             outstandingOrdersValue));
                     JSONArray fundingDetails = new JSONArray();
 
-                final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
-                Funding funding = null;
-                if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
-                    funding = quote.getFunding().stream().findFirst().orElse(null);
-                }
+                    final Date todayTruncated =
+                            org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
+                    Funding funding = null;
+                    if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
+                        funding = quote.getFunding().stream().findFirst().orElse(null);
+                    }
 
-                if (funding == null) {
-                    item.put("error", "This quote has no active Funding Sources.");
-                } else {
-                    if (funding.isFundsReservation()) {
-                        try {
-                            JSONObject fundingInfo = new JSONObject();
-                            fundingInfo.put("grantTitle", funding.getDisplayName());
-                            fundingInfo.put("grantEndDate", DateUtils.getDate(funding.getGrantEndDate()));
-                            fundingInfo.put("grantNumber", funding.getGrantNumber());
-                            fundingInfo.put("grantStatus", funding.getGrantStatus());
+                    if (funding == null) {
+                        item.put("error", "This quote has no active Funding Sources.");
+                    } else {
+                        if (funding.isFundsReservation()) {
+                            try {
+                                JSONObject fundingInfo = new JSONObject();
+                                fundingInfo.put("grantTitle", funding.getDisplayName());
+                                fundingInfo.put("grantEndDate", DateUtils.getDate(funding.getGrantEndDate()));
+                                fundingInfo.put("grantNumber", funding.getGrantNumber());
+                                fundingInfo.put("grantStatus", funding.getGrantStatus());
 
-                            fundingInfo.put("activeGrant", FundingLevel.isGrantActiveForDate(todayTruncated, funding));
-                            fundingInfo.put("daysTillExpire",
-                                DateUtils.getNumDaysBetween(todayTruncated, funding.getGrantEndDate()));
-                            fundingDetails.put(fundingInfo);
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
+                                fundingInfo
+                                        .put("activeGrant", FundingLevel.isGrantActiveForDate(todayTruncated, funding));
+                                fundingInfo.put("daysTillExpire",
+                                        DateUtils.getNumDaysBetween(todayTruncated, funding.getGrantEndDate()));
+                                fundingDetails.put(fundingInfo);
+                            } catch (JSONException e) {
+                                throw new RuntimeException(e);
+                            }
                         }
                     }
+                    item.put("fundingDetails", fundingDetails);
                 }
-                item.put("fundingDetails", fundingDetails);
             }
 
         } catch (Exception ex) {
