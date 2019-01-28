@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.GoogleStorageConfig;
 
 import javax.annotation.Nonnull;
@@ -18,8 +17,7 @@ import java.io.Serializable;
 @ConfigKey("MayoManifestGoogleStorage")
 @ApplicationScoped
 public class MayoManifestConfig extends AbstractConfig implements Serializable, GoogleStorageConfig {
-    private String credentialDirectory;
-    private String credentialFilename;
+    private String credentialFile;
     private String project;
     private String bucketName;
 
@@ -32,13 +30,8 @@ public class MayoManifestConfig extends AbstractConfig implements Serializable, 
     }
 
     @Override
-    public String getCredentialDirectory() {
-        return credentialDirectory;
-    }
-
-    @Override
-    public String getCredentialFilename() {
-        return credentialFilename;
+    public String getCredentialFile() {
+        return credentialFile;
     }
 
     @Override
@@ -51,12 +44,8 @@ public class MayoManifestConfig extends AbstractConfig implements Serializable, 
         return bucketName;
     }
 
-    public void setCredentialDirectory(String credentialDirectory) {
-        this.credentialDirectory = credentialDirectory;
-    }
-
-    public void setCredentialFilename(String credentialFilename) {
-        this.credentialFilename = credentialFilename;
+    public void setCredentialFile(String credentialFile) {
+        this.credentialFile = credentialFile;
     }
 
     public void setProject(String project) {

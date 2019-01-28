@@ -343,28 +343,23 @@ sap:
 
 MayoManifestGoogleStorage:
     DEV:
-        credentialDirectory: /Users/epolk/GoogleCloudStorage
-        credentialFilename: mercurymayoreader.json
+        credentialFile: /Users/epolk/GoogleCloudStorage/mercurymayoreader.json
         project: ancient-snow-228719
         bucketName: ep-test-spreadsheets-2019
     TEST:
-        credentialDirectory: /Users/epolk/GoogleCloudStorage
-        credentialFilename: mercurymayoreader.json
+        credentialFile: /Users/epolk/GoogleCloudStorage/mercurymayoreader.json
         project: ancient-snow-228719
         bucketName: ep-test-spreadsheets-2019
     QA:
-        credentialDirectory: /Users/epolk/GoogleCloudStorage
-        credentialFilename: mercurymayoreader.json
+        credentialFile: /Users/epolk/GoogleCloudStorage/mercurymayoreader.json
         project: ancient-snow-228719
         bucketName: ep-test-spreadsheets-2019
     RC:
-        credentialDirectory: /Users/epolk/GoogleCloudStorage
-        credentialFilename: mercurymayoreader.json
+        credentialFile: /Users/epolk/GoogleCloudStorage/mercurymayoreader.json
         project: ancient-snow-228719
         bucketName: ep-test-spreadsheets-2019
     PROD:
-        credentialDirectory: /Users/epolk/GoogleCloudStorage
-        credentialFilename: mercurymayoreader.json
+        credentialFile: /Users/epolk/GoogleCloudStorage/mercurymayoreader.json
         project: ancient-snow-228719
         bucketName: ep-test-spreadsheets-2019
 

@@ -119,19 +119,21 @@ public class MayoReceivingActionBean extends RackScanActionBean {
             // Finds an existing rack that matches the rack barcode and checks if it is a Mayo rack,
             // which will have a linked RCT- ticket.
             LabVessel existingRack = labVesselDao.findByIdentifier(rackBarcode);
-            if (OrmUtil.proxySafeIsInstance(existingRack, RackOfTubes.class)) {
-                if (OrmUtil.proxySafeCast(existingRack, RackOfTubes.class).getJiraTickets().stream().
-                        filter(ticket -> ticket.getTicketName().
-                                startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
-                        findFirst().isPresent()) {
-                    canOverwrite = true;
+            if (existingRack != null) {
+                if (OrmUtil.proxySafeIsInstance(existingRack, RackOfTubes.class)) {
+                    if (OrmUtil.proxySafeCast(existingRack, RackOfTubes.class).getJiraTickets().stream().
+                            filter(ticket -> ticket.getTicketName().
+                                    startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
+                            findFirst().isPresent()) {
+                        canOverwrite = true;
+                    } else {
+                        messageCollection.addError("Another rack having barcode " + rackBarcode +
+                                " already exists but it isn't an uploaded rack.");
+                    }
                 } else {
-                    messageCollection.addError("Another rack having barcode " + rackBarcode +
-                            " already exists but it isn't an uploaded rack.");
+                    messageCollection.addError("Another vessel having barcode " + rackBarcode +
+                            " already exists but is not a rack of tubes.");
                 }
-            } else {
-                messageCollection.addError("Another vessel having barcode " + rackBarcode +
-                        " already exists but is not a rack of tubes.");
             }
         }
         addMessages(messageCollection);

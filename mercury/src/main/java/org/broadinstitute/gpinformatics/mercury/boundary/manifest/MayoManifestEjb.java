@@ -62,7 +62,6 @@ public class MayoManifestEjb {
     public static final String NOT_IN_RACKSCAN = "Some manifest tubes are not in the rack scan: %s";
     public static final String WRONG_POSITION = "Tube %s has manifest position %s but rack scan position %s.";
     public static final String UNKNOWN_WELL = "Manifest contains unknown well position \"%s\".";
-    public static final String NOT_A_RACK = "Rack barcode %s is not a RackOfTubes label.";
     public static final String NOT_A_TUBE = "Tube %s matches an existing vessel but it is not a tube.";
     public static final String JIRA_PROBLEM = "Problem creating or updating RCT ticket: %s";
     public static final BarcodedTube.BarcodedTubeType DEFAULT_TUBE_TYPE = BarcodedTube.BarcodedTubeType.MatrixTube;
@@ -96,6 +95,7 @@ public class MayoManifestEjb {
         // This config is from the yaml file.
         mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
                 getConfig(MayoManifestConfig.class, deployment);
+        this.googleBucketDao.setConfigGoogleStorageConfig(mayoManifestConfig);
     }
 
     /**
@@ -129,11 +129,9 @@ public class MayoManifestEjb {
      * Errors are put in the MessageCollection.
      */
     public Map<String, List<List<String>>> readFileAsCellGrid(String filename, MessageCollection messages) {
-        if (googleBucketDao.authorizeServiceAccountKey(mayoManifestConfig, messages)) {
-            byte[] spreadsheet = googleBucketDao.download(filename);
-            if (spreadsheet != null && spreadsheet.length > 0) {
-                return MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, messages);
-            }
+        byte[] spreadsheet = googleBucketDao.download(filename, messages);
+        if (spreadsheet != null && spreadsheet.length > 0) {
+            return MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, messages);
         }
         return Collections.emptyMap();
     }
@@ -257,8 +255,6 @@ public class MayoManifestEjb {
             if (barcode.equals(rackBarcode)) {
                 if (OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
                     rack = OrmUtil.proxySafeCast(vessel, RackOfTubes.class);
-                } else {
-                    messages.addError(NOT_A_RACK, barcode);
                 }
             } else {
                 if (OrmUtil.proxySafeIsInstance(vessel, BarcodedTube.class)) {
