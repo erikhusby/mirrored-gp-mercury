@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.AuditJoinTable;

@@ -29,7 +29,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.sap.entity.DeliveryCondition;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;

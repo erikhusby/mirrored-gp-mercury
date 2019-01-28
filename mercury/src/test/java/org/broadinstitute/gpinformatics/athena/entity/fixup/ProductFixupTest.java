@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTe
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;

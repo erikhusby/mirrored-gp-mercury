@@ -56,9 +56,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.entity.Condition;
-import org.broadinstitute.sap.entity.DeliveryCondition;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
@@ -72,6 +70,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -104,11 +103,12 @@ public class ProductOrderEjbTest {
 
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
     private ProductOrder productOrder;
+    SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+
     private Log logger = LogFactory.getLog(ProductOrderEjbTest.class);
 
     @BeforeMethod
     public void setUp() throws Exception {
-
         mockEmailSender = Mockito.mock(EmailSender.class);
         mockSapService = Mockito.mock(SapIntegrationService.class);
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
@@ -375,32 +375,40 @@ public class ProductOrderEjbTest {
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
 
+        Product conversionPdoProduct = conversionPdo.getProduct();
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                conversionPdoProduct.getDescription(), conversionPdoProduct.getDeliverables(), "", new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+
         returnMaterials.add(
                 primaryMaterial);
-        priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote2.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote3.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
+        priceList.add(new QuotePriceItem(conversionPdoProduct.getPrimaryPriceItem().getCategory(),
+                conversionPdoProduct.getPrimaryPriceItem().getName(),
+                conversionPdoProduct.getPrimaryPriceItem().getName(), "10", "test",
+                conversionPdoProduct.getPrimaryPriceItem().getPlatform()));
+        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(), conversionPdoProduct.getPrimaryPriceItem().getName(),
+                conversionPdoProduct.getPrimaryPriceItem().getName(),"2000", "5","each",
+                conversionPdoProduct.getPrimaryPriceItem().getPlatform(),
+                conversionPdoProduct.getPrimaryPriceItem().getCategory()));
+        quoteItems.add(new QuoteItem(testSingleSourceQuote2.getAlphanumericId(), conversionPdoProduct.getPrimaryPriceItem().getName(),
+                conversionPdoProduct.getPrimaryPriceItem().getName(),"2000", "5","each",
+                conversionPdoProduct.getPrimaryPriceItem().getPlatform(),
+                conversionPdoProduct.getPrimaryPriceItem().getCategory()));
+        quoteItems.add(new QuoteItem(testSingleSourceQuote3.getAlphanumericId(), conversionPdoProduct.getPrimaryPriceItem().getName(),
+                conversionPdoProduct.getPrimaryPriceItem().getName(),"2000", "5","each",
+                conversionPdoProduct.getPrimaryPriceItem().getPlatform(),
+                conversionPdoProduct.getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial =
+                new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                    productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                    BigDecimal.ONE, productOrderAddOn.getAddOn().getDescription(),
+                    productOrderAddOn.getAddOn().getDeliverables(), "", new Date(), new Date(),
+                    Collections.emptyMap(), Collections.emptyMap(),
+                    SAPMaterial.MaterialStatus.ENABLED, "");
+
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
@@ -528,25 +536,32 @@ public class ProductOrderEjbTest {
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
-
+        Product conversionPdoProduct = conversionPdo.getProduct();
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+                        new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                            conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                            conversionPdoProduct.getDescription(), conversionPdoProduct.getDeliverables(), "", new Date(), new Date(),
+                            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        primaryMaterial.setCompanyCode(companyCode);
         returnMaterials.add(primaryMaterial);
-        priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
-        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
-                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
+        priceList.add(new QuotePriceItem(conversionPdoProduct.getPrimaryPriceItem().getCategory(),
+                conversionPdoProduct.getPrimaryPriceItem().getName(),
+                conversionPdoProduct.getPrimaryPriceItem().getName(), "10", "test",
+                conversionPdoProduct.getPrimaryPriceItem().getPlatform()));
+        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(), conversionPdoProduct.getPrimaryPriceItem().getName(),
+                conversionPdoProduct.getPrimaryPriceItem().getName(),"2000", "5","each",
+                conversionPdoProduct.getPrimaryPriceItem().getPlatform(),
+                conversionPdoProduct.getPrimaryPriceItem().getCategory()));
 
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial =
+                new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                    productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                    BigDecimal.ONE, productOrderAddOn.getAddOn().getDescription(),
+                    productOrderAddOn.getAddOn().getDeliverables(), "", new Date(), new Date(), Collections.emptyMap(),
+                    Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+            addonMaterial.setCompanyCode(companyCode);
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
@@ -627,10 +642,14 @@ public class ProductOrderEjbTest {
         Set<SAPMaterial> returnMaterials = new HashSet<>();
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition,BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                conversionPdoProduct.getDescription(), conversionPdoProduct.getDeliverables(), "", new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
@@ -643,9 +662,12 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, productOrderAddOn.getAddOn().getDescription(),
+                                productOrderAddOn.getAddOn().getDeliverables(), "", new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, "");
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
@@ -720,10 +742,14 @@ public class ProductOrderEjbTest {
         Set<SAPMaterial> returnMaterials = new HashSet<>();
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition,BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                conversionPdoProduct.getDescription(), conversionPdoProduct.getDeliverables(), "", new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
@@ -736,9 +762,12 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, productOrderAddOn.getAddOn().getDescription(),
+                                productOrderAddOn.getAddOn().getDeliverables(), "", new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, "");
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
@@ -812,10 +841,13 @@ public class ProductOrderEjbTest {
         Set<SAPMaterial> returnMaterials = new HashSet<>();
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition,BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                conversionPdoProduct.getDescription(), conversionPdoProduct.getDeliverables(), "", new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
@@ -828,9 +860,12 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, productOrderAddOn.getAddOn().getDescription(),
+                                productOrderAddOn.getAddOn().getDeliverables(), "", new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, "");
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
@@ -904,10 +939,14 @@ public class ProductOrderEjbTest {
         testSingleSourceQuote.setExpired(false);
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition,BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                conversionPdoProduct.getDescription(), conversionPdoProduct.getDeliverables(), "", new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
@@ -920,9 +959,12 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, productOrderAddOn.getAddOn().getDescription(),
+                                productOrderAddOn.getAddOn().getDeliverables(), "", new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, "");
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
@@ -1054,10 +1096,14 @@ public class ProductOrderEjbTest {
         testSingleSourceQuote.setExpired(false);
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition,BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                conversionPdoProduct.getDescription(), conversionPdoProduct.getDeliverables(), "", new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
@@ -1070,9 +1116,12 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "10", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, productOrderAddOn.getAddOn().getDescription(),
+                                productOrderAddOn.getAddOn().getDeliverables(), "", new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, "");
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
@@ -1182,10 +1231,14 @@ public class ProductOrderEjbTest {
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
+        Product conversionPdoProduct = conversionPdo.getProduct();
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "5", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
+            new SAPMaterial(conversionPdoProduct.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                conversionPdoProduct.getDescription(), "5", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,
+                conversionPdoProduct.getDescription(), conversionPdoProduct.getDeliverables(), "", new Date(), new Date(),
+                Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
@@ -1198,9 +1251,12 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "5",
-                    Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+                                productOrderAddOn.getAddOn().getDescription(), "5", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
+                                BigDecimal.ONE, productOrderAddOn.getAddOn().getDescription(),
+                                productOrderAddOn.getAddOn().getDeliverables(), "", new Date(), new Date(),
+                                Collections.emptyMap(), Collections.emptyMap(),
+                                SAPMaterial.MaterialStatus.ENABLED, "");
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
