@@ -5,7 +5,6 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.controller.StripesConstants;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,7 +16,9 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is for managing security.
@@ -33,6 +34,11 @@ public class SecurityActionBean extends CoreActionBean {
     public static final String HOME_PAGE = "/index.jsp";
 
     public static final String LOGIN_PAGE = "/security/login.jsp";
+
+    private static final Set<String> STRIPES_IGNORE_PARAMS = new HashSet<String>() {{
+        add("__fp");
+        add("__fsk");
+    }};
 
     @Validate(required = true, on = {"signIn"})
     private String username;
@@ -122,7 +128,7 @@ public class SecurityActionBean extends CoreActionBean {
 
                 RedirectResolution redirectResolution = new RedirectResolution(previouslyTargetedPage, false);
                 for (Map.Entry<String, String[]> mapEntry : parameters.entrySet()) {
-                    if (StripesConstants.SPECIAL_URL_KEYS.contains(mapEntry.getKey())) {
+                    if (STRIPES_IGNORE_PARAMS.contains(mapEntry.getKey())) {
                         continue;
                     }
                     redirectResolution.addParameter(mapEntry.getKey(), mapEntry.getValue());
