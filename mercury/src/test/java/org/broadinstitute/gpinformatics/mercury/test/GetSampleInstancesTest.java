@@ -739,10 +739,10 @@ public class GetSampleInstancesTest {
         ulpStarterVessels.add(dnaTube1);
         ulpStarterVessels.add(dnaTube2);
         LabBatch ulpLcset = new LabBatch("LCSET-1", ulpStarterVessels, LabBatch.LabBatchType.WORKFLOW);
-        ulpLcset.setWorkflowName(Workflow.WHOLE_GENOME); // todo jmt ULP workflow?
+        ulpLcset.setWorkflowName(Workflow.CELL_FREE_HYPER_PREP_UMIS);
         Bucket bucket = new Bucket("Pico");
         ProductOrder ulpPdo = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-ULP",
-                Workflow.WHOLE_GENOME, 101L, "Test research project", "Test research project", false, "UlpWgs", "1",
+                Workflow.CELL_FREE_HYPER_PREP_UMIS, 101L, "Test research project", "Test research project", false, "UlpWgs", "1",
                 "UlpWgsQuoteId");
         ulpLcset.addBucketEntry(new BucketEntry(dnaTube1, ulpPdo, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
         ulpLcset.addBucketEntry(new BucketEntry(dnaTube2, ulpPdo, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 2));
@@ -762,7 +762,7 @@ public class GetSampleInstancesTest {
         TubeFormation pondTf = new TubeFormation(pondMapPositionToTube, RackOfTubes.RackType.Matrix96);
 
         // PondRegistration
-        LabEvent pondReg = new LabEvent(LabEventType.POND_REGISTRATION, new Date(), "BATMAN", 1L, 1L, "Bravo");
+        LabEvent pondReg = new LabEvent(LabEventType.CF_DNA_POND_REGISTRATION, new Date(), "BATMAN", 1L, 1L, "Bravo");
         pondReg.getSectionTransfers().add(new SectionTransfer(dnaTf.getContainerRole(), SBSSection.ALL96, null,
                 pondTf.getContainerRole(), SBSSection.ALL96, null, pondReg));
 
@@ -784,11 +784,11 @@ public class GetSampleInstancesTest {
         exomeStarterVessels.add(pondTube1);
         exomeStarterVessels.add(pondTube2);
         LabBatch exomeLcset = new LabBatch("LCSET-2", exomeStarterVessels, LabBatch.LabBatchType.WORKFLOW);
-        exomeLcset.setWorkflowName(Workflow.ICE_EXOME_EXPRESS); // todo jmt custom panel workflow?
+        exomeLcset.setWorkflowName(Workflow.ICE_EXOME_EXPRESS_HYPER_PREP_UMIS);
         Bucket iceBucket = new Bucket("ICE");
         ProductOrder icePdo = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-EXOME",
-                Workflow.ICE_EXOME_EXPRESS, 101L, "Test research project", "Test research project", false, "Exome", "1",
-                "ExomeQuoteId");
+                Workflow.ICE_EXOME_EXPRESS_HYPER_PREP_UMIS, 101L, "Test research project", "Test research project",
+                false, "Exome", "1", "ExomeQuoteId");
         exomeLcset.addBucketEntry(new BucketEntry(pondTube1, icePdo, iceBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
         exomeLcset.addBucketEntry(new BucketEntry(pondTube2, icePdo, iceBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 2));
 

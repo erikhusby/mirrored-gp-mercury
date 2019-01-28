@@ -15,7 +15,7 @@ public class Workflow {
     public static final String CELL_FREE_HYPER_PREP = "Cell Free HyperPrep";
     public static final String CELL_FREE_HYPER_PREP_UMIS = "Cell Free HyperPrep With UMIs";
     public static final String ICE_EXOME_EXPRESS_HYPER_PREP = "Hyper Prep ICE Exome Express";
-//    public static final String ICE_EXOME_EXPRESS_HYPER_PREP_UMIS = "Hyper Prep ICE Exome Express With UMIs";
+    public static final String ICE_EXOME_EXPRESS_HYPER_PREP_UMIS = "Hyper Prep ICE Exome Express With UMIs";
     public static final String CUSTOM_SELECTION = "Custom Selection";
     public static final String ICE = "ICE";
     public static final String ICE_CRSP = "ICE CRSP";

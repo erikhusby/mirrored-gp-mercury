@@ -29,6 +29,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -628,7 +630,16 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
         else if (singleWorkflowBatch == null) {
             /* todo jmt if event matches any workflows unambiguously */
-            new WorkflowLoader().load().getWorkflowByName().getEffectiveVersion(labEvent.getEventDate()).findStepByEventType(labEventType.getName()).getPredecessors();
+            WorkflowConfig workflowConfig = new WorkflowLoader().load();
+            for (LabBatch labBatch : getAllWorkflowBatches()) {
+                ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflowByName(
+                        labBatch.getWorkflowName()).getEffectiveVersion(labEvent.getEventDate());
+                ProductWorkflowDefVersion.LabEventNode labEventNode = workflowDefVersion.findStepByEventType(labEventType.getName());
+                if (labEventNode != null) {
+                    labEventNode.getPredecessorTransfers(); // ancestor = POOLING_BUCKET
+                }
+            }
+
             Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
             if (computedLcsets.size() != 1) {

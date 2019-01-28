@@ -682,6 +682,7 @@
             <workflowStepDefs>
                 <name>PreEndRepairTransfer</name>
                 <labEventTypes>PRE_END_REPAIR_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -689,6 +690,7 @@
             <workflowStepDefs>
                 <name>EndRepair_ABase</name>
                 <labEventTypes>END_REPAIR_ABASE</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -701,6 +703,7 @@
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>
                 <labEventTypes>POST_END_REPAIR_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -708,6 +711,7 @@
             <workflowStepDefs>
                 <name>UMI Addition</name>
                 <labEventTypes>UMI_ADDITION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -715,6 +719,7 @@
             <workflowStepDefs>
                 <name>PostUMIAdditionThermoCyclerLoaded</name>
                 <labEventTypes>POST_UMI_ADDITION_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -722,6 +727,7 @@
             <workflowStepDefs>
                 <name>UMI Cleanup</name>
                 <labEventTypes>UMI_CLEANUP</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -729,6 +735,7 @@
             <workflowStepDefs>
                 <name>Indexed Adaptor Ligation</name>
                 <labEventTypes>INDEXED_ADAPTER_LIGATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -736,6 +743,7 @@
             <workflowStepDefs>
                 <name>Index P5 Pond Enrichment</name>
                 <labEventTypes>INDEX_P5_POND_ENRICHMENT</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -743,6 +751,7 @@
             <workflowStepDefs>
                 <name>PostIndexedAdapterLigationThermoCyclerLoaded</name>
                 <labEventTypes>POST_INDEXED_ADAPTER_LIGATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -750,12 +759,14 @@
             <workflowStepDefs>
                 <name>Cell Free Pond Registration</name>
                 <labEventTypes>CF_DNA_POND_REGISTRATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
                 <labEventTypes>POND_PICO</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1411,6 +1422,7 @@
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Pooling Bucket</name>
                 <labEventTypes>POOLING_BUCKET</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1425,6 +1437,7 @@
             <workflowStepDefs>
                 <name>Pooling Transfer</name>
                 <labEventTypes>POOLING_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1438,6 +1451,7 @@
             <workflowStepDefs>
                 <name>Calibrated Pooling Transfer</name>
                 <labEventTypes>CALIBRATED_POOLING_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1451,6 +1465,7 @@
             <workflowStepDefs>
                 <name>Pool Correction</name>
                 <labEventTypes>POOL_CORRECTION</labEventTypes>
+                <eventClass>IN_PLACE</eventClass> <!-- todo jmt check -->
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1464,6 +1479,7 @@
             <workflowStepDefs>
                 <name>EcoTransfer</name>
                 <labEventTypes>ECO_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1471,6 +1487,7 @@
             <workflowStepDefs>
                 <name>Viia7Transfer</name>
                 <labEventTypes>VIIA7_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1478,6 +1495,7 @@
             <workflowStepDefs>
                 <name>Normalization Transfer</name>
                 <labEventTypes>NORMALIZATION_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1486,6 +1504,7 @@
             <workflowStepDefs>
                 <name>Denature Transfer</name>
                 <labEventTypes>DENATURE_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
