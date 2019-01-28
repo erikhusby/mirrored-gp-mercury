@@ -251,7 +251,6 @@ public class QueueEjb {
 
         for (QueueEntity queueEntity : queueEntities) {
             queueEntity.setQueueStatus(QueueStatus.Repeat);
-            queueEntity.getQueueGrouping().setQueuePriority(QueuePriority.REPEAT);
         }
     }
 
