@@ -1043,8 +1043,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             return displayName;
         }
 
+        /**
+         * Build an AggregationParticle based on the sampleId and productOrderKey.
+         *
+         * @param sampleId When the sample aliquot is used as as a part of the AGP, The sampleID passed in should
+         *                 be the sampleID of the plating event in order to guarantee uniqueness.
+         * @param productOrderKey the PDO key
+         */
         public String build(String sampleId, String productOrderKey) {
-
             switch (this) {
             case PDO:
                 return productOrderKey;
