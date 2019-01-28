@@ -31,10 +31,10 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProduct
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
-import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -63,7 +63,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -229,21 +228,18 @@ public class ProductOrderEjb {
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
             throws IOException, QuoteNotFoundException, SAPInterfaceException {
 
-        persistProductOrder(saveType, editedProductOrder, deletedIds, kitDetailCollection, Collections.<CustomizationValues>emptyList(), new MessageCollection());
+        persistProductOrder(saveType, editedProductOrder, deletedIds, kitDetailCollection, new MessageCollection());
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
                                     @Nonnull Collection<String> deletedIds,
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection,
-                                    List<CustomizationValues> customizationValues,
                                     MessageCollection messageCollection)
             throws IOException, QuoteNotFoundException, SAPInterfaceException {
 
         kitDetailCollection.removeAll(Collections.singleton(null));
         deletedIds.removeAll(Collections.singleton(null));
-
-        editedProductOrder.updateCustomSettings(customizationValues);
 
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 
@@ -342,27 +338,9 @@ public class ProductOrderEjb {
      *
      * @throws SAPInterfaceException
      */
-    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
-                                         boolean allowCreateOrder) throws SAPInterfaceException {
-         publishProductOrderToSAP(editedProductOrder, messageCollection, allowCreateOrder, new Date());
-    }
-
-    /**
-     * Takes care of the logic to publish the Product Order to SAP for the purposes of either creating or updating
-     * an SAP order.  This must be done in order to directly bill to SAP from mercury
-     *
-     * @param editedProductOrder Product order entity which intends to be reflected in SAP
-     * @param messageCollection  Storage for error/success messages that happens during the publishing process
-     * @param allowCreateOrder   Helper flag to know indicate if the scenario by which the method is called intends to
-     *                           allow a new order to be replaced (e.g. an order previously was associated with an SAP
-     *                           order but needs a new one)
-     * @param effectiveDate
-     *
-     * @throws SAPInterfaceException
-     */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
-                                         boolean allowCreateOrder, Date effectiveDate) throws SAPInterfaceException {
+                                         boolean allowCreateOrder) throws SAPInterfaceException {
         ProductOrder orderToPublish = editedProductOrder;
 
         if (!editedProductOrder.hasSapQuote()) {
@@ -430,7 +408,7 @@ public class ProductOrderEjb {
                     orderToUpdate.getProduct(), 0, false, closingOrder);
         }
         orderToUpdate.updateSapDetails(sampleCount.intValue(),
-                TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")), "");
+            MercuryStringUtils.makeDigest(allProductsOrdered),"");
         messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
                                   " has been successfully updated in SAP");
 
@@ -463,7 +441,7 @@ public class ProductOrderEjb {
         orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,0,
                 orderToPublish.getQuoteId(),
                 SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode(),
-                TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")), ""));
+                MercuryStringUtils.makeDigest(allProductsOrdered),""));
 
         if(quoteIdChange ) {
             String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+

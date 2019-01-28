@@ -92,6 +92,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @SuppressWarnings("UnusedDeclaration")
@@ -1617,6 +1618,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public boolean canBill() {
             return EnumSet.of(Submitted, Abandoned, Completed).contains(this);
         }
+
+        /**
+         * @return true if an order can be closed from this state.
+         */
+        public boolean canClose() {
+            return EnumSet.of(Abandoned, Completed).contains(this);
+        }
         /**
          * @return true if an order can be billed from this state.
          */
@@ -2263,6 +2271,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             this.orderType = orderType;
     }
 
+    public boolean isCommercial() {
+        return orderType == OrderAccessType.COMMERCIAL;
+    }
+
     public String getOrderTypeDisplay() {
 
         String displayName = getOrderType().getDisplayName();
@@ -2320,24 +2332,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
-        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
-
-        checkQuoteValidity(quote, todayTruncated);
+        checkQuoteValidity(quote, new Date());
     }
 
-    public static void checkQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
-        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
-            if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
-                for (Funding funding : fundingLevel.getFunding()) {
+    public static void checkQuoteValidity(Quote quote, Date date) throws QuoteServerException {
+        final Date todayTruncated = DateUtils.truncate(date, Calendar.DATE);
+        final Set<String> errors = new HashSet<>();
+        if (Objects.nonNull(quote)) {
+            quote.getFunding().stream()
+                .filter(Funding::isFundsReservation)
+                .filter(funding -> !FundingLevel.isGrantActiveForDate(todayTruncated, funding))
+                .forEach(funding -> {
+                    errors.add(String.format("The funding source %s has expired making this quote currently unfunded.",
+                        funding.getGrantNumber()));
+                });
+        }
 
-                    if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                        if (!FundingLevel.isGrantActiveForDate(todayTruncated, funding)) {
-                            throw new QuoteServerException("The funding source " + funding.getGrantNumber() +
-                                                           " has expired making this quote currently unfunded.");
-                        }
-                    }
-                }
-            }
+        if (CollectionUtils.isNotEmpty(errors)) {
+            throw new QuoteServerException(errors.toString());
         }
     }
 

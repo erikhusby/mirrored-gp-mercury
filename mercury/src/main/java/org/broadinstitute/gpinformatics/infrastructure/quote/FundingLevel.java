@@ -43,4 +43,8 @@ public class FundingLevel {
     public void setFunding(Collection<Funding> funding) {
         this.funding = funding;
     }
+    
+    public boolean isActive() {
+        return Integer.valueOf(getPercent()) != 0;
+    }
 }

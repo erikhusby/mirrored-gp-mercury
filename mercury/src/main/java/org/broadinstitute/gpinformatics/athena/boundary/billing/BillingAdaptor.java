@@ -170,12 +170,12 @@ public class BillingAdaptor implements Serializable {
             //**************************** Temporarily Re-adding **********************************
 
             for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
-
                 final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(itemForPriceUpdate.getProductOrder());
-                final MessageCollection messageCollection = new MessageCollection();
                 List<String> effectivePricesForProducts;
 
                 try {
+
+                    // get and set the priceItem (reallly PriceList) for this quoteImportItem
                     priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(itemForPriceUpdate));
                     itemForPriceUpdate.setPriceOnWorkDate(priceItemsForDate);
 
@@ -183,6 +183,7 @@ public class BillingAdaptor implements Serializable {
                     if (itemForPriceUpdate.getProductOrder().hasSapQuote()) {
                         sapQuote = itemForPriceUpdate.getProductOrder().getSapQuote(sapService);
                     }
+
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
 //                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     itemForPriceUpdate.setQuote(quote);
@@ -217,6 +218,7 @@ public class BillingAdaptor implements Serializable {
 
                 String sapBillingId = null;
                 String workId = null;
+                boolean isQuoteFunded = false;
                 try {
 
                     if (!item.getProductOrder().hasSapQuote()) {
@@ -228,7 +230,8 @@ public class BillingAdaptor implements Serializable {
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
 //                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     item.setQuote(quote);
-
+                    isQuoteFunded = quote.isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
+                    // TODO SGM -- Need an isfunded for SAP /\
                     if (item.getProductOrder().hasSapQuote()) {
                         ProductOrder.checkSapQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
                                 Calendar.DATE));
@@ -292,6 +295,7 @@ public class BillingAdaptor implements Serializable {
                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
                        && StringUtils.isBlank(item.getSapItems())) {
 
+                    if(orderEligibleForSAP && canBeBilledInSap) {
                         final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
                                 item.getProductOrder().getSapCompanyConfigurationForProductOrder());
 
@@ -407,8 +411,7 @@ public class BillingAdaptor implements Serializable {
                                 .append(billingSession.getBusinessKey()).append(".");
 
                     } else if (StringUtils.isBlank(result.getSAPBillingId()) && quote != null
-                               && quote.isEligibleForSAP(item.getWorkCompleteDate())
-                               && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+                               && isQuoteFunded && item.getProductOrder().isSavedInSAP()) {
 
                         errorMessage.append("A problem occured attempting to post to SAP for ")
                                 .append(billingSession.getBusinessKey()).append(".");
