@@ -360,7 +360,7 @@ mercury:
       collaborate: DEV
       submission: DEV
       infiniumStarter: DEV
-      sap:  RC
+      sap:  TEST
       decoder: DEV
 
 
