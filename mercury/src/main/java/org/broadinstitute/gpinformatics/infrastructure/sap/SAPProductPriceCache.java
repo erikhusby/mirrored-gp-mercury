@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
-import clover.org.apache.commons.lang.StringUtils;
+import clover.org.apache.commons.lang3.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -100,6 +100,26 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         
         return foundMaterial;
     }
+
+
+    public void determineIfProductsExist(Collection<Product> products,
+                                         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode)
+            throws InvalidProductException {
+        List<String> missingProducts = new ArrayList<>();
+
+        for( Product product:products) {
+            SAPMaterial foundMaterial = findByProduct(product, companyCode);
+            if(foundMaterial == null) {
+                missingProducts.add(product.getPartNumber());
+            }
+        }
+
+        if(!missingProducts.isEmpty()) {
+            throw new InvalidProductException("The following products have not been setup in SAP: " +
+                                              StringUtils.join(missingProducts));
+        }
+    }
+
 
     public static PriceItem determinePriceItemByCompanyCode(Product product,
                                                             SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {

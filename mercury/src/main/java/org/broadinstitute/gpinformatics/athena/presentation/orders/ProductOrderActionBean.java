@@ -218,6 +218,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String sampleSummary;
     private State state;
+    private String quoteSource;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -772,29 +773,37 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
-        Quote quote = validateQuote(editOrder);
+        final Quote quote = (editOrder.hasQuoteServerQuote())?validateQuote(editOrder):null;
+        final Quote sapQuote = (editOrder.hasSapQuote())?validateSapQuote(editOrder):null;
 
         try {
-            if (quote != null) {
-                ProductOrder.checkQuoteValidity(quote);
-                final String[] error = new String[1];
-                quote.getFunding().stream()
-                    .filter(Funding::isFundsReservation)
-                    .forEach(funding -> {
-                        int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
-                        if (numDaysBetween > 0 && numDaysBetween < 45) {
-                            addMessage(
-                                String.format("The Funding Source %s on %s  Quote expires in %d days. If it is likely "
-                                              + "this work will not be completed by then, please work on updating the "
-                                              + "Funding Source so Billing Errors can be avoided.",
-                                    funding.getDisplayName(), quote.getAlphanumericId(), numDaysBetween)
-                            );
-                        }
-                    });
+            if (editOrder.hasSapQuote()) {
+                if (sapQuote != null) {
+                    ProductOrder.checkSapQuoteValidity(sapQuote);
+                }
+                validateSapQuoteDetails(sapQuote, !editOrder.hasJiraTicketKey(), 0);
+            } else if (editOrder.hasQuoteServerQuote()) {
+                if (quote != null) {
+                    ProductOrder.checkQuoteValidity(quote);
+                    final String[] error = new String[1];
+                    quote.getFunding().stream()
+                            .filter(Funding::isFundsReservation)
+                            .forEach(funding -> {
+                                int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                                if (numDaysBetween > 0 && numDaysBetween < 45) {
+                                    addMessage(
+                                            String.format(
+                                                    "The Funding Source %s on %s  Quote expires in %d days. If it is likely "
+                                                    + "this work will not be completed by then, please work on updating the "
+                                                    + "Funding Source so Billing Errors can be avoided.",
+                                                    funding.getDisplayName(), quote.getAlphanumericId(), numDaysBetween)
+                                    );
+                                }
+                            });
+                }
+
+                validateQuoteDetails(quote, !editOrder.hasJiraTicketKey(), 0);
             }
-
-            validateQuoteDetails(quote, !editOrder.hasJiraTicketKey(), 0);
-
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (InvalidProductException |
@@ -823,11 +832,22 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void validateQuoteDetails(ProductOrder productOrder, boolean countOpenOrders)
             throws InvalidProductException, SAPIntegrationException {
-        Quote quote = validateQuote(productOrder);
 
-        if (quote != null) {
-            validateQuoteDetails(quote, countOpenOrders, 0);
+        Quote quote = null;
+        Quote sapQuote = null;
+
+        if(productOrder.hasSapQuote()) {
+            sapQuote = validateSapQuote(productOrder);
+            if (sapQuote != null) {
+                validateSapQuoteDetails(quote, countOpenOrders, 0);
+            }
+        } else {
+            quote = validateQuote(productOrder);
+            if (quote != null) {
+                validateQuoteDetails(quote, countOpenOrders, 0);
+            }
         }
+
     }
 
     /**
@@ -845,10 +865,20 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder,
                                                       boolean countOpenOrders, int additionalSamplesCount)
             throws InvalidProductException, QuoteServerException, SAPIntegrationException {
-        Quote quote = validateQuote(productOrder);
-        ProductOrder.checkQuoteValidity(quote);
-        if (quote != null) {
-            validateQuoteDetails(quote, countOpenOrders, additionalSamplesCount);
+        Quote quote = null;
+        Quote sapQuote = null;
+        if(productOrder.hasSapQuote()) {
+            sapQuote = validateSapQuote(productOrder);
+            ProductOrder.checkSapQuoteValidity(sapQuote);
+            if(sapQuote != null) {
+                validateSapQuoteDetails(sapQuote, countOpenOrders, additionalSamplesCount);
+            }
+        } else {
+            quote = validateQuote(productOrder);
+            ProductOrder.checkQuoteValidity(quote);
+            if (quote != null) {
+                validateQuoteDetails(quote, countOpenOrders, additionalSamplesCount);
+            }
         }
     }
 
@@ -864,6 +894,35 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     protected void validateQuoteDetails(Quote quote, boolean countCurrentUnPlacedOrder,
                                         int additionalSampleCount) throws InvalidProductException,
+            SAPIntegrationException {
+        if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
+            String unFundedMessage = "A quote should be funded in order to be used for a product order.";
+            addGlobalValidationError(unFundedMessage);
+        }
+
+        double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
+        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
+        double valueOfCurrentOrder = 0;
+
+        if (fundsRemaining <= 0d ||
+            (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
+            String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
+            addGlobalValidationError( inssuficientFundsMessage);
+        }
+    }
+
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote
+     *
+     * @param quote  The quote which the user intends to use.  From this we can determine the collection of orders to
+     *               include in evaluating and the funds remaining
+     * @param countCurrentUnPlacedOrder indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     * @param additionalSampleCount
+     */
+    protected void validateSapQuoteDetails(Quote quote, boolean countCurrentUnPlacedOrder,
+                                      int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
@@ -1402,45 +1461,49 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         try {
             item.put("key", quoteIdentifier);
-            if (quoteIdentifier != null) {
-                Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
-                final QuoteFunding quoteFunding = quote.getQuoteFunding();
-                double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
-                item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
-                item.put("status", quote.getApprovalStatus().getValue());
+            if (StringUtils.isNotBlank(quoteIdentifier)) {
+                if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName()) ) {
+                    Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
+                    final QuoteFunding quoteFunding = quote.getQuoteFunding();
+                    double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
+                    item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
+                    item.put("status", quote.getApprovalStatus().getValue());
 
-                double outstandingOrdersValue = estimateOutstandingOrders(quote, 0, null);
-                item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
-                        outstandingOrdersValue));
-                JSONArray fundingDetails = new JSONArray();
+                    double outstandingOrdersValue = estimateOutstandingOrders(quote, 0, null);
+                    item.put("outstandingEstimate", NumberFormat.getCurrencyInstance().format(
+                            outstandingOrdersValue));
+                    JSONArray fundingDetails = new JSONArray();
 
-                final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
-                Funding funding = null;
-                if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
-                    funding = quote.getFunding().stream().findFirst().orElse(null);
-                }
+                    final Date todayTruncated =
+                            org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
+                    Funding funding = null;
+                    if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
+                        funding = quote.getFunding().stream().findFirst().orElse(null);
+                    }
 
-                if (funding == null) {
-                    item.put("error", "This quote has no active Funding Sources.");
-                } else {
-                    if (funding.isFundsReservation()) {
-                        try {
-                            JSONObject fundingInfo = new JSONObject();
-                            fundingInfo.put("grantTitle", funding.getDisplayName());
-                            fundingInfo.put("grantEndDate", DateUtils.getDate(funding.getGrantEndDate()));
-                            fundingInfo.put("grantNumber", funding.getGrantNumber());
-                            fundingInfo.put("grantStatus", funding.getGrantStatus());
+                    if (funding == null) {
+                        item.put("error", "This quote has no active Funding Sources.");
+                    } else {
+                        if (funding.isFundsReservation()) {
+                            try {
+                                JSONObject fundingInfo = new JSONObject();
+                                fundingInfo.put("grantTitle", funding.getDisplayName());
+                                fundingInfo.put("grantEndDate", DateUtils.getDate(funding.getGrantEndDate()));
+                                fundingInfo.put("grantNumber", funding.getGrantNumber());
+                                fundingInfo.put("grantStatus", funding.getGrantStatus());
 
-                            fundingInfo.put("activeGrant", FundingLevel.isGrantActiveForDate(todayTruncated, funding));
-                            fundingInfo.put("daysTillExpire",
-                                DateUtils.getNumDaysBetween(todayTruncated, funding.getGrantEndDate()));
-                            fundingDetails.put(fundingInfo);
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
+                                fundingInfo
+                                        .put("activeGrant", FundingLevel.isGrantActiveForDate(todayTruncated, funding));
+                                fundingInfo.put("daysTillExpire",
+                                        DateUtils.getNumDaysBetween(todayTruncated, funding.getGrantEndDate()));
+                                fundingDetails.put(fundingInfo);
+                            } catch (JSONException e) {
+                                throw new RuntimeException(e);
+                            }
                         }
                     }
+                    item.put("fundingDetails", fundingDetails);
                 }
-                item.put("fundingDetails", fundingDetails);
             }
 
         } catch (Exception ex) {
@@ -1585,7 +1648,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution publishProductOrderToSAP() throws SAPInterfaceException {
         MessageCollection placeOrderMessageCollection = new MessageCollection();
 
-        productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection, true);
+        if (editOrder.hasSapQuote()) {
+            productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection, true);
+        } else {
+            addGlobalValidationError("This order does not have an SAP quote so it is not eligible to be an SAP order");
+        }
 
         addMessages(placeOrderMessageCollection);
         return createViewResolution(editOrder.getBusinessKey());
@@ -1608,7 +1675,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
-            productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
+            if (editOrder.hasSapQuote()) {
+                productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
+            }
             addMessages(placeOrderMessageCollection);
 
             /*
@@ -3297,6 +3366,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateQuoteOptions(String action) {
+
+        if(action.equals(PLACE_ORDER_ACTION)) {
+            requireField(editOrder.getQuoteSource(), " a quote source type selected", action);
+        }
+
         if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER) ||
             (action.equals(SAVE_ACTION) && editOrder.isSubmitted())) {
             boolean hasQuote = !StringUtils.isBlank(editOrder.getQuoteId());
@@ -3782,5 +3856,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public Collection<DisplayableItem> getReagentDesigns() {
         return makeDisplayableItemCollection(reagentDesignDao.findAll());
+    }
+
+    public List<ProductOrder.QuoteSourceType> getQuoteSources() {
+        return Arrays.asList(ProductOrder.QuoteSourceType.values());
+    }
+
+    public String getQuoteSource() {
+        return quoteSource;
+    }
+
+    public void setQuoteSource(String quoteSource) {
+        this.quoteSource = quoteSource;
     }
 }

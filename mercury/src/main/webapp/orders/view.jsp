@@ -877,7 +877,7 @@ function updateFundsRemaining() {
     var productOrderKey = $j("input[name='productOrder']").val();
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey + "&quoteSource=" + ${actionBean.editOrder.quoteSource},
             dataType: 'json',
             success: updateFunds
         });
@@ -1582,9 +1582,18 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
         <div class="controls">
             <div class="form-value">
-                <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                        ${actionBean.editOrder.quoteId}
-                </a>
+                <c:if test="${actionBean.editOrder.quoteIdSet}">
+                    <c:if test="${ not actionBean.editOrder.hasSapQuote()}">
+                        <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
+                    </c:if>
+                    <c:if test="${ actionBean.editOrder.hasSapQuote()}">
+                        <b>SAP Quote: </b>
+                    </c:if>
+                    ${actionBean.editOrder.quoteId}
+                    <c:if test="${ not actionBean.editOrder.hasSapQuote()}">
+                        </a>
+                    </c:if>
+                </c:if>
                 <div id="fundsRemaining"></div>
             </div>
         </div>

@@ -46,7 +46,9 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
@@ -129,6 +131,8 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
+    @Inject
+    private SapIntegrationService sapService;
 
 
     public enum ErrorLevel {
@@ -645,6 +649,16 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", productOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", productOrder.getQuoteId());
+        }
+        return quoteDetails;
+    }
+
+    protected Quote validateSapQuote(ProductOrder productOrder) {
+        Quote quoteDetails = null;
+        try {
+            quoteDetails = productOrder.getSapQuote(sapService);
+        } catch (SAPIntegrationException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", productOrder.getQuoteId());
         }
         return quoteDetails;

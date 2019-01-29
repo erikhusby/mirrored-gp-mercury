@@ -223,7 +223,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
             } catch (ValidationException e) {
                 logger.error(e);
                 addGlobalValidationErrors(e.getValidationMessages());
-            } catch (QuoteNotFoundException | QuoteServerException e) {
+            } catch (QuoteNotFoundException | QuoteServerException | SAPIntegrationException e) {
                 logger.error(e);
                 addGlobalValidationError(e.getMessage());
             }
