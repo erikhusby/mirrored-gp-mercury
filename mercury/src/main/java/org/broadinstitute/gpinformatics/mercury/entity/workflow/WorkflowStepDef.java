@@ -80,7 +80,8 @@ public class WorkflowStepDef implements Serializable {
 
     enum EventClass {
         IN_PLACE,
-        TRANSFER
+        TRANSFER,
+        SIDE_BRANCH_TRANSFER
     }
 
     /* LibraryQuantTypes:

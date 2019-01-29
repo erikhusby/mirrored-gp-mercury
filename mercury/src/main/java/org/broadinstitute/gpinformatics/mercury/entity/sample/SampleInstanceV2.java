@@ -636,7 +636,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
                         labBatch.getWorkflowName()).getEffectiveVersion(labEvent.getEventDate());
                 ProductWorkflowDefVersion.LabEventNode labEventNode = workflowDefVersion.findStepByEventType(labEventType.getName());
                 if (labEventNode != null) {
-                    labEventNode.getPredecessorTransfers(); // ancestor = POOLING_BUCKET
+                    labEventNode.getPredecessorTransfers();
+                    labEvent.getAncestorEvents();
                 }
             }
 

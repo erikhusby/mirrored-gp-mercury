@@ -766,7 +766,7 @@
             <workflowStepDefs>
                 <name>Pond Pico</name>
                 <labEventTypes>POND_PICO</labEventTypes>
-                <eventClass>TRANSFER</eventClass>
+                <eventClass>SIDE_BRANCH_TRANSFER</eventClass>
                 <optional>true</optional>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1053,6 +1053,7 @@
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>ICE Bucket</name>
                 <labEventTypes>ICE_BUCKET</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1068,6 +1069,7 @@
             <workflowStepDefs>
                 <name>IcePoolingTransfer</name>
                 <labEventTypes>ICE_POOLING_TRANSFER</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1082,6 +1084,7 @@
             <workflowStepDefs>
                 <name>IceSPRIConcentration</name>
                 <labEventTypes>ICE_SPRI_CONCENTRATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1089,6 +1092,7 @@
             <workflowStepDefs>
                 <name>Ice96PlexSPRIConcentration</name>
                 <labEventTypes>ICE_96_PLEX_SPRI_CONCENTRATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1101,6 +1105,7 @@
             <workflowStepDefs>
                 <name>IcePoolTest</name>
                 <labEventTypes>ICE_POOL_TEST</labEventTypes>
+                <eventClass>SIDE_BRANCH_TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1109,6 +1114,7 @@
             <workflowStepDefs>
                 <name>IceHyperPrep1stBaitPick</name>
                 <labEventTypes>ICE_HYPERPREP_1ST_BAIT_PICK</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1116,6 +1122,7 @@
             <workflowStepDefs>
                 <name>IceHyperPrep1stBaitAddition</name>
                 <labEventTypes>ICE_HYPERPREP_1ST_BAIT_ADDITION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1123,6 +1130,7 @@
             <workflowStepDefs>
                 <name>IceHyperPrep1stHybridization</name>
                 <labEventTypes>ICE_HYPERPREP_1ST_HYBRIDIZATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1130,6 +1138,7 @@
             <workflowStepDefs>
                 <name>Ice1stHybridization</name>
                 <labEventTypes>ICE_1ST_HYBRIDIZATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1138,6 +1147,7 @@
             <workflowStepDefs>
                 <name>Ice1stBaitAddition</name>
                 <labEventTypes>ICE_1S_TBAIT_ADDITION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1145,6 +1155,7 @@
             <workflowStepDefs>
                 <name>Ice1stBaitPick</name>
                 <labEventTypes>ICE_1S_TBAIT_PICK</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1153,6 +1164,7 @@
             <workflowStepDefs>
                 <name>PostIce1stHybridizationThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_1ST_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1160,6 +1172,7 @@
             <workflowStepDefs>
                 <name>Ice1stCapture</name>
                 <labEventTypes>ICE_1ST_CAPTURE</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1167,6 +1180,7 @@
             <workflowStepDefs>
                 <name>PostIce1stCaptureThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_1ST_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1175,6 +1189,7 @@
             <workflowStepDefs>
                 <name>IceHyperPrep2ndBaitPick</name>
                 <labEventTypes>ICE_HYPERPREP_2ND_BAIT_PICK</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1182,6 +1197,7 @@
             <workflowStepDefs>
                 <name>IceHyperPrep2ndBaitAddition</name>
                 <labEventTypes>ICE_HYPERPREP_2ND_BAIT_ADDITION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1190,6 +1206,7 @@
             <workflowStepDefs>
                 <name>Ice2ndBaitAddition</name>
                 <labEventTypes>ICE_2ND_BAIT_ADDITION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1197,6 +1214,7 @@
             <workflowStepDefs>
                 <name>Ice2ndBaitPick</name>
                 <labEventTypes>ICE_2ND_BAIT_PICK</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1204,6 +1222,7 @@
             <workflowStepDefs>
                 <name>Ice2ndHybridization</name>
                 <labEventTypes>ICE_2ND_HYBRIDIZATION</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1212,6 +1231,7 @@
             <workflowStepDefs>
                 <name>PostIce2ndHybridizationThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_2ND_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1219,6 +1239,7 @@
             <workflowStepDefs>
                 <name>Ice2ndCapture</name>
                 <labEventTypes>ICE_2ND_CAPTURE</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1226,6 +1247,7 @@
             <workflowStepDefs>
                 <name>PostIce2ndCaptureThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_2ND_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1233,6 +1255,7 @@
             <workflowStepDefs>
                 <name>IceCatchCleanup</name>
                 <labEventTypes>ICE_CATCH_CLEANUP</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1240,6 +1263,7 @@
             <workflowStepDefs>
                 <name>IceCatchEnrichmentSetup</name>
                 <labEventTypes>ICE_CATCH_ENRICHMENT_SETUP</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1247,6 +1271,7 @@
             <workflowStepDefs>
                 <name>PostIceCatchEnrichmentSetupThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_CATCH_ENRICHMENT_SETUP_THERMO_CYCLER_LOADED</labEventTypes>
+                <eventClass>IN_PLACE</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1254,6 +1279,7 @@
             <workflowStepDefs>
                 <name>IceCatchEnrichmentCleanup</name>
                 <labEventTypes>ICE_CATCH_ENRICHMENT_CLEANUP</labEventTypes>
+                <eventClass>TRANSFER</eventClass>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1266,6 +1292,7 @@
             <workflowStepDefs>
                 <name>IceCatchPico</name> <!-- will change on deck, from CatchPico -->
                 <labEventTypes>ICE_CATCH_PICO</labEventTypes>
+                <eventClass>SIDE_BRANCH_TRANSFER</eventClass>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>

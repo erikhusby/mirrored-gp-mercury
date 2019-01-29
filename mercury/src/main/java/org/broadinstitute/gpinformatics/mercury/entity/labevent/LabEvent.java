@@ -784,4 +784,12 @@ todo jmt adder methods
         }
     }
 
+    public Set<LabEvent> getAncestorEvents() {
+        HashSet<LabEvent> labEvents = new HashSet<>();
+        for (LabVessel labVessel : getSourceLabVessels()) {
+            labEvents.addAll(labVessel.getTransfersToWithRearrays());
+        }
+        return labEvents;
+    }
+
 }

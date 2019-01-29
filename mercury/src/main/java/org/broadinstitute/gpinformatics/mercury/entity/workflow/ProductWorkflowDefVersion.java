@@ -249,6 +249,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     public void buildLabEventGraph() {
         mapNameToLabEvents = ArrayListMultimap.create();
         LabEventNode previousNode = null;
+        LabEventNode previousTransferNode = null;
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             WorkflowProcessDefVersion effectiveProcessDef = workflowProcessDef.getEffectiveVersion();
             for (WorkflowStepDef workflowStepDef : effectiveProcessDef.getWorkflowStepDefs()) {
@@ -263,13 +264,16 @@ public class ProductWorkflowDefVersion implements Serializable {
                     }
                     if (previousNode != null) {
                         labEventNode.addPredecessor(previousNode);
-                        WorkflowStepDef.EventClass eventClass = previousNode.getStepDef().getEventClass();
-                        if (eventClass != null && eventClass == WorkflowStepDef.EventClass.TRANSFER) {
-                            labEventNode.addPredecessorTransfer(previousNode);
+                        if (previousTransferNode != null) {
+                            labEventNode.addPredecessorTransfer(previousTransferNode);
                         }
                         previousNode.addSuccessor(labEventNode);
                     }
                     previousNode = labEventNode;
+                    WorkflowStepDef.EventClass eventClass = labEventNode.getStepDef().getEventClass();
+                    if (eventClass != null && eventClass == WorkflowStepDef.EventClass.TRANSFER) {
+                        previousTransferNode = labEventNode;
+                    }
                 }
             }
         }

@@ -767,7 +767,7 @@ public class GetSampleInstancesTest {
                 pondTf.getContainerRole(), SBSSection.ALL96, null, pondReg));
 
         // Pool rack
-        BarcodedTube ulpPoolTube = new BarcodedTube("Pool");
+        BarcodedTube ulpPoolTube = new BarcodedTube("ULPPool");
         HashMap<VesselPosition, BarcodedTube> poolMapPositionToTube = new HashMap<>();
         poolMapPositionToTube.put(VesselPosition.A01, ulpPoolTube);
         TubeFormation poolTf = new TubeFormation(poolMapPositionToTube, RackOfTubes.RackType.Matrix96);
@@ -793,7 +793,7 @@ public class GetSampleInstancesTest {
         exomeLcset.addBucketEntry(new BucketEntry(pondTube2, icePdo, iceBucket, BucketEntry.BucketEntryType.PDO_ENTRY, 2));
 
         // Selection Pool rack
-        BarcodedTube selPoolTube = new BarcodedTube("Pool");
+        BarcodedTube selPoolTube = new BarcodedTube("ExPool");
         HashMap<VesselPosition, BarcodedTube> selPoolMapPositionToTube = new HashMap<>();
         selPoolMapPositionToTube.put(VesselPosition.A01, selPoolTube);
         TubeFormation selPoolTf = new TubeFormation(selPoolMapPositionToTube, RackOfTubes.RackType.Matrix96);
@@ -807,6 +807,7 @@ public class GetSampleInstancesTest {
 
         // SelectionCatchRegistration
         // PoolingTransfer
+        BaseEventTest.runTransferVisualizer(dnaTube1);
 
         // Validate all transfers
         Set<SampleInstanceV2> ulpSampleInstances = ulpPoolTube.getSampleInstancesV2();
