@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -29,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -50,14 +50,8 @@ public class MayoManifestImportProcessor {
     public static final String UNKNOWN_UNITS = "Manifest header %s has unknown units \"%s\".";
     public static final String UNKNOWN_HEADER = "Unknown manifest header \"%s\" will be ignored.";
 
-    // The expected sheet names.
-    public static final String PKG_INFO_SHEETNAME = "PKG Information";
+    // The expected sheet name.
     public static final String DETAILS_SHEETNAME = "Details";
-
-    // The header of interest on the "package information" sheet.
-    private static final String PACKAGE_ID_HEADER = "Package Id";
-
-    // These headers are on the "details" sheet.
     private enum Attribute {REQUIRED, HAS_UNITS, IS_DATE};
 
     public enum Header {
@@ -255,41 +249,17 @@ public class MayoManifestImportProcessor {
      * @param cellData map of sheetname to the list of rows, each of which is a list of string cell values.
      *                 The parser should have already stripped out completely blank rows.
      * @param messages passes back to caller any error, warning, and info messages.
-     * @return the packageId from the spreadsheet, and the ManifestRecords, one per data row in the spreadsheet.
+     * @return the ManifestRecords, one per data row in the spreadsheet.
      */
-    public Pair<String, List<ManifestRecord>> makeManifestRecords(Map<String, List<List<String>>> cellData,
+    public List<ManifestRecord> makeManifestRecords(Map<String, List<List<String>>> cellData,
             MessageCollection messages) {
 
-        if (!cellData.containsKey(PKG_INFO_SHEETNAME)) {
-            messages.addError(MISSING_SHEET, PKG_INFO_SHEETNAME);
-            if (!cellData.containsKey(DETAILS_SHEETNAME)) {
-                messages.addError(MISSING_SHEET, DETAILS_SHEETNAME);
-            }
-        }
-        if (messages.hasErrors()) {
-            return Pair.of(null, null);
-        }
-
-        // Finds the Package Id on the Pkg Info sheet. It may be anywhere on the sheet.
-        // Looks for the header then collects data from same column on the following row.
-        String packageId = null;
-        for (Iterator<List<String>> rowIterator = cellData.get(PKG_INFO_SHEETNAME).iterator();
-                rowIterator.hasNext() && packageId == null; ) {
-            List<String> columns = rowIterator.next();
-            for (int columnIndex = 0; columnIndex < columns.size() && packageId == null; ++columnIndex) {
-                if (columns.get(columnIndex).equalsIgnoreCase(PACKAGE_ID_HEADER) && rowIterator.hasNext()) {
-                    List<String> nextRowColumns = rowIterator.next();
-                    packageId = nextRowColumns.size() > columnIndex ? nextRowColumns.get(columnIndex) : null;
-                }
-            }
-        }
-        if (StringUtils.isBlank(packageId)) {
-            messages.addError(MISSING_HEADER, PACKAGE_ID_HEADER, PKG_INFO_SHEETNAME);
-            return Pair.of(null, null);
-        }
-
         // Makes sample metadata from each row on the Detail page.
-        List<List<String>> cellGrid = cellData.get(DETAILS_SHEETNAME);
+        List<List<String>> cellGrid = cellData == null ? null : cellData.get(DETAILS_SHEETNAME);
+        if (CollectionUtils.isEmpty(cellGrid)) {
+            messages.addError(MISSING_SHEET, DETAILS_SHEETNAME);
+            return null;
+        }
         initHeaders(cellGrid.get(0), messages);
 
         Arrays.asList(Header.values()).stream().
@@ -306,7 +276,7 @@ public class MayoManifestImportProcessor {
             }
         }
         if (messages.hasErrors()) {
-            return Pair.of(null, null);
+            return null;
         }
 
         // Makes a ManifestRecord for each row of data.
@@ -328,8 +298,9 @@ public class MayoManifestImportProcessor {
                                 messages.addError(NOT_NUMBER, header.getText(), value);
                                 value = "";
                             }
-                        } else if (header.isDate()) {
-                            // When column is a date, calculates the date string.
+                        } else if (header.isDate() && NumberUtils.isParsable(value)) {
+                            // When column is a number representing a date, calculates the date string.
+                            // For .xls spreadsheets the value will already be a date string without conversion.
                             value = PoiSpreadsheetParser.convertDoubleStringToDateString(value);
                         }
                         manifestRecord.addMetadata(header.getMetadataKey(), value);
@@ -341,7 +312,7 @@ public class MayoManifestImportProcessor {
             }
             records.add(manifestRecord);
         }
-        return Pair.of(packageId, records);
+        return records;
     }
 
     /**

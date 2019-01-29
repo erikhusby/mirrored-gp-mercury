@@ -54,8 +54,6 @@ import java.util.stream.Collectors;
 @Stateful
 public class MayoManifestEjb {
     private static Log logger = LogFactory.getLog(MayoManifestEjb.class);
-    public static final String INCONSISTENT_MANIFEST_FILE = "The manifest file found for \"%s\" contains " +
-            "package id \"%s\" and cannot be used.";
     public static final String MISSING_MANIFEST = "Cannot find a manifest for package %s. Scanned tubes and rack " +
             "will be saved, but not samples.";
     public static final String NOT_IN_MANIFEST = "Some rack scan tubes are not in the manifest: %s";
@@ -99,44 +97,6 @@ public class MayoManifestEjb {
     }
 
     /**
-     * Processes spreadsheet cell data and persists metadata in a Manifest Session.
-     * Returns the manifest session or null if there was a problem.
-     * Errors are put in the MessageCollection.
-     */
-    public List<ManifestRecord> makeManifestRecordsFromCellGrid(String scannedPackageBarcode,
-            Map<String, List<List<String>>> cellData, MessageCollection messages) {
-
-        if (!cellData.isEmpty()) {
-            MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
-            Pair<String, List<ManifestRecord>> pair = processor.makeManifestRecords(cellData, messages);
-            if (!messages.hasErrors() && pair != null) {
-                String packageIdInSheet = pair.getLeft();
-                List<ManifestRecord> manifestRecords = pair.getRight();
-
-                if (!scannedPackageBarcode.equals(packageIdInSheet)) {
-                    // The scanned package barcode was used to find the manifest file. If file contains
-                    // a different package barcode then it is inconsistent and must be fixed up.
-                    messages.addError(INCONSISTENT_MANIFEST_FILE, scannedPackageBarcode, packageIdInSheet);
-                }
-                return manifestRecords;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Looks for the file in Google Storage using filename. Returns the cell data for each sheet.
-     * Errors are put in the MessageCollection.
-     */
-    public Map<String, List<List<String>>> readFileAsCellGrid(String filename, MessageCollection messages) {
-        byte[] spreadsheet = googleBucketDao.download(filename, messages);
-        if (spreadsheet != null && spreadsheet.length > 0) {
-            return MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, messages);
-        }
-        return Collections.emptyMap();
-    }
-
-    /**
      * Searches database for an existing ManifestSession associated with the package barcode. If none
      * found, queries Google Storage for the manifest file, parses it and persists the ManifestSession.
      * Errors are put in the MessageCollection.
@@ -158,7 +118,8 @@ public class MayoManifestEjb {
         }
         // Reads or re-reads the file from Goolge storage.
         if (manifestSessions.isEmpty() || redoLookup) {
-            List<ManifestRecord> manifestRecordsFromFile = makeManifestRecordsFromCellGrid(packageBarcode,
+            MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
+            List<ManifestRecord> manifestRecordsFromFile = processor.makeManifestRecords(
                     readFileAsCellGrid(filename, messages), messages);
             if (CollectionUtils.isNotEmpty(manifestRecordsFromFile)) {
                 if (manifestSessions.isEmpty()) {
@@ -167,7 +128,6 @@ public class MayoManifestEjb {
                     manifestSessionDao.persist(manifestSession);
                 } else if (redoLookup) {
                     // Persist the new version of manifest only if different from the existing one.
-                    MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
                     if (!CollectionUtils.isEqualCollection(
                             processor.flattenedListOfMetadata(manifestSession.getRecords()),
                             processor.flattenedListOfMetadata(manifestRecordsFromFile))) {
@@ -182,6 +142,18 @@ public class MayoManifestEjb {
     }
 
     /**
+     * Looks for the file in Google Storage using filename. Returns the cell data for each sheet.
+     * Errors are put in the MessageCollection.
+     */
+    public Map<String, List<List<String>>> readFileAsCellGrid(String filename, MessageCollection messages) {
+        byte[] spreadsheet = googleBucketDao.download(filename, messages);
+        if (spreadsheet != null && spreadsheet.length > 0) {
+            return MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, messages);
+        }
+        return Collections.emptyMap();
+    }
+
+    /**
      * Makes the tubes, rack, RCT ticket, and samples. If the manifest is missing, a warning is issued and
      * tube and rack vessels are persisted, but not the samples, since sample name comes from the manifest.
      */
@@ -190,9 +162,9 @@ public class MayoManifestEjb {
 
         // If the ManifestSession exists, makes Metadata maps.
         Multimap<String, Metadata> sampleMetadata = HashMultimap.create();
-        Multimap<String, Metadata> tubeMetadata = HashMultimap.create();
         Map<String, VesselPosition> manifestPositions = new HashMap<>();
         Map<String, String> sampleToTube = new HashMap<>();
+        Map<String, String> tubeToSample = new HashMap<>();
         ManifestSession manifestSession = lookupOrMakeManifestSession(packageBarcode, filename, overwrite, messages);
         if (manifestSession != null) {
             for (ManifestRecord manifestRecord : manifestSession.findRecordsByKey(rackBarcode, Metadata.Key.BOX_ID)) {
@@ -208,6 +180,7 @@ public class MayoManifestEjb {
                     manifestPositions.put(tubeBarcode, position);
                 }
                 sampleToTube.put(sampleName, tubeBarcode);
+                tubeToSample.put(tubeBarcode, sampleName);
             }
         } else {
             messages.addWarning(MISSING_MANIFEST, packageBarcode);
@@ -283,13 +256,11 @@ public class MayoManifestEjb {
             }
             vesselPositionToTube.put(reverseRackScan.get(barcode), tube);
             // Sets the tube's volume and concentration.
-            if (tubeMetadata.containsKey(barcode)) {
-                for (Metadata metadata : tubeMetadata.get(barcode)) {
-                    if (metadata.getKey() == Metadata.Key.QUANTITY) {
-                        tube.setVolume(NumberUtils.toScaledBigDecimal(metadata.getValue()));
-                    } else if (metadata.getKey() == Metadata.Key.CONCENTRATION) {
-                        tube.setConcentration(NumberUtils.toScaledBigDecimal(metadata.getValue()));
-                    }
+            for (Metadata metadata : sampleMetadata.get(tubeToSample.get(barcode))) {
+                if (metadata.getKey() == Metadata.Key.QUANTITY) {
+                    tube.setVolume(NumberUtils.toScaledBigDecimal(metadata.getValue()));
+                } else if (metadata.getKey() == Metadata.Key.CONCENTRATION) {
+                    tube.setConcentration(NumberUtils.toScaledBigDecimal(metadata.getValue()));
                 }
             }
         }
@@ -415,6 +386,6 @@ public class MayoManifestEjb {
     }
 
     private String urlLink(JiraTicket jiraTicket) {
-        return "<a href=" + jiraTicket.getBrowserUrl() + ">" + jiraTicket.getTicketName() + "</a>";
+        return "<a id=rctUrl href=" + jiraTicket.getBrowserUrl() + ">" + jiraTicket.getTicketName() + "</a>";
     }
 }
