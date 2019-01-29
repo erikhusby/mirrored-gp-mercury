@@ -1144,7 +1144,7 @@ public class LabVesselFixupTest extends Arquillian {
      * 0185769113 50.00
      * 0185769029 50.00
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void support1289UpdateVolume() {
         try {
             userBean.loginOSUser();

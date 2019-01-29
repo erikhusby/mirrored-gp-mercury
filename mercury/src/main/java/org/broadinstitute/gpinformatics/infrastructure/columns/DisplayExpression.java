@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -19,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -238,6 +240,21 @@ public enum DisplayExpression {
             return null;
         }
     }),
+    REAGENT_METADATA(Reagent.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            Reagent reagent = (Reagent) entity;
+            SearchTerm searchTerm = context.getSearchTerm();
+            String metaName = searchTerm.getName();
+            Metadata.Key key = Metadata.Key.fromDisplayName(metaName);
+            for( Metadata meta : reagent.getMetadata()){
+                if( meta.getKey() == key ) {
+                    return meta.getValue();
+                }
+            }
+            return null;
+        }
+    }),
 
     // SampleData
     STOCK_SAMPLE(SampleData.class, new SearchTerm.Evaluator<String>() {
@@ -367,6 +384,9 @@ public enum DisplayExpression {
             }
             return (List<T>) new ArrayList<>(sampleInstances);
 
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, Reagent.class)) {
+            Reagent reagent = (Reagent) rowObject;
+            return (List<T>) Arrays.asList(reagent);
         } else {
             throw new RuntimeException("Unexpected combination " + rowObject.getClass() + " to " + expressionClass);
         }

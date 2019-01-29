@@ -349,6 +349,19 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Mass");
+        searchTerm.setDbSortPath("mass");
+        searchTerm.setValueType(ColumnValueType.TWO_PLACE_DECIMAL);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public BigDecimal evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                return labVessel.getMass();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.INITIAL_VOLUME.getTermRefName());
         searchTerm.setValueType(ColumnValueType.STRING);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
