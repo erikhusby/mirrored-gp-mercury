@@ -3576,6 +3576,55 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>Microbial Nextera XT</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2019-01-15T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Microbial Source Rack Pool</name>
+                <labEventTypes>MICROBIAL_SOURCE_RACK_POOL</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Microbial Tagmentation</name>
+                <labEventTypes>MICROBIAL_TAGMENTATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Microbial Neutralization</name>
+                <labEventTypes>MICROBIAL_NEUTRALIZATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Microbial Index PCR</name>
+                <labEventTypes>MICROBIAL_INDEX_PCR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Microbial SPRI</name>
+                <labEventTypes>MICROBIAL_SPRI</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Microbial Pool Transfer</name>
+                <labEventTypes>MICROBIAL_POOL_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>Infinium Methylation</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
@@ -4734,6 +4783,28 @@
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>10X</workflowProcessDefs>
             <workflowProcessDefs>Library Construction Hyper Prep</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Microbial Nextera XT</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <effectiveDate>2019-01-15T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Dried Blood Spots</workflowProcessDefs>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Microbial Nextera XT</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
