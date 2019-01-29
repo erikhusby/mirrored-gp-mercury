@@ -506,7 +506,7 @@
                         <th style="width:10em">Identifier</th>
                         <th>Protocol Title</th>
                         <th style="width:25em">Type</th>
-                        <th style="width:5em"></th>
+                        <%--<th style="width:5em"></th>--%>
                         <th style="width:9em"></th>
                 </thead>
                 <tbody>
@@ -515,20 +515,20 @@
                             <td>${regulatoryInfo.identifier}</td>
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
-                            <td style="text-align:center">
-                                <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
-                                    <c:choose>
-                                        <c:when test="${actionBean.isRegulatoryInfoEditAllowed(regulatoryInfo)}">
-                                            <a href="#" class="editRegulatoryInfo"
-                                               regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}">Edit...</a>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="disabled-link" style="font-size: 12px;"
-                                                  title="Editing regulatory information from the ORSP Portal is not allowed.">Edit...</span>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </security:authorizeBlock>
-                            </td>
+                            <%--<td style="text-align:center">--%>
+                                <%--<security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">--%>
+                                    <%--<c:choose>--%>
+                                        <%--<c:when test="${actionBean.isRegulatoryInfoEditAllowed(regulatoryInfo)}">--%>
+                                            <%--<a href="#" class="editRegulatoryInfo"--%>
+                                               <%--regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}">Edit...</a>--%>
+                                        <%--</c:when>--%>
+                                        <%--<c:otherwise>--%>
+                                            <%--<span class="disabled-link" style="font-size: 12px;"--%>
+                                                  <%--title="Editing regulatory information from the ORSP Portal is not allowed.">Edit...</span>--%>
+                                        <%--</c:otherwise>--%>
+                                    <%--</c:choose>--%>
+                                <%--</security:authorizeBlock>--%>
+                            <%--</td>--%>
                             <td style="text-align:center">
                                 <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
                                     <stripes:submit name="remove"

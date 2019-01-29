@@ -111,7 +111,7 @@
     <div id="addRegulatoryInfoDialog" title="Add Regulatory Information" class="form-horizontal">
 
         <div id="addRegulatoryInfoDialogSheet1">
-            <p>Enter the ORSP Determination number to see if the regulatory information is already known to Mercury.</p>
+            <p>Enter the Broad ORSP number Determination number to see if the regulatory information is already known to Mercury.</p>
             <stripes:form id="regulatoryInfoSearchForm" beanclass="<%=RegulatoryInfoActionBean.class.getName()%>">
                 <stripes:hidden name="researchProjectKey"/>
                 <div class="control-group">

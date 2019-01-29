@@ -78,13 +78,15 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
     public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
         String query = q.trim();
         searchResults = regulatoryInfoDao.findByIdentifier(query);
-        if (searchResults.isEmpty()) {
+//        if (searchResults.isEmpty()) {
+
+        //TODO SGM Still to fix this to only look for ORSP items.
             orspSearchResult = orspProjectDao.findByKey(query);
             if (orspSearchResult != null) {
                 regulatoryInfoType = orspSearchResult.getType();
                 regulatoryInfoAlias = orspSearchResult.getName();
             }
-        }
+//        }
         regulatoryInfoIdentifier = query;
         return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp");
     }
