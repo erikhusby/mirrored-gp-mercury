@@ -25,9 +25,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.ConditionValue;
-import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.entity.SAPOrder;
 import org.broadinstitute.sap.entity.SAPOrderItem;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterMethod;
@@ -459,10 +460,11 @@ public class SapIntegrationServiceImplDBFreeTest {
     @Test(enabled = false)
     public static void addTestProductMaterialPrice(String primaryMaterialBasePrice, PriceList priceList,
                                                    Set<SAPMaterial> materials,
-                                                   Product primaryProduct, String quoteId) {
-        SAPMaterial primaryMaterial = new SAPMaterial(primaryProduct.getPartNumber(),
-                primaryMaterialBasePrice,null, null);
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+                                                   Product primaryProduct, String quoteId) throws SAPIntegrationException {
+        SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        SAPMaterial primaryMaterial = new SAPMaterial(primaryProduct.getPartNumber(), broad, broad.getDefaultWbs(), "test description", primaryMaterialBasePrice,
+            SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "","",new Date(), new Date(),
+            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
         materials.add(primaryMaterial);
         priceList.add(new QuotePriceItem(primaryProduct.getPrimaryPriceItem().getCategory(),
                 primaryProduct.getPrimaryPriceItem().getName(),

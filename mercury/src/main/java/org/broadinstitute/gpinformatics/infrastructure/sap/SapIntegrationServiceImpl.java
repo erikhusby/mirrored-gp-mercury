@@ -27,9 +27,10 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPDeliveryItem;
-import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.entity.SAPOrder;
 import org.broadinstitute.sap.entity.SAPOrderItem;
+import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
@@ -385,9 +386,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             throws SAPIntegrationException {
 
         SAPDeliveryDocument deliveryDocument =
-                new SAPDeliveryDocument(SapIntegrationClientImpl.SystemIdentifier.MERCURY,
-                        quoteItemForBilling.getProductOrder().getSapCompanyConfigurationForProductOrder(),
-                        quoteItemForBilling.getProductOrder().getSapOrderNumber(), workCompleteDate);
+                new SAPDeliveryDocument(quoteItemForBilling.getProductOrder().getSapOrderNumber(), workCompleteDate);
 
         SAPDeliveryItem lineItem =
                 new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
@@ -403,30 +402,23 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @NotNull
-    protected SAPMaterial initializeSapMaterialObject(Product product) {
-        SAPMaterial newMaterial = new SAPMaterial(product.getPartNumber(),
-                SapIntegrationClientImpl.SystemIdentifier.MERCURY, product.getAvailabilityDate(),
-                product.getAvailabilityDate());
-        newMaterial.setCompanyCode(
-//                product.isExternalOnlyProduct() ? SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
-                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        newMaterial.setMaterialName(product.getProductName());
-        newMaterial.setDescription(product.getDescription());
-        newMaterial.setDeliverables(product.getDeliverables());
-        newMaterial.setInputRequirements(product.getInputRequirements());
-        newMaterial.setBaseUnitOfMeasure("EA");
-        BigDecimal minimumOrderQuantity = product.getMinimumOrderSize() != null?new BigDecimal(product.getMinimumOrderSize()):BigDecimal.ONE;
-        newMaterial.setMinimumOrderQuantity(minimumOrderQuantity);
+    protected SAPMaterial initializeSapMaterialObject(Product product) throws SAPIntegrationException {
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = product.isExternalProduct() ?
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        BigDecimal minimumOrderQuantity =
+            product.getMinimumOrderSize() != null ? new BigDecimal(product.getMinimumOrderSize()) : BigDecimal.ONE;
 
-        newMaterial.setStatus(SAPMaterial.MaterialStatus.ENABLED);
-
+        SAPMaterial newMaterial = new SAPMaterial(product.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+            product.getProductName(), null, SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, minimumOrderQuantity,
+            product.getDescription(), product.getDeliverables(), product.getInputRequirements(),new Date(), new Date(),
+            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
         return newMaterial;
     }
 
     @Override
     public void publishProductInSAP(Product product) throws SAPIntegrationException {
-        SAPMaterial newMaterial = initializeSapMaterialObject(product);
-
+        SAPChangeMaterial newMaterial = SAPChangeMaterial.fromSAPMaterial(initializeSapMaterialObject(product));
         if (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) == null) {
             getClient().createMaterial(newMaterial);
         } else {
