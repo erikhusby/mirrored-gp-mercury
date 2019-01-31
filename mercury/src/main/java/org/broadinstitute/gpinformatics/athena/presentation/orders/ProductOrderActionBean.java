@@ -902,7 +902,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
                 sapOrderIDsToExclude.add(orderValue.getSapOrderID());
             }
-        } else {
+        } else if (productOrder != null) {
 
             // This is not a SAP quote.
             BigDecimal orderPrice = new BigDecimal(
