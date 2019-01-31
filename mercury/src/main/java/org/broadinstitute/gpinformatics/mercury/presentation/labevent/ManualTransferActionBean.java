@@ -1249,10 +1249,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             addSelectedStockMetadata(plateCherryPickEvent.getPositionMap().get(0), getSelectedStockType());
                         }
                     }
-
                     // If there was a selected geometry then we have to specifically set the tube type in the message.
-                    if (selectedSourceGeometry != null ) {
-
+                    if (selectedSourceGeometry != null &&
+                        (labEventType.getManualTransferDetails() != null && labEventType.getManualTransferDetails().getSourceVesselTypeGeometries() != null & labEventType.getManualTransferDetails().getSourceVesselTypeGeometries().length > 1)) {
                         Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
                                 plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
                                 Direction.SOURCE, false);
@@ -1269,8 +1268,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         }
                     }
 
+                    VesselTypeGeometry selectedTargetGeometry = getSelectedTargetGeometry();
+                    if (selectedTargetGeometry == null && labEventType.getManualTransferDetails() != null && manualTransferDetails.getTargetVesselTypeGeometry() != null) {
+                        selectedTargetGeometry = manualTransferDetails.getTargetVesselTypeGeometry();
+                    }
                     cleanupPositionMap(plateCherryPickEvent.getPositionMap().get(0), plateCherryPickEvent.getPlate().get(0),
-                            manualTransferDetails.getTargetVesselTypeGeometry());
+                            selectedTargetGeometry);
                     if (manualTransferDetails.getSecondaryEvent() != null && eventIndex > 0) {
                         // copy source from primary
                         PlateCherryPickEvent firstPlateCherryPickEventType =

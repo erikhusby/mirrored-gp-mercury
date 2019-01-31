@@ -335,7 +335,7 @@ public enum LabEventType {
 
     PIZZABOX_DAUGHTER_TRANSFER("PizzaBoxDaughterTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.BSP_AND_MERCURY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP_APPLY_SM_IDS, VolumeConcUpdate.BSP_AND_MERCURY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.values(),
                     RackOfTubes.RackType.values()).sourceVolume(true).targetVolume(true).requireSingleParticipant(true)
                 .build(), LibraryType.NONE_ASSIGNED, SourceHandling.TERMINATE_DEPLETED, true, true),
