@@ -50,27 +50,27 @@ public class OrspProjectDaoTest extends Arquillian {
     private OrspProjectDao orspProjectDao;
 
     public void testFindUnknownId() {
-        OrspProject project = orspProjectDao.findByKey("ORSP-0");
+        OrspProject project = orspProjectDao.findListByKey("ORSP-0");
         assertThat(project, nullValue());
     }
 
     public void testFindIrb() {
-        OrspProject project = orspProjectDao.findByKey("ORSP-2222");
+        OrspProject project = orspProjectDao.findListByKey("ORSP-2222");
         assertThat(project.getType(), equalTo(RegulatoryInfo.Type.IRB));
     }
 
     public void testFindNotHumanSubjectsResearch() {
-        OrspProject project = orspProjectDao.findByKey("ORSP-524");
+        OrspProject project = orspProjectDao.findListByKey("ORSP-524");
         assertThat(project.getType(), equalTo(RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH));
     }
 
     public void testFindNotEngagedProject() {
-        OrspProject project = orspProjectDao.findByKey("ORSP-1000");
+        OrspProject project = orspProjectDao.findListByKey("ORSP-1000");
         assertThat(project.getType(), equalTo(RegulatoryInfo.Type.ORSP_NOT_ENGAGED));
     }
 
     public void testFindConsentGroup() {
-        OrspProject project = orspProjectDao.findByKey("ORSP-3333");
+        OrspProject project = orspProjectDao.findListByKey("ORSP-3333");
         assertThat(project, nullValue());
     }
 

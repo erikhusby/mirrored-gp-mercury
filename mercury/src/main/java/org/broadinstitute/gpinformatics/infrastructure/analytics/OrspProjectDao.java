@@ -70,7 +70,7 @@ public class OrspProjectDao {
         Root<OrspProject> orspProject = criteria.from(OrspProject.class);
         criteria.select(orspProject)
                 .where(cb.and(
-                        cb.like(orspProject.get(OrspProject_.projectKey), id),
+                        cb.equal(orspProject.get(OrspProject_.projectKey), id),
                         restrictType(orspProject)));
         OrspProject project;
         try {

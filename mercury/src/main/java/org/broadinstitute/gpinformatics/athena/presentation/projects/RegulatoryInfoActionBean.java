@@ -20,7 +20,6 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @UrlBinding("/projects/regulatoryInfo.action")
@@ -82,11 +81,8 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
     public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
         String query = q.trim();
 
-        final boolean containsOrsp = Pattern.compile(Pattern.quote("ORSP-"), Pattern.CASE_INSENSITIVE).matcher(query).find();
-
         searchResults = regulatoryInfoDao.findByIdentifier(query);
         if (searchResults.isEmpty()) {
-        //TODO SGM Still to fix this to only look for ORSP items.
             Optional<OrspProject> orspSearchResults = Optional.ofNullable(orspProjectDao.findListByKey(query));
             orspSearchResults.ifPresent(orspProject -> {
                 regulatoryInfoType = orspSearchResult.getType();

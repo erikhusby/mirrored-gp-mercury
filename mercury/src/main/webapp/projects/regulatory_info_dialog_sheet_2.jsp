@@ -22,14 +22,20 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <c:forEach items="${actionBean.searchResults}" var="regulatoryInfo">
-                        <tr>
-                            <td>${regulatoryInfo.identifier}</td>
-                            <td>${regulatoryInfo.name}</td>
-                            <td>${regulatoryInfo.type.name}</td>
-                            <td><d-stripes:submit name="<%= RegulatoryInfoActionBean.ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION %>" regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}" disabled="${actionBean.isRegulatoryInfoInResearchProject(regulatoryInfo) || regulatoryInfo.userEdit}" class="btn">Add</d-stripes:submit></td>
-                        </tr>
-                    </c:forEach>
+                <c:forEach items="${actionBean.searchResults}" var="regulatoryInfo">
+                    <tr>
+                        <c:if test="${regulatoryInfo.userEdit}"><strike></c:if>
+                        <td>${regulatoryInfo.identifier}</td>
+                        <td>${regulatoryInfo.name}</td>
+                        <td>${regulatoryInfo.type.name}</td>
+                        <td><d-stripes:submit
+                                name="<%= RegulatoryInfoActionBean.ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION %>"
+                                regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}"
+                                disabled="${actionBean.isRegulatoryInfoInResearchProject(regulatoryInfo) || regulatoryInfo.userEdit}"
+                                class="btn">Add</d-stripes:submit></td>
+                        <c:if test="${regulatoryInfo.userEdit}"></strike></c:if>
+                    </tr>
+                </c:forEach>
                 </tbody>
             </table>
         </stripes:form>
