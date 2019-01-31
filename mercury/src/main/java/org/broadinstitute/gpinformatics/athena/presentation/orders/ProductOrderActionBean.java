@@ -905,9 +905,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         } else if (productOrder != null) {
 
             // This is not a SAP quote.
-            BigDecimal orderPrice = new BigDecimal(
-                priceListCache.findByKeyFields(productOrder.getProduct().getPrimaryPriceItem()).getPrice());
-            value += orderPrice.doubleValue();
+            value += getValueOfOpenOrders(Collections.singletonList(productOrder), foundQuote, Collections.emptySet());
         }
 
         return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote, sapOrderIDsToExclude);
