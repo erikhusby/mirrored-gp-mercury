@@ -27,7 +27,7 @@
                             <td>${regulatoryInfo.identifier}</td>
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
-                            <td><d-stripes:submit name="<%= RegulatoryInfoActionBean.ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION %>" regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}" disabled="${actionBean.isRegulatoryInfoInResearchProject(regulatoryInfo)}" class="btn">Add</d-stripes:submit></td>
+                            <td><d-stripes:submit name="<%= RegulatoryInfoActionBean.ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION %>" regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}" disabled="${actionBean.isRegulatoryInfoInResearchProject(regulatoryInfo) || regulatoryInfo.userEdit}" class="btn">Add</d-stripes:submit></td>
                         </tr>
                     </c:forEach>
                 </tbody>

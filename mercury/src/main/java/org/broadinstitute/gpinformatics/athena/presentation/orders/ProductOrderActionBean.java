@@ -2001,6 +2001,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                         if (editOrder != null && editOrder.getRegulatoryInfos().contains(regulatoryInfo)) {
                             regulatoryInfoJson.put("selected", true);
                         }
+                        final OrspProject orspRegInfo = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
+                        regulatoryInfoJson.put("userEdit", orspRegInfo == null);
                         values.put(regulatoryInfoJson);
                     }
                     item.put("value", values);

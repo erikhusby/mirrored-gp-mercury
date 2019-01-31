@@ -18,6 +18,10 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @UrlBinding("/projects/regulatoryInfo.action")
 public class RegulatoryInfoActionBean extends CoreActionBean {
@@ -77,16 +81,31 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
     @HandlesEvent(REGULATORY_INFO_QUERY_ACTION)
     public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
         String query = q.trim();
-        searchResults = regulatoryInfoDao.findByIdentifier(query);
-//        if (searchResults.isEmpty()) {
 
+        final boolean containsOrsp = Pattern.compile(Pattern.quote("ORSP-"), Pattern.CASE_INSENSITIVE).matcher(query).find();
+
+        searchResults = regulatoryInfoDao.findByIdentifier(query);
+        if (searchResults.isEmpty()) {
         //TODO SGM Still to fix this to only look for ORSP items.
-            orspSearchResult = orspProjectDao.findByKey(query);
-            if (orspSearchResult != null) {
+            Optional<OrspProject> orspSearchResults = Optional.ofNullable(orspProjectDao.findListByKey(query));
+            orspSearchResults.ifPresent(orspProject -> {
                 regulatoryInfoType = orspSearchResult.getType();
                 regulatoryInfoAlias = orspSearchResult.getName();
+            });
+        } else {
+            final List<String> regulatoryInfoIdentifiers =
+                    searchResults.stream().map(RegulatoryInfo::getIdentifier).collect(Collectors.toList());
+            final List<OrspProject> orspResults = orspProjectDao.findListByList(regulatoryInfoIdentifiers);
+            final Optional<Set<String>> orspResultNames = Optional.ofNullable(orspResults.stream().map(OrspProject::getName).collect(Collectors.toSet()));
+
+            if(orspResultNames.isPresent()) {
+                searchResults.forEach(regulatoryInfo -> {
+                    regulatoryInfo.setUserEdit(orspResultNames.get().contains(regulatoryInfo.getIdentifier()));
+                });
+            } else {
+                searchResults.clear();
             }
-//        }
+        }
         regulatoryInfoIdentifier = query;
         return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp");
     }

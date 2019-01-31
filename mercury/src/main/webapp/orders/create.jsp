@@ -858,11 +858,19 @@
                         var input = $j('<input type = "checkbox" name="selectedRegulatoryIds" />');
                         if (regulatoryList[index].selected) {
                             $j(input).attr("checked", "");
+                        } else if (regulatoryList[index].userEdit) {
+                            $j(input).attr("disabled", "");
                         }
 
                         $j(input).attr('value', regulatoryList[index].key);
                         $j(row).append(input);
+                        if (regulatoryList[index].userEdit) {
+                            $j(row).append("<strike>");
+                        }
                         $j(row).append(regulatoryList[index].value);
+                        if (regulatoryList[index].userEdit) {
+                            $j(row).append("</strike>");
+                        }
                         $j(multiSelectDiv).append(row);
                     }
                 });

@@ -64,13 +64,13 @@ public class OrspProjectDao {
      * @param id    the ORSP ID
      * @return the ORSP project, or null if not found
      */
-    public OrspProject findByKey(String id) {
+    public OrspProject findListByKey(String id) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<OrspProject> criteria = cb.createQuery(OrspProject.class);
         Root<OrspProject> orspProject = criteria.from(OrspProject.class);
         criteria.select(orspProject)
                 .where(cb.and(
-                        cb.equal(orspProject.get(OrspProject_.projectKey), id),
+                        cb.like(orspProject.get(OrspProject_.projectKey), id),
                         restrictType(orspProject)));
         OrspProject project;
         try {
@@ -79,6 +79,23 @@ public class OrspProjectDao {
             project = null;
         }
         return project;
+    }
+
+    public List<OrspProject> findListByList(List<String> ids) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<OrspProject> criteria = cb.createQuery(OrspProject.class);
+        Root<OrspProject> orspProjectRoot = criteria.from(OrspProject.class);
+        criteria.select(orspProjectRoot).where(cb.and(
+                cb.equal(orspProjectRoot.get(OrspProject_.projectKey), ids),
+                restrictType(orspProjectRoot)
+        ));
+        List<OrspProject> projects;
+        try {
+            projects = entityManager.createQuery(criteria).getResultList();
+        } catch (NoResultException e) {
+            projects = null;
+        }
+        return projects;
     }
 
     /**

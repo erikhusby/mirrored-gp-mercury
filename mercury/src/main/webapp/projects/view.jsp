@@ -487,8 +487,8 @@
                                rpTitle="${actionBean.editResearchProject.title}" />
 
             <div style="clear:both;" class="tableBar">
-        <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
                 <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
+        <security:authorizeBlock roles="<%= roles(Developer, GPProjectManager, PM, PDM) %>">
                 <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory
                     Information</a>
         </security:authorizeBlock>
