@@ -508,7 +508,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             if (productOrder != null && productOrder.getProduct() != null) {
                 potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
             }
-            if (StringUtils.isNotBlank(potentialOrderCriteria.getCustomerNumber())) {
+
+            if (potentialOrderCriteria != null && StringUtils.isNotBlank(potentialOrderCriteria.getCustomerNumber())) {
                 orderCalculatedValues =
                     getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
                         potentialOrderCriteria);

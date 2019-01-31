@@ -905,7 +905,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         } else if (productOrder != null) {
 
             // This is not a SAP quote.
-            value += getValueOfOpenOrders(Collections.singletonList(productOrder), foundQuote, Collections.emptySet());
+            ordersWithCommonQuote.add(productOrder);
         }
 
         return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote, sapOrderIDsToExclude);
