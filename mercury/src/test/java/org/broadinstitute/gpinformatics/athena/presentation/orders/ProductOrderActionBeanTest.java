@@ -1384,7 +1384,7 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 
-        actionBean.validateQuoteDetails(testQuote, true, 0);
+        actionBean.validateQuoteDetails(testQuote, 0);
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 
