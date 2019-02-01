@@ -74,7 +74,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         NovaSeqFlowcell("Flowcell2LaneNovaS2", "NovaSeq Flowcell S2", VesselGeometry.FLOWCELL1x2, "Illumina NovaSeq",
                 "^\\w+DM..$", "NovaSeq", CreateFields.IssueType.NOVASEQ, LabBatch.LabBatchType.FCT, CreateFct.YES),
         NovaSeqS1Flowcell("Flowcell2LaneNovaS1", "NovaSeq S1 Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina NovaSeq",
-                "^\\w+DM..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_S1, LabBatch.LabBatchType.FCT, CreateFct.YES),
+                "^\\w+DR..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_S1, LabBatch.LabBatchType.FCT, CreateFct.YES),
         NovaSeqS4Flowcell("Flowcell4LaneNova", "NovaSeq S4 Flowcell", VesselGeometry.FLOWCELL1x4, "Illumina NovaSeq",
                 "^\\w+DS..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_S4, LabBatch.LabBatchType.FCT, CreateFct.YES),
         NextSeqFlowcell("Flowcell4LaneNextSeq", "NextSeq Flowcell", VesselGeometry.FLOWCELL1x4, "Illumina NextSeq",
