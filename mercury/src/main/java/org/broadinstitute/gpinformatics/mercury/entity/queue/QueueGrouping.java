@@ -45,6 +45,8 @@ public class QueueGrouping {
     @BatchSize(size = 100)
     private List<QueueEntity> queuedEntities;
 
+    @Column(name = "queue_origin")
+    @Enumerated(EnumType.STRING)
     private QueueOrigin queueOrigin;
 
     @NotAudited
@@ -64,6 +66,7 @@ public class QueueGrouping {
     private QueuePriority queuePriority;
 
     @Column(name = "queue_specialization")
+    @Enumerated(EnumType.STRING)
     private QueueSpecialization queueSpecialization;
 
     public QueueGrouping() {

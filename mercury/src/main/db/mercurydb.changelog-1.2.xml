@@ -1708,6 +1708,30 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-5743-21" author="pdunlea">
+        <addColumn tableName="queue_grouping" schemaName="mercury">
+            <column name="queue_specialization" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-22" author="pdunlea">
+        <addColumn tableName="queue_grouping_aud" schemaName="mercury">
+            <column name="queue_specialization" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-23" author="pdunlea">
+        <addColumn tableName="queue_grouping" schemaName="mercury">
+            <column name="queue_origin" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-24" author="pdunlea">
+        <addColumn tableName="queue_grouping_aud" schemaName="mercury">
+            <column name="queue_origin" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
     <changeSet id="GPLIM-4712-200" author="epolk">
         <dropForeignKeyConstraint baseTableName="sample_instance_entity" constraintName="FK_SAMPL_INST_RESEARCH_PROJ"/>
         <dropForeignKeyConstraint baseTableName="sample_instance_entity" constraintName="FK_SAMPL_INST_PRODUCT_ORDER"/>

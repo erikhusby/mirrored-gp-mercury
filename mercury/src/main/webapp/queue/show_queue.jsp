@@ -66,7 +66,7 @@
                                 </stripes:link>
                             </td>
                             <td>${queueGrouping.queuePriority.displayName}</td>
-                            <td>${queueGrouping.queueOrigin.displayName}</td>
+                            <td>${queueGrouping.queueOrigin.displayName} <c:if test="${not empty queueGrouping.queueSpecialization}">(${queueGrouping.queueSpecialization.displayName})</c:if> </td>
 
                             <c:set var="doNotNeedPico" value="${fn:length(queueGrouping.queuedEntities) - queueGrouping.remainingEntities}" />
                             <c:set var="needPico" value="${queueGrouping.remainingEntities}" />
