@@ -245,6 +245,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 return HiSeqFlowcell;
             } else if (FlowcellType.NovaSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return NovaSeqFlowcell;
+            } else if (FlowcellType.NovaSeqS1Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return NovaSeqS1Flowcell;
             } else if (FlowcellType.NovaSeqS4Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return NovaSeqS4Flowcell;
             } else if (FlowcellType.NextSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
