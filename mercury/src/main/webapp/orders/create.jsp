@@ -860,17 +860,11 @@
                             $j(input).attr("checked", "");
                         } else if (regulatoryList[index].userEdit) {
                             $j(input).attr("disabled", "");
+                            $j(input).attr("title", "This is invalid as it is not found in the ORSP Database")
                         }
-
                         $j(input).attr('value', regulatoryList[index].key);
                         $j(row).append(input);
-                        if (regulatoryList[index].userEdit) {
-                            $j(row).append("<strike>");
-                        }
                         $j(row).append(regulatoryList[index].value);
-                        if (regulatoryList[index].userEdit) {
-                            $j(row).append("</strike>");
-                        }
                         $j(multiSelectDiv).append(row);
                     }
                 });

@@ -79,14 +79,17 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
      */
     @HandlesEvent(REGULATORY_INFO_QUERY_ACTION)
     public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
+        researchProjectKey = getContext().getRequest().getParameter("researchProjectKey");
+
         String query = q.trim();
 
         searchResults = regulatoryInfoDao.findByIdentifier(query);
         if (searchResults.isEmpty()) {
-            Optional<OrspProject> orspSearchResults = Optional.ofNullable(orspProjectDao.findListByKey(query));
+            Optional<OrspProject> orspSearchResults = Optional.ofNullable(orspProjectDao.findByKey(query));
             orspSearchResults.ifPresent(orspProject -> {
-                regulatoryInfoType = orspSearchResult.getType();
-                regulatoryInfoAlias = orspSearchResult.getName();
+                orspSearchResult = orspProject;
+                regulatoryInfoType = orspProject.getType();
+                regulatoryInfoAlias = orspProject.getName();
             });
         } else {
             final List<String> regulatoryInfoIdentifiers =
@@ -103,7 +106,7 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
             }
         }
         regulatoryInfoIdentifier = query;
-        return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp");
+        return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp").addParameter("researchProjectKey", researchProjectKey);
     }
 
     /**

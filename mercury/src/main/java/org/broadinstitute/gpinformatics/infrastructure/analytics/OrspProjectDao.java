@@ -64,7 +64,7 @@ public class OrspProjectDao {
      * @param id    the ORSP ID
      * @return the ORSP project, or null if not found
      */
-    public OrspProject findListByKey(String id) {
+    public OrspProject findByKey(String id) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<OrspProject> criteria = cb.createQuery(OrspProject.class);
         Root<OrspProject> orspProject = criteria.from(OrspProject.class);

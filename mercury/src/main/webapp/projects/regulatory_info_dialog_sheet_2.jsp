@@ -104,7 +104,7 @@
 </c:choose>
 
 <c:if test="${actionBean.addRegulatoryInfoAllowed}">
-    <jsp:include page="regulatory_info_form.jsp"/>
+    <jsp:include page="regulatory_info_search_insert.jsp"/>
 </c:if>
 
 <script type="text/javascript">
