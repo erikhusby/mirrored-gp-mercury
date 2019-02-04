@@ -88,6 +88,7 @@ import java.util.stream.Collectors;
 import static java.math.RoundingMode.HALF_EVEN;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata.LabEventMetadataType.DilutionFactor;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata.LabEventMetadataType.SensitivityFactor;
+import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata.LabEventMetadataType.VolumeRemoved;
 
 @Stateful
 @RequestScoped
@@ -783,6 +784,10 @@ public class VesselEjb {
                 mapBarcodeToTraverser.values().iterator().next().getLabEventMetadata(), DilutionFactor);
         BigDecimal dilutionFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
 
+        factor = extractFactor(
+                mapBarcodeToTraverser.values().iterator().next().getLabEventMetadata(), VolumeRemoved);
+        BigDecimal volumeRemoved = (factor != null) ? new BigDecimal(factor) : BigDecimal.ZERO;
+
         // Store the quants for each well of the 384 Plate analyzed
         for (VarioskanPlateProcessor.PlateWellResult plateWellResult: plateWellResults) {
             if (plateWellResult.getResult() != null) {
@@ -824,6 +829,8 @@ public class VesselEjb {
                             "Failed to find tube at position: " + posEntry.getKey() + " for plate " + entry.getValue());
                     continue;
                 }
+
+                tube.setVolume(tube.getVolume().subtract(volumeRemoved));
 
                 // Filter the number of non null results in list of plate well results.
                 List<VarioskanPlateProcessor.PlateWellResult> nonNullResults =
@@ -963,6 +970,9 @@ public class VesselEjb {
         factor = extractFactor(
                 mapBarcodeToTraverser.values().iterator().next().getLabEventMetadata(), DilutionFactor);
         BigDecimal dilutionFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
+        factor = extractFactor(
+                mapBarcodeToTraverser.values().iterator().next().getLabEventMetadata(), VolumeRemoved);
+        BigDecimal volumeRemoved = (factor != null) ? new BigDecimal(factor) : BigDecimal.ZERO;
 
         for (VarioskanPlateProcessor.PlateWellResult plateWellResult : plateWellResults) {
             // Puts unaveraged concentration values in the lab metric run.
@@ -998,6 +1008,7 @@ public class VesselEjb {
                     mapTubeToListValues.put(sourceTube, valuesList);
                 }
                 valuesList.add(concValue);
+                sourceTube.setVolume(sourceTube.getVolume().subtract(volumeRemoved));
             } else {
                 messageCollection.addError("Failed to find source tube for " + plateWellResult.getPlateBarcode() +
                         " " + plateWellResult.getVesselPosition());
@@ -1192,6 +1203,8 @@ public class VesselEjb {
         BigDecimal sensitivityFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
         factor = extractFactor(metadata, DilutionFactor);
         BigDecimal dilutionFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
+        factor = extractFactor(metadata, VolumeRemoved);
+        BigDecimal volumeRemoved = (factor != null) ? new BigDecimal(factor) : BigDecimal.ZERO;
 
         for (VarioskanPlateProcessor.PlateWellResult plateWellResult : plateWellResults) {
             StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
@@ -1231,6 +1244,7 @@ public class VesselEjb {
                             mapTubeToListValues.put(sourceTube, valuesList);
                         }
                         valuesList.add(concValue);
+                        sourceTube.setVolume(sourceTube.getVolume().subtract(volumeRemoved));
                     }
                 }
             }
