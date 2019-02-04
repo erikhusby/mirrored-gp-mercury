@@ -34,7 +34,7 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -97,7 +97,7 @@ public class WorkflowTransitionTest extends Arquillian {
         }
         if (labEventFactory != null && mockBspHandler == null){
             mockBspHandler = mock(BSPRestSender.class);
-            doNothing().when(mockBspHandler).postToBsp(any(BettaLIMSMessage.class), any(String.class));
+            doReturn(null).when(mockBspHandler).postToBsp(any(BettaLIMSMessage.class), any(String.class));
             labEventFactory.setBspRestSender(mockBspHandler);
             bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         }

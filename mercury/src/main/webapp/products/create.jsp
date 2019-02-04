@@ -765,6 +765,17 @@
                         </div>
 
                         <div class="control-group">
+                            <stripes:label for="indexType" class="control-label">Index Type</stripes:label>
+                            <div class="controls">
+                                <stripes:select name="editProduct.indexType">
+                                    <stripes:options-enumeration
+                                            enum="org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation.IndexType"
+                                            label="displayName"/>
+                                </stripes:select>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
                             <stripes:label for="analyzeUmi" class="control-label">
                                 Analyze UMIs
                             </stripes:label>

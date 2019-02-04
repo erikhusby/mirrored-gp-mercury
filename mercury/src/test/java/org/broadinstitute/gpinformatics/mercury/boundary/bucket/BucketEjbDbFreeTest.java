@@ -216,7 +216,7 @@ public class BucketEjbDbFreeTest {
             expect(labEventFactory
                     .buildFromBatchRequests(EasyMock.<List<BucketEntry>>anyObject(), EasyMock.<String>anyObject(),
                             EasyMock.<LabBatch>anyObject(), EasyMock.<String>anyObject(), EasyMock.<String>anyObject(),
-                            EasyMock.<LabEventType>anyObject(), EasyMock.<Date>anyObject()))
+                            EasyMock.<LabEventType>anyObject(), EasyMock.<Date>anyObject(), eq(0)))
                     .andReturn(Collections.<LabEvent>emptyList()).anyTimes();
 
             expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))

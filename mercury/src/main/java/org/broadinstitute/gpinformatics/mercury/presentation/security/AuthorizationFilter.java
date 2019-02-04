@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.PublicMessageActionBean;
@@ -16,6 +20,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 /**
@@ -31,6 +38,7 @@ public class AuthorizationFilter implements Filter {
     private static ServletContext servletContext;
 
     public static final String TARGET_PAGE_ATTRIBUTE = "targeted_page";
+    public static final String TARGET_PARAMETERS = "targeted_params";
 
     /**
      * This the default initialization method for this filter.  It grabs the filter config (defined in the
@@ -71,17 +79,41 @@ public class AuthorizationFilter implements Filter {
             if (request.getRemoteUser() == null) {
                 log.debug("User is not authenticated, redirecting to login page");
 
-                StringBuilder requestedUrl = new StringBuilder(request.getRequestURL());
-                if (request.getQueryString() != null) {
-                    requestedUrl.append("?").append(request.getQueryString());
-                }
-                request.getSession().setAttribute(TARGET_PAGE_ATTRIBUTE, requestedUrl.toString());
+                cacheParameters(request);
+
                 servletContext.getRequestDispatcher(SecurityActionBean.LOGIN_PAGE).forward(request, servletResponse);
                 return;
             }
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
+    }
+
+    public static void cacheParameters(HttpServletRequest request) {
+        StringBuilder requestedUrl = new StringBuilder(request.getRequestURL());
+        if (request.getQueryString() != null) {
+            requestedUrl.append("?").append(request.getQueryString());
+        }
+        request.getSession().setAttribute(TARGET_PAGE_ATTRIBUTE, requestedUrl.toString());
+
+        Map<String, String[]> parameterMap = new HashMap<>();
+        parameterMap.putAll(request.getParameterMap());
+        request.getSession().setAttribute(TARGET_PARAMETERS, parameterMap);
+        if (ServletFileUpload.isMultipartContent(request)) {
+            ServletFileUpload sfu = new ServletFileUpload();
+            sfu.setFileItemFactory(new DiskFileItemFactory());
+            try {
+                List<FileItem> fileItems = sfu.parseRequest(request);
+
+                for (FileItem item : fileItems) {
+                    if (item.isFormField()) {
+                        parameterMap.put(item.getFieldName(), new String[]{item.getString()});
+                    }
+                }
+            } catch (FileUploadException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
     }
 
     /**
