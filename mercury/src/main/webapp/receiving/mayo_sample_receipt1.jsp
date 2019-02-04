@@ -10,7 +10,6 @@
         <stripes:form beanclass="${actionBean.class.name}" id="rackScanForm" class="form-horizontal">
 
             <!-- The hidden variables to pass back to the action bean. -->
-            <stripes:hidden name="canOverwrite" value="${actionBean.canOverwrite}"/>
             <c:if test="${actionBean.vesselGeometry != null}">
                 <stripes:hidden name="vesselGeometry" value="${actionBean.vesselGeometry}"/>
             </c:if>

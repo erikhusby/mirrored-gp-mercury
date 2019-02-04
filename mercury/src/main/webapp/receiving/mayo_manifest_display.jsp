@@ -16,7 +16,7 @@
             <c:forEach items="${actionBean.manifestSheetnames}" var="sheet" varStatus="item">
                 <div style="padding-top: 10px;">
                     <p>${sheet} Sheet:</p>
-                    <table id="sheet_${item.index}" border="2">
+                    <table id="${sheet}" border="2">
                         <tbody>
                         <c:forEach items="${actionBean.getManifestArray(sheet)}" var="manifestRow">
                             <tr>

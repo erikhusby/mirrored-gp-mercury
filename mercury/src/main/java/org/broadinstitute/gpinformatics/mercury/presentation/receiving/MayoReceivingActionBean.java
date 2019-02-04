@@ -7,18 +7,15 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestImportProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
@@ -65,7 +62,7 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     public static final String SAVE_EVENT = "saveBtn";
 
     private MessageCollection messageCollection = new MessageCollection();
-    private boolean canOverwrite = false;
+    private boolean previousMayoRack = false;
     private boolean overwriteFlag = false;
     private VesselGeometry vesselGeometry = null;
     private List<String> rackScanEntries = new ArrayList<>();
@@ -92,50 +89,61 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     @HandlesEvent(SCAN_EVENT)
     public Resolution scanEvent() throws ScannerException {
-        runRackScan( false );
-        if (rackScan == null || rackScan.isEmpty()) {
-            messageCollection.addError("The rack scan is empty.");
-        } else {
+        // Checks if the rack barcode matches an existing vessel. If so, it must be a Mayo rack.
+        LabVessel existingVessel = labVesselDao.findByIdentifier(rackBarcode);
+        if (existingVessel != null) {
+            previousMayoRack = mayoManifestEjb.isMayoRack(existingVessel);
+            if (!previousMayoRack) {
+                messageCollection.addError("Cannot continue. " + rackBarcode +
+                        " exists in Mercury but is not a Mayo rack.");
+            }
+        }
+
+        // Performs the rack scan.
+        if (!messageCollection.hasErrors()) {
+            runRackScan(false);
+            if (rackScan == null || rackScan.isEmpty()) {
+                messageCollection.addError("The rack scan is empty.");
+            }
+        }
+
+        // Checks that the positions are valid.
+        if (!messageCollection.hasErrors()) {
             String invalidPositions = rackScan.keySet().stream().
                     filter(position -> VesselPosition.getByName(position) == null).
                     collect(Collectors.joining(", "));
             if (StringUtils.isNotBlank(invalidPositions)) {
                 messageCollection.addError("Rack scan has unknown position: " + invalidPositions);
-            } else {
-                // Turns the rack scan into a list of position & sample to pass to and from jsp.
-                rackScanEntries = rackScan.entrySet().stream().
-                        map(mapEntry -> StringUtils.join(mapEntry.getKey(), " ", mapEntry.getValue())).
-                        sorted().collect(Collectors.toList());
-                // Figures out the minimal rack that will accommodate all vessel positions.
-                RackOfTubes.RackType rackType = mayoManifestEjb.inferRackType(rackScan.keySet());
-                if (rackType != null) {
-                    vesselGeometry = rackType.getVesselGeometry();
-                } else {
-                    messageCollection.addError("Cannot find a rack type for scanned positions " +
-                            rackScan.keySet().stream().sorted().collect(Collectors.joining(", ")));
-                }
             }
+        }
 
-            // Finds an existing rack that matches the rack barcode and checks if it is a Mayo rack,
-            // which will have a linked RCT- ticket.
-            LabVessel existingRack = labVesselDao.findByIdentifier(rackBarcode);
-            if (existingRack != null) {
-                if (OrmUtil.proxySafeIsInstance(existingRack, RackOfTubes.class)) {
-                    if (OrmUtil.proxySafeCast(existingRack, RackOfTubes.class).getJiraTickets().stream().
-                            filter(ticket -> ticket.getTicketName().
-                                    startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
-                            findFirst().isPresent()) {
-                        canOverwrite = true;
-                    } else {
-                        messageCollection.addError("Another rack having barcode " + rackBarcode +
-                                " already exists but it isn't an uploaded rack.");
-                    }
-                } else {
-                    messageCollection.addError("Another vessel having barcode " + rackBarcode +
-                            " already exists but is not a rack of tubes.");
+        // Checks if the tubes exist. If so they must be Mayo tubes.
+        if (!messageCollection.hasErrors()) {
+            List<LabVessel> existingVessels = labVesselDao.findByListIdentifiers(new ArrayList<>(rackScan.values()));
+            if (!existingVessels.isEmpty()) {
+                List<LabVessel> nonMayoTubes = mayoManifestEjb.nonMayoTubes(existingVessels);
+                if (!nonMayoTubes.isEmpty()) {
+                    messageCollection.addError("Cannot continue. Tubes exist in Mercury but are not Mayo tubes: " +
+                            nonMayoTubes.stream().map(LabVessel::getLabel).collect(Collectors.joining(" ")));
                 }
             }
         }
+
+        // Turns the rack scan into a list of position & sample to pass to and from jsp.
+        if (!messageCollection.hasErrors()) {
+            rackScanEntries = rackScan.entrySet().stream().
+                    map(mapEntry -> StringUtils.join(mapEntry.getKey(), " ", mapEntry.getValue())).
+                    sorted().collect(Collectors.toList());
+            // Figures out the minimal rack that will accommodate all vessel positions.
+            RackOfTubes.RackType rackType = mayoManifestEjb.inferRackType(rackScan.keySet());
+            if (rackType != null) {
+                vesselGeometry = rackType.getVesselGeometry();
+            } else {
+                messageCollection.addError("Cannot find a rack type for scanned positions " +
+                        rackScan.keySet().stream().sorted().collect(Collectors.joining(", ")));
+            }
+        }
+
         addMessages(messageCollection);
         return new ForwardResolution(messageCollection.hasErrors() ? PAGE1 : PAGE2);
     }
@@ -164,8 +172,8 @@ public class MayoReceivingActionBean extends RackScanActionBean {
                         List<String> columns = manifestCells.get(sheetname).get(rowIdx);
                         for (int columnIdx = 0; columnIdx < columns.size(); ++columnIdx) {
                             String value = columns.get(columnIdx);
-                            // If there is a date column, converts it.
-                            if (rowIdx > 0 && processor.isDateColumn(columnIdx)) {
+                            // Calculates the date string when the column is a parsable number that represents a date.
+                            if (rowIdx > 0 && processor.isDateColumn(columnIdx) && NumberUtils.isParsable(value)) {
                                 value = PoiSpreadsheetParser.convertDoubleStringToDateString(value);
                             }
                             dataArray[rowIdx][columnIdx] = value;
@@ -207,52 +215,29 @@ public class MayoReceivingActionBean extends RackScanActionBean {
         LabVessel existingRack = null;
         if (!messageCollection.hasErrors()) {
             existingRack = labVesselDao.findByIdentifier(rackBarcode);
-            // Finds an existing rack that matches the rack barcode, and makes an error message if
-            // overwrite is not set. Also errors if the rack is not a previously uploaded rack.
-            if (canOverwrite) {
+            if (existingRack != null) {
+                // An existing rack will have already been checked (in the scanEvent() method) that it is
+                // a Mayo rack. Makes an error message if overwrite is not set.
                 if (overwriteFlag) {
-                    messageCollection.addInfo("Rack " + rackBarcode + " already exists and will be overwritten.");
+                    messageCollection.addInfo("Rack " + rackBarcode + " already exists and will be updated.");
                 } else {
-                    messageCollection.addError("Rack " + rackBarcode + " already exists and overwrite isn't selected.");
-                }
-            } else if (existingRack != null) {
-                if (OrmUtil.proxySafeIsInstance(existingRack, RackOfTubes.class)) {
-                    if (!OrmUtil.proxySafeCast(existingRack, RackOfTubes.class).getJiraTickets().stream().
-                            filter(ticket -> ticket.getTicketName().startsWith(
-                                    CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
-                            findFirst().isPresent()) {
-                        messageCollection.addError("Rack " + rackBarcode +
-                                " already exists but isn't an uploaded rack.");
-                    }
+                    messageCollection.addError("Cannot update an existing rack unless overwrite is selected.");
                 }
             }
         }
 
         if (!messageCollection.hasErrors()) {
             if (existingRack == null) {
-                // If the rack is new but one of the tube barcodes matches an existing vessel,
-                // error if it is not a Mayo upload tube, and error if overwrite is not set.
+                // If the rack is new but tube barcodes match an existing vessel overwrite must be set.
                 List<LabVessel> existingTubes = labVesselDao.findByListIdentifiers(new ArrayList<>(rackScan.values()));
                 if (!existingTubes.isEmpty()) {
-                    // Checks existing tubes for any non-Mayo samples, indicated by the absence of Biobank Id.
-                    String nonMayoSamples = existingTubes.stream().
-                            filter(labVessel -> labVessel.getMercurySamples() != null).
-                            flatMap(labVessel -> labVessel.getMercurySamples().stream()).
-                            filter(mercurySample -> !mercurySample.getMetadata().stream().
-                                    filter(metadata -> metadata.getKey() == Metadata.Key.BIOBANK_ID).
-                                    findFirst().isPresent()).
-                            map(MercurySample::getSampleKey).sorted().distinct().collect(Collectors.joining(", "));
-                    if (StringUtils.isNotBlank(nonMayoSamples)) {
-                        messageCollection.addError("Cannot save samples that match existing non-Mayo samples: " +
-                                nonMayoSamples);
+                    String tubeBarcodes = existingTubes.stream().
+                            map(LabVessel::getLabel).collect(Collectors.joining(" "));
+                    if (!overwriteFlag) {
+                        messageCollection.addError(
+                                "Overwrite must be selected in order to re-save existing tubes: " + tubeBarcodes);
                     } else {
-                        String tubeBarcodes = StringUtils.join(existingTubes, ", ");
-                        if (!overwriteFlag) {
-                            messageCollection.addError(
-                                    "Overwrite must be selected in order to re-save existing tubes: " + tubeBarcodes);
-                        } else {
-                            messageCollection.addInfo("Existing tubes will be overwritten: " + tubeBarcodes);
-                        }
+                        messageCollection.addInfo("Existing tubes will be overwritten: " + tubeBarcodes);
                     }
                 }
             }
@@ -300,14 +285,6 @@ public class MayoReceivingActionBean extends RackScanActionBean {
         return StringUtils.trimToEmpty(rackScan.get(rowName + columnName));
     }
 
-    /** Returns true if the rack identified by rackBarcode can be overwritten. */
-	public boolean getCanOverwrite() {
-        return canOverwrite;
-	}
-
-    public void setCanOverwrite(boolean canOverwrite) {
-        this.canOverwrite = canOverwrite;
-    }
 
     public List<String> getRackScanEntries() {
         return rackScanEntries;
@@ -352,7 +329,12 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     public void setPackageBarcode(String packageBarcode) {
         this.packageBarcode = packageBarcode;
         // Sets the filename too.
-        filename = packageBarcode + ".xlsx";
+        filename = makeFilename(packageBarcode);
+    }
+
+    /** Makes a filename from the given package name. */
+    private String makeFilename(String packageName) {
+        return packageName + ".xlsx";
     }
 
     public String getRackBarcode() {
@@ -365,5 +347,13 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     public String getFilename() {
         return filename;
+    }
+
+    public boolean isPreviousMayoRack() {
+        return previousMayoRack;
+    }
+
+    public void setPreviousMayoRack(boolean previousMayoRack) {
+        this.previousMayoRack = previousMayoRack;
     }
 }

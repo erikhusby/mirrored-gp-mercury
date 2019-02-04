@@ -35,7 +35,6 @@
             <!-- The hidden variables to pass back to the action bean. -->
             <stripes:hidden name="packageBarcode" value="${actionBean.packageBarcode}"/>
             <stripes:hidden name="rackBarcode" value="${actionBean.rackBarcode}"/>
-            <stripes:hidden name="canOverwrite" value="${actionBean.canOverwrite}"/>
             <stripes:hidden name="vesselGeometry" value="${actionBean.vesselGeometry}"/>
             <c:forEach items="${actionBean.rackScanEntries}" var="mapEntry" varStatus="item">
                 <stripes:hidden name="rackScanEntries[${item.index}]" value="${mapEntry}"/>
@@ -43,7 +42,7 @@
 
             <div style="margin-top: 20px;">
                 <!-- The Overwrite checkbox. -->
-                <c:if test="${actionBean.canOverwrite}">
+                <c:if test="${actionBean.previousMayoRack}">
                     <span>
                         <stripes:checkbox id="overwriteFlag" name="overwriteFlag" style="align-vertical: center"/>
                         A Mayo rack having this barcode was already uploaded. Check to overwrite it.

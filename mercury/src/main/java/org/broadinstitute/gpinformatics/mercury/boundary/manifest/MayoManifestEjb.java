@@ -56,12 +56,18 @@ public class MayoManifestEjb {
     private static Log logger = LogFactory.getLog(MayoManifestEjb.class);
     public static final String MISSING_MANIFEST = "Cannot find a manifest for package %s. Scanned tubes and rack " +
             "will be saved, but not samples.";
-    public static final String NOT_IN_MANIFEST = "Some rack scan tubes are not in the manifest: %s";
-    public static final String NOT_IN_RACKSCAN = "Some manifest tubes are not in the rack scan: %s";
+    public static final String RACK_NOT_IN_MANIFEST = "Rack %s is not in the manifest.";
+    public static final String TUBE_NOT_IN_MANIFEST = "Some rack scan tubes are not in the manifest: %s";
+    public static final String TUBE_NOT_IN_RACKSCAN = "Some manifest tubes are not in the rack scan: %s";
     public static final String WRONG_POSITION = "Tube %s has manifest position %s but rack scan position %s.";
     public static final String UNKNOWN_WELL = "Manifest contains unknown well position \"%s\".";
     public static final String NOT_A_TUBE = "Tube %s matches an existing vessel but it is not a tube.";
     public static final String JIRA_PROBLEM = "Problem creating or updating RCT ticket: %s";
+    public static final String ONLY_RECEIVED = "Sample tubes for Mayo package %s have been received, but " +
+            "samples could not be accessioned because the manifest was not found. Tube barcodes: %s";
+    public static final String ACCESSIONED = "Samples for Mayo package %s have been accessioned: %s";
+    public static final String REACCESSIONED = "Samples for Mayo package %s have been re-accessioned: %s";
+
     public static final BarcodedTube.BarcodedTubeType DEFAULT_TUBE_TYPE = BarcodedTube.BarcodedTubeType.MatrixTube;
     public static final RackOfTubes.RackType DEFAULT_RACK_TYPE = RackOfTubes.RackType.Matrix96;
 
@@ -116,24 +122,26 @@ public class MayoManifestEjb {
                     sorted(Comparator.comparingLong(ManifestSession::getManifestSessionId).reversed()).
                     findFirst().get();
         }
-        // Reads or re-reads the file from Goolge storage.
+        // Reads or re-reads the file from Google storage. If file doesn't exist that is not an error.
         if (manifestSessions.isEmpty() || redoLookup) {
             MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
-            List<ManifestRecord> manifestRecordsFromFile = processor.makeManifestRecords(
-                    readFileAsCellGrid(filename, messages), messages);
-            if (CollectionUtils.isNotEmpty(manifestRecordsFromFile)) {
-                if (manifestSessions.isEmpty()) {
-                    manifestSession = new ManifestSession(null, packageBarcode, userBean.getBspUser(), false,
-                            manifestRecordsFromFile);
-                    manifestSessionDao.persist(manifestSession);
-                } else if (redoLookup) {
-                    // Persist the new version of manifest only if different from the existing one.
-                    if (!CollectionUtils.isEqualCollection(
-                            processor.flattenedListOfMetadata(manifestSession.getRecords()),
-                            processor.flattenedListOfMetadata(manifestRecordsFromFile))) {
+            Map<String, List<List<String>>> cells = readFileAsCellGrid(filename, messages);
+            if (cells != null) {
+                List<ManifestRecord> manifestRecordsFromFile = processor.makeManifestRecords(cells, messages);
+                if (CollectionUtils.isNotEmpty(manifestRecordsFromFile)) {
+                    if (manifestSessions.isEmpty()) {
                         manifestSession = new ManifestSession(null, packageBarcode, userBean.getBspUser(), false,
                                 manifestRecordsFromFile);
                         manifestSessionDao.persist(manifestSession);
+                    } else if (redoLookup) {
+                        // Persist the new version of manifest only if different from the existing one.
+                        if (!CollectionUtils.isEqualCollection(
+                                processor.flattenedListOfMetadata(manifestSession.getRecords()),
+                                processor.flattenedListOfMetadata(manifestRecordsFromFile))) {
+                            manifestSession = new ManifestSession(null, packageBarcode, userBean.getBspUser(), false,
+                                    manifestRecordsFromFile);
+                            manifestSessionDao.persist(manifestSession);
+                        }
                     }
                 }
             }
@@ -142,7 +150,8 @@ public class MayoManifestEjb {
     }
 
     /**
-     * Looks for the file in Google Storage using filename. Returns the cell data for each sheet.
+     * Looks for the file in Google Storage using filename and returns the cell data for each sheet.
+     * Returns null if the manifest file doesn't exist or could not be read. This is not an error.
      * Errors are put in the MessageCollection.
      */
     public Map<String, List<List<String>>> readFileAsCellGrid(String filename, MessageCollection messages) {
@@ -150,7 +159,7 @@ public class MayoManifestEjb {
         if (spreadsheet != null && spreadsheet.length > 0) {
             return MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, messages);
         }
-        return Collections.emptyMap();
+        return null;
     }
 
     /**
@@ -182,6 +191,9 @@ public class MayoManifestEjb {
                 sampleToTube.put(sampleName, tubeBarcode);
                 tubeToSample.put(tubeBarcode, sampleName);
             }
+            if (tubeToSample.isEmpty()) {
+                messages.addError(RACK_NOT_IN_MANIFEST, rackBarcode);
+            }
         } else {
             messages.addWarning(MISSING_MANIFEST, packageBarcode);
         }
@@ -194,23 +206,25 @@ public class MayoManifestEjb {
                 filter(mapEntry -> StringUtils.isNotBlank(mapEntry.getValue())).
                 collect(Collectors.toMap(Map.Entry::getValue, mapEntry -> VesselPosition.valueOf(mapEntry.getKey())));
 
-        // The rack scan tube barcodes and positions must match the manifest.
-        if (!CollectionUtils.isEqualCollection(reverseRackScan.keySet(), manifestPositions.keySet())) {
-            String missingFromManifest = StringUtils.join(
-                    CollectionUtils.subtract(reverseRackScan.keySet(), manifestPositions.keySet()), " ");
-            if (StringUtils.isNotBlank(missingFromManifest)) {
-                messages.addError(NOT_IN_MANIFEST, missingFromManifest);
+        // The rack scan tube barcodes and positions must match the manifest, if it exists.
+        if (manifestSession != null) {
+            if (!CollectionUtils.isEqualCollection(reverseRackScan.keySet(), manifestPositions.keySet())) {
+                String missingFromManifest = StringUtils.join(
+                        CollectionUtils.subtract(reverseRackScan.keySet(), manifestPositions.keySet()), " ");
+                if (StringUtils.isNotBlank(missingFromManifest)) {
+                    messages.addError(TUBE_NOT_IN_MANIFEST, missingFromManifest);
+                }
+                String missingFromRackscan = StringUtils.join(
+                        CollectionUtils.subtract(manifestPositions.keySet(), reverseRackScan.keySet()), " ");
+                if (StringUtils.isNotBlank(missingFromRackscan)) {
+                    messages.addError(TUBE_NOT_IN_RACKSCAN, missingFromRackscan);
+                }
+            } else {
+                reverseRackScan.keySet().stream().
+                        filter(tube -> !reverseRackScan.get(tube).equals(manifestPositions.get(tube))).
+                        forEachOrdered(tube -> messages.addError(WRONG_POSITION, tube,
+                                manifestPositions.get(tube), reverseRackScan.get(tube)));
             }
-            String missingFromRackscan = StringUtils.join(
-                    CollectionUtils.subtract(manifestPositions.keySet(), reverseRackScan.keySet()), " ");
-            if (StringUtils.isNotBlank(missingFromRackscan)) {
-                messages.addError(NOT_IN_RACKSCAN, missingFromRackscan);
-            }
-        } else {
-            reverseRackScan.keySet().stream().
-                    filter(tube -> !reverseRackScan.get(tube).equals(manifestPositions.get(tube))).
-                    forEachOrdered(tube -> messages.addError(WRONG_POSITION, tube,
-                            manifestPositions.get(tube), reverseRackScan.get(tube)));
         }
         if (messages.hasErrors()) {
             return;
@@ -325,6 +339,38 @@ public class MayoManifestEjb {
                 orElse(null);
     }
 
+    /** Returns true if the existing vessel is a rack of tubes and linked to an RCT. */
+    public boolean isMayoRack(LabVessel existingVessel) {
+        return OrmUtil.proxySafeIsInstance(existingVessel, RackOfTubes.class) &&
+                OrmUtil.proxySafeCast(existingVessel, RackOfTubes.class).getJiraTickets().stream().
+                        filter(ticket -> ticket.getTicketName().
+                                startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
+                        findFirst().isPresent();
+    }
+
+    /** Returns the existing tubes that are not Mayo uploaded tubes. */
+    public List<LabVessel> nonMayoTubes(Collection<LabVessel> existingTubes) {
+        List<LabVessel> nonMayoTubes = new ArrayList<>();
+        for (LabVessel tube : existingTubes) {
+            if (!OrmUtil.proxySafeIsInstance(tube, BarcodedTube.class)) {
+                nonMayoTubes.add(tube);
+            } else {
+                // Looks at containing rack(s). If one is a Mayo upload then it's a
+                // Mayo upload tube. FYI there won't be a sample linkage if this is
+                // a redo of a non-accessioned Mayo upload.
+                if (!tube.getContainers().stream().
+                        filter(container -> OrmUtil.proxySafeIsInstance(container, TubeFormation.class)).
+                        flatMap(container ->
+                                OrmUtil.proxySafeCast(container, TubeFormation.class).getRacksOfTubes().stream()).
+                        filter(rack -> isMayoRack(rack)).
+                        findAny().isPresent()) {
+                    nonMayoTubes.add(tube);
+                }
+            }
+        }
+        return nonMayoTubes;
+    }
+
     private JiraTicket makeOrUpdateRct(String packageBarcode, RackOfTubes rack, final Collection<String> tubeBarcodes,
             final Collection<String> sampleNames, MessageCollection messages) {
 
@@ -333,22 +379,23 @@ public class MayoManifestEjb {
                     String.valueOf(tubeBarcodes.size())));
             add(new CustomField(new CustomFieldDefinition("customfield_15661", "Shipment Condition", true),
                     "ok"));
+            add(new CustomField(new CustomFieldDefinition("customfield_12662", "Sample IDs", false),
+                    StringUtils.join(sampleNames, " ")));
         }};
         JiraTicket jiraTicket = null;
         try {
-            // Checks the rack for an existing RCT ticket. Every Mayo rack should have a linked RCT ticket
-            // so that Mercury can easily tell if it's a Mayo rack. There shouldn't be more than one but if
-            // there is just use the most recent one.
+            // Gets the most recent linked RCT ticket for the rack.
             jiraTicket = rack.getJiraTickets().stream().
                     filter(t -> t.getTicketName().startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
                     sorted(Comparator.comparing(JiraTicket::getTicketName).reversed()).
                     findFirst().orElse(null);
             JiraIssue jiraIssue;
-            String title = String.format("Mayo rack %s, package %s", rack.getLabel(), packageBarcode);
+            String title = String.format("Mayo package %s rack %s", packageBarcode, rack.getLabel());
             String comment;
             String issueStatus = null;
             if (jiraTicket != null) {
                 jiraIssue = jiraService.getIssue(jiraTicket.getTicketId());
+                jiraService.updateIssue(jiraIssue.getKey(), customFieldList);
                 JiraIssue issueInfo = jiraService.getIssueInfo(jiraIssue.getKey());
                 issueStatus = issueInfo.getStatus();
                 messages.addInfo("Updated " + urlLink(jiraTicket));
@@ -366,14 +413,15 @@ public class MayoManifestEjb {
 
             // Writes a comment and transition that depends on if samples are known.
             if (sampleNames.isEmpty()) {
-                comment = String.format("Vessels from Mayo package %s have been received, but " +
-                        "samples could not be accessioned because the manifest was not found.", packageBarcode);
+                comment = String.format(ONLY_RECEIVED, packageBarcode, StringUtils.join(tubeBarcodes, ", "));
+                // (no transition, already has status of Received)
             } else if (ManifestSessionEjb.JiraTransition.ACCESSIONED.getStateName().equals(issueStatus)) {
-                comment = String.format("Samples from Mayo package %s have been re-accessioned: %s",
-                        packageBarcode, sampleNames.stream().sorted().collect(Collectors.joining(", ")));
+                comment = String.format(REACCESSIONED, packageBarcode,
+                        sampleNames.stream().sorted().collect(Collectors.joining(", ")));
+                // (no transition, already has status of Accessioned)
             } else {
-                comment = String.format("Samples from Mayo package %s have been accessioned: %s",
-                        packageBarcode, sampleNames.stream().sorted().collect(Collectors.joining(", ")));
+                comment = String.format(ACCESSIONED, packageBarcode,
+                        sampleNames.stream().sorted().collect(Collectors.joining(", ")));
                 jiraIssue.postTransition(ManifestSessionEjb.JiraTransition.ACCESSIONED.getStateName(), comment);
             }
             jiraIssue.addComment(comment);

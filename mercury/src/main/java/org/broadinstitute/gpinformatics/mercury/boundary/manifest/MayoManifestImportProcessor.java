@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.enterprise.context.Dependent;
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
  */
 @Dependent
 public class MayoManifestImportProcessor {
-    public static final String CANNOT_PARSE = "Cannot parse the manifest spreadsheet.";
+    public static final String CANNOT_PARSE = "Cannot parse the manifest spreadsheet due to %s.";
     public static final String DUPLICATE_HEADER = "Manifest has duplicate header \"%s\".";
     public static final String MISSING_DATA = "Manifest is missing a value for \"%s\" on sheet %s.";
     public static final String MISSING_HEADER = "Manifest is missing header \"%s\" on sheet %s.";
@@ -238,7 +239,7 @@ public class MayoManifestImportProcessor {
                 sheets.put(sheetname, processor.getHeaderAndDataRows());
             }
         } catch (Exception e) {
-            messages.addError(CANNOT_PARSE + e.toString());
+            messages.addError(CANNOT_PARSE, e.toString());
         }
         return sheets;
     }
@@ -260,6 +261,12 @@ public class MayoManifestImportProcessor {
             messages.addError(MISSING_SHEET, DETAILS_SHEETNAME);
             return null;
         }
+        for (List<String> columns : cellGrid) {
+            for (int i = 0; i < columns.size(); ++i) {
+                columns.set(i, cleanupValue(columns.get(i)));
+            }
+        }
+
         initHeaders(cellGrid.get(0), messages);
 
         Arrays.asList(Header.values()).stream().
@@ -286,7 +293,7 @@ public class MayoManifestImportProcessor {
             for (int columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
                 Header header = sheetHeaders.get(columnIndex);
                 if (header != null) {
-                    String value = cleanupValue(columns.get(columnIndex));
+                    String value = columns.get(columnIndex);
                     if (StringUtils.isNotBlank(value)) {
                         if (header.hasUnits()) {
                             // Calculates metadata value = (column value) * factor.
@@ -299,8 +306,7 @@ public class MayoManifestImportProcessor {
                                 value = "";
                             }
                         } else if (header.isDate() && NumberUtils.isParsable(value)) {
-                            // When column is a number representing a date, calculates the date string.
-                            // For .xls spreadsheets the value will already be a date string without conversion.
+                            // Calculates the date string when the column is a parsable number that represents a date.
                             value = PoiSpreadsheetParser.convertDoubleStringToDateString(value);
                         }
                         manifestRecord.addMetadata(header.getMetadataKey(), value);
@@ -334,21 +340,14 @@ public class MayoManifestImportProcessor {
     }
 
     /**
-     * Returns the string stripped of control characters and line breaks; with underscore in
-     * place of the >8-bit unicode (which become "¿" characters in the database); and with
-     * a regular space in place of non-breaking space.
+     * Returns the string stripped of control characters, line breaks, and >7-bit ascii
+     * (which become "¿" characters in the database).
      */
     private static String cleanupValue(String value) {
-        String cleanString = value.replaceAll("[\\p{C}\\p{Zl}\\p{Zp}]", "");
-        char[] charArray = cleanString.toCharArray();
-        for (int i = 0; i < charArray.length; ++i) {
-            int codePoint = Character.codePointAt(charArray, i);
-            if (codePoint == 0xa0) { // non-breaking space
-                charArray[i] = ' ';
-            } else if (codePoint > 0xff) {
-                charArray[i] = '_';
-            }
-        }
-        return new String(charArray);
+        return org.apache.commons.codec.binary.StringUtils.newStringUsAscii(
+                org.apache.commons.codec.binary.StringUtils.getBytesUsAscii(value)).
+                replaceAll("\\?","").
+                replaceAll("[\\p{C}\\p{Zl}\\p{Zp}]", "").
+                trim();
     }
 }
