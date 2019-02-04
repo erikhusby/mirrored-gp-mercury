@@ -4791,6 +4791,31 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
+        <name>Infinium and Custom Selection</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <effectiveDate>2019-02-03T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Infinium</workflowProcessDefs>
+            <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
+            <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
+            <workflowProcessDefs>PCR Plus Pond HyperPrep</workflowProcessDefs>
+            <workflowProcessDefs>Custom Selection</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
         <name>Single Cell SmartSeq</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
