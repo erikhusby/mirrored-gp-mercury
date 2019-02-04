@@ -509,8 +509,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
             }
 
-            orderCalculatedValues = getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
-                            potentialOrderCriteria);
+            if (potentialOrderCriteria != null && StringUtils.isNotBlank(potentialOrderCriteria.getCustomerNumber())) {
+                orderCalculatedValues =
+                    getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
+                        potentialOrderCriteria);
+            }
         }
         return orderCalculatedValues;
     }
