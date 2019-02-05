@@ -4314,6 +4314,34 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Germline Exome Pond</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2019-02-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Germline Exome PCR Cleanup</name>
+                <labEventTypes>GERMLINE_EXOME_PCR_CLEANUP</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>384 Well Pond Pico</name>
+                <labEventTypes>THREE_84_WELL_POND_PICO</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Germline Exome Norm Transfer</name>
+                <labEventTypes>GERMLINE_EXOME_NORM_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Normalization</statusTransition>
+                    <endStatus>In Normalization</endStatus>
+                </jiraTransition>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -4953,6 +4981,30 @@
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>TSCA</workflowProcessDefs>
             <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Germline Exome</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>GERMLINE_EXOME</batchJiraIssueType>
+            <effectiveDate>2019-02-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
+            <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
+            <workflowProcessDefs>Germline Exome Pond</workflowProcessDefs>
+            <workflowProcessDefs>Custom Selection</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
             <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
             <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>

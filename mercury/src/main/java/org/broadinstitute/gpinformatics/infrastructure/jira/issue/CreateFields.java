@@ -149,6 +149,7 @@ public class CreateFields extends UpdateFields {
         // jiraName is defined by JIRA and must not be based on Mercury Workflow.
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS("Exome Express"),
+        GERMLINE_EXOME("Germline Exome"),
         CDNA_TRUSEQ_SS("cDNA TruSeq Strand Specific Large Insert"),
         CDNA_LASSO("Lasso"),
         PRODUCT_ORDER("Product Order"),
