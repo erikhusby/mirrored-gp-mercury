@@ -137,6 +137,48 @@ public class SampleInstanceEjbTest extends Arquillian {
         }
     }
 
+    /**
+     * Tests a re-upload where the vessels stay the same and the library names are changed.
+     * The first upload's SampleInstanceEntities should be removed by the re-upload.
+     */
+    @Test
+    public void testPooledTubeReuploadSameTubes() throws Exception {
+        final String filename = "PooledTubeReg.xlsx";
+        final String base = String.format("%09d", random.nextInt(100000000));
+        final String barcode = "E" + base;
+        final String[] indexes = {"Illumina_P5-Fayep_P7-Lifet", "Illumina_P5-Yiwed_P7-Colen"};
+
+        for (boolean overwrite : new boolean[]{false, true}) {
+            MessageCollection messageCollection = new MessageCollection();
+            VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor();
+            List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                    VarioskanParserTest.getSpreadsheet(filename), overwrite, processor, messageCollection, () -> {
+                        // Modifies the spreadsheet's barcode, library, sample name, and root
+                        for (int i = 0; i < processor.getSampleNames().size(); ++i) {
+                            // Libraries are pooled into one tube.
+                            processor.getBarcodes().set(i, barcode);
+                            processor.getLibraryNames().set(i, "Library" + base + i + overwrite);
+                            processor.getSampleNames().set(i, "SM-" + base + i + overwrite);
+                            processor.getRootSampleNames().set(i, "SM-" + base + "0" + overwrite);
+                            processor.getMolecularBarcodeNames().set(i, indexes[i]);
+                            processor.getVolumes().set(i, "40");
+                            processor.getReadLengths().set(i, "667");
+                        }
+                    });
+
+            Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
+                    StringUtils.join(messageCollection.getErrors(), "; "));
+            LabVessel tube = labVesselDao.findByIdentifier(barcode);
+            Assert.assertNotNull(tube);
+            Assert.assertEquals(entities.size(), processor.getLibraryNames().size());
+            entities.stream().forEach(entity ->
+                Assert.assertTrue(tube.getSampleInstanceEntities().contains(entity)));
+            // The only sampleInstanceEntities in the tube should be the new ones.
+            Assert.assertEquals(tube.getSampleInstanceEntities().size(), processor.getLibraryNames().size());
+        }
+    }
+
+
     @Test
     public void testPooledTubeUpload() throws Exception {
         for (String filename : Arrays.asList(

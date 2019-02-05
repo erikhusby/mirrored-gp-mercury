@@ -1,8 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -41,6 +44,7 @@ import javax.inject.Inject;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -195,6 +199,11 @@ public class SampleInstanceEjb {
                 // Validates the data.
                 processor.validateAllRows(rowDtos, overwrite, messages);
                 if (!messages.hasErrors()) {
+                    // When a re-upload changes the library name(s) in a tube, the old SampleInstanceEntities
+                    // must be removed, otherwise both old and new ones end up in the tube.
+                    if (overwrite) {
+                        removeOldSampleInstanceEntities(rowDtos);
+                    }
                     // Creates or updates the SampleInstanceEntities, MercurySamples, LabVessels.
                     List<SampleInstanceEntity> instanceEntities = processor.makeOrUpdateEntities(rowDtos);
                     sampleInstanceEntityDao.persistAll(processor.getEntitiesToPersist());
@@ -218,6 +227,33 @@ public class SampleInstanceEjb {
         }
         Collections.sort(messages.getErrors(), BY_ROW_NUMBER);
         return Collections.emptyList();
+    }
+
+    /**
+     * Removes the SampleInstanceEntities linked to a tube when they are not in the upload.
+     */
+    private void removeOldSampleInstanceEntities(List<RowDto> rowDtos) {
+        // Collects tube to sampleInstanceEntity links in the upload.
+        Multimap<String, String> barcodeToLibraryNames = HashMultimap.create();
+        rowDtos.stream().forEach(dto -> barcodeToLibraryNames.put(dto.getBarcode(), dto.getLibraryName()));
+        List<Pair<LabVessel, SampleInstanceEntity>> toBeRemoved = new ArrayList<>();
+        // Iterates on existing tubes for barcodes in the upload.
+        for (LabVessel tube : labVesselDao.findByListIdentifiers(new ArrayList<>(barcodeToLibraryNames.keys()))) {
+            if (tube != null) {
+                Collection<String> newEntities = barcodeToLibraryNames.get(tube.getLabel());
+                for (SampleInstanceEntity oldEntity : tube.getSampleInstanceEntities()) {
+                    if (!newEntities.contains(oldEntity.getSampleLibraryName())) {
+                        toBeRemoved.add(Pair.of(tube, oldEntity));
+                    }
+                }
+            }
+        }
+        for (Pair<LabVessel, SampleInstanceEntity> pair : toBeRemoved) {
+            pair.getLeft().getSampleInstanceEntities().remove(pair.getRight());
+        }
+        for (Pair<LabVessel, SampleInstanceEntity> pair : toBeRemoved) {
+            sampleInstanceEntityDao.remove(pair.getRight());
+        }
     }
 
     /**
