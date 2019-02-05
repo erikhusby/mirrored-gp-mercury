@@ -441,11 +441,18 @@ public class ZimsIlluminaRunFactory {
 
             SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
             Boolean isPooledTube = sampleInstance.getIsPooledTube();
-            if (isPooledTube && sampleData instanceof MercurySampleData) {
+            if (sampleData instanceof MercurySampleData) {
                 MercurySampleData mercurySampleData = (MercurySampleData) sampleData;
-                mercurySampleData.setRootSampleId(sampleInstance.getMercuryRootSampleName());
-                mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
+                if (isPooledTube) {
+                    mercurySampleData.setRootSampleId(sampleInstance.getMercuryRootSampleName());
+                    mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
+                }
+                // Uses External Library root sample metadata if it is present.
+                if (StringUtils.isNotBlank(sampleInstance.getExternalRootSampleName())) {
+                    mercurySampleData.setRootSampleId(sampleInstance.getExternalRootSampleName());
+                }
             }
+
             TZDevExperimentData devExperimentData = sampleInstance.getTzDevExperimentData();
             WorkflowMetadata workflowMetadata = mapWorkflowToMetadata.get(sampleInstance.getWorkflowName());
             libraryBeans.add(createLibraryBean(sampleInstanceDto, productOrder, sampleData, lcSet,

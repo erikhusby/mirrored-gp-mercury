@@ -225,9 +225,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
      * that far.  May be null for a vessel that holds only reagents.  May be null for BSP samples that pre-date Mercury.
      */
     public String getMercuryRootSampleName() {
-        if (StringUtils.isNotBlank(externalRootSampleName)) {
-            return externalRootSampleName;
-        }
         if (rootMercurySamples.isEmpty()) {
             return null;
         }
@@ -687,13 +684,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     private void mergeReadLength(SampleInstanceEntity sampleInstanceEntity) {
         this.readLength = sampleInstanceEntity.getReadLength();
-    }
-
-    private void mergeRootSamples(MercurySample mercurySample)
-    {
-        if(mercurySample != null) {
-            this.rootMercurySamples.add(mercurySample);
-        }
     }
 
     public List<String> getDevConditions() { return devConditions; }

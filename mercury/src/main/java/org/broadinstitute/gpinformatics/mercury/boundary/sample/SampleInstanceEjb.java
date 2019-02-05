@@ -1,8 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -41,6 +44,7 @@ import javax.inject.Inject;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -64,7 +68,7 @@ public class SampleInstanceEjb {
     public static final String ALIAS_CHARS = RESTRICTED_CHARS + " @#&*()[]|;:<>,?/=+\"'";
 
     public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
-    public static final String BSP_METADATA = "Row #%d overwriting BSP sample metadata %s cannot be done here.";
+    public static final String BSP_METADATA = "Row #%d cannot overwrite BSP sample metadata: %s.";
     public static final String DUPLICATE = "Row #%d duplicate value for %s.";
     public static final String DUPLICATE_IN_TUBE = "Row #%d has a duplicate value for %s in tube %s.";
     public static final String DUPLICATE_S_M =
@@ -79,9 +83,8 @@ public class SampleInstanceEjb {
     public static final String NONNEGATIVE_DECIMAL = "Row #%d %s must be a non-negative decimal number.";
     public static final String NONNEGATIVE_INTEGER = "Row #%d %s must be a non-negative integer number.";
     public static final String PREXISTING =
-            "Row #%d %s named \"%s\" already exists in Mercury; set the Overwrite checkbox to re-upload.";
-    public static final String MERCURY_METADATA = "Row #%d requires Overwrite checkbox to be set for " +
-            "updating Mercury sample metadata %s.";
+            "Row #%d requires Overwrite to be checked when re-uploading an existing tube.";
+    public static final String MERCURY_METADATA = "Row #%d requires Overwrite to be checked when updating existing %s.";
     public static final String TOO_LONG = "Row #$d the value for %s is too long (limit is %d).";
     public static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
 
@@ -184,6 +187,18 @@ public class SampleInstanceEjb {
                 // Validates the data.
                 processor.validateAllRows(rowDtos, overwrite, messages);
                 if (!messages.hasErrors()) {
+                    // When a tube is re-uploaded, its old SampleInstanceEntities must be removed,
+                    // otherwise both old and new ones end up in the tube.
+                    if (overwrite) {
+                        processor.getLabVesselMap().values().stream().
+                                filter(tube -> tube != null).
+                                forEach(tube -> {
+                                    tube.getSampleInstanceEntities().stream().
+                                            forEach(sampleInstanceEntity ->
+                                                    sampleInstanceEntityDao.remove(sampleInstanceEntity));
+                                    tube.getSampleInstanceEntities().clear();
+                                });
+                    }
                     // Creates or updates the SampleInstanceEntities, MercurySamples, LabVessels.
                     List<SampleInstanceEntity> instanceEntities = processor.makeOrUpdateEntities(rowDtos);
                     sampleInstanceEntityDao.persistAll(processor.getEntitiesToPersist());
@@ -207,6 +222,22 @@ public class SampleInstanceEjb {
         }
         Collections.sort(messages.getErrors(), BY_ROW_NUMBER);
         return Collections.emptyList();
+    }
+
+    /**
+     * Removes the SampleInstanceEntities linked to a tube.
+     */
+    private void removeOldSampleInstanceEntities(List<RowDto> rowDtos) {
+        for (LabVessel tube : labVesselDao.findByListIdentifiers(rowDtos.stream().
+                map(RowDto::getBarcode).
+                distinct().
+                collect(Collectors.toList()))) {
+            if (tube != null) {
+                tube.getSampleInstanceEntities().stream().
+                        forEach(sampleInstanceEntity -> sampleInstanceEntityDao.remove(sampleInstanceEntity));
+                tube.getSampleInstanceEntities().clear();
+            }
+        }
     }
 
     /**

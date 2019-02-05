@@ -169,6 +169,16 @@ public class ExternalLibraryProcessor extends TableProcessor {
         }
     }
 
+    private final Map<Metadata.Key, String> keyToHeader = new HashMap<Metadata.Key, String>() {{
+        put(Metadata.Key.SAMPLE_ID, Headers.COLLABORATOR_SAMPLE_ID.getText());
+        put(Metadata.Key.ROOT_SAMPLE, Headers.ROOT_SAMPLE_NAME.getText());
+        put(Metadata.Key.SAMPLE_ID, Headers.COLLABORATOR_SAMPLE_ID.getText());
+        put(Metadata.Key.PATIENT_ID, Headers.INDIVIDUAL_NAME.getText());
+        put(Metadata.Key.GENDER, Headers.SEX.getText());
+        put(Metadata.Key.SPECIES, Headers.ORGANISM.getText());
+    }};
+
+
     /** Returns the canonical header names, not the actual ones. */
     @Override
     protected ColumnHeader[] getColumnHeaders() {
@@ -232,8 +242,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
                 // If an existing tube barcode is given then this upload will replace the contents
                 // of the tube and overwrite must be set.
                 if (labVesselMap.get(dto.getBarcode()) != null) {
-                    messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(),
-                            Headers.TUBE_BARCODE.getText(), dto.getBarcode()));
+                    messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber()));
                 }
             }
 
@@ -257,8 +266,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
             LabVessel tube = labVesselMap.get(barcode);
             if (tube != null && !overwrite) {
-                messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(),
-                        Headers.TUBE_BARCODE.getText(), barcode));
+                messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber()));
             }
 
             if (StringUtils.isNotBlank(dto.getMisName())) {
@@ -506,7 +514,8 @@ public class ExternalLibraryProcessor extends TableProcessor {
                 Map<Metadata.Key, String> existingMap = existingMetadata.stream().
                         collect(Collectors.toMap(Metadata::getKey, Metadata::getValue));
                 String changes = updates.stream().
-                        map(metadata -> metadata.getKey().getDisplayName() + "=" + existingMap.get(metadata.getKey())).
+                        map(metadata -> String.format("%s (=%s)", keyToHeader.get(metadata.getKey()),
+                                existingMap.get(metadata.getKey()))).
                         sorted().
                         collect(Collectors.joining(", "));
                 if (sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP) {

@@ -82,7 +82,6 @@ public class SampleInstanceEntity {
     @Column(unique = true)
     private String sampleLibraryName;
 
-    private String libraryType;
     private String experiment;
     private Integer readLength;
     private Date uploadDate;
@@ -96,15 +95,6 @@ public class SampleInstanceEntity {
 
     @Enumerated(EnumType.STRING)
     private IlluminaFlowcell.FlowcellType sequencerModel;
-
-    public void removeSubTasks() {
-        sampleInstanceEntityTsks.clear();
-    }
-
-    public void addSubTasks(SampleInstanceEntityTsk subTasks) {
-        sampleInstanceEntityTsks.add(subTasks);
-        subTasks.setSampleInstanceEntity(this);
-    }
 
     /** Returns the Jira dev sub tasks in the order they were created. */
     public List<String> getSubTasks() {
@@ -179,13 +169,6 @@ public class SampleInstanceEntity {
         this.referenceSequence = referenceSequence;
     }
 
-    public String getLibraryType() {
-        return libraryType;
-    }
-
-    public void setLibraryType(String libraryType) {
-        this.libraryType = libraryType;
-    }
 
     public Integer getReadLength() {
         return readLength;
@@ -218,10 +201,6 @@ public class SampleInstanceEntity {
 
     public String getSampleLibraryName() {
         return sampleLibraryName;
-    }
-
-    public Set<SampleInstanceEntityTsk> getSampleInstanceEntityTsks() {
-        return sampleInstanceEntityTsks;
     }
 
     public void setUploadDate(Date uploadDate) {

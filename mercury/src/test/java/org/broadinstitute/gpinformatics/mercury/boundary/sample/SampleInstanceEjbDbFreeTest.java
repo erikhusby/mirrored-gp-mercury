@@ -71,7 +71,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,11 +95,9 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     private AnalysisTypeDao analysisTypeDao = Mockito.mock(AnalysisTypeDao.class);
     private ProductDao productDao = Mockito.mock(ProductDao.class);
 
-    enum TestType {EXTERNAL_LIBRARY, WALKUP}
-
     @Test
     public void testWalkupSequencing() throws Exception {
-        SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.WALKUP);
+        SampleInstanceEjb sampleInstanceEjb = setMocks();
         MessageCollection messages = new MessageCollection();
         sampleInstanceEjb.verifyAndPersistSubmission(new WalkUpSequencing() {{
             setLibraryName("TEST_LIBRARY");
@@ -118,7 +115,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     @Test
     public void testExternalLibrary() throws Exception {
         String file = "testdata/externalLibDbFreeSuccess.xls";
-        SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.EXTERNAL_LIBRARY);
+        SampleInstanceEjb sampleInstanceEjb = setMocks();
         MessageCollection messageCollection = new MessageCollection();
         ExternalLibraryProcessor processor = new ExternalLibraryProcessor();
 
@@ -275,7 +272,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
     @Test
     public void testNullSpreadsheet() throws Exception {
-        SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.EXTERNAL_LIBRARY);
+        SampleInstanceEjb sampleInstanceEjb = setMocks();
         MessageCollection messageCollection = new MessageCollection();
 
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
@@ -294,7 +291,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     @Test
     public void testExternalLibraryFail() throws Exception {
         final String filename = "testdata/externalLibDbFreeFail.xls";
-        SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.EXTERNAL_LIBRARY);
+        SampleInstanceEjb sampleInstanceEjb = setMocks();
         MessageCollection messageCollection = new MessageCollection();
         ExternalLibraryProcessor processor = new ExternalLibraryProcessor();
         List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
@@ -400,19 +397,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     }
 
 
-    private boolean errorIfMissing(List<String> errors, String filename, String expected) {
-        for (Iterator<String> iterator = errors.iterator(); iterator.hasNext(); ) {
-            String error = iterator.next();
-            if (error.startsWith(expected)) {
-                iterator.remove();
-                return true;
-            }
-        }
-        Assert.fail(filename + " error message \"" + expected + "\" is missing from the remaining errors: " +
-                StringUtils.join(errors, "; "));
-        return false;
-    }
-
     private <VESSEL extends LabVessel> void assertSampleInstanceEntitiesPresent(Collection<VESSEL> labVessels,
             Collection<SampleInstanceEntity> entities) {
         List<String> list = new ArrayList<>();
@@ -432,7 +416,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     }
 
     /** Sets up the mocks for all test cases. */
-    private SampleInstanceEjb setMocks(TestType testType) throws Exception {
+    private SampleInstanceEjb setMocks() throws Exception {
 
         // BarcodedTubes
         Mockito.when(labVesselDao.findByBarcodes(Mockito.anyList())).thenAnswer(new Answer<Map<String, LabVessel>>() {

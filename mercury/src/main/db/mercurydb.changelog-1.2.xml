@@ -1966,5 +1966,11 @@
     <changeSet id="GPLIM-6065-7" author="epolk">
         <dropColumn columnName="ROOT_SAMPLE" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
     </changeSet>
+    <changeSet id="GPLIM-6065-8" author="epolk">
+        <dropColumn columnName="LIBRARY_TYPE" tableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-9" author="epolk">
+        <dropColumn columnName="LIBRARY_TYPE" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+    </changeSet>
 
 </databaseChangeLog>
