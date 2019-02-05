@@ -4823,7 +4823,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <batchJiraIssueType>GERMLINE_EXOME</batchJiraIssueType>
             <effectiveDate>2019-02-03T10:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>Infinium</workflowProcessDefs>
             <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
