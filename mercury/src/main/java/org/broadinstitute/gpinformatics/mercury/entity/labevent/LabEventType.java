@@ -13,9 +13,11 @@ import javax.annotation.Nullable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -2525,7 +2527,7 @@ public enum LabEventType {
         PCR_PLUS_NORMALIZED_POND("PCR-Plus Norm Pond", "Norm Pond"),
         HYBRID_SELECTION_AGILENT_CATCH("Enriched Catch", "Catch"),
         HYBRID_SELECTION_ICE_ENRICHED_CATCH("Enriched Catch", "Catch"),
-        NEXTERA_ENRICHED_LIBRARY("Nextera Enriched"),
+        NEXTERA_ENRICHED_LIBRARY("Nextera Enriched", "Pond"),
         NEXTERA_POOLED_NORMALIZED_LIBRARY("Nextera Pooled Normalized", "Pooled"),
         NEXTERA_SPRI_CONCENTRATED_POOL("Nextera SPRI Concentrated Pool", "Pooled"),
         NEXOME_CATCH("Nexome Catch", "Catch"),
@@ -3299,6 +3301,16 @@ public enum LabEventType {
             }
         }
         return resultSet;
+    }
+
+    public static List<LabEventType> getLabEventsWithLibraryEtlDisplayName(String etlDisplayName) {
+        Set<LabEventType> resultSet =new HashSet<>();
+        for (LabEventType labEventType : LabEventType.values()) {
+            if (labEventType.getLibraryType().getEtlDisplayName().equals(etlDisplayName)) {
+                resultSet.add(labEventType);
+            }
+        }
+        return new ArrayList<>(resultSet);
     }
 
     public ForwardMessage getForwardMessage() {
