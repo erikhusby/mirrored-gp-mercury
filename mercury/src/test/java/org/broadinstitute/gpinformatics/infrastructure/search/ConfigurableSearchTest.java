@@ -518,7 +518,8 @@ public class ConfigurableSearchTest extends Arquillian {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 SearchDefinitionFactory.getForEntity(productOrderEntityName);
 
-        SearchInstance.SearchValue quoteSearchValue = searchInstance.addTopLevelTerm("Quote Identifier",
+        SearchInstance.SearchValue quoteSearchValue =
+            searchInstance.addTopLevelTerm(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER,
                 configurableSearchDefinition);
         quoteSearchValue.setOperator(SearchInstance.Operator.EQUALS);
         quoteSearchValue.setValues(Collections.singletonList("GPSPIE8"));
