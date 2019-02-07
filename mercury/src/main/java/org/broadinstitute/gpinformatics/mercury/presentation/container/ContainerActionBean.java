@@ -9,11 +9,9 @@ import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
@@ -26,7 +24,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTy
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -35,21 +32,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,18 +50,19 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 
 /**
- * Create a Rack Of Tubes with a specified barcode to be used for Storage.
- */
+ * Everything that has to do with creating, storing, and removing a rack of tubes or static plate in freezers.
+ * */
 @UrlBinding(ContainerActionBean.ACTION_BEAN_URL)
 public class ContainerActionBean extends RackScanActionBean {
     private static final Log logger = LogFactory.getLog(ContainerActionBean.class);
 
     public static final String PAGE_TITLE = "View Container";
+    public static final String CREATE_CONTAINER_TITLE = "Create Container";
+    public static final String EDIT_CONTAINER_TITLE = "Edit Container";
+
     public static final String ACTION_BEAN_URL = "/container/container.action";
     public static final String CONTAINER_CREATE_PAGE = "/container/create.jsp";
     public static final String CONTAINER_VIEW_PAGE = "/container/view.jsp";
@@ -84,18 +78,11 @@ public class ContainerActionBean extends RackScanActionBean {
     public static final String CANCEL_SAVE_ACTION = "cancel";
     public static final String FIRE_RACK_SCAN = "rackScan";
 
-    private static final String CONTAINER = "Container";
-    public static final String CREATE_CONTAINER = CoreActionBean.CREATE + CONTAINER;
-    public static final String EDIT_CONTAINER = CoreActionBean.EDIT + CONTAINER;
-
     @Inject
     private LabVesselDao labVesselDao;
 
     @Inject
     private StorageLocationDao storageLocationDao;
-
-    @Inject
-    private TubeFormationDao tubeFormationDao;
 
     @Inject
     private LabEventFactory labEventFactory;
@@ -118,9 +105,10 @@ public class ContainerActionBean extends RackScanActionBean {
     private StaticPlate staticPlate;
     private boolean ajaxRequest;
     private boolean showLayout;
+    private boolean ignoreCheckinEvents = false;
 
     public ContainerActionBean() {
-        super(CREATE_CONTAINER, EDIT_CONTAINER, CONTAINER_PARAMETER);
+        super(CREATE_CONTAINER_TITLE, EDIT_CONTAINER_TITLE, CONTAINER_PARAMETER);
     }
 
     @Override
@@ -133,6 +121,14 @@ public class ContainerActionBean extends RackScanActionBean {
         return PAGE_TITLE;
     }
 
+    @DefaultHandler
+    @DontValidate
+    @HandlesEvent(VIEW_ACTION)
+    public Resolution view() {
+        return new ForwardResolution(CONTAINER_VIEW_PAGE);
+    }
+
+    /* *** BEGIN CREATE CONTAINER FUNCTIONALITY *** */
     @DontValidate
     @HandlesEvent(CREATE_ACTION)
     public Resolution viewCreatePage() {
@@ -140,16 +136,18 @@ public class ContainerActionBean extends RackScanActionBean {
     }
 
     @ValidationMethod(on = CREATE_CONTAINER_ACTION)
-    public void labVesselDoesntExist(ValidationErrors errors) {
+    public void validateVesselNotExist(ValidationErrors errors) {
         if (StringUtils.isEmpty(containerBarcode)) {
             addValidationError("containerBarcode", "Container Barcode is required.");
-            return;
-        }
-        if (labVesselDao.findByIdentifier(containerBarcode) != null) {
-            errors.add(containerBarcode, new SimpleError("Barcode is already associated with another lab vessel"));
+        } else if (labVesselDao.findByIdentifier(containerBarcode) != null) {
+            addValidationError("containerBarcode", "Barcode is already associated with another lab vessel");
         }
     }
 
+    /**
+     * Creates racks of tubes only!  Static plates MUST exist already via sample import or transfers. <br/>
+     * Redirects to 'Check /in / Search Container' - "viewContainer" event page if successful
+     */
     @HandlesEvent(CREATE_CONTAINER_ACTION)
     public Resolution createContainer() {
         RackOfTubes rackOfTubes = new RackOfTubes(containerBarcode, rackType);
@@ -159,10 +157,14 @@ public class ContainerActionBean extends RackScanActionBean {
         return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_ACTION)
                 .addParameter(CONTAINER_PARAMETER, containerBarcode);
     }
+    /* *** END CREATE CONTAINER FUNCTIONALITY *** */
 
+    /**
+     * Validates existence of the container only, existence of tubes is handled farther on
+     */
     @ValidationMethod(on = {VIEW_CONTAINER_ACTION, EDIT_ACTION, SAVE_ACTION, SAVE_LOCATION_ACTION,
             CANCEL_SAVE_ACTION, FIRE_RACK_SCAN, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_SEARCH_ACTION})
-    public void labVesselExist() {
+    public void validateVesselExist() {
         if (StringUtils.isEmpty(containerBarcode)) {
             addValidationError("containerBarcode", "Container Barcode is required.");
             return;
@@ -183,169 +185,131 @@ public class ContainerActionBean extends RackScanActionBean {
     }
 
     /**
-     * Attempt to determine the position map of the container under the disclaimer that the RackOfTubes
-     * may not be accurate under rearrays.
+     * Attempt to determine the position map of the container under the disclaimer that a RackOfTubes
+     * layout shown may not reflect the layout when previously checked in due to rearrays.
+     * TODO:  JMS Lots of logic unrelated to validation, call this explicitly as needed instead of wiring into Stripes lifecycle
      */
-    @After(stages = LifecycleStage.CustomValidation, on = {VIEW_CONTAINER_ACTION, EDIT_ACTION, SAVE_ACTION,
-            SAVE_LOCATION_ACTION, CANCEL_SAVE_ACTION, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_SEARCH_ACTION})
-    public void buildPositionMapping() {
+    @After(stages = LifecycleStage.CustomValidation, on = {EDIT_ACTION, CANCEL_SAVE_ACTION, REMOVE_LOCATION_ACTION})
+    public void buildPositionMappingForInStorage() {
         mapPositionToVessel = new HashMap<>();
         mapPositionToSampleId = new HashMap<>();
-        if (rackOfTubes == null && staticPlate == null) {
-            return;
-        }
-        if (isStaticPlate()){
-            buildStaticPlatePositionMapping();
-            return;
-        }
-        SortedMap<Date, Pair<LabEvent, TubeFormation>> sortedTreeMap = new TreeMap<>();
-        for (TubeFormation tubeFormation: rackOfTubes.getTubeFormations()) {
-            Set<LabEvent> allEvents = tubeFormation.getEvents();
-            for (LabEvent labEvent: allEvents) {
-                LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
-                boolean foundRackOfTubesInEvent = false;
-                if (inPlaceLabVessel != null) {
-                    foundRackOfTubesInEvent = isRackOfTubesInEvent( labEvent, inPlaceLabVessel, rackOfTubes.getLabel() );
-                }
-                for (LabVessel vessel : labEvent.getTargetLabVessels()) {
-                    if( OrmUtil.proxySafeIsInstance( vessel, TubeFormation.class )) {
-                        foundRackOfTubesInEvent = isRackOfTubesInEvent( labEvent, vessel, rackOfTubes.getLabel() );
-                    } else {
-                        if (vessel.getLabel().equals(rackOfTubes.getLabel())) {
-                            foundRackOfTubesInEvent = true;
-                        }
-                    }
-                }
-                for (LabVessel vessel : labEvent.getSourceLabVessels()) {
-                    if( OrmUtil.proxySafeIsInstance( vessel, TubeFormation.class )) {
-                        foundRackOfTubesInEvent = isRackOfTubesInEvent( labEvent, vessel, rackOfTubes.getLabel() );
-                    } else {
-                        if (vessel.getLabel().equals(rackOfTubes.getLabel())) {
-                            foundRackOfTubesInEvent = true;
-                        }
-                    }
-                }
-                if( !foundRackOfTubesInEvent && inPlaceLabVessel != null ) {
-                    if( inPlaceLabVessel.getContainerRole() != null ) {
-                        if (inPlaceLabVessel.getContainerRole().getEmbedder().getLabel().equals(rackOfTubes.getLabel())) {
-                            foundRackOfTubesInEvent = true;
-                        }
-                    } else if (inPlaceLabVessel.getLabel().equals(rackOfTubes.getLabel())){
-                        foundRackOfTubesInEvent = true;
-                    }
-                }
-                if (foundRackOfTubesInEvent) {
-                    sortedTreeMap.put(labEvent.getEventDate(), Pair.of(labEvent, tubeFormation));
-                }
-            }
-        }
-        if (!sortedTreeMap.isEmpty()) {
-            TreeMap<Date, Pair<LabEvent, TubeFormation>> sortedDateDesc =
-                    new TreeMap<>(Collections.reverseOrder());
-            sortedDateDesc.putAll(sortedTreeMap);
-            Pair<LabEvent, TubeFormation> labEventTubeFormationPair = null;
-            for (Map.Entry<Date, Pair<LabEvent, TubeFormation>> entry: sortedDateDesc.entrySet()) {
-                if (entry.getValue() != null && entry.getValue().getLeft() != null &&
-                    entry.getValue().getLeft().getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
-                    entry.getValue().getLeft().getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
-                    labEventTubeFormationPair = entry.getValue();
-                    break;
-                }
-            }
-            if (labEventTubeFormationPair == null) {
-                return;
-            }
 
-            LabEvent latestEvent = labEventTubeFormationPair.getLeft();
-            TubeFormation tubeFormation = labEventTubeFormationPair.getRight();
-            VesselContainer<?> containerRole = tubeFormation.getContainerRole();
-            if (containerRole != null) {
-                for (VesselPosition vesselPosition : rackOfTubes.getVesselGeometry().getVesselPositions()) {
-                    LabVessel barcodedTube = containerRole.getImmutableVesselAtPosition(vesselPosition);
-                    if (barcodedTube != null) {
-                        if (rackOfTubes.getStorageLocation() == null && barcodedTube.getStorageLocation() != null) {
-                            continue;
-                        } else if (rackOfTubes.getStorageLocation() == null && barcodedTube.getStorageLocation() != null) {
-                            continue;
-                        }
-                        if (rackOfTubes.getStorageLocation() != null && barcodedTube.getStorageLocation() == null) {
-                            continue;
-                        }
-                        if (rackOfTubes.getStorageLocation() != null && barcodedTube.getStorageLocation() != null
-                                && !barcodedTube.getStorageLocation().equals(rackOfTubes.getStorageLocation())) {
-                            continue;
-                        }
-                        LabEvent barcodesLatestEvent = barcodedTube.getLatestStorageEvent();
-                        if (barcodesLatestEvent != null && barcodesLatestEvent.equals(latestEvent)) {
-                            mapPositionToVessel.put(vesselPosition, barcodedTube);
-                            Set<MercurySample> samples = barcodedTube.getMercurySamples();
-                            String display = "";
-                            if( samples.size() == 1 ) {
-                                display = samples.iterator().next().getSampleKey();
-                            } else if( samples.size() > 1 ) {
-                                // Not sure if this should ever happen - but code for it
-                                StringBuilder b = new StringBuilder();
-                                for( MercurySample sample : samples ) {
-                                    b.append(sample.getSampleKey()).append(" ");
-                                }
-                                display = b.toString().trim();
-                            }
-                            mapPositionToSampleId.put( vesselPosition, display );
-                        }
-                    }
-                }
-            }
+        // Layouts are not shown for static plates (showLayout=false)
+        if ( rackOfTubes == null || isStaticPlate() ) {
+            return;
         }
+
+        // Skip event/container logic overhead if no layout to be shown (after 'Find' viewContainer() redirect action)
+        // Or forced to use rack scan layout
+        if( !showLayout || ignoreCheckinEvents ) {
+            return;
+        }
+
+        LabEvent latestEvent = findLatestCheckInEvent(rackOfTubes);
+        mapPositionToVessel = findStoredTubesFromCheckIn(latestEvent);
+        mapPositionToSampleId = getSamplesForTubes(mapPositionToVessel);
+
     }
 
     /**
-     * If Static Plate has PlateWells already mapped such as in an Index Plate then use them, otherwise
-     * just display the boxes.
+     * Find latest check-in event for a lab vessel (rack of tubes, static plate) <br/>
+     * If a check-out occurs after a check-in, do not report the check-in event
      */
-    private void buildStaticPlatePositionMapping() {
-        VesselContainer<PlateWell> containerRole = staticPlate.getContainerRole();
-        if (containerRole != null) {
-            Map<VesselPosition, PlateWell> plateWellMap = containerRole.getMapPositionToVessel();
-            for (Map.Entry<VesselPosition, PlateWell> entry : plateWellMap.entrySet()) {
-                if (entry.getValue() != null) {
-                    mapPositionToVessel.put(entry.getKey(), entry.getValue());
+    private LabEvent findLatestCheckInEvent(LabVessel labVessel ) {
+        LabEvent latestCheckInEvent = null;
+        List<LabEvent> inPlaceLabEvents = labEventDao.findInPlaceByAncillaryVessel(rackOfTubes);
+        for (LabEvent labEvent : inPlaceLabEvents) {
+            if( labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ) {
+                if (latestCheckInEvent == null) {
+                    latestCheckInEvent = labEvent;
+                } else if (labEvent.getEventDate().after(latestCheckInEvent.getEventDate())) {
+                    latestCheckInEvent = labEvent;
+                }
+            } else if ( labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
+                if (latestCheckInEvent != null && latestCheckInEvent.getEventDate().before(labEvent.getEventDate())) {
+                    latestCheckInEvent = null;
                 }
             }
         }
+        return latestCheckInEvent;
+    }
+
+    /**
+     * Given a storage check-in event for a rack, build a map of positions and tubes in the check-in event tube formation
+     * which are still in the same storage location as the rack.  <br/>
+     * Handles the case where a tube may have been removed from the rack without a storage checkout.
+     */
+    private Map<VesselPosition, LabVessel> findStoredTubesFromCheckIn(LabEvent checkInEvent ) {
+
+        Map<VesselPosition, LabVessel> mapPositionToStoredVessel = new HashMap<>();
+
+        // Spare the caller having to test
+        if( checkInEvent == null ) {
+            return mapPositionToStoredVessel;
+        }
+
+        TubeFormation eventTubeFormation = null;
+
+        LabVessel inPlaceVessel = checkInEvent.getInPlaceLabVessel();
+        if( OrmUtil.proxySafeIsInstance( inPlaceVessel, TubeFormation.class) ) {
+            eventTubeFormation = OrmUtil.proxySafeCast(inPlaceVessel, TubeFormation.class);
+        }
+
+        // Shouldn't happen
+        if( eventTubeFormation == null ) {
+            return mapPositionToStoredVessel;
+        }
+
+        Long rackLocId = rackOfTubes.getStorageLocation()==null?null:rackOfTubes.getStorageLocation().getStorageLocationId();
+        Long tubeLocId;
+
+        VesselContainer<?> containerRole = eventTubeFormation.getContainerRole();
+        if (containerRole != null) {
+            for ( Map.Entry<VesselPosition,BarcodedTube> positionAndTube : eventTubeFormation.getContainerRole().getMapPositionToVessel().entrySet() ) {
+                BarcodedTube tube = positionAndTube.getValue();
+                VesselPosition position = positionAndTube.getKey();
+                tubeLocId = tube.getStorageLocation()==null?null:tube.getStorageLocation().getStorageLocationId();
+
+                // Do not show any tubes checked in to other locations
+                if( tubeLocId != null && rackLocId != null && !tubeLocId.equals(rackLocId) ) {
+                    String locationPath = storageLocationDao.getLocationTrail(tubeLocId);
+                    addMessage(tube.getLabel() + " [ " + position + " ] was moved to " + locationPath );
+                    continue;
+                }
+
+                mapPositionToStoredVessel.put(position, tube);
+            }
+        }
+        return mapPositionToStoredVessel;
+    }
+
+    /**
+     * Build a map of positions to sample ids corresponding to positions and vessels in a rack
+     */
+    private Map<VesselPosition,String> getSamplesForTubes(Map<VesselPosition, LabVessel> vesselPositionMap ){
+        Map<VesselPosition,String> mapPositionToSampleId = new HashMap<>();
+
+        for( Map.Entry<VesselPosition, LabVessel> posVesselEntry : vesselPositionMap.entrySet() ) {
+
+            Set<MercurySample> samples = posVesselEntry.getValue().getMercurySamples();
+            String display = "";
+            if (samples.size() == 1) {
+                display = samples.iterator().next().getSampleKey();
+            } else if (samples.size() > 1) {
+                // Not sure if this should ever happen - but code for it
+                StringBuilder b = new StringBuilder();
+                for (MercurySample sample : samples) {
+                    b.append(sample.getSampleKey()).append(" ");
+                }
+                display = b.toString().trim();
+            }
+            mapPositionToSampleId.put(posVesselEntry.getKey(), display);
+        }
+        return mapPositionToSampleId;
     }
 
     private boolean isStaticPlate() {
         return staticPlate != null;
-    }
-
-    private boolean isRackOfTubesInEvent( LabEvent labEvent, LabVessel vessel, String searchRackBarcode ){
-        TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
-        LabVessel rack = null;
-        if( labEvent.getSectionTransfers().iterator().hasNext() ) {
-            rack = labEvent.getSectionTransfers().iterator().next().getAncillaryTargetVessel();
-        } else if ( labEvent.getCherryPickTransfers().iterator().hasNext() ) {
-            rack = labEvent.getCherryPickTransfers().iterator().next().getAncillaryTargetVessel();
-        } else if ( labEvent.getVesselToSectionTransfers().iterator().hasNext() ) {
-            rack = labEvent.getVesselToSectionTransfers().iterator().next().getAncillaryTargetVessel();
-        }
-        if( rack != null ) {
-            return rack.getLabel().equals(searchRackBarcode);
-        } else {
-            // Ancillary vessel logic was added around Aug 2014.  This handles any earlier cases
-            for ( LabVessel oldLogicRack : tubes.getRacksOfTubes()) {
-                if (oldLogicRack.getLabel().equals(searchRackBarcode)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    @DefaultHandler
-    @DontValidate
-    @HandlesEvent(VIEW_ACTION)
-    public Resolution view() {
-        return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
 
     @HandlesEvent(VIEW_CONTAINER_ACTION)
@@ -355,12 +319,18 @@ public class ContainerActionBean extends RackScanActionBean {
                     .addParameter(CONTAINER_PARAMETER, containerBarcode)
                     .addParameter(SHOW_LAYOUT_PARAMETER, false);
         }
+
+        LabEvent latestCheckInEvent = findLatestCheckInEvent(getViewVessel());
+        mapPositionToVessel = findStoredTubesFromCheckIn(latestCheckInEvent);
+        mapPositionToSampleId = getSamplesForTubes(mapPositionToVessel);
+
         showLayout = true;
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
 
     @HandlesEvent(VIEW_CONTAINER_SEARCH_ACTION)
     public Resolution viewContainerSearch() {
+        buildPositionMappingForInStorage();
         showLayout = true;
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
@@ -369,8 +339,8 @@ public class ContainerActionBean extends RackScanActionBean {
     public Resolution viewContainerAjax() {
         ajaxRequest = true;
         showLayout = true;
-        labVesselExist();
-        buildPositionMapping();
+        validateVesselExist();
+        buildPositionMappingForInStorage();
         if (hasErrors()) {
             throw new RuntimeException("Failed to find lab vessel: " + containerBarcode);
         }
@@ -384,132 +354,132 @@ public class ContainerActionBean extends RackScanActionBean {
             showLayout = true;
         }
         if (storageLocation != null) {
-            addMessage("After updating the container layout you will need to add it back to storage.");
+            String locationPath = storageLocationDao.getLocationTrail(storageLocation.getStorageLocationId());
+            addMessage("Rack " + getViewVessel().getLabel() + " is currently stored in [" + locationPath + "] and will be checked out after scan and layout update.");
         }
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
-    }
-
-    private List<BarcodedTube> savePositionMapToLocation(MessageCollection messageCollection) {
-        Set<String> barcodes = new HashSet<>();
-        if (rackOfTubes == null) {
-            return null;
-        }
-        if (receptacleTypes == null) {
-            messageCollection.addError("You must scan the rack.");
-            return null;
-        }
-        List<BarcodedTube> tubesToAddToStorage = new ArrayList<>();
-        for (ReceptacleType receptacleType : receptacleTypes) {
-            if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
-                String barcode = receptacleType.getBarcode();
-                LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
-                if (labVessel == null) {
-                    messageCollection.addError("Unrecognized barcode: " + barcode);
-                } else if (!OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
-                    messageCollection.addError("Barcode isn't a tube type: " + barcode);
-                } else if (barcodes.contains(barcode)) {
-                    messageCollection.addError("Duplicate tube barcode found: " + barcode);
-                } else {
-                    BarcodedTube barcodedTube = OrmUtil.proxySafeCast(labVessel, BarcodedTube.class);
-                    tubesToAddToStorage.add(barcodedTube);
-                    barcodes.add(barcode);
-                }
-            }
-        }
-
-        // Remove any tubes that are no longer in this storage location
-        for (LabVessel labVessel: mapPositionToVessel.values()) {
-            if (!barcodes.contains(labVessel.getLabel())) {
-                labVessel.setStorageLocation(null);
-            }
-        }
-        return tubesToAddToStorage;
     }
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution saveContainer() {
         MessageCollection messageCollection = new MessageCollection();
         handleSaveContainer(messageCollection);
+        showLayout = true;
         if (messageCollection.hasErrors()) {
-            addMessages(messageCollection);
-            showLayout = true;
             editLayout = true;
-            return new ForwardResolution(CONTAINER_VIEW_PAGE);
-        } else if (messageCollection.hasWarnings()) {
-            addMessages(messageCollection);
+            ignoreCheckinEvents = true;
+        } else {
+            editLayout = false;
+            messageCollection.addInfo("Successfully updated layout.");
+            messageCollection.addInfo("Please select storage location.");
         }
-        addMessage("Successfully updated layout.");
-        addMessage("Please select storage location.");
-        return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_SEARCH_ACTION)
-                .addParameter(CONTAINER_PARAMETER, containerBarcode)
-                .addParameter(SHOW_LAYOUT_PARAMETER, true);
+        addMessages(messageCollection);
+        return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
 
+    /**
+     * Confirms a storage update - removes rack and any tubes from storage if applicable
+     * User must select a new storage location afterwards
+     */
     public void handleSaveContainer(MessageCollection messageCollection) {
-        // Save all new lab vessels to parents storage location
+
+        // Save all lab vessels to parent's storage location
         if (receptacleTypes == null) {
             messageCollection.addError("No tube barcodes found.");
             return;
         }
-        storageLocation = null;
-        List<BarcodedTube> barcodedTubesToAddToStorage = null;
-        Set<String> barcodes = new HashSet<>();
-        for (ReceptacleType receptacleType : receptacleTypes) {
-            if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
-                String barcode = receptacleType.getBarcode();
-                LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
-                labVessel.setStorageLocation(null);
-                barcodes.add(barcode);
+
+        LabEvent checkOutEvent = null;
+
+        if (rackOfTubes != null && rackOfTubes.getStorageLocation() != null) {
+            storageLocation = rackOfTubes.getStorageLocation();
+            Map<VesselPosition, LabVessel> storedRackVessels =
+                    findStoredTubesFromCheckIn(findLatestCheckInEvent(rackOfTubes));
+            PlateEventType plateEventType =
+                    buildPlateEventFromVessels(rackOfTubes, storedRackVessels, LabEventType.STORAGE_CHECK_OUT);
+            checkOutEvent = labEventFactory.buildFromBettaLims(plateEventType);
+            messageCollection.addInfo("Layout update checked out rack %s from [%s]."
+                    , rackOfTubes.getLabel()
+                    , storageLocationDao.getLocationTrail(rackOfTubes.getStorageLocation().getStorageLocationId()));
+            rackOfTubes.setStorageLocation(null);
+        }
+
+        mapPositionToVessel = new HashMap<>();
+        buildTubeLayoutFromPost(messageCollection);
+
+        for( Map.Entry<VesselPosition,LabVessel> pv : mapPositionToVessel.entrySet() ) {
+            if (pv.getValue().getStorageLocation() != null) {
+                // Report relocated tubes only when entire rack not relocated
+                if( checkOutEvent == null ) {
+                    messageCollection.addWarning("Layout update removed %s [%s] from [%s]"
+                            , pv.getValue().getLabel(), pv.getKey()
+                            , storageLocationDao
+                                    .getLocationTrail(pv.getValue().getStorageLocation().getStorageLocationId()));
+                }
+                pv.getValue().setStorageLocation(null);
             }
         }
 
+        // Vessel not exist errors
         if (messageCollection.hasErrors()) {
             return;
         }
-
-        for (Iterator<ReceptacleType> iterator = receptacleTypes.iterator(); iterator.hasNext();) {
-            ReceptacleType receptacleType = iterator.next();
-            if (StringUtils.isEmpty(receptacleType.getBarcode())) {
-                iterator.remove();
-            }
-        }
-
-        PlateEventType plateEventType = buildPlateEvent(LabEventType.STORAGE_CHECK_IN);
-        LabEvent labEvent = labEventFactory.buildFromBettaLims(plateEventType);
-        LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
-        if (inPlaceLabVessel != null) {
-            if (OrmUtil.proxySafeIsInstance(inPlaceLabVessel, TubeFormation.class)) {
-                TubeFormation tubeFormation = OrmUtil.proxySafeCast(inPlaceLabVessel, TubeFormation.class);
-                tubeFormation.addRackOfTubes(rackOfTubes);
-            }
-        }
-        rackOfTubes.setStorageLocation(storageLocation);
-        if (barcodedTubesToAddToStorage != null) {
-            for (BarcodedTube barcodedTube : barcodedTubesToAddToStorage) {
-                barcodedTube.setStorageLocation(storageLocation);
-            }
-        }
-
-        // Remove any tubes that are no longer in this storage location
-        // Sort to display orphans warnings in order
-        List<Map.Entry<VesselPosition, LabVessel>> entries = new ArrayList<>(mapPositionToVessel.entrySet());
-        Collections.sort(entries, new Comparator<Map.Entry<VesselPosition, LabVessel>>() {
-            @Override
-            public int compare(Map.Entry<VesselPosition, LabVessel> o1, Map.Entry<VesselPosition, LabVessel> o2) {
-                return o1.getKey().compareTo(o2.getKey());
-            }
-        });
-        for (Map.Entry<VesselPosition, LabVessel> entry: entries) {
-            LabVessel labVessel = entry.getValue();
-            if (!barcodes.contains(labVessel.getLabel())) {
-                VesselPosition vesselPosition = entry.getKey();
-                labVessel.setStorageLocation(null);
-                messageCollection.addWarning("Lab Vessel " + labVessel.getLabel() + " was orphaned from position " + vesselPosition.name());
-            }
-        }
         showLayout = true;
-        labEventDao.persist(labEvent);
-        labEventDao.flush();
+        if( checkOutEvent != null ) {
+            storageLocationDao.persist(checkOutEvent);
+            storageLocationDao.flush();
+            // Vessels may have been removed from storage
+            labEventDao.flush();
+        }
+    }
+
+    /**
+     * Builds mapPositionToVessel from web post
+     * @param messageCollection Holds any errors (vessel not found)
+     */
+    private void buildTubeLayoutFromPost(MessageCollection messageCollection) {
+
+        mapPositionToVessel = new HashMap<>();
+
+        if (rackOfTubes == null) {
+            return;
+        }
+        if (receptacleTypes == null) {
+            messageCollection.addError("You must scan the rack.");
+            return;
+        }
+
+        // Get vessel barcodes, remove empty positions from raw input
+        if( receptacleTypes != null ) {
+            for (Iterator<ReceptacleType> iterator = receptacleTypes.iterator(); iterator.hasNext(); ) {
+                ReceptacleType receptacleType = iterator.next();
+                if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
+                    String barcode = receptacleType.getBarcode();
+                    LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+                    if (labVessel == null) {
+                        // Won't even add non-existent vessel to layout map  TODO: JMS Should we?
+                        messageCollection.addError("No vessel with barcode %s found.", barcode);
+                        continue;
+                    }
+                    mapPositionToVessel.put(VesselPosition.getByName(receptacleType.getPosition()), labVessel);
+                } else {
+                    iterator.remove();
+                }
+            }
+        }
+
+        // Some critical validation
+        Set<String> barcodes = new HashSet<>();
+        for( Map.Entry<VesselPosition,LabVessel> ptov : mapPositionToVessel.entrySet() ) {
+            String barcode = ptov.getValue().getLabel();
+            if (!OrmUtil.proxySafeIsInstance(ptov.getValue(), BarcodedTube.class)) {
+                messageCollection.addError("Barcode isn't a tube type: " + barcode);
+            } else if (barcodes.contains(barcode)) {
+                messageCollection.addError("Duplicate tube barcode found: " + barcode);
+            }
+            barcodes.add(barcode);
+        }
+
     }
 
     @HandlesEvent(FIRE_RACK_SCAN)
@@ -517,29 +487,48 @@ public class ContainerActionBean extends RackScanActionBean {
         scan();
         boolean rackScanEmpty = true;
         MessageCollection messageCollection = new MessageCollection();
-        Map<VesselPosition, LabVessel> scanPositionToVessel = new HashMap<>();
-        if(getRackScan() != null) {
-            if (rackScan == null || rackScan.isEmpty()) {
-                messageCollection.addError("No results from rack scan");
-            } else {
-                List<String> barcodes = new ArrayList<>(rackScan.values());
-                Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-                for (Map.Entry<String, String> entry : rackScan.entrySet()) {
-                    if (StringUtils.isNotEmpty(entry.getValue())) {
-                        rackScanEmpty = false;
-                        String position = entry.getKey();
-                        String barcode = entry.getValue();
-                        LabVessel labVessel = mapBarcodeToVessel.get(barcode);
-                        if (labVessel == null) {
-                            messageCollection.addError("Unrecognized tube barcode: " + barcode);
-                        } else {
-                            VesselPosition vesselPosition = VesselPosition.getByName(position);
-                            if (vesselPosition == null) {
-                                messageCollection.addError("Unrecognized position: " + position);
-                            } else {
-                                scanPositionToVessel.put(vesselPosition, labVessel);
-                            }
-                        }
+
+        mapPositionToVessel = new HashMap<>();
+        mapPositionToSampleId = new HashMap<>();
+
+        if( rackScan == null || rackScan.isEmpty() ) {
+            messageCollection.addError("No results from rack scan");
+        } else {
+            if( rackOfTubes != null && rackOfTubes.getStorageLocation() != null ) {
+                messageCollection.addWarning("Rack %s will be checked out from [%s] when layout update performed."
+                        , rackOfTubes.getLabel()
+                        , storageLocationDao.getLocationTrail( rackOfTubes.getStorageLocation().getStorageLocationId()));
+            }
+
+            List<String> barcodes = new ArrayList<>(rackScan.values());
+            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+
+            for (Map.Entry<String, String> entry : rackScan.entrySet()) {
+                if (StringUtils.isNotEmpty(entry.getValue())) {
+                    rackScanEmpty = false;
+                    String position = entry.getKey();
+                    String barcode = entry.getValue();
+
+                    LabVessel labVessel = mapBarcodeToVessel.get(barcode);
+                    if (labVessel == null) {
+                        messageCollection.addError("Unrecognized tube barcode: " + barcode);
+                        continue;
+                    }
+
+                    VesselPosition vesselPosition = VesselPosition.getByName(position);
+                    if (vesselPosition == null) {
+                        messageCollection.addError("Unrecognized position: " + position);
+                        continue;
+                    }
+
+                    if( mapPositionToVessel.put(vesselPosition, labVessel) != null ) {
+                        messageCollection.addError("Duplicate position: " + position);
+                    }
+
+                    if( labVessel.getStorageLocation() != null ) {
+                        messageCollection.addWarning("%s [ %s ] will be removed from [%s] when layout update performed."
+                                , labVessel.getLabel(), vesselPosition
+                                , storageLocationDao.getLocationTrail( labVessel.getStorageLocation().getStorageLocationId()));
                     }
                 }
             }
@@ -549,20 +538,21 @@ public class ContainerActionBean extends RackScanActionBean {
             messageCollection.addError("No results from rack scan");
         }
 
+        addMessages(messageCollection);
         if (messageCollection.hasErrors()) {
+            mapPositionToVessel.clear();
             showLayout = false;
-            addMessages(messageCollection);
         } else {
             showLayout = true;
-            mapPositionToVessel = scanPositionToVessel;
         }
         editLayout = true;
-        return new ForwardResolution(CONTAINER_VIEW_PAGE)
-                .addParameter(CONTAINER_PARAMETER, containerBarcode)
-                .addParameter(VIEW_ACTION, "");
+        return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
 
-    private PlateEventType buildPlateEvent(LabEventType eventType) {
+    /**
+     * Builds a bettalims plate event from posting a web layout
+     */
+    private PlateEventType buildPlateEventFromPost(LabEventType eventType) {
         PlateEventType plateEventType = new PlateEventType();
         plateEventType.setEventType(eventType.getName());
         plateEventType.setStart(new Date());
@@ -586,6 +576,35 @@ public class ContainerActionBean extends RackScanActionBean {
         return plateEventType;
     }
 
+    /**
+     * Builds a bettalims plate event from rack and vessel positions
+     */
+    private PlateEventType buildPlateEventFromVessels(
+            LabVessel vessel, Map<VesselPosition,LabVessel> mapPositionVessel, LabEventType eventType) {
+        PlateEventType plateEventType = new PlateEventType();
+        plateEventType.setEventType(eventType.getName());
+        plateEventType.setStart(new Date());
+        plateEventType.setDisambiguator(1L);
+        plateEventType.setOperator(getUserBean().getLoginUserName());
+        plateEventType.setProgram(LabEvent.UI_PROGRAM_NAME);
+        plateEventType.setStation(LabEvent.UI_PROGRAM_NAME);
+        PlateType plateType = new PlateType();
+        plateEventType.setPlate(plateType);
+        plateType.setBarcode(vessel.getLabel());
+        plateType.setSection("ALL96");
+        PositionMapType positionMapType = new PositionMapType();
+        positionMapType.setBarcode(vessel.getLabel());
+        for( Map.Entry<VesselPosition,LabVessel> posVesselEntry : mapPositionVessel.entrySet() ) {
+            ReceptacleType receptacleType = new ReceptacleType();
+            receptacleType.setBarcode(posVesselEntry.getValue().getLabel());
+            receptacleType.setPosition(posVesselEntry.getKey().name());
+            positionMapType.getReceptacle().add(receptacleType);
+        }
+        plateEventType.setPositionMap(positionMapType);
+        plateType.setPhysType(rackOfTubes.getRackType().getDisplayName());
+        return plateEventType;
+    }
+
     @HandlesEvent(CANCEL_SAVE_ACTION)
     public Resolution cancelSave() {
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
@@ -593,22 +612,43 @@ public class ContainerActionBean extends RackScanActionBean {
 
     @HandlesEvent(SAVE_LOCATION_ACTION)
     public Resolution saveToLocation() {
+        MessageCollection messageCollection = new MessageCollection();
+        LabVessel checkInVessel = getViewVessel();
         if (!StringUtils.isEmpty(storageId)) {
             storageLocation = storageLocationDao.findById(StorageLocation.class, Long.valueOf(storageId));
-            MessageCollection messageCollection = new MessageCollection();
-            getViewVessel().setStorageLocation(storageLocation);
-            List<BarcodedTube> barcodedTubes = savePositionMapToLocation(messageCollection);
-            if (messageCollection.hasErrors()) {
-                addMessages(messageCollection);
-                return new ForwardResolution(CONTAINER_VIEW_PAGE);
-            }
-            if (barcodedTubes != null) {
-                for (BarcodedTube barcodedTube : barcodedTubes) {
-                    barcodedTube.setStorageLocation(storageLocation);
+            checkInVessel.setStorageLocation(storageLocation);
+
+            LabEvent checkInEvent;
+
+            if ( rackOfTubes != null ) {
+                mapPositionToVessel = new HashMap<>();
+                buildTubeLayoutFromPost(messageCollection);
+
+                if (messageCollection.hasErrors()) {
+                    addMessages(messageCollection);
+                    return new ForwardResolution(CONTAINER_VIEW_PAGE);
                 }
+
+                for( LabVessel vessel : mapPositionToVessel.values() ) {
+                    vessel.setStorageLocation(storageLocation);
+                }
+                PlateEventType plateEventType =
+                        buildPlateEventFromVessels(rackOfTubes, mapPositionToVessel, LabEventType.STORAGE_CHECK_IN);
+                checkInEvent = labEventFactory.buildFromBettaLims(plateEventType);
+                storageLocationDao.persist(checkInEvent);
+                messageCollection.addInfo("Rack of tubes %s checked in to [%s]."
+                        , rackOfTubes.getLabel()
+                        , storageLocationDao.getLocationTrail(storageLocation.getStorageLocationId()));
+            } else {
+                checkInEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, new Date(), LabEvent.UI_PROGRAM_NAME
+                        , 1L, getUserBean().getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME );
+                checkInEvent.setInPlaceLabVessel(checkInVessel);
+                storageLocationDao.persist(checkInEvent);
             }
-            storageLocationDao.persist(getViewVessel());
+
+            storageLocationDao.persist(checkInVessel);
             storageLocationDao.flush();
+            labVesselDao.flush();
             showLayout = true;
             addMessage("Successfully added to storage.");
         } else {
@@ -621,20 +661,25 @@ public class ContainerActionBean extends RackScanActionBean {
     public Resolution removeFromLocation() {
         MessageCollection messageCollection = new MessageCollection();
         if (storageLocation != null) {
-            getViewVessel().setStorageLocation(null);
-            List<BarcodedTube> barcodedTubes = savePositionMapToLocation(messageCollection);
-            if (messageCollection.hasErrors()) {
-                addMessages(messageCollection);
-            } else {
-                if (barcodedTubes != null) {
-                    for (BarcodedTube barcodedTube : barcodedTubes) {
+            LabVessel storedVessel = getViewVessel();
+            buildTubeLayoutFromPost(messageCollection);
+            if (!messageCollection.hasErrors()) {
+                storedVessel.setStorageLocation(null);
+                messageCollection.addInfo("Removed %s from storage.", storedVessel.getLabel());
+                if (mapPositionToVessel != null) {
+                    for (LabVessel barcodedTube : mapPositionToVessel.values()) {
                         barcodedTube.setStorageLocation(null);
                     }
                 }
-                storageLocationDao.persist(getViewVessel());
+                PlateEventType plateEventType = buildPlateEventFromPost(LabEventType.STORAGE_CHECK_OUT);
+                LabEvent labEvent = labEventFactory.buildFromBettaLims(plateEventType);
+
+                storageLocationDao.persist(labEvent);
                 storageLocationDao.flush();
+                labVesselDao.flush();
                 storageLocation = null;
             }
+            addMessages(messageCollection);
         } else {
             addValidationError("storageName","Lab Vessel not in storage.");
         }
@@ -723,13 +768,9 @@ public class ContainerActionBean extends RackScanActionBean {
 
     public String getLocationTrail() {
         if (locationTrail == null && storageLocation != null) {
-            locationTrail = storageLocation.buildLocationTrail();
+            locationTrail = storageLocationDao.getLocationTrail(storageLocation.getStorageLocationId());
         }
         return locationTrail;
-    }
-
-    public boolean viewReady() {
-        return rackOfTubes != null || staticPlate != null;
     }
 
     public String getStorageId() {
@@ -757,6 +798,7 @@ public class ContainerActionBean extends RackScanActionBean {
     }
 
     public boolean isShowLayout() {
+        // Never for static plate
         if (staticPlate != null) {
             return false;
         }
@@ -769,6 +811,17 @@ public class ContainerActionBean extends RackScanActionBean {
 
     public void setShowLayout(boolean showLayout) {
         this.showLayout = showLayout;
+    }
+
+    /**
+     * This flag stops logic from over-writing layouts with the last checkin event layout
+     * Used when confirming a new layout (after rack scan or manual barcode scanning)
+     */
+    public void setIgnoreCheckins(boolean ignoreCheckins) {
+        this.ignoreCheckinEvents = ignoreCheckins;
+    }
+    public boolean getIgnoreCheckins() {
+       return ignoreCheckinEvents;
     }
 
     /** For testing. **/

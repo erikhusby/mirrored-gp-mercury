@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -79,17 +80,18 @@ public class ContainerActionBeanTest {
 
     @Test
     public void testBuildPositionMapEmptyRack() {
-        actionBean.buildPositionMapping();
+        actionBean.buildPositionMappingForInStorage();
         Assert.assertEquals(actionBean.getMapPositionToVessel().isEmpty(), true);
     }
 
     @Test
     public void testBuildPositionMapWithEvent() {
-
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         mapPositionToTube.put(VesselPosition.A01, barcodedTube);
-        addEventToRack(rackOfTubes, mapPositionToTube, LabEventType.STORAGE_CHECK_IN);
-        actionBean.buildPositionMapping();
+        LabEvent event = addEventToRack(rackOfTubes, mapPositionToTube, LabEventType.STORAGE_CHECK_IN);
+        actionBean.setShowLayout(true);
+        when(mockLabEventDao.findInPlaceByAncillaryVessel(rackOfTubes)).thenReturn(Collections.singletonList(event));
+        actionBean.buildPositionMappingForInStorage();
         Assert.assertEquals(actionBean.getMapPositionToVessel().get(VesselPosition.A01), barcodedTube);
     }
 
@@ -105,7 +107,7 @@ public class ContainerActionBeanTest {
         mapPositionToTube.put(VesselPosition.A01, barcodedTube);
         addEventToRack(rackOfTubes, mapPositionToTube, LabEventType.STORAGE_CHECK_IN);
 
-        mapPositionToTube.clear();
+        mapPositionToTube = new HashMap<>();
         mapPositionToTube.put(VesselPosition.A05, barcodedTube);
         TubeFormation rearrayFormation = new TubeFormation(mapPositionToTube, rackOfTubes.getRackType());
         RackOfTubes newRearrayRack = new RackOfTubes("RearrayRack", RackOfTubes.RackType.Matrix48SlotRack2mL);
@@ -113,9 +115,10 @@ public class ContainerActionBeanTest {
         newRearrayRack.getTubeFormations().add(rearrayFormation);
         LabEvent labEvent2 = new LabEvent(LabEventType.STORAGE_CHECK_OUT, checkoutDate, "UnitTest", 1L, 1L, "UnitTest");
         labEvent2.setInPlaceLabVessel(rearrayFormation);
+        labEvent2.setAncillaryInPlaceVessel(newRearrayRack);
         rearrayFormation.addInPlaceEvent(labEvent2);
 
-        actionBean.buildPositionMapping();
+        actionBean.buildPositionMappingForInStorage();
         Assert.assertEquals(actionBean.getMapPositionToVessel().isEmpty(), true);
     }
 
@@ -133,7 +136,7 @@ public class ContainerActionBeanTest {
         LabEvent labEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, new Date(), "", 1L, 1L, "");
         when(mockLabEventFactory.buildFromBettaLims(any(PlateEventType.class))).thenReturn(labEvent);
         actionBean.setReceptacleTypes(receptacleTypeList);
-        actionBean.buildPositionMapping();
+        actionBean.buildPositionMappingForInStorage();
 
         MessageCollection messageCollection = new MessageCollection();
         actionBean.handleSaveContainer(messageCollection);
@@ -148,6 +151,7 @@ public class ContainerActionBeanTest {
         rackOfTubes.getTubeFormations().add(tubeFormation);
         LabEvent labEvent = new LabEvent(labEventType, new Date(), "UnitTest", 1L, 1L, "UnitTest");
         labEvent.setInPlaceLabVessel(tubeFormation);
+        labEvent.setAncillaryInPlaceVessel(rackOfTubes);
         tubeFormation.addInPlaceEvent(labEvent);
         return labEvent;
     }

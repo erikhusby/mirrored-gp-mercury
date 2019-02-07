@@ -183,6 +183,14 @@ public class LabEvent {
     private LabVessel inPlaceLabVessel;
 
     /**
+     * For tube formation in place vessels, record the associated RackOfTubes at the event point in time
+     */
+    @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "ANCILLARY_IN_PLACE_VESSEL")
+    @Nullable
+    private LabVessel ancillaryInPlaceVessel;
+
+    /**
      * Required for configurable search nested criteria
      */
     @Column(name = "IN_PLACE_LAB_VESSEL", insertable = false, updatable = false)
@@ -490,6 +498,21 @@ todo jmt adder methods
 
     public void setInPlaceLabVessel(LabVessel inPlaceLabVessel) {
         this.inPlaceLabVessel = inPlaceLabVessel;
+    }
+
+    /**
+     * Retrieve the RackOfTubes at the point in time of this event
+     */
+    @Nullable
+    public LabVessel getAncillaryInPlaceVessel() {
+        return ancillaryInPlaceVessel;
+    }
+
+    /**
+     * Record the RackOfTubes at the point in time of this event
+     */
+    public void setAncillaryInPlaceVessel( LabVessel ancillaryInPlaceVessel ) {
+        this.ancillaryInPlaceVessel = ancillaryInPlaceVessel;
     }
 
     public LabEventType getLabEventType() {

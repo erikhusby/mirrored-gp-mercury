@@ -46,6 +46,10 @@
     <div id="ajax-jstree"></div>
 </div>
 <div class="row-fluid">
+<c:if test="${actionBean.ajaxRequest}">
+    <stripes:errors />
+    <stripes:messages/>
+</c:if>
     <strong id="containerInfo">Container ${actionBean.viewVessel.label} Type: ${actionBean.containerTypeDisplayName}</strong>
     <c:if test="${actionBean.ajaxRequest}">
         <a title="Click to Edit Container" class="pull-right"
@@ -62,7 +66,7 @@
     <%--Do not let the lab get away with hand scanning RackOfTubes that can be scanned by a flatbed--%>
     <c:if test="${canRackScan}">
         <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
-        <div class="controls">
+        <div class="controls" style="padding-bottom: 10px">
             <stripes:submit value="Scan" id="scanBtn" class="btn btn-primary"
                             name="rackScan"/>
         </div>
@@ -102,6 +106,7 @@
             </c:forEach>
         </table>
         <c:if test="${actionBean.editLayout}">
+            <stripes:hidden id="ignoreCheckins" name="ignoreCheckins"/>
             <div class="control-group top-buffer">
                 <div class="controls">
                     <stripes:submit id="saveLayout" name="save" value="Update Layout" class="btn btn-primary"/>
@@ -117,7 +122,6 @@
                 <stripes:label for="storageName" class="control-label"/>
                 <div class="controls">
                     <stripes:hidden id="storageId" name="storageId"/>
-                    <stripes:hidden id="containerBarcode" name="containerBarcode"/>
                     <input type="hidden" name="<csrf:tokenname/>" value="<csrf:tokenvalue/>"/>
                     <enhance:out escapeXml='false'><stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true" style="width:${empty actionBean.locationTrail ? 200 : actionBean.locationTrail.length() * 8}px"/></enhance:out>
                     <c:if test="${not empty actionBean.staticPlate or (actionBean.showLayout && !actionBean.editLayout)}">

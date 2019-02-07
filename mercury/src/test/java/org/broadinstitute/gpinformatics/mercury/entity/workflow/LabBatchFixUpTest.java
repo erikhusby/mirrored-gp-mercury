@@ -1747,6 +1747,7 @@ public class LabBatchFixUpTest extends Arquillian {
                             persistTubeFormation.addRackOfTubes(rackOfTubes);
                         }
                         processLogWriter.write(".. Persisting in place SampleImport event for tube formation " + dummyTubeFormation.getLabel() + ", rack " + rackOfTubes.getLabel() + "\n");
+                        // TODO: If copying this code, assign rack of tubes to in place event ancillary vessel
                         persistTubeFormation.addInPlaceEvent( new LabEvent(LabEventType.SAMPLE_IMPORT, exportDate, "BSP", 1L, userId,
                             "BSP"));
                         labVesselDao.flush();

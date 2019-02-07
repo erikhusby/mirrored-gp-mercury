@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTarget
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -873,18 +874,26 @@ public class LabEventSearchDefinition {
      */
     private void getLabelFromTubeFormation( LabEvent labEvent, LabVessel vessel, List<String> results ){
         TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
-        LabVessel rack = null;
-        if( labEvent.getSectionTransfers().iterator().hasNext() ) {
-            rack = labEvent.getSectionTransfers().iterator().next().getAncillaryTargetVessel();
+        Set<LabVessel> racks = new HashSet<>();
+        if( labEvent.getAncillaryInPlaceVessel() != null ) {
+            racks.add( labEvent.getAncillaryInPlaceVessel() );
+        } else if( labEvent.getSectionTransfers().iterator().hasNext() ) {
+            racks.add( labEvent.getSectionTransfers().iterator().next().getAncillaryTargetVessel() );
         } else if ( labEvent.getCherryPickTransfers().iterator().hasNext() ) {
-            rack = labEvent.getCherryPickTransfers().iterator().next().getAncillaryTargetVessel();
+            // Possibly more than one in cherry picks
+            for(CherryPickTransfer xfer : labEvent.getCherryPickTransfers() ) {
+                racks.add(xfer.getAncillaryTargetVessel());
+            }
         } else if ( labEvent.getVesselToSectionTransfers().iterator().hasNext() ) {
-            rack = labEvent.getVesselToSectionTransfers().iterator().next().getAncillaryTargetVessel();
+            racks.add( labEvent.getVesselToSectionTransfers().iterator().next().getAncillaryTargetVessel() );
         }
-        if( rack != null ) {
-            results.add(rack.getLabel());
+        if( !racks.isEmpty() ) {
+            for( LabVessel rack : racks ) {
+                results.add(rack.getLabel());
+            }
         } else {
-            // Ancillary vessel logic was added around Aug 2014.  This handles any earlier cases
+            // Ancillary vessel logic was added to transfers around Aug 2014, in-place mid Jan 2019.
+            // This handles any earlier cases
             for ( LabVessel oldLogicRack : tubes.getRacksOfTubes()) {
                 results.add(oldLogicRack.getLabel());
             }

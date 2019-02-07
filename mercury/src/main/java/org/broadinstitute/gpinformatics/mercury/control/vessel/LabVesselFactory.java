@@ -318,8 +318,10 @@ public class LabVesselFactory implements Serializable {
                     }
                     tubeFormation.addRackOfTubes(rackOfTubes);
                     if (labEventType != null) {
-                        tubeFormation.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
-                                "BSP"));
+                        LabEvent rackEvent = new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
+                                "BSP");
+                        tubeFormation.addInPlaceEvent(rackEvent);
+                        rackEvent.setAncillaryInPlaceVessel(rackOfTubes);
                     }
                     // Insure it's persisted
                     secondaryLabVessels.add(tubeFormation);

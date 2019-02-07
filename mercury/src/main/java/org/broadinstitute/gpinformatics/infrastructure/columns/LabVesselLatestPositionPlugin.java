@@ -206,6 +206,13 @@ public class LabVesselLatestPositionPlugin implements ListPlugin {
         LabVessel rack = null;
         VesselContainer vesselContainer = null;
 
+        // In-place vessel?
+        if( labEvent.getAncillaryInPlaceVessel() != null ) {
+            rack = labEvent.getAncillaryInPlaceVessel();
+            vesselContainer = labEvent.getInPlaceLabVessel().getContainerRole();
+            return Triple.of( OrmUtil.proxySafeCast( rack, RackOfTubes.class ), vesselContainer, labEvent );
+        }
+
         // Section transfer most likely?
         for( SectionTransfer xfer : labEvent.getSectionTransfers() ) {
             if( useTarget ) {

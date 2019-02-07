@@ -103,7 +103,7 @@ public class PickerActionBean extends CoreActionBean {
         List<String> barcodeList = Arrays.asList(this.barcodes.trim().split("\\s+"));
         Set<String> foundBarcodes = new HashSet<>();
         if (barcodeList.isEmpty()) {
-            addMessage("Barcodes are a required field.");
+            addMessage("Search values are required.");
         } else {
             switch (searchType) {
             case LAB_BATCH:

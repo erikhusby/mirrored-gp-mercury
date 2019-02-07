@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
@@ -52,5 +53,18 @@ public class StorageLocationDao extends GenericDao {
             resultList.addAll(findByLocationType(locationType));
         }
         return resultList;
+    }
+
+    /**
+     * Uses Oracle specific hierarchy query to get storage path to a location with one database round trip
+     * @see org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation#buildLocationTrail() for JPA entity based logic
+     */
+    public String getLocationTrail( Long storageLocationId ) {
+        Query qry = getEntityManager().createNativeQuery("SELECT LISTAGG( label, ' > ' ) WITHIN GROUP ( ORDER BY level DESC ) \n"
+                                                                 + "   FROM storage_location \n"
+                                                                 + "START WITH storage_location_id = ? \n"
+                                                                 + "CONNECT BY PRIOR parent_storage_location = storage_location_id");
+        qry.setParameter( 1, storageLocationId );
+        return qry.getSingleResult().toString();
     }
 }

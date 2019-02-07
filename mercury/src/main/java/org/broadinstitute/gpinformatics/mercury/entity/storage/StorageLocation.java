@@ -296,6 +296,10 @@ public class StorageLocation {
         this.barcode = barcode;
     }
 
+    /**
+     * Uses JPA entities to get hierarchy storage path to a location - requires multiple database round trips
+     * @see org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao#getLocationTrail(java.lang.Long) for single Oracle hierarchy query logic
+     */
     @Transient
     public String buildLocationTrail() {
         String locationTrailString = "";
