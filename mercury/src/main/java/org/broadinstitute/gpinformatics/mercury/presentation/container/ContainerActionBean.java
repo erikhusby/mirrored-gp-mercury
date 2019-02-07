@@ -383,34 +383,38 @@ public class ContainerActionBean extends RackScanActionBean {
      */
     public void handleSaveContainer(MessageCollection messageCollection) {
 
+        boolean rackWasRemovedFromStorage = false;
+
         // Save all lab vessels to parent's storage location
         if (receptacleTypes == null) {
             messageCollection.addError("No tube barcodes found.");
             return;
         }
 
-        LabEvent checkOutEvent = null;
-
         if (rackOfTubes != null && rackOfTubes.getStorageLocation() != null) {
+            // Save this in case user wants to put it right back in same spot
             storageLocation = rackOfTubes.getStorageLocation();
-            Map<VesselPosition, LabVessel> storedRackVessels =
-                    findStoredTubesFromCheckIn(findLatestCheckInEvent(rackOfTubes));
-            PlateEventType plateEventType =
-                    buildPlateEventFromVessels(rackOfTubes, storedRackVessels, LabEventType.STORAGE_CHECK_OUT);
-            checkOutEvent = labEventFactory.buildFromBettaLims(plateEventType);
-            messageCollection.addInfo("Layout update checked out rack %s from [%s]."
-                    , rackOfTubes.getLabel()
-                    , storageLocationDao.getLocationTrail(rackOfTubes.getStorageLocation().getStorageLocationId()));
             rackOfTubes.setStorageLocation(null);
+            rackWasRemovedFromStorage = true;
+            messageCollection.addInfo("Layout update removed rack %s from storage location [%s]."
+                    , rackOfTubes.getLabel()
+                    , storageLocationDao.getLocationTrail(storageLocation.getStorageLocationId()));
         }
 
         mapPositionToVessel = new HashMap<>();
         buildTubeLayoutFromPost(messageCollection);
 
+        showLayout = true;
+
+        // Vessel not exist errors
+        if (messageCollection.hasErrors()) {
+            return;
+        }
+
         for( Map.Entry<VesselPosition,LabVessel> pv : mapPositionToVessel.entrySet() ) {
             if (pv.getValue().getStorageLocation() != null) {
                 // Report relocated tubes only when entire rack not relocated
-                if( checkOutEvent == null ) {
+                if( !rackWasRemovedFromStorage ) {
                     messageCollection.addWarning("Layout update removed %s [%s] from [%s]"
                             , pv.getValue().getLabel(), pv.getKey()
                             , storageLocationDao
@@ -419,18 +423,8 @@ public class ContainerActionBean extends RackScanActionBean {
                 pv.getValue().setStorageLocation(null);
             }
         }
-
-        // Vessel not exist errors
-        if (messageCollection.hasErrors()) {
-            return;
-        }
-        showLayout = true;
-        if( checkOutEvent != null ) {
-            storageLocationDao.persist(checkOutEvent);
-            storageLocationDao.flush();
-            // Vessels may have been removed from storage
-            labEventDao.flush();
-        }
+        // Vessels may have been removed from storage
+        labEventDao.flush();
     }
 
     /**
@@ -495,7 +489,7 @@ public class ContainerActionBean extends RackScanActionBean {
             messageCollection.addError("No results from rack scan");
         } else {
             if( rackOfTubes != null && rackOfTubes.getStorageLocation() != null ) {
-                messageCollection.addWarning("Rack %s will be checked out from [%s] when layout update performed."
+                messageCollection.addWarning("Rack %s will be removed from location [%s] when layout update performed."
                         , rackOfTubes.getLabel()
                         , storageLocationDao.getLocationTrail( rackOfTubes.getStorageLocation().getStorageLocationId()));
             }
