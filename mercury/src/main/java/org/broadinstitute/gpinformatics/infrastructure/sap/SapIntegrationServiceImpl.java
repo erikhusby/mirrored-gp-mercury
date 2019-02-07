@@ -98,7 +98,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 environment = SapIntegrationClientImpl.SAPEnvironment.DEV_400;
                 break;
             case RC:
-                environment = SapIntegrationClientImpl.SAPEnvironment.QA2_400;
+                environment = SapIntegrationClientImpl.SAPEnvironment.QA_400;
                 break;
             case QA:
             default:
@@ -464,8 +464,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
             }
 
-            orderCalculatedValues = getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
-                            potentialOrderCriteria);
+            if (potentialOrderCriteria != null && StringUtils.isNotBlank(potentialOrderCriteria.getCustomerNumber())) {
+                orderCalculatedValues =
+                    getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
+                        potentialOrderCriteria);
+            }
         }
         return orderCalculatedValues;
     }
@@ -488,50 +491,50 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();
         final SAPOrderItem orderItem = getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount,
-                false);
+            false);
 
         sapOrderItems.add(orderItem);
 
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
             final SAPOrderItem orderSubItem = getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount,
-                    false);
+                false);
             sapOrderItems.add(orderSubItem);
         }
 
         String customerNumber = "";
-        if (!forOrderValueQuery) {
-            Quote foundQuote = null;
-            try {
-                foundQuote = findSapQuote(productOrder.getQuoteId());
-            } catch (SAPIntegrationException e) {
-                throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
-            }
-            FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
+        Quote foundQuote = null;
+        try {
+            foundQuote = findSapQuote(productOrder.getQuoteId());
+        } catch (SAPIntegrationException e) {
+            throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
+        }
+        FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
 
-            if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
-                // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
-                // of funding
+        if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
+            // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
+            // of funding
+            if (!forOrderValueQuery) {
                 throw new SAPIntegrationException(
-                        "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
+                    "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
             }
+        }
 
-            customerNumber = null;
-            if(fundingLevel.getFunding().size() >1) {
-                throw new SAPIntegrationException("This order is ineligible to save to SAP since there are multiple "
-                                                  + "funding sources associated with the given quote " +
-                                                  productOrder.getQuoteId());
-            }
-            for (Funding funding : fundingLevel.getFunding()) {
-                if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                    customerNumber = findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(), fundingLevel);
-                } else {
-                    customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
-                }
+        customerNumber = null;
+        if (fundingLevel.getFunding().size() > 1 && !forOrderValueQuery) {
+            throw new SAPIntegrationException("This order is ineligible to save to SAP since there are multiple "
+                                              + "funding sources associated with the given quote " +
+                                              productOrder.getQuoteId());
+        }
+        for (Funding funding : fundingLevel.getFunding()) {
+            if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
+                customerNumber = findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(), fundingLevel);
+            } else {
+                customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
             }
         }
 
         return new OrderCriteria(customerNumber, productOrder.getSapCompanyConfigurationForProductOrder(),
-                sapOrderItems);
+            sapOrderItems);
     }
 
     /**
