@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
-import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Dependent
@@ -539,35 +540,45 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             sapOrderItems.add(orderSubItem);
         }
 
-        String customerNumber = "";
-        Quote foundQuote = null;
+        String customerNumber = null;
+        Optional <Quote> foundQuote = null;
         try {
-            foundQuote = productOrder.getQuote(quoteService);
+            foundQuote = Optional.ofNullable(productOrder.getQuote(quoteService));
         } catch (QuoteServerException | QuoteNotFoundException e) {
-            throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
-        }
-        FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
-
-        if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
-            // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
-            // of funding
-            if (!forOrderValueQuery) {
-                throw new SAPIntegrationException(
-                    "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
+            if(!forOrderValueQuery) {
+                throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
             }
         }
+        if(foundQuote.isPresent()) {
+            Optional<FundingLevel> fundingLevel = Optional.ofNullable(foundQuote.get().getFirstRelevantFundingLevel());
 
-        customerNumber = null;
-        if (fundingLevel.getFunding().size() > 1 && !forOrderValueQuery) {
-            throw new SAPIntegrationException("This order is ineligible to save to SAP since there are multiple "
-                                              + "funding sources associated with the given quote " +
-                                              productOrder.getQuoteId());
-        }
-        for (Funding funding : fundingLevel.getFunding()) {
-            if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                customerNumber = findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(), fundingLevel);
-            } else {
-                customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+            if (fundingLevel.isPresent() && CollectionUtils.isEmpty(fundingLevel.get().getFunding())) {
+                // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
+                // of funding
+                if (!forOrderValueQuery) {
+                    throw new SAPIntegrationException(
+                            "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
+                }
+            }
+
+//            customerNumber = null;
+
+            if (!forOrderValueQuery && fundingLevel.isPresent()) {
+                if (fundingLevel.get().getFunding().size() > 1) {
+                    throw new SAPIntegrationException(
+                            "This order is ineligible to save to SAP since there are multiple "
+                            + "funding sources associated with the given quote " +
+                            productOrder.getQuoteId());
+                }
+                for (Funding funding : fundingLevel.get().getFunding()) {
+                    if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
+                        customerNumber =
+                                findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(),
+                                        fundingLevel.get());
+                    } else {
+                        customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+                    }
+                }
             }
         }
 
