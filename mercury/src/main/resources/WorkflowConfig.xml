@@ -4802,7 +4802,6 @@
             <batchJiraProjectType>LCSET</batchJiraProjectType>
             <batchJiraIssueType>MICROBIAL</batchJiraIssueType>
             <effectiveDate>2019-01-15T10:03:24.085-04:00</effectiveDate>
-            <workflowProcessDefs>Dried Blood Spots</workflowProcessDefs>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Microbial Nextera XT</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
