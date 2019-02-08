@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanc
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -15,6 +16,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,6 +33,9 @@ public class SampleInstanceEntityFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -88,4 +94,42 @@ public class SampleInstanceEntityFixupTest extends Arquillian {
         sampleInstanceEntityDao.persist(new FixupCommentary(fixupCommentary));
         sampleInstanceEntityDao.flush();
     }
+
+    /**
+     * Deletes SampleInstanceEntity and unlinks the corresponding tube from mercury sample.
+     * Input comes from a file so the code can be reused. The file should contain:
+     *    SUPPORT-5002 remove original upload after second upload was done.
+     *    8336
+     *    8647
+     *    8598
+     */
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void support5002_deleteSampleInstanceEntities() throws Exception {
+        String filename = "sampleInstanceEntityDeletes.txt";
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource(filename));
+        String fixupCommentary = lines.get(0);
+        Assert.assertFalse(fixupCommentary.isEmpty());
+        utx.begin();
+        // Makes a list of entity ids and looks up their SampleInstanceEntity.
+        List<Long> ids = lines.subList(1, lines.size()).stream().
+                mapToLong(Long::parseLong).boxed().collect(Collectors.toList());
+        sampleInstanceEntityDao.findListByList(SampleInstanceEntity.class,
+                SampleInstanceEntity_.sampleInstanceEntityId, ids).forEach(sampleInstanceEntity -> {
+            LabVessel labVessel = sampleInstanceEntity.getLabVessel();
+            MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
+            if (labVessel.getMercurySamples().contains(mercurySample)) {
+                System.out.println("Removing sample " + mercurySample.getSampleKey() +
+                        " from vessel " + labVessel.getLabel());
+                mercurySample.removeSampleFromVessels(Collections.singletonList(labVessel));
+            }
+            System.out.println("Deleting SampleInstanceEntity for " + sampleInstanceEntity.getSampleLibraryName());
+            sampleInstanceEntityDao.remove(sampleInstanceEntity);
+        });
+
+        sampleInstanceEntityDao.persist(new FixupCommentary(fixupCommentary));
+        sampleInstanceEntityDao.flush();
+        utx.commit();
+    }
+
 }
