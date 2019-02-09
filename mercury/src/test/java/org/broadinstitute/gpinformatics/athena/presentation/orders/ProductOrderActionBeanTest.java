@@ -1489,7 +1489,7 @@ public class ProductOrderActionBeanTest {
 
         testOrder.addCustomPriceAdjustment(new ProductOrderPriceAdjustment(new BigDecimal(160.00),null, null));
 
-        actionBean.validateQuoteDetails(testQuote,true, 0);
+        actionBean.validateQuoteDetails(testQuote, 0);
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
     }
