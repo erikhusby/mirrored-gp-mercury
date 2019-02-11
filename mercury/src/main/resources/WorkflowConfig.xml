@@ -4369,6 +4369,16 @@
             <version>1.0</version>
             <effectiveDate>2019-02-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs>
+                <name>Exome PCR Cleanup</name>
+                <labEventTypes>PCR_TRANSFER</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PCR Thermo Cycler Loaded</name>
+                <labEventTypes>PCR_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Germline Exome PCR Cleanup</name>
                 <labEventTypes>GERMLINE_EXOME_PCR_CLEANUP</labEventTypes>
                 <optional>false</optional>
