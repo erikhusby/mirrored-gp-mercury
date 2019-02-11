@@ -293,4 +293,8 @@ public class SampleInstanceEntity {
     public void setUmisPresent(Boolean umisPresent) {
         this.umisPresent = umisPresent;
     }
+
+    public Long getSampleInstanceEntityId() {
+        return sampleInstanceEntityId;
+    }
 }
