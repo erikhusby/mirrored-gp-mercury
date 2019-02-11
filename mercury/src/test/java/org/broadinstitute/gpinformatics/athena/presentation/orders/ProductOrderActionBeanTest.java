@@ -880,24 +880,13 @@ public class ProductOrderActionBeanTest {
                 "Put it on the sequencer"));
         seqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
 
-        final SAPMaterial seqMaterial= new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
-                Collections.<DeliveryCondition,BigDecimal>emptyMap());
-        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(seqMaterial);
+        addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
-        final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                primaryMaterial);
-        final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                nonSeqMaterial);
+        addSapMaterial(returnMaterials, testOrder.getProduct(), "2000",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, addonNonSeqProduct, "1573",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500"
@@ -1014,22 +1003,11 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500");
 
 
-        final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                primaryMaterial);
-        final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                nonSeqMaterial);
-        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
-                Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(seqMaterial);
+        addSapMaterial(returnMaterials, testOrder.getProduct(), "2000",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, addonNonSeqProduct, "1573",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
         Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
@@ -1155,22 +1133,11 @@ public class ProductOrderActionBeanTest {
         );
 
 
-        final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                primaryMaterial);
-        final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                nonSeqMaterial);
-        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
-                Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(seqMaterial);
+        addSapMaterial(returnMaterials, testOrder.getProduct(), "2000",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, addonNonSeqProduct, "1573",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
         Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
@@ -1289,33 +1256,20 @@ public class ProductOrderActionBeanTest {
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(),"","");
         testOrder.addSapOrderDetail(sapReference);
 
-
-
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> returnMaterials = new HashSet<>();
-
 
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, testOrder.getProduct(), "2000", "2000",
                 "1000");
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, addonNonSeqProduct, "1573", "2000", "573");
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500");
 
-
-        final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(primaryMaterial);
-        final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(nonSeqMaterial);
-        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
-                Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(seqMaterial);
+        addSapMaterial(returnMaterials, testOrder.getProduct(), "2000",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, addonNonSeqProduct, "1573",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
         Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
@@ -1388,6 +1342,15 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 
+    }
+
+    public void addSapMaterial(Set<SAPMaterial> returnMaterials, Product product, String basePrice,
+                               SapIntegrationClientImpl.SAPCompanyConfiguration broad) {
+        final SAPMaterial material =
+                new SAPMaterial(product.getPartNumber(), basePrice, Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
+        material.setCompanyCode(broad);
+        returnMaterials.add(material);
     }
 
     private void addPriceItemForProduct(String testQuoteIdentifier, PriceList priceList,
