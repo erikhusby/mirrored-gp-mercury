@@ -163,6 +163,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
@@ -892,6 +893,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (calculatedValues != null &&
             calculatedValues.getPotentialOrderValue() != null) {
 
+            if(ordersWithCommonQuote.contains(productOrder)) {
+                final List<ProductOrder> commonQuoteOrders =
+                        ordersWithCommonQuote.stream().filter(productOrder1 -> !productOrder1.equals(productOrder))
+                                .collect(
+                                        Collectors.toList());
+                ordersWithCommonQuote = commonQuoteOrders;
+            }
+
             value += calculatedValues.getPotentialOrderValue().doubleValue();
 
             for (OrderValue orderValue : calculatedValues.getValue()) {
@@ -902,7 +911,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
                 sapOrderIDsToExclude.add(orderValue.getSapOrderID());
             }
-        } else if (productOrder != null) {
+        } else if (productOrder != null &&
+                   ordersWithCommonQuote.contains(productOrder)) {
 
             // This is not a SAP quote.
             ordersWithCommonQuote.add(productOrder);
