@@ -15,10 +15,14 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAd
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.sap.entity.Condition;
@@ -27,9 +31,11 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPDeliveryItem;
-import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.entity.SAPOrder;
 import org.broadinstitute.sap.entity.SAPOrderItem;
+import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +49,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl.SSF_PRICE_LIST_NAME;
 
 @Dependent
 @Default
@@ -403,31 +411,29 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @NotNull
-    protected SAPMaterial initializeSapMaterialObject(Product product) {
-        SAPMaterial newMaterial = new SAPMaterial(product.getPartNumber(),
-                SapIntegrationClientImpl.SystemIdentifier.MERCURY, product.getAvailabilityDate(),
-                product.getAvailabilityDate());
-        newMaterial.setCompanyCode(
-//                product.isExternalOnlyProduct() ? SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
-                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        newMaterial.setMaterialName(product.getProductName());
-        newMaterial.setDescription(product.getDescription());
-        newMaterial.setDeliverables(product.getDeliverables());
-        newMaterial.setInputRequirements(product.getInputRequirements());
-        newMaterial.setBaseUnitOfMeasure("EA");
-        BigDecimal minimumOrderQuantity = product.getMinimumOrderSize() != null?new BigDecimal(product.getMinimumOrderSize()):BigDecimal.ONE;
-        newMaterial.setMinimumOrderQuantity(minimumOrderQuantity);
+    protected SAPMaterial initializeSapMaterialObject(Product product) throws SAPIntegrationException {
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = product.isExternalProduct() ?
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        String productHeirarchy = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization();
+        if (!product.getPrimaryPriceItem().getPlatform().equals(SSF_PRICE_LIST_NAME)) {
+            productHeirarchy = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization();
+        }
+        BigDecimal minimumOrderQuantity =
+            product.getMinimumOrderSize() != null ? new BigDecimal(product.getMinimumOrderSize()) : BigDecimal.ONE;
 
-        newMaterial.setStatus(SAPMaterial.MaterialStatus.ENABLED);
-
-        return newMaterial;
+        return new SAPMaterial(product.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+            product.getProductName(), null, SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, minimumOrderQuantity,
+            product.getDescription(), product.getDeliverables(), product.getInputRequirements(),new Date(), new Date(),
+            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, productHeirarchy);
     }
 
     @Override
     public void publishProductInSAP(Product product) throws SAPIntegrationException {
         SAPMaterial newMaterial = initializeSapMaterialObject(product);
 
-        if (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) == null) {
+
+        if (isNewMaterial(product)) {
             getClient().createMaterial(newMaterial);
         } else {
             getClient().changeMaterialDetails(newMaterial);
@@ -444,6 +450,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         }
 
+    }
+
+    private boolean isNewMaterial(Product product) {
+        return (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) == null)
+            || (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null);
     }
 
     @Override
@@ -481,8 +492,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public Quote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
         final SapIntegrationClientImpl sapClient = getClient();
-
-        throw new SAPIntegrationException("SAP Quotes are not available at this time");
+        SapQuote sapQuote = sapClient.findQuoteDetails(sapQuoteId);
+        return new Quote(sapQuoteId, new QuoteFunding(sapQuote.getQuoteHeader().getQuoteTotal().toString()),
+            ApprovalStatus.fromValue(sapQuote.getQuoteHeader().getQuoteStatus().name()));
+//        throw new SAPIntegrationException("SAP Quotes are not available at this time");
     }
 
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
@@ -510,8 +523,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         if (!forOrderValueQuery) {
             Quote foundQuote = null;
             try {
-                foundQuote = findSapQuote(productOrder.getQuoteId());
-            } catch (SAPIntegrationException e) {
+                if (productOrder.getQuoteSource() == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
+                foundQuote = productOrder.getQuote(quoteService);
+            } else {foundQuote = findSapQuote(productOrder.getQuoteId());
+            }} catch (SAPIntegrationException | QuoteNotFoundException | QuoteServerExceptione) {
                 throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
             }
             FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
