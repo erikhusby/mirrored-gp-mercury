@@ -46,7 +46,8 @@ import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
@@ -99,7 +100,9 @@ public class BillingCreditDbFreeTest {
     private final Double qtyNegativeTwo = (double) Math.negateExact(qtyPositiveTwo.longValue());
 
     @BeforeMethod
-    public void setUp() throws QuoteNotFoundException, QuoteServerException, InvalidProductException, SAPInterfaceException {
+    public void setUp()
+        throws QuoteNotFoundException, QuoteServerException, InvalidProductException, SAPInterfaceException,
+        SAPIntegrationException {
         resetMocks();
         pdo = ProductOrderTestFactory.createDummyProductOrder(2, "PDO-1234");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
@@ -143,10 +146,12 @@ public class BillingCreditDbFreeTest {
             Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class))).thenReturn("workId-" + quoteId);
         Mockito.when(productOrderEjb.isOrderFunded(Mockito.any(ProductOrder.class), Mockito.any(Date.class)))
                 .thenReturn(true);
-
+        SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
             SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
-            .thenReturn(new SAPMaterial("material", "100", Collections.emptyMap(), Collections.emptyMap()));
+            .thenReturn(new SAPMaterial("test", broad, broad.getDefaultWbs(), "test description", "100",
+                SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(),
+                new Date(), Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, ""));
         TemplateEngine templateEngine = new TemplateEngine();
 
         templateEngine.postConstruct();

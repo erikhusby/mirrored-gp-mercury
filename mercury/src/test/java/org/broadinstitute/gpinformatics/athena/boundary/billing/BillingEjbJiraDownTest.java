@@ -21,9 +21,9 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
-import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -91,7 +91,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class, SapIntegrationServiceStub.class);
     }
 
-    private String writeFixtureData() {
+    private String writeFixtureData() throws SAPIntegrationException {
 
         final String SM_A = "SM-" + (new Date()).getTime();
         final String SM_B = "SM-" + ((new Date()).getTime() + 1);
@@ -121,9 +121,15 @@ public class BillingEjbJiraDownTest extends Arquillian {
         productPriceCache = Mockito.mock(SAPProductPriceCache.class);
         billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
+        SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn(new SAPMaterial("Test", "50", Collections.<Condition, BigDecimal>emptyMap(), Collections.singletonMap(
-                DeliveryCondition.LATE_DELIVERY_DISCOUNT, new BigDecimal("200.00"))));
+            SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
+            .thenReturn(new SAPMaterial("test", broad, broad.getDefaultWbs(), "test description", "50",
+                SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", null, null, null, null,
+                Collections.emptyMap(),
+                Collections.singletonMap(DeliveryCondition.LATE_DELIVERY_DISCOUNT, new BigDecimal("200.00")),
+                SAPMaterial.MaterialStatus.ENABLED, null));
         Mockito.when(productPriceCache.productExists(Mockito.anyString())).thenReturn(true);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
 
@@ -138,7 +144,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
     }
 
 
-    public void test() {
+    public void test() throws SAPIntegrationException {
 
         String businessKey = writeFixtureData();
 

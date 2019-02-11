@@ -781,7 +781,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 if (sapQuote != null) {
                     ProductOrder.checkSapQuoteValidity(sapQuote);
                 }
-                validateSapQuoteDetails(sapQuote, !editOrder.hasJiraTicketKey(), 0);
+                validateSapQuoteDetails(sapQuote, 0);
             } else if (editOrder.hasQuoteServerQuote()) {
                 if (quote != null) {
                     ProductOrder.checkQuoteValidity(quote);
@@ -801,9 +801,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                                 }
                             });
                 }
-
-                validateQuoteDetails(quote, !editOrder.hasJiraTicketKey(), 0);
             }
+
+            validateQuoteDetails(quote, 0);
+
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (InvalidProductException |
@@ -839,12 +840,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         if(productOrder.hasSapQuote()) {
             sapQuote = validateSapQuote(productOrder);
             if (sapQuote != null) {
-                validateSapQuoteDetails(quote, countOpenOrders, 0);
+                validateSapQuoteDetails(quote, 0);
             }
         } else {
             quote = validateQuote(productOrder);
             if (quote != null) {
-                validateQuoteDetails(quote, countOpenOrders, 0);
+                validateQuoteDetails(quote, 0);
             }
         }
 
@@ -856,10 +857,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      * refelcted on the order.
      *
      * The scenario for this is when the user clicks on the "Add Samples" button of a placed order
-     *  @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
+     * @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
      *                  collection of orders to include in evaluating and the funds remaining
-     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
- *                        Pending
      * @param additionalSamplesCount Number of extra samples to be considered which are not currently
      */
     private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder, int additionalSamplesCount)
@@ -870,13 +869,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             sapQuote = validateSapQuote(productOrder);
             ProductOrder.checkSapQuoteValidity(sapQuote);
             if(sapQuote != null) {
-                validateSapQuoteDetails(sapQuote, countOpenOrders, additionalSamplesCount);
+                validateSapQuoteDetails(sapQuote, additionalSamplesCount);
             }
         } else {
             quote = validateQuote(productOrder);
             ProductOrder.checkQuoteValidity(quote);
             if (quote != null) {
-                validateQuoteDetails(quote, countOpenOrders, additionalSamplesCount);
+                validateQuoteDetails(quote, additionalSamplesCount);
             }
         }
     }
@@ -884,15 +883,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
      * remaining on the quote
-     *
-     * @param quote  The quote which the user intends to use.  From this we can determine the collection of orders to
+     *  @param quote  The quote which the user intends to use.  From this we can determine the collection of orders to
      *               include in evaluating and the funds remaining
-     * @param countCurrentUnPlacedOrder indicator for if the current order should be added.  Typically used if it is Draft or
-     *                        Pending
      * @param additionalSampleCount
      */
-    protected void validateQuoteDetails(Quote quote, boolean countCurrentUnPlacedOrder,
-                                        int additionalSampleCount) throws InvalidProductException,
+    protected void validateQuoteDetails(Quote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
@@ -929,10 +924,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
         double valueOfCurrentOrder = 0;
 
-        if (fundsRemaining <= 0d ||
-            (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
-            String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
-            addGlobalValidationError(inssuficientFundsMessage);
+        if (fundsRemaining <= 0d || (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
+            String insufficientFundsMessage =
+                "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
+            addGlobalValidationError(insufficientFundsMessage);
         }
     }
 
@@ -950,7 +945,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             calculatedValues = sapService
                     .calculateOpenOrderValues(addedSampleCount, foundQuote.getAlphanumericId(), productOrder);
         } catch (SAPIntegrationException e) {
-            logger.info("Attempting to calculate order from SAP yeilded an error");
+            logger.info("Attempting to calculate order from SAP yielded an error", e);
         }
 
         Set<String> sapOrderIDsToExclude = new HashSet<>();
@@ -970,6 +965,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
                 sapOrderIDsToExclude.add(orderValue.getSapOrderID());
             }
+        } else if (productOrder != null) {
+
+            // This is not a SAP quote.
+            ordersWithCommonQuote.add(productOrder);
         }
 
         return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote, sapOrderIDsToExclude);
@@ -2699,8 +2698,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = ADD_SAMPLES_ACTION)
     public void addSampleExtraValidations() throws Exception {
         try {
-                validateQuoteDetailsWithAddedSamples(editOrder,
-                        !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());
+                validateQuoteDetailsWithAddedSamples(editOrder, stringToSampleList(addSamplesText).size());
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (InvalidProductException | SAPIntegrationException e) {

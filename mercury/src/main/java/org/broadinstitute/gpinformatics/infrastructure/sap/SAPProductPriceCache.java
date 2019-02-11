@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
@@ -97,7 +97,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
 
     public SAPMaterial findByProduct(Product product, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
         SAPMaterial foundMaterial = findByPartNumber(product.getPartNumber(), companyCode);
-        
+
         return foundMaterial;
     }
 
