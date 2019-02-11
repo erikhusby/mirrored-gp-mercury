@@ -801,9 +801,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                             }
                         });
                 }
-
-                validateQuoteDetails(quote, 0);
             }
+            validateQuoteDetails(quote, 0);
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (InvalidProductException |
@@ -911,12 +910,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      *
      * @param quote  The quote which the user intends to use.  From this we can determine the collection of orders to
      *               include in evaluating and the funds remaining
-     * @param countCurrentUnPlacedOrder indicator for if the current order should be added.  Typically used if it is Draft or
-     *                        Pending
      * @param additionalSampleCount
      */
-    protected void validateSapQuoteDetails(Quote quote, boolean countCurrentUnPlacedOrder,
-                                      int additionalSampleCount) throws InvalidProductException,
+    protected void validateSapQuoteDetails(Quote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
