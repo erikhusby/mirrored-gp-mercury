@@ -859,8 +859,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      *                  collection of orders to include in evaluating and the funds remaining
      * @param additionalSamplesCount Number of extra samples to be considered which are not currently
      */
-    private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder,
-                                                      boolean countOpenOrders, int additionalSamplesCount)
+    private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder, int additionalSamplesCount)
             throws InvalidProductException, QuoteServerException, SAPIntegrationException {
         Quote quote = null;
         Quote sapQuote = null;

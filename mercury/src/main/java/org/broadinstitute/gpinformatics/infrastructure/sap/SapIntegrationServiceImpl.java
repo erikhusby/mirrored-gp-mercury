@@ -524,9 +524,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             Quote foundQuote = null;
             try {
                 if (productOrder.getQuoteSource() == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
-                foundQuote = productOrder.getQuote(quoteService);
-            } else {foundQuote = findSapQuote(productOrder.getQuoteId());
-            }} catch (SAPIntegrationException | QuoteNotFoundException | QuoteServerExceptione) {
+                    foundQuote = productOrder.getQuote(quoteService);
+                } else {
+                    foundQuote = findSapQuote(productOrder.getQuoteId());
+                }
+            } catch (SAPIntegrationException | QuoteNotFoundException | QuoteServerException e) {
                 throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
             }
             FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
