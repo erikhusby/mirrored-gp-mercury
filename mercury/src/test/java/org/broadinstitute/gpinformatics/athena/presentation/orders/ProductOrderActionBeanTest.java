@@ -56,6 +56,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
@@ -139,6 +140,7 @@ public class ProductOrderActionBeanTest {
     private PriceListCache priceListCache;
 
     private QuoteService mockQuoteService;
+    private QuoteService stubQuoteService = new QuoteServiceStub();
     public SapIntegrationService mockSAPService;
     public SAPProductPriceCache stubProductPriceCache;
     public ProductOrderDao mockProductOrderDao;
@@ -1215,6 +1217,69 @@ public class ProductOrderActionBeanTest {
                 ) + 82);
     }
 
+    @Test(dataProvider = "quoteDataProvider")
+    public void testEstimateOpenOrdersUnderFunded(String quoteName, boolean canCallSap) throws Exception {
+        final String testQuoteIdentifier = "underfunded";
+
+        Quote testQuote = stubQuoteService.getQuoteByAlphaId("GP87U");
+
+        Product primaryProduct = new Product();
+        primaryProduct.setPartNumber("P-Test_Prime");
+        primaryProduct.setPrimaryPriceItem(new PriceItem("primary", "GP", "primary size", "overfundme"));
+        primaryProduct
+                .setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName()));
+
+        testOrder = new ProductOrder();
+        testOrder.setProduct(primaryProduct);
+        testOrder.setQuoteId(testQuoteIdentifier);
+
+        List<ProductOrderSample> sampleList = new ArrayList<>();
+        for (int i = 0; i < 75; i++) {
+            sampleList.add(new ProductOrderSample("SM-Test" + i));
+        }
+        testOrder.setSamples(sampleList);
+
+        PriceList priceList = new PriceList();
+        Set<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> materials = new HashSet<>();
+
+        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, testOrder.getProduct(), "150", "1000",
+                "150");
+        addSapMaterial(materials, testOrder.getProduct(), "150",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+
+        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(materials);
+        stubProductPriceCache.refreshCache();
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
+
+        final int calculatedValue = testOrder.getSamples().size() * 150;
+        final OrderCalculatedValues testCalculatedValues =
+                new OrderCalculatedValues(new BigDecimal(calculatedValue), Collections.emptySet());
+
+        if(canCallSap) {
+            Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(), Mockito.anyString(),
+                    Mockito.any(ProductOrder.class))).thenReturn(testCalculatedValues);
+        }
+
+        actionBean.setEditOrder(testOrder);
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) calculatedValue);
+
+        testOrder.setJiraTicketKey("PDO-1294");
+
+        SapOrderDetail sapReference = new SapOrderDetail("test001", 75, testOrder.getQuoteId(),
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
+        testOrder.addSapOrderDetail(sapReference);
+
+        Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Collections.singletonList(testOrder));
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) calculatedValue);
+
+    }
+
     public void testEstimateSAPOrdersWithUpdateCurrentSapOrder() throws Exception {
         final String testQuoteIdentifier = "testQuote";
         Quote testQuote = buildSingleTestQuote(testQuoteIdentifier, "71000");
@@ -1415,6 +1480,18 @@ public class ProductOrderActionBeanTest {
         public Long getRegulatoryInfoId() {
             return this.mockId;
         }
+    }
+
+    @DataProvider(name = "quoteDataProvider")
+    public Iterator<Object[]> quoteDataProvider() {
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{"GP87U", false});
+        testCases.add(new Object[]{"STCIL1", false});
+        testCases.add(new Object[]{"GAN1GX", false});
+        testCases.add(new Object[]{"GAN1MB", false});
+        testCases.add(new Object[]{"MPG1X6", true});
+
+        return testCases.iterator();
     }
 
     @DataProvider(name = "getSamplesForAjaxDataProvider")
