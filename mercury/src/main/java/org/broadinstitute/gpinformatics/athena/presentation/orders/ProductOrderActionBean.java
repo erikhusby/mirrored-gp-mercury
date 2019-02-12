@@ -912,7 +912,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 sapOrderIDsToExclude.add(orderValue.getSapOrderID());
             }
         } else if (productOrder != null &&
-                   ordersWithCommonQuote.contains(productOrder)) {
+                   !ordersWithCommonQuote.contains(productOrder)) {
 
             // This is not a SAP quote.
             ordersWithCommonQuote.add(productOrder);

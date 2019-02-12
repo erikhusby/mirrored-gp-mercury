@@ -52,22 +52,16 @@ import java.util.Set;
 @Default
 public class SapIntegrationServiceImpl implements SapIntegrationService {
 
-    @Inject
     private SapConfig sapConfig;
 
-    @Inject
     private QuoteService quoteService;
 
-    @Inject
     private BSPUserList bspUserList;
 
-    @Inject
     private PriceListCache priceListCache;
 
-    @Inject
     private SAPProductPriceCache productPriceCache;
 
-    @Inject
     private SAPAccessControlEjb accessControlEjb;
 
     private SapIntegrationClientImpl wrappedClient;
@@ -77,10 +71,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public SapIntegrationServiceImpl() {
     }
 
-    public SapIntegrationServiceImpl(SapConfig sapConfigIn) {
+    @Inject
+    public SapIntegrationServiceImpl(SapConfig sapConfigIn, QuoteService quoteService, BSPUserList bspUserList,
+                                     PriceListCache priceListCache, SAPProductPriceCache productPriceCache,
+                                     SAPAccessControlEjb accessControlEjb) {
         if(sapConfig == null) {
             this.sapConfig = sapConfigIn;
         }
+        this.quoteService = quoteService;
+        this.bspUserList = bspUserList;
+        this.priceListCache = priceListCache;
+        this.productPriceCache = productPriceCache;
+        this.accessControlEjb = accessControlEjb;
     }
 
     /**
@@ -526,7 +528,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder, int addedSampleCount,
                                                   boolean forOrderValueQuery) throws SAPIntegrationException {
 
-
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();
         final SAPOrderItem orderItem = getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount,
@@ -563,8 +564,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
 //            customerNumber = null;
 
-            if (!forOrderValueQuery && fundingLevel.isPresent()) {
-                if (fundingLevel.get().getFunding().size() > 1) {
+            if (fundingLevel.isPresent()) {
+                if (!forOrderValueQuery && fundingLevel.get().getFunding().size() > 1) {
                     throw new SAPIntegrationException(
                             "This order is ineligible to save to SAP since there are multiple "
                             + "funding sources associated with the given quote " +

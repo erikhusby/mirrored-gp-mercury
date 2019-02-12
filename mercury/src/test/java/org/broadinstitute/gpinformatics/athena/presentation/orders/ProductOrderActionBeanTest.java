@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
@@ -58,7 +59,9 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -79,6 +82,7 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
+import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -1218,10 +1222,25 @@ public class ProductOrderActionBeanTest {
     }
 
     @Test(dataProvider = "quoteDataProvider")
-    public void testEstimateOpenOrdersUnderFunded(String quoteName, boolean canCallSap) throws Exception {
-        final String testQuoteIdentifier = "underfunded";
+    public void testEstimateOpenOrdersWeirdQuotes(String quoteName, boolean willCallSap, boolean sapBlocked) throws Exception {
 
-        Quote testQuote = stubQuoteService.getQuoteByAlphaId("GP87U");
+        Quote testQuote = stubQuoteService.getQuoteByAlphaId(quoteName);
+
+        final SAPAccessControlEjb mockAccessControlEjb = Mockito.mock(SAPAccessControlEjb.class);
+        SapIntegrationServiceImpl testService = new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV),
+                mockQuoteService, Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
+                stubProductPriceCache, mockAccessControlEjb);
+
+        final SAPAccessControl enabledControl = new SAPAccessControl();
+        if(sapBlocked) {
+            enabledControl.setAccessStatus(AccessStatus.DISABLED);
+        } else {
+            enabledControl.setAccessStatus(AccessStatus.ENABLED);
+        }
+        Mockito.when(mockAccessControlEjb.getCurrentControlDefinitions()).thenReturn(enabledControl);
+        stubProductPriceCache.setAccessControlEjb(mockAccessControlEjb);
+        final SapIntegrationClientImpl mockSapClient = Mockito.mock(SapIntegrationClientImpl.class);
+        testService.setWrappedClient(mockSapClient);
 
         Product primaryProduct = new Product();
         primaryProduct.setPartNumber("P-Test_Prime");
@@ -1231,7 +1250,7 @@ public class ProductOrderActionBeanTest {
 
         testOrder = new ProductOrder();
         testOrder.setProduct(primaryProduct);
-        testOrder.setQuoteId(testQuoteIdentifier);
+        testOrder.setQuoteId(testQuote.getAlphanumericId());
 
         List<ProductOrderSample> sampleList = new ArrayList<>();
         for (int i = 0; i < 75; i++) {
@@ -1243,26 +1262,42 @@ public class ProductOrderActionBeanTest {
         Set<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> materials = new HashSet<>();
 
-        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, testOrder.getProduct(), "150", "1000",
+        addPriceItemForProduct(testQuote.getAlphanumericId(), priceList, quoteItems, testOrder.getProduct(), "150", "1000",
                 "150");
         addSapMaterial(materials, testOrder.getProduct(), "150",
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
-        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(materials);
+        if(!sapBlocked) {
+            Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materials);
+        }
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenReturn(testQuote);
 
         final int calculatedValue = testOrder.getSamples().size() * 150;
         final OrderCalculatedValues testCalculatedValues =
                 new OrderCalculatedValues(new BigDecimal(calculatedValue), Collections.emptySet());
 
-        if(canCallSap) {
-            Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(), Mockito.anyString(),
-                    Mockito.any(ProductOrder.class))).thenReturn(testCalculatedValues);
+        if(willCallSap || !sapBlocked) {
+            Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
+        }
+        if(!sapBlocked) {
+            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                    SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                    .thenReturn(testCalculatedValues);
         }
 
         actionBean.setEditOrder(testOrder);
+        productOrderEjb = new ProductOrderEjb(mockProductOrderDao, Mockito.mock(ProductDao.class),
+                mockQuoteService, Mockito.mock(JiraService.class),Mockito.mock(UserBean.class),
+                Mockito.mock(BSPUserList.class),Mockito.mock(BucketEjb.class),Mockito.mock(SquidConnector.class),
+                Mockito.mock(MercurySampleDao.class),Mockito.mock(ProductOrderJiraUtil.class), testService ,priceListCache,
+                stubProductPriceCache);
+        productOrderEjb.setAccessController(mockAccessControlEjb);
+
+        actionBean.setProductOrderEjb(productOrderEjb);
+        actionBean.setSapService(testService);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
                 (double) calculatedValue);
@@ -1485,11 +1520,16 @@ public class ProductOrderActionBeanTest {
     @DataProvider(name = "quoteDataProvider")
     public Iterator<Object[]> quoteDataProvider() {
         List<Object[]> testCases = new ArrayList<>();
-        testCases.add(new Object[]{"GP87U", false});
-        testCases.add(new Object[]{"STCIL1", false});
-        testCases.add(new Object[]{"GAN1GX", false});
-        testCases.add(new Object[]{"GAN1MB", false});
-        testCases.add(new Object[]{"MPG1X6", true});
+        testCases.add(new Object[]{"GP87U", false, true});
+        testCases.add(new Object[]{"GP87U", false, false});
+        testCases.add(new Object[]{"STCIL1", false, true});
+        testCases.add(new Object[]{"STCIL1", false, false});
+        testCases.add(new Object[]{"GAN1GX", false, true});
+        testCases.add(new Object[]{"GAN1GX", false, false});
+        testCases.add(new Object[]{"GAN1MB", false, true});
+        testCases.add(new Object[]{"GAN1MB", false, false});
+        testCases.add(new Object[]{"MPG1X6", true, true});
+        testCases.add(new Object[]{"MPG1X6", true, false});
 
         return testCases.iterator();
     }
