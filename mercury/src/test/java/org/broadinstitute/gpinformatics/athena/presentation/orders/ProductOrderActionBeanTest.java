@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -1222,7 +1223,8 @@ public class ProductOrderActionBeanTest {
     }
 
     @Test(dataProvider = "quoteDataProvider")
-    public void testEstimateOpenOrdersWeirdQuotes(String quoteName, boolean willCallSap, boolean sapBlocked) throws Exception {
+    public void testEstimateOpenOrdersWeirdQuotes(String quoteName, boolean sapBlocked, boolean productBlockedFromSap)
+            throws Exception {
 
         Quote testQuote = stubQuoteService.getQuoteByAlphaId(quoteName);
 
@@ -1248,6 +1250,9 @@ public class ProductOrderActionBeanTest {
         primaryProduct
                 .setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName()));
 
+        if (productBlockedFromSap) {
+            enabledControl.addDisabledItem(new AccessItem(primaryProduct.getPrimaryPriceItem().getName()));
+        } 
         testOrder = new ProductOrder();
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuote.getAlphanumericId());
@@ -1267,9 +1272,7 @@ public class ProductOrderActionBeanTest {
         addSapMaterial(materials, testOrder.getProduct(), "150",
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
-        if(!sapBlocked) {
-            Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materials);
-        }
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenReturn(testQuote);
@@ -1278,15 +1281,11 @@ public class ProductOrderActionBeanTest {
         final OrderCalculatedValues testCalculatedValues =
                 new OrderCalculatedValues(new BigDecimal(calculatedValue), Collections.emptySet());
 
-        if(willCallSap || !sapBlocked) {
-            Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
-        }
-        if(!sapBlocked) {
-            Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
-                    SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
-                    .thenReturn(testCalculatedValues);
-        }
+        Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
 
         actionBean.setEditOrder(testOrder);
         productOrderEjb = new ProductOrderEjb(mockProductOrderDao, Mockito.mock(ProductDao.class),
@@ -1444,7 +1443,7 @@ public class ProductOrderActionBeanTest {
 
     }
 
-    public void addSapMaterial(Set<SAPMaterial> returnMaterials, Product product, String basePrice,
+    private void addSapMaterial(Set<SAPMaterial> returnMaterials, Product product, String basePrice,
                                SapIntegrationClientImpl.SAPCompanyConfiguration broad) {
         final SAPMaterial material =
                 new SAPMaterial(product.getPartNumber(), basePrice, Collections.<Condition, BigDecimal>emptyMap(),
@@ -1520,16 +1519,33 @@ public class ProductOrderActionBeanTest {
     @DataProvider(name = "quoteDataProvider")
     public Iterator<Object[]> quoteDataProvider() {
         List<Object[]> testCases = new ArrayList<>();
-        testCases.add(new Object[]{"GP87U", false, true});
-        testCases.add(new Object[]{"GP87U", false, false});
+
+        // Quote ID, SAP Access status, is the Product Blocked from SAP
+
+        testCases.add(new Object[]{"GP87U",  true, true});
+        testCases.add(new Object[]{"GP87U",  true, false});
+        testCases.add(new Object[]{"GP87U",  false, true});
+        testCases.add(new Object[]{"GP87U",  false, false});
+
+        testCases.add(new Object[]{"STCIL1", true, true});
+        testCases.add(new Object[]{"STCIL1", true, false});
         testCases.add(new Object[]{"STCIL1", false, true});
         testCases.add(new Object[]{"STCIL1", false, false});
+
+        testCases.add(new Object[]{"GAN1GX", true, true});
+        testCases.add(new Object[]{"GAN1GX", true, false});
         testCases.add(new Object[]{"GAN1GX", false, true});
         testCases.add(new Object[]{"GAN1GX", false, false});
+
+        testCases.add(new Object[]{"GAN1MB", true, true});
+        testCases.add(new Object[]{"GAN1MB", true, false});
         testCases.add(new Object[]{"GAN1MB", false, true});
         testCases.add(new Object[]{"GAN1MB", false, false});
+
         testCases.add(new Object[]{"MPG1X6", true, true});
         testCases.add(new Object[]{"MPG1X6", true, false});
+        testCases.add(new Object[]{"MPG1X6", false, true});
+        testCases.add(new Object[]{"MPG1X6", false, false});
 
         return testCases.iterator();
     }
