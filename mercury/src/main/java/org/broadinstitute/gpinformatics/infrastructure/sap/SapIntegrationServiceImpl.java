@@ -512,9 +512,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
             }
 
-            if (potentialOrderCriteria != null && StringUtils.isBlank(potentialOrderCriteria.getCustomerNumber())) {
-                potentialOrderCriteria = null;
-            }
             orderCalculatedValues =
                     getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
                             potentialOrderCriteria);
@@ -544,6 +541,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         String customerNumber = null;
         Optional <Quote> foundQuote = null;
+        OrderCriteria orderCriteria = null;
+
         try {
             foundQuote = Optional.ofNullable(productOrder.getQuote(quoteService));
         } catch (QuoteServerException | QuoteNotFoundException e) {
@@ -562,8 +561,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                             "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
                 }
             }
-
-//            customerNumber = null;
 
             if (fundingLevel.isPresent()) {
                 if (!forOrderValueQuery && fundingLevel.get().getFunding().size() > 1) {
@@ -584,8 +581,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             }
         }
 
-        return new OrderCriteria(customerNumber, productOrder.getSapCompanyConfigurationForProductOrder(),
-            sapOrderItems);
+        if(customerNumber != null) {
+            orderCriteria = new OrderCriteria(customerNumber, productOrder.getSapCompanyConfigurationForProductOrder(),
+                    sapOrderItems);
+        }
+        return orderCriteria;
     }
 
     /**
