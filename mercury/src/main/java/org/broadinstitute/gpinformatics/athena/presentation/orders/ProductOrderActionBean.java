@@ -163,7 +163,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
@@ -876,7 +875,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     double estimateOutstandingOrders(Quote foundQuote, int addedSampleCount, ProductOrder productOrder)
             throws InvalidProductException, SAPIntegrationException {
 
-        List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId());
+        //Creating a new array list to be able to remove items from it if need be
+        List<ProductOrder> ordersWithCommonQuote = new ArrayList<>(productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId()));
 
         OrderCalculatedValues calculatedValues = null;
         try {
@@ -893,13 +893,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (calculatedValues != null &&
             calculatedValues.getPotentialOrderValue() != null) {
 
-            if(ordersWithCommonQuote.contains(productOrder)) {
-                final List<ProductOrder> commonQuoteOrders =
-                        ordersWithCommonQuote.stream().filter(productOrder1 -> !productOrder1.equals(productOrder))
-                                .collect(
-                                        Collectors.toList());
-                ordersWithCommonQuote = commonQuoteOrders;
-            }
+            ordersWithCommonQuote.remove(productOrder);
 
             value += calculatedValues.getPotentialOrderValue().doubleValue();
 
