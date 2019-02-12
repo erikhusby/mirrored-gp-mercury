@@ -61,7 +61,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -146,10 +145,12 @@ public class ProductOrderActionBeanTest {
 
     private QuoteService mockQuoteService;
     private QuoteService stubQuoteService = new QuoteServiceStub();
-    public SapIntegrationService mockSAPService;
+    public SapIntegrationServiceImpl mockSAPService;
     public SAPProductPriceCache stubProductPriceCache;
     public ProductOrderDao mockProductOrderDao;
     public ProductOrder testOrder;
+    private SapIntegrationClientImpl mockSapClient;
+    private SAPAccessControlEjb mockAccessController;
 
 
     @BeforeMethod
@@ -160,9 +161,15 @@ public class ProductOrderActionBeanTest {
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
         priceListCache = new PriceListCache(mockQuoteService);
         actionBean.setPriceListCache(priceListCache);
-        mockSAPService = Mockito.mock(SapIntegrationService.class);
+
+        mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
+        mockSAPService = new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV),
+                mockQuoteService, Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
+                stubProductPriceCache, mockAccessController);
         stubProductPriceCache = new SAPProductPriceCache(mockSAPService);
-        final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
+        mockSapClient = Mockito.mock(SapIntegrationClientImpl.class);
+        mockSAPService.setWrappedClient(mockSapClient);
+
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
         stubProductPriceCache.setAccessControlEjb(mockAccessController);
         actionBean.setProductPriceCache(stubProductPriceCache);
@@ -898,7 +905,7 @@ public class ProductOrderActionBeanTest {
 
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500"
         );
-        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
 
@@ -1017,19 +1024,18 @@ public class ProductOrderActionBeanTest {
         addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
-        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
         Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Collections.singletonList(testOrder));
-        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(),
-                Mockito.anyString(), Mockito.any(ProductOrder.class)
-        )).thenReturn(new OrderCalculatedValues(
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
+                Mockito.any(SapIntegrationClientImpl.SystemIdentifier.class),
+                Mockito.any(OrderCriteria.class))).thenReturn(new OrderCalculatedValues(
                 BigDecimal.ZERO, Collections.<OrderValue>emptySet()));
 
         actionBean.setEditOrder(testOrder);
-
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote,0, null),
                 (double) (1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
@@ -1147,7 +1153,7 @@ public class ProductOrderActionBeanTest {
         addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
-        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
@@ -1163,10 +1169,9 @@ public class ProductOrderActionBeanTest {
         final OrderCalculatedValues testCalculatedValues = new OrderCalculatedValues(
                 BigDecimal.ZERO, sapOrderValues);
 
-        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(),
-                Mockito.anyString(), Mockito.any(ProductOrder.class)
-        )).thenReturn(
-                testCalculatedValues);
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
+                Mockito.any(SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
 
         actionBean.setEditOrder(testOrder);
 
@@ -1228,21 +1233,15 @@ public class ProductOrderActionBeanTest {
 
         Quote testQuote = stubQuoteService.getQuoteByAlphaId(quoteName);
 
-        final SAPAccessControlEjb mockAccessControlEjb = Mockito.mock(SAPAccessControlEjb.class);
-        SapIntegrationServiceImpl testService = new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV),
-                mockQuoteService, Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
-                stubProductPriceCache, mockAccessControlEjb);
-
         final SAPAccessControl enabledControl = new SAPAccessControl();
         if(sapBlocked) {
             enabledControl.setAccessStatus(AccessStatus.DISABLED);
         } else {
             enabledControl.setAccessStatus(AccessStatus.ENABLED);
         }
-        Mockito.when(mockAccessControlEjb.getCurrentControlDefinitions()).thenReturn(enabledControl);
-        stubProductPriceCache.setAccessControlEjb(mockAccessControlEjb);
-        final SapIntegrationClientImpl mockSapClient = Mockito.mock(SapIntegrationClientImpl.class);
-        testService.setWrappedClient(mockSapClient);
+
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(enabledControl);
+        stubProductPriceCache.setAccessControlEjb(mockAccessController);
 
         Product primaryProduct = new Product();
         primaryProduct.setPartNumber("P-Test_Prime");
@@ -1252,7 +1251,7 @@ public class ProductOrderActionBeanTest {
 
         if (productBlockedFromSap) {
             enabledControl.addDisabledItem(new AccessItem(primaryProduct.getPrimaryPriceItem().getName()));
-        } 
+        }
         testOrder = new ProductOrder();
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuote.getAlphanumericId());
@@ -1288,15 +1287,6 @@ public class ProductOrderActionBeanTest {
                 .thenReturn(testCalculatedValues);
 
         actionBean.setEditOrder(testOrder);
-        productOrderEjb = new ProductOrderEjb(mockProductOrderDao, Mockito.mock(ProductDao.class),
-                mockQuoteService, Mockito.mock(JiraService.class),Mockito.mock(UserBean.class),
-                Mockito.mock(BSPUserList.class),Mockito.mock(BucketEjb.class),Mockito.mock(SquidConnector.class),
-                Mockito.mock(MercurySampleDao.class),Mockito.mock(ProductOrderJiraUtil.class), testService ,priceListCache,
-                stubProductPriceCache);
-        productOrderEjb.setAccessController(mockAccessControlEjb);
-
-        actionBean.setProductOrderEjb(productOrderEjb);
-        actionBean.setSapService(testService);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
                 (double) calculatedValue);
@@ -1371,7 +1361,7 @@ public class ProductOrderActionBeanTest {
         addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
-        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
@@ -1390,10 +1380,9 @@ public class ProductOrderActionBeanTest {
         final OrderCalculatedValues testCalculatedValues = new OrderCalculatedValues(
                 new BigDecimal(overrideCalculatedOrderValue), sapOrderValues);
 
-        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(),
-                Mockito.anyString(), Mockito.any(ProductOrder.class)
-        )).thenReturn(
-                testCalculatedValues);
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class),
+                Mockito.any(OrderCriteria.class))).thenReturn(testCalculatedValues);
 
         actionBean.setEditOrder(testOrder);
 
