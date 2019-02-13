@@ -1536,6 +1536,12 @@ public class ProductOrderActionBeanTest {
         testCases.add(new Object[]{"MPG1X6", false, true});
         testCases.add(new Object[]{"MPG1X6", false, false});
 
+        testCases.add(new Object[]{"MPG20W", true, true});
+        testCases.add(new Object[]{"MPG20W", true, false});
+        testCases.add(new Object[]{"MPG20W", false, true});
+        testCases.add(new Object[]{"MPG20W", false, false});
+
+
         return testCases.iterator();
     }
 
