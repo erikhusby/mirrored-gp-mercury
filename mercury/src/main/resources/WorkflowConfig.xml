@@ -5105,7 +5105,6 @@
             <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
-            <workflowProcessDefs>PCR Plus Pond HyperPrep</workflowProcessDefs>
             <workflowProcessDefs>Germline Exome Pond</workflowProcessDefs>
             <workflowProcessDefs>Custom Selection</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
