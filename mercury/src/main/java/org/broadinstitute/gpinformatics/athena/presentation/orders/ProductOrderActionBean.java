@@ -162,6 +162,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
@@ -766,13 +767,13 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
-        Quote quote = validateQuote(editOrder);
+        Optional<Quote> quote = Optional.ofNullable(validateQuote(editOrder));
 
         try {
-            if (quote != null) {
-                ProductOrder.checkQuoteValidity(quote);
+            if (quote.isPresent()) {
+                ProductOrder.checkQuoteValidity(quote.get());
                 final String[] error = new String[1];
-                quote.getFunding().stream()
+                quote.get().getFunding().stream()
                     .filter(Funding::isFundsReservation)
                     .forEach(funding -> {
                         int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
@@ -781,13 +782,13 @@ public class ProductOrderActionBean extends CoreActionBean {
                                 String.format("The Funding Source %s on %s  Quote expires in %d days. If it is likely "
                                               + "this work will not be completed by then, please work on updating the "
                                               + "Funding Source so Billing Errors can be avoided.",
-                                    funding.getDisplayName(), quote.getAlphanumericId(), numDaysBetween)
+                                    funding.getDisplayName(), quote.get().getAlphanumericId(), numDaysBetween)
                             );
                         }
                     });
+                validateQuoteDetails(quote.get(), 0);
             }
 
-            validateQuoteDetails(quote, 0);
 
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
