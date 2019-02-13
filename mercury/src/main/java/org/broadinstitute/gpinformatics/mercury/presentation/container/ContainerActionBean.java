@@ -199,6 +199,10 @@ public class ContainerActionBean extends RackScanActionBean {
             return;
         }
 
+        if( !rackOfTubes.getRackType().isRackScannable() ) {
+            showLayout = true;
+        }
+
         // Skip event/container logic overhead if no layout to be shown (after 'Find' viewContainer() redirect action)
         // Or forced to use rack scan layout
         if( !showLayout || ignoreCheckinEvents ) {
@@ -355,7 +359,7 @@ public class ContainerActionBean extends RackScanActionBean {
         }
         if (storageLocation != null) {
             String locationPath = storageLocationDao.getLocationTrail(storageLocation.getStorageLocationId());
-            addMessage("Rack " + getViewVessel().getLabel() + " is currently stored in [" + locationPath + "] and will be checked out after scan and layout update.");
+            addMessage("Rack " + getViewVessel().getLabel() + " is currently stored in [" + locationPath + "] and will be removed at layout update.");
         }
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
@@ -399,6 +403,18 @@ public class ContainerActionBean extends RackScanActionBean {
             messageCollection.addInfo("Layout update removed rack %s from storage location [%s]."
                     , rackOfTubes.getLabel()
                     , storageLocationDao.getLocationTrail(storageLocation.getStorageLocationId()));
+
+            // Now the part where all tubes associated with rack check-in have to be removed also
+            LabEvent checkInEvent = findLatestCheckInEvent( rackOfTubes );
+            Collection<LabVessel> vesselsToAlsoRemove = findStoredTubesFromCheckIn( checkInEvent ).values();
+            for( LabVessel tube : vesselsToAlsoRemove ) {
+                tube.setStorageLocation(null);
+            }
+            if( vesselsToAlsoRemove.size() > 0 ) {
+                messageCollection.addInfo("Also removed %d tubes associated with prior rack %s check-in."
+                        , vesselsToAlsoRemove.size()
+                        , rackOfTubes.getLabel());
+            }
         }
 
         mapPositionToVessel = new HashMap<>();
@@ -424,6 +440,7 @@ public class ContainerActionBean extends RackScanActionBean {
             }
         }
         // Vessels may have been removed from storage
+        labVesselDao.flush();
         labEventDao.flush();
     }
 
