@@ -15,12 +15,10 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAd
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -35,7 +33,6 @@ import org.broadinstitute.sap.entity.SAPOrder;
 import org.broadinstitute.sap.entity.SAPOrderItem;
 import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
-import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
@@ -451,7 +448,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     private boolean isNewMaterial(Product product) {
         return (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) == null)
-            || (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null);
+            && (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null);
     }
 
     @Override
@@ -491,11 +488,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Override
     public Quote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
-        final SapIntegrationClientImpl sapClient = getClient();
-        SapQuote sapQuote = sapClient.findQuoteDetails(sapQuoteId);
-        return new Quote(sapQuoteId, new QuoteFunding(sapQuote.getQuoteHeader().getQuoteTotal().toString()),
-            ApprovalStatus.fromValue(sapQuote.getQuoteHeader().getQuoteStatus().name()));
-//        throw new SAPIntegrationException("SAP Quotes are not available at this time");
+        throw new SAPIntegrationException("SAP Quotes are not available at this time");
     }
 
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
@@ -525,10 +518,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             try {
                 if (productOrder.getQuoteSource() == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
                     foundQuote = productOrder.getQuote(quoteService);
-                } else {
-                    foundQuote = findSapQuote(productOrder.getQuoteId());
                 }
-            } catch (SAPIntegrationException | QuoteNotFoundException | QuoteServerException e) {
+            } catch (QuoteNotFoundException | QuoteServerException e) {
                 throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
             }
             FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
