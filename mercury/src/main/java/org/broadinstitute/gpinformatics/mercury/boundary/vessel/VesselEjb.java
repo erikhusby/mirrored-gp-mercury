@@ -887,6 +887,11 @@ public class VesselEjb {
                             posEntry.getKey().name(), runStarted);
                     LabMetricDecision decision = null;
                     LabMetric.Decider decider = metricType.getDecider();
+
+                    if (tube.getVolume() != null) {
+                        labMetric.getMetadataSet().add(new Metadata(Metadata.Key.TOTAL_NG,
+                                labMetric.getValue().multiply(tube.getVolume())));
+                    }
                     if (runFailed) {
                         decision = new LabMetricDecision(
                                 LabMetricDecision.Decision.RUN_FAILED, new Date(), decidingUser, labMetric);
