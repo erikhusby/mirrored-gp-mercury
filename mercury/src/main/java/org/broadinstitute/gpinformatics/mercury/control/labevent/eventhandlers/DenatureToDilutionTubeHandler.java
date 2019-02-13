@@ -158,7 +158,8 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
 
         boolean mustMatchLane = fctLabBatch.getFlowcellType() != null &&
                 (fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqFlowcell ||
-                        fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell);
+                        fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell ||
+                 fctLabBatch.getFlowcellType() == IlluminaFlowcell.FlowcellType.NovaSeqS1Flowcell );
 
         for (LabBatchStartingVessel labBatchStartingVessel : fctLabBatch.getLabBatchStartingVessels()) {
             boolean tubeMatches = loadingTube.equals(labBatchStartingVessel.getLabVessel());
