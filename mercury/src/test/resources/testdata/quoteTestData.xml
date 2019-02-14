@@ -438,14 +438,14 @@
             <ProjectManager firstName="Tracey" lastName="Honan" userName="honan@broadinstitute.org"/>
         </ProjectManagers>
         <QuoteFunding fundsRemaining="16050.4">
-            <FundingLevel percent="50">
+            <FundingLevel percent="0">
                 <Funding awardAdministrator="Ms. Marian A Orfeo" broadName="" commonName="" costObject="5420140"
                          costObjectStatus="CLSD" endDate="03/24/2011" fundingType="Funds Reservation"
                          fundsReservationNumber="439" grantDescription="GCC-U24_NIH_MEYERSON" grantEndDate="07/31/2011"
                          grantNumber="128" grantStartDate="09/29/2009" grantStatus="Active"
                          sponsorName="GCC-U24_NIH_Meyerson" startDate=""/>
             </FundingLevel>
-            <FundingLevel percent="50">
+            <FundingLevel percent="100">
                 <Funding awardAdministrator="Ms. Marian A Orfeo" broadName="" commonName="" costObject="5420143"
                          costObjectStatus="ACTV" endDate="" fundingType="Funds Reservation"
                          fundsReservationNumber="2045" grantDescription="GCC-U24_NIH_MEYERSON" grantEndDate="07/31/2012"
