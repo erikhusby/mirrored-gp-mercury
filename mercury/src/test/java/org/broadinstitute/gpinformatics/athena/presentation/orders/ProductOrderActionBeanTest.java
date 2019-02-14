@@ -1560,38 +1560,38 @@ public class ProductOrderActionBeanTest {
 
         // Quote ID, SAP Access status, is the Product Blocked from SAP
 
-        testCases.add(new Object[]{"GP87U",  true, true});
-        testCases.add(new Object[]{"GP87U",  true, false});
+        testCases.add(new Object[]{"GP87U",  true, true});   // common catch all quote used by PDMs
+        testCases.add(new Object[]{"GP87U",  true, false});  // Split funded
         testCases.add(new Object[]{"GP87U",  false, true});
         testCases.add(new Object[]{"GP87U",  false, false});
 
-        testCases.add(new Object[]{"STCIL1", true, true});
-        testCases.add(new Object[]{"STCIL1", true, false});
+        testCases.add(new Object[]{"STCIL1", true, true});  // Single funded quote in which the funding source
+        testCases.add(new Object[]{"STCIL1", true, false}); // is split among 2 cost objects
         testCases.add(new Object[]{"STCIL1", false, true});
         testCases.add(new Object[]{"STCIL1", false, false});
 
-        testCases.add(new Object[]{"GAN1GX", true, true});
-        testCases.add(new Object[]{"GAN1GX", true, false});
+        testCases.add(new Object[]{"GAN1GX", true, true});  // Split funded quote in which the funding sources are
+        testCases.add(new Object[]{"GAN1GX", true, false}); // each fund reservations
         testCases.add(new Object[]{"GAN1GX", false, true});
         testCases.add(new Object[]{"GAN1GX", false, false});
 
-        testCases.add(new Object[]{"GAN1MB", true, true});
-        testCases.add(new Object[]{"GAN1MB", true, false});
+        testCases.add(new Object[]{"GAN1MB", true, true});  // Split funded quote in which the funding sources are
+        testCases.add(new Object[]{"GAN1MB", true, false}); // each purchase orders
         testCases.add(new Object[]{"GAN1MB", false, true});
         testCases.add(new Object[]{"GAN1MB", false, false});
 
-        testCases.add(new Object[]{"MPG1X6", true, true});
-        testCases.add(new Object[]{"MPG1X6", true, false});
+        testCases.add(new Object[]{"MPG1X6", true, true});  // Single funded quote in which the funding source is
+        testCases.add(new Object[]{"MPG1X6", true, false}); // a purchase order
         testCases.add(new Object[]{"MPG1X6", false, true});
         testCases.add(new Object[]{"MPG1X6", false, false});
 
-        testCases.add(new Object[]{"MPG20W", true, true});
-        testCases.add(new Object[]{"MPG20W", true, false});
+        testCases.add(new Object[]{"MPG20W", true, true});  // Single funded quote in which the funding source
+        testCases.add(new Object[]{"MPG20W", true, false}); // is a fund reservation.
         testCases.add(new Object[]{"MPG20W", false, true});
         testCases.add(new Object[]{"MPG20W", false, false});
 
-        testCases.add(new Object[]{"GAN1GX2", true, true});
-        testCases.add(new Object[]{"GAN1GX2", true, false});
+        testCases.add(new Object[]{"GAN1GX2", true, true}); // Same setup as GAN1GX only the percentage of each
+        testCases.add(new Object[]{"GAN1GX2", true, false}); // Funding source is 50%
         testCases.add(new Object[]{"GAN1GX2", false, true});
         testCases.add(new Object[]{"GAN1GX2", false, false});
 
