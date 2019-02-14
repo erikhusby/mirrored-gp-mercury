@@ -1232,14 +1232,14 @@ public class ProductOrderActionBeanTest {
 
     /**
      * This unit test primarily tests a pretty basic case:
-     * <ul>
+     * <ol>
      *     <li>Attempt to place a new order where there are no existing orders associated with the Given quote</li>
      *     <li>Validate that the Calculated value of that one order matches what is expected</li>
      *     <li> "Place" the order</li>
      *     <li>attempt to modify that order and estimate the new calculated value</li>
      *     <li>add on more sample to the order and ensure that the Action bean logic rejects this addition since there
      *     is no more money left on the quote to support it.</li>
-     * </ul>
+     * </ol>
      * @param quoteName Identifier for the Quote to use.  Quote definition is pulled from quoteTestData.xml
      * @param sapBlocked Set true if the test case is to mimic that all SAP access is blocked
      * @param productBlockedFromSap Set true if the test case is to mimic that the price item for the product on the
@@ -1302,7 +1302,7 @@ public class ProductOrderActionBeanTest {
 
         double calculatedValue = testOrder.getSamples().size() * priceItemPrice;
         OrderCalculatedValues testCalculatedValues =
-                new OrderCalculatedValues(new BigDecimal(calculatedValue), Collections.emptySet());
+                new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedValue):null, Collections.emptySet());
 
         Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
                 SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
@@ -1336,7 +1336,9 @@ public class ProductOrderActionBeanTest {
         testOrder.addSample(new ProductOrderSample("SM-Test" + 76));
         calculatedValue = testOrder.getSamples().size() * priceItemPrice;
         testCalculatedValues =
-                new OrderCalculatedValues(new BigDecimal(calculatedValue), Collections.emptySet());
+                new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedValue):null,
+                        Collections.emptySet());
+
         Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
                 SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
                 .thenReturn(testCalculatedValues);
@@ -1359,13 +1361,28 @@ public class ProductOrderActionBeanTest {
      * on the quote.  After that has been determined to calculate according to the estimates, the test will add one
      * more sample to put the total unbilled count just over the funds remaining and thus causing an error.  That error
      * will be considered a successful test.
+     *
+     * The sequence of events mimicked in this test case are as follows:
+     * <ol>
+     *     <li>create and validate a product order that has not been placed.  Mimics the validation called when the
+     *     order is attempting to be placed</li>
+     *     <li>Mimic that the order has been placed and has gone to SAP</li>
+     *     <li>Mimic validating the order again after another order has been placed and gone to SAP</li>
+     *     <li>Mimic validating the order again after that second order has had a customized price set on it</li>
+     *     <li>Force the Quote to no longer be eligible for SAP</li>
+     *     <li>Mimic validating the order again after a third order has been placed, but is not in SAP (due to the fact
+     *     that the quote is not eligible for SAP</li>
+     *     <li>Add one more sample to the main product order</li>
+     *     <li>Mimic validating this order again after the sample has been added to it</li>
+     *     <li>Ensure that valdiateQuoteDetails returns an error due to the fact that the Quote now is over extended</li>
+     * </ol>
+     *
      * @param quoteId Identifier for the Quote to use.  Quote definition is pulled from quoteTestData.xml
      * @param sapBlocked Set true if the test case is to mimic that all SAP access is blocked
      * @param productBlockedFromSap Set true if the test case is to mimic that the price item for the product on the
      *                              order is blocked from going to SAP
      * @throws Exception
      */
-//    @Test(dataProvider = "sapConditionsForOrderEstimation")
     @Test(dataProvider = "quoteDataProvider")
     public void testSapEligibleQuoteThenNot(String quoteId, boolean sapBlocked, boolean productBlockedFromSap)
             throws Exception {
@@ -1490,7 +1507,7 @@ public class ProductOrderActionBeanTest {
         double calculatedNonSapOrderValue = nonSAPOrder.getSamples().size() * (primaryPriceItemPrice) +
                                             nonSAPOrder.getLaneCount()* (addonPrice);
         OrderCalculatedValues testCalculatedValues =
-                new OrderCalculatedValues(new BigDecimal(calculatedMainOrderValue), Collections.emptySet());
+                new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedMainOrderValue):null, Collections.emptySet());
 
         Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
                 SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
@@ -1503,8 +1520,16 @@ public class ProductOrderActionBeanTest {
         // Estimate the Order now
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
                 (double) calculatedMainOrderValue);
+        actionBean.validateQuoteDetails(testQuote, 0);
 
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
+
+
+        //
         // Now the order gets placed in mercury and gets submitted to SAP
+        //
         testOrder.setJiraTicketKey("PDO-1294");
 
         SapOrderDetail sapReference = new SapOrderDetail("test001", sampleTestSize, testOrder.getQuoteId(),
@@ -1526,7 +1551,7 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Arrays.asList(testOrder, secondOrder));
 
         testCalculatedValues =
-                new OrderCalculatedValues(new BigDecimal(calculatedMainOrderValue),
+                new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedMainOrderValue):null,
                         Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
                                 BigDecimal.valueOf(calculatedSecondOrderValue))));
 
@@ -1551,7 +1576,7 @@ public class ProductOrderActionBeanTest {
         calculatedSecondOrderValue = secondOrder.getSamples().size() * (secondaryPrice - .75d) +
                                     secondOrder.getLaneCount() * (addonPrice);
 
-        testCalculatedValues = new OrderCalculatedValues(BigDecimal.valueOf(calculatedMainOrderValue),
+        testCalculatedValues = new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedMainOrderValue):null,
                 Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
                         BigDecimal.valueOf(calculatedSecondOrderValue))));
 
@@ -1580,6 +1605,15 @@ public class ProductOrderActionBeanTest {
 
         testQuote.setQuoteFunding(quoteFunding);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenReturn(testQuote);
+        testCalculatedValues =
+                new OrderCalculatedValues(null,
+                        Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
+                                BigDecimal.valueOf(calculatedSecondOrderValue))));
+
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
 
         // Now SAP should be down and we have placed a new order, but it doesn't go to SAP
         Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Arrays.asList(testOrder, secondOrder, nonSAPOrder));
@@ -1598,7 +1632,7 @@ public class ProductOrderActionBeanTest {
         testOrder.addSample(new ProductOrderSample("SM-test" +(testOrder.getSamples().size()+1)));
         calculatedMainOrderValue = testOrder.getSamples().size() * primaryPriceItemPrice;
         testCalculatedValues =
-                new OrderCalculatedValues(new BigDecimal(calculatedMainOrderValue),
+                new OrderCalculatedValues(null,
                         Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
                                 BigDecimal.valueOf(calculatedSecondOrderValue))));
 
