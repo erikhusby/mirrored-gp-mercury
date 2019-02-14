@@ -98,7 +98,7 @@ public class StorageLocationFixupTest extends Arquillian {
      * This test reads its parameters from a file, mercury/src/test/resources/testdata/CreateStorageLocation.json, so it can
      * be used for other similar fixups, without writing a new test. The json object is the CreateStorageLocation.class:
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim6012BackfillInPlaceRacks() throws Exception {
 
         File logFile = new File(logDirName, "fixupGplim6012BackfillInPlaceRacks.log");
