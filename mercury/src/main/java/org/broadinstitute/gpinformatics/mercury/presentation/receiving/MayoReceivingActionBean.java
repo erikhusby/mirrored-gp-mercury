@@ -66,6 +66,7 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     private boolean overwriteFlag = false;
     private VesselGeometry vesselGeometry = null;
     private List<String> rackScanEntries = new ArrayList<>();
+    private List<String> rackScanBarcodes = new ArrayList<>();
     private String filename;
     private List<String> manifestSheetnames;
     private Map<String, String[][]> manifestArray = new HashMap<>();
@@ -119,7 +120,8 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
         // Checks if the tubes exist. If so they must be Mayo tubes.
         if (!messageCollection.hasErrors()) {
-            List<LabVessel> existingVessels = labVesselDao.findByListIdentifiers(new ArrayList<>(rackScan.values()));
+            rackScanBarcodes = rackScan.values().stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            List<LabVessel> existingVessels = labVesselDao.findByListIdentifiers(rackScanBarcodes);
             if (!existingVessels.isEmpty()) {
                 List<LabVessel> nonMayoTubes = mayoManifestEjb.nonMayoTubes(existingVessels);
                 if (!nonMayoTubes.isEmpty()) {
@@ -198,18 +200,22 @@ public class MayoReceivingActionBean extends RackScanActionBean {
      */
     @HandlesEvent(SAVE_EVENT)
     public Resolution saveEvent() {
+        boolean missingRackScan = false;
         if (!messageCollection.hasErrors()) {
             // Errors if the package barcode, rack barcode, or rackScan is blank.
             if (StringUtils.isBlank(packageBarcode) && StringUtils.isBlank(rackBarcode)) {
                 messageCollection.addError("Package or rack barcode is blank.");
             }
+            // Reconstructs the rackScan from the jsp's mapEntries.
             rackScan = new LinkedHashMap<>();
             for (String rackScanEntry : rackScanEntries) {
                 String[] tokens = rackScanEntry.split(" ");
                 rackScan.put(tokens[0], (tokens.length > 1) ? tokens[1] : "");
             }
-            if (!rackScan.values().stream().filter(StringUtils::isNotBlank).findFirst().isPresent()) {
-                messageCollection.addError("Rack scan has no tube barcodes.");
+            rackScanBarcodes = rackScan.values().stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            if (rackScanBarcodes.isEmpty()) {
+                missingRackScan = true;
+                messageCollection.addWarning("Rack scan is blank.");
             }
         }
         LabVessel existingRack = null;
@@ -229,7 +235,8 @@ public class MayoReceivingActionBean extends RackScanActionBean {
         if (!messageCollection.hasErrors()) {
             if (existingRack == null) {
                 // If the rack is new but tube barcodes match an existing vessel overwrite must be set.
-                List<LabVessel> existingTubes = labVesselDao.findByListIdentifiers(new ArrayList<>(rackScan.values()));
+                List<LabVessel> existingTubes = labVesselDao.findByListIdentifiers(rackScan.values().stream().
+                        filter(StringUtils::isNotBlank).collect(Collectors.toList()));
                 if (!existingTubes.isEmpty()) {
                     String tubeBarcodes = existingTubes.stream().
                             map(LabVessel::getLabel).collect(Collectors.joining(" "));
@@ -243,13 +250,10 @@ public class MayoReceivingActionBean extends RackScanActionBean {
             }
         }
         if (!messageCollection.hasErrors()) {
-            // Looks up or makes tubes, rack, and RCT ticket, and links them. If the manifest for the package is
-            // found, makes samples and links them to the tubes, and links the sample metadata from the manifest.
-            mayoManifestEjb.lookupOrMakeVesselsAndSamples(packageBarcode, rackBarcode, rackScan, filename,
+            // Does the receipt of rack or of rack and tubes if rack scan is present. If tubes are given
+            // then does a manifest lookup and comparison. If no mismatches, does sample accession.
+            mayoManifestEjb.receiveAndAccession(packageBarcode, rackBarcode, rackScan, filename,
                     overwriteFlag, messageCollection);
-        }
-        if (!messageCollection.hasErrors()) {
-            addMessage("Successfully received samples in Mercury.");
         }
         addMessages(messageCollection);
         return new ForwardResolution(PAGE1);

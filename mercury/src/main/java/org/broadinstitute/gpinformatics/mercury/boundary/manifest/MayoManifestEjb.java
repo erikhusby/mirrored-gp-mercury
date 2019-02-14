@@ -54,8 +54,7 @@ import java.util.stream.Collectors;
 @Stateful
 public class MayoManifestEjb {
     private static Log logger = LogFactory.getLog(MayoManifestEjb.class);
-    public static final String MISSING_MANIFEST = "Cannot find a manifest for package %s. Scanned tubes and rack " +
-            "will be saved, but not samples.";
+    public static final String MISSING_MANIFEST = "Cannot find a manifest for package %s.";
     public static final String RACK_NOT_IN_MANIFEST = "Rack %s is not in the manifest.";
     public static final String TUBE_NOT_IN_MANIFEST = "Some rack scan tubes are not in the manifest: %s";
     public static final String TUBE_NOT_IN_RACKSCAN = "Some manifest tubes are not in the rack scan: %s";
@@ -63,10 +62,10 @@ public class MayoManifestEjb {
     public static final String UNKNOWN_WELL = "Manifest contains unknown well position \"%s\".";
     public static final String NOT_A_TUBE = "Tube %s matches an existing vessel but it is not a tube.";
     public static final String JIRA_PROBLEM = "Problem creating or updating RCT ticket: %s";
-    public static final String ONLY_RECEIVED = "Sample tubes for Mayo package %s have been received, but " +
-            "samples could not be accessioned because the manifest was not found. Tube barcodes: %s";
-    public static final String ACCESSIONED = "Samples for Mayo package %s have been accessioned: %s";
-    public static final String REACCESSIONED = "Samples for Mayo package %s have been re-accessioned: %s";
+    public static final String ONLY_RACK_RECEIVED = "Received package %s, rack %s.";
+    public static final String ONLY_RECEIVED = "Received package, %s rack %s, tubes %s.";
+    public static final String ACCESSIONED = "Accessioned package %s, rack %s, samples %s.";
+    public static final String REACCESSIONED = "Samples have been re-accessioned: %s";
 
     public static final BarcodedTube.BarcodedTubeType DEFAULT_TUBE_TYPE = BarcodedTube.BarcodedTubeType.MatrixTube;
     public static final RackOfTubes.RackType DEFAULT_RACK_TYPE = RackOfTubes.RackType.Matrix96;
@@ -163,13 +162,16 @@ public class MayoManifestEjb {
     }
 
     /**
-     * Makes the tubes, rack, RCT ticket, and samples. If the manifest is missing, a warning is issued and
-     * tube and rack vessels are persisted, but not the samples, since sample name comes from the manifest.
+     * Does the receipt of rack, or receipt of rack and tubes if rack scan is present, and if manifest
+     * is available does a manifest comparison. If no problems found, does sample accession.
+     * This method will always make at least an RCT received ticket for package and rack, and
+     * persist the empty rack (in order to find the RCT when the rack is processed again).
+     * At most it will make an RCT accessioned ticket and persist rack, tubes, and samples.
      */
-    public void lookupOrMakeVesselsAndSamples(String packageBarcode, String rackBarcode,
+    public void receiveAndAccession(String packageBarcode, String rackBarcode,
             Map<String, String> rackScan, String filename, boolean overwrite, MessageCollection messages) {
 
-        // If the ManifestSession exists, makes Metadata maps.
+        // If the ManifestSession exists, makes maps of sample name to sample metadata.
         Multimap<String, Metadata> sampleMetadata = HashMultimap.create();
         Map<String, VesselPosition> manifestPositions = new HashMap<>();
         Map<String, String> sampleToTube = new HashMap<>();
@@ -197,124 +199,124 @@ public class MayoManifestEjb {
         } else {
             messages.addWarning(MISSING_MANIFEST, packageBarcode);
         }
-        if (messages.hasErrors()) {
-            return;
-        }
 
-        // Makes a reverse mapped rackScan for the non-blank tube barcodes.
-        Map<String, VesselPosition> reverseRackScan = rackScan.entrySet().stream().
-                filter(mapEntry -> StringUtils.isNotBlank(mapEntry.getValue())).
-                collect(Collectors.toMap(Map.Entry::getValue, mapEntry -> VesselPosition.valueOf(mapEntry.getKey())));
-
-        // The rack scan tube barcodes and positions must match the manifest, if it exists.
-        if (manifestSession != null) {
-            if (!CollectionUtils.isEqualCollection(reverseRackScan.keySet(), manifestPositions.keySet())) {
-                String missingFromManifest = StringUtils.join(
-                        CollectionUtils.subtract(reverseRackScan.keySet(), manifestPositions.keySet()), " ");
-                if (StringUtils.isNotBlank(missingFromManifest)) {
-                    messages.addError(TUBE_NOT_IN_MANIFEST, missingFromManifest);
-                }
-                String missingFromRackscan = StringUtils.join(
-                        CollectionUtils.subtract(manifestPositions.keySet(), reverseRackScan.keySet()), " ");
-                if (StringUtils.isNotBlank(missingFromRackscan)) {
-                    messages.addError(TUBE_NOT_IN_RACKSCAN, missingFromRackscan);
-                }
-            } else {
-                reverseRackScan.keySet().stream().
-                        filter(tube -> !reverseRackScan.get(tube).equals(manifestPositions.get(tube))).
-                        forEachOrdered(tube -> messages.addError(WRONG_POSITION, tube,
-                                manifestPositions.get(tube), reverseRackScan.get(tube)));
-            }
-        }
-        if (messages.hasErrors()) {
-            return;
-        }
-
-        // Finds existing vessels.
+        final Map<String, VesselPosition> reverseRackScan = new HashMap<>();
         Map<String, BarcodedTube> tubeMap = new HashMap<>();
-        RackOfTubes rack = null;
-        for (LabVessel vessel : labVesselDao.findListByList(LabVessel.class, LabVessel_.label,
-                new ArrayList<String>() {{
-                    addAll(reverseRackScan.keySet());
-                    add(rackBarcode);
-                }})) {
-            String barcode = vessel.getLabel();
-            if (barcode.equals(rackBarcode)) {
-                if (OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
-                    rack = OrmUtil.proxySafeCast(vessel, RackOfTubes.class);
-                }
-            } else {
-                if (OrmUtil.proxySafeIsInstance(vessel, BarcodedTube.class)) {
-                    tubeMap.put(barcode, OrmUtil.proxySafeCast(vessel, BarcodedTube.class));
+        if (!messages.hasErrors()) {
+            // Makes a reverse mapped rackScan for the non-blank barcode entries.
+            reverseRackScan.putAll(rackScan.entrySet().stream().
+                    filter(mapEntry -> StringUtils.isNotBlank(mapEntry.getValue())).
+                    collect(Collectors.toMap(Map.Entry::getValue,
+                            mapEntry -> VesselPosition.valueOf(mapEntry.getKey()))));
+
+            // The rack scan tube barcodes and positions must match the manifest, if it exists.
+            if (manifestSession != null) {
+                if (!CollectionUtils.isEqualCollection(reverseRackScan.keySet(), manifestPositions.keySet())) {
+                    String missingFromManifest = StringUtils.join(
+                            CollectionUtils.subtract(reverseRackScan.keySet(), manifestPositions.keySet()), " ");
+                    if (StringUtils.isNotBlank(missingFromManifest)) {
+                        messages.addError(TUBE_NOT_IN_MANIFEST, missingFromManifest);
+                    }
+                    String missingFromRackscan = StringUtils.join(
+                            CollectionUtils.subtract(manifestPositions.keySet(), reverseRackScan.keySet()), " ");
+                    if (StringUtils.isNotBlank(missingFromRackscan)) {
+                        messages.addError(TUBE_NOT_IN_RACKSCAN, missingFromRackscan);
+                    }
                 } else {
-                    messages.addError(NOT_A_TUBE, barcode);
+                    reverseRackScan.keySet().stream().
+                            filter(tube -> !reverseRackScan.get(tube).equals(manifestPositions.get(tube))).
+                            forEachOrdered(tube -> messages.addError(WRONG_POSITION, tube,
+                                    manifestPositions.get(tube), reverseRackScan.get(tube)));
                 }
             }
         }
-        if (messages.hasErrors()) {
-            return;
+        RackOfTubes rack = null;
+        if (!messages.hasErrors()) {
+            // Finds existing vessels.
+            for (LabVessel vessel : labVesselDao.findListByList(LabVessel.class, LabVessel_.label,
+                    new ArrayList<String>() {{
+                        addAll(reverseRackScan.keySet());
+                        add(rackBarcode);
+                    }})) {
+                String barcode = vessel.getLabel();
+                if (barcode.equals(rackBarcode)) {
+                    if (OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
+                        rack = OrmUtil.proxySafeCast(vessel, RackOfTubes.class);
+                    }
+                } else {
+                    if (OrmUtil.proxySafeIsInstance(vessel, BarcodedTube.class)) {
+                        tubeMap.put(barcode, OrmUtil.proxySafeCast(vessel, BarcodedTube.class));
+                    } else {
+                        messages.addError(NOT_A_TUBE, barcode);
+                    }
+                }
+            }
         }
-
-        // Creates or updates tubes.
+        List<String> sampleNames = Collections.emptyList();
         List<Object> newEntities = new ArrayList<>();
-        Map<VesselPosition, BarcodedTube> vesselPositionToTube = new HashMap<>();
-        for (String barcode : reverseRackScan.keySet()) {
-            BarcodedTube tube = tubeMap.get(barcode);
-            if (tube == null) {
-                tube = new BarcodedTube(barcode, DEFAULT_TUBE_TYPE);
-                newEntities.add(tube);
-                tubeMap.put(barcode, tube);
-            } else {
-                // Tube is being re-uploaded, so clearing old samples is appropriate.
-                tube.getMercurySamples().clear();
-            }
-            vesselPositionToTube.put(reverseRackScan.get(barcode), tube);
-            // Sets the tube's volume and concentration.
-            for (Metadata metadata : sampleMetadata.get(tubeToSample.get(barcode))) {
-                if (metadata.getKey() == Metadata.Key.QUANTITY) {
-                    tube.setVolume(NumberUtils.toScaledBigDecimal(metadata.getValue()));
-                } else if (metadata.getKey() == Metadata.Key.CONCENTRATION) {
-                    tube.setConcentration(NumberUtils.toScaledBigDecimal(metadata.getValue()));
+        if (!messages.hasErrors()) {
+            // Creates or updates tubes.
+            Map<VesselPosition, BarcodedTube> vesselPositionToTube = new HashMap<>();
+            for (String barcode : reverseRackScan.keySet()) {
+                BarcodedTube tube = tubeMap.get(barcode);
+                if (tube == null) {
+                    tube = new BarcodedTube(barcode, DEFAULT_TUBE_TYPE);
+                    newEntities.add(tube);
+                    tubeMap.put(barcode, tube);
+                } else {
+                    // Tube is being re-uploaded, so clearing old samples is appropriate.
+                    tube.getMercurySamples().clear();
+                }
+                vesselPositionToTube.put(reverseRackScan.get(barcode), tube);
+                // Sets the tube's volume and concentration.
+                for (Metadata metadata : sampleMetadata.get(tubeToSample.get(barcode))) {
+                    if (metadata.getKey() == Metadata.Key.QUANTITY) {
+                        tube.setVolume(NumberUtils.toScaledBigDecimal(metadata.getValue()));
+                    } else if (metadata.getKey() == Metadata.Key.CONCENTRATION) {
+                        tube.setConcentration(NumberUtils.toScaledBigDecimal(metadata.getValue()));
+                    }
                 }
             }
-        }
 
-        // Creates or updates the rack. Uses a new or existing tube formation obtained from the rackScan.
-        List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
-        for (String positionName : rackScan.keySet()) {
-            positionBarcodeList.add(Pair.of(VesselPosition.getByName(positionName), rackScan.get(positionName)));
-        }
-        String digest = TubeFormation.makeDigest(positionBarcodeList);
-        TubeFormation tubeFormation = tubeFormationDao.findByDigest(digest);
-        RackOfTubes.RackType rackType = (rack != null) ? rack.getRackType() : inferRackType(rackScan.keySet());
-        if (tubeFormation == null) {
-            tubeFormation = new TubeFormation(vesselPositionToTube, rackType);
-            newEntities.add(tubeFormation);
-        }
-        if (rack == null) {
-            rack = new RackOfTubes(rackBarcode, rackType);
-            newEntities.add(rack);
-        }
-        tubeFormation.addRackOfTubes(rack);
-
-        // If manifest is known, creates or updates samples.
-        Map<String, MercurySample> sampleMap = mercurySampleDao.findMapIdToMercurySample(sampleMetadata.keySet());
-        for (String sampleName : sampleMetadata.keySet()) {
-            MercurySample mercurySample = sampleMap.get(sampleName);
-            if (mercurySample == null) {
-                mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY);
-                newEntities.add(mercurySample);
-                sampleMap.put(sampleName, mercurySample);
+            // Creates or updates the rack. Uses a new or existing tube formation obtained from the rackScan.
+            List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
+            for (String positionName : rackScan.keySet()) {
+                positionBarcodeList.add(Pair.of(VesselPosition.getByName(positionName), rackScan.get(positionName)));
             }
-            // Adds new values or replaces existing values, which can be done since samples have MetadataSource.MERCURY.
-            mercurySample.updateMetadata(new HashSet<>(sampleMetadata.get(sampleName)));
+            String digest = TubeFormation.makeDigest(positionBarcodeList);
+            TubeFormation tubeFormation = tubeFormationDao.findByDigest(digest);
+            RackOfTubes.RackType rackType = (rack != null) ? rack.getRackType() : inferRackType(rackScan.keySet());
+            if (tubeFormation == null) {
+                tubeFormation = new TubeFormation(vesselPositionToTube, rackType);
+                newEntities.add(tubeFormation);
+            }
+            if (rack == null) {
+                rack = new RackOfTubes(rackBarcode, rackType);
+                newEntities.add(rack);
+            }
+            tubeFormation.addRackOfTubes(rack);
 
-            // Links sample to tube.
-            tubeMap.get(sampleToTube.get(sampleName)).addSample(mercurySample);
+            // If manifest is known, creates or updates samples.
+            Map<String, MercurySample> sampleMap = mercurySampleDao.findMapIdToMercurySample(sampleMetadata.keySet());
+            sampleNames = sampleMap.entrySet().stream().
+                    filter(mapEntry -> mapEntry.getValue() != null).
+                    map(Map.Entry::getKey).sorted().
+                    collect(Collectors.toList());
+            for (String sampleName : sampleMetadata.keySet()) {
+                MercurySample mercurySample = sampleMap.get(sampleName);
+                if (mercurySample == null) {
+                    mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY);
+                    newEntities.add(mercurySample);
+                    sampleMap.put(sampleName, mercurySample);
+                }
+                // Adds new values or replaces existing values, which can be done since samples have MetadataSource.MERCURY.
+                mercurySample.updateMetadata(new HashSet<>(sampleMetadata.get(sampleName)));
+
+                // Links sample to tube.
+                tubeMap.get(sampleToTube.get(sampleName)).addSample(mercurySample);
+            }
         }
-
-        JiraTicket jiraTicket = makeOrUpdateRct(packageBarcode, rack, reverseRackScan.keySet(), sampleMap.keySet(),
-                messages);
+        JiraTicket jiraTicket = makeOrUpdateRct(packageBarcode, rack, reverseRackScan.keySet(), sampleNames, messages);
         if (jiraTicket != null) {
             newEntities.add(jiraTicket);
             labVesselDao.persistAll(newEntities);
@@ -411,16 +413,20 @@ public class MayoManifestEjb {
                 messages.addInfo("Created " + urlLink(jiraTicket));
             }
 
-            // Writes a comment and transition that depends on if samples are known.
+            // Writes a comment and transition that depends on if tubes and samples are known.
             if (sampleNames.isEmpty()) {
-                comment = String.format(ONLY_RECEIVED, packageBarcode, StringUtils.join(tubeBarcodes, ", "));
-                // (no transition, already has status of Received)
+                if (tubeBarcodes.isEmpty()) {
+                    comment = String.format(ONLY_RACK_RECEIVED, packageBarcode, rack.getLabel());
+                } else {
+                    comment = String.format(ONLY_RECEIVED, packageBarcode, rack.getLabel(),
+                            StringUtils.join(tubeBarcodes, " "));
+                }
+                // (no transition needed since ticket is created with status of Received)
             } else if (ManifestSessionEjb.JiraTransition.ACCESSIONED.getStateName().equals(issueStatus)) {
-                comment = String.format(REACCESSIONED, packageBarcode,
-                        sampleNames.stream().sorted().collect(Collectors.joining(", ")));
+                comment = String.format(REACCESSIONED, sampleNames.stream().sorted().collect(Collectors.joining(" ")));
                 // (no transition, already has status of Accessioned)
             } else {
-                comment = String.format(ACCESSIONED, packageBarcode,
+                comment = String.format(ACCESSIONED, packageBarcode, rack.getLabel(),
                         sampleNames.stream().sorted().collect(Collectors.joining(", ")));
                 jiraIssue.postTransition(ManifestSessionEjb.JiraTransition.ACCESSIONED.getStateName(), comment);
             }

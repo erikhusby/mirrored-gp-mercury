@@ -25,7 +25,7 @@
                     <span>
                         <stripes:submit value="Show The Manifest" id="showManifestBtn" name="showManifestBtn"
                                         class="btn btn-primary"
-                                        title="Click to see a display of the manifest document corresponding to the package barcode."/>
+                                        title="Displays the manifest document corresponding to the package barcode."/>
                     </span>
                 </div>
             </div>
@@ -33,8 +33,15 @@
             <div class="control-group">
                 <stripes:label for="rackBarcode" name="Tube Rack or Box Barcode" class="control-label"/>
                 <div class="controls">
-                    <input type="text" id="rackBarcode" name="rackBarcode" value="${actionBean.rackBarcode}"
-                           autocomplete="off" class="clearable barcode unique">
+                    <span>
+                        <input type="text" id="rackBarcode" name="rackBarcode" value="${actionBean.rackBarcode}"
+                               autocomplete="off" class="clearable barcode unique">
+                    </span>
+                    <span>
+                        <stripes:submit value="Receive Rack" id="saveBtn" name="saveBtn"
+                                        class="btn btn-primary"
+                                        title="Generates an RCT ticket for the rack, without tubes or samples."/>
+                    </span>
                 </div>
             </div>
 
