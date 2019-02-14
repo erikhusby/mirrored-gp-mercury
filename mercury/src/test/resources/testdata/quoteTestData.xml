@@ -421,6 +421,76 @@
               name="Hourly Charge - Project Management" platform="Biological Samples" price="96.0" priceItemId="5880"
               quantity="53.5" quantityComplete="53.5" quoteId="1905" total="5136.0" unit="Hour"/>
     </Quote>
+    <Quote alphanumericId="GAN1GX2" approvalStatus="Funded" expirationDate="06/21/2010" financeContactFirstName="Tracey"
+           financeContactLastName="Honan" financeContactUserName="honan@broadinstitute.org" id="1905"
+           investigatorFirstName="Matthew" investigatorLastName="Meyerson"
+           investigatorUserName="matthew_meyerson@dfci.harvard.edu" isExpired="true" isExpiringSoon="false" markup=""
+           name="TCGA_BSPsampleprocessing" projectManagerFirstName="Robert" projectManagerLastName="Onofrio"
+           projectManagerUserName="onofrio@broadinstitute.org" quoteType="Open-Ended">
+        <AssociatedPeople/>
+        <Investigators>
+            <Investigator firstName="Matthew" lastName="Meyerson" userName="matthew_meyerson@dfci.harvard.edu"/>
+        </Investigators>
+        <FinanceUsers>
+            <FinanceUser firstName="Tracey" lastName="Honan" userName="honan@broadinstitute.org"/>
+        </FinanceUsers>
+        <ProjectManagers>
+            <ProjectManager firstName="Tracey" lastName="Honan" userName="honan@broadinstitute.org"/>
+        </ProjectManagers>
+        <QuoteFunding fundsRemaining="16050.4">
+            <FundingLevel percent="50">
+                <Funding awardAdministrator="Ms. Marian A Orfeo" broadName="" commonName="" costObject="5420140"
+                         costObjectStatus="CLSD" endDate="03/24/2011" fundingType="Funds Reservation"
+                         fundsReservationNumber="439" grantDescription="GCC-U24_NIH_MEYERSON" grantEndDate="07/31/2011"
+                         grantNumber="128" grantStartDate="09/29/2009" grantStatus="Active"
+                         sponsorName="GCC-U24_NIH_Meyerson" startDate=""/>
+            </FundingLevel>
+            <FundingLevel percent="50">
+                <Funding awardAdministrator="Ms. Marian A Orfeo" broadName="" commonName="" costObject="5420143"
+                         costObjectStatus="ACTV" endDate="" fundingType="Funds Reservation"
+                         fundsReservationNumber="2045" grantDescription="GCC-U24_NIH_MEYERSON" grantEndDate="07/31/2012"
+                         grantNumber="128" grantStartDate="08/01/2011" grantStatus="Active"
+                         sponsorName="GCC-U24_NIH_Meyerson" startDate=""/>
+            </FundingLevel>
+        </QuoteFunding>
+        <Item calculation="" categoryName="Sample Kit" isExpired="true" isExpiringSoon="true"
+              name="DNA/RNA Matrix Sample Kit Partial Plate (1 - 48 Samples)" platform="Biological Samples" price="5.0"
+              priceItemId="5836" quantity="2340.0" quantityComplete="2679.0" quoteId="1905" total="11700.0"
+              unit="Sample"/>
+        <Item calculation="" categoryName="Sample Processing" isExpired="true" isExpiringSoon="true"
+              name="Bioanalyzer (12 Samples)" platform="Biological Samples" price="186.0" priceItemId="5408"
+              quantity="21.0" quantityComplete="34.0" quoteId="1905" total="3906.0" unit="Chip"/>
+        <Item calculation="" categoryName="Sample Processing" isExpired="true" isExpiringSoon="true"
+              name="Bioanalyzer (12 Samples)" platform="Biological Samples" price="199.0" priceItemId="6961"
+              quantity="29.0" quantityComplete="0.0" quoteId="1905" total="5771.0" unit="Chip"/>
+        <Item calculation="" categoryName="Whole Genome Amplification" isExpired="true" isExpiringSoon="true"
+              name="Whole Genome Amplification Cleanup" platform="Biological Samples" price="5.0" priceItemId="6995"
+              quantity="250.0" quantityComplete="0.0" quoteId="1905" total="1250.0" unit="Sample"/>
+        <Item calculation="" categoryName="" isExpired="true" isExpiringSoon="true"
+              name="Hourly Charge - Project Management" platform="Biological Samples" price="99.0" priceItemId="7002"
+              quantity="20.5" quantityComplete="0.0" quoteId="1905" total="2029.5" unit="Hour"/>
+        <Item calculation="" categoryName="Sample Kit" isExpired="true" isExpiringSoon="true"
+              name="DNA/RNA Matrix Sample Kit Full Plate (49 - 96 Samples)" platform="Biological Samples" price="384.0"
+              priceItemId="5835" quantity="100.0" quantityComplete="109.0" quoteId="1905" total="38400.0" unit="Plate"/>
+        <Item calculation="" categoryName="Sample Processing" isExpired="true" isExpiringSoon="true"
+              name="DNA Quantification - Picogreen" platform="Biological Samples" price="2.5" priceItemId="5865"
+              quantity="9227.0" quantityComplete="10207.0" quoteId="1905" total="23067.5" unit="Sample"/>
+        <Item calculation="" categoryName="" isExpired="true" isExpiringSoon="true" name="Hourly Charge - Laboratory"
+              platform="Biological Samples" price="43.0" priceItemId="7001" quantity="15.0" quantityComplete="5.0"
+              quoteId="1905" total="645.0" unit="Hour"/>
+        <Item calculation="" categoryName="" isExpired="true" isExpiringSoon="true" name="Hourly Charge - Laboratory"
+              platform="Biological Samples" price="48.0" priceItemId="5879" quantity="12.0" quantityComplete="10.0"
+              quoteId="1905" total="576.0" unit="Hour"/>
+        <Item calculation="" categoryName="Sample Kit" isExpired="true" isExpiringSoon="true"
+              name="DNA/RNA Matrix Sample Kit Partial Plate (1 - 48 Samples)" platform="Biological Samples" price="5.5"
+              priceItemId="6964" quantity="248.0" quantityComplete="-34.0" quoteId="1905" total="1364.0" unit="Sample"/>
+        <Item calculation="" categoryName="Sample Plating" isExpired="true" isExpiringSoon="true"
+              name="Sample Plating (96 Well Plate)" platform="Biological Samples" price="192.0" priceItemId="7171"
+              quantity="10.0" quantityComplete="0.0" quoteId="1905" total="1920.0" unit="Plate"/>
+        <Item calculation="" categoryName="" isExpired="true" isExpiringSoon="true"
+              name="Hourly Charge - Project Management" platform="Biological Samples" price="96.0" priceItemId="5880"
+              quantity="53.5" quantityComplete="53.5" quoteId="1905" total="5136.0" unit="Hour"/>
+    </Quote>
     <Quote alphanumericId="BSP20P" approvalStatus="Funded" expirationDate="12/08/2010" financeContactFirstName="Tracey"
            financeContactLastName="Honan" financeContactUserName="honan@broadinstitute.org" id="2617"
            investigatorFirstName="Roger" investigatorLastName="Wiegand"

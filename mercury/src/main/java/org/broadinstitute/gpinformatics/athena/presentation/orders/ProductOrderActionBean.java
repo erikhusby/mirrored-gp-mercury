@@ -107,7 +107,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
@@ -293,8 +292,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private SampleDataSourceResolver sampleDataSourceResolver;
-
-    private QuoteService quoteService;
 
     private PriceListCache priceListCache;
 
@@ -732,7 +729,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private void doValidation(String action) {
+    protected void doValidation(String action) {
         requireField(editOrder.getCreatedBy(), "an owner", action);
         if (editOrder.getCreatedBy() != null) {
             String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
@@ -3672,11 +3669,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     protected void setSapService(SapIntegrationService sapService) {
         this.sapService = sapService;
-    }
-
-    @Inject
-    protected void setQuoteService(QuoteService quoteService) {
-        this.quoteService = quoteService;
     }
 
     @HandlesEvent(SAVE_SEARCH_DATA)
