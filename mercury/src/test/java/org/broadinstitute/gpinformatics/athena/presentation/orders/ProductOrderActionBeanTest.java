@@ -13,6 +13,7 @@ import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
@@ -23,6 +24,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrder
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -56,6 +58,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
@@ -89,6 +92,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -138,11 +143,15 @@ public class ProductOrderActionBeanTest {
     public static final long TEST_COLLECTION = 1062L;
     private PriceListCache priceListCache;
 
+    private QuoteService stubQuoteService = new QuoteServiceStub();
+
     private QuoteService mockQuoteService;
     public SapIntegrationService mockSAPService;
     public SAPProductPriceCache stubProductPriceCache;
     public ProductOrderDao mockProductOrderDao;
     public ProductOrder testOrder;
+    private BSPUserList mockBspUserList;
+    private JiraService mockJiraService;
 
 
     @BeforeMethod
@@ -161,9 +170,11 @@ public class ProductOrderActionBeanTest {
         actionBean.setProductPriceCache(stubProductPriceCache);
 
         mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
+        mockBspUserList = Mockito.mock(BSPUserList.class);
+        mockJiraService = Mockito.mock(JiraService.class);
         productOrderEjb = new ProductOrderEjb(mockProductOrderDao, Mockito.mock(ProductDao.class),
-                mockQuoteService, Mockito.mock(JiraService.class),Mockito.mock(UserBean.class),
-                Mockito.mock(BSPUserList.class),Mockito.mock(BucketEjb.class),Mockito.mock(SquidConnector.class),
+                mockQuoteService, mockJiraService,Mockito.mock(UserBean.class),
+                mockBspUserList,Mockito.mock(BucketEjb.class),Mockito.mock(SquidConnector.class),
                 Mockito.mock(MercurySampleDao.class),Mockito.mock(ProductOrderJiraUtil.class), mockSAPService,priceListCache,
                 stubProductPriceCache);
 
@@ -172,6 +183,8 @@ public class ProductOrderActionBeanTest {
         actionBean.setProductOrderEjb(productOrderEjb);
         actionBean.setProductOrderDao(mockProductOrderDao);
         actionBean.setSapService(mockSAPService);
+        actionBean.setBspUserList(mockBspUserList);
+        actionBean.setJiraService(mockJiraService);
 
         jsonObject = new JSONObject();
         pdo = newPdo();
@@ -322,6 +335,83 @@ public class ProductOrderActionBeanTest {
     public void testCanEmptyRinScoreBeUsedForOnRiskCalculation() {
         SampleData emptyRinScoreSample = getSampleDTOWithEmptyRinScore();
         Assert.assertTrue(emptyRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
+    }
+
+    /**
+     * Primarily testing the null pointer error found in GPLIM-6072, This test case sets up a Product order and
+     * validates that the do Validation method acts as it should.
+     *
+     * @throws Exception
+     */
+    public void testDoValidationMethodQuoteOnOrder() throws Exception {
+
+        pdo = ProductOrderTestFactory.createDummyProductOrder();
+        pdo.setQuoteId("BSP252");
+        pdo.addRegulatoryInfo(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
+        pdo.setAttestationConfirmed(true);
+
+
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> returnMaterials = new HashSet<>();
+        addPriceItemForProduct("BSP252", priceList, quoteItems, pdo.getProduct(), "10", "20", "10");
+        final SAPMaterial productMaterial =
+                new SAPMaterial(pdo.getProduct().getPartNumber(), "10", Collections.emptyMap(), Collections.emptyMap());
+        productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(productMaterial);
+
+        for (ProductOrderAddOn addOn : pdo.getAddOns()) {
+            addPriceItemForProduct("BSP252", priceList, quoteItems, addOn.getAddOn(), "20", "20", "20");
+            final SAPMaterial addonMaterial =
+                    new SAPMaterial(addOn.getAddOn().getPartNumber(), "20", Collections.emptyMap(), Collections.emptyMap());
+            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            returnMaterials.add(addonMaterial);
+        }
+
+        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        stubProductPriceCache.refreshCache();
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn((Collections.singletonList(pdo)));
+        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(), Mockito.anyString(), Mockito.any(ProductOrder.class)))
+                .thenReturn(new OrderCalculatedValues(BigDecimal.valueOf(pdo.getSamples().size()*10),Collections.emptySet()));
+
+        actionBean.setEditOrder(pdo);
+        actionBean.setQuoteService(mockQuoteService);
+
+        Mockito.when(mockBspUserList.getById(Mockito.any(Long.class))).thenReturn(new BspUser(1L, "", "squidUser@broadinstitute.org", "Squid", "User", Collections.<String>emptyList(),1L, "squiduser" ));
+        Mockito.when(mockJiraService.isValidUser(Mockito.anyString())).thenReturn(true);
+
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString()))
+                .then(new Answer<Quote>() {
+                    @Override
+                    public Quote answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        return stubQuoteService.getQuoteByAlphaId(pdo.getQuoteId());
+                    }
+                });
+
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
+
+        pdo.setQuoteId("MPG183");
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+        Assert.assertEquals(1, actionBean.getValidationErrors().size());
+        actionBean.clearValidationErrors();
+
+        pdo.setQuoteId("ScottInvalid");
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+        Assert.assertEquals(1, actionBean.getValidationErrors().size());
+        actionBean.clearValidationErrors();
+
+        pdo.setQuoteId(null);
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+        Assert.assertEquals(1, actionBean.getValidationErrors().size());
     }
 
     public void testPostReceiveOptions() throws Exception {

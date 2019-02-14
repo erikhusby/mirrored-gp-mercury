@@ -107,7 +107,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
@@ -253,7 +252,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProductOrderListEntryDao orderListEntryDao;
 
-    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -286,7 +284,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private BSPConfig bspConfig;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
     private JiraService jiraService;
 
     @Inject
@@ -294,8 +291,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private SampleDataSourceResolver sampleDataSourceResolver;
-
-    private QuoteService quoteService;
 
     private PriceListCache priceListCache;
 
@@ -733,7 +728,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private void doValidation(String action) {
+    protected void doValidation(String action) {
         requireField(editOrder.getCreatedBy(), "an owner", action);
         if (editOrder.getCreatedBy() != null) {
             String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
@@ -786,8 +781,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                             );
                         }
                     });
-                validateQuoteDetails(quote.get(), 0);
             }
+            validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
+                                                                                  editOrder.getQuoteId())), 0);
 
 
         } catch (QuoteServerException e) {
@@ -3671,11 +3667,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.sapService = sapService;
     }
 
-    @Inject
-    protected void setQuoteService(QuoteService quoteService) {
-        this.quoteService = quoteService;
-    }
-
     @HandlesEvent(SAVE_SEARCH_DATA)
     public Resolution saveSearchData() throws Exception {
         preferenceSaver.saveTableData(tableState);
@@ -3776,5 +3767,15 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public Collection<DisplayableItem> getReagentDesigns() {
         return makeDisplayableItemCollection(reagentDesignDao.findAll());
+    }
+
+    @Inject
+    public void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
+    }
+
+    @Inject
+    public void setJiraService(JiraService jiraService) {
+        this.jiraService = jiraService;
     }
 }
