@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.owasp.encoder.Encode;
@@ -363,7 +364,7 @@ public class SearchInstance implements Serializable {
                             try {
                                     propertyValues.add(mdyDateFormat.parse(value));
                                 } catch (ParseException e) {
-                                    throw new RuntimeException(e);
+                                    throw new InformaticsServiceException(e);
                                 }
                             break;
                         case BOOLEAN:
