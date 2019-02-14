@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessCo
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -1347,9 +1348,28 @@ public class ProductOrderActionBeanTest {
                 +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+priceItemPrice + " Calculated Value is " + calculatedValue);
     }
 
-    @Test(dataProvider = "sapConditionsForOrderEstimation")
-    public void testSapEligibleQuoteThenNot(boolean sapBlocked, boolean productBlockedFromSap) throws Exception {
-        Quote testQuote = stubQuoteService.getQuoteByAlphaId("MPG183");
+    /**
+     * This test case sort of does a full gamut of testing order estimation with regards to SAP and not SAP.  It
+     * utilizes the same inputs as the prior test case to show that the diverse quote setups will provide the same
+     * results.
+     *
+     * In order to adjust the needs of this test case to the varying setups of the quotes (specifically available funds)
+     * the price of each product is dynamically calculated using the size of the orders which will be used with respect
+     * to the available funding on the quote.  This way the orders being used will just use up all the remaining funds
+     * on the quote.  After that has been determined to calculate according to the estimates, the test will add one
+     * more sample to put the total unbilled count just over the funds remaining and thus causing an error.  That error
+     * will be considered a successful test.
+     * @param quoteId Identifier for the Quote to use.  Quote definition is pulled from quoteTestData.xml
+     * @param sapBlocked Set true if the test case is to mimic that all SAP access is blocked
+     * @param productBlockedFromSap Set true if the test case is to mimic that the price item for the product on the
+     *                              order is blocked from going to SAP
+     * @throws Exception
+     */
+//    @Test(dataProvider = "sapConditionsForOrderEstimation")
+    @Test(dataProvider = "quoteDataProvider")
+    public void testSapEligibleQuoteThenNot(String quoteId, boolean sapBlocked, boolean productBlockedFromSap)
+            throws Exception {
+        Quote testQuote = stubQuoteService.getQuoteByAlphaId(quoteId);
         final int sampleTestSize = 15;
 
         final SAPAccessControl enabledControl = new SAPAccessControl();
@@ -1426,18 +1446,22 @@ public class ProductOrderActionBeanTest {
         Set<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> materials = new HashSet<>();
 
+        // Using the size of the orders we plan to use, figure out the price for each product to make the funds
+        // remaining just cover our orders.  This way when we add a sample to any order, it will put us over the mark
+        // and allow us to test the condition of running out of funds
         final double primaryPriceItemPrice = (new BigDecimal(testQuote.getQuoteFunding().getFundsRemaining())
                 .divide(BigDecimal.valueOf(
                         testOrder.getSamples().size() +
-                        secondOrder.getSamples().size()*.5 +
-                        secondOrder.getLaneCount()*.25+
-                        nonSAPOrder.getSamples().size() +
-                        nonSAPOrder.getLaneCount()*.25),2, RoundingMode.FLOOR
+                        secondOrder.getSamples().size() * .5 + // Price of the second product will be 1/2 the primary price, so the samples will count as 1/2 a sample
+                        secondOrder.getLaneCount() * .25 + // Price of the addon product will be 1/4 the primary price, so lane count will count as 1/4 of a lane
+                        nonSAPOrder.getSamples().size() + // non sap order will use the primary product for its product
+                        nonSAPOrder.getLaneCount() * .25),2, RoundingMode.FLOOR
                 ))
                 .doubleValue();
 
-        double secondaryPrice = primaryPriceItemPrice*.5;
-        double addonPrice = primaryPriceItemPrice*.25;
+        double secondaryPrice = primaryPriceItemPrice * .5; // Define the price of the second product/price item to be half the price of the primary product/price item
+        double addonPrice = primaryPriceItemPrice * .25; // Define the price of the addon product/price item to be 1/4 the price of the primary product/price item
+
         final String primaryStringPrice = String.valueOf(primaryPriceItemPrice);
         final String secondaryStringPrice = String.valueOf(secondaryPrice);
         final String addonStringPrice = String.valueOf(addonPrice);
@@ -1505,6 +1529,31 @@ public class ProductOrderActionBeanTest {
                 new OrderCalculatedValues(new BigDecimal(calculatedMainOrderValue),
                         Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
                                 BigDecimal.valueOf(calculatedSecondOrderValue))));
+
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) (calculatedMainOrderValue + calculatedSecondOrderValue));
+
+        actionBean.validateQuoteDetails(testQuote, 0);
+
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
+
+        // Now set a custom price adjustment for the second order
+        final ProductOrderPriceAdjustment customPriceAdjustment =
+                new ProductOrderPriceAdjustment(BigDecimal.valueOf(secondaryPrice - .75d), null, null);
+        secondOrder.setCustomPriceAdjustment(customPriceAdjustment);
+
+        calculatedSecondOrderValue = secondOrder.getSamples().size() * (secondaryPrice - .75d) +
+                                    secondOrder.getLaneCount() * (addonPrice);
+
+        testCalculatedValues = new OrderCalculatedValues(BigDecimal.valueOf(calculatedMainOrderValue),
+                Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
+                        BigDecimal.valueOf(calculatedSecondOrderValue))));
 
         Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
                 SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
@@ -1822,6 +1871,11 @@ public class ProductOrderActionBeanTest {
         testCases.add(new Object[]{"GAN1GX2", true, false});
         testCases.add(new Object[]{"GAN1GX2", false, true});
         testCases.add(new Object[]{"GAN1GX2", false, false});
+
+        testCases.add(new Object[]{"MPG183", true, true}); // Single funded quote, Cost Object, LOT of money to use.
+        testCases.add(new Object[]{"MPG183", true, false});
+        testCases.add(new Object[]{"MPG183", false, true});
+        testCases.add(new Object[]{"MPG183", false, false});
 
         return testCases.iterator();
     }
