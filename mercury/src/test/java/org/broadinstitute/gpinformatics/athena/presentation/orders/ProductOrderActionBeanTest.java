@@ -349,7 +349,8 @@ public class ProductOrderActionBeanTest {
         pdo.setQuoteId("BSP252");
         pdo.addRegulatoryInfo(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
         pdo.setAttestationConfirmed(true);
-
+        pdo.setJiraTicketKey("");
+        pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
 
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
@@ -378,7 +379,8 @@ public class ProductOrderActionBeanTest {
         actionBean.setEditOrder(pdo);
         actionBean.setQuoteService(mockQuoteService);
 
-        Mockito.when(mockBspUserList.getById(Mockito.any(Long.class))).thenReturn(new BspUser(1L, "", "squidUser@broadinstitute.org", "Squid", "User", Collections.<String>emptyList(),1L, "squiduser" ));
+        Mockito.when(mockBspUserList.getById(Mockito.any(Long.class)))
+                .thenReturn(new BspUser(1L, "", "squidUser@broadinstitute.org", "Squid", "User", Collections.<String>emptyList(),1L, "squiduser" ));
         Mockito.when(mockJiraService.isValidUser(Mockito.anyString())).thenReturn(true);
 
         Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString()))
@@ -412,6 +414,65 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
         Assert.assertEquals(1, actionBean.getValidationErrors().size());
+
+        //////////////////////////////////////////////////////
+        // Now test some of the other validations
+        //////////////////////////////////////////////////////
+        actionBean.clearValidationErrors();
+
+        pdo.setQuoteId("BSP252");
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
+
+        pdo.setAttestationConfirmed(false);
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+        Assert.assertEquals(1, actionBean.getValidationErrors().size());
+        actionBean.clearValidationErrors();
+
+        pdo.setAttestationConfirmed(true);
+        final ResearchProject researchProject = pdo.getResearchProject();
+        pdo.setResearchProject(null);
+
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+        Assert.assertEquals(1, actionBean.getValidationErrors().size());
+        actionBean.clearValidationErrors();
+
+        pdo.setResearchProject(researchProject);
+        pdo.setCreatedBy(null);
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+        Assert.assertEquals(1, actionBean.getValidationErrors().size());
+        actionBean.clearValidationErrors();
+
+        pdo.setCreatedBy(1L);
+        Mockito.when(mockJiraService.isValidUser(Mockito.anyString())).thenReturn(false);
+
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+        Assert.assertEquals(1, actionBean.getValidationErrors().size());
+        actionBean.clearValidationErrors();
+
+        Product holdProduct = pdo.getProduct();
+        pdo.setProduct(null);
+
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+        Assert.assertEquals(1, actionBean.getValidationErrors().size());
+        actionBean.clearValidationErrors();
+
+        pdo.setProduct(holdProduct);
+        final ProductFamily holdProductFamily = pdo.getProduct().getProductFamily();
+        pdo.getProduct().setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
+        pdo.setLaneCount(0);
+
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+        Assert.assertEquals(1, actionBean.getValidationErrors().size());
+        actionBean.clearValidationErrors();
+
+        pdo.getProduct().setProductFamily(holdProductFamily);
     }
 
     public void testPostReceiveOptions() throws Exception {
