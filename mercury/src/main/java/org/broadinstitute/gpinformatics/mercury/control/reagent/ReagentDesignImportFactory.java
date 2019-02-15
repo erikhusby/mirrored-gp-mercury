@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.reagent;
 
 import clover.org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.DesignedReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -31,6 +32,9 @@ public class ReagentDesignImportFactory {
     @Inject
     private ReagentDesignDao reagentDesignDao;
 
+    @Inject
+    private DesignedReagentDao designedReagentDao;
+
     /**
      * From a spreadsheet, creates tubes and associates them with Reagent Designs.
      * @param inputStream spreadsheet with tube barcodes
@@ -49,8 +53,8 @@ public class ReagentDesignImportFactory {
 
             List<String> tubeBarcodes = processor.getTubeBarcodes();
             for (LabVessel labVessel: labVesselDao.findByListIdentifiers(tubeBarcodes)) {
-                messageCollection.addError("barcode", String.format(
-                        "Barcode \"%s\" is already in use.", labVessel.getLabel()));
+                messageCollection.addError(String.format(
+                        "Barcode \"%s\" is already exists.", labVessel.getLabel()));
             }
 
             Map<String, ReagentDesign> mapNameToReagentDesign = new HashMap<>();
@@ -69,21 +73,26 @@ public class ReagentDesignImportFactory {
 
                 String tubeBarcode = StringUtils.leftPad(dto.getTubeBarcode(), 10, '0');
 
-                DesignedReagent reagent = new DesignedReagent(reagentDesign);
-                reagent.setExpiration(dto.getExpirationDate());
-                reagent.setLot(dto.getLotNumber());
+                DesignedReagent reagent = designedReagentDao
+                        .findByReagentLotDesignAndExpiration(reagentDesign, dto.getLotNumber(),
+                                dto.getExpirationDate());
+                if (reagent == null) {
+                    reagent = new DesignedReagent(reagentDesign);
+                    reagent.setExpiration(dto.getExpirationDate());
+                    reagent.setLot(dto.getLotNumber());
+                    Metadata synthesisDate = new Metadata(Metadata.Key.SYNTHESIS_DATE, dto.getSynthesisDate());
+                    Metadata manufacturingDate = new Metadata(Metadata.Key.MANUFACTURING_DATE, dto.getManufacturingDate());
+                    Metadata storageConditions = new Metadata(Metadata.Key.STORAGE_CONDITIONS, dto.getStorageConditions());
+
+                    Set<Metadata> metadata = new HashSet<>(Arrays.asList(synthesisDate, manufacturingDate, storageConditions));
+                    reagent.addMetadata(metadata);
+                }
+
 
                 BarcodedTube barcodedTube = new BarcodedTube(tubeBarcode);
                 barcodedTube.addReagent(reagent);
                 barcodedTubeList.add(barcodedTube);
                 barcodedTube.setVolume(new BigDecimal(dto.getVolume()));
-
-                Metadata synthesisDate = new Metadata(Metadata.Key.SYNTHESIS_DATE, dto.getSynthesisDate());
-                Metadata manufacturingDate = new Metadata(Metadata.Key.MANUFACTURING_DATE, dto.getManufacturingDate());
-                Metadata storageConditions = new Metadata(Metadata.Key.STORAGE_CONDITIONS, dto.getStorageConditions());
-
-                Set<Metadata> metadata = new HashSet<>(Arrays.asList(synthesisDate, manufacturingDate, storageConditions));
-                reagent.addMetadata(metadata);
 
                 BigDecimal mass = new BigDecimal(dto.getMass());
                 barcodedTube.setMass(mass);

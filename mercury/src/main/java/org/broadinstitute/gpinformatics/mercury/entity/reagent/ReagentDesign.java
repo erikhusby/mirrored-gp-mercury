@@ -56,6 +56,10 @@ public class ReagentDesign implements BusinessObject {
         this.reagentType = reagentType;
     }
 
+    public Long getReagentDesignId() {
+        return reagentDesignId;
+    }
+
     public ReagentType getReagentType() {
         return reagentType;
     }

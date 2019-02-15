@@ -80,7 +80,7 @@ public class ReagentDesignImportProcessor {
     }
 
     public static class ReagentImportDto {
-        public static final String DATE_FORMAT = "MM/dd/yyyy";
+        public static final String DATE_FORMAT = "MM/dd/yy";
 
         @CsvBindByName(column = "Design ID")
         private String designId;
