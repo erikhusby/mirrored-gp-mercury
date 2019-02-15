@@ -71,7 +71,8 @@ public class OrspProjectDao {
         criteria.select(orspProject)
                 .where(cb.and(
                         cb.equal(orspProject.get(OrspProject_.projectKey), id),
-                        restrictType(orspProject)));
+                        restrictType(orspProject),
+                        orspProject.get(OrspProject_.status).in(OrspProject.USABLE_STATUSES)));
         OrspProject project;
         try {
             project = entityManager.createQuery(criteria).getSingleResult();
@@ -87,7 +88,8 @@ public class OrspProjectDao {
         Root<OrspProject> orspProjectRoot = criteria.from(OrspProject.class);
         criteria.select(orspProjectRoot).where(cb.and(
                 cb.equal(orspProjectRoot.get(OrspProject_.projectKey), ids),
-                restrictType(orspProjectRoot)
+                restrictType(orspProjectRoot),
+                orspProjectRoot.get(OrspProject_.status).in(OrspProject.USABLE_STATUSES)
         ));
         List<OrspProject> projects;
         try {
@@ -141,7 +143,8 @@ public class OrspProjectDao {
                 .where(cb.and(
                         consents.get(OrspProjectConsent_.key).get(OrspProjectConsentKey_.sampleCollection)
                                 .in(new HashSet<>(sampleCollections)),
-                        restrictType(orspProject)));
+                        restrictType(orspProject),
+                        orspProject.get(OrspProject_.status).in(OrspProject.USABLE_STATUSES)));
         try {
             return entityManager.createQuery(criteria).getResultList();
         } catch (NoResultException e) {
