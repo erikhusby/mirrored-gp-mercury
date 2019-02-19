@@ -58,26 +58,27 @@ public class ConcordanceCalculator {
                     fpGenotype.getCallConfidence().toString(), null,null));
         }
 
-        DownloadGenotypes downloadGenotypes = new DownloadGenotypes();
-        List<DownloadGenotypes.SnpGenotype> snpGenotypes = DownloadGenotypes.mercuryResultsToGenotypes(
-                fingerprints, haplotypes, 0.0);
-        DownloadGenotypes.cleanupGenotypes(snpGenotypes, haplotypes);
-        File fpFile;
         try {
-            SequenceUtil.assertSequenceDictionariesEqual(ref.getSequenceDictionary(),
-                    haplotypes.getHeader().getSequenceDictionary());
-            SortedSet<VariantContext> variantContexts = downloadGenotypes.makeVariantContexts(snpGenotypes,
-                    haplotypes, ref);
-            fpFile = File.createTempFile("Fingerprint", ".vcf");
+            DownloadGenotypes downloadGenotypes = new DownloadGenotypes();
+            File fpFile = File.createTempFile("Fingerprint", ".vcf");
             downloadGenotypes.OUTPUT = fpFile;
             downloadGenotypes.SAMPLE_ALIAS = sampleKey1;
+
+            List<DownloadGenotypes.SnpGenotype> snpGenotypes = DownloadGenotypes.mercuryResultsToGenotypes(
+                    fingerprints, haplotypes, 0.0);
+            List<DownloadGenotypes.SnpGenotype> consistentGenotypes = DownloadGenotypes.cleanupGenotypes(snpGenotypes,
+                    haplotypes);
+            SequenceUtil.assertSequenceDictionariesEqual(ref.getSequenceDictionary(),
+                    haplotypes.getHeader().getSequenceDictionary());
+            SortedSet<VariantContext> variantContexts = downloadGenotypes.makeVariantContexts(consistentGenotypes,
+                    haplotypes, ref);
             downloadGenotypes.writeVcf(variantContexts, Gender.valueOf(fingerprint.getGender().name()),
                     reference, ref.getSequenceDictionary());
+            return new picard.fingerprint.Fingerprint(sampleKey1, fpFile.toPath(), "");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        return new picard.fingerprint.Fingerprint(sampleKey1, fpFile.toPath(), "");
     }
 
     public void done() {
