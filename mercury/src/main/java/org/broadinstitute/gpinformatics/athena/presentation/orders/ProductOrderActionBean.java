@@ -82,6 +82,9 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -89,9 +92,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -105,7 +105,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -295,7 +294,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private SampleDataSourceResolver sampleDataSourceResolver;
 
-    @Inject
     private QuoteService quoteService;
 
     private PriceListCache priceListCache;
@@ -773,32 +771,30 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             if (quote != null) {
                 ProductOrder.checkQuoteValidity(quote);
-                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
-                    for (Funding funding : fundingLevel.getFunding()) {
-                        if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                            final int numDaysBetween =
-                                    DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
-                            if (numDaysBetween > 0 && numDaysBetween < 45) {
-                                addMessage("The Funding Source " + funding.getDisplayName() + " on " +
-                                           quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
-                                           " days. If it is likely this work will not be completed by then, please work on "
-                                           + "updating the Funding Source so Billing Errors can be avoided.");
-                            }
+                final String[] error = new String[1];
+                quote.getFunding().stream()
+                    .filter(Funding::isFundsReservation)
+                    .forEach(funding -> {
+                        int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                        if (numDaysBetween > 0 && numDaysBetween < 45) {
+                            addMessage(
+                                String.format("The Funding Source %s on %s  Quote expires in %d days. If it is likely "
+                                              + "this work will not be completed by then, please work on updating the "
+                                              + "Funding Source so Billing Errors can be avoided.",
+                                    funding.getDisplayName(), quote.getAlphanumericId(), numDaysBetween)
+                            );
                         }
-                    }
-                }
+                    });
             }
 
-            if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
-            }
+            validateQuoteDetails(quote, 0);
+
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
-        } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
-        } catch (InvalidProductException | SAPIntegrationException e) {
+        } catch (InvalidProductException |
+            SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " +
-                                     editOrder.getQuoteId() +": " +e.getMessage());
+                                     editOrder.getQuoteId() + ": " + e.getMessage());
             logger.error(e);
         }
 
@@ -818,14 +814,13 @@ public class ProductOrderActionBean extends CoreActionBean {
      * remaining on the quote
      *  @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
      *                  collection of orders to include in evaluating and the funds remaining
-     * @param errorLevel indicator for if the user should see a validation error or just a warning
      */
-    private void validateQuoteDetails(ProductOrder productOrder, final ErrorLevel errorLevel, boolean countOpenOrders)
+    private void validateQuoteDetails(ProductOrder productOrder, boolean countOpenOrders)
             throws InvalidProductException, SAPIntegrationException {
         Quote quote = validateQuote(productOrder);
 
         if (quote != null) {
-            validateQuoteDetails(quote, errorLevel, countOpenOrders, 0);
+            validateQuoteDetails(quote, 0);
         }
     }
 
@@ -835,66 +830,41 @@ public class ProductOrderActionBean extends CoreActionBean {
      * refelcted on the order.
      *
      * The scenario for this is when the user clicks on the "Add Samples" button of a placed order
-     *  @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
+     * @param productOrder   Identifier for The quote which the user intends to use.  From this we can determine the
      *                  collection of orders to include in evaluating and the funds remaining
-     * @param errorLevel indicator for if the user should see a validation error or just a warning
-     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
- *                        Pending
      * @param additionalSamplesCount Number of extra samples to be considered which are not currently
      */
-    private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder, final ErrorLevel errorLevel,
-                                                      boolean countOpenOrders, int additionalSamplesCount)
+    private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder, int additionalSamplesCount)
             throws InvalidProductException, QuoteServerException, SAPIntegrationException {
         Quote quote = validateQuote(productOrder);
         ProductOrder.checkQuoteValidity(quote);
         if (quote != null) {
-            validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
+            validateQuoteDetails(quote, additionalSamplesCount);
         }
     }
 
     /**
      * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
      * remaining on the quote
-     *
-     * @param quote  The quote which the user intends to use.  From this we can determine the collection of orders to
+     *  @param quote  The quote which the user intends to use.  From this we can determine the collection of orders to
      *               include in evaluating and the funds remaining
-     * @param errorLevel indicator for if the user should see a validation error or just a warning
-     * @param countCurrentUnPlacedOrder indicator for if the current order should be added.  Typically used if it is Draft or
-     *                        Pending
      * @param additionalSampleCount
      */
-    protected void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
-                                      int additionalSampleCount) throws InvalidProductException,
+    protected void validateQuoteDetails(Quote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
-            addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
+            addGlobalValidationError(unFundedMessage);
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
         double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
         double valueOfCurrentOrder = 0;
 
-        if (fundsRemaining <= 0d ||
-            (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
-            String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
-            addMessageBasedOnErrorLevel(errorLevel, inssuficientFundsMessage);
-        }
-    }
-
-    /**
-     * Helper to determine if the returned message will be considered an full on validation error or simply a warning
-     * @param errorLevel Enum to trigger the logic for what message level is desired
-     * @param multiFundingLevelMessage Message to display to the user
-     */
-    private void addMessageBasedOnErrorLevel(ErrorLevel errorLevel, String multiFundingLevelMessage) {
-        switch (errorLevel) {
-        case ERROR:
-            addGlobalValidationError(multiFundingLevelMessage);
-            break;
-        case WARNING:
-            addMessage("WARNING: " +multiFundingLevelMessage);
-            break;
+        if (fundsRemaining <= 0d || (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
+            String insufficientFundsMessage =
+                "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
+            addGlobalValidationError(insufficientFundsMessage);
         }
     }
 
@@ -912,7 +882,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             calculatedValues = sapService
                     .calculateOpenOrderValues(addedSampleCount, foundQuote.getAlphanumericId(), productOrder);
         } catch (SAPIntegrationException e) {
-            logger.info("Attempting to calculate order from SAP yeilded an error");
+            logger.info("Attempting to calculate order from SAP yielded an error", e);
         }
 
         Set<String> sapOrderIDsToExclude = new HashSet<>();
@@ -932,6 +902,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
                 sapOrderIDsToExclude.add(orderValue.getSapOrderID());
             }
+        } else if (productOrder != null) {
+
+            // This is not a SAP quote.
+            ordersWithCommonQuote.add(productOrder);
         }
 
         return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote, sapOrderIDsToExclude);
@@ -1409,6 +1383,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getQuoteFunding")
     public Resolution getQuoteFunding() {
+        JSONObject item = getQuoteFundingJson();
+
+        return createTextResolution(item.toString());
+    }
+
+    public JSONObject getQuoteFundingJson() {
         JSONObject item = new JSONObject();
 
         try {
@@ -1426,39 +1406,30 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONArray fundingDetails = new JSONArray();
 
                 final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
-
+                Funding funding = null;
                 if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
-                    for (FundingLevel fundingLevel : quoteFunding.getFundingLevel(true)) {
+                    funding = quote.getFunding().stream().findFirst().orElse(null);
+                }
 
-                        if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
-                            for (Funding funding:fundingLevel.getFunding()) {
-                                if (StringUtils.isNotBlank(funding.getFundingType())) {
-                                    if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                                        JSONObject fundingInfo = new JSONObject();
-                                        fundingInfo.put("grantTitle", funding.getDisplayName());
-                                        fundingInfo.put("grantEndDate",
-                                                DateUtils.getDate(funding.getGrantEndDate()));
-                                        fundingInfo.put("grantNumber", funding.getGrantNumber());
-                                        fundingInfo.put("grantStatus", funding.getGrantStatus());
+                if (funding == null) {
+                    item.put("error", "This quote has no active Funding Sources.");
+                } else {
+                    if (funding.isFundsReservation()) {
+                        try {
+                            JSONObject fundingInfo = new JSONObject();
+                            fundingInfo.put("grantTitle", funding.getDisplayName());
+                            fundingInfo.put("grantEndDate", DateUtils.getDate(funding.getGrantEndDate()));
+                            fundingInfo.put("grantNumber", funding.getGrantNumber());
+                            fundingInfo.put("grantStatus", funding.getGrantStatus());
 
-                                        final Date today = new Date();
-                                        fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,funding)));
-                                        fundingInfo.put("daysTillExpire",
-                                                DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
-                                        fundingDetails.put(fundingInfo);
-                                    }
-                                }
-                        /*
-                        This really only needs to loop once since the information that is retrieved will be the same for each
-                        funding instance under fundingLevel
-                        */
-
-                                break;
-                            }
+                            fundingInfo.put("activeGrant", FundingLevel.isGrantActiveForDate(todayTruncated, funding));
+                            fundingInfo.put("daysTillExpire",
+                                DateUtils.getNumDaysBetween(todayTruncated, funding.getGrantEndDate()));
+                            fundingDetails.put(fundingInfo);
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
                         }
                     }
-                } else {
-                    item.put("error", "This quote has no active Funding Sources.");
                 }
                 item.put("fundingDetails", fundingDetails);
             }
@@ -1471,8 +1442,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 // Don't really care if this gets an exception.
             }
         }
-
-        return createTextResolution(item.toString());
+        return item;
     }
 
     @DefaultHandler
@@ -1783,13 +1753,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if this order is not destined to go to SAP, validate Quote order values and only send a warning if
             there is an issue
             */
-            if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(editOrder, ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
-            }
-        } catch (QuoteServerException e) {
-            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
-        } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+            validateQuoteDetails(editOrder, !editOrder.hasJiraTicketKey());
         } catch (InvalidProductException | SAPIntegrationException ipe) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
         }
@@ -2664,14 +2628,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = ADD_SAMPLES_ACTION)
     public void addSampleExtraValidations() throws Exception {
         try {
-            if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetailsWithAddedSamples(editOrder, ErrorLevel.ERROR,
-                        !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());
-            }
+                validateQuoteDetailsWithAddedSamples(editOrder, stringToSampleList(addSamplesText).size());
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
-        } catch (QuoteNotFoundException e) {
-            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
         } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +e.getMessage());
         }
@@ -3709,6 +3668,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     protected void setSapService(SapIntegrationService sapService) {
         this.sapService = sapService;
+    }
+
+    @Inject
+    protected void setQuoteService(QuoteService quoteService) {
+        this.quoteService = quoteService;
     }
 
     @HandlesEvent(SAVE_SEARCH_DATA)

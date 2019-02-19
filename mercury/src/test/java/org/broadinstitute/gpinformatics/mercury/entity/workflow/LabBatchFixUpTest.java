@@ -1802,8 +1802,8 @@ public class LabBatchFixUpTest extends Arquillian {
 
 
     /*
-     * This test removes samples from an LCSET.  It reads its parameters from a file,
-     * testdata/RemoveLabBatchSample.txt, so it can be used for other similar fixups, without writing a new test.
+     * This test removes samples (starting vessels and bucket entries) from an LCSET.
+     * To simplify reuse, parameters come from file testdata/RemoveLabBatchSample.txt
      * The file needs a ticket id, an lcset, and comma-delimited list of samples.
      * For example:
      * SUPPORT-1234
@@ -1822,11 +1822,52 @@ public class LabBatchFixUpTest extends Arquillian {
         LabBatch labBatch = labBatchDao.findByName(lcsetName);
         Assert.assertNotNull(labBatch, "Cannot find LCSET: '" + lcsetName + "'");
         List<String> samplesToRemove = Arrays.asList(lines.get(2).split(","));
-        removeSamples(samplesToRemove, labBatch);
+        removeStartingVesselsAndBucketEntries(samplesToRemove, labBatch);
 
         labBatchDao.persist(new FixupCommentary(lines.get(0) + " Removed samples from " + lcsetName));
         labBatchDao.flush();
         userTransaction.commit();
+    }
+
+    private List<LabBatchStartingVessel> removeStartingVesselsAndBucketEntries(List<String> sampleNames,
+            LabBatch labBatch) {
+        List<LabBatchStartingVessel> vesselsToRemove = new ArrayList<>();
+        Set<BucketEntry> bucketEntriesToRemove = new HashSet<>();
+        List<String> sampleNamesFound = new ArrayList<>();
+        for (LabBatchStartingVessel startingVessel : labBatch.getLabBatchStartingVessels()) {
+            Set<SampleInstanceV2> sampleInstances = startingVessel.getLabVessel().getSampleInstancesV2();
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                String sample = sampleInstance.getRootOrEarliestMercurySampleName();
+                if (sampleNames.contains(sample)) {
+                    vesselsToRemove.add(startingVessel);
+                    sampleNamesFound.add(sample);
+                    for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+                        if (bucketEntry.getLabBatch().equals(labBatch)) {
+                            bucketEntriesToRemove.add(bucketEntry);
+                        }
+                    }
+                }
+            }
+        }
+        Assert.assertEquals(sampleNamesFound, sampleNames, labBatch.getBatchName() + " does not contain " +
+                StringUtils.join(CollectionUtils.subtract(sampleNames, sampleNamesFound), ", "));
+
+        System.out.println("Removing starting vessels and bucket entries for samples " +
+                StringUtils.join(sampleNames, ", ") + " from " + labBatch.getBatchName());
+
+        for (LabBatchStartingVessel vesselToRemove : vesselsToRemove) {
+            labBatch.getLabBatchStartingVessels().remove(vesselToRemove);
+            vesselToRemove.getLabVessel().getLabBatchStartingVessels().remove(vesselToRemove);
+        }
+        for (BucketEntry bucketEntry : bucketEntriesToRemove) {
+            labBatch.getBucketEntries().remove(bucketEntry);
+            LabVessel labVessel = bucketEntry.getLabVessel();
+            labVessel.getBucketEntries().remove(bucketEntry);
+            ProductOrder productOrder = bucketEntry.getProductOrder();
+            productOrder.getBucketEntries().remove(bucketEntry);
+            labBatchDao.remove(bucketEntry);
+        }
+        return vesselsToRemove;
     }
 
     /**

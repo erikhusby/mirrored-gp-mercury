@@ -16,6 +16,7 @@ public class SampleInfo {
     private String position;
     private String status;
     private String originalMaterialType;
+    private boolean canBeRackScanned;
 
 
     /** No-arg constructor required for use by the JAX-RS framework. */
@@ -24,13 +25,14 @@ public class SampleInfo {
     }
 
     public SampleInfo(String manufacturerBarcode, String sampleId, String vesselType, String position, String status,
-                      String originalMaterialType) {
+                      String originalMaterialType, boolean canBeRackScanned) {
         this.manufacturerBarcode = manufacturerBarcode;
         this.sampleId = sampleId;
         this.vesselType = vesselType;
         this.position = position;
         this.status = status;
         this.originalMaterialType = originalMaterialType;
+        this.canBeRackScanned = canBeRackScanned;
     }
 
     public String getManufacturerBarcode() {
@@ -55,5 +57,9 @@ public class SampleInfo {
 
     public String getOriginalMaterialType() {
         return originalMaterialType;
+    }
+
+    public boolean isCanBeRackScanned() {
+        return canBeRackScanned;
     }
 }

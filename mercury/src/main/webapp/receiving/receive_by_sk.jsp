@@ -2,7 +2,7 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"/>
-<stripes:layout-render name="/layout.jsp" pageTitle="Receive By SK" sectionTitle="Receive By SK">
+<stripes:layout-render name="/layout.jsp" pageTitle="Receive By SK-ID" sectionTitle="Receive By SK-ID">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -17,6 +17,7 @@
                         {"bSortable": true} ,
                         {"bSortable": true} ,
                         {"bSortable": true} ,
+                        {"bSortable": true},
                         {"bSortable": true}
                     ]
                 });
@@ -39,54 +40,52 @@
                     <input type="text" id="rackBarcode" autocomplete="off" name="rackBarcode" value="${actionBean.rackBarcode}"
                            class="clearable barcode unique" required="" aria-required="true">
                 </div>
-                <div class="control-group">
-                    <div class="controls">
-                        <stripes:submit value="Search" id="scanBtn" class="btn btn-primary"
-                                        name="findSkId"/>
-                    </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <stripes:submit value="Search" id="scanBtn" class="btn btn-primary"
+                                    name="findSkId"/>
                 </div>
             </div>
-
         </stripes:form>
         <c:if test="${actionBean.showLayout}">
             <stripes:form beanclass="${actionBean.class.name}"
                           id="showScanForm" class="form-horizontal">
                 <stripes:hidden name="rackBarcode" value="${actionBean.rackBarcode}"/>
-                <stripes:hidden name="isPlate" value="${actionBean.sampleKitInfo.isPlate()}"/>
+                <stripes:hidden name="isPlate" value="${actionBean.sampleKitInfo.plate}"/>
                 <table id="samplesTable" class="sample-checkbox table simple">
                     <thead>
                     <tr>
                         <th width="30px">
                             <input type="checkbox" class="sample-checkAll" title="Check All"/>
-                            <span id="count" class="samples-checkedCount"></span>
+                            <span id="count" class="sample-checkedCount"></span>
                         </th>
                         <th>Sample Info</th>
                         <th>Sample Kit</th>
                         <th>Status</th>
                         <th>Material Type</th>
+                        <th>Original Material Type</th>
                     </tr>
                     </thead>
                     <tbody>
                     <c:forEach items="${actionBean.sampleRows}" var="sampleData">
                         <tr class="sample-row">
                             <td>
-                                    <stripes:checkbox class="sample-checkbox" name="selectedSampleIds"
-                                                      value="${sampleData.sampleId}"/>
+                                <stripes:checkbox class="sample-checkbox" name="selectedSampleIds"
+                                                  value="${sampleData.sampleId}"/>
                             </td>
                             <td>${sampleData.sampleId}</td>
                             <td>${sampleData.sampleKitId}</td>
                             <td>${sampleData.sampleStatus}</td>
+                            <td>${sampleData.materialType}</td>
                             <td>${sampleData.originalMaterialType}</td>
                         </tr>
                     </c:forEach>
                     </tbody>
                 </table>
-                <div class="control-group">
-                    <div class="controls">
-                        <stripes:submit id="receiveToBsp" name="receiveBySkToBsp" value="Receive To BSP"
-                                        class="btn btn-primary"/>
-                    </div>
-                </div>
+                <br/>
+                <stripes:submit id="receiveToBsp" name="receiveBySkToBsp" value="Receive To BSP"
+                                class="btn btn-primary"/>
             </stripes:form>
         </c:if>
     </stripes:layout-component>
