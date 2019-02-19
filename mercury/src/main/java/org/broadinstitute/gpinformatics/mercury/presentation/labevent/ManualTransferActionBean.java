@@ -6,6 +6,7 @@ import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.collections4.CollectionUtils;
@@ -18,6 +19,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
+import org.broadinstitute.gpinformatics.infrastructure.decoder.BarcodeDecoderRestClient;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -36,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.barcode.generated.DecodeResponse;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -62,9 +65,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.annotation.Nullable;
+import javax.imageio.ImageIO;
 import javax.inject.Inject;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -96,6 +104,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String RACK_SCAN_EVENT = "rackScan";
     public static final String PARSE_LIMS_FILE_ACTION = "parseLimsFile";
     public static final String SKIP_LIMS_FILE_ACTION = "skipLimsFile";
+    public static final String DECODE_IMAGE_ACTION = "decodeImage";
     private final String syntheticBarcode = String.valueOf(System.currentTimeMillis());
 
     /** Parameter from batch workflow page. */
@@ -132,6 +141,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     private boolean isParseLimsFile;
 
+    private boolean isUseWebCam;
+
     private Map<VesselPosition, Boolean> mapPositionToDepleteFlag;
 
     private Map<Integer, Boolean> depleteAll;
@@ -150,6 +161,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     @Inject
     private MercurySampleDao mercurySampleDao;
+
+    @Inject
+    private BarcodeDecoderRestClient barcodeDecoderRestClient;
+
+    private String imageFile;
+    private String eventClass;
 
     @Inject
     private SampleDataFetcher sampleDataFetcher;
@@ -372,6 +389,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
         assignSyntheticBarcodes();
         isParseLimsFile = manualTransferDetails.isLimsFile();
+        isUseWebCam = manualTransferDetails.isUseWebCam();
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
@@ -432,6 +450,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public Resolution skipLimsFile() {
         chooseLabEventType();
         isParseLimsFile = false;
+        isUseWebCam = false;
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
@@ -545,6 +564,34 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
+    public String getImageFile() {
+        return imageFile;
+    }
+
+    public void setImageFile(String imageFile) {
+        this.imageFile = imageFile;
+    }
+
+    public String getEventClass() {
+        return eventClass;
+    }
+
+    public void setEventClass(String eventClass) {
+        this.eventClass = eventClass;
+    }
+
+    @HandlesEvent(DECODE_IMAGE_ACTION)
+    public Resolution decodeBarcodeImage() throws IOException {
+        String base64Image = getImageFile().split(",")[1];
+        byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
+        BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+        File outputfile = File.createTempFile("DecodedImage", "png");
+        ImageIO.write(img, "png", outputfile);
+        DecodeResponse decodeResult = barcodeDecoderRestClient.analyzeImage(outputfile, getEventClass());
+        ObjectMapper mapper = new ObjectMapper();
+        return new StreamingResolution("application/json", mapper.writeValueAsString(decodeResult));
+    }
+
     private void validateBarcodes(@Nullable LabBatch labBatch, MessageCollection messageCollection) {
         switch (manualTransferDetails.getMessageType()) {
             case PLATE_EVENT:
@@ -636,7 +683,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                     }
                                     for (SampleInstanceV2 sample : currentLabVessel.getSampleInstancesV2()) {
                                         String rootSampleName = sample.getMercuryRootSampleName();
-                                        rootSampleIds.add(rootSampleName);
+                                        if (rootSampleName == null) {
+                                            messageCollection.addError("No root sample for " +
+                                                    currentLabVessel.getLabel());
+                                        } else {
+                                            rootSampleIds.add(rootSampleName);
+                                        }
                                         mapPositionToSampleIds.put(receptacleType.getPosition(), rootSampleName);
                                     }
                                 }
@@ -856,6 +908,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 }
             }
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            LabEventFactory.trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
             for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
                 LabVessel labVessel = stringLabVesselEntry.getValue();
                 String barcode = stringLabVesselEntry.getKey();
@@ -884,9 +937,15 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             }
                         }
                     }
-                    if (labBatch != null && direction == Direction.SOURCE &&
-                            !labVessel.getWorkflowLabBatches().contains(labBatch)) {
-                        messageCollection.addError(direction.getText() + " " + barcode + " is not in batch " + labBatch.getBatchName());
+
+                    if (labBatch != null && direction == Direction.SOURCE) {
+                        Collection<LabBatch> nearestWorkflowLabBatches = labVessel.getNearestWorkflowLabBatches();
+                        List<LabBatch> workflowLabBatches = labVessel.getWorkflowLabBatches();
+                        if (!workflowLabBatches.contains(labBatch) && nearestWorkflowLabBatches != null &&
+                            !nearestWorkflowLabBatches.contains(labBatch)) {
+                            messageCollection.addError(direction.getText() + " " + barcode + " is not in batch " + labBatch
+                                            .getBatchName());
+                        }
                     }
                 }
             }
@@ -894,7 +953,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 messageCollection.addWarning("Batch has " + labBatch.getLabBatchStartingVessels().size() +
                         " vessels, but " + barcodes.size() + " were scanned.");
             }
-            if (labBatch != null) {
+            if (labBatch != null && required && direction == Direction.SOURCE) {
                 List<String> expectedBarcodes = labBatch.getLabBatchStartingVessels()
                         .stream().map(lbsv -> lbsv.getLabVessel().getLabel()).collect(Collectors.toList());
                 for (String missingBarcode : CollectionUtils.removeAll(expectedBarcodes, barcodes)) {
@@ -1337,6 +1396,14 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     public void setParseLimsFile(boolean parseLimsFile) {
         isParseLimsFile = parseLimsFile;
+    }
+
+    public boolean isUseWebCam() {
+        return isUseWebCam;
+    }
+
+    public void setUseWebCam(boolean useWebCam) {
+        isUseWebCam = useWebCam;
     }
 
     public Map<VesselPosition, Boolean> getMapPositionToDepleteFlag() {

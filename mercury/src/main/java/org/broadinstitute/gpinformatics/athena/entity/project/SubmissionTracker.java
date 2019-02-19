@@ -24,6 +24,9 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Represents the association between a submitted sample and its' submission identifier.  This will aid the system
@@ -96,6 +99,14 @@ public class SubmissionTracker implements ISubmissionTuple {
 
     public SubmissionTracker(String project, String submittedSampleName, String version, FileType fileType, String processingLocation, String dataType) {
         this(null, project, submittedSampleName, version, fileType, processingLocation, dataType);
+    }
+
+    public static Map<String, SubmissionTracker> uuidMap(List<SubmissionTracker> submissionTrackers) {
+        Map<String, SubmissionTracker> uuidMap = new HashMap<>(submissionTrackers.size());
+        for (SubmissionTracker submissionTracker : submissionTrackers) {
+            uuidMap.put(submissionTracker.createSubmissionIdentifier(), submissionTracker);
+        }
+        return uuidMap;
     }
 
     /**
@@ -176,6 +187,14 @@ public class SubmissionTracker implements ISubmissionTuple {
 
     public Date getRequestDate() {
         return requestDate;
+    }
+
+    public void setProcessingLocation(String processingLocation) {
+        this.processingLocation = processingLocation;
+    }
+
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
     }
 
     @Override

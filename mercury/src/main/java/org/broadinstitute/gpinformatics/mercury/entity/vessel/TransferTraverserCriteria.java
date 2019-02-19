@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
@@ -769,9 +771,10 @@ public abstract class TransferTraverserCriteria {
         public TraversalControl evaluateVesselPreOrder(Context context) {
 
             LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+            boolean shouldStop = false;
             if( contextVesselEvent != null ) {
                 if (evaluteVesselEvent(contextVesselEvent, context.getTraversalDirection()) == TraversalControl.StopTraversing) {
-                    return TraversalControl.StopTraversing;
+                    shouldStop = true;
                 }
             } else {
                 // No VesselEvent means we're on starting vessel, process any in place events
@@ -781,12 +784,12 @@ public abstract class TransferTraverserCriteria {
                 }
                 for (LabEvent inPlaceEvent : contextVessel.getInPlaceLabEvents()) {
                     if (evaluateEvent(contextVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
-                        return TraversalControl.StopTraversing;
+                        shouldStop = true;
                     }
                 }
             }
 
-            return TraversalControl.ContinueTraversing;
+            return shouldStop?TraversalControl.StopTraversing:TraversalControl.ContinueTraversing;
         }
 
         private TraversalControl evaluteVesselEvent(LabVessel.VesselEvent contextVesselEvent, TraversalDirection traversalDirection){
@@ -802,34 +805,28 @@ public abstract class TransferTraverserCriteria {
                 targetVessel = contextVesselEvent.getTargetVesselContainer().getEmbedder();
             }
 
-            if( traversalDirection == TraversalDirection.Ancestors ) {
-                for (LabEvent inPlaceEvent : sourceVessel.getInPlaceLabEvents()) {
-                    if (evaluateEvent(sourceVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
-                        return TraversalControl.StopTraversing;
-                    }
-                }
-                if( useTargetVessels ) {
-                    // Some ancestry logic wants the event target vessel
-                    if (evaluateEvent(targetVessel, contextEvent) == TraversalControl.StopTraversing) {
-                        return TraversalControl.StopTraversing;
-                    }
-                } else {
-                    // Ancestor by default uses source vessel
-                    if (evaluateEvent(sourceVessel, contextEvent) == TraversalControl.StopTraversing) {
-                        return TraversalControl.StopTraversing;
-                    }
-                }
-            } else {
+            boolean shouldStop = false;
+            if( useTargetVessels ) {
+                // Some logic wants the event target vessel
                 for (LabEvent inPlaceEvent : targetVessel.getInPlaceLabEvents()) {
                     if (evaluateEvent(targetVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
-                        return TraversalControl.StopTraversing;
+                        shouldStop = true;
                     }
                 }
                 if (evaluateEvent(targetVessel, contextEvent) == TraversalControl.StopTraversing) {
-                    return TraversalControl.StopTraversing;
+                    shouldStop = true;
+                }
+            } else {
+                for (LabEvent inPlaceEvent : sourceVessel.getInPlaceLabEvents()) {
+                    if (evaluateEvent(sourceVessel, inPlaceEvent) == TraversalControl.StopTraversing) {
+                        shouldStop = true;
+                    }
+                }
+                if (evaluateEvent(sourceVessel, contextEvent) == TraversalControl.StopTraversing) {
+                    shouldStop = true;
                 }
             }
-            return TraversalControl.ContinueTraversing;
+            return shouldStop?TraversalControl.StopTraversing:TraversalControl.ContinueTraversing;
         }
 
         private void addVesselForType(LabVessel vessel, LabEvent event){
@@ -1039,6 +1036,65 @@ public abstract class TransferTraverserCriteria {
 
         public Map<LabEventType, VesselAndPosition> getMapTypeToVesselPosition() {
             return mapTypeToVesselPosition;
+        }
+    }
+
+    public static class RootSample extends TransferTraverserCriteria {
+        private Set<MercurySample> rootSamples = new HashSet<>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabVessel contextVessel = context.getContextVessel();
+            if (contextVessel == null) {
+                return TraversalControl.ContinueTraversing;
+            } else {
+                boolean incomingTransfers = !contextVessel.getTransfersTo().isEmpty();
+                boolean stop = false;
+                for (MercurySample mercurySample : contextVessel.getMercurySamples()) {
+                    if (mercurySample.isRoot() || incomingTransfers) {
+                        rootSamples.add(mercurySample);
+                        stop = true;
+                    }
+                }
+                return stop ? TraversalControl.StopTraversing : TraversalControl.ContinueTraversing;
+            }
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Set<MercurySample> getRootSamples() {
+            return rootSamples;
+        }
+    }
+
+    public static class Fingerprints extends TransferTraverserCriteria {
+        Set<Fingerprint> fingerprints = new HashSet<>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabVessel contextVessel = context.getContextVessel();
+            if (contextVessel != null) {
+                boolean stop = false;
+                for (MercurySample mercurySample : contextVessel.getMercurySamples()) {
+                    Set<Fingerprint> sampleFingerprints = mercurySample.getFingerprints();
+                    if (!sampleFingerprints.isEmpty()) {
+                        fingerprints.addAll(sampleFingerprints);
+                        stop = true;
+                    }
+                }
+                return stop ? TraversalControl.StopTraversing : TraversalControl.ContinueTraversing;
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Set<Fingerprint> getFingerprints() {
+            return fingerprints;
         }
     }
 }

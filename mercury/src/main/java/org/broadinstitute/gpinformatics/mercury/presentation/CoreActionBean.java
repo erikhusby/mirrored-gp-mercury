@@ -47,6 +47,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -68,6 +69,8 @@ import java.util.Map;
 public abstract class CoreActionBean implements ActionBean, MessageReporter {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
+    public static final String ERROR_CONTACT_SUPPORT =
+        "Please contact support using the <span class='badge'>Feedback</span> link above.";
     public static final String DATE_PATTERN = "MM/dd/yyyy";
     private static final String DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm";
     private static final String PRECISE_DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm:ss.S";
@@ -428,7 +431,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     }
 
     public String getError(Map<String, Object> requestScope) {
-        return ((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getMessage();
+        return Encode.forHtml(((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getMessage());
     }
 
     public StackTraceElement[] getStackTrace(Map<String, Object> requestScope) {

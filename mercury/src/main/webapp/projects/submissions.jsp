@@ -47,6 +47,7 @@
 
         .submissionControls {
             width: auto;
+            margin-bottom: 20px;
             display: none;
         }
 
@@ -80,9 +81,10 @@
             padding: 12px;
             left: -12px;
         }
-
+        .autoWidth {
+            width: auto;
+        }
     </style>
-    <script src="${ctxpath}/resources/scripts/jquery.pasteSelect.js" type="text/javascript"></script>
     <link rel="stylesheet" href="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.min.css">
     <script type="text/javascript" src="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.jquery.min.js"></script>
     <script type="text/javascript" src="${ctxpath}/resources/scripts/dataTables-filterColumn.js"></script>
@@ -92,16 +94,38 @@
             return "<li>" + item.dropdownItem + extraCount + '</li>';
         }
 
-        $j(document).ready(function () {
-            $j("#submissionSamples").pasteSelect({
-                columnNames: ["BioSample"],
-                noun: "Sample"
+        function initPasteBarcodesDeprecated() {
+
+            // GPLIM-5660
+            // Inform users that this is deprecated on this page and show them how do do this using filters.
+            var $pasteInBarcodesDisabledDialog = $j("#listOfBarcodesDisabledForm").dialog({
+                buttons: {
+                    Ok: function () {
+                        $j(this).dialog("close");
+                    }
+                },
+                autoOpen: false,
+                title: "This functionality has been deprecated",
+                width: '475',
+                height: 'auto',
+                modal: true,
             });
+            $("#PasteBarcodesListDisabled").on("click", function () {
+                $pasteInBarcodesDisabledDialog.dialog("open");
+            });
+        }
+
+        $j(document).ready(function () {
+
+            // GPLIM-5660 This should be removed in a future release.
+            initPasteBarcodesDeprecated();
 
             $j("#bioProject").tokenInput(
                     "${ctxpath}/projects/project.action?bioProjectAutocomplete=", {
                         hintText: "Type a Study Name",
+                        <enhance:out escapeXml="false">
                         prePopulate: ${actionBean.ensureStringResult(actionBean.bioProjectTokenInput.completeData)},
+                        </enhance:out>
                         tokenDelimiter: "${actionBean.bioProjectTokenInput.separator}",
                         preventDuplicates: true,
                         tokenLimit: 1,
@@ -126,7 +150,10 @@
             }
 
             var oTable;
-            $j("${submissionsTabSelector}").click(function () {
+            <enhance:out escapeXml="false">
+                var submissionsTabSelector = "${submissionsTabSelector}";
+            </enhance:out>
+            $j(submissionsTabSelector).click(function () {
                 function buildMessage(jqXHR) {
                     var responseText = jqXHR.responseJSON;
                     if (responseText && responseText.stripesMessages) {
@@ -194,17 +221,19 @@
                     }
                     return data;
                 }
+                enableDefaultPagingOptions();
                 oTable = $j('#submissionSamples').dataTable({
                     "bDeferRender": true,
                     "oLanguage": {
-                        "sInfo": "_TOTAL_ submissions displayed.",
-                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, BSP and Picard. This may take a few minutes."
+                        "sInfo": "Displaying _START_ to _END_ of _TOTAL_ submission entries",
+                        "sInfoFiltered": "(filtered from _MAX_)",
+                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes."
                     },
                     "oTableTools": ttExportDefines,
                     "bStateSave": true,
                     "bProcessing": true,
                     "bInfo": true,
-                    "sDom": "r<'row-fluid'<'span12'T>><'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' i>'span2'>>>t<'row-fluid'<'span6'><'span6'p>>",
+                    "sDom": "r<'#filtering.accordion'<'row-fluid autoWidth'<'span12' <'columnFilter'i>><'row-fluid'<'span12'f>>>> <'row-fluid evenHeight'<'span6' l><'span6'T>>t   <'row-fluid'<'span6' l><'span6'p>>",
                     "sAjaxSource": '${ctxpath}/projects/project.action',
                     "fnServerData": function (sSource, aoData, fnCallback, oSettings) {
                         aoData.push({"name": "researchProject", "value": "${researchProject}"});
@@ -343,10 +372,12 @@
 
                 includeAdvancedFilter(oTable, "#submissionSamples");
                 $j('#submissionSamples').one('init', function (event, oSettings, aaData) {
+                    <enhance:out escapeXml="false">
                     $j('#submissionSamples').filterColumn("Current Status", ${actionBean.submissionStatusesJson}, {
                         selectedValues: ${actionBean.preselectedStatusesJson},
                         filteringText: "#columnFilter_filteringText .headerText"
                     });
+                    </enhance:out>
                 });
             }
             });
@@ -394,7 +425,7 @@
         <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>"
                         value="Post Selected Submissions" class="btn submissionControls"
                         disabled="${!actionBean.validateViewOrPostSubmissions(true)}"/>
-        <a href="javascript:void(0)" id="PasteBarcodesList"
+        <a href="javascript:void(0)" id="PasteBarcodesListDisabled"
            title="Select samples using a pasted-in list of values.">Choose via list of samples...</a>
     </div>
     <table class="table simple" id="submissionSamples">
@@ -432,4 +463,15 @@
                     disabled="${!actionBean.validateViewOrPostSubmissions(true)}" style="display:none;"/>
 
 </stripes:form>
+    <%--GPLIM-5660 This div should be removed in a future release.--%>
+    <div id="listOfBarcodesDisabledForm" class="ui-dialog-content ui-widget-content" style="display:none;">
+    <p style="font-weight: bold">To choose from a list of samples, paste the sample list into the text filter:</p>
+        <div style="margin-left: 2em; border-style: dashed; border-width: 1px; padding: 5px; border-color: grey;">
+            <img src="${ctxpath}/images/deprecate/filter-any.png" alt="">
+        </div>
+        <br/>
+        <p style="font-weight: bold">and click the "select all" checkbox at the top of the table:</p>
+    <div style="margin-left: 2em; border-style: dashed; border-width: 1px; padding: 5px; border-color: grey;">
+            <img src="${ctxpath}/images/deprecate/check-all.png" alt="">
+        </div>
 </stripes:layout-definition>

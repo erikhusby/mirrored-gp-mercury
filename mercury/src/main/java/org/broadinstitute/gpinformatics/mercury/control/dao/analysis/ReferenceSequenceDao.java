@@ -90,20 +90,6 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessObjectFi
         if (values.length != 2) {
             throw new IllegalArgumentException("Reference Sequence business key must only contain a name and a version: ");
         }
-
-        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
-        final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
-        Root<ReferenceSequence> root = query.from(ReferenceSequence.class);
-        Predicate namePredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.name), values[0]);
-        Predicate versionPredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.version), values[1]);
-
-        query.where(criteriaBuilder.and(namePredicate, versionPredicate));
-
-        try {
-            return getEntityManager().createQuery(query).getSingleResult();
-        } catch (NoResultException exception) {
-            // return null if there is no entity
-            return null;
-        }
+        return findByNameAndVersion(values[0], values[1]);
     }
 }

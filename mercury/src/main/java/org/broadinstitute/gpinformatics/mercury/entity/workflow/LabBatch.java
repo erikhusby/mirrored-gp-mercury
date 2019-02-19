@@ -243,6 +243,12 @@ public class LabBatch {
         createdOn = new Date();
     }
 
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
+                    @Nonnull LabBatchType labBatchType, @Nonnull Date date) {
+        this(batchName, starterVessels, labBatchType);
+        createdOn = date;
+    }
+
     /** Specialized FCT or MISEQ constructor for test purposes. Puts the starter vessel on all flowcell lanes. */
     public LabBatch(@Nonnull String batchName, @Nonnull LabBatchType labBatchType,
                     IlluminaFlowcell.FlowcellType flowcellType, @Nonnull LabVessel starterVessel,
@@ -440,8 +446,8 @@ public class LabBatch {
         this.workflowName = workflowName;
     }
 
-    public void setWorkflow(@Nonnull Workflow workflow) {
-        workflowName = workflow.getWorkflowName();
+    public void setWorkflow(@Nonnull String workflow) {
+        workflowName = workflow;
     }
 
     public String getBatchDescription() {
@@ -474,11 +480,11 @@ public class LabBatch {
      * <p/>
      * {@code [Product name] [Product workflow Version]: [comma separated list of PDO names]}
      */
-    public static String generateBatchName(@Nonnull Workflow workflow, @Nonnull Collection<String> pdoNames) {
+    public static String generateBatchName(@Nonnull String workflow, @Nonnull Collection<String> pdoNames) {
 
         StringBuilder batchName = new StringBuilder();
 
-        batchName.append(workflow.getWorkflowName()).append(": ");
+        batchName.append(workflow).append(": ");
         boolean first = true;
 
         for (String currentPdo : pdoNames) {

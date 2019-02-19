@@ -45,6 +45,12 @@ public interface ColumnTabulation {
     String evalUiDisplayOutputExpression(Object value, SearchContext context);
 
     /**
+     * Whether to apply XSS escaping.
+     * @return true if needs central escaping, false if already escaped by the output expression
+     */
+    boolean mustEscape();
+
+    /**
      * returns the results of evaluating the expression for the view column header.
      *
      * @param entity  root of object graph that expression navigates.

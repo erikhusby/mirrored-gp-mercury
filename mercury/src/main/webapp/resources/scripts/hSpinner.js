@@ -9,8 +9,8 @@ $j.widget('mercury.hSpinner', {
         this._super(key, value);
 
         if (key == 'disabled') {
-            this.controlButtons.attr('disabled', value);
-            this.controlButtons.toggleClass('ui-state-disabled', value);
+            $j(this.controlButtons).attr('disabled', value);
+            $j(this.controlButtons).toggleClass('ui-state-disabled', value);
             this.element.attr('disabled', value);
         }
     },
@@ -37,8 +37,8 @@ $j.widget('mercury.hSpinner', {
     _create: function () {
         elementJs = this.element.get(0);
         var container = elementJs.parentNode;
+        var origContainer = container;
         var parent = container.parentNode;
-        parent.removeChild(container);
         // this.element.remove();
         // $originalElement = this.element.remove();
         this.inputName = elementJs.name;
@@ -69,7 +69,7 @@ $j.widget('mercury.hSpinner', {
         if (this.options.initialVisibility==='hidden'){
             this.hidden(true)
         }
-        parent.appendChild(container);
+        parent.replaceChild(container, origContainer);
         $container=$j(container);
         // $container.append(this.$incButton);
 

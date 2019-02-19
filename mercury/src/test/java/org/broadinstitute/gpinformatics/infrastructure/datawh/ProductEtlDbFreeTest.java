@@ -34,7 +34,7 @@ public class ProductEtlDbFreeTest {
     private static final int GUARANTEED_CYCLE_TIME_SECONDS = 99999;
     private static final int SAMPLES_PER_WEEK = 200;
     private static final boolean IS_TOP_LEVEL_PRODUCT = true;
-    private static final Workflow WORKFLOW = Workflow.AGILENT_EXOME_EXPRESS;
+    private static final String WORKFLOW = Workflow.AGILENT_EXOME_EXPRESS;
     private static final String PRODUCT_FAMILY_NAME = "Test ProductFamily";
     private static final long PRIMARY_PRICE_ITEM_ID = 987654321L;
     private static final String AGGREGATION_DATA_TYPE = "Exome";
@@ -92,7 +92,7 @@ public class ProductEtlDbFreeTest {
         EasyMock.expect(product.getGuaranteedCycleTimeSeconds()).andReturn(GUARANTEED_CYCLE_TIME_SECONDS);
         EasyMock.expect(product.getSamplesPerWeek()).andReturn(SAMPLES_PER_WEEK);
         EasyMock.expect(product.isTopLevelProduct()).andReturn(IS_TOP_LEVEL_PRODUCT);
-        EasyMock.expect(product.getWorkflow()).andReturn(WORKFLOW).anyTimes();
+        EasyMock.expect(product.getWorkflowName()).andReturn(WORKFLOW).anyTimes();
         EasyMock.expect(product.getProductFamily()).andReturn(family).anyTimes();
         EasyMock.expect(product.getPrimaryPriceItem()).andReturn(primaryPriceItem).anyTimes();
         EasyMock.expect(product.getAggregationDataType()).andReturn(AGGREGATION_DATA_TYPE).anyTimes();
@@ -128,7 +128,7 @@ public class ProductEtlDbFreeTest {
         Assert.assertEquals(parts[i++], String.valueOf(GUARANTEED_CYCLE_TIME_SECONDS));
         Assert.assertEquals(parts[i++], String.valueOf(SAMPLES_PER_WEEK));
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(IS_TOP_LEVEL_PRODUCT));
-        Assert.assertEquals(parts[i++], WORKFLOW.getWorkflowName());
+        Assert.assertEquals(parts[i++], WORKFLOW);
         Assert.assertEquals(parts[i++], PRODUCT_FAMILY_NAME);
         Assert.assertEquals(parts[i++], String.valueOf(PRIMARY_PRICE_ITEM_ID));
         Assert.assertEquals(parts[i++], String.valueOf(AGGREGATION_DATA_TYPE));

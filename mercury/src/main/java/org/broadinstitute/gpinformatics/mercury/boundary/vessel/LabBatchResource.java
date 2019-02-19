@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -150,15 +151,17 @@ public class LabBatchResource {
         if (labBatch == null) {
             labBatch = new LabBatch(labBatchBean.getBatchId(), labVesselSet,
                     labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
-                            LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
+                            LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW,
+                    labBatchBean.getCreatedDate());
         }
-        addToBatch(labVesselSet, labBatch, labBatchBean.getWorkflowName(), labBatchBean.getUsername(), bucketEjb);
+        addToBatch(labVesselSet, labBatch, labBatchBean.getWorkflowName(), labBatchBean.getUsername(),
+                labBatchBean.getCreatedDate(), bucketEjb);
 
         return labBatch;
     }
 
     public static Set<ProductOrder> addToBatch(Set<LabVessel> labVesselSet, LabBatch labBatch, String productFamilyName,
-            String username, BucketEjb bucketEjb) {
+            String username, Date createdDate, BucketEjb bucketEjb) {
         // Create bucket entries (if any) and add to batch
         LabVessel.loadSampleDataForBuckets(labVesselSet);
         ListMultimap<ProductOrder, LabVessel> mapPdoToVessels = ArrayListMultimap.create();
@@ -169,13 +172,18 @@ public class LabBatchResource {
                 SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
                 List<ProductOrder> productOrders = new ArrayList<>();
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                    Product product = productOrderSample.getProductOrder().getProduct();
-                    if (product.getProductFamily().getName().equals(productFamilyName) ||
-                            // Some array / sequencing combo products are in family "Exome"
-                            productFamilyName.equals(ProductFamily.WHOLE_GENOME_GENOTYPING) &&
-                                    product.getWorkflow().name().contains("INFINIUM")) {
-                        if (productOrderSample.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
-                            productOrders.add(productOrderSample.getProductOrder());
+                    // For backfill from GAP, the bean specifies the PDO
+                    if (productOrderSample.getProductOrder().getBusinessKey().equals(productFamilyName)) {
+                        productOrders.add(productOrderSample.getProductOrder());
+                    } else {
+                        Product product = productOrderSample.getProductOrder().getProduct();
+                        if (product.getProductFamily().getName().equals(productFamilyName) ||
+                                // Some array / sequencing combo products are in family "Exome"
+                                productFamilyName.equals(ProductFamily.WHOLE_GENOME_GENOTYPING) &&
+                                        StringUtils.containsIgnoreCase(product.getWorkflowName(), "INFINIUM")) {
+                            if (productOrderSample.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
+                                productOrders.add(productOrderSample.getProductOrder());
+                            }
                         }
                     }
                 }
@@ -200,6 +208,7 @@ public class LabBatchResource {
             }
         }
 
+        int offset = 0;
         for (ProductOrder productOrder : mapPdoToVessels.keySet()) {
             // Remove vessels that have already been bucketed for this PDO
             List<LabVessel> vessels = mapPdoToVessels.get(productOrder);
@@ -218,10 +227,15 @@ public class LabBatchResource {
             }
 
             // Get existing PDOs
+            Date localCreatedDate = createdDate;
+            if (offset > 0) {
+                // Avoid unique constraint on bucket lab events
+                localCreatedDate = new Date(createdDate.getTime() + offset);
+            }
             Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                     bucketEjb.applyBucketCriteria(noBucketEntryVessels,
                             productOrder, username,
-                            ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS);
+                            ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS, localCreatedDate);
             ProductWorkflowDefVersion productWorkflowDefVersion = workflowBucketEntriesPair.getLeft();
             if (productWorkflowDefVersion == null) {
                 throw new RuntimeException("No workflow for " + productOrder.getJiraTicketKey());
@@ -229,6 +243,7 @@ public class LabBatchResource {
             labBatch.setWorkflowName(productWorkflowDefVersion.getProductWorkflowDef().getName());
             // todo jmt check that bucket entries count matches lab vessel count?
             bucketEjb.moveFromBucketToBatch(workflowBucketEntriesPair.getRight(), labBatch);
+            offset++;
         }
         return mapPdoToVessels.keySet();
     }

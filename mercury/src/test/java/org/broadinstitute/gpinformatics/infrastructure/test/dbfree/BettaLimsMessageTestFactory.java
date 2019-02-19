@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -214,6 +215,26 @@ public class BettaLimsMessageTestFactory {
         plateTransferEvent.setSourcePlate(buildRack(sourceRackBarcode));
 
         plateTransferEvent.setPositionMap(buildPositionMap(targetRackBarcode, targetTubeBarcodes));
+        plateTransferEvent.setPlate(buildRack(targetRackBarcode));
+
+        return plateTransferEvent;
+    }
+
+    public PlateTransferEventType buildRackToRack(String eventType, String sourceRackBarcode, Map<String, String> sourceTubeBarcodesToWellNames,
+                                                  String targetRackBarcode, List<String> targetTubeBarcodes) {
+        PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
+        setStationEventData(eventType, plateTransferEvent);
+
+        plateTransferEvent.setSourcePositionMap(buildPositionMap(sourceRackBarcode, sourceTubeBarcodesToWellNames));
+        plateTransferEvent.setSourcePlate(buildRack(sourceRackBarcode));
+        // Create a map of the destination barcodes matched to source positions.
+        Map<String, String> destinationTubeBarcodesToWellNames = new HashMap<>();
+        Iterator<String> destinationIterator = targetTubeBarcodes.iterator();
+        for (String sourceWell : sourceTubeBarcodesToWellNames.values()) {
+            destinationTubeBarcodesToWellNames.put(destinationIterator.next(), sourceWell);
+        }
+
+        plateTransferEvent.setPositionMap(buildPositionMap(targetRackBarcode, destinationTubeBarcodesToWellNames));
         plateTransferEvent.setPlate(buildRack(targetRackBarcode));
 
         return plateTransferEvent;

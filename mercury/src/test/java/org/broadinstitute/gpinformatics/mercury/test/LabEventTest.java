@@ -99,7 +99,10 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcell
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCell10XEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SingleCellSmartSeqEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
@@ -1644,6 +1647,80 @@ public class LabEventTest extends BaseEventTest {
     }
 
     /**
+     * Build object graph for Single Cell messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testSingleCellSmartSeq() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK * 4;
+        ProductOrder productOrder = ProductOrderTestFactory.buildSingleCellProductOrder(numSamples);
+        List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "SC_cDNAPlate");
+        int numSampleInstances = 0;
+        Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
+        List<LabVessel> labVesselList = new ArrayList<>();
+        Map<String, PlateWell> mapWellToPlateWell = new HashMap<>();
+        for (StaticPlate sourceplate: sourcePlates) {
+            int sampleInstances = sourceplate.getSampleInstancesV2().size();
+            numSampleInstances += sampleInstances;
+            mapBarcodeToPlate.put(sourceplate.getLabel(), sourceplate);
+            for (PlateWell plateWell: sourceplate.getContainerRole().getContainedVessels()) {
+                labVesselList.add(plateWell);
+                mapWellToPlateWell.put(plateWell.getLabel(), plateWell);
+            }
+        }
+
+        LabBatch workflowBatch = new LabBatch("Single Cell SmartSeq Batch",
+                new HashSet<>(labVesselList),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.SINGLE_CELL_SMART_SEQ);
+        bucketPlateBatchAndDrain(mapWellToPlateWell, productOrder, workflowBatch, "1");
+
+        SingleCellSmartSeqEntityBuilder scEntityBuilder = runSingleCellSmartSeqProcess(sourcePlates, numSampleInstances, "SC");
+        LabVessel finalTube =
+                scEntityBuilder.getBulkSpriRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        Set<SampleInstanceV2> sampleInstancesV2 = finalTube.getSampleInstancesV2();
+        Assert.assertEquals(sampleInstancesV2.size(), numSampleInstances, "Wrong number of sample instances");
+    }
+
+    /**
+     * Build object graph for Single Cell messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testSingleCell10X() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK;
+        ProductOrder productOrder = ProductOrderTestFactory.buildSingleCellProductOrder(numSamples);
+        List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "SC_cDNAPlate");
+        int numSampleInstances = 0;
+        Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
+        List<LabVessel> labVesselList = new ArrayList<>();
+        Map<String, PlateWell> mapWellToPlateWell = new HashMap<>();
+        for (StaticPlate sourceplate: sourcePlates) {
+            int sampleInstances = sourceplate.getSampleInstancesV2().size();
+            numSampleInstances += sampleInstances;
+            mapBarcodeToPlate.put(sourceplate.getLabel(), sourceplate);
+            for (PlateWell plateWell: sourceplate.getContainerRole().getContainedVessels()) {
+                labVesselList.add(plateWell);
+                mapWellToPlateWell.put(plateWell.getLabel(), plateWell);
+            }
+        }
+
+        StaticPlate sourcePlate = sourcePlates.get(0);
+
+        LabBatch workflowBatch = new LabBatch("Single Cell 10X Batch",
+                new HashSet<>(labVesselList),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.SINGLE_CELL_10X);
+        bucketPlateBatchAndDrain(mapWellToPlateWell, productOrder, workflowBatch, "1");
+
+        SingleCell10XEntityBuilder entityBuilder = runSingleCell10XProcess(sourcePlate, numSamples, "SC");
+        StaticPlate finalPlate = entityBuilder.getDoubleSidedSpriPlate();
+        Set<SampleInstanceV2> sampleInstancesV2 = finalPlate.getSampleInstancesV2();
+        Assert.assertEquals(sampleInstancesV2.size(), numSamples, "Wrong number of sample instances");
+    }
+
+
+    /**
      * Build object graph for infinium messages
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
@@ -2176,13 +2253,50 @@ public class LabEventTest extends BaseEventTest {
 
     }
 
+    public void testCustomSelectionHyperPrep() {
+//        Controller.startCPURecording(true);
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildPcrFreeHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
+
+        String[] expectedEventNames = {
+                "PicoTransfer",
+                "PicoTransfer",
+                "FingerprintingAliquot",
+                "PicoTransfer",
+                "PicoTransfer",
+                "FingerprintingPlateSetup",
+                "ShearingAliquot",
+                "PicoTransfer",
+                "PicoTransfer",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "PCRPlusPondRegistration",
+                "SelectionPoolingTransfer",
+                "SelectionConcentrationTransfer",
+                "SelectionHybSetup",
+                "SelectionCatchRegistration",
+                "PoolingTransfer",
+                "EcoTransfer",
+                "NormalizationTransfer",
+                "DenatureTransfer",
+                "StripTubeBTransfer",
+                "FlowcellTransfer",
+        };
+        testGenomeWorkflow(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS_HYPER_PREP, expectedEventNames,
+                Workflow.CUSTOM_SELECTION);
+    }
+
     private void testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
-                                    String[] expectedEventNames, Workflow workflow) {
+                                    String[] expectedEventNames, String workflow) {
         testGenomeWorkflow(productOrder, pondType, expectedEventNames, workflow, "1", false);
     }
 
     private QtpEntityBuilder testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
-                                                String[] expectedEventNames, Workflow workflow, String barcodeSuffix,
+                                                String[] expectedEventNames, String workflow, String barcodeSuffix,
                                                 boolean includeUMI) {
         Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pair =
                 testUpToBooking(productOrder, pondType, workflow, barcodeSuffix,
@@ -2190,10 +2304,15 @@ public class LabEventTest extends BaseEventTest {
         QtpEntityBuilder qtpEntityBuilder = pair.getRight();
         Map<String, BarcodedTube> mapBarcodeToTube = pair.getLeft();
         int numSeqReagents = 1;
-        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP)
+        if (workflow.equals(Workflow.CUSTOM_SELECTION)) {
+            numSeqReagents = 2;
+        }
+        if (workflow.equals(Workflow.ICE_EXOME_EXPRESS_HYPER_PREP)) {
             numSeqReagents = 3;
-        if (includeUMI)
+        }
+        if (includeUMI) {
             numSeqReagents++;
+        }
 
         LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -2225,7 +2344,7 @@ public class LabEventTest extends BaseEventTest {
     }
 
     private Pair<Map<String, BarcodedTube>, QtpEntityBuilder> testUpToBooking(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
-                                                                              Workflow workflow, String barcodeSuffix,
+                                                                              String workflow, String barcodeSuffix,
                                                                               LibraryConstructionEntityBuilder.Indexing indexing,
                                                                               LibraryConstructionEntityBuilder.Umi umi) {
         expectedRouting = SystemRouter.System.MERCURY;
@@ -2244,7 +2363,7 @@ public class LabEventTest extends BaseEventTest {
         String platingBarcode = null;
         Map<String, BarcodedTube> mapBarcodeToDaughterTube = null;
         Map<String, BarcodedTube> mapBarcodeToPlatingVessel = null;
-        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
+        if (workflow.equals(Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) || workflow.equals(Workflow.CUSTOM_SELECTION)) {
             CrspPicoEntityBuilder crspPicoEntityBuilder = new CrspPicoEntityBuilder(getBettaLimsMessageTestFactory(),
                     getLabEventFactory(), getLabEventHandler(), "", "CRSP", mapBarcodeToTube).invoke();
             platingTubeFormation = (TubeFormation) crspPicoEntityBuilder.getShearingAliquotEntity().
@@ -2268,7 +2387,7 @@ public class LabEventTest extends BaseEventTest {
         }
 
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder;
-        if (workflow == Workflow.CELL_FREE_HYPER_PREP_UMIS && umi != LibraryConstructionEntityBuilder.Umi.NONE) {
+        if (workflow.equals(Workflow.CELL_FREE_HYPER_PREP_UMIS) && umi != LibraryConstructionEntityBuilder.Umi.NONE) {
             LibraryConstructionCellFreeUMIEntityBuilder libraryConstructionProcessWithUMI =
                     runLibraryConstructionProcessWithUMI(mapBarcodeToPlatingVessel,
                             platingTubeFormation, umi);
@@ -2314,13 +2433,20 @@ public class LabEventTest extends BaseEventTest {
 
         QtpEntityBuilder qtpEntityBuilder = null;
 
-        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
+        if (workflow.equals(Workflow.ICE_EXOME_EXPRESS_HYPER_PREP)) {
             IceEntityBuilder iceEntityBuilder = runHyperPrepIceProcess(
                     Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()),
                     "1");
             qtpEntityBuilder = runQtpProcess(iceEntityBuilder.getCatchEnrichRack(),
                     iceEntityBuilder.getCatchEnrichBarcodes(),
                     iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), barcodeSuffix);
+        } else if (workflow.equals(Workflow.CUSTOM_SELECTION)) {
+            SelectionEntityBuilder selectionEntityBuilder = runSelectionProcess(
+                    Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()),
+                    "1");
+            qtpEntityBuilder = runQtpProcess(selectionEntityBuilder.getCatchRack(),
+                    selectionEntityBuilder.getCatchTubeBarcodes(),
+                    selectionEntityBuilder.getMapBarcodeToCatchTubes(), barcodeSuffix);
         } else {
             qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),

@@ -148,7 +148,8 @@ plate / rack.
                             <c:if test="${volumeType == 'text'}">
                                 </br>
                             </c:if>
-                            <input type="${volumeType}"
+                            <input type="${volumeType}" id="${source ? 'src' : 'dest'}RcpVol${stationEventIndex}_${receptacleIndex}"
+                                    id="${source ? 'src' : 'dest'}RcpVol${stationEventIndex}_${receptacleIndex}"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].volume"
                                     value="${actionBean.findReceptacleAtPosition(positionMap[0], geometry.vesselPositions[receptacleIndex]).volume}"
                                     class="clearable smalltext" autocomplete="off" placeholder="volume"/>

@@ -1,11 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.bioproject;
 
 
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.ConnectionException;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -14,7 +15,9 @@ import org.testng.annotations.Test;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BioProjectServiceDownTest {
@@ -72,6 +75,11 @@ public class BioProjectServiceDownTest {
         @Override
         public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor) {
             return null;
+        }
+
+        @Override
+        public List<SubmissionTracker> findOrphans(Map<String, SubmissionTracker> submissionTrackerMap) {
+            return Collections.emptyList();
         }
     }
 

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -71,7 +72,16 @@ public enum ColumnEntity {
             },
             PreferenceType.GLOBAL_LAB_METRIC_RUN_COLUMN_SETS, PreferenceType.USER_LAB_METRIC_RUN_COLUMN_SETS,
             new PreferenceType[]{PreferenceType.GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES,
-                    PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES});
+                    PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES}),
+    PRODUCT_ORDER("ProductOrder", "Product Order", "productOrderId", ProductOrder.class,
+            new IdGetter() {
+                @Override
+                public String getId(Object entity) {
+                    return ((ProductOrder) entity).getProductOrderId().toString();
+                }
+            },PreferenceType.GLOBAL_PRODUCT_ORDER_COLUMN_SETS, PreferenceType.USER_PRODUCT_ORDER_COLUMN_SETS,
+            new PreferenceType[]{PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES,
+                    PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES});
 
     private IdGetter idGetter;
     private String entityName;

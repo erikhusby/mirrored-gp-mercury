@@ -27,6 +27,7 @@
                     </p>
 
                     <p class="text-error" style="font-weight: bold; margin-left: 50px;">
+                        <!-- todo jmt XSS -->
                         ${actionBean.getError(requestScope)}
                     </p>
 
