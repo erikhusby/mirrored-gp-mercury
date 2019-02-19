@@ -91,7 +91,6 @@ public class SampleInstanceEntity {
     private Integer readLength;
     private Date uploadDate;
     private Boolean pairedEndRead;
-    private String comments;
     private Integer numberLanes;
     private String aggregationParticle;
     private String insertSize;
@@ -212,13 +211,6 @@ public class SampleInstanceEntity {
                 this.uploadDate = new Date();
             }
         }
-    }
-    public String getComments() {
-        return comments;
-    }
-
-    public void setComments(String comments) {
-        this.comments = comments;
     }
 
     @Nonnull

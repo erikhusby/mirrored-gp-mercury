@@ -1918,4 +1918,12 @@
             <column name="FP_GENOTYPE_ID"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="GPLIM-6065-1" author="epolk">
+        <dropColumn columnName="COMMENTS" tableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-2" author="epolk">
+        <dropColumn columnName="COMMENTS" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+    </changeSet>
+
 </databaseChangeLog>

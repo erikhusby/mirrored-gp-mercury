@@ -4,52 +4,29 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean"/>
 
-<script type="text/javascript">
-    $j(document).ready(function () {
-        $(".control-group").removeClass("control-group");
-        $(".control-label").removeClass("control-label");
-        $(".controls").removeClass("controls");
-        $j("#vesselBarcode").attr("value", $("#vesselLabel").val());
-        $j("#accordion").accordion({collapsible: true, active: false, heightStyle: "content", autoHeight: false});
-    });
-</script>
-
-<stripes:layout-render name="/layout.jsp" pageTitle="External Library Upload" sectionTitle="External Library Upload">
-    <stripes:layout-component name="extraHead">
-    </stripes:layout-component>
+<stripes:layout-render name="/layout.jsp" pageTitle="Upload External Library Spreadsheet" sectionTitle="External Library Upload">
+    <stripes:layout-component name="extraHead"/>
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="uploadForm">
-            <div class="form-horizontal">
-                <div class="control-group">
-                    <div class="controls">
-                        <div style="float: left; width: 25%;">
-                            <stripes:select id="spreadsheetType" name="spreadsheetType">
-                                <stripes:option value="">Select a Spreadsheet Type</stripes:option>
-                                <stripes:options-enumeration
-                                        enum="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean.SpreadsheetType"
-                                        label="displayName"/>
-                            </stripes:select>
-                        </div>
-                        <div style="float: right; width: 75%;">
-                            <stripes:submit name="downloadTemplate" value="View Template" class="btn btn-primary"/>
-                        </div>
-                    </div>
+            <h5>Instantiate samples/libraries via spreadsheet upload.
+                &MediumSpace; &MediumSpace;
+                <stripes:submit name="downloadTemplate" value="View Template" class="btn btn-primary"
+                                title="Click for a blank spreadsheet with valid headers and dropdowns showing all valid choices."/>
+            </h5>
+            <div class="control-group">
+                <div class="controls" style="padding: 20px;">
+                    <stripes:file name="samplesSpreadsheet" id="samplesSpreadsheet"
+                                  title="Choose the .xlsx file to upload."/>
                 </div>
-                <div class="control-group">
-                    <div class="controls">
-                        <stripes:file name="samplesSpreadsheet" id="samplesSpreadsheet"/>
-                    </div>
-                    <div style="margin-left: 180px; width: auto;">
-                        <stripes:checkbox id="overWriteFlag" name="overWriteFlag"/>
-                        <stripes:label for="overWriteFlag">
-                            Overwrite previous upload
-                        </stripes:label>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <div class="controls">
-                        <stripes:submit name="uploadSamples" value="Upload Samples" class="btn btn-primary"/>
-                    </div>
+                <div style="padding-left: 20px;">
+                    <span>
+                        <stripes:submit name="upload" value="Upload" class="btn btn-primary"
+                                        title="Mercury reads the file and creates or updates the samples and tubes."/>
+                        &MediumSpace;
+                        <stripes:checkbox id="overWriteFlag" name="overWriteFlag"
+                                          title="This must be checked to update existing samples and tubes."/>
+                        &MediumSpace;Overwrite previous upload
+                    </span>
                 </div>
             </div>
         </stripes:form>

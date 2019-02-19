@@ -27,17 +27,12 @@ import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEj
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNewTech;
-import org.broadinstitute.gpinformatics.mercury.control.sample.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,39 +47,11 @@ import java.util.stream.Collectors;
 public class ExternalLibraryUploadActionBean extends CoreActionBean {
     private static final String SESSION_LIST_PAGE = "/sample/externalLibraryUpload.jsp";
     private static final String DOWNLOAD_TEMPLATE = "downloadTemplate";
-    public static final String ACCESSION = "uploadSamples";
+    private static final String UPLOAD = "upload";
     private boolean overWriteFlag;
 
     @Inject
     private AnalysisTypeDao analysisTypeDao;
-
-    /**
-     * The types of spreadsheet that can be uploaded.
-     */
-    public enum SpreadsheetType {
-        PooledMultiOrganismLibraries("New Tech Libraries", ExternalLibraryProcessorNewTech.class),
-        EzPassLibraries("EZ Pass Libraries", ExternalLibraryProcessorEzPass.class),
-        PooledTubes("Pooled Dev Tubes", VesselPooledTubesProcessor.class);
-
-        private String displayName;
-        private Class processor;
-
-        SpreadsheetType(String displayName, Class processor) {
-            this.displayName = displayName;
-            this.processor = processor;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public Class getProcessor() {
-            return processor;
-        }
-    }
-
-    @Validate(required = true, on = {ACCESSION, DOWNLOAD_TEMPLATE})
-    private SpreadsheetType spreadsheetType;
 
     @Inject
     private ReferenceSequenceDao referenceSequenceDao;
@@ -92,7 +59,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     @Inject
     private SampleInstanceEjb sampleInstanceEjb;
 
-    @Validate(required = true, on = {ACCESSION})
+    @Validate(required = true, on = {UPLOAD})
     private FileBean samplesSpreadsheet;
 
     @DefaultHandler
@@ -101,7 +68,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    @HandlesEvent(ACCESSION)
+    @HandlesEvent(UPLOAD)
     public Resolution accession() {
         InputStream inputStream = null;
         try {
@@ -110,14 +77,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
             addMessage("Cannot upload spreadsheet: " + e);
         }
 
-        Class processorClass = spreadsheetType.getProcessor();
-        ExternalLibraryProcessor processor;
-        try {
-            processor = (ExternalLibraryProcessor) processorClass.getConstructor().newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot instantiate " + processorClass.getCanonicalName() + ": " + e);
-        }
-
+        ExternalLibraryProcessor processor = new ExternalLibraryProcessor();
         MessageCollection messageCollection = new MessageCollection();
         sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, processor, messageCollection, null);
         addMessages(messageCollection);
@@ -127,35 +87,20 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     @HandlesEvent(DOWNLOAD_TEMPLATE)
     public Resolution template() {
         HeaderValueRow[] headerValueRows = null;
-        ColumnHeader[] columnHeaders;
-        if (spreadsheetType.getProcessor().equals(VesselPooledTubesProcessor.class)) {
-            columnHeaders = VesselPooledTubesProcessor.Headers.values();
-        } else if (spreadsheetType.getProcessor().equals(ExternalLibraryProcessorEzPass.class)) {
-            headerValueRows = ExternalLibraryProcessorEzPass.HeaderValueRows.values();
-            columnHeaders = ExternalLibraryProcessorEzPass.Headers.values();
-        } else if (spreadsheetType.getProcessor().equals(ExternalLibraryProcessorNewTech.class)) {
-            headerValueRows = ExternalLibraryProcessorNewTech.HeaderValueRows.values();
-            columnHeaders = ExternalLibraryProcessorNewTech.Headers.values();
-        } else {
-            throw new RuntimeException("Unsupported processor type: " +
-                    spreadsheetType.getProcessor().getCanonicalName());
-        }
+        ColumnHeader[] columnHeaders = ExternalLibraryProcessor.Headers.values();
         try {
             ByteArrayOutputStream stream = templateSpreadsheet(headerValueRows, columnHeaders);
             final byte[] bytes = stream.toByteArray();
             IOUtils.closeQuietly(stream);
 
-            Resolution resolution = new Resolution() {
-                @Override
-                public void execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
-                    response.setContentType("application/ms-excel");
-                    response.setContentLength(bytes.length);
-                    response.setHeader("Expires:", "0"); // eliminates browser caching
-                    response.setHeader("Content-Disposition", "attachment; filename=testxls.xls");
-                    OutputStream outStream = response.getOutputStream();
-                    outStream.write(bytes);
-                    outStream.flush();
-                }
+            Resolution resolution = (request, response) -> {
+                response.setContentType("application/ms-excel");
+                response.setContentLength(bytes.length);
+                response.setHeader("Expires:", "0"); // eliminates browser caching
+                response.setHeader("Content-Disposition", "attachment; filename=testxls.xls");
+                OutputStream outStream = response.getOutputStream();
+                outStream.write(bytes);
+                outStream.flush();
             };
             return resolution;
 
@@ -182,17 +127,14 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 collect(Collectors.toList()).toArray(new String[0]);
         String[] validSequencingTechnology = Arrays.asList(IlluminaFlowcell.FlowcellType.values()).stream().
                 filter(flowcellType -> flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.YES).
-                map(flowcellType -> SampleInstanceEjb.makeSequencerValue(flowcellType)).
+                map(IlluminaFlowcell.FlowcellType::getTechnology).
                 sorted().
                 collect(Collectors.toList()).toArray(new String[0]);
 
-        // Makes the fixed up header names for the drowdown columns.
-        String dataAnalysisTypeHeader = ExternalLibraryProcessor.fixupHeaderName(
-                ExternalLibraryProcessorNewTech.Headers.DATA_ANALYSIS_TYPE.getText());
-        String referenceSequenceHeader = ExternalLibraryProcessor.fixupHeaderName(
-                ExternalLibraryProcessorNewTech.Headers.REFERENCE_SEQUENCE.getText());
-        String sequencingTechnologyHeader = ExternalLibraryProcessor.fixupHeaderName(
-                ExternalLibraryProcessorNewTech.Headers.SEQUENCING_TECHNOLOGY.getText());
+        // Makes the header names for the drowdown columns.
+        String dataAnalysisTypeHeader = ExternalLibraryProcessor.Headers.DATA_ANALYSIS_TYPE.getText();
+        String referenceSequenceHeader = ExternalLibraryProcessor.Headers.REFERENCE_SEQUENCE.getText();
+        String sequencingTechnologyHeader = ExternalLibraryProcessor.Headers.SEQUENCING_TECHNOLOGY.getText();
 
         HSSFWorkbook workbook = new HSSFWorkbook();
         HSSFSheet sheet1 = workbook.createSheet("samples");
@@ -325,7 +267,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 cell.setCellValue(headerName);
 
                 ExternalLibraryProcessor.DataPresence dataPresence =
-                        ((ColumnHeader.Ignorable) columnHeader).getDataPresenceIndicator();
+                        ((ColumnHeader.Ignorable)columnHeader).getDataPresenceIndicator();
                 cell.setCellStyle(headerStyles.get(dataPresence));
 
                 // If this cell is reference sequence, analysis type, or sequencing technology,
@@ -377,13 +319,5 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
     public boolean isOverWriteFlag() {
         return overWriteFlag;
-    }
-
-    public SpreadsheetType getSpreadsheetType() {
-        return spreadsheetType;
-    }
-
-    public void setSpreadsheetType(SpreadsheetType spreadsheetType) {
-        this.spreadsheetType = spreadsheetType;
     }
 }

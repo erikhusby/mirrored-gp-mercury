@@ -33,7 +33,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.WalkUpSequencing;
-import org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -44,10 +43,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -63,7 +60,6 @@ public class SampleInstanceEjb {
     public static final String RESTRICTED_MESSAGE = "a-z, A-Z, 0-9, '.', '-', or '_'";
 
     public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
-    public static final String BSP_FORMAT = "Row #%d the new %s \"%s\" must not have a BSP sample name format.";
     public static final String BSP_METADATA =
             "Row #%d values for %s should be blank because BSP data for sample %s cannot be updated.";
     public static final String DUPLICATE = "Row #%d duplicate value for %s.";
@@ -79,7 +75,6 @@ public class SampleInstanceEjb {
     public static final String INVALID_CHARS = "Row #%d %s characters must only be " + RESTRICTED_CHARS;
     public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
     public static final String MISSING = "Row #%d is missing a value for %s.";
-    public static final String MUST_NOT_HAVE_BOTH = "Row #%d must not have both %s and %s.";
     public static final String NONEXISTENT = "Row #%d the value for %s \"%s\" does not exist in %s.";
     public static final String NONNEGATIVE_DECIMAL = "Row #%d %s must be a non-negative decimal number.";
     public static final String NONNEGATIVE_INTEGER = "Row #%d %s must be a non-negative integer number.";
@@ -88,12 +83,7 @@ public class SampleInstanceEjb {
     public static final String PREXISTING_VALUES =
             "Row #%d values for %s already exist in Mercury; set the Overwrite checkbox to re-upload.";
     public static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
-    /**
-     * A string of the available sequencer model names.
-     */
-    public static final String SEQUENCER_MODELS;
 
-    private static final Map<String, IlluminaFlowcell.FlowcellType> mapSequencerToFlowcellType = new HashMap<>();
     private static final Log log = LogFactory.getLog(SampleInstanceEjb.class);
 
     @Inject
@@ -131,14 +121,6 @@ public class SampleInstanceEjb {
 
     @Inject
     private Deployment deployment;
-
-    static {
-        for (IlluminaFlowcell.FlowcellType flowcellType : CreateFCTActionBean.FLOWCELL_TYPES) {
-            String sequencer = makeSequencerValue(flowcellType);
-            mapSequencerToFlowcellType.put(sequencer, flowcellType);
-        }
-        SEQUENCER_MODELS = "\"" + StringUtils.join(mapSequencerToFlowcellType.keySet(), "\", \"") + "\"";
-    }
 
     public SampleInstanceEjb() {
     }
@@ -246,25 +228,15 @@ public class SampleInstanceEjb {
                 processor.getMolecularIndexingSchemeMap().put(dto.getMisName(),
                         molecularIndexingSchemeDao.findByName(dto.getMisName()));
             }
-            // If bait is given, uses it, otherwise if cat is given, uses that. Only one will be present.
-            dto.setReagent(StringUtils.isNotBlank(dto.getBait()) ?
-                    reagentDesignDao.findByBusinessKey(dto.getBait()) :
-                    (StringUtils.isNotBlank(dto.getCat()) ?
-                            reagentDesignDao.findByBusinessKey(dto.getCat()) : null));
-
-            if (StringUtils.isNotBlank(dto.getReferenceSequenceName())) {
-                ReferenceSequence referenceSequence = dto.getReferenceSequenceName().contains("|") ?
-                        referenceSequenceDao.findByBusinessKey(dto.getReferenceSequenceName()) :
-                        referenceSequenceDao.findCurrent(dto.getReferenceSequenceName());
-                if (referenceSequence != null) {
-                    processor.getReferenceSequenceMap().put(dto.getReferenceSequenceName(), referenceSequence);
-                }
+            if (StringUtils.isNotBlank(dto.getBait())) {
+                dto.setReagent(reagentDesignDao.findByBusinessKey(dto.getBait()));
             }
-
-            if (StringUtils.isNotBlank(dto.getSequencerModelName())) {
-                IlluminaFlowcell.FlowcellType sequencerModel = findFlowcellType(dto.getSequencerModelName());
-                if (sequencerModel != null) {
-                    processor.getSequencerModelMap().put(dto.getSequencerModelName(), sequencerModel);
+            if (StringUtils.isNotBlank(dto.getReferenceSequence())) {
+                ReferenceSequence referenceSequence = dto.getReferenceSequence().contains("|") ?
+                        referenceSequenceDao.findByBusinessKey(dto.getReferenceSequence()) :
+                        referenceSequenceDao.findCurrent(dto.getReferenceSequence());
+                if (referenceSequence != null) {
+                    processor.getReferenceSequenceMap().put(dto.getReferenceSequence(), referenceSequence);
                 }
             }
 
@@ -326,7 +298,7 @@ public class SampleInstanceEjb {
 
         IlluminaFlowcell.FlowcellType sequencerModel = null;
         if (StringUtils.isNotBlank(walkUpSequencing.getIlluminaTech())) {
-            sequencerModel = SampleInstanceEjb.findFlowcellType(walkUpSequencing.getIlluminaTech());
+            sequencerModel = IlluminaFlowcell.FlowcellType.getByTechnology(walkUpSequencing.getIlluminaTech());
             if (sequencerModel == null) {
                 messages.addError("Unknown Sequencing Technology '" + walkUpSequencing.getIlluminaTech() + "'");
             }
@@ -382,7 +354,6 @@ public class SampleInstanceEjb {
                     ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength()),
                     ExternalLibraryProcessor.asInteger(walkUpSequencing.getReadLength2())));
             sampleInstanceEntity.setNumberLanes(ExternalLibraryProcessor.asInteger(walkUpSequencing.getLaneQuantity()));
-            sampleInstanceEntity.setComments(walkUpSequencing.getComments());
             sampleInstanceEntity.setReagentDesign(baitSet);
             sampleInstanceEntity.setLabVessel(labVessel);
             sampleInstanceEntity.setMercurySample(mercurySample);
@@ -405,10 +376,6 @@ public class SampleInstanceEjb {
             return (o1Row == o2Row) ? o1.compareTo(o2) : (o1Row - o2Row);
         }
     };
-
-    private static IlluminaFlowcell.FlowcellType findFlowcellType(String sequencerModel) {
-        return mapSequencerToFlowcellType.get(sequencerModel);
-    }
 
     /**
      * Adds library size metric to the given lab vessel, but does not add the same value
@@ -435,38 +402,25 @@ public class SampleInstanceEjb {
         return (CollectionUtils.isNotEmpty(list) && list.size() > index) ? list.get(index) : null;
     }
 
-    /** Returns a string that can be used as a sequencer value in the spreadsheet. */
-    public static String makeSequencerValue(IlluminaFlowcell.FlowcellType flowcellType) {
-        return StringUtils.substringBeforeLast(flowcellType.getDisplayName(), "Flowcell").trim();
-    }
-
     /** Dto containing data from a spreadsheet row. */
     public static class RowDto {
-        private String additionalAssemblyInformation;
-        private String additionalSampleInformation;
         private String aggregationParticle;
-        private String analysisTypeName;
         private String bait;
         private String barcode;
-        private String cat;
         private String collaboratorParticipantId;
         private String collaboratorSampleId;
         private BigDecimal concentration;
+        private String analysisTypeName;
+        private Integer fragmentSize;
         private String insertSize;
-        private String irbNumber;
         private String libraryName;
-        private String libraryType;
-        private String lsid;
         private String misName;
-        private Integer numberOfLanes;
         private String organism;
-        private String participantId;
         private Integer readLength;
         private String referenceSequence;
-        private String referenceSequenceName;
         private String rootSampleName;
         private String sampleName;
-        private String sequencerModelName;
+        private String sequencingTechnology;
         private String sex;
         private Boolean umisPresent; // null if not given in spreadsheet
         private BigDecimal volume;
@@ -479,20 +433,12 @@ public class SampleInstanceEjb {
             this.rowNumber = rowNumber;
         }
 
-        public String getAdditionalAssemblyInformation() {
-            return additionalAssemblyInformation;
+        public Integer getFragmentSize() {
+            return fragmentSize;
         }
 
-        public void setAdditionalAssemblyInformation(String additionalAssemblyInformation) {
-            this.additionalAssemblyInformation = StringUtils.trimToEmpty(additionalAssemblyInformation);
-        }
-
-        public String getAdditionalSampleInformation() {
-            return additionalSampleInformation;
-        }
-
-        public void setAdditionalSampleInformation(String additionalSampleInformation) {
-            this.additionalSampleInformation = StringUtils.trimToEmpty(additionalSampleInformation);
+        public void setFragmentSize(Integer fragmentSize) {
+            this.fragmentSize = fragmentSize;
         }
 
         public String getAnalysisTypeName() {
@@ -527,14 +473,6 @@ public class SampleInstanceEjb {
             this.rootSampleName = rootSampleName;
         }
 
-        public String getCat() {
-            return cat;
-        }
-
-        public void setCat(String cat) {
-            this.cat = cat;
-        }
-
         public String getCollaboratorParticipantId() {
             return collaboratorParticipantId;
         }
@@ -567,36 +505,12 @@ public class SampleInstanceEjb {
             this.insertSize = insertSize;
         }
 
-        public String getIrbNumber() {
-            return irbNumber;
-        }
-
-        public void setIrbNumber(String irbNumber) {
-            this.irbNumber = irbNumber;
-        }
-
         public String getLibraryName() {
             return libraryName;
         }
 
         public void setLibraryName(String libraryName) {
             this.libraryName = libraryName;
-        }
-
-        public String getLibraryType() {
-            return libraryType;
-        }
-
-        public void setLibraryType(String libraryType) {
-            this.libraryType = libraryType;
-        }
-
-        public String getLsid() {
-            return lsid;
-        }
-
-        public void setLsid(String lsid) {
-            this.lsid = lsid;
         }
 
         public String getMisName() {
@@ -607,28 +521,12 @@ public class SampleInstanceEjb {
             this.misName = misName;
         }
 
-        public Integer getNumberOfLanes() {
-            return numberOfLanes;
-        }
-
-        public void setNumberOfLanes(Integer numberOfLanes) {
-            this.numberOfLanes = numberOfLanes;
-        }
-
         public String getOrganism() {
             return organism;
         }
 
         public void setOrganism(String organism) {
             this.organism = organism;
-        }
-
-        public String getParticipantId() {
-            return participantId;
-        }
-
-        public void setParticipantId(String participantId) {
-            this.participantId = participantId;
         }
 
         public String getAggregationParticle() {
@@ -655,14 +553,6 @@ public class SampleInstanceEjb {
             this.referenceSequence = referenceSequence;
         }
 
-        public String getReferenceSequenceName() {
-            return referenceSequenceName;
-        }
-
-        public void setReferenceSequenceName(String referenceSequenceName) {
-            this.referenceSequenceName = referenceSequenceName;
-        }
-
         public String getSampleName() {
             return sampleName;
         }
@@ -671,12 +561,12 @@ public class SampleInstanceEjb {
             this.sampleName = sampleName;
         }
 
-        public String getSequencerModelName() {
-            return sequencerModelName;
+        public String getSequencingTechnology() {
+            return sequencingTechnology;
         }
 
-        public void setSequencerModelName(String sequencerModelName) {
-            this.sequencerModelName = sequencerModelName;
+        public void setSequencingTechnology(String sequencingTechnology) {
+            this.sequencingTechnology = sequencingTechnology;
         }
 
         public String getSex() {
