@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.labevent;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -11,6 +14,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -55,5 +59,24 @@ public class LabEventDao extends GenericDao {
                         getCriteriaBuilder().equal(root.get(LabEvent_.disambiguator), disambiguator));
             }
         });
+    }
+
+    /**
+     * Racks of tubes are attached to in place events as ancillary vessels
+     * Find any in-place events associated to a rack
+     */
+    public List<LabEvent> findInPlaceByAncillaryVessel(final LabVessel rackOfTubes ) {
+        // Only valid for racks of tubes
+        if(OrmUtil.proxySafeIsInstance(rackOfTubes, RackOfTubes.class)) {
+            return findAll(LabEvent.class, new GenericDaoCallback<LabEvent>() {
+                @Override
+                public void callback(CriteriaQuery<LabEvent> criteriaQuery, Root<LabEvent> root) {
+                    criteriaQuery
+                            .where(getCriteriaBuilder().equal(root.get(LabEvent_.ancillaryInPlaceVessel), rackOfTubes));
+                }
+            });
+        } else {
+            return Collections.emptyList();
+        }
     }
 }

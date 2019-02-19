@@ -1019,7 +1019,7 @@ public class LabEventFactory implements Serializable {
     }
 
     /**
-     * Builds a lab event entity from a JAXB plate event (reagent addition) bean
+     * Builds an in-place lab event entity from a JAXB plate event (reagent addition) bean
      *
      * @param plateEventType JAXB event bean
      *
@@ -1337,6 +1337,9 @@ public class LabEventFactory implements Serializable {
         }
     }
 
+    /**
+     * Builds an in-place event on a static plate
+     */
     @DaoFree
     public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, StaticPlate plate) {
         LabEvent labEvent = constructReferenceData(plateEvent, labEventRefDataFetcher);
@@ -1414,6 +1417,9 @@ public class LabEventFactory implements Serializable {
         }
     }
 
+    /**
+     * Builds an in-place event on a tube formation and rack of tubes
+     */
     @DaoFree
     public LabEvent buildFromBettaLimsRackEventDbFree(PlateEventType plateEvent, @Nullable TubeFormation tubeFormation,
                                                       Map<String, BarcodedTube> mapBarcodeToTubes,
@@ -1427,6 +1433,7 @@ public class LabEventFactory implements Serializable {
             setTubeQuantities(mapBarcodeToTubes, plateEvent.getPositionMap(), labEvent, true);
         }
         tubeFormation.addInPlaceEvent(labEvent);
+        labEvent.setAncillaryInPlaceVessel(rackOfTubes);
         return labEvent;
     }
 

@@ -1940,4 +1940,18 @@
             <column name="abandoned_by" type="number(19,0)"/>
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-5728-1" author="jsacco">
+        <addColumn tableName="LAB_EVENT">
+            <column name="ANCILLARY_IN_PLACE_VESSEL" type="NUMBER(19,0)"/>
+        </addColumn>
+        <createIndex tableName="LAB_EVENT" indexName="IX_EVT_ANC_INPLCE_VESS">
+            <column name="ANCILLARY_IN_PLACE_VESSEL"/>
+        </createIndex>
+        <addForeignKeyConstraint constraintName="FK_EVENT_ANCILLARY_VESSEL"
+                                 baseTableName="LAB_EVENT" baseColumnNames="ANCILLARY_IN_PLACE_VESSEL"
+                                 referencedTableName="LAB_VESSEL" referencedColumnNames="LAB_VESSEL_ID"/>
+        <addColumn tableName="LAB_EVENT_AUD">
+            <column name="ANCILLARY_IN_PLACE_VESSEL" type="NUMBER(19,0)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

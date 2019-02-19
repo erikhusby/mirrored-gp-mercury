@@ -127,6 +127,7 @@ public class PickerActionBeanTest extends BaseEventTest {
         LabEvent labEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, new Date(),
                 "UnitTest", 1L, 1L, "UnitTest");
         labEvent.setInPlaceLabVessel(denatureTube2500.getContainers().iterator().next());
+        labEvent.setAncillaryInPlaceVessel(denatureTube2500Rack);
         denatureTube2500.getContainers().iterator().next().addInPlaceEvent(labEvent);
     }
 

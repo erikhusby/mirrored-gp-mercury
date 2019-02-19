@@ -69,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -1831,38 +1832,26 @@ public class LabVesselSearchDefinition {
                 if (labVessel.getStorageLocation() != null) {
                     // If Barcoded Tube, attempt to find its container by grabbing most recent Storage Check-in event.
                     if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
-                        SortedMap<Date, TubeFormation> sortedMap = new TreeMap<>();
+                        SortedSet<LabEvent> eventSortedSet = new TreeSet<>(LabEvent.BY_EVENT_DATE);
                         for (LabVessel container : labVessel.getContainers()) {
                             if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
                                 TubeFormation tubeFormation = OrmUtil.proxySafeCast(
                                         container, TubeFormation.class);
                                 for (LabEvent labEvent : tubeFormation.getInPlaceLabEvents()) {
                                     if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN) {
-                                        sortedMap.put(labEvent.getEventDate(), tubeFormation);
+                                        eventSortedSet.add(labEvent);
                                     }
                                 }
                             }
                         }
-                        if (!sortedMap.isEmpty()) {
-                            TubeFormation tubeFormation = sortedMap.get(sortedMap.lastKey());
-                            for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
-                                if (rackOfTubes.getStorageLocation() != null) {
-                                    if (rackOfTubes.getStorageLocation().equals(labVessel.getStorageLocation())) {
-                                        VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
-                                        for (Map.Entry<VesselPosition, BarcodedTube> entry:
-                                                containerRole.getMapPositionToVessel().entrySet()) {
-                                            BarcodedTube value = entry.getValue();
-                                            if (value != null && value.getLabel().equals(labVessel.getLabel())) {
-                                                String locationTrail = rackOfTubes.getStorageLocation().buildLocationTrail();
-                                                locationTrail = locationTrail + ": [" +
-                                                                rackOfTubes.getLabel() + "] : " +
-                                                                entry.getKey().name();
-                                                return locationTrail;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        if (!eventSortedSet.isEmpty()) {
+                            LabEvent latestCheckIn = eventSortedSet.last();
+                            LabVessel rack = latestCheckIn.getAncillaryInPlaceVessel();
+                            String locationTrail = rack.getStorageLocation().buildLocationTrail();
+                            locationTrail = locationTrail + ": [" +
+                                            rack.getLabel() + "] : " +
+                                            latestCheckIn.getInPlaceLabVessel().getContainerRole().getPositionOfVessel(labVessel);
+                            return locationTrail;
                         }
                         // On Failure at least return storage location w/o container
                         return labVessel.getStorageLocation().buildLocationTrail();

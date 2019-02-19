@@ -275,7 +275,7 @@ public class StorageLocationActionBean extends CoreActionBean {
                     objectNode.put("hasErrors", true);
                     objectNode.put("errors", "Failed to find location trail for storage id " + storageId);
                 } else {
-                    locationTrailString = storageLocation.buildLocationTrail();
+                    locationTrailString = storageLocationDao.getLocationTrail( storageLocation.getStorageLocationId());
                     if (StringUtils.isEmpty(locationTrailString)) {
                         objectNode.put("hasErrors", true);
                         objectNode.put("errors", "Failed to find location trail for storage id " + storageId);
