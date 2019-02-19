@@ -13,6 +13,9 @@ import java.lang.reflect.InvocationTargetException;
  * fail to deploy with an error.
  */
 public abstract class AbstractConfig {
+
+    public AbstractConfig(){}
+
     protected AbstractConfig(@Nonnull Deployment deploymentConfig) {
         if (deploymentConfig != Deployment.STUBBY) {
             AbstractConfig source = produce(getClass(), deploymentConfig);
@@ -53,7 +56,7 @@ public abstract class AbstractConfig {
      * Useful for debugging.
      */
     @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-    private final Deployment deploymentConfig;
+    private Deployment deploymentConfig;
 
     public void setExternalDeployment(Deployment externalDeployment) {
         this.externalDeployment = externalDeployment;

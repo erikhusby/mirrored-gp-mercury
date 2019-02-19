@@ -81,11 +81,16 @@ public class SnpListFixupTest extends Arquillian {
      * 
      */
 
-    @Test
+    @Test(enabled = false)
     public void fixupGplim5122CreateSnpList() {
+        userBean.loginOSUser();
+        persistSnpList("SnpListFluidigmFPv4.txt");
+        persistSnpList("SnpListFluidigmFPv5.txt");
+    }
+
+    private void persistSnpList(String fileName) {
         try {
-            userBean.loginOSUser();
-            List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("SnpList.txt"));
+            List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource(fileName));
             String fixupCommentary = lines.get(0);
             String name = lines.get(1);
             SnpList snpList = new SnpList(name);

@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -19,36 +18,36 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Resource;
 import javax.ejb.EJBContext;
-import javax.ejb.Singleton;
+import javax.ejb.Stateless;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Finds pending infinium chip runs and forwards them on to analysis.
  */
-@Singleton
+@Stateless
+@Dependent
 @TransactionManagement(value= TransactionManagementType.BEAN)
 public class InfiniumRunFinder implements Serializable {
     private static final Log log = LogFactory.getLog(InfiniumRunFinder.class);
 
     @Inject
     private InfiniumRunProcessor infiniumRunProcessor;
-
-    @Inject
-    private BettaLimsMessageResource bettaLimsMessageResource;
 
     @Inject
     private InfiniumPipelineClient infiniumPipelineClient;
@@ -68,6 +67,9 @@ public class InfiniumRunFinder implements Serializable {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private UserBean userBean;
+
     @Resource
     private EJBContext ejbContext;
 
@@ -79,16 +81,24 @@ public class InfiniumRunFinder implements Serializable {
         }
 
         try {
+            userBean.login("seqsystem");
             List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
                     LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
-            for (LabVessel labVessel : infiniumChips) {
+            List<String> barcodes = infiniumChips.stream().map(LabVessel::getLabel).collect(Collectors.toList());
+            for (String barcode : barcodes) {
                 if (labEventDao != null && labEventDao.getEntityManager() != null &&
-                    labEventDao.getEntityManager().isOpen()) {
+                        labEventDao.getEntityManager().isOpen()) {
                     UserTransaction utx = ejbContext.getUserTransaction();
                     try {
+                        // Clear the session, then fetch each chip individually, otherwise many chips will accumulate.
+                        // This accumulation would take progressively longer to dirty check during the flush after
+                        // each chip.  For 75 chips, the overall time is reduced from 1m20s to 15s.
+                        labVesselDao.clear();
+                        LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
                         if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
                             StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
                             utx.begin();
+                            log.debug("Processing " + staticPlate.getLabel());
                             processChip(staticPlate);
                             // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
                             labEventDao.flush();
@@ -96,12 +106,11 @@ public class InfiniumRunFinder implements Serializable {
                         }
                     } catch (Exception e) {
                         utx.rollback();
-                        log.error("Failed to process chip " + labVessel.getLabel(), e);
+                        log.error("Failed to process chip " + barcode, e);
                         emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                                Collections.<String>emptyList(),
-                                "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
-                                                                             " with error: " + e.getMessage(),
-                                false);
+                                Collections.emptyList(), "[Mercury] Failed to process infinium chip",
+                                "For " + barcode + " with error: " + e.getMessage(),
+                                false, true);
                     }
                 }
             }
@@ -194,10 +203,10 @@ public class InfiniumRunFinder implements Serializable {
      *  Check to see if the any position on the current chip or any ancestor plates or vessels are abandoned.
      */
     private boolean isAbandoned(StaticPlate staticPlate, VesselPosition vesselPosition) {
-        TransferTraverserCriteria.AbandonedLabVesselAncestorCriteria abandonedLabVesselAncestorCriteria =
-                new TransferTraverserCriteria.AbandonedLabVesselAncestorCriteria();
-        staticPlate.getContainerRole().evaluateCriteria(vesselPosition, abandonedLabVesselAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
-        if(abandonedLabVesselAncestorCriteria.isAncestorAbandoned()) {
+        TransferTraverserCriteria.AbandonedLabVesselCriteria abandonedLabVesselCriteria =
+                new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+        staticPlate.getContainerRole().evaluateCriteria(vesselPosition, abandonedLabVesselCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
+        if(abandonedLabVesselCriteria.isAncestorAbandoned()) {
             return true;
         }
         return false;
@@ -218,9 +227,9 @@ public class InfiniumRunFinder implements Serializable {
         String subject = "[Mercury] Failed to find scanner name for infinium chip " + staticPlate.getLabel();
         String body = "Defaulted scanner name to be " + staticPlate.getLabel() + " for starter events";
         emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                Collections.<String>emptyList(),
+                Collections.emptyList(),
                 subject, body,
-                false);
+                false, true);
     }
 
     /**

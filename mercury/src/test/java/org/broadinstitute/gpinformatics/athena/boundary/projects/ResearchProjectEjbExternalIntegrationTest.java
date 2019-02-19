@@ -20,7 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionConf
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class ResearchProjectEjbExternalIntegrationTest {
     @Test(expectedExceptions = NullPointerException.class)
     public void testValidateSubmissionSamplesNullSample() throws Exception {
         researchProjectEjb.validateSubmissionSamples(bioProjectWithResults, null);
-        assertThat(null, CoreMatchers.notNullValue());
+        assertThat(null, Matchers.notNullValue());
     }
 
     @Test(expectedExceptions = ValidationException.class)
@@ -82,7 +82,7 @@ public class ResearchProjectEjbExternalIntegrationTest {
     public void testValidateSubmissionNullBioProject() throws Exception {
         researchProjectEjb.validateSubmissionSamples(null, goodSubmissionDtos);
 
-        assertThat(null, CoreMatchers.notNullValue());
+        assertThat(null, Matchers.notNullValue());
     }
 
 

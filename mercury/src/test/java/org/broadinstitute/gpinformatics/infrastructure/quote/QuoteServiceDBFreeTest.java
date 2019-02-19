@@ -9,7 +9,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -46,6 +45,13 @@ public class QuoteServiceDBFreeTest {
         PriceList priceList = service.getAllPriceItems();
         Assert.assertFalse(priceList.getQuotePriceItems().isEmpty());
 
+        final QuotePriceItem cryovialPriceItem = priceList.findByKeyFields("Biological Samples", "Sample Kit",
+                "Cryovials Partial Kit (1 - 40 Samples)");
+
+        Assert.assertNotNull(cryovialPriceItem.getEffectiveDate(), cryovialPriceItem.getName() +
+                                                                   " should not have a null effective date");
+        Assert.assertNotNull(cryovialPriceItem.getSubmittedDate(), cryovialPriceItem.getName() +
+                                                                   " should not have a null submitted date");
     }
 
     @Test(groups = DATABASE_FREE)

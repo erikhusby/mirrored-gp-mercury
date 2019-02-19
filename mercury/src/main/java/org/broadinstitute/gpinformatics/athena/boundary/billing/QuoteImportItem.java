@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A flattened structure of information needed to import an item into the quote server.
@@ -72,6 +73,10 @@ public class QuoteImportItem {
 
     public Collection<String> getWorkItems() {
         return Collections.unmodifiableCollection(workItems);
+    }
+
+    public Collection<LedgerEntry> getBillingCredits(){
+        return ledgerItems.stream().filter(ledgerEntry -> ledgerEntry.getQuantity() < 0).collect(Collectors.toSet());
     }
 
     public String getSapItems() {
@@ -327,7 +332,7 @@ public class QuoteImportItem {
 
         if (replacedProductQuotePriceItem == null || replacedProductQuotePriceItem.getPrice() == null) {
             throw new QuoteServerException(
-                    "The price was not found for price item " + replacedProductQuotePriceItem.getName());
+                    "The price was not found for price item " + priceItem.getDisplayName());
         }
 
         getPriceItem().setPrice(replacedProductQuotePriceItem.getPrice());
@@ -336,5 +341,13 @@ public class QuoteImportItem {
 
     public String getEffectivePrice() throws InvalidProductException {
         return this.priceOnWorkDate.getEffectivePrice(this.priceItem, this.quote, this.getWorkCompleteDate());
+    }
+
+    public boolean needsCustomization() {
+        return productOrder.needsCustomization(product);
+    }
+
+    public boolean isBillingCredit() {
+        return getQuantity() < 0;
     }
 }

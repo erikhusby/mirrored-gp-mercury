@@ -7,12 +7,15 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson_;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class ProjectPersonEtl extends GenericEntityEtl<ProjectPerson, ProjectPerson> {
     private BSPUserList userList;
 

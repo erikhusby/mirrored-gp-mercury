@@ -15,6 +15,7 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -169,7 +170,7 @@ public class ProductOrderResource {
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderData)
             throws DuplicateTitleException, ApplicationValidationException, NoSamplesException,
-            WorkRequestCreationException {
+            WorkRequestCreationException, InvalidProductException {
 
         ProductOrder productOrder = createProductOrder(productOrderData);
 
@@ -282,7 +283,8 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
-            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException {
+            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
+            InvalidProductException {
         return new ProductOrderData(createProductOrder(productOrderData), true);
     }
 
@@ -290,7 +292,8 @@ public class ProductOrderResource {
      * Create a product order in Pending state, and create its corresponding JIRA ticket.
      */
     private ProductOrder createProductOrder(ProductOrderData productOrderData)
-            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException {
+            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
+            InvalidProductException {
 
         validateAndLoginUser(productOrderData);
 
@@ -418,9 +421,10 @@ public class ProductOrderResource {
         }
 
         Date currentDate = new Date();
+        // Process is only interested in the primary vessels
         List<LabVessel> vessels = labVesselFactory.buildLabVessels(
                 addSamplesToPdoBean.parentVesselBeans, bspUser.getUsername(), currentDate, LabEventType.SAMPLE_PACKAGE,
-                MercurySample.MetadataSource.BSP);
+                MercurySample.MetadataSource.BSP).getLeft();
         labVesselDao.persistAll(vessels);
 
         // Get all the sample ids

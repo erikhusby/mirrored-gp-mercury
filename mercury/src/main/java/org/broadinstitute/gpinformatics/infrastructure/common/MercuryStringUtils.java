@@ -11,10 +11,13 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 import java.util.zip.CRC32;
 
@@ -73,5 +76,9 @@ public class MercuryStringUtils {
         case 3: return "b";
         default: return aString;
         }
+    }
+
+    public static String makeDigest(List<? extends Object> stringList) {
+        return TubeFormation.makeDigest(StringUtils.join(stringList, ","));
     }
 }

@@ -5,8 +5,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product: #{actionBean.editProduct.partNumber}"
-                       sectionTitle="View Product: #{actionBean.editProduct.partNumber}"
+<stripes:layout-render name="/layout.jsp" pageTitle="View Product: ${actionBean.editProduct.partNumber}"
+                       sectionTitle="View Product: ${actionBean.editProduct.partNumber}"
                        businessKeyValue="${actionBean.editProduct.businessKey}">
 
     <stripes:layout-component name="content">
@@ -18,7 +18,7 @@
 
                 <security:authorizeBlock roles="<%= roles(PDM, GPProjectManager, PM, Developer) %>">
 
-                    <c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber)}">
+                    <c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber, actionBean.editProduct.determineCompanyConfiguration())}">
                         <stripes:submit name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}"
                                         value="Publish Product to SAP"
                                         class="btn padright" title="Click to Publish Product to SAP"/>
@@ -263,7 +263,7 @@
                     <label class="control-label label-form">Workflow</label>
                     <div class="controls">
                         <div class="form-value">
-                        ${actionBean.editProduct.workflow.workflowName}
+                        ${actionBean.editProduct.workflowName}
                         </div>
                     </div>
                 </div>
@@ -294,6 +294,15 @@
                             <c:if test="${!empty actionBean.editProduct.analysisTypeKey}">
                                 ${(actionBean.getAnalysisType(actionBean.editProduct.analysisTypeKey)).displayName}
                             </c:if>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Bait Locked</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.baitLocked ? "Yes" : "No"}
                         </div>
                     </div>
                 </div>
@@ -353,6 +362,26 @@
                     <div class="controls">
                         <div class="form-value">
                                 ${actionBean.editProduct.pairedEndRead}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Index Type</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editProduct.indexType}">
+                                ${actionBean.editProduct.indexType}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Analyze UMIs</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.analyzeUmi ? "Yes" : "No"}
                         </div>
                     </div>
                 </div>

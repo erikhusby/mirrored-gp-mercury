@@ -8,14 +8,17 @@ import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Message;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.ValidationError;
+import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
@@ -35,16 +38,20 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletResponse;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -98,6 +105,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private ProductOrder productOrder;
 
     /**
+     * productOrderSampleId to load when ledgerDetails is called.
+     */
+    private long productOrderSampleId;
+
+    /**
      * Provides information about the billing state of the product order.
      */
     private ProductOrderListEntry productOrderListEntry;
@@ -110,12 +122,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private List<PriceItem> priceItems = new ArrayList<>();
 
     /**
-     * List of sample names for this product order. This is saved into the form and checked against current data when
+     * The modified date of this product order. This is saved into the form and checked against the order when
      * the form is submitted to make sure that nothing changed between rendering and submitting the form. Used for both
      * rendering the JSP and capturing the values submitted from hidden elements in the form.
      */
-    private List<String> renderedSampleNames;
-
+    private Date modifiedDate;
     /**
      * List of price item names for this product order. This is saved into the form and checked against current data
      * when the form is submitted to make sure that nothing changed between rendering and submitting the form. Used for
@@ -144,6 +155,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private List<LedgerData> ledgerData;
 
     /**
+     * this variable is sent in with the updaterLedgers request to instruct the actionBean to forward rather than send
+     * another json response;
+     */
+    boolean redirectOnSuccess=false;
+    /**
      * Load the product order, price items, sample data, and various other information based on the orderId parameter.
      * All of this data is needed for rendering the billing ledger UI.
      */
@@ -166,35 +182,32 @@ public class BillingLedgerActionBean extends CoreActionBean {
     }
 
     /**
-     * Load the product order based on the orderId request parameter. This is all of the data that is needed for loading
-     * the ledger details (from an AJAX request).
+     * Load the product order based on the orderId request parameter.
      */
-    @Before(stages = LifecycleStage.EventHandling, on = { "ledgerDetails" })
-    public void loadProductOrder() {
-        productOrder = productOrderDao.findByBusinessKey(orderId, ProductOrderDao.FetchSpec.RISK_ITEMS);
-    }
+    public void loadProductOrder() { productOrder = productOrderDao.findByBusinessKey(orderId); }
 
     /**
      * Render the billing ledger UI.
      */
     @DefaultHandler
     public Resolution view() {
+        String successMessage = getContext().getRequest().getParameter("successMessage");
+        if (StringUtils.isNotBlank(successMessage)) {
+            addMessage(successMessage);
+        }
         return new ForwardResolution(BILLING_LEDGER_PAGE);
     }
 
     /**
-     * Load the ledger details and return them as JSON data to be loaded by the page via AJAX.
+     * Load the ledger detail for specified sample and return it as JSON data to be loaded by the page via AJAX.
      *
      * @return a resolution containing the ledger details serialized as JSON
      * @throws JSONException
      */
     @HandlesEvent("ledgerDetails")
     public Resolution ledgerDetails() throws JSONException {
-        JSONArray details = new JSONArray();
-        for (ProductOrderSample sample : productOrder.getSamples()) {
-            details.put(makeLedgerDetailJson(sample));
-        }
-        return createTextResolution(details.toString());
+        ProductOrderSample sample = productOrderDao.findById(ProductOrderSample.class, productOrderSampleId);
+        return createTextResolution(makeLedgerDetailJson(sample).toString());
     }
 
     /**
@@ -202,34 +215,69 @@ public class BillingLedgerActionBean extends CoreActionBean {
      */
     @HandlesEvent("updateLedgers")
     public Resolution updateLedgers() {
-        if (isSubmittedSampleListValid() && isSubmittedPriceItemListValid()) {
+        if (isOrderModified() && isSubmittedPriceItemListValid()) {
             Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates = buildLedgerUpdates();
             try {
                 productOrderEjb.updateSampleLedgers(ledgerUpdates);
+                addMessage("{1} ledgers have been updated.", ledgerUpdates.size());
             } catch (ValidationException e) {
                 logger.error(e);
                 addGlobalValidationErrors(e.getValidationMessages());
-            } catch (SAPIntegrationException | QuoteNotFoundException | QuoteServerException e) {
+            } catch (QuoteNotFoundException | QuoteServerException e) {
                 logger.error(e);
                 addGlobalValidationError(e.getMessage());
-            } catch (SAPInterfaceException sie) {
-                String errorMessage = "While updating this order in SAP an error occurred:  ";
-                logger.error(sie);
-                addGlobalValidationError(errorMessage + sie.getMessage());
-            } catch (InvalidProductException ipe) {
-                String errorMessage = "Either the product or one of the selected add-ons for this order is associated "
-                                      + "with an invalid Price item.  Please set the correct price item before "
-                                      + "continuing for this will cause issues when billing: ";
-                logger.error(ipe);
-                addGlobalValidationError(errorMessage+ipe.getMessage());
+            }
+        }
+        if (redirectOnSuccess) {
+            if (!hasErrors()){
+                for (Message message : getContext().getMessages()) {
+                    flashMessage(message);
+                }
             }
         }
 
-        if (hasErrors()) {
-            return new ForwardResolution(BILLING_LEDGER_PAGE);
-        } else {
-            return new RedirectResolution("/orders/ledger.action?orderId=" + productOrder.getBusinessKey());
-        }
+        Resolution resolution = new StreamingResolution("text/json") {
+            @Override
+            protected void stream(HttpServletResponse response) throws Exception {
+                JsonFactory jsonFactory = new JsonFactory();
+                JsonGenerator jsonGenerator = null;
+                try {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    OutputStream outputStream = response.getOutputStream();
+                    jsonGenerator = jsonFactory.createJsonGenerator(outputStream);
+                    jsonGenerator.setCodec(objectMapper);
+                    jsonGenerator.writeStartObject();
+                    if (hasErrors()) {
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        jsonGenerator.writeArrayFieldStart("error");
+                        ValidationErrors errors = getValidationErrors();
+                        for (Map.Entry<String, List<ValidationError>> errorsEntry : errors.entrySet()) {
+                            for (ValidationError validationError : errorsEntry.getValue()) {
+                                jsonGenerator.writeObject(validationError.getMessage(getContext().getLocale()));
+                            }
+                        }
+                        jsonGenerator.writeEndArray();
+                    } else {
+                        jsonGenerator.writeArrayFieldStart(ProductOrderSampleBean.DATA_FIELD);
+                        for (LedgerData ledgerDatum : ledgerData) {
+                            if (ledgerDatum != null) {
+                                jsonGenerator.writeObject(ledgerDatum);
+                            }
+                        }
+                        jsonGenerator.writeEndArray();
+                        jsonGenerator.writeObjectField("redirectOnSuccess", redirectOnSuccess);
+                    }
+                    jsonGenerator.writeEndObject();
+                } catch (Exception e) {
+                    logger.error("updating ledgers", e);
+                } finally {
+                    if (jsonGenerator != null) {
+                        jsonGenerator.close();
+                    }
+                }
+            }
+        };
+        return resolution;
     }
 
     /**
@@ -271,7 +319,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
         productOrderSampleLedgerInfos = gatherSampleInfo();
 
         // Capture data to render into the form to verify that nothing changed when the form is submitted
-        renderedSampleNames = buildSampleNameList();
         renderedPriceItemNames = buildPriceItemNameList();
     }
 
@@ -302,21 +349,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
     }
 
     /**
-     * Build a list of all of the sample names on this product order. This is done both when rendering the form and when
-     * the form is submitted. The results are compared and an error is thrown if they are different, indicating that a
-     * change has been made that may make it unsafe to apply the requested ledger updates.
-     *
-     * @return a list of sample names on the product order
-     */
-    private ArrayList<String> buildSampleNameList() {
-        ArrayList<String> sampleNames = new ArrayList<>();
-        for (ProductOrderSample sample : productOrder.getSamples()) {
-            sampleNames.add(sample.getName());
-        }
-        return sampleNames;
-    }
-
-    /**
      * Build a list of all of the price item names for this product order.  This is done both when rendering the form
      * and when the form is submitted. The results are compared and an error is thrown if they are different, indicating
      * that a change has been made that may make it unsafe to apply the requested ledger updates.
@@ -337,9 +369,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
      *
      * @return true if the sample names have not changed; false otherwise
      */
-    private boolean isSubmittedSampleListValid() {
-        List<String> sampleNames = buildSampleNameList();
-        if (!sampleNames.equals(renderedSampleNames)) {
+    private boolean isOrderModified() {
+        if (modifiedDate.compareTo(productOrder.getModifiedDate()) != 0) {
             addGlobalValidationError(
                     "The sample list has changed since loading the page. Changes have not been saved. Please reevaluate your billing decisions and reapply your changes as appropriate.");
             return false;
@@ -451,14 +482,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return priceItems;
     }
 
-    public List<String> getRenderedSampleNames() {
-        return renderedSampleNames;
-    }
-
-    public void setRenderedSampleNames(List<String> renderedSampleNames) {
-        this.renderedSampleNames = renderedSampleNames;
-    }
-
     public List<String> getRenderedPriceItemNames() {
         return renderedPriceItemNames;
     }
@@ -486,9 +509,31 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * @return the date 3 months ago as milliseconds since January 1, 1970, 00:00:00 GMT
      */
     public long getThreeMonthsAgo() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MONTH, -3);
-        return calendar.getTime().getTime();
+        return DateUtils.getByMonthOffset(-3).getTime();
+    }
+
+    public long getProductOrderSampleId() {
+        return productOrderSampleId;
+    }
+
+    public void setProductOrderSampleId(long productOrderSampleId) {
+        this.productOrderSampleId = productOrderSampleId;
+    }
+
+    public boolean isRedirectOnSuccess() {
+        return redirectOnSuccess;
+    }
+
+    public void setRedirectOnSuccess(boolean redirectOnSuccess) {
+        this.redirectOnSuccess = redirectOnSuccess;
+    }
+
+    public Date getModifiedDate() {
+        return modifiedDate;
+    }
+
+    public void setModifiedDate(Date modifiedDate) {
+        this.modifiedDate = modifiedDate;
     }
 
     /**
@@ -501,6 +546,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         private Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantities;
         private ListMultimap<PriceItem, LedgerEntry> ledgerEntriesByPriceItem = ArrayListMultimap.create();
         private int autoFillQuantity = 0;
+        private boolean anyQuantitySet = false;
 
         public ProductOrderSampleLedgerInfo(ProductOrderSample productOrderSample, Date coverageFirstMet) {
             this.productOrderSample = productOrderSample;
@@ -513,6 +559,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
             }
 
             ledgerQuantities = productOrderSample.getLedgerQuantities();
+
+            for(Map.Entry<PriceItem, ProductOrderSample.LedgerQuantities> quantityEntry: ledgerQuantities.entrySet()) {
+                if(quantityEntry.getValue().getTotal()>0) {
+                    anyQuantitySet = true;
+                }
+            }
 
             boolean primaryBilled = false;
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
@@ -563,6 +615,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public int getAutoFillQuantity() {
             return autoFillQuantity;
         }
+
+        public boolean isAnyQuantitySet() {
+            return anyQuantitySet;
+        }
     }
 
     /**
@@ -588,18 +644,15 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public String getCompleteDateFormatted() {
             return workCompleteDate != null ? new SimpleDateFormat(DATE_FORMAT).format(workCompleteDate) : null;
         }
-
         public void setWorkCompleteDate(Date workCompleteDate) {
             this.workCompleteDate = workCompleteDate;
         }
 
-        public Map<Long, ProductOrderSampleQuantities> getQuantities() {
-            return quantities;
-        }
-
+        public Map<Long, ProductOrderSampleQuantities> getQuantities() { return quantities; }
         public void setQuantities(Map<Long, ProductOrderSampleQuantities> quantities) {
             this.quantities = quantities;
         }
+
     }
 
     /**
@@ -625,7 +678,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.submittedQuantity = submittedQuantity;
         }
     }
-    
+
     /**
      * This gets the product price item and then its list of optional price items. If the price items are not
      * yet stored in the PRICE_ITEM table, it will create it there.

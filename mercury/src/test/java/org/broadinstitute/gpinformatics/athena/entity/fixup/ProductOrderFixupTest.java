@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -7,7 +9,9 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -15,6 +19,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
@@ -23,7 +29,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfoFixupTest;
@@ -32,11 +37,17 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
@@ -45,20 +56,20 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Join;
 import javax.persistence.criteria.ParameterExpression;
-import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -73,7 +84,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -82,6 +95,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,21 +103,29 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
+
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
  * Set @Test(enabled=false) after running once.
  */
-@Test(groups = TestGroups.FIXUP)
+@Test(groups = TestGroups.FIXUP, singleThreaded = true)
+@RequestScoped
 public class ProductOrderFixupTest extends Arquillian {
+
+    public ProductOrderFixupTest() {
+    }
+
+    @Inject
+    BucketEjb bucketEjb;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -155,6 +177,14 @@ public class ProductOrderFixupTest extends Arquillian {
     @Inject
     private BucketEntryDao bucketEntryDao;
 
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private QuoteService quoteService;
+
+    @Inject
+    private SAPAccessControlEjb accessController;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -385,7 +415,7 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void fixupPDOCompleteStatus() throws ProductOrderEjb.NoSuchPDOException, IOException {
+    public void fixupPDOCompleteStatus() throws ProductOrderEjb.NoSuchPDOException, IOException, SAPInterfaceException {
         // Loop through all PDOs and update their status to complete where necessary.  The API can in theory
         // un-complete PDOs but no PDOs in the database should be completed yet.
         List<ProductOrder> orders = productOrderDao.findAll();
@@ -559,7 +589,8 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void gplim2893ManuallyCompletePDO() throws ProductOrderEjb.NoSuchPDOException, IOException {
+    public void gplim2893ManuallyCompletePDO()
+            throws ProductOrderEjb.NoSuchPDOException, IOException, SAPInterfaceException {
         MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(log);
         productOrderEjb.updateOrderStatus("PDO-2635", reporter);
     }
@@ -772,7 +803,7 @@ public class ProductOrderFixupTest extends Arquillian {
             RegulatoryInfo selectedRegulatoryInfo = null;
             for(RegulatoryInfo candidate: pdoToChange.getResearchProject().getRegulatoryInfos()) {
                 if(candidate.getIdentifier().equals(orderToRegInfo.getRegulatoryInfoIdentifier()) &&
-                        candidate.getType() == orderToRegInfo.getRegulatoryInfoType()) {
+                   candidate.getType() == orderToRegInfo.getRegulatoryInfoType()) {
                     selectedRegulatoryInfo = candidate;
                     break;
                 }
@@ -1055,8 +1086,13 @@ public class ProductOrderFixupTest extends Arquillian {
 
         for(ProductOrder orderWithSap:listWithWildcard) {
             if(CollectionUtils.isEmpty(orderWithSap.getSapReferenceOrders())) {
+                BigDecimal sampleCount = BigDecimal.ZERO;
+                if(orderWithSap.isPriorToSAP1_5()) {
+                    sampleCount =
+                            SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct(), false);
+                }
                 SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
-                        SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct()),
+                        sampleCount.intValue(),
                         orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode(),
                         "", "");
                 orderWithSap.addSapOrderDetail(newDetail);
@@ -1224,7 +1260,10 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         final MessageReporter testOnly = MessageReporter.UNUSED;
-        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, testOnly);
+
+        MessageCollection testCollection = new MessageCollection();
+
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, testCollection);
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
         final MessageCollection messageCollection = new MessageCollection();
@@ -1238,6 +1277,41 @@ public class ProductOrderFixupTest extends Arquillian {
                                                     + "is removed and the new process would not satisfy this case"));
         commitTransaction();
     }
+
+    @Test(enabled = false)
+    public void gplim5364UnabandonSamples() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        final String sampleComment = "Unabandon due to the current status of the samples in the process.";
+        Set<Long> productOrderSampleIDs = new HashSet<>();
+        String pdoTicket = "PDO-13827";
+
+        List<String> sampleKeys =
+                Arrays.asList("SM-GBMDQ", "SM-GBME1", "SM-GBME3", "SM-GBME8", "SM-GBMES", "SM-GBMCE", "SM-GBOBR",
+                        "SM-GBMBT", "SM-GBOB7");
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoTicket);
+
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if (sampleKeys.contains(sample.getSampleKey())) {
+                productOrderSampleIDs.add(sample.getProductOrderSampleId());
+            }
+        }
+
+        final MessageReporter testOnly = MessageReporter.UNUSED;
+        final MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, messageCollection);
+        productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
+
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
+            Assert.fail("Error occured attempting to update SAP in fixupTest");
+
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-5364:  unabandon due to the current status of the samples in the process."));
+        commitTransaction();
+    }
+
 
     @Test(enabled = false)
     public void support3407UpdatePDOAssociationsOnLCSET11965() throws Exception {
@@ -1337,5 +1411,377 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         productOrderDao.persist(new FixupCommentary("GPLIM-4593: Backfilling sap Order Detail with billing Ledger Associations"));
+    }
+
+    @Test(enabled=false)
+    public void gplim5377MakeCliaPcrFreeWholeGenomeClinical() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        Product pcrFreeProduct = productDao.findByBusinessKey("P-CLA-0008");
+        Product germlineCommercial = productDao.findByBusinessKey("P-CLA-0005");
+        Product somaticCommercial = productDao.findByBusinessKey("P-CLA-0006");
+
+        List<ProductOrder> pcrFreeOrders = productOrderDao.findList(ProductOrder.class, ProductOrder_.product, pcrFreeProduct);
+
+        pcrFreeProduct.setClinicalProduct(true);
+        System.out.println("Set " + pcrFreeProduct.getPartNumber() + " to be a clinical order");
+        pcrFreeProduct.setExternalOnlyProduct(false);
+        System.out.println("Set " + pcrFreeProduct.getPartNumber() + " to not be an external order");
+
+        germlineCommercial.setExternalOnlyProduct(true);
+        somaticCommercial.setExternalOnlyProduct(true);
+
+        for (ProductOrder pcrFreeOrder : pcrFreeOrders) {
+            if(pcrFreeOrder.getOrderStatus() != ProductOrder.OrderStatus.Abandoned &&
+               pcrFreeOrder.getOrderStatus() != ProductOrder.OrderStatus.Draft) {
+                pcrFreeOrder.setClinicalAttestationConfirmed(true);
+                System.out.println("Updating " + pcrFreeOrder.getJiraTicketKey() + " to have Clinical attestation set");
+            }
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-5377:  Updated PCR-Free Whole Genome product to be a "
+                                                    + "clinical product, and set the associated orders for them to "
+                                                    + "have the Clinical Attestation Set"));
+
+        commitTransaction();
+    }
+
+    @Test(enabled=false)
+    public void gplimSupport3853ChangeOrderType() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        ProductOrder orderToUpdate = productOrderDao.findByBusinessKey("PDO-13052");
+
+        orderToUpdate.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3853: updated PDO-13052 to allow it to switch to a commercial order type"));
+
+        commitTransaction();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/PDOSamplesToUnabandon.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX unabandoning samples in pdo-xxx
+     * A reason for unabandoning to go with the unabandon comment
+     * PDO-xxx
+     * SM-329482
+     * SM-2938239
+     * ...
+     * ...
+     */
+
+    @Test(enabled = false)
+    public void genericUnAbandonSamples() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("PDOSamplesToUnabandon.txt"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(fixupLines), "The file PDOSamplesToUnabandon.txt has no content.");
+        String fixupReason = fixupLines.get(0);
+        final String sampleComment = fixupLines.get(1);
+        String pdoTicket = fixupLines.get(2);
+
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
+        Assert.assertTrue(StringUtils.isNotBlank(pdoTicket), "A PDO is necessary to unabandon");
+
+        List<String> samplesToUnabandon = fixupLines.subList(3, fixupLines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(samplesToUnabandon), "No Samples have been provided to unabandon");
+
+
+        Set<Long> productOrderSampleIDs = new HashSet<>();
+
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoTicket);
+
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if (samplesToUnabandon .contains(sample.getSampleKey())) {
+                productOrderSampleIDs.add(sample.getProductOrderSampleId());
+            }
+        }
+
+        final MessageReporter testOnly = MessageReporter.UNUSED;
+        final MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, messageCollection);
+        productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
+
+        if(productOrder.isSavedInSAP()) {
+            productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        }
+        if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
+            Assert.fail("Error occured attempting to update SAP in fixupTest");
+
+        }
+        productOrderDao.persist(new FixupCommentary(fixupReason));
+        commitTransaction();
+    }
+
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/SamplesToAddToClosedPDO.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX Adding samples to completed pdos PDO-xxx, PDO-xxx1
+     * PDO-xxx SM-329482
+     * PDO-xxx SM-2938239
+     * PDO-xxx1 SM-329482
+     * PDO-xxx1 SM-2938239
+     * ...
+     * ...
+     */
+    @Test(enabled = false)
+    public void addSamplesToClosedOrder() throws Exception {
+
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("SamplesToAddToClosedPDO.txt"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(fixupLines), "The file SamplesToAddToClosedPDO.txt has no content.");
+        final String fixupReason = fixupLines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
+
+        Multimap<String, ProductOrderSample> samplesToAdd = ArrayListMultimap.create();
+        fixupLines.subList(1, fixupLines.size())
+                .forEach((pdoSampleString)->samplesToAdd.put(pdoSampleString.split(" ")[0],
+                        new ProductOrderSample(pdoSampleString.split(" ")[1])));
+
+        samplesToAdd.asMap().forEach((String pdoKey, Collection<ProductOrderSample> samples) -> {
+            ProductOrder pdo = productOrderDao.findByBusinessKey(pdoKey);
+            pdo.addSamples(samples);
+
+            pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+            productOrderEjb.attachMercurySamples(new ArrayList<>(samples));
+
+            pdo.prepareToSave(userBean.getBspUser());
+            productOrderDao.persist(pdo);
+            productOrderEjb.handleSamplesAdded(pdoKey, samples, MessageReporter.UNUSED);
+
+            try {
+                productOrderEjb.updateSamples(pdo, samples, MessageReporter.UNUSED, "added");
+            } catch (IOException | ProductOrderEjb.NoSuchPDOException | SAPInterfaceException e) {
+                Assert.fail();
+            }
+        });
+
+        productOrderDao.persist(new FixupCommentary(fixupReason));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void gplim5824ReOpenPdo() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        String pdoKey = "PDO-16090";
+
+        ProductOrder orderToOpen = productOrderDao.findByBusinessKey(pdoKey);
+
+        orderToOpen.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+        System.out.println("Set the status of " +pdoKey + " to be " + orderToOpen.getOrderStatus().getDisplayName());
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-5824: repopening order to allow billing to continue"));
+        commitTransaction();
+    }
+
+    /**
+     *
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/SamplesToAbandon.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     *
+     * SUPPORT-XXXX Marking samples as abandoned in PDOs
+     * PDO-xxx SM-32948 SM-3344
+     * PDO-xxx1 SM-329482 SM-2938239
+     * ...
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void gplim5878ChangeSampleToAbandoned() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("SamplesToAbandon.txt"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(fixupLines), "The file SamplesToAbandon.txt has no content.");
+        final String fixupReason = fixupLines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
+
+        fixupLines.subList(1, fixupLines.size())
+                .forEach(line ->{
+                    String pdoKey = line.split(" ", 2)[0];
+                    final String samples = line.split(" ", 2)[1];
+                    final List<String> sampleList = Arrays.asList(samples.split(" "));
+                    try {
+                        abandonSamplesForSapOrder(pdoKey, sampleList, fixupReason);
+                        System.out.println("Changed the status of " + StringUtils.join(sampleList, ", ") +
+                                           " in " + pdoKey + " To abandoned");
+                    } catch (ProductOrderEjb.SampleDeliveryStatusChangeException | QuoteNotFoundException |
+                            QuoteServerException | InvalidProductException | SAPIntegrationException |
+                            IOException | ProductOrderEjb.NoSuchPDOException | SAPInterfaceException e) {
+                        Assert.fail(e.getMessage());
+                    }
+                }
+                );
+
+        productOrderDao.persist(new FixupCommentary(fixupReason));
+        commitTransaction();
+    }
+
+    /**
+     *
+     * Helper method to assist abandoning
+     *
+     * @param pdoKey        Business key for the Product Order being updated
+     * @param sampleList    List of Samples to be abandoned
+     * @param abandonReason   Comment to add as the reason to abandon
+     * @throws ProductOrderEjb.SampleDeliveryStatusChangeException
+     * @throws QuoteNotFoundException
+     * @throws QuoteServerException
+     * @throws InvalidProductException
+     * @throws SAPIntegrationException
+     * @throws IOException
+     * @throws ProductOrderEjb.NoSuchPDOException
+     * @throws SAPInterfaceException
+     */
+    public void abandonSamplesForSapOrder(String pdoKey, List<String> sampleList, String abandonReason)
+            throws ProductOrderEjb.SampleDeliveryStatusChangeException, QuoteNotFoundException, QuoteServerException,
+            InvalidProductException, SAPIntegrationException, IOException, ProductOrderEjb.NoSuchPDOException,
+            SAPInterfaceException {
+
+        final ProductOrder orderToModify = productOrderDao.findByBusinessKey(pdoKey);
+        final List<ProductOrderSample> samplesToTransition =
+                orderToModify.getSamples().stream()
+                        .filter(productOrderSample -> sampleList.contains(productOrderSample.getSampleKey()))
+                        .collect(Collectors.toList());
+
+        productOrderEjb.transitionSamples(orderToModify,
+                EnumSet.of(ProductOrderSample.DeliveryStatus.ABANDONED, ProductOrderSample.DeliveryStatus.NOT_STARTED),
+                ProductOrderSample.DeliveryStatus.ABANDONED, samplesToTransition);
+
+        if (orderToModify.isSavedInSAP() && isOrderEligibleForSAP(orderToModify, new Date())) {
+            final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToModify);
+            Quote quote = orderToModify.getQuote(quoteService);
+
+            final List<String> effectivePricesForProducts = productPriceCache
+                    .getEffectivePricesForProducts(allProductsOrdered,orderToModify, quote);
+
+            productOrderEjb.updateOrderInSap(orderToModify, allProductsOrdered, effectivePricesForProducts, new MessageCollection(),
+                    CollectionUtils.containsAny(Arrays.asList(
+                            ProductOrder.OrderStatus.Abandoned, ProductOrder.OrderStatus.Completed),
+                            Collections.singleton(orderToModify.getOrderStatus()))
+                    && !orderToModify.isPriorToSAP1_5());
+        }
+
+        JiraIssue issue = jiraService.getIssue(orderToModify.getJiraTicketKey());
+        issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
+                productOrderEjb.getUserName(), ProductOrderSample.DeliveryStatus.ABANDONED.getDisplayName(),
+                StringUtils.join(ProductOrderSample.getSampleNames(samplesToTransition), ","),
+                StringUtils.stripToEmpty(abandonReason)));
+
+        productOrderEjb.updateOrderStatus(orderToModify.getJiraTicketKey(), MessageReporter.UNUSED);
+    }
+
+    @Test(enabled = false)
+    public void gplim5918_updateIncorrectOrsp() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        String incorrectOrspIdentifier = "2861";
+        String correctOrspIdentifier = "ORSP-2861";
+
+        List<ProductOrder> productOrders = productOrderDao.findOrdersByRegulatoryInfoIdentifier(incorrectOrspIdentifier);
+        List<RegulatoryInfo> incorrectRegulatoryInfos = regulatoryInfoDao.findByIdentifier(incorrectOrspIdentifier);
+        assertThat(incorrectRegulatoryInfos, hasSize(1));
+        RegulatoryInfo incorrectRegulatoryInfo = incorrectRegulatoryInfos.iterator().next();
+        List<RegulatoryInfo> replacementRegulatoryInfos = regulatoryInfoDao.findByIdentifier(correctOrspIdentifier);
+        assertThat(replacementRegulatoryInfos, hasSize(1));
+        RegulatoryInfo replacement = replacementRegulatoryInfos.iterator().next();
+
+        Set<ResearchProject> projectList =
+            productOrders.stream().map(ProductOrder::getResearchProject).collect(Collectors.toSet());
+
+        // add replacement regulatoryInfo if it isn't there yet.
+        projectList.forEach(researchProject -> {
+            if (!researchProject.getRegulatoryInfos().contains(replacement)) {
+                researchProject.getRegulatoryInfos().add(replacement);
+            }
+        });
+
+        // remove incorrect regulatoryInfo and add the replacement.
+        productOrders.forEach(productOrder -> {
+            assertThat(productOrder.getRegulatoryInfos().remove(incorrectRegulatoryInfo), is(true));
+            productOrder.getRegulatoryInfos().add(replacement);
+        });
+
+        // remove incorrect regulatoryInfo from the research project.
+        projectList.forEach(researchProject -> researchProject.getRegulatoryInfos().remove(incorrectRegulatoryInfo));
+
+        // finally, delete the old regulatoryInfo
+        regulatoryInfoDao.remove(incorrectRegulatoryInfo);
+        productOrderDao.persist(new FixupCommentary("See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-5918"));
+        commitTransaction();
+    }
+
+    /**
+     * Duplicate of the 'isOrderEligible' check from ProductOrderEjb.  For the purposes of why we are using it, we
+     * need to bypass the Quote funding check which is what this version will do.
+     * @param editedProductOrder    productOrder against which SAP viability will be validated
+     * @param effectiveDate         date by which we are comparing sap order viability
+     * @return
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     * @throws InvalidProductException
+     */
+    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
+            throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
+        Quote orderQuote = editedProductOrder.getQuote(quoteService);
+        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
+        boolean eligibilityResult = false;
+
+        Set<AccessItem> priceItemNameList = new HashSet<>();
+
+        final boolean priceItemsValid = productOrderEjb.areProductPricesValid(editedProductOrder, priceItemNameList, orderQuote);
+
+        if(orderQuote != null && accessControl.isEnabled()) {
+
+            eligibilityResult = editedProductOrder.getProduct()!=null &&
+                                editedProductOrder.getProduct().getPrimaryPriceItem() != null &&
+                                orderQuote != null &&
+                                !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
+        }
+
+        if(eligibilityResult && !priceItemsValid) {
+            throw new InvalidProductException("One of the Price items associated with " +
+                                              editedProductOrder.getBusinessKey() + ": " +
+                                              editedProductOrder.getName() + " is invalid");
+        }
+        return eligibilityResult;
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ChangePdoProduct.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-4488
+     * PDO-5818 P-EX-0008 P-EX-0016
+     * ...
+     * The first line is the fixup commentary.  The second and subsequent lines are: the PDO-ID,
+     * the old product part number, the new product part number.
+     */
+    @Test(enabled = false)
+    public void fixupSupport4488() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangePdoProduct.txt"));
+
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+            String[] split = line.split("\\s");
+            ProductOrder productOrder = productOrderDao.findByBusinessKey(split[0]);
+            Assert.assertEquals(productOrder.getProduct().getPartNumber(), split[1]);
+            Product product = productDao.findByPartNumber(split[2]);
+            System.out.println("Changing " + productOrder.getBusinessKey() + " to " + product.getPartNumber());
+            productOrder.setProduct(product);
+        }
+
+        productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
     }
 }

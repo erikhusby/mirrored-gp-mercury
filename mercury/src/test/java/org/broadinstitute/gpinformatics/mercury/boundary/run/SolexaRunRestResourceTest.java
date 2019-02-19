@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
@@ -33,16 +33,15 @@ import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainer
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
-import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -58,7 +57,10 @@ import java.util.EnumMap;
  * Test run registration web service
  */
 @Test(groups = TestGroups.STUBBY)
-public class SolexaRunRestResourceTest extends Arquillian {
+@Dependent
+public class SolexaRunRestResourceTest extends StubbyContainerTest {
+
+    public SolexaRunRestResourceTest(){}
 
     @Inject
     private IlluminaSequencingRunDao runDao;
@@ -101,18 +103,6 @@ public class SolexaRunRestResourceTest extends Arquillian {
     private ArrayList<ProductOrderSample> bucketReadySamples;
     private String runName;
     private String pdo1JiraKey;
-
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-
-        /**
-         * Since this implements a rest call Auto_Build will be used for the server used for the bamboo builds.  To
-         * test locally, the server definitions for AUTO_BUILD should be modified locally to point to the users
-         * local server
-         *
-         */
-        return DeploymentBuilder.buildMercuryWar();
-    }
 
     @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {

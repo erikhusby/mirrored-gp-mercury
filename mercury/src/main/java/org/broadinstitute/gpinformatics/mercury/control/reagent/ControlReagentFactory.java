@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ControlReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +26,7 @@ import java.util.Set;
 /**
  * Creates ControlReagent entities.
  */
+@Dependent
 public class ControlReagentFactory {
 
     @Inject

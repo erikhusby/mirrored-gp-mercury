@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.HashMultimap;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionCreator;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.JAXBContext;
@@ -29,7 +29,6 @@ import java.util.Map;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-@Impl
 public class WorkflowConfig implements PreferenceDefinitionValue, Serializable {
 
     // JAXBContext is threadsafe
@@ -84,8 +83,8 @@ public class WorkflowConfig implements PreferenceDefinitionValue, Serializable {
         return sequencingConfigDef;
     }
 
-    public ProductWorkflowDef getWorkflow(@Nonnull Workflow workflow) {
-        return getWorkflowByName(workflow.getWorkflowName());
+    public ProductWorkflowDef getWorkflow(@Nonnull String workflow) {
+        return getWorkflowByName(workflow);
     }
 
     public ProductWorkflowDef getWorkflowByName(String workflowName) {
@@ -203,4 +202,16 @@ public class WorkflowConfig implements PreferenceDefinitionValue, Serializable {
         }
         return null;
     }
+
+    public WorkflowBucketDef findWorkflowBucketDef(@Nonnull ProductOrder productOrder, String bucketName) {
+        for (String productWorkflow : productOrder.getProductWorkflows()) {
+            ProductWorkflowDefVersion workflowDefVersion = getWorkflowVersionByName(productWorkflow, new Date());
+            WorkflowBucketDef bucketDef = workflowDefVersion.findBucketDefByName(bucketName);
+            if (bucketDef != null) {
+                return bucketDef;
+            }
+        }
+        return null;
+    }
+
 }

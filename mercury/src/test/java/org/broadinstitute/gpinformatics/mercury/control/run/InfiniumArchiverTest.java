@@ -2,15 +2,13 @@ package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,22 +22,18 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-
 
 /**
  * Test archiving.
  */
 @Test(groups = TestGroups.STUBBY)
-public class InfiniumArchiverTest extends Arquillian {
+@Dependent
+public class InfiniumArchiverTest extends StubbyContainerTest {
+
+    public InfiniumArchiverTest(){}
 
     @Inject
     private InfiniumArchiver infiniumArchiver;
-
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
-    }
 
     public void testQuery() {
         GregorianCalendar gregorianCalendar = new GregorianCalendar();

@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -30,13 +31,13 @@ import java.util.Set;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class WorkflowBucketEntryEvaluator implements Serializable {
     private static final Log log = LogFactory.getLog(WorkflowBucketEntryEvaluator.class);
-    Set<Workflow> workflows = new HashSet<>();
+    Set<String> workflows = new HashSet<>();
     Set<MaterialType> materialTypes = new HashSet<>();
 
     public WorkflowBucketEntryEvaluator() {
     }
 
-    WorkflowBucketEntryEvaluator(Set<Workflow> workflows, Set<MaterialType> materialTypes) {
+    WorkflowBucketEntryEvaluator(Set<String> workflows, Set<MaterialType> materialTypes) {
         this.workflows = workflows;
         this.materialTypes = materialTypes;
     }
@@ -49,29 +50,29 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
     }
 
     private boolean productOrAddOnsHaveWorkflow(ProductOrder productOrder) {
-        return workflows.isEmpty() || getMatchingWorkflow(productOrder) != Workflow.NONE;
+        return workflows.isEmpty() || getMatchingWorkflow(productOrder) != null;
     }
 
-    protected Workflow getMatchingWorkflow(ProductOrder productOrder) {
+    protected String getMatchingWorkflow(ProductOrder productOrder) {
         if (workflows.isEmpty()) {
-            return productOrder.getProduct().getWorkflow();
+            return productOrder.getProduct().getWorkflowName();
         }
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            Workflow matchingWorkflow = getMatchingWorkflow(productOrderAddOn.getAddOn().getWorkflow());
-            if (matchingWorkflow != Workflow.NONE) {
+            String matchingWorkflow = getMatchingWorkflow(productOrderAddOn.getAddOn().getWorkflowName());
+            if (matchingWorkflow != null) {
                 return matchingWorkflow;
             }
         }
-        return getMatchingWorkflow(productOrder.getProduct().getWorkflow());
+        return getMatchingWorkflow(productOrder.getProduct().getWorkflowName());
     }
 
-    private Workflow getMatchingWorkflow(Workflow workflow) {
-        for (Workflow testWorkflow : workflows) {
-            if (testWorkflow == workflow) {
+    private String getMatchingWorkflow(String workflow) {
+        for (String testWorkflow : workflows) {
+            if (testWorkflow.equals(workflow)) {
                 return workflow;
             }
         }
-        return Workflow.NONE;
+        return null;
     }
 
 
@@ -82,7 +83,7 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
     protected String findMissingRequirements(ProductOrder productOrder, MaterialType materialType) {
         Set<MaterialType> missingMaterialTypes=materialTypes;
         missingMaterialTypes.remove(materialType);
-        Set<Workflow> missingWorkflows = workflows;
+        Set<String> missingWorkflows = workflows;
         missingWorkflows.removeAll(productOrder.getProductWorkflows());
 
         String missingRequirements = "";
@@ -92,9 +93,8 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
                             MaterialType.displayNamesOf(missingMaterialTypes));
         }
         if (!missingWorkflows.isEmpty()) {
-            missingRequirements +=
-                    String.format("Workflows '%s' are not one of %s ", Workflow.workflowNamesOf(
-                            productOrder.getProductWorkflows()), Workflow.workflowNamesOf(missingWorkflows));
+            missingRequirements += String.format("Workflows '%s' are not one of %s ",
+                    StringUtils.join(productOrder.getProductWorkflows(), ","), StringUtils.join(missingWorkflows, ","));
         }
         return missingRequirements;
     }

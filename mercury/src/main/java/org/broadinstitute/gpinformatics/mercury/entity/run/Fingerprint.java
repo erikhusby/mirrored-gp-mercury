@@ -10,6 +10,8 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -30,7 +32,8 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury",
+    indexes = {@Index(name = "IX_FP_MERCURY_SAMPLE", columnList = "MERCURY_SAMPLE", unique = false)})
 public class Fingerprint {
 
     public enum Disposition {
@@ -96,6 +99,8 @@ public class Fingerprint {
         }
     }
 
+    // todo jmt unique constraint?
+
     @SuppressWarnings("unused")
     @SequenceGenerator(name = "SEQ_FINGERPRINT", schema = "mercury", sequenceName = "SEQ_FINGERPRINT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_FINGERPRINT")
@@ -103,6 +108,7 @@ public class Fingerprint {
     private Long fingerprintId;
 
     @ManyToOne
+    @JoinColumn(name = "MERCURY_SAMPLE")
     private MercurySample mercurySample;
 
     @Enumerated(EnumType.STRING)
@@ -117,9 +123,10 @@ public class Fingerprint {
     private Date dateGenerated;
 
     @ManyToOne
+    @JoinColumn(name = "SNP_LIST")
     private SnpList snpList;
 
-    @OneToMany(mappedBy = "fingerprint", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "fingerprint", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private Set<FpGenotype> fpGenotypes = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
@@ -147,8 +154,7 @@ public class Fingerprint {
     }
 
     @Transient
-    private
-    Map<String, FpGenotype> mapRsIdToFpGenotype;
+    private Map<String, FpGenotype> mapRsIdToFpGenotype;
 
     private Map<String, FpGenotype> getMapRsIdToFpGenotype() {
         if (mapRsIdToFpGenotype == null) {
@@ -170,10 +176,13 @@ public class Fingerprint {
         return fpGenotypesOrdered;
     }
 
+    public Set<FpGenotype> getFpGenotypes() {
+        return fpGenotypes;
+    }
+
     public void addFpGenotype(FpGenotype fpGenotype) {
         fpGenotypes.add(fpGenotype);
     }
-
 
     public MercurySample getMercurySample() {
         return mercurySample;
@@ -183,12 +192,24 @@ public class Fingerprint {
         return disposition;
     }
 
+    public void setDisposition(Disposition disposition) {
+        this.disposition = disposition;
+    }
+
     public Platform getPlatform() {
         return platform;
     }
 
+    public void setPlatform(Platform platform) {
+        this.platform = platform;
+    }
+
     public GenomeBuild getGenomeBuild() {
         return genomeBuild;
+    }
+
+    public void setGenomeBuild(GenomeBuild genomeBuild) {
+        this.genomeBuild = genomeBuild;
     }
 
     public Date getDateGenerated() {
@@ -201,6 +222,10 @@ public class Fingerprint {
 
     public Gender getGender() {
         return gender;
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = gender;
     }
 
     public Boolean getMatch() {

@@ -129,6 +129,7 @@ public class LabMetricRunSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.RUN_VESSEL.getTermRefName());
+        searchTerm.setRackScanSupported(Boolean.TRUE);
         searchTerm.setCriteriaPaths(emptyCriteriaPaths);
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setAlternateSearchDefinition(ALL_VESSEL_METRIC_RUNS_ALT_SRCH_DEFINITION);
@@ -385,6 +386,7 @@ public class LabMetricRunSearchDefinition {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Run Drill Down");
         searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
+        searchTerm.setMustEscape(false);
 
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
 

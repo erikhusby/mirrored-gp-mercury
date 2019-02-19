@@ -1,18 +1,23 @@
 package org.broadinstitute.gpinformatics.athena.boundary.search;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
  * This class is for testing the {@link SearchEjb} class.
  */
 @Test(groups = TestGroups.STUBBY, enabled = true)
-public class SearchEjbTest extends ContainerTest {
+@Dependent
+public class SearchEjbTest extends StubbyContainerTest {
+
+    public SearchEjbTest(){}
+
     @Inject
     SearchEjb searchEjb;
 

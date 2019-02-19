@@ -69,8 +69,9 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      * @param batch               instance of the Lab Batch entity for which a new LCSetT Ticket is to be created
      * @param productOrderDao
      */
-    public ExtractionJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
-        super(batch, CreateFields.ProjectType.EXTRACTION_PROJECT);
+    public ExtractionJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao,
+            WorkflowConfig workflowConfig) {
+        super(batch, CreateFields.ProjectType.EXTRACTION_PROJECT, productOrderDao, workflowConfig);
 
         if (!batch.getBucketEntries().isEmpty()) {
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
@@ -136,7 +137,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         if (CollectionUtils.isNotEmpty(batch.getStartingBatchLabVessels())) {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SAMPLE_IDS,
-                    buildSamplesListString(batch)));
+                    buildSamplesListString()));
         }
 
         try {
@@ -145,7 +146,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
                 MaterialType materialType = bucketEntry.getLabVessel().getLatestMaterialType();
                 if (materialType!=null) {
-                    CustomField materialTypeField = new CustomField(submissionFields, LabBatch.TicketFields.BATCH_TYPE,
+                    CustomField materialTypeField = new CustomField(submissionFields, LabBatch.TicketFields.MATERIAL_TYPE,
                                     new CustomField.ValueContainer(materialType.getDisplayName()));
                     customFields.add(materialTypeField);
                     // TODO: the batchtype field will be changed to a multi-select in the near future,

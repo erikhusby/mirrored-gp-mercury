@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import java.util.Set;
  * vessels) have been batched for a Mercury-supported workflow.
  *
  */
+@Dependent
 public class SystemRouter implements Serializable {
 
     private static final long serialVersionUID = 20130507L;

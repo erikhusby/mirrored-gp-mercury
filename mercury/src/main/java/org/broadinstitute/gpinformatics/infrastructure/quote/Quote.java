@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import clover.org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.time.DateUtils;
+import org.broadinstitute.gpinformatics.infrastructure.ShortDateAdapter;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
@@ -9,10 +9,16 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @XmlRootElement(name="Quote")
 public class Quote {
@@ -28,6 +34,8 @@ public class Quote {
     private Collection<QuoteItem> quoteItems = new ArrayList<> ();
     private Date expirationDate;
 
+    @XmlTransient
+    private Collection<Funding> cachedFunding;
 
     // quick access Cache of quote items
     @XmlTransient
@@ -118,7 +126,7 @@ public class Quote {
     }
 
     @XmlAttribute(name="expirationDate")
-    @XmlJavaTypeAdapter(QuotePriceItem.DateAdapter.class)
+    @XmlJavaTypeAdapter(ShortDateAdapter.class)
     public Date getExpirationDate() {
         return expirationDate;
     }
@@ -149,55 +157,63 @@ public class Quote {
      * Tests if the Quote is in a state that makes it eligible to be used on an order bound for SAP.  The criteria
      * for this would be
      * <ul>
-     *     <li>There is only one funding source defined for the quote.  SAP Orders will only be able to handle one
-     *     source of funding</li>
-     *     <li>If the funding source is backed by a Grant, ensure that the grant end date has not passed.</li>
+     * <li>There is only one funding source defined for the quote.  SAP Orders will only be able to handle one
+     * source of funding</li>
+     * <li>If the funding source is backed by a Grant, ensure that the grant end date has not passed.</li>
      * </ul>
      *
      * @return
+     *
      */
     public boolean isEligibleForSAP() {
+        Collection<Funding> allFundingSources = new HashSet<>();
 
-        FundingLevel singleLevel = getFirstRelevantFundingLevel();
+        Optional.ofNullable(getFirstRelevantFundingLevel())
+            .ifPresent(singleLevel -> {
+                Optional.ofNullable(singleLevel.getFunding())
+                    .ifPresent(allFundingSources::addAll);
+            });
+        return  allFundingSources.size() == 1;
+    }
 
-        boolean grantHasEnded = false;
+    public boolean isFunded() {
+        return isFunded(new Date());
+    }
 
-        boolean multipleFundReservation = true;
+    public boolean isFunded(Date effectiveDate) {
 
-        if (singleLevel != null ) {
-            multipleFundReservation = singleLevel.getFunding().size()>1;
-            if (!multipleFundReservation) {
-                for (Funding funding : singleLevel.getFunding()) {
+        int fundsCount = 0;
+        int purchaseOrderCount = 0;
+        Map<String, List<Funding>> fundingByType =
+            getFunding().stream().collect(Collectors.groupingBy(Funding::getFundingType));
 
-                    if(funding.getGrantEndDate() != null && funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                        final Date today = DateUtils.truncate(new Date(), Calendar.DATE);
-                        grantHasEnded = grantHasEnded && !FundingLevel.isGrantActiveForDate(today, funding);
+        fundsCount = Optional.ofNullable(fundingByType.get(Funding.FUNDS_RESERVATION))
+            .orElse(Collections.emptyList()).stream()
+            .filter(funding -> funding.isGrantActiveForDate(effectiveDate)).collect(Collectors.toSet())
+            .size();
 
-                        if(grantHasEnded) {
-                            break;
-                        }
-                    }
-                }
-            }
+        purchaseOrderCount = Optional.ofNullable(fundingByType.get(Funding.PURCHASE_ORDER))
+            .orElse(Collections.emptyList()).size();
 
-        }
-        return !(singleLevel == null) && !grantHasEnded && !multipleFundReservation;
+        return (fundsCount != 0 || purchaseOrderCount != 0) ;
     }
 
     /**
      * Helper method to support SAP transition.  If there is only one funding level, this will return it.  Otherwise
-     * Null will be returned
+     * Null will be returned. This method should only be used for testing if funding is valid for SAP.
      *
      * @return Single funding level for the quote, or null if there is either more than one level or no level.
      */
     public FundingLevel getFirstRelevantFundingLevel() {
         FundingLevel singleLevel = null;
 
-        for(FundingLevel level : quoteFunding.getFundingLevel()) {
-            if (singleLevel == null) {
-                singleLevel = level;
-            } else {
-                return null;
+        if (quoteFunding != null && CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
+            for(FundingLevel level : quoteFunding.getFundingLevel()) {
+                if (singleLevel == null) {
+                    singleLevel = level;
+                } else {
+                    return null;
+                }
             }
         }
         return singleLevel;
@@ -246,5 +262,16 @@ public class Quote {
         }
 
         return foundItem;
+    }
+
+    public Collection<Funding> getFunding() {
+        if (CollectionUtils.isEmpty(cachedFunding)) {
+            cachedFunding = new HashSet<>();
+            getQuoteFunding().getActiveFundingLevel().stream().filter(Objects::nonNull)
+                .filter(fundingLevel -> Objects.nonNull(fundingLevel.getFunding()))
+                .forEach(fundingLevel -> cachedFunding.addAll(fundingLevel.getFunding()));
+
+        }
+        return cachedFunding;
     }
 }

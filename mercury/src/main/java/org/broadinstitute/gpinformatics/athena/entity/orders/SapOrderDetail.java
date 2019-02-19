@@ -1,17 +1,22 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -216,6 +221,25 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     @Override
     public UpdateData getUpdateData() {
         return updateData;
+    }
+
+    public double getBilledSampleQuantity(final Product targetProduct) {
+        final Iterable<LedgerEntry> billedSamplesByPriceItemFilter = Iterables
+                .filter(getLedgerEntries(), new Predicate<LedgerEntry>() {
+
+                    @Override
+                    public boolean apply(@Nullable LedgerEntry ledgerEntry) {
+                        return ledgerEntry.getPriceItem().equals(targetProduct.getPrimaryPriceItem()) &&
+                               StringUtils.equals(ledgerEntry.getBillingMessage(),BillingSession.SUCCESS);
+                    }
+                });
+
+        double billedSampleResult = 0d;
+        for (LedgerEntry ledgerEntry : billedSamplesByPriceItemFilter) {
+            billedSampleResult += ledgerEntry.getQuantity();
+        }
+
+        return billedSampleResult;
     }
 
     @Override

@@ -61,6 +61,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -68,8 +69,8 @@ import java.util.Set;
  * defined by bettalims.xsd.  There is a BettaLIMS server that is part of the Squid suite of applications.
  */
 @Path("/bettalimsmessage")
-@Stateful
 @RequestScoped
+@Stateful
 public class BettaLimsMessageResource {
 
     /**
@@ -120,6 +121,7 @@ public class BettaLimsMessageResource {
     }
 
     @PostConstruct
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void postConstructor() {
         // Does the one-time lab event setup that is needed when processing messages.
         LabEvent.setupEventTypesThatCanFollowBucket(workflowConfig);
@@ -260,7 +262,7 @@ public class BettaLimsMessageResource {
                 log.error(e.getMessage());
             }
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                    Collections.<String>emptyList(), "[Mercury] Failed to process message", e.getMessage(), false);
+                    Collections.<String>emptyList(), "[Mercury] Failed to process message", e.getMessage(), false, true);
             throw e;
         }
     }
@@ -445,11 +447,13 @@ public class BettaLimsMessageResource {
         }
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
-            labEventHandler.processEvent(labEvent);
+            if (!Objects.equals(message.getMode(), LabEventFactory.MODE_BACKFILL)) {
+                labEventHandler.processEvent(labEvent);
+            }
             if (labEvent.hasAmbiguousLcsetProblem()) {
                 emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
                         "[Mercury] Vessels have ambiguous LCSET", "After " + labEvent.getLabEventType().getName() +
-                                                                  " (" + labEvent.getLabEventId() + ")", false);
+                                                                  " (" + labEvent.getLabEventId() + ")", false, true);
             }
         }
     }

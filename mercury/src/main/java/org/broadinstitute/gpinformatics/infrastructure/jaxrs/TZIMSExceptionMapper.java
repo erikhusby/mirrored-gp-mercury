@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jaxrs;
 
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -14,8 +15,7 @@ import javax.ws.rs.ext.Provider;
 @Provider
 public class TZIMSExceptionMapper implements ExceptionMapper<TZIMSException> {
 
-    @Inject
-    private Log log;
+    private Log log = LogFactory.getLog(this.getClass());
 
     @Override
     public Response toResponse(TZIMSException e) {

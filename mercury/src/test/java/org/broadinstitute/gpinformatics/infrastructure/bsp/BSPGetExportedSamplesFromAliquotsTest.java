@@ -33,7 +33,7 @@ public class BSPGetExportedSamplesFromAliquotsTest extends Arquillian {
     public void testBasics() {
         Collection<String> sampleLsids = new ArrayList<>();
         sampleLsids.add("broadinstitute.org:bsp.prod.sample:GOHM6");
-        List<BSPGetExportedSamplesFromAliquots.ExportedSamples> exportedSamplesFromAliquots =
+        List<BSPGetExportedSamplesFromAliquots.ExportedSample> exportedSamplesFromAliquots =
                 bspGetExportedSamplesFromAliquots.getExportedSamplesFromAliquots(sampleLsids,
                         IsExported.ExternalSystem.GAP);
         Assert.assertEquals(exportedSamplesFromAliquots.size(), 1);

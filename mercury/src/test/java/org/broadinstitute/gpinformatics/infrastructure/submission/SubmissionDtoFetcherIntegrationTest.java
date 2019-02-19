@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDet
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -29,11 +30,12 @@ import javax.inject.Inject;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 
 @Test(groups = TestGroups.STANDARD)
 public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
@@ -49,7 +51,7 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
 
     public static final String COLLABORATOR_SAMPLE_ID = "NA12878";
     public static final String RESEARCH_PROJECT_ID = "RP-697";
-
+    public static final String RP_518 = "RP-518";
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -80,7 +82,8 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
             assertThat(submissionDto.getVersion(), equalTo(version));
             assertThat(submissionDto.getSampleName(), equalTo(COLLABORATOR_SAMPLE_ID));
             assertThat(submissionDto.getAggregationProject(), equalTo(RESEARCH_PROJECT_ID));
-            assertThat(submissionDto.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
+            assertThat(submissionDto.getDataType(),
+                equalTo(SubmissionLibraryDescriptor.getNormalizedLibraryName(Aggregation.DATA_TYPE_EXOME)));
             assertThat(submissionDto.getContamination(), equalTo(contamination));
             assertThat(submissionDto.getResearchProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(String.format("expected LOD min to be %f but was %f", lodMin,
@@ -92,5 +95,22 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
             assertThat(submissionDto.getFingerprintLOD(), equalTo(fingerprintLod));
             assertThat(submissionDto.getLanesInAggregation(), equalTo(22));
         }
+    }
+
+    public void testFetchSquidProject() {
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(RP_518);
+        List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
+
+        assertThat(submissionDtoList, is(not(empty())));
+        boolean matchedSample=false;
+        for (SubmissionDto submissionDto : submissionDtoList) {
+            if (submissionDto.getSampleName().equals(COLLABORATOR_SAMPLE_ID)) {
+                assertThat(submissionDto.getAggregationProject(),
+                    Matchers.either(startsWith("C")).or(startsWith("G")).or(startsWith("D")));
+                matchedSample = true;
+            }
+            assertThat(submissionDto.getResearchProject(), equalTo(RP_518));
+        }
+        assertThat(matchedSample, is(true));
     }
 }

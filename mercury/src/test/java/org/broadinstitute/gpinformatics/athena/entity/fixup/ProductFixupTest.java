@@ -6,12 +6,17 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -48,6 +53,12 @@ public class ProductFixupTest extends Arquillian {
     private UserBean userBean;
 
     @Inject
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private PriceListCache priceListCache;
+
+    @Inject
     private UserTransaction utx;
 
     /*
@@ -64,8 +75,8 @@ public class ProductFixupTest extends Arquillian {
 
         Product exExProduct = productDao.findByPartNumber("P-EX-0002");
 
-        if (exExProduct.getWorkflow() != Workflow.AGILENT_EXOME_EXPRESS) {
-            exExProduct.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        if (exExProduct.getWorkflowName() != Workflow.AGILENT_EXOME_EXPRESS) {
+            exExProduct.setWorkflowName(Workflow.AGILENT_EXOME_EXPRESS);
             productDao.persist(exExProduct);
         }
     }
@@ -74,7 +85,7 @@ public class ProductFixupTest extends Arquillian {
     public void addHybridSelectionWorkflowName() {
 
         Product hybSelProject = productDao.findByPartNumber("P-EX-0001");
-            hybSelProject.setWorkflow(Workflow.HYBRID_SELECTION);
+            hybSelProject.setWorkflowName(Workflow.HYBRID_SELECTION);
 
         productDao.persist(hybSelProject);
     }
@@ -85,11 +96,11 @@ public class ProductFixupTest extends Arquillian {
         List<Product> wgProducts = new ArrayList<>(3);
 
         Product wholeGenomeProduct1 = productDao.findByPartNumber("P-WG-0001");
-            wholeGenomeProduct1.setWorkflow(Workflow.WHOLE_GENOME);
+            wholeGenomeProduct1.setWorkflowName(Workflow.WHOLE_GENOME);
         Product wholeGenomeProduct2 = productDao.findByPartNumber("P-WG-0002");
-            wholeGenomeProduct2.setWorkflow(Workflow.WHOLE_GENOME);
+            wholeGenomeProduct2.setWorkflowName(Workflow.WHOLE_GENOME);
         Product wholeGenomeProduct3 = productDao.findByPartNumber("P-WG-0003");
-            wholeGenomeProduct3.setWorkflow(Workflow.WHOLE_GENOME);
+            wholeGenomeProduct3.setWorkflowName(Workflow.WHOLE_GENOME);
 
         Collections.addAll(wgProducts, wholeGenomeProduct1, wholeGenomeProduct2, wholeGenomeProduct3);
 
@@ -320,5 +331,34 @@ public class ProductFixupTest extends Arquillian {
         productDao.persist(new FixupCommentary(fixupReason));
         utx.commit();
 
+    }
+
+    @Test(enabled = false)
+    public void testPriceDifferences() throws Exception {
+        List<Product> allProducts =
+                productDao.findProducts(ProductDao.Availability.CURRENT, ProductDao.TopLevelOnly.NO,
+                        ProductDao.IncludePDMOnly.YES);
+
+        List<String> errors = new ArrayList<>();
+        for (Product currentProduct : allProducts) {
+            SapIntegrationClientImpl.SAPCompanyConfiguration configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+            if(currentProduct.isExternalOnlyProduct() || currentProduct.isClinicalProduct()) {
+                configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+            }
+            final QuotePriceItem byKeyFields = priceListCache.findByKeyFields(currentProduct.getPrimaryPriceItem());
+            if(byKeyFields != null) {
+                BigDecimal qsPrice = new BigDecimal(byKeyFields.getPrice());
+                final SAPMaterial material = productPriceCache.findByProduct(currentProduct, configuration);
+                if (material != null) {
+                    BigDecimal sapPrice = new BigDecimal(material.getBasePrice());
+                    if (sapPrice.compareTo(qsPrice) != 0) {
+                        errors.add("Price for " + currentProduct.getPartNumber() + " sold in " + configuration
+                                .getCompanyCode() + " does not match SAP: QS price is " +
+                                   qsPrice.toString() + " and SAP price is " + sapPrice.toString());
+                    }
+                }
+            }
+        }
+        System.out.println(StringUtils.join(errors,"\n"));
     }
 }

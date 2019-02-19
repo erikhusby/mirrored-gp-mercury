@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.Namespaces;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -18,6 +19,7 @@ public class LabBatchBean {
     private List<TubeBean> tubeBeans = new ArrayList<>();
     private ParentVesselBean parentVesselBean;
     private String username;
+    private Date createdDate;
 
     public LabBatchBean(String batchId, String workflowName, List<TubeBean> tubeBeans) {
         this.batchId = batchId;
@@ -78,5 +80,13 @@ public class LabBatchBean {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
     }
 }

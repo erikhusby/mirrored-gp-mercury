@@ -37,10 +37,11 @@ public interface SapIntegrationService {
      * For a given ProductOrder that is already represented in SAP, this method will communicate to SAP any changes to
      * be made for that order
      * @param placedOrder ProductOrder, that is reflected in SAP, to be updated in SAP
+     * @param closingOrder
      * @return Unique order identifier of the sales/release order currently in SAP
      * @throws SAPIntegrationException
      */
-    void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException;
+    void updateOrder(ProductOrder placedOrder, boolean closingOrder) throws SAPIntegrationException;
 
     /**
      * For Phase 1 of the SAP/GP integration, Orders placed in SAP need to have reference to the customer number found

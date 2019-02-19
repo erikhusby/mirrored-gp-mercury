@@ -50,7 +50,10 @@ public class LabMetric implements Comparable<LabMetric> {
         Bp("Bp"),
         RQS("Rqs"),
         PERCENTAGE("%"),
-        NUMBER("");
+        NUMBER(""),
+        RQS("Rqs"),
+        UL("uL"),
+        NM("nM");
 
         private String displayName;
         private static final Map<String, LabUnit> mapNameToUnit = new HashMap<>();
@@ -83,7 +86,7 @@ public class LabMetric implements Comparable<LabMetric> {
     }
 
     public enum MetricType {
-        INITIAL_PICO("Initial Pico", true, Category.CONCENTRATION, new Decider() {
+        INITIAL_PICO("Initial Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision = LabMetricDecision.Decision.FAIL;
@@ -95,7 +98,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        INITIAL_RIBO("Initial Ribo", true, Category.CONCENTRATION, new Decider() {
+        INITIAL_RIBO("Initial Ribo", true, Category.CONCENTRATION,LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision = LabMetricDecision.Decision.FAIL;
@@ -107,7 +110,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        FINGERPRINT_PICO("Fingerprint Pico", true, Category.CONCENTRATION, new Decider() {
+        FINGERPRINT_PICO("Fingerprint Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision;
@@ -120,7 +123,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        PLATING_PICO("Plating Pico", true, Category.CONCENTRATION, new Decider() {
+        PLATING_PICO("Plating Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision;
@@ -132,7 +135,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        SHEARING_PICO("Shearing Pico", true, Category.CONCENTRATION, new Decider() {
+        SHEARING_PICO("Shearing Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision;
@@ -145,7 +148,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        PLATING_RIBO("Plating Ribo", true, Category.CONCENTRATION, new Decider() {
+        PLATING_RIBO("Plating Ribo", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision;
@@ -157,7 +160,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        POND_PICO("Pond Pico", true, Category.CONCENTRATION, new Decider() {
+        POND_PICO("Pond Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision;
@@ -169,7 +172,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        CDNA_ENRICHED_PICO("cDNA Enriched Pico", true, Category.CONCENTRATION, new Decider() {
+        CDNA_ENRICHED_PICO("cDNA Enriched Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision;
@@ -181,7 +184,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        CATCH_PICO("Catch Pico", true, Category.CONCENTRATION, new Decider() {
+        CATCH_PICO("Catch Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision;
@@ -193,10 +196,11 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        FINAL_LIBRARY_SIZE("Final Library Size", false, Category.DNA_LENGTH, null),
-        ECO_QPCR("ECO QPCR", true, Category.CONCENTRATION, null),
-        VIIA_QPCR("VIIA QPCR", true, Category.CONCENTRATION, null),
-        INITIAL_RNA_CALIPER("Initial RNA Caliper", true, Category.QUALITY, new Decider() {
+        FINAL_LIBRARY_SIZE("Final Library Size", false, Category.DNA_LENGTH, LabUnit.Bp, null),
+        ECO_QPCR("ECO QPCR", true, Category.CONCENTRATION, LabUnit.NM, null),
+        VIIA_QPCR("VIIA QPCR", true, Category.CONCENTRATION, LabUnit.NM, null),
+        VVP_VOLUME("VVP Volume", false, Category.VOLUME, LabUnit.UL, null),
+        INITIAL_RNA_CALIPER("Initial RNA Caliper", true, Category.QUALITY, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision = LabMetricDecision.Decision.PASS;
@@ -314,6 +318,7 @@ public class LabMetric implements Comparable<LabMetric> {
         private static final Map<String, MetricType> mapNameToType = new HashMap<>();
         private Category category;
         private Decider decider;
+        private LabUnit labUnit;
 
         static {
             for (MetricType metricType : MetricType.values()) {
@@ -321,10 +326,11 @@ public class LabMetric implements Comparable<LabMetric> {
             }
         }
 
-        MetricType(String displayName, boolean uploadEnabled, Category category, Decider decider) {
+        MetricType(String displayName, boolean uploadEnabled, Category category, LabUnit labUnit, Decider decider) {
             this.displayName = displayName;
             this.uploadEnabled = uploadEnabled;
             this.category = category;
+            this.labUnit = labUnit;
             this.decider = decider;
         }
 
@@ -356,6 +362,10 @@ public class LabMetric implements Comparable<LabMetric> {
             return metricTypes;
         }
 
+        public LabUnit getLabUnit() {
+            return labUnit;
+        }
+
         public Category getCategory() {
             return category;
         }
@@ -364,6 +374,7 @@ public class LabMetric implements Comparable<LabMetric> {
          * Whether this MetricType represents a concentration
          */
         public enum Category {
+            VOLUME,
             NUMBER,
             CONCENTRATION,
             DNA_LENGTH,
@@ -381,6 +392,7 @@ public class LabMetric implements Comparable<LabMetric> {
      * The run that generated this metric
      */
     @ManyToOne
+    @JoinColumn(name = "LAB_METRIC_RUN")
     private LabMetricRun labMetricRun;
 
     /**
@@ -402,6 +414,7 @@ public class LabMetric implements Comparable<LabMetric> {
     private LabUnit labUnit;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
     //todo jmt convert to enum?
@@ -417,6 +430,7 @@ public class LabMetric implements Comparable<LabMetric> {
 
     /** This is actually OneToOne, but using ManyToOne to avoid N+1 selects */
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @JoinColumn(name = "LAB_METRIC_DECISION")
     private LabMetricDecision labMetricDecision;
 
     /**
@@ -472,6 +486,10 @@ public class LabMetric implements Comparable<LabMetric> {
 
     public LabUnit getUnits() {
         return labUnit;
+    }
+
+    public void setLabUnit(LabUnit labUnit) {
+        this.labUnit = labUnit;
     }
 
     public LabMetricRun getLabMetricRun() {

@@ -14,13 +14,13 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -44,12 +44,11 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-import org.springframework.util.CollectionUtils;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
@@ -62,9 +61,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.TopLevelOnly;
@@ -82,12 +83,14 @@ public class ProductActionBean extends CoreActionBean {
     public static final String CREATE_PRODUCT = CoreActionBean.CREATE + PRODUCT_STRING;
     private static final String EDIT_PRODUCT = CoreActionBean.EDIT + PRODUCT_STRING;
     public static final String PUBLISH_TO_SAP = "publishToSap";
+    public static final String OPEN_RISK_SUGGESTIONS = "openRiskSuggestedValues";
 
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
     public static final String PRODUCT_VIEW_PAGE = "/products/view.jsp";
     private static final String DOWNLOAD_PRODUCT_LIST = "downloadProductDescriptions";
     private static final String PUBLISH_PRODUCTS_TO_SAP = "publishProductsToSap";
+    private static final String RISK_CRITERIA_SUGGESTED_VALUES = "risk_criteria_suggested_values.jsp";
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -132,6 +135,7 @@ public class ProductActionBean extends CoreActionBean {
     private List<String> selectedProductPartNumbers;
     private List<Product> selectedProducts;
 
+    private List<String> criteriaSelectionValues = new ArrayList<>();
 
 
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
@@ -167,6 +171,7 @@ public class ProductActionBean extends CoreActionBean {
     private Product editProduct;
 
     private boolean productUsedInOrders = false;
+    private List<String> suggestedValueSelections = new ArrayList();
 
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
@@ -189,6 +194,11 @@ public class ProductActionBean extends CoreActionBean {
     public void setQ(String q) {
         this.q = q;
     }
+
+    private String criteriaIndex;
+    private String criteriaLabel;
+    private String criteriaOp;
+    private String currentCriteriaChoices;
 
     /**
      * Initialize the product with the passed in key for display in the form.
@@ -225,6 +235,7 @@ public class ProductActionBean extends CoreActionBean {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
         }
+        productPriceCache.refreshCache();
         availableChipTechnologyAndChipNames = productEjb.findChipFamiliesAndNames();
     }
 
@@ -282,6 +293,16 @@ public class ProductActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void allProductsInit() {
         allProducts = productDao.findProducts(availability, TopLevelOnly.NO, IncludePDMOnly.YES);
+
+        for (Product product: allProducts) {
+            final QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+            if (quotePriceItem != null) {
+                product.getPrimaryPriceItem().setPrice(quotePriceItem.getPrice());
+                product.getPrimaryPriceItem().setUnits(quotePriceItem.getUnit());
+
+                product.setSapMaterial(productPriceCache.findByProduct(product, product.determineCompanyConfiguration()));
+            }
+        }
     }
 
     /**
@@ -475,12 +496,16 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(PUBLISH_PRODUCTS_TO_SAP)
     public Resolution publishProductsToSap() {
-        selectedProducts = productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
-        try {
-
+        if(CollectionUtils.isEmpty(selectedProductPartNumbers)) {
+            addGlobalValidationError("Select at least one product when publishing products in bulk.");
+        } else {
+            selectedProducts =
+                    productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
+            try {
                 productEjb.publishProductsToSAP(selectedProducts);
-        } catch (ValidationException e) {
-            addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
+            } catch (ValidationException e) {
+                addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
+            }
         }
         return new RedirectResolution(ProductActionBean.class,LIST_ACTION);
     }
@@ -524,6 +549,19 @@ public class ProductActionBean extends CoreActionBean {
         }.setFilename(fileName);
     }
 
+    @HandlesEvent(OPEN_RISK_SUGGESTIONS)
+    public Resolution openRiskSuggestedValues() throws Exception {
+        RiskCriterion.RiskCriteriaType criterion = RiskCriterion.RiskCriteriaType.findByLabel(criteriaLabel);
+        Optional<String> optionalCriterion = Optional.ofNullable(currentCriteriaChoices);
+        optionalCriterion.ifPresent(s -> suggestedValueSelections =
+                Arrays.stream(s.split(",")).map(String::trim).collect(Collectors.toList()));
+
+        if(CollectionUtils.isNotEmpty(criterion.getSuggestedValues())) {
+            criteriaSelectionValues.addAll(criterion.getSuggestedValues());
+        }
+        return new ForwardResolution(RISK_CRITERIA_SUGGESTED_VALUES);
+    }
+
     public static String getPdfFilename(List<Product> productList) {
         String fileName = "Product Descriptions.pdf";
         if (productList.size() == 1) {
@@ -547,6 +585,10 @@ public class ProductActionBean extends CoreActionBean {
 
     public Product getEditProduct() {
         return editProduct;
+    }
+
+    public boolean isProductNameSet() {
+        return StringUtils.isNotBlank(editProduct.getPartNumber());
     }
 
     public void setEditProduct(Product product) {
@@ -725,18 +767,18 @@ public class ProductActionBean extends CoreActionBean {
      *
      * @return all workflows
      */
-    public Set<Workflow> getAvailableWorkflows() {
-        Set<Workflow> workflows = new TreeSet<>(Workflow.BY_NAME);
+    public Set<String> getAvailableWorkflows() {
+        Set<String> workflows = new TreeSet<>();
         List<ProductWorkflowDef> productWorkflowDefs = workflowConfig.getProductWorkflowDefs();
         for (ProductWorkflowDef productWorkflowDef : productWorkflowDefs) {
-            workflows.add(Workflow.findByName(productWorkflowDef.getName()));
+            workflows.add(productWorkflowDef.getName());
         }
         return workflows;
     }
 
-    public boolean productInSAP(String partNumber) {
+    public boolean productInSAP(String partNumber, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
 
-        return productPriceCache.productExists(partNumber);
+        return productPriceCache.findByPartNumber(partNumber, companyCode) != null;
     }
 
     public ProductDao.Availability getAvailability() {
@@ -811,5 +853,55 @@ public class ProductActionBean extends CoreActionBean {
     public boolean isProductUsedInOrders() {
         return productUsedInOrders;
     }
-    
+
+
+    public List<String> getCriteriaSelectionValues() {
+        return criteriaSelectionValues;
+    }
+
+    public void setCriteriaSelectionValues(List<String> criteriaSelectionValues) {
+        this.criteriaSelectionValues = criteriaSelectionValues;
+    }
+
+    public String getCriteriaIndex() {
+        return criteriaIndex;
+    }
+
+    public void setCriteriaIndex(String criteriaIndex) {
+        this.criteriaIndex = criteriaIndex;
+    }
+
+    public String getCriteriaLabel() {
+        return criteriaLabel;
+    }
+
+    public void setCriteriaLabel(String criteriaLabel) {
+        this.criteriaLabel = criteriaLabel;
+    }
+
+    public String getCriteriaOp() {
+        return criteriaOp;
+    }
+
+    public void setCriteriaOp(String criteriaOp) {
+        this.criteriaOp = criteriaOp;
+    }
+
+    public String getCurrentCriteriaChoices() {
+        return currentCriteriaChoices;
+    }
+
+    public void setCurrentCriteriaChoices(String currentCriteriaChoices) {
+        this.currentCriteriaChoices = currentCriteriaChoices;
+    }
+
+
+    public List<String> getSuggestedValueSelections() {
+        return suggestedValueSelections;
+    }
+
+    public void setSuggestedValueSelections(List<String> suggestedValueSelections) {
+        this.suggestedValueSelections = suggestedValueSelections;
+    }
+
 }

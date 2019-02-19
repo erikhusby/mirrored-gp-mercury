@@ -33,12 +33,26 @@
                 background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,.5) 5px,
                                                             rgba(255,255,255,.5) 10px);
             }
+
+            .blacklisted {
+                background-image:url("../images/blacklist.png");
+                background-position: right center;
+                background-repeat: no-repeat;
+            }
+
+            .abandoned {
+                background-image:url("../images/abandon.png");
+                background-position: right center;
+                background-repeat: no-repeat;
+            }
         </style>
         <script src="${ctxpath}/resources/scripts/plateMap.js"></script>
         <script type="text/javascript">
             $j(document).ready(function () {
                 <c:if test="${actionBean.foundResults}">
+                    <enhance:out escapeXml="false">
                     var platemaps = ${actionBean.metricsTableJson};
+                    </enhance:out>
                     var json = {};
                     json.platemaps = platemaps;
                     console.log(json);
@@ -116,7 +130,7 @@
                                         </table>
                                     </div>
                                     <div class="span4">
-                                        <div class="well">
+                                        <div class="well" style="height: 335px">
                                             Vessel Metadata
                                             <dl class="metadataDefinitionPlateList dl-horizontal">
                                             </dl>

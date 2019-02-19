@@ -96,12 +96,6 @@ public class SampleInstanceEtlData {
                     && bucketEntry.getCreatedDate().getTime() <= eventTs) {
                     sampleInstanceData.labBatch = bucketEntry.getLabBatch();
                     bucketTs = bucketEntry.getCreatedDate().getTime();
-                    // Bucket entry meets the criteria, so hold onto newest sample ID
-                    if (includeNearestSample && !bucketEntry.getLabVessel().getMercurySamples().isEmpty()) {
-                        sampleInstanceData.nearestSampleID =
-                                bucketEntry.getLabVessel().getMercurySamples().iterator().next()
-                                        .getSampleKey();
-                    }
                 }
             }
         }

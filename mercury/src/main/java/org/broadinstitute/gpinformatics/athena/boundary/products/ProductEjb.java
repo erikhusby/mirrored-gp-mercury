@@ -363,8 +363,8 @@ public class ProductEjb {
             }
         }
         if (CollectionUtils.isNotEmpty(errorMessages)) {
-            throw new ValidationException("Some errors were found pussing products", errorMessages);
+            throw new ValidationException("Some errors were found pushing products", errorMessages);
         }
-
+        productPriceCache.refreshCache();
     }
 }

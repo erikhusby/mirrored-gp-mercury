@@ -14,11 +14,14 @@ import net.sourceforge.stripes.mock.MockServletContext;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
@@ -66,23 +69,23 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Search;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
-import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Search;
-import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
-import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;
@@ -112,6 +115,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -151,6 +155,9 @@ public class ProductOrderActionBeanTest {
         actionBean.setPriceListCache(priceListCache);
         mockSAPService = Mockito.mock(SapIntegrationService.class);
         stubProductPriceCache = new SAPProductPriceCache(mockSAPService);
+        final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
+        stubProductPriceCache.setAccessControlEjb(mockAccessController);
         actionBean.setProductPriceCache(stubProductPriceCache);
 
         mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
@@ -159,6 +166,9 @@ public class ProductOrderActionBeanTest {
                 Mockito.mock(BSPUserList.class),Mockito.mock(BucketEjb.class),Mockito.mock(SquidConnector.class),
                 Mockito.mock(MercurySampleDao.class),Mockito.mock(ProductOrderJiraUtil.class), mockSAPService,priceListCache,
                 stubProductPriceCache);
+
+        productOrderEjb.setAccessController(mockAccessController);
+
         actionBean.setProductOrderEjb(productOrderEjb);
         actionBean.setProductOrderDao(mockProductOrderDao);
         actionBean.setSapService(mockSAPService);
@@ -219,11 +229,19 @@ public class ProductOrderActionBeanTest {
         productThatHasRinRisk.addRiskCriteria(
                 new RiskCriterion(RiskCriterion.RiskCriteriaType.RIN, Operator.LESS_THAN, "6.0")
         );
-        pdo.setProduct(productThatHasRinRisk);
+        try {
+            pdo.setProduct(productThatHasRinRisk);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
     }
 
     private void setNonRinRiskProduct(ProductOrder pdo) {
-        pdo.setProduct(new Product());
+        try {
+            pdo.setProduct(new Product());
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
     }
 
     /**
@@ -349,7 +367,11 @@ public class ProductOrderActionBeanTest {
 
     public void testSampleKitWithValidationErrors() {
         Product product = new Product();
-        pdo.setProduct(product);
+        try {
+            pdo.setProduct(product);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         ProductOrderKit kitWithValidationProblems = createGoodPdoKit();
         kitWithValidationProblems.setTransferMethod(SampleKitWorkRequest.TransferMethod.PICK_UP);
         kitWithValidationProblems.setNotificationIds(new ArrayList<String>());
@@ -361,7 +383,11 @@ public class ProductOrderActionBeanTest {
 
     public void testSampleKitNoValidationErrors() {
         Product product = new Product();
-        pdo.setProduct(product);
+        try {
+            pdo.setProduct(product);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         pdo.setProductOrderKit(createGoodPdoKit());
         actionBean.setEditOrder(pdo);
         actionBean.validateTransferMethod(pdo);
@@ -370,7 +396,11 @@ public class ProductOrderActionBeanTest {
 
     public void testPostReceiveOptionKeys() {
         Product product = new Product();
-        pdo.setProduct(product);
+        try {
+            pdo.setProduct(product);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         pdo.setProductOrderKit(createGoodPdoKit());
         actionBean.setEditOrder(pdo);
         Assert.assertTrue(actionBean.getPostReceiveOptionKeys().isEmpty());
@@ -568,7 +598,11 @@ public class ProductOrderActionBeanTest {
         Product dummyProduct =
                 ProductTestFactory
                         .createDummyProduct(Workflow.NONE, Product.EXOME_EXPRESS_V2_PART_NUMBER, false, false);
-        actionBean.getEditOrder().setProduct(dummyProduct);
+        try {
+            actionBean.getEditOrder().setProduct(dummyProduct);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         actionBean.getEditOrder().setQuoteId("");
         actionBean.validateQuoteOptions(ProductOrderActionBean.VALIDATE_ORDER);
         Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
@@ -809,7 +843,7 @@ public class ProductOrderActionBeanTest {
         Set<SAPMaterial> returnMaterials = new HashSet<>();
 
         final Product primaryOrderProduct = testOrder.getProduct();
-        returnMaterials.add(new SAPMaterial(primaryOrderProduct.getPartNumber(),"2000", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        returnMaterials.add(new SAPMaterial(primaryOrderProduct.getPartNumber(),"2000", Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap()));
 
         final String priceItemPrice = "2000";
         final String quoteItemQuantity = "2000";
@@ -822,7 +856,7 @@ public class ProductOrderActionBeanTest {
         addonNonSeqProduct.setPrimaryPriceItem(new PriceItem("Secondary", "Genomics Platform",
                 "secondary testing size", "Extraction price"));
         addonNonSeqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.ALTERNATE_LIBRARY_PREP_DEVELOPMENT.getFamilyName()));
-        returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(),"1573", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(),"1573", Collections.<Condition, BigDecimal>emptyMap(), Collections.<DeliveryCondition, BigDecimal>emptyMap()));
 
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, addonNonSeqProduct, "1573", "2000", "573"
         );
@@ -846,21 +880,21 @@ public class ProductOrderActionBeanTest {
                 "Put it on the sequencer"));
         seqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
 
-        final SAPMaterial seqMaterial= new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
-                Collections.<DeliveryCondition>emptySet());
+        final SAPMaterial seqMaterial= new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
+                Collections.<DeliveryCondition,BigDecimal>emptyMap());
         seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(seqMaterial);
 
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
         final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 nonSeqMaterial);
@@ -871,7 +905,6 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
                 (double) (1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
@@ -982,19 +1015,19 @@ public class ProductOrderActionBeanTest {
 
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
         final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 nonSeqMaterial);
-        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
-                Collections.<DeliveryCondition>emptySet());
+        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
+                Collections.<DeliveryCondition, BigDecimal>emptyMap());
         seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(seqMaterial);
 
@@ -1123,19 +1156,19 @@ public class ProductOrderActionBeanTest {
 
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
         final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 nonSeqMaterial);
-        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
-                Collections.<DeliveryCondition>emptySet());
+        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
+                Collections.<DeliveryCondition, BigDecimal>emptyMap());
         seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(seqMaterial);
 
@@ -1270,17 +1303,17 @@ public class ProductOrderActionBeanTest {
 
 
         final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(primaryMaterial);
         final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(nonSeqMaterial);
-        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
-                Collections.<DeliveryCondition>emptySet());
+        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
+                Collections.<DeliveryCondition, BigDecimal>emptyMap());
         seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(seqMaterial);
 
@@ -1351,7 +1384,7 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 
-        actionBean.validateQuoteDetails(testQuote, CoreActionBean.ErrorLevel.ERROR, true, 0);
+        actionBean.validateQuoteDetails(testQuote, 0);
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 
@@ -1484,5 +1517,82 @@ public class ProductOrderActionBeanTest {
         return samples;
     }
 
+    public void testQuoteOptionsFundsReservation() throws Exception {
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
+        funding.setGrantNumber("1234");
+        funding.setGrantStartDate(new Date());
+        Date oneWeek = DateUtils.getOneWeek();
+        funding.setGrantEndDate(oneWeek);
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel.setPercent("100");
+
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteService(mockQuoteService);
+
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
+
+        assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
+        assertThat(fundingDetails.get("grantEndDate"), equalTo(DateUtils.getDate(oneWeek)));
+        assertThat(fundingDetails.get("activeGrant"), is(true));
+        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7));
+    }
+
+    public void testQuoteOptionsPurchaseOrder() throws Exception {
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.PURCHASE_ORDER, "test", "c333");
+        funding.setPurchaseOrderNumber("1234");
+        funding.setGrantStartDate(new Date());
+        Date oneWeek = DateUtils.getOneWeek();
+        funding.setGrantEndDate(oneWeek);
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel.setPercent("100");
+
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteService(mockQuoteService);
+
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
+        assertThat(quoteFundingJson.getString("key"), is(quoteId));
+        assertThat(quoteFundingJson.getString("fundsRemaining"), equalTo("$100.00"));
+        assertThat(quoteFundingJson.getString("status"), equalTo("Funded"));
+
+        // Purchase Orders do not have funding details
+        assertThat(fundingDetails.length(), is(0));
+
+    }
+
+    public void testQuoteOptionsNoFunding() throws Exception {
+         String quoteId = "DNA4JD";
+         testOrder = new ProductOrder();
+         FundingLevel fundingLevel = new FundingLevel();
+         Funding funding = new Funding();
+         fundingLevel.setFunding(Collections.singleton(funding));
+         QuoteFunding quoteFunding = new QuoteFunding();
+         Quote testQuote = buildSingleTestQuote(quoteId, "2");
+         testQuote.setQuoteFunding(quoteFunding);
+         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+         actionBean.setQuoteIdentifier(quoteId);
+         actionBean.setQuoteService(mockQuoteService);
+
+         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        assertThat(quoteFundingJson.getString("error"), is("Unable to complete evaluating order values:  null"));
+         assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
+     }
 
 }

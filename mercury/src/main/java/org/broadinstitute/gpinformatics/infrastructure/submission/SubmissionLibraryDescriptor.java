@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
@@ -34,7 +35,7 @@ public class SubmissionLibraryDescriptor implements Serializable {
     public static final SubmissionLibraryDescriptor WHOLE_GENOME =
         new SubmissionLibraryDescriptor("Whole Genome", "Human Whole Genome");
     public static final SubmissionLibraryDescriptor RNA_SEQ =
-        new SubmissionLibraryDescriptor("RNA Seq", "Whole Exome Sequencing");
+        new SubmissionLibraryDescriptor("RNA Seq", "RNA Sequencing");
 
 
     @JsonProperty
@@ -85,5 +86,39 @@ public class SubmissionLibraryDescriptor implements Serializable {
 
         return new EqualsBuilder().append(getName(), castOther.getName())
                 .append(getDescription(), castOther.getDescription()).isEquals();
+    }
+
+    /**
+     * Attempt to align library name/datatype with the names that Mercury and Epsilon 9 uses. This is especially
+     * important when comparing Tuples.
+     */
+    public static String getNormalizedLibraryName(String dataType) {
+        SubmissionLibraryDescriptor descriptor = null;
+        if (StringUtils.isNotBlank(dataType)) {
+            switch (dataType) {
+            case "Exome":
+            case "Whole Exome":
+            case "Whole Exome Sequencing":
+                descriptor = WHOLE_EXOME;
+                break;
+            case "WGS":
+            case "Genome":
+            case "Whole Genome":
+            case "Human Whole Genome":
+                descriptor = WHOLE_GENOME;
+                break;
+            case "RNA":
+            case "RNA Seq":
+            case "RNA Sequencing":
+                descriptor = RNA_SEQ;
+                break;
+            default:
+                descriptor = new SubmissionLibraryDescriptor(dataType, dataType);
+            }
+        }
+        if (descriptor != null) {
+            return descriptor.getName();
+        }
+        return null;
     }
 }

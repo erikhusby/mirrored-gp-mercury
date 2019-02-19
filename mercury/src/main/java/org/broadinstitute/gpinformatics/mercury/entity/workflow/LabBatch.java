@@ -52,7 +52,7 @@ import java.util.TreeMap;
  */
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batch_name"}))
 public class LabBatch {
 
     public static class VesselToLanesInfo {
@@ -122,10 +122,13 @@ public class LabBatch {
         }
     }
 
-    public static final Comparator<LabBatch> byDate = new Comparator<LabBatch>() {
+    /**
+     * To support lab batch sorting by creation date, newest first
+     */
+    public static final Comparator<LabBatch> byDateDesc = new Comparator<LabBatch>() {
         @Override
         public int compare(LabBatch bucketEntryPrime, LabBatch bucketEntrySecond) {
-            return bucketEntryPrime.getCreatedOn().compareTo(bucketEntrySecond.getCreatedOn());
+            return bucketEntrySecond.getCreatedOn().compareTo(bucketEntryPrime.getCreatedOn());
         }
     };
 
@@ -140,7 +143,9 @@ public class LabBatch {
     @Deprecated
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels")
+    @JoinTable(schema = "MERCURY", name = "LB_STARTING_LAB_VESSELS"
+            , joinColumns = {@JoinColumn(name = "LAB_BATCH")}
+            , inverseJoinColumns = {@JoinColumn(name = "STARTING_LAB_VESSELS")})
     private Set<LabVessel> startingLabVessels = new HashSet<>();
 
     private boolean isActive = true;
@@ -148,6 +153,7 @@ public class LabBatch {
     private String batchName;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "JIRA_TICKET")
     private JiraTicket jiraTicket;
 
     // todo jmt get Hibernate to sort this
@@ -158,8 +164,9 @@ public class LabBatch {
      * Vessels in the batch that were added as rework from a previous batch.
      */
     @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name = "lab_batch_reworks", joinColumns = @JoinColumn(name = "lab_batch"),
-            inverseJoinColumns = @JoinColumn(name = "reworks"))
+    @JoinTable(schema = "MERCURY", name = "LAB_BATCH_REWORKS"
+            , joinColumns = @JoinColumn(name = "LAB_BATCH")
+            , inverseJoinColumns = @JoinColumn(name = "REWORKS"))
     private Collection<LabVessel> reworks = new HashSet<>();
 
     private Date createdOn;
@@ -234,6 +241,12 @@ public class LabBatch {
             addLabVessel(starter);
         }
         createdOn = new Date();
+    }
+
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
+                    @Nonnull LabBatchType labBatchType, @Nonnull Date date) {
+        this(batchName, starterVessels, labBatchType);
+        createdOn = date;
     }
 
     /** Specialized FCT or MISEQ constructor for test purposes. Puts the starter vessel on all flowcell lanes. */
@@ -433,8 +446,8 @@ public class LabBatch {
         this.workflowName = workflowName;
     }
 
-    public void setWorkflow(@Nonnull Workflow workflow) {
-        workflowName = workflow.getWorkflowName();
+    public void setWorkflow(@Nonnull String workflow) {
+        workflowName = workflow;
     }
 
     public String getBatchDescription() {
@@ -467,11 +480,11 @@ public class LabBatch {
      * <p/>
      * {@code [Product name] [Product workflow Version]: [comma separated list of PDO names]}
      */
-    public static String generateBatchName(@Nonnull Workflow workflow, @Nonnull Collection<String> pdoNames) {
+    public static String generateBatchName(@Nonnull String workflow, @Nonnull Collection<String> pdoNames) {
 
         StringBuilder batchName = new StringBuilder();
 
-        batchName.append(workflow.getWorkflowName()).append(": ");
+        batchName.append(workflow).append(": ");
         boolean first = true;
 
         for (String currentPdo : pdoNames) {
@@ -536,7 +549,7 @@ public class LabBatch {
         SUMMARY("Summary", false),
         SEQUENCING_STATION("Sequencing Station", true),
         CLUSTER_STATION("Cluster Station", true),
-        MATERIAL_TYPE("BATCH_TYPE", true),
+        MATERIAL_TYPE("Material Type", true),
         LANE_INFO("Lane Info", true),
         SAMPLES_ON_RISK("Samples On Risk", true),
         RISK_CATEGORIZED_SAMPLES("Risk Categorized Samples", true),
@@ -544,6 +557,11 @@ public class LabBatch {
 
         ISSUE_TYPE_MAP("Issue Type", false),
         ISSUE_TYPE_NAME("name", false),
+
+        // ARRAY tickets
+        NUMBER_OF_EMPTIES("Number of Empties", true),
+        NUMBER_OF_WELLS("Total Samples, Controls, and Empties", true),
+        CONTAINER_ID("Container ID", true),
         ;
 
 

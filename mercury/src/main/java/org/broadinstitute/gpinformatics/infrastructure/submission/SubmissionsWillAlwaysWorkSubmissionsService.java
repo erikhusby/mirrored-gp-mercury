@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +22,11 @@ import java.util.Date;
 import java.util.List;
 
 @Alternative
+@Dependent
 public class SubmissionsWillAlwaysWorkSubmissionsService extends SubmissionsServiceStub {
+
+    public SubmissionsWillAlwaysWorkSubmissionsService(){}
+
     @Override
     public Collection<SubmissionStatusDetailBean> postSubmissions(SubmissionRequestBean submission) {
         List<SubmissionStatusDetailBean> results = new ArrayList<>();

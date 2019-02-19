@@ -8,8 +8,8 @@ TRAILING NULLCOLS
  etl_date DATE "YYYYMMDDHH24MISS",
  is_delete,
  abandon_id,
- abandon_type,
  abandon_vessel_id,
  reason,
- abandoned_on DATE "YYYYMMDDHH24MISS"
+ abandoned_on DATE "YYYYMMDDHH24MISS",
+ vessel_position
 )

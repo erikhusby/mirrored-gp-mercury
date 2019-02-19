@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.Assert;
@@ -16,7 +17,7 @@ public class SubmissionTrackerTest {
     public static final String TEST_ACCESSION_ID = "SA-2342";
     public static final String TEST_PROJECT_ID = "P123";
     public static final String TEST_PROCESSING_LOCATION = SubmissionBioSampleBean.ON_PREM;
-    public static final String TEST_DATA_TYPE = "Exome";
+    public static final String TEST_DATA_TYPE = SubmissionLibraryDescriptor.WHOLE_EXOME.getName();
     public static final FileType TEST_FILE_TYPE = FileType.BAM;
     public static final String TEST_VERSION = "v1";
 

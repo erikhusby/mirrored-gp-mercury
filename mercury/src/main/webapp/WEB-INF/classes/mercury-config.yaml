@@ -8,31 +8,34 @@ app:
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     AUTO_BUILD:
-      host:     mercurydev.broadinstitute.org
-      port:     8444
-      jmsPort:  5446
-      workflowValidationEmail:
-
-    TEST:
-      host:     mercurydev.broadinstitute.org
+      host:     vmercurydev.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
+    TEST:
+      host:     mercuryfb.broadinstitute.org
+      port:     8443
+      jmsPort:  5445
+      workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
     QA:
       host:     mercuryqa.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     RC:
       host:     mercuryrc.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
+      gpBillingManagers: !!set { Mercury-QA-Notifications@broadinstitute.org }
 
     PROD:
       host:     mercury.broadinstitute.org
@@ -40,6 +43,7 @@ app:
       jmsPort:  5445
       workflowValidationEmail: mercury-dev@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
+      gpBillingManagers: !!set { suhamil@broadinstitute.org, sferrier@broadinstitute.org }
 
 bsp:
 
@@ -276,6 +280,20 @@ infiniumStarter:
         login: mercury-pipeline
         passwordFileName: mercury-pipeline-prod-passwords.properties
 
+decoder:
+
+    DEV:
+      host:     gp-decode-vm.broadinstitute.org
+      port:     5000
+
+    QA:
+      host:     gp-decode-vm.broadinstitute.org
+      port:     5000
+
+    PROD:
+      host:     gp-decode-vm.broadinstitute.org
+      port:     5000
+
 hipchat:
     DEV:
         baseUrl: https://www.hipchat.com/v1/rooms/message
@@ -300,28 +318,28 @@ sap:
     DEV:
       login:      GPCOMU
       password:   SAPERD300!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
     TEST:
       login:      GPCOMU
       password:   temp1!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
     RC:
       login:      GPCOMU
       password:   temp1!
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "TEST SAP Order"
     PROD:
       login:      GPCOMU
       password:   SAPERP300!
-      sapShortCloseRecipientEmail: BUSSYS@broadinstitute.org
-      sapShortCloseEmailSubject: "SAP Order: Short Close Request"
+      sapSupportEmail: BUSSYS@broadinstitute.org
+      sapSupportEmailSubjectPrefix: "SAP Order"
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
@@ -342,7 +360,8 @@ mercury:
       collaborate: DEV
       submission: DEV
       infiniumStarter: DEV
-      sap:  TEST
+      sap:  RC
+      decoder: DEV
 
 
     AUTO_BUILD:
@@ -352,7 +371,7 @@ mercury:
       gap:      DEV
       jira:     TEST
       quote:    QA
-      squid:    DEV
+      squid:    TEST
       tableau:  PROD
       thrift:   TEST
       deckMsgs: DEV
@@ -363,6 +382,7 @@ mercury:
       submission: DEV
       infiniumStarter: DEV
       sap:  RC
+      decoder: DEV
 
     TEST:
 
@@ -382,6 +402,7 @@ mercury:
       submission: DEV
       infiniumStarter: DEV
       sap:  RC
+      decoder: DEV
 
     QA:
       app:      QA
@@ -400,6 +421,7 @@ mercury:
       submission: DEV
       infiniumStarter: QA
       sap:  RC
+      decoder: QA
 
     RC:
 
@@ -419,6 +441,7 @@ mercury:
       submission: DEV
       infiniumStarter: QA
       sap:  RC
+      decoder: QA
 
 
     PROD:
@@ -439,4 +462,5 @@ mercury:
       submission: PROD
       infiniumStarter: PROD
       sap:  PROD
+      decoder: PROD
 

@@ -11,20 +11,17 @@ import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.BspWorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
-import javax.inject.Inject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-@Impl
+/**
+ * A CDI bean created by a producer
+ * @see org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer
+ */
 public class BSPManagerFactoryImpl implements BSPManagerFactory {
-    @Inject
-    private BSPConfig params;
 
-    @Inject
-    private Deployment deployment;
+    private BSPConfig params;
 
     private Object create(Class<?> clazz) {
         try {
@@ -35,10 +32,6 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
                 IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @SuppressWarnings("unused")
-    public BSPManagerFactoryImpl() {
     }
 
     public BSPManagerFactoryImpl(BSPConfig params) {

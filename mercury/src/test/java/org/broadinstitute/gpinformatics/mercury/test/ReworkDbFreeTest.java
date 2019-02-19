@@ -5,12 +5,13 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -20,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityB
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,7 +57,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
         origBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         origBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
-        bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
+        Bucket origBucket = bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
                 origRackBarcodeSuffix,
@@ -81,8 +83,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
                                             LabBatch.LabBatchType.WORKFLOW);
 
         reworkBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        EX_EX_IN_MERCURY_CALENDAR.add(Calendar.SECOND, 1);
         reworkBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
-        bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
+        Bucket reworkBucket = bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
                 reworkRackMap,
                 reworkRackBarcodeSuffix,
@@ -105,9 +108,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabVessel tube1 = iterator.next();
         LabVessel tube2 = iterator.next();
         BucketEntry bucketEntry1 =
-                new BucketEntry(tube1, productOrder, BucketEntry.BucketEntryType.REWORK_ENTRY);
+                new BucketEntry(tube1, productOrder, reworkBucket, BucketEntry.BucketEntryType.REWORK_ENTRY);
         BucketEntry bucketEntry2 =
-                new BucketEntry(tube2, productOrder, BucketEntry.BucketEntryType.REWORK_ENTRY);
+                new BucketEntry(tube2, productOrder, reworkBucket, BucketEntry.BucketEntryType.REWORK_ENTRY);
         reworkBatch.addBucketEntry(bucketEntry1);
         reworkBatch.addBucketEntry(bucketEntry2);
 
@@ -158,7 +161,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
         origBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         origBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
-        bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
+        Bucket origBucket = bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
                 origRackBarcodeSuffix,
@@ -189,9 +192,10 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
                                             LabBatch.LabBatchType.WORKFLOW);
         reworkBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        EX_EX_IN_MERCURY_CALENDAR.add(Calendar.SECOND, 1);
         reworkBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
-        bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
+        Bucket reworkBucket = bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
                 reworkRackMap,
                 reworkRackBarcodeSuffix,

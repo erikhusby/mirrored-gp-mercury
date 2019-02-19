@@ -9,10 +9,12 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -174,10 +176,8 @@ public class InfiniumRunResource {
                         }
                     }
 
-                    if (productOrders.size() == 1) {
+                    if (productOrders.size() >= 1) {
                         productOrder = productOrders.iterator().next();
-                    } else if (productOrders.size() > 1) {
-                        throw new ResourceException("Found mix of product orders ", Response.Status.INTERNAL_SERVER_ERROR);
                     } else {
                         throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
                     }
@@ -232,12 +232,14 @@ public class InfiniumRunResource {
             String productFamily = null;
             String partNumber = null;
             String researchProjectId = null;
+            ResearchProject.RegulatoryDesignation regulatoryDesignation = null;
             if (productOrder != null) {
                 productOrderId = productOrder.getJiraTicketKey();
                 productName = productOrder.getProduct().getProductName();
                 productFamily = productOrder.getProduct().getProductFamily().getName();
                 partNumber = productOrder.getProduct().getPartNumber();
                 researchProjectId = productOrder.getResearchProject().getBusinessKey();
+                regulatoryDesignation = productOrder.getResearchProject().getRegulatoryDesignation();
 
                 //Attempt to override default chip attributes if changed in product order
                 GenotypingProductOrderMapping genotypingProductOrderMapping =
@@ -253,6 +255,10 @@ public class InfiniumRunResource {
                 }
             }
 
+            String sampleLsid = sampleData.getSampleLsid();
+            if (sampleLsid == null && regulatoryDesignation != null && regulatoryDesignation.isClinical()) {
+                sampleLsid = CrspPipelineUtils.getCrspLSIDForBSPSampleId(sampleInstanceV2.getNearestMercurySampleName());
+            }
             infiniumRunBean = new InfiniumRunBean(
                     idatPrefix + "_Red.idat",
                     idatPrefix + "_Grn.idat",
@@ -262,7 +268,7 @@ public class InfiniumRunResource {
                     chipAttributes.get("zcall_threshold_unix"),
                     sampleInstanceV2.getNearestMercurySampleName(),
                     sampleData.getCollaboratorsSampleName(),
-                    sampleData.getSampleLsid(),
+                    sampleLsid,
                     sampleData.getGender(),
                     sampleData.getPatientId(),
                     researchProjectId,
@@ -278,8 +284,8 @@ public class InfiniumRunResource {
                     batchName,
                     startDate,
                     scannerName,
-                    chipAttributes.get("norm_manifest_unix")
-                    );
+                    chipAttributes.get("norm_manifest_unix"),
+                    regulatoryDesignation == null ? null : regulatoryDesignation.name());
         } else {
             throw new RuntimeException("Expected 1 sample, found " + sampleInstancesAtPositionV2.size());
         }

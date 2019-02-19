@@ -8,6 +8,7 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
@@ -30,6 +31,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -74,10 +76,6 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     private Set<LabBatch> loadLcsets = new HashSet<>();
     private Set<LabVessel> loadTubes = new HashSet<>();
     private List<DesignationUtils.LcsetAssignmentDto> tubeLcsetAssignments = new ArrayList<>();
-    private boolean showProcessed;
-    private boolean showAbandoned;
-    private boolean showQueued = true;
-    private boolean append;
     private DesignationUtils utils = new DesignationUtils(this);
 
     private static final EnumSet DESCENDANTS = EnumSet.of(TransferTraverserCriteria.TraversalDirection.Descendants);
@@ -96,15 +94,8 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     @HandlesEvent(VIEW_ACTION)
     @DefaultHandler
     public Resolution view() {
-        // Filters out the unwanted dto's by status.
         for (Iterator<DesignationDto> iter = dtos.iterator(); iter.hasNext(); ) {
             DesignationDto dto = iter.next();
-            if (!showAbandoned && dto.getStatus() == FlowcellDesignation.Status.ABANDONED ||
-                !showProcessed && dto.getStatus() == FlowcellDesignation.Status.IN_FCT ||
-                !showQueued && dto.getStatus() == FlowcellDesignation.Status.QUEUED) {
-                iter.remove();
-                continue;
-            }
             dto.setSelected(false);
         }
         Set<DesignationDto> uniqueDtos = new HashSet<>(dtos);
@@ -172,9 +163,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                 return new ForwardResolution(TUBE_LCSET_PAGE);
             }
         }
-        if (!append) {
-            dtos.clear();
-        }
+        dtos.clear();
         // At this point there should be a single lcset per loading tube.
         makeDtos(loadingTubeLcset);
         return view();
@@ -186,23 +175,10 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     @HandlesEvent(PENDING_ACTION)
     public Resolution loadPendingDesignations() {
         clearValidationErrors();
-        if (!append) {
-            dtos.clear();
-        }
-        List <FlowcellDesignation.Status> statusesToShow = new ArrayList<FlowcellDesignation.Status>(){{
-            if (getShowAbandoned()) {
-                add(FlowcellDesignation.Status.ABANDONED);
-            }
-            if (getShowQueued()) {
-                add(FlowcellDesignation.Status.QUEUED);
-            }
-            if (getShowProcessed()) {
-                add(FlowcellDesignation.Status.IN_FCT);
-            }
-        }};
+        dtos.clear();
         MessageCollection messageCollection = new MessageCollection();
-        tubeLcsetAssignments = utils.makeDtosFromDesignations(designationTubeEjb.existingDesignations(statusesToShow),
-                messageCollection);
+        tubeLcsetAssignments = utils.makeDtosFromDesignations(designationTubeEjb.existingDesignations(
+                Collections.singletonList(FlowcellDesignation.Status.QUEUED)), messageCollection);
         if (tubeLcsetAssignments.size() > 0) {
             return new ForwardResolution(TUBE_LCSET_PAGE);
         }
@@ -254,7 +230,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
         if (isNotBlank(lcsetsBarcodes)) {
             // Keeps only the decimal digits, ascii letters, hyphen, and space delimiters.
             String[] tokens = lcsetsBarcodes.replaceAll("[^\\p{Nd}\\p{Ll}\\p{Lu}\\p{Pd}]", " ").
-                    replaceAll("[^\\x20-\\x7E]", "").toUpperCase().split(" ");
+                    replaceAll("[^\\x20-\\x7E]", "").split(" ");
             for (String token : tokens) {
                 if (isNotBlank(token)) {
                     BarcodedTube tube = barcodedTubeDao.findByBarcode(token);
@@ -326,65 +302,11 @@ public class DesignationActionBean extends CoreActionBean implements Designation
         }
 
         // Iterates on the LCSETs specified by the user.
-        for (LabBatch targetLcset : loadLcsets) {
-            boolean foundLoadingTube = false;
-            // Finds the loading tubes for each of the lcset's starting batch vessels. When a starting
-            // tube is reworked it may have multiple loading tubes. Each of these loading tube will
-            // need to be checked for the best lcset(s), and only be used if the target lcset is among
-            // them. Typically there is only one best lcset but a pooled tube may be in two equivalently
-            // good lcsets so that case must be handled correctly.
-            Map<LabEvent, Set<LabVessel>> loadingEventsAndVessels = null;
-            for (LabVessel startingBatchVessel : targetLcset.getStartingBatchLabVessels()) {
-                loadingEventsAndVessels = startingBatchVessel.findVesselsForLabEventType(selectedEventType, true,
-                        DESCENDANTS);
-                // Includes batched vessel if it was the target of a loading event, e.g. a bucketed pooled tube.
-                for (LabEvent labEvent : startingBatchVessel.getInPlaceAndTransferToEvents()) {
-                    if (labEvent.getLabEventType() == selectedEventType) {
-                        loadingEventsAndVessels.put(labEvent, Collections.singleton(startingBatchVessel));
-                    }
-                }
-                for (LabEvent targetEvent : loadingEventsAndVessels.keySet()) {
-                    for (LabVessel loadingTube : loadingEventsAndVessels.get(targetEvent)) {
-                        // Only processes a loading tube for this lcset once.
-                        if (!targetLcset.equals(loadingTubeToLcset.get(loadingTube))) {
-                            Pair<Set<LabBatch>, Set<SampleInstanceV2>> loadingTubeTraversal =
-                                    DesignationUtils.findBestLcsets(loadingTube);
-                            Set<LabBatch> loadingTubeLcsets = loadingTubeTraversal.getLeft();
-                            Set<SampleInstanceV2> loadingTubeSampleInstances = loadingTubeTraversal.getRight();
-
-                            if (loadingTubeLcsets.contains(targetLcset)) {
-                                foundLoadingTube = true;
-                                loadingTubeToLcset.put(loadingTube, targetLcset);
-                                loadingTubeToLabEvent.put(loadingTube, targetEvent);
-
-                                for (SampleInstanceV2 sampleInstance : loadingTubeSampleInstances) {
-                                    if (sampleInstance.getSingleBatch() != null &&
-                                        sampleInstance.getSingleBatch().equals(targetLcset) ||
-                                        sampleInstance.getSingleBatch() == null &&
-                                        sampleInstance.getAllWorkflowBatches().contains(targetLcset)) {
-
-                                        for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
-                                            if (targetLcset.equals(bucketEntry.getLabBatch())) {
-                                                loadingTubeToBucketEntry.put(loadingTube, bucketEntry);
-                                            }
-                                        }
-
-                                        // A starting vessel with no bucket entry is a positive control.
-                                        if (sampleInstance.getAllBucketEntries().isEmpty()) {
-                                            for (LabBatchStartingVessel vessel : sampleInstance.getAllBatchVessels()) {
-                                                loadingTubeToControl.put(loadingTube, vessel.getLabVessel());
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if (!foundLoadingTube) {
-                addMessage("No " + selectedEventType + " tubes in " + targetLcset.getBatchName());
-            }
+        Multimap<LabVessel, LabBatch> loadingTubeToLcsets = HashMultimap.create();
+        List<String> noLoadingTubeLcsets = loadingTubeDtoForLcsets(selectedEventType, loadLcsets, loadingTubeToLcset,
+                loadingTubeToLcsets, loadingTubeToLabEvent, loadingTubeToBucketEntry, loadingTubeToControl);
+        if (!noLoadingTubeLcsets.isEmpty()) {
+            addMessage("No " + selectedEventType + " found tubes in " + StringUtils.join(noLoadingTubeLcsets, ", "));
         }
 
         // Makes the UI table row dto for each loading tube.
@@ -409,6 +331,79 @@ public class DesignationActionBean extends CoreActionBean implements Designation
         }
     }
 
+    /**
+     * Populates the collections passed in with information about the loading tube and bucket entries
+     * for each of the lcset's starting batch vessels. When a starting tube is reworked it may have
+     * multiple loading tubes. Each of these loading tube will need to be checked for the best lcset(s),
+     * and only be used if the target lcset is among them. Typically there is only one best lcset but
+     * a pooled tube may be in two equivalently good lcsets so that case must be handled correctly.
+     *
+     * @return the names of the lcsets having no loading tubes.
+     */
+    public static List<String> loadingTubeDtoForLcsets(LabEventType loadingEventType, Collection<LabBatch> lcsets,
+            Map<LabVessel, LabBatch> loadingTubeToLcset, Multimap<LabVessel, LabBatch> loadingTubeToLcsets,
+            Multimap<LabVessel, LabEvent> loadingTubeToLabEvent,
+            Multimap<LabVessel, BucketEntry> loadingTubeToBucketEntry,
+            Multimap<LabVessel, LabVessel> loadingTubeToControl) {
+
+        List<String> noLoadingTubeLcsets = new ArrayList<>();
+        for (LabBatch targetLcset : lcsets) {
+            boolean foundLoadingTube = false;
+            for (LabVessel startingBatchVessel : targetLcset.getStartingBatchLabVessels()) {
+                Map<LabEvent, Set<LabVessel>> loadingEventsAndVessels = startingBatchVessel.findVesselsForLabEventType(
+                        loadingEventType, true, DESCENDANTS);
+                // Includes batched vessel if it was the target of a loading event, e.g. a bucketed pooled tube.
+                for (LabEvent labEvent : startingBatchVessel.getInPlaceAndTransferToEvents()) {
+                    if (labEvent.getLabEventType() == loadingEventType) {
+                        loadingEventsAndVessels.put(labEvent, Collections.singleton(startingBatchVessel));
+                    }
+                }
+                for (LabEvent targetEvent : loadingEventsAndVessels.keySet()) {
+                    for (LabVessel loadingTube : loadingEventsAndVessels.get(targetEvent)) {
+                        // Only processes a loading tube for this lcset once.
+                        if (!targetLcset.equals(loadingTubeToLcset.get(loadingTube))) {
+                            Pair<Set<LabBatch>, Set<SampleInstanceV2>> loadingTubeTraversal =
+                                    DesignationUtils.findBestLcsets(loadingTube);
+                            Set<LabBatch> loadingTubeLcsets = loadingTubeTraversal.getLeft();
+                            Set<SampleInstanceV2> loadingTubeSampleInstances = loadingTubeTraversal.getRight();
+
+                            loadingTubeToLcsets.putAll(loadingTube, loadingTubeLcsets);
+                            if (loadingTubeLcsets.contains(targetLcset)) {
+                                foundLoadingTube = true;
+                                loadingTubeToLcset.put(loadingTube, targetLcset);
+                                loadingTubeToLabEvent.put(loadingTube, targetEvent);
+
+                                for (SampleInstanceV2 sampleInstance : loadingTubeSampleInstances) {
+                                    if (sampleInstance.getSingleBatch() != null &&
+                                            sampleInstance.getSingleBatch().equals(targetLcset) ||
+                                            sampleInstance.getSingleBatch() == null &&
+                                                    sampleInstance.getAllWorkflowBatches().contains(targetLcset)) {
+
+                                        for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+                                            if (targetLcset.equals(bucketEntry.getLabBatch())) {
+                                                loadingTubeToBucketEntry.put(loadingTube, bucketEntry);
+                                            }
+                                        }
+
+                                        // A starting vessel with no bucket entry is a positive control.
+                                        if (sampleInstance.getAllBucketEntries().isEmpty()) {
+                                            for (LabBatchStartingVessel vessel : sampleInstance.getAllBatchVessels()) {
+                                                loadingTubeToControl.put(loadingTube, vessel.getLabVessel());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (!foundLoadingTube) {
+                noLoadingTubeLcsets.add(targetLcset.getBatchName());
+            }
+        }
+        return noLoadingTubeLcsets;
+    }
 
     /**
      * Finds the single lcset for barcoded tubes, possibly relying on user to select one.
@@ -511,38 +506,6 @@ public class DesignationActionBean extends CoreActionBean implements Designation
 
     public void setTubeLcsetAssignments(List<DesignationUtils.LcsetAssignmentDto> tubeLcsetAssignments) {
         this.tubeLcsetAssignments = tubeLcsetAssignments;
-    }
-
-    public boolean getShowProcessed() {
-        return showProcessed;
-    }
-
-    public void setShowProcessed(boolean showProcessed) {
-        this.showProcessed = showProcessed;
-    }
-
-    public boolean getShowAbandoned() {
-        return showAbandoned;
-    }
-
-    public void setShowAbandoned(boolean showAbandoned) {
-        this.showAbandoned = showAbandoned;
-    }
-
-    public boolean getShowQueued() {
-        return showQueued;
-    }
-
-    public void setShowQueued(boolean showQueued) {
-        this.showQueued = showQueued;
-    }
-
-    public boolean isAppend() {
-        return append;
-    }
-
-    public void setAppend(boolean append) {
-        this.append = append;
     }
 
     public void setDateRangeStart(Date start) {

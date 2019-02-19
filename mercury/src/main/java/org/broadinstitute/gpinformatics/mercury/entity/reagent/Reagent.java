@@ -71,6 +71,9 @@ public abstract class Reagent {
     @Column(name = "EXPIRATION", nullable = true)
     private Date expiration;
 
+    @Column(name = "FIRST_USE", nullable = true)
+    private Date firstUse;
+
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "reagent")
     @BatchSize(size = 100)
     private Set<LabEventReagent> labEventReagents = new HashSet<>();
@@ -114,5 +117,13 @@ public abstract class Reagent {
 
     public Set<LabEventReagent> getLabEventReagents() {
         return labEventReagents;
+    }
+
+    public Date getFirstUse() {
+        return firstUse;
+    }
+
+    public void setFirstUse(Date firstUse) {
+        this.firstUse = firstUse;
     }
 }

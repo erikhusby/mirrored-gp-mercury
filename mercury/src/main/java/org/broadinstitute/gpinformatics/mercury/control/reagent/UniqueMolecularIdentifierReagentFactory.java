@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,7 @@ import java.util.TreeMap;
 /**
  * Creates UniqueMolecularIdentifier entities.
  */
+@Dependent
 public class UniqueMolecularIdentifierReagentFactory {
 
     @Inject

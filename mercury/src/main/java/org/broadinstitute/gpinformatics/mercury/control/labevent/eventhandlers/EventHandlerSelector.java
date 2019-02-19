@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
@@ -13,22 +14,26 @@ import javax.inject.Inject;
  * By triggering off of the {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType}, we can
  * target each message at its own message validator.
  */
+@Dependent
 public class EventHandlerSelector {
 
     private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
     private FlowcellLoadedHandler flowcellLoadedHandler;
     private BspNewRootHandler bspNewRootHandler;
+    private CreateLabBatchHandler createLabBatchHandler;
 
     @Inject
     public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
             FlowcellMessageHandler flowcellMessageHandler,
             FlowcellLoadedHandler flowcellLoadedHandler,
-            BspNewRootHandler bspNewRootHandler) {
+            BspNewRootHandler bspNewRootHandler,
+            CreateLabBatchHandler createLabBatchHandler) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
         this.bspNewRootHandler = bspNewRootHandler;
+        this.createLabBatchHandler = createLabBatchHandler;
     }
 
     /**
@@ -62,6 +67,9 @@ public class EventHandlerSelector {
         case BLOOD_PLASMA_SECOND_TRANSFER:
         case BLOOD_BUFFY_COAT_TRANSFER:
             bspNewRootHandler.handleEvent(targetEvent, stationEvent);
+            break;
+        case ARRAY_PLATING_DILUTION:
+            createLabBatchHandler.handleEvent(targetEvent, stationEvent);
             break;
         }
     }

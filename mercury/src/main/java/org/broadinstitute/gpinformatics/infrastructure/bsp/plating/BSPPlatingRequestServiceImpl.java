@@ -12,16 +12,18 @@ import org.broadinstitute.bsp.client.workrequest.*;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPWorkRequestClientService;
 import org.broadinstitute.gpinformatics.infrastructure.common.GroupingIterable;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.text.DateFormat;
 import java.util.*;
 
-@Impl
+@Dependent
+@Default
 public class BSPPlatingRequestServiceImpl extends BSPWorkRequestClientService implements BSPPlatingRequestService {
 
     // not sure these are really going to be constants; they should be true
@@ -44,8 +46,8 @@ public class BSPPlatingRequestServiceImpl extends BSPWorkRequestClientService im
     @Inject
     private QuoteService quoteService;
 
-    @Inject
-    private Log log;
+    private Log log = LogFactory.getLog(this.getClass());
+
     @Inject
     private JiraTicketDao jiraTicketDao;
 

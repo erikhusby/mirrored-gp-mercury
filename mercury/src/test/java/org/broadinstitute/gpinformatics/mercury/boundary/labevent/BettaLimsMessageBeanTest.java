@@ -1,16 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.hornetq.api.core.TransportConfiguration;
-import org.hornetq.api.jms.HornetQJMSClient;
-import org.hornetq.api.jms.JMSFactoryType;
-import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
-import org.hornetq.core.remoting.impl.netty.TransportConstants;
-import org.hornetq.jms.client.HornetQConnectionFactory;
 import org.testng.annotations.Test;
 
 import javax.jms.Connection;
@@ -20,14 +15,17 @@ import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Test Message Driven Bean
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BettaLimsMessageBeanTest {
+
+    @Test(enabled = false)
+    public static void main( String[] args ) {
+        sendJmsMessage("This is a JMS configuration test message", "broad.queue.mercury.bettalims.dev");
+    }
 
     @Test(enabled = false)
     public void testJms() {
@@ -44,25 +42,14 @@ public class BettaLimsMessageBeanTest {
     public static boolean sendJmsMessage(String message, String queueName) {
         Connection connection = null;
         Session session = null;
+        String url = "tcp://localhost:5445";
         try {
-            Map<String, Object> connectionParams = new HashMap<>();
-            connectionParams.put(TransportConstants.PORT_PROP_NAME, 5445);
-            connectionParams.put(TransportConstants.HOST_PROP_NAME, "localhost");
-//            connectionParams.put(TransportConstants.HOST_PROP_NAME, "gpinfx-jms");
-            TransportConfiguration transportConfiguration = new TransportConfiguration(
-                    NettyConnectorFactory.class.getName(), connectionParams);
-            HornetQConnectionFactory connectionFactory = HornetQJMSClient.createConnectionFactoryWithoutHA(
-                    JMSFactoryType.CF, transportConfiguration);
-
-            connectionFactory.setConnectionTTL(-1);
-            connectionFactory.setClientFailureCheckPeriod(Long.MAX_VALUE);
-
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
             connection = connectionFactory.createConnection();
             connection.start();
 
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Destination destination = session.createQueue(queueName);
-//            Destination destination = session.createQueue("broad.queue.mercury.bettalims.production");
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 

@@ -1,16 +1,18 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("jira")
+@ApplicationScoped
 public class JiraConfig extends AbstractConfig implements LoginAndPassword, Serializable {
     private String host;
 
@@ -21,6 +23,8 @@ public class JiraConfig extends AbstractConfig implements LoginAndPassword, Seri
     private String password;
 
     private String urlBase;
+
+    public JiraConfig(){}
 
     @Inject
     public JiraConfig(@Nonnull Deployment deployment) {

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,6 +64,8 @@ public class LibraryConstructionEntityBuilder {
     private Indexing indexing;
     private LibraryConstructionJaxbBuilder.PondType pondType;
     private final Umi umi;
+    private final String p7IndexPlateBarcode;
+    private final String p5IndexPlateBarcode;
 
     private final Map<String, BarcodedTube> mapBarcodeToPondRegTubes = new HashMap<>();
     private final Map<String, BarcodedTube> mapBarcodeToPondNormTubes = new HashMap<>();
@@ -80,6 +83,15 @@ public class LibraryConstructionEntityBuilder {
             LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
             String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
             Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType, Umi umi) {
+        this(bettaLimsMessageTestFactory, labEventFactory, labEventHandler, shearingCleanupPlate, shearCleanPlateBarcode,
+                shearingPlate, numSamples, testPrefix, indexing, pondType, umi, "IndexPlateP7", "IndexPlateP5");
+    }
+
+    public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                                            LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
+                                            String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
+                                            Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType, Umi umi,
+                                            String p7IndexPlateBarcode, String p5IndexPlateBarcode) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -91,6 +103,8 @@ public class LibraryConstructionEntityBuilder {
         this.indexing = indexing;
         this.pondType = pondType;
         this.umi = umi;
+        this.p7IndexPlateBarcode = p7IndexPlateBarcode;
+        this.p5IndexPlateBarcode = p5IndexPlateBarcode;
     }
 
     public List<String> getPondRegTubeBarcodes() {
@@ -127,7 +141,7 @@ public class LibraryConstructionEntityBuilder {
 
     public LibraryConstructionEntityBuilder invoke() {
         final LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
-                bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, "IndexPlateP7", "IndexPlateP5",
+                bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, p7IndexPlateBarcode, p5IndexPlateBarcode,
                 numSamples, LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
@@ -135,6 +149,11 @@ public class LibraryConstructionEntityBuilder {
                 Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6)),
                 pondType
         ).invoke();
+
+        Set<String> shearingPlateA01SampleNames = new HashSet<>();
+        for (SampleInstanceV2 sampleInstance : shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01)) {
+            shearingPlateA01SampleNames.add(sampleInstance.getRootOrEarliestMercurySampleName());
+        }
 
         if (pondType == LibraryConstructionJaxbBuilder.PondType.PCR_PLUS_HYPER_PREP ||
             pondType == LibraryConstructionJaxbBuilder.PondType.PCR_FREE_HYPER_PREP ||
@@ -227,24 +246,22 @@ public class LibraryConstructionEntityBuilder {
         shearingCleanupPlate.clearCaches();
 
         // asserts
-        Set<SampleInstanceV2> postIndexingSampleInstances =
-                shearingCleanupPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
-        SampleInstanceV2 sampleInstance = postIndexingSampleInstances.iterator().next();
-        List<Reagent> reagents = sampleInstance.getReagents();
-        MolecularIndexReagent molecularIndexReagent = null;
-        if (includeUmi) {
-            int reagentCount = umi == Umi.SINGLE ? 2: 3;
-            Assert.assertEquals(reagents.size(), reagentCount, "Wrong number of reagents");
-            molecularIndexReagent = findIndexReagent(reagents);
-            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
-                    "Wrong index");
-        } else {
-            Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
-            molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
-                    "Wrong index");
+        for (SampleInstanceV2 sampleInstance :
+                shearingCleanupPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01)) {
+            List<Reagent> reagents = sampleInstance.getReagents();
+            if (includeUmi) {
+                int reagentCount = umi == Umi.SINGLE ? 2 : 3;
+                Assert.assertEquals(reagents.size(), reagentCount, "Wrong number of reagents");
+                MolecularIndexReagent molecularIndexReagent = findIndexReagent(reagents);
+                Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
+                        "Wrong index");
+            } else {
+                Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+                MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
+                Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
+                        "Wrong index");
+            }
         }
-
         // PostIndexedAdapterLigationThermoCyclerLoaded
         LabEventTest.validateWorkflow("PostIndexedAdapterLigationThermoCyclerLoaded", shearingCleanupPlate);
         LabEvent postIdxAdapterLigationThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
@@ -353,42 +370,50 @@ public class LibraryConstructionEntityBuilder {
             }
         }
 
-        // asserts
-        Assert.assertEquals(pondRegRack.getSampleInstancesV2().size(),
-                shearingPlate.getSampleInstancesV2().size(), "Wrong number of sample instances");
+        // Check the sample instances.
+        // The pond cleanup plate will always have sample instances in all 96 wells due to the
+        // reagent addition.
+        Set<SampleInstanceV2> nonReagentInstances = new HashSet<>();
+        for (SampleInstanceV2 sampleInstance : pondRegRack.getSampleInstancesV2()) {
+            if (sampleInstance.getNearestMercurySample() != null) {
+                nonReagentInstances.add(sampleInstance);
+            }
+        }
+        Assert.assertEquals(nonReagentInstances.size(), shearingPlate.getSampleInstancesV2().size(),
+                "Wrong number of sample instances");
+
+        // A pooled sample will have multiple sample instances in A01.
         Set<SampleInstanceV2> sampleInstancesInPondRegWell =
                 pondRegRack.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
-        Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
-        SampleInstanceV2 pondRegSampleInstance = sampleInstancesInPondRegWell.iterator().next();
-        Assert.assertEquals(pondRegSampleInstance.getRootOrEarliestMercurySampleName(),
-                shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01).iterator().next()
-                        .getRootOrEarliestMercurySampleName(),
-                "Wrong sample");
-        reagents = pondRegSampleInstance.getReagents();
-        if (includeUmi) {
-            if (umi == Umi.DUAL) {
-                Assert.assertEquals(reagents.size(), 3, "Wrong number of reagents");
-            } else {
-                Assert.assertEquals(reagents.size(), 2, "Wrong number of reagents");
+        for (SampleInstanceV2 pondRegSampleInstance : sampleInstancesInPondRegWell) {
+            Assert.assertTrue(shearingPlateA01SampleNames.contains(
+                    pondRegSampleInstance.getRootOrEarliestMercurySampleName()),
+                    "Wrong sample " + pondRegSampleInstance.getRootOrEarliestMercurySampleName());
+            List<Reagent> reagents = pondRegSampleInstance.getReagents();
+            if (includeUmi) {
+                if (umi == Umi.DUAL) {
+                    Assert.assertEquals(reagents.size(), 3, "Wrong number of reagents");
+                } else {
+                    Assert.assertEquals(reagents.size(), 2, "Wrong number of reagents");
+                }
+                MolecularIndexReagent molecularIndexReagent = findIndexReagent(reagents);
+                Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
+                        "Illumina_P5-Habab_P7-Habab",
+                        "Wrong index");
+            } else if (indexing == Indexing.DUAL) {
+                Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+                MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
+                Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
+                        "Illumina_P5-Habab_P7-Habab",
+                        "Wrong index");
+            } else if (indexing == Indexing.SINGLE) {
+                Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+                MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
+                Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
+                        "Illumina_P7-Habab",
+                        "Wrong index");
             }
-            molecularIndexReagent = findIndexReagent(reagents);
-            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
-                    "Illumina_P5-Habab_P7-Habab",
-                    "Wrong index");
-        } else if (indexing == Indexing.DUAL){
-            Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
-            molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
-                    "Illumina_P5-Habab_P7-Habab",
-                    "Wrong index");
-        } else if (indexing == Indexing.SINGLE) {
-            Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
-            molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
-                    "Illumina_P7-Habab",
-                    "Wrong index");
         }
-
         return this;
     }
 

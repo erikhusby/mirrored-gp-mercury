@@ -15,6 +15,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -31,6 +33,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private WorkflowConfigLookup workflowConfigLookup;
     private final Collection<EventFactDto> loggingDtos = new ArrayList<>();
@@ -75,7 +78,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
     @Override
-    Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
+    public Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
 
         Collection<String> eventFactRecords = new ArrayList<>();
         try {
@@ -134,11 +137,12 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
      * All delete records go in event fact table.  <br/>
      * Last character of line for update/insert records determines which file the record is written to: <br/>
      * "E" is an event fact record <br/>
-     * "A" is an ancestry fact record
+     * "A" is an ancestry fact record <br/>
+     * Scope relaxed from protected to public to allow a backfill service hook
      */
     @DaoFree
     @Override
-    protected int writeRecords(Collection<LabEvent> entities,
+    public int writeRecords(Collection<LabEvent> entities,
                                Collection<Long>deletedEntityIds,
                                String etlDateStr) {
 
@@ -192,10 +196,11 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     /**
      * Overridden to gather LabEvent objects for entity ids and pass to writer so the file writes are forked
-     * into event or ancestry file
+     * into event or ancestry file <br/>
+     * Scope relaxed from protected to public to allow a backfill service hook
      */
     @Override
-    protected int writeRecords(Collection<Long> deletedEntityIds,
+    public int writeRecords(Collection<Long> deletedEntityIds,
                                Collection<Long> modifiedEntityIds,
                                Collection<Long> addedEntityIds,
                                Collection<RevInfoPair<LabEvent>> revInfoPairs,
@@ -215,25 +220,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         }
         return writeRecords( eventList, deletedEntityIds, etlDateStr );
     }
-
-    /**
-
-    /**
-     * Modifies the id lists and possibly also invokes sequencingSampleFact ETL, in order to fixup the downstream
-     * event facts and sequencing facts when there are lab event deletions and modifications, which are due to a
-     * manual fixup.
-     *
-     * @param deletedEntityIds the deleted event ids.
-     * @param modifiedEntityIds the modified event ids, and the downstream event ids get added to this list.
-     * @param etlDateStr the etl date.
-     */
-    @Override
-    protected void processFixups(Collection<Long> deletedEntityIds,
-                                 Collection<Long> modifiedEntityIds,
-                                 String etlDateStr) throws Exception {
-        // See GPLIM-4731 This didn't catch all the necessary downstream dependent events, etc. to do a full fixup
-    }
-
 
     /**
      * Holds extract data for lab event ETL.  Data should be considered immutable after constructor. <br />
@@ -608,7 +594,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     }
 
                     if (StringUtils.isBlank(workflowName) && pdo != null) {
-                        workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
+                        workflowName = pdo.getProduct().getWorkflowName();
                     }
 
                     WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(

@@ -30,7 +30,7 @@ function enableDefaultPagingOptions(){
         "bLengthChange": true,
         "sPaginationType": 'bootstrap',
     });
-    $j.fn.dataTable.defaults.aLengthMenu = [[50, 100, 200, 400, -1], [50, 100, 200, 400, "All"]];
+    $j.fn.dataTable.defaults.aLengthMenu = [[50, 100, 200, 400, 1000, 2000, 4000, -1], [50, 100, 200, 400, 1000, 2000, 4000, "All"]];
 }
 /**
  *  Set the defaults for DataTables initialization

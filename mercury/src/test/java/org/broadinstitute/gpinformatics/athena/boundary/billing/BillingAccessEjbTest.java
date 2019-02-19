@@ -2,12 +2,13 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Date;
 
@@ -15,7 +16,10 @@ import java.util.Date;
  * TODO scottmat fill in javadoc!!!
  */
 @Test(groups = TestGroups.STUBBY, enabled = true)
-public class BillingAccessEjbTest extends ContainerTest {
+@Dependent
+public class BillingAccessEjbTest extends StubbyContainerTest {
+
+    public BillingAccessEjbTest(){}
 
     @Inject
     private BillingSessionDao billingSessionDao;

@@ -22,10 +22,14 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -81,10 +85,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     public void setAuditReaderDao(AuditReaderDao auditReaderDao) {
         this.auditReaderDao = auditReaderDao;
     }
-
-    /** This class uses Bean Managed Transactions in order to set a longer session timeout. */
-    @Inject
-    private UserTransaction utx;
 
     protected GenericEntityEtl() {
         this(null, null, null, null, null);
@@ -186,10 +186,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public int doIncrementalEtl(Set<Long> revIds, String etlDateStr) throws Exception {
         try {
-            if (utx != null) {
-                utx.begin();
-                utx.setTransactionTimeout(TRANSACTION_TIMEOUT);
-            }
+
             // Retrieves the Envers-formatted list of entity changes in the given revision range.
             // Subclass may add additional entity ids based on custom rev query.
             List<EnversAudit> auditEntities = auditReaderDao.fetchEnversAudits(revIds, entityClass);
@@ -210,10 +207,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         } catch (Exception e) {
             logger.error(getClass().getSimpleName() + " incremental ETL failed", e);
             throw e;
-        } finally {
-            if (utx != null) {
-                utx.rollback();
-            }
         }
     }
 
@@ -223,19 +216,10 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                          Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs,
                          String etlDateStr) throws Exception {
         try {
-            processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
             return writeRecords(deletedEntityIds, modifiedEntityIds, addedEntityIds, revInfoPairs, etlDateStr);
         } finally {
             postEtlLogging();
         }
-    }
-
-    /**
-     * Used when necessary to re-etl related entities (e.g. downstream events) when fixups occur.
-     */
-    protected void processFixups(Collection<Long> deletedEntityIds,
-                                 Collection<Long> modifiedEntityIds,
-                                 String etlDateStr) throws Exception {
     }
 
     /**
@@ -256,11 +240,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             return 0;
         }
         try {
-            if (utx != null) {
-                utx.begin();
-                utx.setTransactionTimeout(TRANSACTION_TIMEOUT);
-            }
-
             Collection<Long> auditClassDeletedIds = fetchDeletedEntityIds(startId, endId);
             Collection<Long> auditClassModifiedIds = new ArrayList<>();
 
@@ -283,16 +262,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                 deletedEntityIds.clear();
             }
 
-            if (utx != null) {
-                // Something in the above code block starts a 5 minute timer on the transaction that overrides
-                // any setTransactionTimeout value. This causes the next code block to timeout when there are
-                // many entities to etl. The workaround is to close and reopen the transaction which will then
-                // honor a long timeout setting.
-                utx.rollback();
-                utx.begin();
-                utx.setTransactionTimeout(TRANSACTION_TIMEOUT);
-            }
-
             int count =  writeEtlDataFile(deletedEntityIds, modifiedEntityIds, Collections.<Long>emptyList(),
                     Collections.<RevInfoPair<AUDITED_ENTITY_CLASS>>emptyList(), etlDateStr);
 
@@ -304,9 +273,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             throw e;
 
         } finally {
-            if (utx != null) {
-                utx.rollback();
-            }
             postEtlLogging();
         }
     }
@@ -635,10 +601,29 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     protected static class DataFile {
         private final String filename;
         private BufferedWriter writer;
-        private int lineCount;
+        private int lineCount = 0;
 
         DataFile(String filename) {
             this.filename = filename;
+
+            // There are cases (fixup tests) where records are appended to existing files
+            // Adjust line counter as required
+            java.nio.file.Path path = FileSystems.getDefault().getPath(filename);
+            if(Files.exists(path) ) {
+                BufferedReader lineCounter = null;
+                try {
+                    lineCounter = Files.newBufferedReader(path, Charset.defaultCharset());
+                    while( lineCounter.readLine() != null ) {
+                        lineCount++;
+                    }
+                    // Roll counter back to accommodate empty last line
+                    lineCount--;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    IOUtils.closeQuietly(lineCounter);
+                }
+            }
         }
 
         int getRecordCount() {
@@ -655,7 +640,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             }
             lineCount++;
             if (writer == null) {
-                writer = new BufferedWriter(new FileWriter(filename));
+                writer = new BufferedWriter(new FileWriter(filename, true));
             }
             writer.write(lineCount + ExtractTransform.DELIMITER + record);
             writer.newLine();

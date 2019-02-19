@@ -30,10 +30,10 @@ public class SampleDataFetcherAddRowsListener implements ConfigurableList.AddRow
     }
 
     @Override
-    public void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations) {
+    public void addRows(List<?> entityList, SearchContext context, Map<Integer,ColumnTabulation> nonPluginTabulations) {
 
         if (!columnsInitialized) {
-           for (ColumnTabulation nonPluginTabulation : nonPluginTabulations) {
+           for (ColumnTabulation nonPluginTabulation : nonPluginTabulations.values()) {
                 // todo jmt avoid all this casting
                 SearchTerm searchTerm;
                 if (nonPluginTabulation instanceof SearchInstance.SearchValue) {

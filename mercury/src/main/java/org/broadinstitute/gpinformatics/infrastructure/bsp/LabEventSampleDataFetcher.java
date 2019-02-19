@@ -5,12 +5,14 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.Collection;
 
 /**
  * Wrapper around {@link LabVesselDao} that allows easy access to each {@link LabVessel} associated with samples.
  */
+@RequestScoped
 public class LabEventSampleDataFetcher {
 
     @Inject

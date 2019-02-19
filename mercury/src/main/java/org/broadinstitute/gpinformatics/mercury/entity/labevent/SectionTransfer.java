@@ -3,11 +3,16 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 /**
  * Represents a transfer between two sections.
@@ -18,28 +23,33 @@ import javax.persistence.*;
 public class SectionTransfer extends VesselTransfer {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "SOURCE_VESSEL")
     private LabVessel sourceVessel;
+
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "TARGET_VESSEL")
+    private LabVessel targetVessel;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "LAB_EVENT")
+    private LabEvent labEvent;
 
     @Enumerated(EnumType.STRING)
     private SBSSection sourceSection;
 
     /** Typically a RackOfTubes. */
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "ANCILLARY_SOURCE_VESSEL")
     private LabVessel ancillarySourceVessel;
-
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private LabVessel targetVessel;
 
     @Enumerated(EnumType.STRING)
     private SBSSection targetSection;
 
     /** Typically a RackOfTubes. */
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "ANCILLARY_TARGET_VESSEL")
     private LabVessel ancillaryTargetVessel;
-
-    @Index(name = "ix_st_lab_event")
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private LabEvent labEvent;
 
     public SectionTransfer(VesselContainer sourceVesselContainer, SBSSection sourceSection, LabVessel ancillarySourceVessel,
             VesselContainer targetVesselContainer, SBSSection targetSection, LabVessel ancillaryTargetVessel, LabEvent labEvent) {
@@ -61,6 +71,22 @@ public class SectionTransfer extends VesselTransfer {
     }
 
     protected SectionTransfer() {
+    }
+
+    /**
+     * Added to support Hibernate envers not properly instantiating VesselContainer.embedder. <br />
+     * Preference should be getSourceVesselContainer()
+     */
+    public LabVessel getSourceVessel(){
+        return sourceVessel;
+    }
+
+    /**
+     * Added to support Hibernate envers not properly instantiating VesselContainer.embedder. <br />
+     * Preference should be getTargetVesselContainer()
+     */
+    public LabVessel getTargetVessel(){
+        return targetVessel;
     }
 
     public VesselContainer<?> getSourceVesselContainer() {

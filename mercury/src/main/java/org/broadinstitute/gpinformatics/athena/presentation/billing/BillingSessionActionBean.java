@@ -13,11 +13,11 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingException;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionAccessEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
@@ -45,6 +45,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * This handles all the needed interface processing elements.
@@ -91,12 +92,16 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     public static final String SESSION_KEY_PARAMETER_NAME = "sessionKey";
 
-    public static final String BILLING_SESSION_FROM_QUOTE_SERVER_URL_PARAMETER = "billingSession";
+    public static final String BILLING_SESSION_FROM_URL_PARAMETER = "billingSession";
 
     // parameter from quote server, comes over as &workId= in the url
     private String workId;
 
-    public static final String WORK_ITEM_FROM_QUOTE_SERVER_URL_PARAMETER = "workId";
+    public static final String WORK_ITEM_FROM_URL_PARAMETER = "workId";
+
+    public static final String SAP_DELIVERY_DOCUMENT_ID_URL_PARAMETER = "sapDeliveryId";
+
+    private String sapDeliveryId;
 
     private BillingSession editSession;
 
@@ -207,10 +212,15 @@ public class BillingSessionActionBean extends CoreActionBean {
                                     billingResult.getWorkId());
 
                     String link = "<a href=\"" + workUrl + "\" target=\"QUOTE\">click here</a>";
-                    addMessage("Sent to quote server and SAP: " + link + " to see the quotes server value");
+                    final StringBuilder results = new StringBuilder("Sent to quote server");
+                    if(StringUtils.isNotBlank(billingResult.getSAPBillingId())) {
+                        results.append(" and SAP");
+                    }
+                    results.append(": ").append(link) .append(" to see the quotes server value");
+                    addMessage(results.toString());
                 }
             }
-        } catch (BillingException e) {
+        } catch (Exception e) {
             errorsInBilling = true;
             addGlobalValidationError(e.getMessage());
         }
@@ -300,6 +310,14 @@ public class BillingSessionActionBean extends CoreActionBean {
         return workId;
     }
 
+    public String getSapDeliveryId() {
+        return sapDeliveryId;
+    }
+
+    public void setSapDeliveryId(String sapDeliveryId) {
+        this.sapDeliveryId = sapDeliveryId;
+    }
+
     /**
      * Parameters that the quote server puts in the
      * link so that we show the right billing session
@@ -310,27 +328,34 @@ public class BillingSessionActionBean extends CoreActionBean {
         private final String billingSession;
 
         private final String workId;
+        private final String sapDeliveryId;
 
         public QuoteServerParameters(String billingSession,
-                                     String workId) {
+                                     String workId, String sapDeliveryId) {
             this.billingSession = billingSession;
             this.workId = workId;
+            this.sapDeliveryId = sapDeliveryId;
         }
 
         private static QuoteServerParameters createFromQuoteSourceLink(ActionBeanContext context) {
-            String billingSessionFromQuoteServer = context.getRequest().getParameter(BILLING_SESSION_FROM_QUOTE_SERVER_URL_PARAMETER);
-            String workIdFromQuoteServer = context.getRequest().getParameter(WORK_ITEM_FROM_QUOTE_SERVER_URL_PARAMETER);
+            Optional<String> billingSessionFromUrl = Optional.ofNullable(context.getRequest().getParameter(BILLING_SESSION_FROM_URL_PARAMETER));
+            Optional<String> workIdFromURL = Optional.ofNullable(context.getRequest().getParameter(WORK_ITEM_FROM_URL_PARAMETER));
+            Optional<String> sapDeliveryId = Optional.ofNullable(context.getRequest().getParameter(SAP_DELIVERY_DOCUMENT_ID_URL_PARAMETER));
             QuoteServerParameters params = null;
-            if (billingSessionFromQuoteServer != null) {
-                params = new QuoteServerParameters(billingSessionFromQuoteServer,workIdFromQuoteServer);
+            if (billingSessionFromUrl.isPresent()) {
+                params = new QuoteServerParameters(billingSessionFromUrl.orElse("")
+                        ,workIdFromURL.orElse(""), sapDeliveryId.orElse(""));
             }
             return params;
         }
 
         private RedirectResolution redirectFromQuoteServer() {
-            return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION)
-                    .addParameter(SESSION_KEY_PARAMETER_NAME, billingSession)
-                    .addParameter(WORK_ITEM_FROM_QUOTE_SERVER_URL_PARAMETER, workId);
+            final RedirectResolution redirectResolution =
+                    new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION);
+            redirectResolution.addParameter(SESSION_KEY_PARAMETER_NAME, billingSession);
+            redirectResolution.addParameter(WORK_ITEM_FROM_URL_PARAMETER, workId);
+            redirectResolution.addParameter(SAP_DELIVERY_DOCUMENT_ID_URL_PARAMETER, sapDeliveryId);
+            return redirectResolution;
         }
     }
 

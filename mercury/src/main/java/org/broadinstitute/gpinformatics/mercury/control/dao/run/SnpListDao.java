@@ -10,7 +10,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 
 /**
- * Data Access Object for Snp entities.
+ * Data Access Object for SnpList entities.
  */
 @Stateful
 @RequestScoped

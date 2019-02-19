@@ -13,23 +13,23 @@
                 Product name
             </th>
             <th>
-                Price Override
+                Price Per Unit (e.g. $20/sample)
             </th>
             <th>
-                Quantity Override
+                Total Number of Units for the Order
             </th>
             <th>
-                Custom Product Name
+                Alternate Product Title for Invoice (40 Characters Max -- SAP Orders Only)
             </th>
         </tr>
         </thead>
         <tbody>
         <c:forEach items="${actionBean.productCustomizations}" var="customization">
             <tr>
-                <td>${customization.productName}
+                <td>${customization.productName}:  list price -- ${customization.originalPrice}
                 <input type="hidden" value="${customization.productPartNumber}" class="partNumber" />
                 </td>
-                <td><input type="text" value="${customization.price}" class="customPriceValue"/></td>
+                <td><stripes:text name="customPricePlaceholder" value="${customization.price}" class="customPriceValue" disabled="${!actionBean.canEditPrice(customization.units)}"/></td>
                 <td><input type="text" value="${customization.quantity}" class="customQuantityValue"/></td>
                 <td><input type="text" value="${customization.customName}" class="customProductNameValue"/></td>
             </tr>

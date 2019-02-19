@@ -28,6 +28,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -38,6 +39,7 @@ import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1288,6 +1290,39 @@ public class ReagentFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * Backfill to update reagent with date of first use for GPLIM-4886
+     */
+    @Test(enabled = false)
+    public void fixupBackfillFirstUse() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        EntityManager em = genericReagentDao.getEntityManager();
+        Query qry = em.createNativeQuery("select r.reagent_id, min(e.event_date)\n" +
+                "  from lab_event e\n" +
+                "     , lab_event_reagents er\n" +
+                "     , reagent r\n" +
+                " where er.lab_event = e.lab_event_id\n" +
+                "   and er.reagents   = r.reagent_id\n" +
+                "group by r.reagent_id");
+        List<Object[]> rslts = qry.getResultList();
+        Long reagentId;
+        Date firstUsed;
+        Reagent reagent;
+        for( Object[] vals : rslts) {
+            reagentId = ((BigDecimal) vals[0]).longValue();
+            firstUsed = (Date) vals[1];
+            reagent = genericReagentDao.findById( Reagent.class, reagentId );
+            reagent.setFirstUse(firstUsed);
+
+        }
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4886 Backfill reagent first used dates"));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
     @Test(enabled = false)
     public void fixupSupport3618() throws Exception {
         userBean.loginOSUser();
@@ -1314,6 +1349,111 @@ public class ReagentFixupTest extends Arquillian {
                            " lot to: " + indexingPrimerMix.getLot() + " and expiration to 08/02/2018");
         genericReagentDao.persist(new FixupCommentary("SUPPORT-3618 fixup reagent lot and expiration."));
         genericReagentDao.flush();
+        utx.commit();
+    }
+    @Test(enabled = false)
+    public void fixupSupport3794() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 2522890L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+
+        Reagent cleavageMM = genericReagentDao.findByReagentNameLotExpiration("Cleavage Reagent Master Mix",
+                "20192115", new GregorianCalendar(2019, Calendar.AUGUST, 25).getTime());
+        Assert.assertNotNull(cleavageMM);
+        labEvent.addReagent(cleavageMM);
+
+        Reagent cleavageWashMix = genericReagentDao.findByReagentNameLotExpiration("Cleavage Reagent Wash Mix",
+                "20191163", new GregorianCalendar(2018, Calendar.AUGUST, 26).getTime());
+        Assert.assertNotNull(cleavageWashMix);
+        labEvent.addReagent(cleavageWashMix);
+
+        Reagent fastAmp = genericReagentDao.findByReagentNameLotExpiration("Fast Amplifixation Mix",
+                "20204400", new GregorianCalendar(2018, Calendar.OCTOBER, 11).getTime());
+        Assert.assertNotNull(fastAmp);
+        labEvent.addReagent(fastAmp);
+
+        Reagent fastAmpPre = genericReagentDao.findByReagentNameLotExpiration("Fast Amplification Premix",
+                "20210536", new GregorianCalendar(2019, Calendar.OCTOBER, 30).getTime());
+        Assert.assertNotNull(fastAmpPre);
+        labEvent.addReagent(fastAmpPre);
+
+        Reagent fastDenature = genericReagentDao.findByReagentNameLotExpiration("Fast Denaturation Reagent",
+                "20204370", new GregorianCalendar(2018, Calendar.OCTOBER, 8).getTime());
+        Assert.assertNotNull(fastDenature);
+        labEvent.addReagent(fastDenature);
+
+        Reagent fastLine1 = genericReagentDao.findByReagentNameLotExpiration("Fast Linearization Mix 1",
+                "20199036", new GregorianCalendar(2018, Calendar.SEPTEMBER, 19).getTime());
+        Assert.assertNotNull(fastLine1);
+        labEvent.addReagent(fastLine1);
+
+        Reagent fastLine2 = genericReagentDao.findByReagentNameLotExpiration("Fast Linearization Mix 2",
+                "20204405", new GregorianCalendar(2019, Calendar.FEBRUARY, 4).getTime());
+        Assert.assertNotNull(fastLine2);
+        labEvent.addReagent(fastLine2);
+
+        Reagent fastResyn = genericReagentDao.findByReagentNameLotExpiration("Fast Resynthesis Mix",
+                "20205214", new GregorianCalendar(2018, Calendar.OCTOBER, 15).getTime());
+        Assert.assertNotNull(fastResyn);
+        labEvent.addReagent(fastResyn);
+
+        Reagent incorporationMix = genericReagentDao.findByReagentNameLotExpiration("Incorporation Master Mix",
+                "20187116", new GregorianCalendar(2019, Calendar.JANUARY, 31).getTime());
+        Assert.assertNotNull(incorporationMix);
+        labEvent.addReagent(incorporationMix);
+
+        Reagent i7Primer = genericReagentDao.findByReagentNameLotExpiration("Primer Mix Index i7",
+                "20199029", new GregorianCalendar(2018, Calendar.OCTOBER, 21).getTime());
+        Assert.assertNotNull(i7Primer);
+        labEvent.addReagent(i7Primer);
+
+        Reagent read1Primer = genericReagentDao.findByReagentNameLotExpiration("Primer Mix Read 1",
+                "20199029", new GregorianCalendar(2019, Calendar.SEPTEMBER, 19).getTime());
+        Assert.assertNotNull(read1Primer);
+        labEvent.addReagent(read1Primer);
+
+        Reagent read2Primer = genericReagentDao.findByReagentNameLotExpiration("Primer Mix Read 2",
+                "20207978", new GregorianCalendar(2018, Calendar.OCTOBER, 20).getTime());
+        Assert.assertNotNull(read2Primer);
+        labEvent.addReagent(read2Primer);
+
+        Reagent scanReagent = genericReagentDao.findByReagentNameLotExpiration("Scan Reagent",
+                "20190535", new GregorianCalendar(2018, Calendar.AUGUST, 14).getTime());
+        Assert.assertNotNull(scanReagent);
+        labEvent.addReagent(scanReagent);
+
+        Reagent clusterKit = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid PE Cluster Kit",
+                "18A12A0015", new GregorianCalendar(2018, Calendar.SEPTEMBER, 19).getTime());
+        Assert.assertNotNull(clusterKit);
+        labEvent.addReagent(clusterKit);
+
+        Reagent sbsKit = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit",
+                "17K15A0031", new GregorianCalendar(2018, Calendar.AUGUST, 7).getTime());
+        Assert.assertNotNull(sbsKit);
+        labEvent.addReagent(sbsKit);
+
+        Reagent sbsKit2 = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit Box 2 of 2",
+                "17K15A0029", new GregorianCalendar(2018, Calendar.AUGUST, 14).getTime());
+        Assert.assertNotNull(sbsKit2);
+        labEvent.addReagent(sbsKit2);
+
+        Reagent usb1 = genericReagentDao.findByReagentNameLotExpiration("Universal Sequencing Buffer 1",
+                "20186729", new GregorianCalendar(2018, Calendar.AUGUST, 7).getTime());
+        Assert.assertNotNull(usb1);
+        labEvent.addReagent(usb1);
+
+        Reagent usb2 = genericReagentDao.findByReagentNameLotExpiration("Universal Sequencing Buffer 2",
+                "20186729", new GregorianCalendar(2018, Calendar.AUGUST, 7).getTime());
+        Assert.assertNotNull(usb2);
+        labEvent.addReagent(usb2);
+
+        Reagent flowcell = genericReagentDao.findByReagentNameLotExpiration("Flowcell Lot",
+                "20216849", new GregorianCalendar(2018, Calendar.MAY, 27).getTime());
+        Assert.assertNotNull(flowcell);
+        labEvent.addReagent(flowcell);
+
         utx.commit();
     }
 

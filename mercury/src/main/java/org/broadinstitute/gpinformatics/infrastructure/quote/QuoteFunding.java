@@ -3,9 +3,10 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,18 +44,10 @@ public class QuoteFunding {
         return fundingLevel;
     }
 
-    public Collection<FundingLevel> getFundingLevel(boolean excludeInactiveSources) {
-        List<FundingLevel> condensedFundingLevles = new ArrayList<>();
-
-        for (FundingLevel level : fundingLevel) {
-            if(excludeInactiveSources && Integer.valueOf(level.getPercent()) == 0)  {
-                continue;
-            } else {
-                condensedFundingLevles.add(level);
-            }
-        }
-        return condensedFundingLevles;
-
+    public Collection<FundingLevel> getActiveFundingLevel() {
+        return Optional.ofNullable(fundingLevel).orElse(Collections.emptyList()).stream()
+                .filter(FundingLevel::isActive)
+                .collect(Collectors.toList());
     }
 
     public String getFundsRemaining() {

@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItemInArray;
@@ -38,18 +37,19 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.collection.IsEmptyCollection.emptyCollectionOf;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, singleThreaded = true)
 public class SubmissionsServiceImplTest {
 
     private static int sequenceNumber = 1;
 
-    private static final String BIO_PROJECT_ACCESSION_ID = "PRJNA325068";
-    private static final String SAMPLE1_ID = "ALCH-ABN1-NB1-A-1-0-D-A488-36";
+    public static final String BIO_PROJECT_ACCESSION_ID = "PRJNA325068";
+    public static final String SAMPLE1_ID = "ALCH-ABN1-NB1-A-1-0-D-A488-36";
     private static final String SAMPLE2_ID = "ALCH-ABNA-TTP1-A-1-0-D-A488-36";
     private static final String SAMPLE3_ID = "ALCH-ABBH-NB1-A-1-0-D-A485-36";
-    private static final String broadProject= "RP-1145";
-    private static final String bamVersion ="4";
+    public static final String broadProject= "RP-1145";
+    public static final String bamVersion ="4";
 
     private SubmissionsService submissionsService;
 
@@ -136,9 +136,9 @@ public class SubmissionsServiceImplTest {
                 submissionResult = submissionsService.postSubmissions(submissionRequestBean);
         assertThat(submissionResult.size(), is(2));
         for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionResult) {
+            assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(submissionStatusDetailBean.getStatus(),
                     is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
-            assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                     notNullValue());
         }
@@ -149,10 +149,11 @@ public class SubmissionsServiceImplTest {
         Collection<SubmissionStatusDetailBean> submissionStatus = submissionsService.getSubmissionStatus(testUUIDs);
         assertThat(submissionStatus.size(), is(testUUIDs.length));
         for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
+            assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(testUUIDs, hasItemInArray(submissionStatusDetailBean.getUuid()));
             assertThat(submissionStatusDetailBean.getStatusString(), nullValue());
-            assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(submissionStatusDetailBean.getLastStatusUpdate(), nullValue());
+            assertThat(submissionStatusDetailBean.submissionServiceHasRequest(), is(false));
         }
     }
 
@@ -168,20 +169,22 @@ public class SubmissionsServiceImplTest {
                 submissionsService.postSubmissions(submissionRequestBean);
         assertThat(submissionResult.size(), is(1));
         SubmissionStatusDetailBean submissionStatusDetailBean = submissionResult.iterator().next();
+        assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
         assertThat(submissionStatusDetailBean.getStatus(),
                 is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
-        assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
         assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                 notNullValue());
+        assertThat(submissionStatusDetailBean.submissionServiceHasRequest(), is(true));
 
         submissionResult = submissionsService.getSubmissionStatus(testUUID);
         assertThat(submissionResult.size(), is(1));
         submissionStatusDetailBean = submissionResult.iterator().next();
+        assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
         assertThat(submissionStatusDetailBean.getStatus(),
                 is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
-        assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
         assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                 notNullValue());
+        assertThat(submissionStatusDetailBean.submissionServiceHasRequest(), is(true));
     }
 
     private static synchronized String getTestUUID() {
