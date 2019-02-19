@@ -786,9 +786,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             }
                         }
                     }
-                    loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
+                    Map<String, LabVessel> stringLabVesselMap = loadPlateFromDb(plateCherryPickEvent.getPlate().get(0),
+                            plateCherryPickEvent.getPositionMap().get(0),
                             false, null, labBatch, messageCollection, Direction.TARGET, true);
-                    verifyCherryPickDestinations(plateCherryPickEvent.getSource(), plateCherryPickEvent.getPositionMap().get(0), messageCollection);
+                    verifyCherryPickDestinations(((PlateCherryPickEvent) stationEvent).getPositionMap().get(0), ((PlateCherryPickEvent) stationEvent).getSource(), stringLabVesselMap , messageCollection);
                 }
                 break;
             case RECEPTACLE_PLATE_TRANSFER_EVENT:
@@ -813,37 +814,30 @@ public class ManualTransferActionBean extends RackScanActionBean {
     /**
      * Verify that none of the destinations in the cherry pick exist.
      *
-     * @param plateCherryPicks      List of cherry pick events.
-     * @param targetPositionMapType Mapping of the destination tubes.
+     * @param positionMapType       Destination PositionMap containing all of the destination barcodes in the message.
+     * @param cherryPickSourceTypes List of cherry pick transfers from the message.
+     * @param labelLabVesselMap     Map of vessel barcode to vessel.
      * @param messageCollection     Message collection object used to give information back to the user.
      */
-    private void verifyCherryPickDestinations(List<CherryPickSourceType> plateCherryPicks,
-                                              PositionMapType targetPositionMapType,
+    private void verifyCherryPickDestinations(PositionMapType positionMapType,
+                                              List<CherryPickSourceType> cherryPickSourceTypes,
+                                              Map<String, LabVessel> labelLabVesselMap,
                                               MessageCollection messageCollection) {
-        for (CherryPickSourceType plateCherryPick : plateCherryPicks) {
+        List<String> destinationBarcodes = new ArrayList<>();
+        // Only check to see if the cherry picked destinations are found in Mercury.
+        for (CherryPickSourceType cherryPickSource : cherryPickSourceTypes) {
+            ReceptacleType receptacleAtPosition =
+                    findReceptacleAtPosition(positionMapType, cherryPickSource.getDestinationWell());
+            destinationBarcodes.add(receptacleAtPosition.getBarcode());
+        }
 
-            ReceptacleType receptacleType = findReceptacleAtPosition(targetPositionMapType, plateCherryPick.getDestinationWell());
-            LabVessel labVessel = labVesselDao.findByIdentifier(receptacleType.getBarcode());
-
-            if (labVessel != null && !labVessel.getTransfersTo().isEmpty()) {
-                for (LabEvent labEvent : labVessel.getTransfersTo()) {
-                    if (!labEvent.getCherryPickTransfers().isEmpty()) {
-                        for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
-                            // For each cherry pick transfer determine if the target tube exists.
-                            VesselContainer<?> containerRole = cherryPickTransfer.getTargetVessel().getContainerRole();
-                            LabVessel targetVessel = containerRole.getVesselAtPosition(cherryPickTransfer.getTargetPosition());
-                            if (targetVessel != null && targetVessel.getLabel().compareToIgnoreCase(labVessel.getLabel()) == 0) {
-                                messageCollection.addError("Destination " + labVessel.getLabel()
-                                                           + " is in the database and has seen transfers.");
-                            }
-                        }
-                    }
-                }
-
+        for (String destinationBarcode : destinationBarcodes) {
+            if (labelLabVesselMap.get(destinationBarcode) != null) {
+                messageCollection.addError("Destination " + destinationBarcode
+                                           + " is in the database and has seen transfers.");
             }
         }
     }
-
 
     /**
      * Validate that the sources and destinations in a repeated event are the same as those in the event that it
