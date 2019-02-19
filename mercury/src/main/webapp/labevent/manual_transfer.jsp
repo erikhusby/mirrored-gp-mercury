@@ -315,12 +315,17 @@
                         <%-- Set by transfer_plate.jsp --%>
                         <input type="hidden" name="scanSource" value="">
 
-                        <c:if test="${not empty actionBean.manualTransferDetails.machineNames}">
-                            <stripes:label for="station">Machine </stripes:label>
-                            <stripes:select name="stationEvents[0].station" id="station">
-                                <stripes:options-collection collection="${actionBean.manualTransferDetails.machineNames}"/>
-                            </stripes:select>
-                        </c:if>
+                        <c:choose>
+                            <c:when test="${not empty actionBean.manualTransferDetails.machineNames}">
+                                <stripes:label for="station">Machine </stripes:label>
+                                <stripes:select name="stationEvents[0].station" id="station">
+                                    <stripes:options-collection collection="${actionBean.manualTransferDetails.machineNames}"/>
+                                </stripes:select>
+                            </c:when>
+                            <c:otherwise>
+                                <stripes:hidden name="stationEvents[0].station" value="${actionBean.stationEvents[0].station}"/>
+                            </c:otherwise>
+                        </c:choose>
 
                         <c:if test="${not empty actionBean.stationEvents[0].reagent}">
                             <h5>Reagents</h5>
