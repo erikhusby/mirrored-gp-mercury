@@ -4,6 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -94,6 +95,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     private JiraService jiraService = Mockito.mock(JiraService.class);
     private ReferenceSequenceDao referenceSequenceDao = Mockito.mock(ReferenceSequenceDao.class);
     private AnalysisTypeDao analysisTypeDao = Mockito.mock(AnalysisTypeDao.class);
+    private ProductDao productDao = Mockito.mock(ProductDao.class);
 
     enum TestType {EXTERNAL_LIBRARY, WALKUP}
 
@@ -147,7 +149,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
             String libraryName = select(i, "Jon_Test_3a", "Jon_Test_4b");
             Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
-
             MercurySample mercurySample = entity.getMercurySample();
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
@@ -179,9 +180,9 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getUmisPresent(), new Boolean[]{null, Boolean.TRUE}[i]);
 
             Assert.assertEquals(tube.getVolume(), new BigDecimal("0.60"));
-            Assert.assertEquals(tube.getNearestMetricsOfType(LabMetric.MetricType.FINAL_LIBRARY_SIZE).size(), 1);
-            Assert.assertEquals(tube.getNearestMetricsOfType(LabMetric.MetricType.FINAL_LIBRARY_SIZE).iterator().next().getValue(),
-                    new BigDecimal("2"));
+            List<LabMetric> metrics = tube.getNearestMetricsOfType(LabMetric.MetricType.FINAL_LIBRARY_SIZE);
+            Assert.assertEquals(metrics.size(), 1);
+            Assert.assertEquals(metrics.get(0).getValue(), new BigDecimal("2"));
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("4.44"));
 
             Assert.assertEquals(entity.getInsertSize(), select(i, null, "31-31"));
@@ -191,6 +192,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
             Assert.assertEquals(entity.getSequencerModel().getTechnology(),
                     select(i, "HiSeq X 10", "HiSeq 2500 Rapid Run"));
+
+            Assert.assertEquals(entity.getAggregationDataType(), select(i, "Exome", ""));
         }
         assertSampleInstanceEntitiesPresent(mapBarcodeToTube.values(), entities);
 
@@ -599,12 +602,21 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             }
         });
 
+        // Product.aggregationDataType
+        Mockito.when(productDao.findAggregationDataTypes()).thenAnswer(new Answer<List<String>>() {
+            @Override
+            public List<String> answer(InvocationOnMock invocation) throws Throwable {
+                return Arrays.asList("10X_WGS", "16S", "CustomHybSel", "Custom_Selection", "Exome", "ExomePlus",
+                        "Jump", "PCR", "RNA", "RRBS", "ShortRangePCR", "WGS");
+            }
+        });
+
         // SampleInstanceEntity
         Mockito.when(sampleInstanceEntityDao.findByName(anyString())).thenReturn(null);
 
         return new SampleInstanceEjb(molecularIndexingSchemeDao, jiraService,
                 reagentDesignDao, labVesselDao, mercurySampleDao, sampleInstanceEntityDao,
-                analysisTypeDao, sampleDataFetcher, referenceSequenceDao);
+                analysisTypeDao, sampleDataFetcher, referenceSequenceDao, productDao);
     }
 
 }

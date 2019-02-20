@@ -6,7 +6,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
@@ -49,12 +48,15 @@ public class ExternalLibraryProcessor extends TableProcessor {
     private Map<String, LabVessel> labVesselMap = new HashMap<>();
     // Maps sample name to BSP or Mercury SampleData.
     private Map<String, SampleData> fetchedData = new HashMap<>();
+    // Maps of spreadsheet values to entities.
     private Map<String, AnalysisType> analysisTypeMap = new HashMap<>();
     private Map<String, MolecularIndexingScheme> molecularIndexingSchemeMap = new HashMap<>();
     private Map<String, ReferenceSequence> referenceSequenceMap = new HashMap<>();
+    private Map<String, String> aggregationDataTypeMap = new HashMap<>();
     private Set<Object> entitiesToUpdate = new HashSet<>();
     private List<Boolean> requiredValuesPresent = new ArrayList<>();
     private List<String> aggregationParticles = new ArrayList<>();
+    private List<String> aggregationDataTypes = new ArrayList<>();
     private List<String> baits = new ArrayList<>();
     private List<String> barcodes = new ArrayList<>();
     private List<String> collaboratorParticipantIds = new ArrayList<>();
@@ -92,6 +94,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
         SEX("Sex", DataPresence.OPTIONAL),
         ORGANISM("Organism", DataPresence.OPTIONAL),
         DATA_ANALYSIS_TYPE("Data Analysis Type", DataPresence.REQUIRED),
+        AGGREGATION_DATA_TYPE("Aggregation Data Type", DataPresence.OPTIONAL),
         READ_LENGTH("Desired Read Length", DataPresence.REQUIRED),
         UMIS_PRESENT("UMIs Present", DataPresence.OPTIONAL),
         VOLUME("Volume", DataPresence.ONCE_PER_TUBE),
@@ -179,6 +182,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
         sexes.add(getFromRow(dataRow, Headers.SEX));
         organisms.add(getFromRow(dataRow, Headers.ORGANISM));
         dataAnalysisTypes.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
+        aggregationDataTypes.add(getFromRow(dataRow, Headers.AGGREGATION_DATA_TYPE));
         readLengths.add(getFromRow(dataRow, Headers.READ_LENGTH));
         umisPresents.add(getFromRow(dataRow, Headers.UMIS_PRESENT));
         volumes.add(getFromRow(dataRow, Headers.VOLUME));
@@ -250,18 +254,9 @@ public class ExternalLibraryProcessor extends TableProcessor {
             }
 
             LabVessel tube = getLabVesselMap().get(barcode);
-            if (tube != null) {
-                if (!overwrite) {
-                    messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(),
-                            Headers.TUBE_BARCODE.getText(), barcode));
-                }
-            } else {
-                // A new tube barcode character set is restricted.
-                if (!StringUtils.containsOnly(barcode, SampleInstanceEjb.RESTRICTED_CHARS)) {
-                    messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                            Headers.TUBE_BARCODE.getText(),
-                            "composed of " + SampleInstanceEjb.RESTRICTED_MESSAGE));
-                }
+            if (tube != null && !overwrite) {
+                messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(),
+                        Headers.TUBE_BARCODE.getText(), barcode));
             }
 
             if (StringUtils.isNotBlank(dto.getMisName())) {
@@ -302,6 +297,12 @@ public class ExternalLibraryProcessor extends TableProcessor {
                     getAnalysisTypeMap().get(dto.getAnalysisTypeName()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         Headers.DATA_ANALYSIS_TYPE.getText(), "Mercury"));
+            }
+
+            if (StringUtils.isNotBlank(dto.getAggregationDataType()) &&
+                    getAggregationDataTypeMap().get(dto.getAggregationDataType()) == null) {
+                messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
+                        Headers.AGGREGATION_DATA_TYPE.getText(), "Mercury"));
             }
 
             if (StringUtils.isNotBlank(dto.getReferenceSequence()) &&
@@ -510,6 +511,44 @@ public class ExternalLibraryProcessor extends TableProcessor {
     }
 
     /**
+     * Does character set validation checks on the data.
+     */
+    public void validateCharacterSet(List<SampleInstanceEjb.RowDto> dtos, MessageCollection messages) {
+        for (SampleInstanceEjb.RowDto dto : dtos) {
+            if (!StringUtils.containsOnly(dto.getBarcode(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.TUBE_BARCODE.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (!StringUtils.containsOnly(dto.getLibraryName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.LIBRARY_NAME.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (!StringUtils.containsOnly(dto.getLibraryName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.SAMPLE_NAME.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+            if (!StringUtils.containsOnly(dto.getCollaboratorSampleId(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.COLLABORATOR_SAMPLE_ID.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (!StringUtils.containsOnly(dto.getCollaboratorParticipantId(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.INDIVIDUAL_NAME.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getOrganism()) &&
+                    !StringUtils.containsOnly(dto.getOrganism(), SampleInstanceEjb.ALIAS_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.ORGANISM.getText(), SampleInstanceEjb.ALIAS_CHARS));
+            }
+            if (StringUtils.isNotBlank(dto.getAggregationParticle()) &&
+                    !StringUtils.containsOnly(dto.getAggregationParticle(), SampleInstanceEjb.RESTRICTED_CHARS)) {
+                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                        Headers.DATA_AGGREGATOR.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+            }
+        }
+    }
+
+    /**
      * Creates/updates tube and sample for each unique barcode and sample name.
      */
     protected void makeTubesAndSamples(List<SampleInstanceEjb.RowDto> dtos) {
@@ -632,6 +671,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
             sampleInstanceEntity.setSampleLibraryName(dto.getLibraryName());
         }
         // An existing Sample Instance Entity gets rewritten.
+        sampleInstanceEntity.setAggregationDataType(dto.getAggregationDataType());
         sampleInstanceEntity.setAggregationParticle(dto.getAggregationParticle());
         sampleInstanceEntity.setAnalysisType(getAnalysisTypeMap().get(dto.getAnalysisTypeName()));
         sampleInstanceEntity.setInsertSize(dto.getInsertSize());
@@ -774,12 +814,16 @@ public class ExternalLibraryProcessor extends TableProcessor {
         return analysisTypeMap;
     }
 
+    public Map<String, ReferenceSequence> getReferenceSequenceMap() {
+        return referenceSequenceMap;
+    }
+
     public Map<String, MolecularIndexingScheme> getMolecularIndexingSchemeMap() {
         return molecularIndexingSchemeMap;
     }
 
-    public Map<String, ReferenceSequence> getReferenceSequenceMap() {
-        return referenceSequenceMap;
+    public Map<String, String> getAggregationDataTypeMap() {
+        return aggregationDataTypeMap;
     }
 
     /**
@@ -843,6 +887,10 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
     public List<String> getReadLengths() {
         return readLengths;
+    }
+
+    public List<String> getAggregationDataTypes() {
+        return aggregationDataTypes;
     }
 
     public List<String> getReferenceSequences() {

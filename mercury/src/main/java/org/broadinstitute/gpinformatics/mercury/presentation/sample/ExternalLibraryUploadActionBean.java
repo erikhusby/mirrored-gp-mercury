@@ -21,6 +21,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
@@ -37,7 +38,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -52,6 +55,9 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
     @Inject
     private AnalysisTypeDao analysisTypeDao;
+
+    @Inject
+    private ProductDao productDao;
 
     @Inject
     private ReferenceSequenceDao referenceSequenceDao;
@@ -130,11 +136,17 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 map(IlluminaFlowcell.FlowcellType::getTechnology).
                 sorted().
                 collect(Collectors.toList()).toArray(new String[0]);
+        String[] validAggregationDataTypes = (
+                new ArrayList<String>() {{
+                    add("");
+                    addAll(productDao.findAggregationDataTypes());
+                }}).toArray(new String[0]);
 
         // Makes the header names for the drowdown columns.
         String dataAnalysisTypeHeader = ExternalLibraryProcessor.Headers.DATA_ANALYSIS_TYPE.getText();
         String referenceSequenceHeader = ExternalLibraryProcessor.Headers.REFERENCE_SEQUENCE.getText();
         String sequencingTechnologyHeader = ExternalLibraryProcessor.Headers.SEQUENCING_TECHNOLOGY.getText();
+        String aggregationDataTypeHeader = ExternalLibraryProcessor.Headers.AGGREGATION_DATA_TYPE.getText();
 
         HSSFWorkbook workbook = new HSSFWorkbook();
         HSSFSheet sheet1 = workbook.createSheet("samples");
@@ -159,8 +171,9 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         final int REF_SEQ_LIST_COLUMN = 0;
         final int ANALYSIS_LIST_COLUMN = 1;
         final int SEQ_TECH_LIST_COLUMN = 2;
-        final int numberValidationRows = 1 + Math.max(validSequencingTechnology.length,
-                Math.max(validAnalysisTypes.length, validReferenceSequence.length));
+        final int AGG_DATATYPE_LIST_COLUMN = 3;
+        final int numberValidationRows = 1 + Collections.max(Arrays.asList(validSequencingTechnology.length,
+                validAnalysisTypes.length, validReferenceSequence.length, validAggregationDataTypes.length));
         for (int index = 0; index < numberValidationRows; ++index) {
             sheet2.createRow(index);
         }
@@ -185,9 +198,16 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         for (String value : validSequencingTechnology) {
             rowIterator.next().createCell(SEQ_TECH_LIST_COLUMN).setCellValue(value);
         }
+        // Writes the aggregation data type values available in Mercury starting in the second row.
+        rowIterator = sheet2.rowIterator();
+        rowIterator.next();
+        for (String value : validAggregationDataTypes) {
+            rowIterator.next().createCell(AGG_DATATYPE_LIST_COLUMN).setCellValue(value);
+        }
         sheet2.autoSizeColumn(REF_SEQ_LIST_COLUMN);
         sheet2.autoSizeColumn(ANALYSIS_LIST_COLUMN);
         sheet2.autoSizeColumn(SEQ_TECH_LIST_COLUMN);
+        sheet2.autoSizeColumn(AGG_DATATYPE_LIST_COLUMN);
 
         // Writes the color coded headers in sheet1.
         int rowIndex = 0;
@@ -221,8 +241,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 Pair.of((ExternalLibraryProcessor.DataPresence)null, "Cell color indicates:"),
                 Pair.of(ExternalLibraryProcessor.DataPresence.REQUIRED, " Required "),
                 Pair.of(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE, " Required Once per Tube "),
-                Pair.of(ExternalLibraryProcessor.DataPresence.OPTIONAL, " Optional "),
-                Pair.of(ExternalLibraryProcessor.DataPresence.IGNORED, " Ignored "))) {
+                Pair.of(ExternalLibraryProcessor.DataPresence.OPTIONAL, " Optional "))) {
 
             HSSFCellStyle style = workbook.createCellStyle();
             style.setBorderTop(colorRowIdx == 1 ? CellStyle.BORDER_THIN : CellStyle.BORDER_NONE);
@@ -268,10 +287,11 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
                 ExternalLibraryProcessor.DataPresence dataPresence =
                         ((ColumnHeader.Ignorable)columnHeader).getDataPresenceIndicator();
-                cell.setCellStyle(headerStyles.get(dataPresence));
-
-                // If this cell is reference sequence, analysis type, or sequencing technology,
-                // puts a dropdown lists of valid values in the corresponding cell of the next row.
+                if (headerStyles.containsKey(dataPresence)) {
+                    cell.setCellStyle(headerStyles.get(dataPresence));
+                }
+                // If this cell requires a categorical value, puts a dropdown lists of valid values
+                // in the corresponding cell of the next row.
                 Character referenceColumn = null;
                 int length = 0;
                 if (columnHeader.getText().equalsIgnoreCase(referenceSequenceHeader)) {
@@ -286,6 +306,10 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                     dropdownRow.getCell(column).setCellValue(validSequencingTechnology[0]);
                     referenceColumn = (char)('A' + SEQ_TECH_LIST_COLUMN);
                     length = validSequencingTechnology.length + 1;
+                } else if (columnHeader.getText().equalsIgnoreCase(aggregationDataTypeHeader)) {
+                    dropdownRow.getCell(column).setCellValue(validAggregationDataTypes[0]);
+                    referenceColumn = (char)('A' + AGG_DATATYPE_LIST_COLUMN);
+                    length = validAggregationDataTypes.length + 1;
                 }
                 if (referenceColumn != null) {
                     // Uses a cell range that is a column on sheet2 that contains the dropdown list values.

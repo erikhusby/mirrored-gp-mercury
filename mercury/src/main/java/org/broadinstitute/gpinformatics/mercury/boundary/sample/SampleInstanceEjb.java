@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -46,10 +47,12 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * This class handles the external library creation from walkup sequencing web serivce calls, pooled tube
- * spreadsheet upload, and the various external library spreadsheet uploads.
+ * spreadsheet upload, and EZPass/New Tech external library spreadsheet uploads.
  * In all cases a SampleInstanceEntity and associated MercurySample and LabVessel are created or overwritten.
  */
 @Stateful
@@ -57,7 +60,7 @@ import java.util.Set;
 public class SampleInstanceEjb {
     // These are the only characters allowed in a library or sample name.
     public static final String RESTRICTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_";
-    public static final String RESTRICTED_MESSAGE = "a-z, A-Z, 0-9, '.', '-', or '_'";
+    public static final String ALIAS_CHARS = RESTRICTED_CHARS + " @#&*()[]|;:<>,?/=+\"'";
 
     public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
     public static final String BSP_METADATA =
@@ -72,7 +75,7 @@ public class SampleInstanceEjb {
             "Row #%d value for %s is not consistent with row #%d (Sample %s).";
     public static final String INCONSISTENT_TUBE =
             "Row #%d value for %s is not consistent with row #%d (Tube Barcode %s).";
-    public static final String INVALID_CHARS = "Row #%d %s characters must only be " + RESTRICTED_CHARS;
+    public static final String INVALID_CHARS = "Row #%d %s characters must only be %s";
     public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
     public static final String MISSING = "Row #%d is missing a value for %s.";
     public static final String NONEXISTENT = "Row #%d the value for %s \"%s\" does not exist in %s.";
@@ -122,6 +125,9 @@ public class SampleInstanceEjb {
     @Inject
     private Deployment deployment;
 
+    @Inject
+    private ProductDao productDao;
+
     public SampleInstanceEjb() {
     }
 
@@ -131,7 +137,7 @@ public class SampleInstanceEjb {
     public SampleInstanceEjb(MolecularIndexingSchemeDao molecularIndexingSchemeDao, JiraService jiraService,
             ReagentDesignDao reagentDesignDao, LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao,
             SampleInstanceEntityDao sampleInstanceEntityDao, AnalysisTypeDao analysisTypeDao,
-            SampleDataFetcher sampleDataFetcher, ReferenceSequenceDao referenceSequenceDao) {
+            SampleDataFetcher sampleDataFetcher, ReferenceSequenceDao referenceSequenceDao, ProductDao productDao) {
         this.molecularIndexingSchemeDao = molecularIndexingSchemeDao;
         this.jiraService = jiraService;
         this.reagentDesignDao = reagentDesignDao;
@@ -142,6 +148,7 @@ public class SampleInstanceEjb {
         this.sampleDataFetcher = sampleDataFetcher;
         this.reagentDesignDao = reagentDesignDao;
         this.referenceSequenceDao = referenceSequenceDao;
+        this.productDao = productDao;
     }
 
     /**
@@ -174,6 +181,8 @@ public class SampleInstanceEjb {
             } else {
                 // Makes maps of samples, vessels, and other primary entities.
                 makeEntityMaps(processor, rowDtos, messages);
+                // Validates the character set used in spreadsheet values that get passed on as-is.
+                processor.validateCharacterSet(rowDtos, messages);
                 // Validates the data.
                 processor.validateAllRows(rowDtos, overwrite, messages);
                 if (!messages.hasErrors()) {
@@ -209,7 +218,6 @@ public class SampleInstanceEjb {
     private void makeEntityMaps(ExternalLibraryProcessor processor, List<RowDto> rowDtos, MessageCollection messages) {
         Set<String> samplesToLookup = new HashSet<>();
         Set<String> barcodesToLookup = new HashSet<>();
-        Exception jiraException = null;
 
         for (RowDto dto : rowDtos) {
             if (StringUtils.isNotBlank(dto.getSampleName())) {
@@ -246,18 +254,18 @@ public class SampleInstanceEjb {
                     processor.getAnalysisTypeMap().put(dto.getAnalysisTypeName(), analysisType);
                 }
             }
-
         }
         processor.getSampleMap().putAll(mercurySampleDao.findMapIdToMercurySample(samplesToLookup));
         processor.getLabVesselMap().putAll(labVesselDao.findByBarcodes(new ArrayList<>(barcodesToLookup)));
 
-        if (jiraException != null) {
-            messages.addError("Failed to lookup Jira tickets: " + jiraException.toString());
-        }
-
         // A sample data lookup is done on all samples and root samples. This returns either
         // Mercury and BSP metadata for each sample, depending on the sample metadata source.
         processor.getFetchedData().putAll(sampleDataFetcher.fetchSampleData(samplesToLookup));
+
+        // Fetches the valid aggregation data type values.
+        // todo emp GPLIM-6001 should make this map be String->Entity for only the values present.
+        processor.getAggregationDataTypeMap().putAll(productDao.findAggregationDataTypes().stream().
+                collect(Collectors.toMap(Function.identity(), Function.identity())));
     }
 
     /**
@@ -365,16 +373,13 @@ public class SampleInstanceEjb {
         }
     }
 
-    private static Comparator<String> BY_ROW_NUMBER = new Comparator<String>() {
-        @Override
-        public int compare(String o1, String o2) {
-            // Does a numeric sort on the row number string, expected to be after the word "Row #".
-            int o1Row = o1.contains("Row #") ?
-                    Integer.parseInt(StringUtils.substringAfter(o1, "Row #").split("[ \\.,;]")[0]) : -1;
-            int o2Row = o2.contains("Row #") ?
-                    Integer.parseInt(StringUtils.substringAfter(o2, "Row #").split("[ \\.,;]")[0]) : -1;
-            return (o1Row == o2Row) ? o1.compareTo(o2) : (o1Row - o2Row);
-        }
+    private static Comparator<String> BY_ROW_NUMBER = (o1, o2) -> {
+        // Does a numeric sort on the row number string, expected to be after the word "Row #".
+        int o1Row = o1.contains("Row #") ?
+                Integer.parseInt(StringUtils.substringAfter(o1, "Row #").split("[ \\.,;]")[0]) : -1;
+        int o2Row = o2.contains("Row #") ?
+                Integer.parseInt(StringUtils.substringAfter(o2, "Row #").split("[ \\.,;]")[0]) : -1;
+        return (o1Row == o2Row) ? o1.compareTo(o2) : (o1Row - o2Row);
     };
 
     /**
@@ -404,6 +409,7 @@ public class SampleInstanceEjb {
 
     /** Dto containing data from a spreadsheet row. */
     public static class RowDto {
+        private String aggregationDataType;
         private String aggregationParticle;
         private String bait;
         private String barcode;
@@ -618,6 +624,14 @@ public class SampleInstanceEjb {
             this.umisPresent = StringUtils.isBlank(umisPresent) ? null :
                     "yt1".contains(umisPresent.toLowerCase().subSequence(0, 1)) ?
                             Boolean.TRUE : Boolean.FALSE;
+        }
+
+        public String getAggregationDataType() {
+            return aggregationDataType;
+        }
+
+        public void setAggregationDataType(String aggregationDataType) {
+            this.aggregationDataType = aggregationDataType;
         }
     }
 }
