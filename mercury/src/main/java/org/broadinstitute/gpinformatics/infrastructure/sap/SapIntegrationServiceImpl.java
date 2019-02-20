@@ -508,7 +508,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         OrderCalculatedValues orderCalculatedValues = null;
         if (accessControlEjb.getCurrentControlDefinitions().isEnabled()) {
             OrderCriteria potentialOrderCriteria = null;
-            if (productOrder != null && productOrder.getProduct() != null) {
+            if (productOrder != null && productOrder.getProduct() != null && productsFoundInSap(productOrder)) {
                 potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
             }
 
@@ -517,6 +517,22 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                             potentialOrderCriteria);
         }
         return orderCalculatedValues;
+    }
+
+    private boolean productsFoundInSap(ProductOrder productOrder) {
+        boolean result = true;
+
+        if(!productPriceCache.productExists(productOrder.getProduct().getPartNumber())) {
+            result = false;
+        } else {
+            for (ProductOrderAddOn addOn : productOrder.getAddOns()) {
+                if(!productPriceCache.productExists(addOn.getAddOn().getPartNumber())) {
+                    result = false;
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
