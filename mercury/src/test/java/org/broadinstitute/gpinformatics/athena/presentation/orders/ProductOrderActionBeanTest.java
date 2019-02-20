@@ -1247,7 +1247,8 @@ public class ProductOrderActionBeanTest {
      * @throws Exception
      */
     @Test(dataProvider = "quoteDataProvider")
-    public void testEstimateOpenOrdersWeirdQuotes(String quoteName, boolean sapBlocked, boolean productBlockedFromSap)
+    public void testEstimateOpenOrdersWeirdQuotes(String quoteName, boolean sapBlocked, boolean productBlockedFromSap,
+                                                  boolean productExistInSap)
             throws Exception {
 
         Quote testQuote = stubQuoteService.getQuoteByAlphaId(quoteName);
@@ -1292,8 +1293,10 @@ public class ProductOrderActionBeanTest {
         final String stringPrice = String.valueOf(priceItemPrice);
         addPriceItemForProduct(testQuote.getAlphanumericId(), priceList, quoteItems, testOrder.getProduct(),
                 stringPrice, "1000", stringPrice);
-        addSapMaterial(materials, testOrder.getProduct(), stringPrice,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        if(productExistInSap) {
+            addSapMaterial(materials, testOrder.getProduct(), stringPrice,
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        }
 
         Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materials);
         stubProductPriceCache.refreshCache();
@@ -1384,7 +1387,8 @@ public class ProductOrderActionBeanTest {
      * @throws Exception
      */
     @Test(dataProvider = "quoteDataProvider")
-    public void testSapEligibleQuoteThenNot(String quoteId, boolean sapBlocked, boolean productBlockedFromSap)
+    public void testSapEligibleQuoteThenNot(String quoteId, boolean sapBlocked, boolean productBlockedFromSap,
+                                            boolean productExistInSap)
             throws Exception {
         Quote testQuote = stubQuoteService.getQuoteByAlphaId(quoteId);
         final int sampleTestSize = 15;
@@ -1489,12 +1493,14 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct(testQuote.getAlphanumericId(), priceList, quoteItems, addOnProduct,
                 addonStringPrice, "1000", addonStringPrice);
 
-        addSapMaterial(materials, primaryProduct, primaryStringPrice,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        addSapMaterial(materials, secondaryProduct, secondaryStringPrice,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        addSapMaterial(materials, addOnProduct, addonStringPrice,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        if(productExistInSap) {
+            addSapMaterial(materials, primaryProduct, primaryStringPrice,
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            addSapMaterial(materials, secondaryProduct, secondaryStringPrice,
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            addSapMaterial(materials, addOnProduct, addonStringPrice,
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        }
 
         Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materials);
         stubProductPriceCache.refreshCache();
@@ -1593,6 +1599,35 @@ public class ProductOrderActionBeanTest {
                 "Errors occurred validating Quote details.  Funds remaining is "
                 +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
 
+
+        //Now set a custom price adjustment for the primary order
+        final ProductOrderPriceAdjustment primaryCustomPriceAdjustment =
+                new ProductOrderPriceAdjustment(BigDecimal.valueOf(primaryPriceItemPrice -.25d), null, null);
+        testOrder.setCustomPriceAdjustment(primaryCustomPriceAdjustment);
+        calculatedMainOrderValue = testOrder.getSamples().size() * (primaryPriceItemPrice - .25d);
+
+        testCalculatedValues = new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedMainOrderValue):null,
+                Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),BigDecimal.valueOf(calculatedSecondOrderValue))));
+
+
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) (calculatedMainOrderValue + calculatedSecondOrderValue));
+
+        actionBean.validateQuoteDetails(testQuote, 0);
+
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
+
+
+
+
+
+
         // Now make the Quote split funding so that attempting to go to SAP will fail
         final FundingLevel fundingLevel = new FundingLevel();
         final FundingLevel fundingLevel2 = new FundingLevel();
@@ -1630,7 +1665,7 @@ public class ProductOrderActionBeanTest {
 
         // Now, add another sample to the primary order
         testOrder.addSample(new ProductOrderSample("SM-test" +(testOrder.getSamples().size()+1)));
-        calculatedMainOrderValue = testOrder.getSamples().size() * primaryPriceItemPrice;
+        calculatedMainOrderValue = testOrder.getSamples().size() * (primaryPriceItemPrice - .25d);
         testCalculatedValues =
                 new OrderCalculatedValues(null,
                         Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
@@ -1871,45 +1906,77 @@ public class ProductOrderActionBeanTest {
 
         // Quote ID, SAP Access status, is the Product Blocked from SAP
 
-        testCases.add(new Object[]{"GP87U",  true, true});   // common catch all quote used by PDMs
-        testCases.add(new Object[]{"GP87U",  true, false});  // Split funded
-        testCases.add(new Object[]{"GP87U",  false, true});
-        testCases.add(new Object[]{"GP87U",  false, false});
+        testCases.add(new Object[]{"GP87U",  true, true, true});   // common catch all quote used by PDMs
+        testCases.add(new Object[]{"GP87U",  true, false, true});  // Split funded
+        testCases.add(new Object[]{"GP87U",  false, true, true});
+        testCases.add(new Object[]{"GP87U",  false, false, true});
+        testCases.add(new Object[]{"GP87U",  true, true, false});
+        testCases.add(new Object[]{"GP87U",  true, false, false});
+        testCases.add(new Object[]{"GP87U",  false, true, false});
+        testCases.add(new Object[]{"GP87U",  false, false, false});
 
-        testCases.add(new Object[]{"STCIL1", true, true});  // Single funded quote in which the funding source
-        testCases.add(new Object[]{"STCIL1", true, false}); // is split among 2 cost objects
-        testCases.add(new Object[]{"STCIL1", false, true});
-        testCases.add(new Object[]{"STCIL1", false, false});
+        testCases.add(new Object[]{"STCIL1", true, true, true});  // Single funded quote in which the funding source
+        testCases.add(new Object[]{"STCIL1", true, false, true}); // is split among 2 cost objects
+        testCases.add(new Object[]{"STCIL1", false, true, true});
+        testCases.add(new Object[]{"STCIL1", false, false, true});
+        testCases.add(new Object[]{"STCIL1", true, true, false});
+        testCases.add(new Object[]{"STCIL1", true, false, false});
+        testCases.add(new Object[]{"STCIL1", false, true, false});
+        testCases.add(new Object[]{"STCIL1", false, false, false});
 
-        testCases.add(new Object[]{"GAN1GX", true, true});  // Split funded quote in which the funding sources are
-        testCases.add(new Object[]{"GAN1GX", true, false}); // each fund reservations
-        testCases.add(new Object[]{"GAN1GX", false, true});
-        testCases.add(new Object[]{"GAN1GX", false, false});
+        testCases.add(new Object[]{"GAN1GX", true, true, true});  // Split funded quote in which the funding sources are
+        testCases.add(new Object[]{"GAN1GX", true, false, true}); // each fund reservations
+        testCases.add(new Object[]{"GAN1GX", false, true, true});
+        testCases.add(new Object[]{"GAN1GX", false, false, true});
+        testCases.add(new Object[]{"GAN1GX", true, true, false});
+        testCases.add(new Object[]{"GAN1GX", true, false, false});
+        testCases.add(new Object[]{"GAN1GX", false, true, false});
+        testCases.add(new Object[]{"GAN1GX", false, false, false});
 
-        testCases.add(new Object[]{"GAN1MB", true, true});  // Split funded quote in which the funding sources are
-        testCases.add(new Object[]{"GAN1MB", true, false}); // each purchase orders
-        testCases.add(new Object[]{"GAN1MB", false, true});
-        testCases.add(new Object[]{"GAN1MB", false, false});
+        testCases.add(new Object[]{"GAN1MB", true, true, true});  // Split funded quote in which the funding sources are
+        testCases.add(new Object[]{"GAN1MB", true, false, true}); // each purchase orders
+        testCases.add(new Object[]{"GAN1MB", false, true, true});
+        testCases.add(new Object[]{"GAN1MB", false, false, true});
+        testCases.add(new Object[]{"GAN1MB", true, true, false});
+        testCases.add(new Object[]{"GAN1MB", true, false, false});
+        testCases.add(new Object[]{"GAN1MB", false, true, false});
+        testCases.add(new Object[]{"GAN1MB", false, false, false});
 
-        testCases.add(new Object[]{"MPG1X6", true, true});  // Single funded quote in which the funding source is
-        testCases.add(new Object[]{"MPG1X6", true, false}); // a purchase order
-        testCases.add(new Object[]{"MPG1X6", false, true});
-        testCases.add(new Object[]{"MPG1X6", false, false});
+        testCases.add(new Object[]{"MPG1X6", true, true, true});  // Single funded quote in which the funding source is
+        testCases.add(new Object[]{"MPG1X6", true, false, true}); // a purchase order
+        testCases.add(new Object[]{"MPG1X6", false, true, true});
+        testCases.add(new Object[]{"MPG1X6", false, false, true});
+        testCases.add(new Object[]{"MPG1X6", true, true, false});
+        testCases.add(new Object[]{"MPG1X6", true, false, false});
+        testCases.add(new Object[]{"MPG1X6", false, true, false});
+        testCases.add(new Object[]{"MPG1X6", false, false, false});
 
-        testCases.add(new Object[]{"MPG20W", true, true});  // Single funded quote in which the funding source
-        testCases.add(new Object[]{"MPG20W", true, false}); // is a fund reservation.
-        testCases.add(new Object[]{"MPG20W", false, true});
-        testCases.add(new Object[]{"MPG20W", false, false});
+        testCases.add(new Object[]{"MPG20W", true, true, true});  // Single funded quote in which the funding source
+        testCases.add(new Object[]{"MPG20W", true, false, true}); // is a fund reservation.
+        testCases.add(new Object[]{"MPG20W", false, true, true});
+        testCases.add(new Object[]{"MPG20W", false, false, true});
+        testCases.add(new Object[]{"MPG20W", true, true, false});
+        testCases.add(new Object[]{"MPG20W", true, false, false});
+        testCases.add(new Object[]{"MPG20W", false, true, false});
+        testCases.add(new Object[]{"MPG20W", false, false, false});
 
-        testCases.add(new Object[]{"GAN1GX2", true, true}); // Same setup as GAN1GX only the percentage of each
-        testCases.add(new Object[]{"GAN1GX2", true, false});
-        testCases.add(new Object[]{"GAN1GX2", false, true});
-        testCases.add(new Object[]{"GAN1GX2", false, false});
+        testCases.add(new Object[]{"GAN1GX2", true, true, true});  // Same setup as GAN1GX only the percentage of each
+        testCases.add(new Object[]{"GAN1GX2", true, false, true});
+        testCases.add(new Object[]{"GAN1GX2", false, true, true});
+        testCases.add(new Object[]{"GAN1GX2", false, false, true});
+        testCases.add(new Object[]{"GAN1GX2", true, true, false});
+        testCases.add(new Object[]{"GAN1GX2", true, false, false});
+        testCases.add(new Object[]{"GAN1GX2", false, true, false});
+        testCases.add(new Object[]{"GAN1GX2", false, false, false});
 
-        testCases.add(new Object[]{"MPG183", true, true}); // Single funded quote, Cost Object, LOT of money to use.
-        testCases.add(new Object[]{"MPG183", true, false});
-        testCases.add(new Object[]{"MPG183", false, true});
-        testCases.add(new Object[]{"MPG183", false, false});
+        testCases.add(new Object[]{"MPG183", true, true, true});  // Single funded quote, Cost Object, LOT of money to use.
+        testCases.add(new Object[]{"MPG183", true, false, true});
+        testCases.add(new Object[]{"MPG183", false, true, true});
+        testCases.add(new Object[]{"MPG183", false, false, true});
+        testCases.add(new Object[]{"MPG183", true, true, false});
+        testCases.add(new Object[]{"MPG183", true, false, false});
+        testCases.add(new Object[]{"MPG183", false, true, false});
+        testCases.add(new Object[]{"MPG183", false, false, false});
 
         return testCases.iterator();
     }
