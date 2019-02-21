@@ -124,7 +124,7 @@
         <label for="vesselBarcode">Vessel Barcode</label>
         <input type="text" id="vesselBarcode" name="vesselBarcode">
         <input type="submit" id="vesselBarcodeSearch" name="vesselBarcodeSearch" class="btn btn-primary" value="Find" />&nbsp;&nbsp;&nbsp;<input type="button" id="rackScanBtn" name="rackScanBtn" class="btn btn-primary" value="Rack Scan" onclick="startRackScan(this)" />
-        <input type="hidden" name="rackScanData" id="rackScanData" value="${fn:escapeXml(actionBean.rackScanData)}"/>
+        <input type="hidden" name="rackScanData" id="rackScanData" value='${actionBean.rackScanData}'/>
         <input type="hidden" name="redisplayVesselBarcode" id="redisplayVesselBarcode" value="${actionBean.vesselBarcode}"/>
         <input type="hidden" name="abandonActionJson" id="abandonActionJson"/>
         <input type="hidden" name="abandonActionReason" id="abandonActionReason"/>
@@ -169,7 +169,7 @@
                     <c:forEach items="${actionBean.vesselGeometry.rowNames}"
                                var="rowName" varStatus="rowLoop">
                         <tr>
-                            <th id="row_${rowLoop.index + 1}" class="cellUnSelected">${rowName}</th>
+                            <th id="row_${rowLoop.index + 1}" style="padding-right: 14px" class="cellUnSelected">${rowName}</th>
                             <c:forEach items="${actionBean.vesselGeometry.columnNames}"
                                        var="colName" varStatus="colLoop">
                                 <td id="cell_${rowLoop.index + 1}_${colLoop.index + 1}"></td>
