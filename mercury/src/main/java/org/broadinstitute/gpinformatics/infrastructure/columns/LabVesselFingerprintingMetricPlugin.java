@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -22,9 +23,12 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * Fetches available lab metric and decision data for each page of a lab vessel search.
@@ -41,10 +45,7 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
         Q20_CALL_RATE("Q20 Call Rate"),
         Q20_CALL_RATE_RATIO("Q20 Call Rate Ratio"),
         Q20_CALL_RATE_QC("Q20 Call Rate QC Result"),
-        GENDER("Gender (Fluidigm / Reported)"),
-        GENDER_CONCORDANCE_RESULT("Gender Concordance Result"),
-        HAPMAP_CONCORDANCE("HapMap Concordance"),
-        HAPMAP_CONCORDANCE_QC_RESULT("HapMap Concordance QC Result"),
+        GENDER("Fluidigm Gender"),
         SAMPLE_ALIQUOT_ID("Sample Aliquot ID"),
         ROOT_SAMPLE_ID("Root Sample ID"),
         STOCK_SAMPLE_ID("Stock Sample ID"),
@@ -82,7 +83,8 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
     @Override
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
             , @Nonnull SearchContext context) {
-        List<PlateWell> labVesselList = (List<PlateWell>) entityList;
+        List<LabVessel> labVesselList = (List<LabVessel>) entityList;
+
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
 
@@ -92,47 +94,76 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
         }
 
         Map<StaticPlate, StaticPlate.TubeFormationByWellCriteria.Result> plateResultMap = new HashMap<>();
-        for( PlateWell plateWell : labVesselList ) {
-            StaticPlate staticPlate = plateWell.getPlate();
-            if (!plateResultMap.containsKey(staticPlate)) {
-                StaticPlate.TubeFormationByWellCriteria.Result traverserResult =
-                        staticPlate.nearestFormationAndTubePositionByWell();
-                plateResultMap.put(staticPlate, traverserResult);
-            }
-            String stockSampleId = null;
-            String rootSampleId = null;
-            String aliquotSampleId = null;
-            String collaboratorParticipantId = null;
-            Set<SampleInstanceV2> sampleInstancesV2 = plateWell.getSampleInstancesV2();
-            int tryCount = 0;
-            for (SampleInstanceV2 sampleInstanceV2: sampleInstancesV2) {
-                MercurySample rootSample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                aliquotSampleId = sampleInstanceV2.getNearestMercurySampleName();
-                if (rootSample != null) {
-                    SampleData sampleData = sampleDataFetcher.fetchSampleData(rootSample.getSampleKey());
-                    if (sampleData != null) {
-                        stockSampleId = sampleData.getStockSample();
-                        rootSampleId = sampleData.getRootSample();
-                        collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
-                    }
-                    Set<LabVessel> rootLabVessels = rootSample.getLabVessel();
-                    if (!rootLabVessels.isEmpty()) {
-                        LabVessel rootLabVessel = rootLabVessels.iterator().next();
-                        List<LabEventType> fingerprintingFinalTransferEvents =
-                                Collections.singletonList(LabEventType.FINGERPRINTING_IFC_TRANSFER);
-                        TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria =
-                                new TransferTraverserCriteria.VesselForEventTypeCriteria(fingerprintingFinalTransferEvents, true);
-                        rootLabVessel.evaluateCriteria(eventTypeCriteria,
-                                TransferTraverserCriteria.TraversalDirection.Descendants);
-                        for (Map.Entry<LabEvent, Set<LabVessel>> entry: eventTypeCriteria.getVesselsForLabEventType().entrySet()) {
-                            Set<LabVessel> targetLabVessels = entry.getKey().getTargetLabVessels();
-                            for (LabVessel labVessel: targetLabVessels) {
-                                if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-                                    StaticPlate chip = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
-                                    for (PlateWell chipPlateWell: chip.getContainerRole().getContainedVessels()) {
-                                        if (!chipPlateWell.getMetrics().isEmpty()) {
-                                            tryCount++;
-                                            break;
+
+        Map<String, ConfigurableList.Row> mapPlateWellToRow = new HashMap<>();
+
+        Map<LabVessel, List<LabMetric>> mapLabVesselToMetrics = new HashMap<>();
+        for (LabVessel labVessel: labVesselList) {
+            LabMetricRun labMetricRun =
+                    labVessel.getMostRecentLabMetricRunForType(LabMetric.MetricType.CALL_RATE_Q20);
+
+            mapLabVesselToMetrics = labMetricRun.getLabMetrics().stream()
+                    .collect(groupingBy(LabMetric::getLabVessel));
+        }
+
+        for (LabVessel labVessel: labVesselList) {
+
+            for (LabMetric labMetric: mapLabVesselToMetrics.get(labVessel)) {
+
+                if (!mapPlateWellToRow.containsKey(labVessel.getLabel())) {
+                    ConfigurableList.Row row = new ConfigurableList.Row(labVessel.getLabel());
+                    mapPlateWellToRow.put(labVessel.getLabel(), row);
+                    metricRows.add(row);
+                }
+                ConfigurableList.Row row = mapPlateWellToRow.get(labVessel.getLabel());
+
+                if (!OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
+                    throw new RuntimeException("Expect plate wells only for these lab metrics");
+                }
+                PlateWell plateWell = OrmUtil.proxySafeCast(labVessel, PlateWell.class);
+                StaticPlate staticPlate = plateWell.getPlate();
+                if (!plateResultMap.containsKey(staticPlate)) {
+                    StaticPlate.TubeFormationByWellCriteria.Result traverserResult =
+                            staticPlate.nearestFormationAndTubePositionByWell();
+                    plateResultMap.put(staticPlate, traverserResult);
+                }
+                String stockSampleId = null;
+                String rootSampleId = null;
+                String aliquotSampleId = null;
+                String collaboratorParticipantId = null;
+                Set<SampleInstanceV2> sampleInstancesV2 = plateWell.getSampleInstancesV2();
+                int tryCount = 0;
+                for (SampleInstanceV2 sampleInstanceV2 : sampleInstancesV2) {
+                    MercurySample rootSample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                    aliquotSampleId = sampleInstanceV2.getNearestMercurySampleName();
+                    if (rootSample != null) {
+                        SampleData sampleData = sampleDataFetcher.fetchSampleData(rootSample.getSampleKey());
+                        if (sampleData != null) {
+                            stockSampleId = sampleData.getStockSample();
+                            rootSampleId = sampleData.getRootSample();
+                            collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
+                        }
+                        Set<LabVessel> rootLabVessels = rootSample.getLabVessel();
+                        if (!rootLabVessels.isEmpty()) {
+                            LabVessel rootLabVessel = rootLabVessels.iterator().next();
+                            List<LabEventType> fingerprintingFinalTransferEvents =
+                                    Collections.singletonList(LabEventType.FINGERPRINTING_IFC_TRANSFER);
+                            TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria =
+                                    new TransferTraverserCriteria.VesselForEventTypeCriteria(
+                                            fingerprintingFinalTransferEvents, true);
+                            rootLabVessel.evaluateCriteria(eventTypeCriteria,
+                                    TransferTraverserCriteria.TraversalDirection.Descendants);
+                            for (Map.Entry<LabEvent, Set<LabVessel>> eventSetEntry : eventTypeCriteria
+                                    .getVesselsForLabEventType().entrySet()) {
+                                Set<LabVessel> targetLabVessels = eventSetEntry.getKey().getTargetLabVessels();
+                                for (LabVessel targetLabVessel : targetLabVessels) {
+                                    if (OrmUtil.proxySafeIsInstance(targetLabVessel, StaticPlate.class)) {
+                                        StaticPlate chip = OrmUtil.proxySafeCast(targetLabVessel, StaticPlate.class);
+                                        for (PlateWell chipPlateWell : chip.getContainerRole().getContainedVessels()) {
+                                            if (!chipPlateWell.getMetrics().isEmpty()) {
+                                                tryCount++;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
@@ -140,48 +171,8 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                         }
                     }
                 }
-            }
-            StaticPlate.TubeFormationByWellCriteria.Result result = plateResultMap.get(staticPlate);
-            if (result != null && result.getTubeFormation() != null) {
-                Map<VesselPosition, VesselPosition> wellToTubePosition = result.getWellToTubePosition();
-                ConfigurableList.Row row = new ConfigurableList.Row(plateWell.getLabel());
 
-                VesselPosition dnaPlateWell = wellToTubePosition.get(plateWell.getVesselPosition());
-                row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.DNA_PLATE_WELL.getResultHeader(),
-                        dnaPlateWell.name(), dnaPlateWell.name()));
-
-                Set<LabMetric> metrics = plateWell.getMetrics();
-                for (LabMetric metric: metrics) {
-                    switch (metric.getName()) {
-                    case CALL_RATE_Q17:
-                        parseCallRate(metric, row, VALUE_COLUMN_TYPE.Q17_CALL_RATE.getResultHeader(),
-                                VALUE_COLUMN_TYPE.Q17_CALL_RATE_QC.getResultHeader(),
-                                VALUE_COLUMN_TYPE.Q17_CALL_RATE_RATIO.getResultHeader());
-                        break;
-                    case CALL_RATE_Q20:
-                        parseCallRate(metric, row, VALUE_COLUMN_TYPE.Q20_CALL_RATE.getResultHeader(),
-                                VALUE_COLUMN_TYPE.Q20_CALL_RATE_QC.getResultHeader(),
-                                VALUE_COLUMN_TYPE.Q20_CALL_RATE_RATIO.getResultHeader());
-                        break;
-                    case ROX_SAMPLE_RAW_DATA_MEAN:
-                        String meanVal = ColumnValueType.TWO_PLACE_DECIMAL.format(metric.getValue(), "");
-                        row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.ROX_RAW_INTENSITY_MEAN.getResultHeader(),
-                                meanVal, meanVal));
-                        break;
-                    case ROX_SAMPLE_RAW_DATA_MEDIAN:
-                        String medianVal = ColumnValueType.UNSIGNED.format(metric.getValue(), "");
-                        row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.ROX_RAW_INTENSITY_MEDIAN.getResultHeader(),
-                                medianVal, medianVal));
-                        break;
-                    case ROX_SAMPLE_RAW_DATA_STD_DEV:
-                        String stdDevVal = ColumnValueType.UNSIGNED.format(metric.getValue(), "");
-                        row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.ROX_RAW_INTENSITY_STD_DEV.getResultHeader(),
-                                stdDevVal, stdDevVal));
-                        break;
-                    default:
-                    }
-                }
-
+                // Add non-metric columns
                 String value = ColumnValueType.UNSIGNED.format(tryCount, "");
                 row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.TRY_COUNT.getResultHeader(),
                         value, value));
@@ -195,10 +186,55 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                 row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.SAMPLE_ALIQUOT_ID.getResultHeader(),
                         aliquotSampleId, aliquotSampleId));
 
-                row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.COLLABORATOR_PARTICIPANT_ID.getResultHeader(),
-                        collaboratorParticipantId, collaboratorParticipantId));
+                row.addCell(
+                        new ConfigurableList.Cell(VALUE_COLUMN_TYPE.COLLABORATOR_PARTICIPANT_ID.getResultHeader(),
+                                collaboratorParticipantId, collaboratorParticipantId));
 
-                metricRows.add(row);
+                StaticPlate.TubeFormationByWellCriteria.Result result = plateResultMap.get(staticPlate);
+                if (result != null && result.getTubeFormation() != null) {
+                    Map<VesselPosition, VesselPosition> wellToTubePosition = result.getWellToTubePosition();
+
+                    VesselPosition dnaPlateWell = wellToTubePosition.get(plateWell.getVesselPosition());
+                    row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.DNA_PLATE_WELL.getResultHeader(),
+                            dnaPlateWell.name(), dnaPlateWell.name()));
+                }
+
+                switch (labMetric.getName()) {
+                case CALL_RATE_Q17:
+                    parseCallRate(labMetric, row, VALUE_COLUMN_TYPE.Q17_CALL_RATE.getResultHeader(),
+                            VALUE_COLUMN_TYPE.Q17_CALL_RATE_QC.getResultHeader(),
+                            VALUE_COLUMN_TYPE.Q17_CALL_RATE_RATIO.getResultHeader());
+                    break;
+                case CALL_RATE_Q20:
+                    parseCallRate(labMetric, row, VALUE_COLUMN_TYPE.Q20_CALL_RATE.getResultHeader(),
+                            VALUE_COLUMN_TYPE.Q20_CALL_RATE_QC.getResultHeader(),
+                            VALUE_COLUMN_TYPE.Q20_CALL_RATE_RATIO.getResultHeader());
+                    break;
+                case ROX_SAMPLE_RAW_DATA_MEAN:
+                    String meanVal = ColumnValueType.TWO_PLACE_DECIMAL.format(labMetric.getValue(), "");
+                    row.addCell(new ConfigurableList.Cell(
+                            VALUE_COLUMN_TYPE.ROX_RAW_INTENSITY_MEAN.getResultHeader(),
+                            meanVal, meanVal));
+                    break;
+                case ROX_SAMPLE_RAW_DATA_MEDIAN:
+                    String medianVal = ColumnValueType.UNSIGNED.format(labMetric.getValue(), "");
+                    row.addCell(new ConfigurableList.Cell(
+                            VALUE_COLUMN_TYPE.ROX_RAW_INTENSITY_MEDIAN.getResultHeader(),
+                            medianVal, medianVal));
+                    break;
+                case ROX_SAMPLE_RAW_DATA_STD_DEV:
+                    String stdDevVal = ColumnValueType.UNSIGNED.format(labMetric.getValue(), "");
+                    row.addCell(new ConfigurableList.Cell(
+                            VALUE_COLUMN_TYPE.ROX_RAW_INTENSITY_STD_DEV.getResultHeader(),
+                            stdDevVal, stdDevVal));
+                    break;
+                case FLUIDIGM_GENDER:
+                    String gender = ColumnValueType.GENDER.format(
+                            labMetric.getMetadataSet().iterator().next().getValue(), "");
+                    row.addCell(new ConfigurableList.Cell(
+                            VALUE_COLUMN_TYPE.GENDER.getResultHeader(), gender, gender));
+                default:
+                }
             }
         }
 

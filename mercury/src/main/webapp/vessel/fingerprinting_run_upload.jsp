@@ -6,7 +6,7 @@ JSP to allow upload of fingerprinting run.
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadFingerprintingRunActionBean"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Fingerprinting Run Upload"
-                       sectionTitle="Fingerprinting Run Upload" showCreate="true">
+                       sectionTitle="Fingerprinting Run Upload" showCreate="false">
 
     <stripes:layout-component name="extraHead">
     </stripes:layout-component>
@@ -29,6 +29,50 @@ JSP to allow upload of fingerprinting run.
                 </div>
             </div>
         </stripes:form>
+        <c:if test="${!actionBean.hasErrors() && actionBean.labMetricRun != null}">
+            Type: ${actionBean.labMetricRun.metricType.displayName}
+            <br/>
+            Run Date: <fmt:formatDate value="${actionBean.labMetricRun.runDate}" pattern="${actionBean.dateTimePattern}"/>
+            <br/>
+            Run Name: ${actionBean.labMetricRun.runName}
+            <c:if test="${not empty actionBean.labMetricRun.metadata}">
+                <table class="table simple" id="runTable">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Value</th>
+                    </tr>
+                    </thead>
+
+
+                    <c:forEach items="${actionBean.labMetricRun.metadata}" var="metadata">
+                        <tr>
+                            <td>${metadata.key}</td>
+                            <td>${metadata.value}</td>
+                        </tr>
+                    </c:forEach>
+                </table>
+            </c:if>
+            <c:if test="${not empty actionBean.resultList.resultRows}">
+                <div style="margin-top: 50px;">
+                    <stripes:layout-render name="/columns/configurable_list.jsp"
+                                           entityName="${actionBean.entityName}"
+                                           sessionKey="${actionBean.sessionKey}"
+                                           columnSetName="${actionBean.columnSetName}"
+                                           downloadColumnSets="${actionBean.downloadColumnSets}"
+                                           resultList="${actionBean.resultList}"
+                                           action="${ctxpath}/search/ConfigurableSearch.action"
+                                           downloadViewedColumns="true"
+                                           isDbSortAllowed="False"
+                                           dbSortPath=""
+                                           dataTable="true"
+                                           loadDatatable="false"
+                                           showJumpToEnd="false"
+                    />
+                    <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
+                </div>
+            </c:if>
+        </c:if>
 
     </stripes:layout-component>
 </stripes:layout-render>

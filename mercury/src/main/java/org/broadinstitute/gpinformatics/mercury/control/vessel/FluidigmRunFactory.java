@@ -81,8 +81,6 @@ public class FluidigmRunFactory {
             return Pair.of(staticPlate, sameDateRuns.iterator().next());
         }
 
-        traverserResult.getWellToTubePosition();
-
         Set<String> polyAssays = fluidigmRun.getPolyAssays();
         Map<String, Snp> mapAssayToSnp = snpDao.findByRsIds(polyAssays);
         for (Map.Entry<String, Snp> entry: mapAssayToSnp.entrySet()) {
@@ -92,8 +90,8 @@ public class FluidigmRunFactory {
             }
         }
 
-        LabMetricRun run = createFluidigmRunDaoFree(fluidigmRun, staticPlate, decidingUser, messageCollection,
-                traverserResult, mapAssayToSnp);
+        LabMetricRun run = createFluidigmRunDaoFree(fluidigmRun, staticPlate, decidingUser,
+                traverserResult, mapAssayToSnp, messageCollection);
 
         if (!messageCollection.hasErrors()) {
             labMetricRunDao.persist(run);
@@ -104,9 +102,9 @@ public class FluidigmRunFactory {
     @DaoFree
     public LabMetricRun createFluidigmRunDaoFree(FluidigmChipProcessor.FluidigmRun fluidigmRun,
                                                  StaticPlate ifcChip, Long decidingUser,
-                                                 MessageCollection messageCollection,
                                                  StaticPlate.TubeFormationByWellCriteria.Result traverserResult,
-                                                 Map<String, Snp> mapAssayToSnp) {
+                                                 Map<String, Snp> mapAssayToSnp,
+                                                 MessageCollection messageCollection) {
         LabMetricRun labMetricRun = new LabMetricRun(fluidigmRun.buildRunName(), fluidigmRun.getRunDate(),
                 LabMetric.MetricType.FLUIDIGM_FINGERPRINTING);
         labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
@@ -125,6 +123,9 @@ public class FluidigmRunFactory {
             int sampleNum = Integer.parseInt(sampleName.substring(1));
             String well = convertIntToWellPosition(sampleNum, 12);
             VesselPosition tubeVesselPosition = VesselPosition.getByName(well);
+            if (!tubePositionToWell.containsKey(tubeVesselPosition)) {
+                continue;
+            }
             VesselPosition vesselPosition = tubePositionToWell.get(tubeVesselPosition);
             PlateWell plateWell = ifcChip.getContainerRole().getVesselAtPosition(vesselPosition);
             if (plateWell == null) {
@@ -132,7 +133,7 @@ public class FluidigmRunFactory {
                 ifcChip.getContainerRole().addContainedVessel(plateWell, vesselPosition);
             }
             if (!mapLabVesselToRecords.containsKey(plateWell)) {
-                mapLabVesselToRecords.put(plateWell, new ArrayList<FluidigmChipProcessor.FluidigmDataRow>());
+                mapLabVesselToRecords.put(plateWell, new ArrayList<>());
             }
             mapSampleNameToPlateWell.put(sampleName, plateWell);
             mapLabVesselToRecords.get(plateWell).add(record);
@@ -208,6 +209,8 @@ public class FluidigmRunFactory {
             }
         }
 
+        generateGenderAndConfidenceMetric(labMetricRun, mapAssayToSnp, mapLabVesselToRecords, messageCollection);
+
         return labMetricRun;
     }
 
@@ -255,6 +258,39 @@ public class FluidigmRunFactory {
         }
     }
 
+    private void generateGenderAndConfidenceMetric(LabMetricRun run, Map<String, Snp> mapAssayToSnp,
+                                                   Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords,
+                                                   MessageCollection messageCollection) {
+        for (Map.Entry<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> entry: mapLabVesselToRecords.entrySet()) {
+            PlateWell plateWell = entry.getKey();
+            for (FluidigmChipProcessor.FluidigmDataRow row : entry.getValue()) {
+                Snp polyAssay = mapAssayToSnp.get(row.getAssayName());
+                if(polyAssay.isGender()) {
+                    String genderCall = null;
+                    Genotype genotype = parseGenotype(row);
+                    if (polyAssay.getRsId().contains("AMG_3b")) {
+                        if (genotype.isCall()) {
+                            genderCall = genotype.isHet() ? Gender.MALE.getSymbol() : Gender.FEMALE.getSymbol();
+                        } else {
+                            genderCall = Genotype.NO_CALL_ALLELE_CHAR;       // No call symbol...
+                        }
+                    } else {
+                        // TODO JW handle chromosome? See FingerprintManager.getFluidigmGenotypeGenderCall
+                    }
+                    if (genderCall != null) {
+                        // TODO How to store gender?
+                        LabMetric labMetric = new LabMetric(BigDecimal.ZERO, LabMetric.MetricType.FLUIDIGM_GENDER, LabMetric.LabUnit.GENDER,
+                                plateWell.getVesselPosition().name(), new Date());
+                        plateWell.addMetric(labMetric);
+                        Metadata metadata = new Metadata(Metadata.Key.FLUIDIGM_GENDER, genderCall);
+                        labMetric.getMetadataSet().add(metadata);
+                        run.getLabMetrics().add(labMetric);
+                    }
+                }
+            }
+        }
+    }
+
     private Genotype parseGenotype(FluidigmChipProcessor.FluidigmDataRow record) {
         Genotype genotype = new Genotype();
         genotype.setConfidence(new Double(record.getConfidence()));
@@ -291,6 +327,7 @@ public class FluidigmRunFactory {
     }
 
     private class Genotype {
+        static public final String NO_CALL_ALLELE_CHAR =  "-";
 
         private double confidence;
         private String allele1;
@@ -328,9 +365,21 @@ public class FluidigmRunFactory {
         public boolean isUserCall() {
             return userCall;
         }
+
+        public boolean isHet() {
+            return !allele1.equals(allele2);
+        }
+
+        public boolean isNoCall() {
+            return ((this.allele1.equals(NO_CALL_ALLELE_CHAR)) && (this.allele2.equals(NO_CALL_ALLELE_CHAR)));
+        }
+
+        public boolean isCall() {
+            return !isNoCall();
+        }
     }
 
-    public static String convertIntToWellPosition(int number, int multiplier) {
+    public String convertIntToWellPosition(int number, int multiplier) {
         number--;
         char c = (char) (number / multiplier + 65);
         int i = number % multiplier + 1;
@@ -341,5 +390,28 @@ public class FluidigmRunFactory {
         }
         sb.append(i);
         return sb.toString().toUpperCase();
+    }
+
+    public enum Gender {
+        MALE("M", "Male"),
+        FEMALE("F", "Female"),
+        UNKNOWN("U", "Unknown"),
+        UNRECOGNIZED("?", "Unrecognized");
+
+        private final String symbol;
+        private final String name;
+
+        Gender(String symbol, String name) {
+            this.symbol = symbol;
+            this.name = name;
+        }
+
+        public String getSymbol() {
+            return symbol;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 }

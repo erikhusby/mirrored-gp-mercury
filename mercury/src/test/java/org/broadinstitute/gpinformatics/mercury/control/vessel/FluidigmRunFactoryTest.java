@@ -52,7 +52,6 @@ public class FluidigmRunFactoryTest extends BaseEventTest {
         StaticPlate.TubeFormationByWellCriteria.Result result =
                 ifcChip.nearestFormationAndTubePositionByWell();
 
-        MessageCollection messageCollection = new MessageCollection();
         FluidigmRunFactory fluidigmRunFactory = new FluidigmRunFactory();
 
         // Test that the gender SNP will be skipped
@@ -69,10 +68,13 @@ public class FluidigmRunFactoryTest extends BaseEventTest {
         Snp failedSnp = new Snp("rsIFail", true, false);
         when(mapAssayToSnp.get(argThat(isIn(failedSnps)))).thenReturn(failedSnp);
 
-        LabMetricRun labMetricRun = fluidigmRunFactory.createFluidigmRunDaoFree(run, ifcChip, 1L, messageCollection,
-                result, mapAssayToSnp);
+        MessageCollection messageCollection = new MessageCollection();
+        LabMetricRun labMetricRun = fluidigmRunFactory.createFluidigmRunDaoFree(run, ifcChip, 1L,
+                result, mapAssayToSnp,messageCollection);
 
-        Assert.assertEquals(labMetricRun.getLabMetrics().size(), 96 * 10);
+        Assert.assertEquals(messageCollection.hasErrors(), false);
+
+        Assert.assertEquals(labMetricRun.getLabMetrics().size(), 1056);
         LabMetric labMetric = findLabMetric(LabMetric.MetricType.CALL_RATE_Q20, labMetricRun.getLabMetrics());
 
         //Check that the total calls metadata was 90 since we skipped the gender/failed assays

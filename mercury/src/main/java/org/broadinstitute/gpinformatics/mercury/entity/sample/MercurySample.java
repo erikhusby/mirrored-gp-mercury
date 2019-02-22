@@ -340,10 +340,6 @@ public class MercurySample extends AbstractSample {
         return fingerprints;
     }
 
-    public Set<Fingerprint> getFingerprints() {
-        return fingerprints;
-    }
-
     // For fixup tests only.
     void setRoot(Boolean root) {
         isRoot = root;

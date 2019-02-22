@@ -50,8 +50,8 @@ public class LabMetric implements Comparable<LabMetric> {
         Bp("Bp"),
         RQS("Rqs"),
         PERCENTAGE("%"),
+        GENDER("XX/XY"),
         NUMBER(""),
-        RQS("Rqs"),
         UL("uL"),
         NM("nM");
 
@@ -233,9 +233,10 @@ public class LabMetric implements Comparable<LabMetric> {
         }),
 
         // Fingerprinting Metrics
-        FLUIDIGM_FINGERPRINTING("Fluidigm Fingerprinting", false, Category.QUALITY, null),
-        AUTOCALL_CONFIDENCE("Autocall Confidence", false, Category.DNA_LENGTH, null),
-        CALL_RATE_Q17("Q17 Call Rate", false, Category.PERCENTAGE, new Decider() {
+        FLUIDIGM_FINGERPRINTING("Fluidigm Fingerprinting", false, Category.QUALITY, LabUnit.NUMBER, null),
+        FLUIDIGM_GENDER("Fluidigm Gender", false, Category.PERCENTAGE, LabUnit.GENDER, null),
+        AUTOCALL_CONFIDENCE("Autocall Confidence", false, Category.DNA_LENGTH, LabUnit.NUMBER, null),
+        CALL_RATE_Q17("Q17 Call Rate", false, Category.PERCENTAGE, LabUnit.PERCENTAGE, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision = LabMetricDecision.Decision.PASS;
@@ -246,7 +247,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        CALL_RATE_Q20("Q20 Call Rate", false, Category.PERCENTAGE, new Decider() {
+        CALL_RATE_Q20("Q20 Call Rate", false, Category.PERCENTAGE, LabUnit.PERCENTAGE, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision = LabMetricDecision.Decision.PASS;
@@ -257,56 +258,56 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        ROX_ASSAY_RAW_DATA_COUNT("ROX Assay Raw Data Count", false, Category.NUMBER, new Decider() {
+        ROX_ASSAY_RAW_DATA_COUNT("ROX Assay Raw Data Count", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 return null;
             }
         }),
-        ROX_SAMPLE_RAW_DATA_COUNT("ROX Sample Raw Data Count", false, Category.NUMBER, new Decider() {
+        ROX_SAMPLE_RAW_DATA_COUNT("ROX Sample Raw Data Count", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 return null;
             }
         }),
-        ROX_SAMPLE_RAW_DATA_MEAN("ROX Sample Raw Data Mean", false, Category.NUMBER, new Decider() {
+        ROX_SAMPLE_RAW_DATA_MEAN("ROX Sample Raw Data Mean", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 return null;
             }
         }),
-        ROX_SAMPLE_RAW_DATA_MEDIAN("ROX Sample Raw Data Median", false, Category.NUMBER, new Decider() {
+        ROX_SAMPLE_RAW_DATA_MEDIAN("ROX Sample Raw Data Median", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 return null;
             }
         }),
-        ROX_SAMPLE_RAW_DATA_STD_DEV("ROX Sample Raw Data Std Dev", false, Category.NUMBER, new Decider() {
+        ROX_SAMPLE_RAW_DATA_STD_DEV("ROX Sample Raw Data Std Dev", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 return null;
             }
         }),
 
-        ROX_SAMPLE_BKGD_DATA_COUNT("ROX Sample Bkgd Data Count", false, Category.NUMBER, new Decider() {
+        ROX_SAMPLE_BKGD_DATA_COUNT("ROX Sample Bkgd Data Count", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 return null;
             }
         }),
-        ROX_SAMPLE_BKGD_DATA_MEAN("ROX Sample BKGD Data Mean", false, Category.NUMBER, new Decider() {
+        ROX_SAMPLE_BKGD_DATA_MEAN("ROX Sample BKGD Data Mean", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 return null;
             }
         }),
-        ROX_SAMPLE_BKGD_DATA_MEDIAN("ROX Sample BKGD Data Median", false, Category.NUMBER, new Decider() {
+        ROX_SAMPLE_BKGD_DATA_MEDIAN("ROX Sample BKGD Data Median", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 return null;
             }
         }),
-        ROX_SAMPLE_BKGD_DATA_STD_DEV("ROX Sample BKGD Data Std Dev", false, Category.NUMBER, new Decider() {
+        ROX_SAMPLE_BKGD_DATA_STD_DEV("ROX Sample BKGD Data Std Dev", false, Category.NUMBER, LabUnit.NUMBER, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 return null;
@@ -379,7 +380,8 @@ public class LabMetric implements Comparable<LabMetric> {
             CONCENTRATION,
             DNA_LENGTH,
             QUALITY,
-            PERCENTAGE
+            PERCENTAGE,
+            GENDER
         }
     }
 

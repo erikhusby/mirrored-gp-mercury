@@ -243,6 +243,7 @@ public class FluidigmChipProcessor {
             throw new RuntimeException("Control dye needs to be set to ROX");
         }
         fluidigmRun.setRunDateFromString(columns[7]);
+        fluidigmRun.setInstrumentName(columns[9]);
         //read version line
         line = reader.readLine();
         fluidigmRun.setApplicationVersion(line.split(",")[1]);
@@ -355,7 +356,7 @@ public class FluidigmChipProcessor {
         }
 
         public void setRunDateFromString(String dateString) throws ParseException {
-            setRunDate(new SimpleDateFormat("MM/dd/yyyy HH:mm").parse(dateString));
+            setRunDate(new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").parse(dateString));
         }
 
         public void setRecords(List<FluidigmDataRow> records) {
@@ -551,7 +552,7 @@ public class FluidigmChipProcessor {
         }
 
         public String buildRunName() {
-            return chipBarcode + "_" + new SimpleDateFormat("MM-dd-yyyy HH:mm").format(getRunDate());
+            return chipBarcode + "_" + new SimpleDateFormat("MM-dd-yyyy HH:mm:ss").format(getRunDate());
         }
 
         public Set<String> getPolyAssays() {
