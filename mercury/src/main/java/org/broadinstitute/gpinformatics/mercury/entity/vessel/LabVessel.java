@@ -480,22 +480,6 @@ public abstract class LabVessel implements Serializable {
         return metricList.get(0);
     }
 
-    public LabMetric getMostRecentMetricOfType(LabMetric.MetricType metricType) {
-        if(labMetrics != null) {
-            Set<LabMetric> metrics = new HashSet<>();
-            for (LabMetric labMetric: labMetrics) {
-                if(labMetric.getName()== metricType) {
-                    metrics.add(labMetric);
-                }
-            }
-            List<LabMetric> metricList = new ArrayList<>(metrics);
-            metricList.sort(Collections.reverseOrder());
-            return metricList.get(0);
-        }
-
-        return null;
-    }
-
     public LabMetricRun getMostRecentLabMetricRunForType(LabMetric.MetricType metricType) {
         if(labMetrics != null) {
             Set<LabMetric> metrics = new HashSet<>();
