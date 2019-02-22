@@ -1199,8 +1199,11 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
                     BarcodedTube.BarcodedTubeType.MatrixTubeSC14,
-                    BarcodedTube.BarcodedTubeType.MatrixTubeSC05).
-                    reagentNames(new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}).build(),
+                    BarcodedTube.BarcodedTubeType.MatrixTubeSC05,
+                    new ReagentRequirements[]{new ReagentRequirements("Proteinase K"),
+                            new ReagentRequirements("Buffer AL"),
+                            new ReagentRequirements("100% Ethanol")})
+                    .build(),
             LibraryType.NONE_ASSIGNED),
 
     //Globin Depletion
