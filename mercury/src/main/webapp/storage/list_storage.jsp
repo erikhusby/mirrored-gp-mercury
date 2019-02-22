@@ -1,5 +1,4 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"/>
@@ -30,6 +29,29 @@
                 var theform = new FormData($j("#replaceMeWithStorageContents > #looseVesselForm" )[0]);
                 // Submit value needed
                 theform.append("removeLooseLoc", "");
+                $j.ajax("${ctxpath}/container/container.action", {
+                    type: 'POST',
+                    accepts:"text/html",
+                    data: theform,
+                    async: false,
+                    cache: false,
+                    dataType: "html",
+                    processData: false,
+                    contentType: false,
+                    success: function (results) {
+                        $j("#replaceMeWithStorageContents").html(results);
+                    },
+                    error: function(results){
+                        $j("#looseMessages").html("An unspecified error occurred");
+                    }
+
+                });
+            }
+
+            function storeLooseVessels(){
+                var theform = new FormData($j("#replaceMeWithStorageContents > #looseVesselForm" )[0]);
+                // Submit value needed
+                theform.append("saveLocation", "");
                 $j.ajax("${ctxpath}/container/container.action", {
                     type: 'POST',
                     accepts:"text/html",

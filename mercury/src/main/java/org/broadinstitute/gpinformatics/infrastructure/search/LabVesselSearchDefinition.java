@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
@@ -1847,8 +1848,11 @@ public class LabVesselSearchDefinition {
                         if (!eventSortedSet.isEmpty()) {
                             LabEvent latestCheckIn = eventSortedSet.last();
                             LabVessel rack = latestCheckIn.getAncillaryInPlaceVessel();
-                            String locationTrail = rack.getStorageLocation().buildLocationTrail();
-                            locationTrail = locationTrail + ": [" +
+                            StorageLocation storageLocation = rack.getStorageLocation();
+                            if( storageLocation == null ) {
+                                return "";
+                            }
+                            String locationTrail = storageLocation.buildLocationTrail() + ": [" +
                                             rack.getLabel() + "] : " +
                                             latestCheckIn.getInPlaceLabVessel().getContainerRole().getPositionOfVessel(labVessel);
                             return locationTrail;

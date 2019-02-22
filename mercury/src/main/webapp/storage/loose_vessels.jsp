@@ -55,8 +55,8 @@
                     <c:if test="${not empty actionBean.staticPlate or (actionBean.showLayout && !actionBean.editLayout)}">
                         <stripes:submit name="browse" id="browse" value="Browse"
                                         class="btn" onclick="handleBrowseClick(event);"/>
-                        <stripes:submit id="saveStorageLocation" name="saveLocation" value="Save To Location"
-                                        class="btn btn-primary"/>
+                        <input type="button" id="saveStorageLocation" name="saveLocation" value="Save To Location"
+                               class="btn btn-primary" onclick="storeLooseVessels();"/>
                     </c:if>
                 </div>
             </div>

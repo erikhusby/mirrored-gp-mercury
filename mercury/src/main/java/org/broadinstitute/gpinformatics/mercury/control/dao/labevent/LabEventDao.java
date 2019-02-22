@@ -79,4 +79,17 @@ public class LabEventDao extends GenericDao {
             return Collections.emptyList();
         }
     }
+
+    /**
+     * Find any in-place events associated to a vessel
+     */
+    public List<LabEvent> findInPlaceByVessel(final LabVessel vessel ) {
+        return findAll(LabEvent.class, new GenericDaoCallback<LabEvent>() {
+                @Override
+                public void callback(CriteriaQuery<LabEvent> criteriaQuery, Root<LabEvent> root) {
+                    criteriaQuery
+                            .where(getCriteriaBuilder().equal(root.get(LabEvent_.inPlaceLabVessel), vessel));
+                }
+            });
+    }
 }

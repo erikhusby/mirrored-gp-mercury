@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 
-import com.sun.xml.internal.ws.api.pipe.Tube;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
