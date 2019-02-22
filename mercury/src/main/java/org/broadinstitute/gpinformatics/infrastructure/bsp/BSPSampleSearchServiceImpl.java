@@ -10,6 +10,8 @@ import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -70,18 +72,16 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
         String urlString = bspConfig.getWSUrl(SEARCH_RUN_SAMPLE_SEARCH);
 
-        List<String> parameters = new ArrayList<>();
+        MultivaluedMap<String, String> parameters = new MultivaluedHashMap<>();
 
         try {
             for (BSPSampleSearchColumn column : queryColumns) {
-                parameters.add("columns=" + URLEncoder.encode(column.columnName(), "UTF-8"));
+                parameters.add("columns", URLEncoder.encode(column.columnName(), "UTF-8"));
             }
 
-            parameters.add("sample_ids=" + StringUtils.join(sampleIDs, ","));
+            parameters.add("sample_ids", StringUtils.join(sampleIDs, ","));
 
-            String parameterString = StringUtils.join(parameters, "&");
-
-            post(urlString, parameterString, ExtraTab.TRUE, new PostCallback() {
+            post(urlString, parameters, ExtraTab.TRUE, new PostCallback() {
                 @Override
                 public void callback(String[] bspData) {
                     Map<BSPSampleSearchColumn, String> newMap = new HashMap<>();

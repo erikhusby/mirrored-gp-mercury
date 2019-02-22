@@ -146,18 +146,19 @@ public abstract class AbstractJerseyClientService implements Serializable {
      * Post method.
      *
      * @param urlString Base URL.
-     * @param paramString Parameter string with embedded ampersands, <b>without</b> initial question mark.
+     * @param params map from parameter names to values
      * @param extraTab Extra tab flag, strip a trailing tab if this is present.
      * @param callback Callback method to feed data.
      */
-    public void post(@Nonnull String urlString, @Nonnull String paramString, @Nonnull ExtraTab extraTab, @Nonnull PostCallback callback) {
+    public void post(@Nonnull String urlString, @Nonnull MultivaluedMap<String, String> params,
+                     @Nonnull ExtraTab extraTab, @Nonnull PostCallback callback) {
         logger.debug(String.format("URL string is '%s'", urlString));
         WebTarget webTarget = getJerseyClient().target(urlString);
 
         BufferedReader reader = null;
         try {
-            Response clientResponse =
-                    webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(Entity.entity(paramString, MediaType.MULTIPART_FORM_DATA_TYPE)); // todo jmt is this right?
+            Response clientResponse = webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+                    .post(Entity.form(params));
 
             InputStream is = clientResponse.readEntity(InputStream.class);
             reader = new BufferedReader(new InputStreamReader(is));

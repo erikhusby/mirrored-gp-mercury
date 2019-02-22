@@ -15,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -154,11 +155,12 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
         // Check to see if BSP is supported before trying to get data.
         if (!barcodeToSampleDataMap.isEmpty() && AbstractConfig.isSupported(getBspConfig())) {
             String urlString = getUrl(WS_FFPE_DERIVED);
-            String queryString = makeQueryString("barcodes", barcodeToSampleDataMap.keySet());
+            MultivaluedMap<String, String> params = new MultivaluedHashMap<>();
+            params.addAll("barcodes", new ArrayList<>(barcodeToSampleDataMap.keySet()));
             final int SAMPLE_BARCODE = 0;
             final int FFPE = 1;
 
-            post(urlString, queryString, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
+            post(urlString, params, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
                 @Override
                 public void callback(String[] bspOutput) {
                     BspSampleData bspSampleData = barcodeToSampleDataMap.get(bspOutput[SAMPLE_BARCODE]);
@@ -183,10 +185,11 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
         }
 
         String urlString = getUrl(WS_DETAILS);
-        String queryString = makeQueryString("sample_lsid", lsidToSampleDataMap.keySet());
+        MultivaluedMap<String, String> params = new MultivaluedHashMap<>();
+        params.addAll("sample_lsid", new ArrayList<>(lsidToSampleDataMap.keySet()));
         final int LSID = 1;
         final int PLASTIC_BARCODE = 16;
-        post(urlString, queryString, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
+        post(urlString, params, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
             @Override
             public void callback(String[] bspOutput) {
                 BspSampleData bspSampleData = lsidToSampleDataMap.get(bspOutput[LSID]);
