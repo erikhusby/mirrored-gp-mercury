@@ -263,7 +263,7 @@
                     <label class="control-label label-form">Workflow</label>
                     <div class="controls">
                         <div class="form-value">
-                        ${actionBean.editProduct.workflow.workflowName}
+                        ${actionBean.editProduct.workflowName}
                         </div>
                     </div>
                 </div>
@@ -362,6 +362,17 @@
                     <div class="controls">
                         <div class="form-value">
                                 ${actionBean.editProduct.pairedEndRead}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Index Type</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editProduct.indexType}">
+                                ${actionBean.editProduct.indexType}
+                            </c:if>
                         </div>
                     </div>
                 </div>

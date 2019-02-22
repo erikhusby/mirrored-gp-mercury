@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -370,9 +371,15 @@ public class ConfigurableList {
         private String formattedValue;
 
         Cell(Header header, Comparable<?> sortableValue, String formattedValue) {
+            this(header, sortableValue, formattedValue, true);
+        }
+
+        Cell(Header header, Comparable<?> sortableValue, String formattedValue, boolean xssEncode) {
             this.header = header;
             this.sortableValue = sortableValue;
-            this.formattedValue = formattedValue;
+            if (formattedValue != null) {
+                this.formattedValue = xssEncode ? Encode.forHtml(formattedValue) : formattedValue;
+            }
         }
 
         public Header getHeader() {
@@ -596,7 +603,7 @@ public class ConfigurableList {
             Comparable<?> comparableValue =
                     columnTabulation.evalValueTypeExpression(entity,context)
                         .getComparableValue(currentValue,multiValueDelimiter);
-            Cell cell = new Cell(header, comparableValue, formattedString);
+            Cell cell = new Cell(header, comparableValue, formattedString, columnTabulation.mustEscape());
             row.addCell(cell);
             valueIndex++;
         }
@@ -627,11 +634,13 @@ public class ConfigurableList {
             List<String> cells = new ArrayList<>();
             for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
                 Object value = nestedColumnTabulation.evalValueExpression(entity, context);
+                String output;
                 if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
-                    cells.add(nestedColumnTabulation.evalUiDisplayOutputExpression(value, context));
+                    output = nestedColumnTabulation.evalUiDisplayOutputExpression(value, context);
                 } else {
-                    cells.add(nestedColumnTabulation.evalPlainTextOutputExpression(value, context));
+                    output = nestedColumnTabulation.evalPlainTextOutputExpression(value, context);
                 }
+                cells.add(nestedColumnTabulation.mustEscape() ? Encode.forHtml(output) : output);
             }
             ResultRow row = new ResultRow( emptySortableCells, cells, null );
             localRows.add(row);
@@ -938,6 +947,12 @@ public class ConfigurableList {
          */
         private List<ResultList> cellNestedTables = new ArrayList<>();
 
+        /**
+         *
+         * @param sortableCells see field
+         * @param renderableCells must be escaped for XSS
+         * @param resultId see field
+         */
         ResultRow(List<Comparable<?>> sortableCells, List<String> renderableCells, String resultId) {
             this.sortableCells = sortableCells;
             this.renderableCells = renderableCells;

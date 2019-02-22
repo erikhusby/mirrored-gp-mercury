@@ -47,6 +47,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.owasp.encoder.Encode;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -126,8 +127,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     private DateRangeSelector dateRange = new DateRangeSelector(DateRangeSelector.THIS_MONTH);
 
     @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private QuoteService quoteService;
+    protected QuoteService quoteService;
 
 
     public enum ErrorLevel {
@@ -430,7 +430,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     }
 
     public String getError(Map<String, Object> requestScope) {
-        return ((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getMessage();
+        return Encode.forHtml(((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getMessage());
     }
 
     public StackTraceElement[] getStackTrace(Map<String, Object> requestScope) {
@@ -703,5 +703,10 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
             displayableItems.add(new DisplayableItem(item.getBusinessKey(), item.getName()));
         }
         return displayableItems;
+    }
+
+    @Inject
+    public void setQuoteService(QuoteService quoteService) {
+        this.quoteService = quoteService;
     }
 }

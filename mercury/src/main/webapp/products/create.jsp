@@ -65,7 +65,9 @@
                     $j("#primaryPriceItem").tokenInput(
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Price Item name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.priceItemTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.priceItemTokenInput.separator}",
@@ -77,7 +79,9 @@
                     $j("#externalPriceItem").tokenInput(
                         "${ctxpath}/products/product.action?externalPriceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type an External Price Item name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.externalPriceItemTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.externalPriceItemTokenInput.separator}",
@@ -89,7 +93,9 @@
                     $j("#addOns").tokenInput(
                         "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Product name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.addOnTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenDelimiter: "${actionBean.addOnTokenInput.separator}",
                             preventDuplicates: true,
@@ -662,9 +668,9 @@
                             Workflow
                         </stripes:label>
                         <div class="controls">
-                            <stripes:select name="editProduct.workflow" id="workflow">
-                                <stripes:option value="<%= Workflow.NONE %>">None</stripes:option>
-                                <stripes:options-collection collection="${actionBean.availableWorkflows}" label="workflowName"/>
+                            <stripes:select name="editProduct.workflowName" id="workflow">
+                                <stripes:option value="">None</stripes:option>
+                                <stripes:options-collection collection="${actionBean.availableWorkflows}" />
                             </stripes:select>
                         </div>
                     </div>
@@ -755,6 +761,17 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="pairedEndRead" name="editProduct.pairedEndRead" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="indexType" class="control-label">Index Type</stripes:label>
+                            <div class="controls">
+                                <stripes:select name="editProduct.indexType">
+                                    <stripes:options-enumeration
+                                            enum="org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation.IndexType"
+                                            label="displayName"/>
+                                </stripes:select>
                             </div>
                         </div>
 

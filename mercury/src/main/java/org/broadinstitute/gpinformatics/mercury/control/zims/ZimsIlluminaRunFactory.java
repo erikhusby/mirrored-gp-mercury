@@ -155,7 +155,8 @@ public class ZimsIlluminaRunFactory {
                 BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                 if (singleBucketEntry != null) {
                     if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
-                        Aggregation.DATA_TYPE_WGS)) {
+                            Aggregation.DATA_TYPE_WGS) ||
+                            Aggregation.DATA_TYPE_WGS.equals(sampleInstance.getAggregationDataType())) {
                         mixedLaneOk = true;
                         break;
                     }
@@ -319,27 +320,49 @@ public class ZimsIlluminaRunFactory {
         Set<String> analysisTypes = new HashSet<>();
         Set<String> referenceSequenceKeys = new HashSet<>();
         Set<String> aggregationDataTypes = new HashSet<>();
-        Set<Integer> insertSizes = new HashSet<>();
+        Set<String> insertSizes = new HashSet<>();
         Set<ResearchProject> positiveControlResearchProjects = new HashSet<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
+            String analysisType = sampleInstanceDto.getSampleInstance().getAnalysisType() != null ?
+                    sampleInstanceDto.getSampleInstance().getAnalysisType().getName() : null;
+            String referenceSequence = sampleInstanceDto.getSampleInstance().getReferenceSequence() != null ?
+                    sampleInstanceDto.getSampleInstance().getReferenceSequence().getName() : null;
+            String aggregationDataType = sampleInstanceDto.getSampleInstance().getAggregationDataType();
+            String insertSize = sampleInstanceDto.getSampleInstance().getExpectedInsertSize();
+
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
             if (productOrder != null) {
                 Product product = productOrder.getProduct();
-                analysisTypes.add(product.getAnalysisTypeKey());
-                aggregationDataTypes.add(product.getAggregationDataType());
                 ResearchProject project = productOrder.getResearchProject();
-                if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
-                    referenceSequenceKeys.add(project.getReferenceSequenceKey());
-                }
                 ResearchProject positiveControlResearchProject = product.getPositiveControlResearchProject();
                 if (positiveControlResearchProject != null) {
                     positiveControlResearchProjects.add(positiveControlResearchProject);
                 }
-                Integer insertSize = product.getInsertSize();
-                if (insertSize != null) {
-                    insertSizes.add(insertSize);
+                if (analysisType == null) {
+                    analysisType = product.getAnalysisTypeKey();
                 }
+                if (referenceSequence == null && !StringUtils.isBlank(project.getReferenceSequenceKey())) {
+                    referenceSequence = project.getReferenceSequenceKey();
+                }
+                if (aggregationDataType == null) {
+                    aggregationDataType = product.getAggregationDataType();
+                }
+                if (insertSize == null && product.getInsertSize() != null) {
+                    insertSize = String.valueOf(product.getInsertSize());
+                }
+            }
+            if (analysisType != null) {
+                analysisTypes.add(analysisType);
+            }
+            if (referenceSequence != null) {
+                referenceSequenceKeys.add(referenceSequence);
+            }
+            if (aggregationDataType != null) {
+                aggregationDataTypes.add(aggregationDataType);
+            }
+            if (insertSize != null) {
+                insertSizes.add(insertSize);
             }
         }
 
@@ -365,47 +388,45 @@ public class ZimsIlluminaRunFactory {
                 lcSet = sampleInstance.getSingleBatch().getBatchName();
             }
 
-            // This loop goes through all the reagents and takes the last bait name (under the assumption that
-            // the lab would only ever have one for this sample instance. All cat names are collected and the
-            // last indexing scheme reagent.
-            MolecularIndexingScheme indexingSchemeEntity = null;
-            String baitName = null;
-            List<String> catNames = new ArrayList<>();
+            // Finds molecular barcode, bait, and CAT. There should be only one per sample instance but
+            // if multiple are found, takes the last one.
+            MolecularIndexingScheme indexingSchemeEntity = sampleInstance.getMolecularIndexingScheme();
+            String baitName = sampleInstance.getBaitName();
+            List<String> catNames = new ArrayList<String>() {{
+                if (sampleInstance.getCatName() != null) {
+                    add(sampleInstance.getCatName());
+                }
+            }};
 
-            //If this is an uploaded pooled tube we already have the reagent design
-            if(!sampleInstance.getReagentsDesigns().isEmpty())            {
-                for (ReagentDesign reagentDesign : sampleInstance.getReagentsDesigns()) {
-                    indexingSchemeEntity = sampleInstance.getMolecularIndexingScheme();
-                    ReagentDesign.ReagentType reagentType = reagentDesign.getReagentType();
-                        if (reagentType == ReagentDesign.ReagentType.BAIT) {
-                            baitName = reagentDesign.getDesignName();
-                        } else if (reagentType == ReagentDesign.ReagentType.CAT) {
-                            catNames.add(reagentDesign.getDesignName());
-                        }
-                    }
+            for (ReagentDesign reagentDesign : sampleInstance.getReagentsDesigns()) {
+                ReagentDesign.ReagentType reagentType = reagentDesign.getReagentType();
+                if (reagentType == ReagentDesign.ReagentType.BAIT) {
+                    baitName = reagentDesign.getDesignName();
+                } else if (reagentType == ReagentDesign.ReagentType.CAT) {
+                    catNames.add(reagentDesign.getDesignName());
+                }
             }
-            else {
-                for (Reagent reagent : sampleInstance.getReagents()) {
-                    if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                        indexingSchemeEntity =
-                                OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).getMolecularIndexingScheme();
-                    } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
-                        DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
-                        ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
-                        if (reagentType == ReagentDesign.ReagentType.BAIT) {
-                            baitName = designedReagent.getReagentDesign().getDesignName();
-                        } else if (reagentType == ReagentDesign.ReagentType.CAT) {
-                            catNames.add(designedReagent.getReagentDesign().getDesignName());
-                        }
+
+            for (Reagent reagent : sampleInstance.getReagents()) {
+                if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                    indexingSchemeEntity = OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).
+                            getMolecularIndexingScheme();
+                } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                    DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
+                    ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
+                    if (reagentType == ReagentDesign.ReagentType.BAIT) {
+                        baitName = designedReagent.getReagentDesign().getDesignName();
+                    } else if (reagentType == ReagentDesign.ReagentType.CAT) {
+                        catNames.add(designedReagent.getReagentDesign().getDesignName());
                     }
                 }
             }
+
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto = null;
             if (indexingSchemeEntity != null) {
                 Map<IndexPosition, String> positionSequenceMap = new HashMap<>();
                 Set<Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex>> entries =
                         indexingSchemeEntity.getIndexes().entrySet();
-
                 for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexEntry : entries) {
                     String indexName = indexEntry.getKey().toString();
                     positionSequenceMap.put(
@@ -462,15 +483,15 @@ public class ZimsIlluminaRunFactory {
         return StringUtils.join(components, "__delimiter__");
     }
 
-    private LibraryBean createLibraryBean(
-            SampleInstanceDto sampleInstanceDto, ProductOrder productOrder, SampleData sampleData, String lcSet, String baitName,
-            MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
+    private LibraryBean createLibraryBean(SampleInstanceDto sampleInstanceDto, ProductOrder productOrder,
+            SampleData sampleData, String lcSet, String baitName, MolecularIndexingScheme indexingSchemeEntity,
+            List<String> catNames, String labWorkflow,
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
-            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes, TZDevExperimentData devExperimentData,
-            boolean isPooledTube, WorkflowMetadata workflowMetadata) {
+            Set<ResearchProject> positiveControlProjects, Set<String> insertSizes,
+            TZDevExperimentData devExperimentData, boolean isPooledTube, WorkflowMetadata workflowMetadata) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -509,11 +530,10 @@ public class ZimsIlluminaRunFactory {
         String referenceSequenceVersion = null;
         String aggregationDataType = null;
         String species = null;
-        String lsid = null;
+
         if (sampleData != null && productOrder == null) {
             Control control = mapNameToControl.get(sampleData.getCollaboratorParticipantId());
             species = sampleData.getOrganism();
-            lsid = sampleData.getSampleLsid();
             if (control != null) {
                 switch (control.getType()) {
                 case POSITIVE:
@@ -534,7 +554,7 @@ public class ZimsIlluminaRunFactory {
                             positiveControlProject = positiveControlProjects.iterator().next();
                         }
                         if (insertSizes.size() == 1) {
-                            expectedInsertSize = insertSizes.iterator().next().toString();
+                            expectedInsertSize = String.valueOf(insertSizes.iterator().next());
                         }
                     }
                     break;
@@ -555,10 +575,15 @@ public class ZimsIlluminaRunFactory {
             analysisType = sampleInstanceDto.sampleInstance.getAnalysisType().getBusinessKey();
         }
 
-        // insert size is a  range consisting of two integers with a hyphen in between, e.g. "225-350".
-        expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
+        // insert size is either a single integer or two integers with a hyphen in between, e.g. "225-350".
+        if (expectedInsertSize == null) {
+            expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
+        }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
-         if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
+        if (aggregationDataType == null) {
+            aggregationDataType = sampleInstanceDto.sampleInstance.getAggregationDataType();
+        }
+        if (sampleInstanceDto.sampleInstance.getReferenceSequence() != null) {
             referenceSequence = sampleInstanceDto.sampleInstance.getReferenceSequence().getName();
             referenceSequenceVersion = sampleInstanceDto.sampleInstance.getReferenceSequence().getVersion();
         }
@@ -566,7 +591,7 @@ public class ZimsIlluminaRunFactory {
         if (productOrder != null) {
             Product product = productOrder.getProduct();
             if (StringUtils.isBlank(expectedInsertSize) && product.getInsertSize() != null) {
-                expectedInsertSize = product.getInsertSize().toString();
+                expectedInsertSize = String.valueOf(product.getInsertSize());
             }
             if (analyzeUmi == null) {
                 analyzeUmi = productOrder.getAnalyzeUmiOverride();

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -94,6 +95,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private String sampleLibraryName;
     private Integer readLength;
     private String aggregationParticle;
+    private String aggregationDataType;
     private Boolean umisPresent;
     private String expectedInsertSize;
     private ReferenceSequence referenceSequence;
@@ -113,11 +115,11 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private MolecularIndexingScheme molecularIndexingScheme;
     private LabVessel firstPcrVessel;
     private MaterialType materialType;
-
-    private SampleInstanceEntity sampleInstanceEntity;
+    private String baitName;
+    private String catName;
     private int depth;
     private List<String> devConditions = new ArrayList<>();
-    private TZDevExperimentData tzDevExperimentData;
+    private TZDevExperimentData tzDevExperimentData = null;
     /**
      * For a reagent-only sample instance.
      */
@@ -200,14 +202,15 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         firstPcrVessel = other.firstPcrVessel;
         materialType = other.materialType;
         depth = other.depth + 1;
-        sampleInstanceEntity = other.getSampleInstanceEntity();
         tzDevExperimentData = other.getTzDevExperimentData();
         devConditions = other.getDevConditions();
         isPooledTube = other.getIsPooledTube();
         sampleLibraryName = other.getSampleLibraryName();
         readLength = other.getReadLength();
-
+        baitName = other.getBaitName();
+        catName = other.getCatName();
         aggregationParticle = other.getAggregationParticle();
+        aggregationDataType = other.getAggregationDataType();
         analysisType = other.getAnalysisType();
         referenceSequence = other.getReferenceSequence();
         umisPresent = other.getUmisPresent();
@@ -541,16 +544,21 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             setIsPooledTube(true);
             MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
             mergePooledTubeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
-            mergeReagents(sampleInstanceEntity.getReagentDesign());
             mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
             mergeRootSamples(sampleInstanceEntity.getRootSample());
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
             aggregationParticle = sampleInstanceEntity.getAggregationParticle();
+            aggregationDataType = sampleInstanceEntity.getAggregationDataType();
             analysisType = sampleInstanceEntity.getAnalysisType();
             referenceSequence = sampleInstanceEntity.getReferenceSequence();
             umisPresent = sampleInstanceEntity.getUmisPresent();
             expectedInsertSize = sampleInstanceEntity.getInsertSize();
+            ReagentDesign reagentDesign = sampleInstanceEntity.getReagentDesign();
+            catName = (reagentDesign != null && reagentDesign.getReagentType() == ReagentDesign.ReagentType.CAT) ?
+                    reagentDesign.getDesignName() : null;
+            baitName = (reagentDesign != null && reagentDesign.getReagentType() == ReagentDesign.ReagentType.BAIT) ?
+                    reagentDesign.getDesignName() : null;
             mercurySamples.add(mercurySample);
         } else {
             mergeDevConditions(labVessel);
@@ -709,16 +717,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     /**
-     * Merges DesignedReagent into Reagents
-     *   - as of July 2018 only to support DEV Tagged pooled tubes upload
-     */
-    private void mergeReagents(ReagentDesign reagentDesign) {
-        if (reagentDesign != null) {
-            this.reagents.addAll(reagentDesign.getDesignedReagents());
-        }
-    }
-
-    /**
      * Gets any ReagentDesign entities out of any DesignedReagent subclasses of Reagent on demand
      * to avoid the overhead of digesting Reagent into separate variables at SampleInstanceV2 creation
      * just to support a few use-cases
@@ -735,24 +733,27 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     private void mergePooledTubeDevConditions(String experimentName, List<String> subTasks)
     {
-        devConditions.addAll(subTasks);
-        tzDevExperimentData = new TZDevExperimentData(experimentName,subTasks);
-
+        // tzDevExperimentData must also be null to prevent resurrecting the experiment in DevExperimentDataBean.
+        if (StringUtils.isNotBlank(experimentName)) {
+            devConditions.addAll(subTasks);
+            tzDevExperimentData = new TZDevExperimentData(experimentName, subTasks);
+        }
     }
 
     private void mergeDevConditions(LabVessel labVessel)
     {
-
-        for(JiraTicket ticket : labVessel.getJiraTickets()) {
-            if(ticket != null){
-                devConditions.add(ticket.getTicketId());
+        // DEV Pooled tube upload is the only way to add experiment & conditions to a sample instance.
+        if (!getIsPooledTube()) {
+            for (JiraTicket ticket : labVessel.getJiraTickets()) {
+                if (ticket != null) {
+                    devConditions.add(ticket.getTicketId());
+                }
+            }
+            if (devConditions.size() > 0) {
+                //The experiment data will be populated from the parent Jira ticket.
+                tzDevExperimentData = new TZDevExperimentData(null, devConditions);
             }
         }
-        if(devConditions.size() > 0 ) {
-            //The experiment data will be populated from the parent Jira ticket.
-            tzDevExperimentData = new TZDevExperimentData(null, devConditions);
-        }
-
     }
 
 
@@ -774,12 +775,25 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return aggregationParticle;
     }
 
+    public String getAggregationDataType() {
+        return aggregationDataType;
+    }
+
     public Boolean getUmisPresent() {
         return umisPresent;
     }
 
     public String getExpectedInsertSize() {
         return expectedInsertSize;
+    }
+
+    /** Returns the integer value of insert size. Returns the last value if an integer range such as 200-254. */
+    public Integer getExpectedInsertSizeInteger() {
+        if (StringUtils.isNotBlank(expectedInsertSize)) {
+            String[] values = expectedInsertSize.split("[\\s-]");
+            return Integer.parseInt(values[values.length - 1]);
+        }
+        return null;
     }
 
     /**
@@ -826,16 +840,20 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return true;
     }
 
-    private SampleInstanceEntity getSampleInstanceEntity() {
-        return sampleInstanceEntity;
-    }
-
     public ReferenceSequence getReferenceSequence() {
         return referenceSequence;
     }
 
     public AnalysisType getAnalysisType() {
         return analysisType;
+    }
+
+    public String getBaitName() {
+        return baitName;
+    }
+
+    public String getCatName() {
+        return catName;
     }
 
     @Override

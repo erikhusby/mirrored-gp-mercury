@@ -683,7 +683,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                     }
                                     for (SampleInstanceV2 sample : currentLabVessel.getSampleInstancesV2()) {
                                         String rootSampleName = sample.getMercuryRootSampleName();
-                                        rootSampleIds.add(rootSampleName);
+                                        if (rootSampleName == null) {
+                                            messageCollection.addError("No root sample for " +
+                                                    currentLabVessel.getLabel());
+                                        } else {
+                                            rootSampleIds.add(rootSampleName);
+                                        }
                                         mapPositionToSampleIds.put(receptacleType.getPosition(), rootSampleName);
                                     }
                                 }
@@ -903,6 +908,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 }
             }
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            LabEventFactory.trySampleIds(barcodes, mapBarcodeToVessel, mercurySampleDao);
             for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
                 LabVessel labVessel = stringLabVesselEntry.getValue();
                 String barcode = stringLabVesselEntry.getKey();

@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 //import com.jprofiler.api.agent.Controller;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
@@ -454,8 +453,6 @@ public class ConfigurableSearchTest extends Arquillian {
 
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER);
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER);
-        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.RESEARCH_PROJECT_COLUMN_HEADER);
-        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PRODUCT_ORDER_SAMPLES_COLUMN_HEADER);
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER);
 
 
@@ -521,15 +518,14 @@ public class ConfigurableSearchTest extends Arquillian {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 SearchDefinitionFactory.getForEntity(productOrderEntityName);
 
-        SearchInstance.SearchValue quoteSearchValue = searchInstance.addTopLevelTerm("Quote Identifier",
+        SearchInstance.SearchValue quoteSearchValue =
+            searchInstance.addTopLevelTerm(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER,
                 configurableSearchDefinition);
         quoteSearchValue.setOperator(SearchInstance.Operator.EQUALS);
         quoteSearchValue.setValues(Collections.singletonList("GPSPIE8"));
 
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER);
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER);
-        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.RESEARCH_PROJECT_COLUMN_HEADER);
-        searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PRODUCT_ORDER_SAMPLES_COLUMN_HEADER);
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER);
 
         searchInstance.establishRelationships(configurableSearchDefinition);
@@ -561,17 +557,6 @@ public class ConfigurableSearchTest extends Arquillian {
         List<String> rowValues = row.getRenderableCells();
         Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER)), "Draft-220113 -- Johan Nilsson_Lund University_Heart Transplant_PCR-PLUS_FFPE_XXTimepoints", "Incorrect PDO found");
         Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER)), "GPSPIE8", "Incorrect quote found");
-        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.RESEARCH_PROJECT_COLUMN_HEADER)), "RP-797", "Incorrect RP found");
-
-        final String samples = rowValues
-                .get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PRODUCT_ORDER_SAMPLES_COLUMN_HEADER));
-
-        List<String> testSamples = Arrays.asList("SM-D8WVS", "SM-D8WVT", "SM-D8WVU", "SM-D8WVV", "SM-D8WVX",
-                "SM-D8WW2", "SM-D8WW4", "SM-D8WW5", "SM-D8WW7", "SM-D8WW8", "SM-D8WW9", "SM-D8WJL", "SM-D8WJM",
-                "SM-D8WJN", "SM-D8WJO", "SM-D8WJP", "SM-D8WJQ", "SM-D8WJR");
-
-        Assert.assertTrue(Arrays.stream(StringUtils.split(samples, " ")).allMatch(testSamples::contains),
-                "Incorrect Samples found");
 
         Assert.assertTrue(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER)).contains("XTNL-WGS-010307"), "Incorrect product part number found");
     }

@@ -17,10 +17,10 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
@@ -51,14 +51,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 @Test(groups = TestGroups.FIXUP)
@@ -354,6 +350,34 @@ public class LedgerEntryFixupTest extends Arquillian {
 
         ledgerEntryFixupDao.persist(new FixupCommentary("Support-4164 Removing Ledger entry that was created "
                                                         + "in the wrong way.  Quote server correction is found at work item " + correction));
+    }
+
+    @Test(enabled = false)
+    public void support4714ReverseIncorrectQuantity() {
+        userBean.loginOSUser();
+
+        String workItem = "302042";
+        LedgerEntry entryToCorrect= ledgerEntryFixupDao.findSingle(LedgerEntry.class, LedgerEntry_.workItem, workItem);
+        String quote = "MMML4G";
+        Assert.assertEquals(entryToCorrect.getQuoteId(), quote);
+
+        Quote quoteByAlphaId = null;
+        try {
+            quoteByAlphaId = quoteService.getQuoteByAlphaId(entryToCorrect.getQuoteId());
+        } catch (QuoteServerException | QuoteNotFoundException e) {
+            Assert.fail();
+        }
+        String fixupMessage = String.format("SUPPORT-4714 Reverse samples billed in Quotes (workItem %s, Quote %s)", workItem, quote);
+
+        final String correction = quoteService.registerNewSAPWork(quoteByAlphaId,
+                QuotePriceItem.convertMercuryPriceItem(entryToCorrect.getPriceItem()), null,
+                entryToCorrect.getWorkCompleteDate(), -4,
+                "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4714",
+                "correction", "SUPPORT-4714", null);
+
+        String messageWithCorrection = String.format("%s %s", fixupMessage, correction);
+        System.out.println(messageWithCorrection);
+        ledgerEntryFixupDao.persist(new FixupCommentary(messageWithCorrection));
     }
 
     @Test(enabled=false)

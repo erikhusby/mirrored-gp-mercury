@@ -53,7 +53,6 @@ public class DesignationDto implements Cloneable, FctDto {
         createdOn = new Date();
         status = FlowcellDesignation.Status.UNSAVED;
         priority = FlowcellDesignation.Priority.NORMAL;
-        indexType = FlowcellDesignation.IndexType.DUAL;
         groupByRegulatoryDesignation = true;
     }
 

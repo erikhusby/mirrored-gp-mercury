@@ -27,7 +27,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -39,7 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
@@ -74,12 +73,6 @@ public class ReworkEjb {
     private static final Log logger = LogFactory.getLog(ReworkEjb.class);
 
     @Inject
-    private MercurySampleDao mercurySampleDao;
-
-    @Inject
-    private ReworkEntryDao reworkEntryDao;
-
-    @Inject
     private LabVesselDao labVesselDao;
 
     private BSPSampleDataFetcher bspSampleDataFetcher;
@@ -99,7 +92,6 @@ public class ReworkEjb {
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
-    @Inject
     private WorkflowConfig workflowConfig;
 
     public ReworkEjb() {
@@ -159,7 +151,8 @@ public class ReworkEjb {
             List<ProductOrderSample> productOrderSamples = new ArrayList<>();
             for (SampleInstanceV2 sampleInstanceV2 : vessel.getSampleInstancesV2()) {
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                    if (productOrderSample.getProductOrder().getOrderStatus().readyForLab()) {
+                    if (productOrderSample.getProductOrder().getOrderStatus().readyForLab() &&
+                        StringUtils.isNotBlank(productOrderSample.getProductOrder().getProduct().getWorkflowName())) {
                         productOrderSamples.add(productOrderSample);
                     }
                 }
@@ -194,7 +187,8 @@ public class ReworkEjb {
         if (bucketCandidates.isEmpty()) {
             Collection<ProductOrderSample> sampleCollection = new ArrayList<>();
             for (ProductOrderSample productOrderSample : productOrderSampleDao.findBySamples(query)) {
-                if (productOrderSample.getProductOrder().getOrderStatus().readyForLab()) {
+                if (productOrderSample.getProductOrder().getOrderStatus().readyForLab() &&
+                    StringUtils.isNotBlank(productOrderSample.getProductOrder().getProduct().getWorkflowName())) {
                     sampleCollection.add(productOrderSample);
                 }
             }
@@ -235,8 +229,13 @@ public class ReworkEjb {
     }
 
     private boolean productOrderSampleCanEnterBucket(ProductOrderSample sample) {
-        Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
-        return sample.getProductOrder().getOrderStatus().readyForLab() && workflow.isWorkflowSupportedByMercury();
+        if (!sample.getProductOrder().getOrderStatus().readyForLab() ||
+                StringUtils.isBlank(sample.getProductOrder().getProduct().getWorkflowName())) {
+            return false;
+        }
+        ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(
+                sample.getProductOrder().getProduct().getWorkflowName());
+        return !workflowDef.getEffectiveVersion().getBuckets().isEmpty();
     }
 
     /**
@@ -491,6 +490,11 @@ public class ReworkEjb {
     @Inject
     public void setBspSampleDataFetcher(BSPSampleDataFetcher bspSampleDataFetcher) {
         this.bspSampleDataFetcher = bspSampleDataFetcher;
+    }
+
+    @Inject
+    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
     }
 
     /**

@@ -25,7 +25,6 @@ import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.CrossTypeRevisionChangesReader;
 import org.hibernate.envers.RevisionType;
-import org.hibernate.envers.exception.AuditException;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
@@ -294,9 +293,9 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
                     records.add(etlData + ",S");
                 }
             }
-        } catch ( AuditException ae ) {
-            errorException = new Exception( "Envers audit API failure in FixUpEtl - ignoring FixupCommentary ID " + currentRevision, ae );
-            errorIds.add(currentRevision);
+        } catch ( Exception ae ) {
+            errorException = new Exception( ae.getClass().getSimpleName() + " failure in FixUpEtl.  Ignoring FixupCommentary ID " + fixupId + ".  May require manual event_fact and sequencing_sample_fact refresh.", ae );
+            errorIds.add(fixupId);
         }
 
         return records;

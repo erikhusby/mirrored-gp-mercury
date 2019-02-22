@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.owasp.encoder.Encode;
 
 import java.math.BigDecimal;
 import java.util.AbstractMap;
@@ -77,8 +78,11 @@ import java.util.TreeSet;
 @SuppressWarnings("ReuseOfLocalVariable")
 public class LabVesselSearchDefinition {
 
-    private static final List<LabEventType> POND_LAB_EVENT_TYPES = Arrays.asList(LabEventType.POND_REGISTRATION,
-            LabEventType.PCR_FREE_POND_REGISTRATION, LabEventType.PCR_PLUS_POND_REGISTRATION);
+    private static final List<LabEventType> POND_LAB_EVENT_TYPES =
+            LabEventType.getLabEventsWithLibraryEtlDisplayName("Pond");
+
+    private static final List<LabEventType> CATCH_LAB_EVENT_TYPES =
+            LabEventType.getLabEventsWithLibraryEtlDisplayName("Catch");
 
     public static final List<LabEventType> CHIP_EVENT_TYPES = Collections.singletonList(
             LabEventType.INFINIUM_HYBRIDIZATION);
@@ -441,6 +445,7 @@ public class LabVesselSearchDefinition {
                 return SearchDefinitionFactory.buildDrillDownLink("", drillDownOption.getTargetEntity(), drillDownOption.getPreferenceScope().name() + "|" + drillDownOption.getPreferenceName() + "|" + drillDownOption.getSearchName(), terms, context);
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerm.setResultParamConfigurationExpression(
             new SearchTerm.Evaluator<ResultParamConfiguration>() {
 
@@ -1115,13 +1120,7 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> positions = null;
 
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                // ICE
-                labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
-                // Agilent
-                labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
-
-                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(labEventTypes );
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(CATCH_LAB_EVENT_TYPES);
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
@@ -1145,14 +1144,8 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> barcodes = null;
 
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                // ICE
-                labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
-                // Agilent
-                labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
-
                 VesselsForEventTraverserCriteria eval
-                        = new VesselsForEventTraverserCriteria(labEventTypes );
+                        = new VesselsForEventTraverserCriteria(CATCH_LAB_EVENT_TYPES);
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
@@ -1888,7 +1881,7 @@ public class LabVesselSearchDefinition {
                 if (entity != null && entity instanceof String) {
                     String str = (String) entity;
                     if (str.contains("[")) {
-                        String containerBarcode = str.substring(str.indexOf("[")+1,str.indexOf("]"));
+                        String containerBarcode = Encode.forHtml(str.substring(str.indexOf("[")+1,str.indexOf("]")));
                         String href = String.format(
                                 "/Mercury/container/container.action?containerBarcode=%s&viewContainerSearch=",
                                 containerBarcode
@@ -1902,6 +1895,7 @@ public class LabVesselSearchDefinition {
                 return null;
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -2219,6 +2213,7 @@ public class LabVesselSearchDefinition {
                 return SearchDefinitionFactory.buildDrillDownLink(barcode.toString(), ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context);
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -2247,6 +2242,7 @@ public class LabVesselSearchDefinition {
                 return SearchDefinitionFactory.buildDrillDownLink(barcode, ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context);
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -2304,6 +2300,7 @@ public class LabVesselSearchDefinition {
                 return results.toString();
             }
         });
+        searchTerm.setMustEscape(false);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
