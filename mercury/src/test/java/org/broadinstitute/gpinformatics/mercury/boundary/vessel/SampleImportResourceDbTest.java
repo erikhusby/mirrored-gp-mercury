@@ -1,14 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.glassfish.jersey.client.ClientConfig;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -16,6 +13,10 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -63,16 +64,15 @@ public class SampleImportResourceDbTest extends StubbyContainerTest {
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         // POST to the resource
-        WebResource resource = Client.create(clientConfig)
-                .resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/sampleimport");
-        String response = resource.type(MediaType.APPLICATION_XML_TYPE)
+        WebTarget resource = ClientBuilder.newClient(clientConfig)
+                .target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/sampleimport");
+        String response = resource.request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
-                .entity(sampleImportBeanPost)
-                .post(String.class);
+                .post(Entity.xml(sampleImportBeanPost), String.class);
 
         // GET from the resource to verify persistence
         String batchName = response.substring(response.lastIndexOf(": ") + 2);
-        SampleImportBean sampleImportBeanGet = resource.path(batchName).get(SampleImportBean.class);
+        SampleImportBean sampleImportBeanGet = resource.path(batchName).request().get(SampleImportBean.class);
         Assert.assertEquals(sampleImportBeanGet.getParentVesselBeans().iterator().next().getChildVesselBeans().size(),
                 sampleImportBeanPost.getParentVesselBeans().iterator().next().getChildVesselBeans().size(),
                 "Wrong number of tubes");
@@ -107,14 +107,13 @@ public class SampleImportResourceDbTest extends StubbyContainerTest {
                 parentVesselBeans, "");
 
         // POST to the resource
-        WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "rest/sampleimport");
+        WebTarget resource = ClientBuilder.newClient().target(baseUrl.toExternalForm() + "rest/sampleimport");
         try {
-            String response = resource.type(MediaType.APPLICATION_XML_TYPE)
+            String response = resource.request(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
-                    .entity(sampleImportBeanPost)
-                    .post(String.class);
+                    .post(Entity.xml(sampleImportBeanPost), String.class);
             Assert.fail();
-        } catch (UniformInterfaceException e) {
+        } catch (WebApplicationException e) {
 
         }
     }
@@ -140,14 +139,13 @@ public class SampleImportResourceDbTest extends StubbyContainerTest {
                 parentVesselBeans, badUserName);
 
         // POST to the resource
-        WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "rest/sampleimport");
+        WebTarget resource = ClientBuilder.newClient().target(baseUrl.toExternalForm() + "rest/sampleimport");
         try {
-            String response = resource.type(MediaType.APPLICATION_XML_TYPE)
+            String response = resource.request(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
-                    .entity(sampleImportBeanPost)
-                    .post(String.class);
+                    .post(Entity.xml(sampleImportBeanPost), String.class);
             Assert.fail();
-        } catch (UniformInterfaceException e) {
+        } catch (WebApplicationException e) {
 
         }
     }

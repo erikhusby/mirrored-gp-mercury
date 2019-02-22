@@ -50,7 +50,7 @@ public class ProductOrderSampleFixupTest extends Arquillian {
      */
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(DEV, "prod");
     }
 
     @Test(enabled = false)
@@ -132,7 +132,7 @@ public class ProductOrderSampleFixupTest extends Arquillian {
      * 1 SM-A8XL2 G1234
      * 2 SM-A8XL3 G3456
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void fixupGplim5598AggParticle() {
         userBean.loginOSUser();
 

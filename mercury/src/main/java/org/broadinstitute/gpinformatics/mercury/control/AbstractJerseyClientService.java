@@ -1,15 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.ClientRequest;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.api.client.filter.ClientFilter;
-import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
-import com.sun.jersey.api.json.JSONConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.logging.Log;
@@ -18,9 +8,19 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientResponse;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.client.ClientResponseContext;
+import javax.ws.rs.client.ClientResponseFilter;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -53,7 +53,7 @@ public abstract class AbstractJerseyClientService implements Serializable {
      * Subclasses can call this to turn on JSON processing support for client calls.
      */
     protected void supportJson(ClientConfig clientConfig) {
-        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+//        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
     }
 
     /**
@@ -61,18 +61,18 @@ public abstract class AbstractJerseyClientService implements Serializable {
      *
      */
     protected void specifyHttpAuthCredentials(Client client, LoginAndPassword loginAndPassword) {
-        client.addFilter(new HTTPBasicAuthFilter(loginAndPassword.getLogin(), loginAndPassword.getPassword()));
+        client.register(HttpAuthenticationFeature.basic(loginAndPassword.getLogin(), loginAndPassword.getPassword()));
     }
 
     /**
      * Subclasses can call this to force a MIME type on the response if needed (Quote service)
      */
     protected void forceResponseMimeTypes(Client client, final MediaType... mediaTypes) {
-        client.addFilter(new ClientFilter() {
+        client.register(new ClientResponseFilter() {
             @Override
-            public ClientResponse handle(ClientRequest cr) throws ClientHandlerException {
-                ClientResponse resp = getNext().handle(cr);
-                MultivaluedMap<String, String> map = resp.getHeaders();
+            public void filter(ClientRequestContext clientRequestContext, ClientResponseContext clientResponseContext) throws IOException {
+
+                MultivaluedMap<String, String> map = clientResponseContext.getHeaders();
                 List<String> mimeTypes = new ArrayList<>();
 
                 for (MediaType mediaType : mediaTypes) {
@@ -80,7 +80,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
                 }
 
                 map.put("Content-Type", mimeTypes);
-                return resp;
             }
         });
     }
@@ -90,13 +89,13 @@ public abstract class AbstractJerseyClientService implements Serializable {
      */
     protected Client getJerseyClient() {
         if (jerseyClient == null) {
-            DefaultClientConfig clientConfig = new DefaultClientConfig();
+            ClientBuilder clientBuilder = ClientBuilder.newBuilder();
             if(deployment != Deployment.PROD) {
-                JerseyUtils.acceptAllServerCertificates(clientConfig);
+                JerseyUtils.acceptAllServerCertificates(clientBuilder);
             }
-            customizeConfig(clientConfig);
+            customizeBuilder(clientBuilder);
 
-            jerseyClient = Client.create(clientConfig);
+            jerseyClient = clientBuilder.build();
             customizeClient(jerseyClient);
         }
         return jerseyClient;
@@ -105,9 +104,9 @@ public abstract class AbstractJerseyClientService implements Serializable {
     /**
      * The default for this is to do nothing, but it can be overridden for custom set up.
      *
-     * @param clientConfig The config object
+     * @param clientBuilder The builder object
      */
-    protected void customizeConfig(ClientConfig clientConfig) {
+    protected void customizeBuilder(ClientBuilder clientBuilder) {
     }
 
     /**
@@ -155,14 +154,14 @@ public abstract class AbstractJerseyClientService implements Serializable {
      */
     public void post(@Nonnull String urlString, @Nonnull String paramString, @Nonnull ExtraTab extraTab, @Nonnull PostCallback callback) {
         logger.debug(String.format("URL string is '%s'", urlString));
-        WebResource webResource = getJerseyClient().resource(urlString);
+        WebTarget webTarget = getJerseyClient().target(urlString);
 
         BufferedReader reader = null;
         try {
             ClientResponse clientResponse =
-                    webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, paramString);
+                    webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(Entity.entity(paramString, MediaType.MULTIPART_FORM_DATA_TYPE), ClientResponse.class); // todo jmt is this right?
 
-            InputStream is = clientResponse.getEntityInputStream();
+            InputStream is = clientResponse.getEntityStream();
             reader = new BufferedReader(new InputStreamReader(is));
 
             Response.Status clientResponseStatus = Response.Status.fromStatusCode(clientResponse.getStatus());

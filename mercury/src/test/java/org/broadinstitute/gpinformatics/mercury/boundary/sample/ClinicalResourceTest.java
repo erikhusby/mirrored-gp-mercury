@@ -12,8 +12,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import com.google.common.collect.ImmutableMap;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
@@ -26,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.glassfish.jersey.client.ClientResponse;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -35,16 +34,15 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URL;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 
 @Test(groups = TestGroups.STANDARD)
 public class ClinicalResourceTest extends RestServiceContainerTest {
@@ -73,12 +71,12 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, true, 0);
 
-        WebResource resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
-        ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE)
-                .accept(MediaType.APPLICATION_JSON_TYPE).entity(clinicalResourceBean)
-                .post(ClientResponse.class);
+        WebTarget resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
+        ClientResponse response = resource.request(MediaType.APPLICATION_JSON_TYPE)
+                .accept(MediaType.APPLICATION_JSON_TYPE)
+                .post(Entity.json(clinicalResourceBean), ClientResponse.class);
         assertThat(response.getStatus(), is(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-        String errorMessage = response.getEntity(String.class);
+        String errorMessage = response.readEntity(String.class);
         assertThat(errorMessage, is(ClinicalResource.EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED));
     }
 

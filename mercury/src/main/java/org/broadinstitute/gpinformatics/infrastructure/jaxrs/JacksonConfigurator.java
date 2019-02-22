@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jaxrs;
 
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.ext.ContextResolver;
@@ -21,8 +21,8 @@ public class JacksonConfigurator implements ContextResolver<ObjectMapper> {
     private final ObjectMapper mapper = new ObjectMapper();
 
     public JacksonConfigurator() {
-        mapper.setSerializationConfig(mapper.getSerializationConfig().withDateFormat(new SimpleDateFormat(DATE_FORMAT)));
-        mapper.setDeserializationConfig(mapper.getDeserializationConfig().withDateFormat(new SimpleDateFormat(DATE_FORMAT)));
+        mapper.setDateFormat(new SimpleDateFormat(DATE_FORMAT));
+//        mapper.setDeserializationConfig(mapper.getDeserializationConfig().withDateFormat(new SimpleDateFormat(DATE_FORMAT)));
     }
 
     @Override

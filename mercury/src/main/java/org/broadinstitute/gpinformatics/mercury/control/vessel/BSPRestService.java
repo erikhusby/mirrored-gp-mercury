@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
@@ -10,11 +7,13 @@ import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RegisterNonBroadTubesBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceivedBean;
+import org.glassfish.jersey.client.ClientResponse;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.Serializable;
 import java.util.Map;
@@ -36,36 +35,32 @@ public class BSPRestService implements Serializable {
     public SampleKitInfo getSampleKitDetails(String kitId) {
 
         String urlString = bspRestClient.getUrl(BSP_SAMPLE_KIT_INFO);
-        MultivaluedMap<String, String> parameters = new MultivaluedMapImpl();
-        parameters.add("kit_id", kitId);
-        WebResource webResource = bspRestClient.getWebResource(urlString).queryParams(parameters);
+        WebTarget webResource = bspRestClient.getWebResource(urlString).queryParam("kit_id", kitId);
 
         // Posts message to BSP using the specified REST url.
-        ClientResponse response = webResource.type(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+        ClientResponse response = webResource.request(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            throw new RuntimeException("GET to " + urlString + " returned: " + response.getEntity(String.class));
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            throw new RuntimeException("GET to " + urlString + " returned: " + response.readEntity(String.class));
         }
 
-        return response.getEntity(SampleKitInfo.class);
+        return response.readEntity(SampleKitInfo.class);
     }
 
     public GetSampleDetails.SampleDetails getSampleInfoForContainer(String containerId) {
         String urlString = bspRestClient.getUrl(BSP_CONTAINER_SAMPLE_INFO);
-        MultivaluedMap<String, String> parameters = new MultivaluedMapImpl();
-        parameters.add("containerBarcode", containerId);
-        WebResource webResource = bspRestClient.getWebResource(urlString).queryParams(parameters);
+        WebTarget webResource = bspRestClient.getWebResource(urlString).queryParam("containerBarcode", containerId);
 
         // Posts message to BSP using the specified REST url.
-        ClientResponse response = webResource.type(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+        ClientResponse response = webResource.request(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            throw new RuntimeException("GET to " + urlString + " returned: " + response.getEntity(String.class));
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            throw new RuntimeException("GET to " + urlString + " returned: " + response.readEntity(String.class));
         }
 
-        return response.getEntity(GetSampleDetails.SampleDetails.class);
+        return response.readEntity(GetSampleDetails.SampleDetails.class);
     }
 
     /**
@@ -88,18 +83,18 @@ public class BSPRestService implements Serializable {
 
         String urlString = bspRestClient.getUrl(BSP_RECEIVE_NON_BROAD_SAMPLE);
 
-        WebResource webResource = bspRestClient.getWebResource(urlString);
+        WebTarget webResource = bspRestClient.getWebResource(urlString);
 
-        ClientResponse response = webResource.accept(MediaType.APPLICATION_XML)
-                .post(ClientResponse.class, registerNonBroadTubesBean);
+        ClientResponse response = webResource.request(MediaType.APPLICATION_XML)
+                .post(Entity.xml(registerNonBroadTubesBean), ClientResponse.class);
 
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             SampleKitReceivedBean receiptResponse = new SampleKitReceivedBean(false);
-            logger.warn("POST to " + urlString + " returned: " + response.getEntity(String.class));
+            logger.warn("POST to " + urlString + " returned: " + response.readEntity(String.class));
             return receiptResponse;
         }
 
-        return response.getEntity(SampleKitReceivedBean.class);
+        return response.readEntity(SampleKitReceivedBean.class);
     }
 
     public void setBspRestClient(BSPRestClient bspRestClient) {

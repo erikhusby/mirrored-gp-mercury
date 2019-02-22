@@ -1,12 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.map.ObjectMapper;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,89 +36,89 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
     }
 
     /**
-     * Set the JSON MIME types for both request and response on the {@link WebResource}
+     * Set the JSON MIME types for both request and response on the {@link WebTarget}
      */
-    protected WebResource.Builder setJsonMimeTypes(WebResource webResource) {
-        return webResource.type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON_TYPE);
+    protected Invocation.Builder setJsonMimeTypes(WebTarget webResource) {
+        return webResource.request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON_TYPE);
     }
 
     /**
-     * POST a JSON representation of the requestPojo to the specified {@link WebResource} and return a POJO
+     * POST a JSON representation of the requestPojo to the specified {@link WebTarget} and return a POJO
      * representation of the response.
      */
-    protected <T> T post(WebResource webResource, Object requestPojo, GenericType<T> responseGenericType) throws IOException {
+    protected <T> T post(WebTarget webResource, Object requestPojo, GenericType<T> responseGenericType) throws IOException {
         String request = writeValue(requestPojo);
 
         log.trace("POST request: " + request);
 
         try {
-            T ret = setJsonMimeTypes(webResource).post(responseGenericType, request);
+            T ret = setJsonMimeTypes(webResource).post(Entity.json(request), responseGenericType);
             log.trace("POST response: " + ret);
             return ret;
-        } catch (UniformInterfaceException e) {
+        } catch (WebApplicationException e) {
             //TODO   Change to a more defined exception to give the option to set in throws or even catch
             log.error("POST request: " + request, e);
-            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+            throw new RuntimeException(e.getResponse().readEntity(String.class), e);
         }
     }
 
     /**
-     * POST a JSON representation of the requestPojo to the specified {@link WebResource} This method is used when a
+     * POST a JSON representation of the requestPojo to the specified {@link WebTarget} This method is used when a
      * a post does not expect a response (HTTP Status code in the 200 range)
      */
-    protected void post(WebResource webResource, Object requestPojo) throws IOException {
+    protected void post(WebTarget webResource, Object requestPojo) throws IOException {
         String request = writeValue(requestPojo);
 
         log.trace("POST request: " + request);
 
         try {
-            setJsonMimeTypes(webResource).post(request);
-        } catch (UniformInterfaceException e) {
+            setJsonMimeTypes(webResource).post(Entity.json(request));
+        } catch (WebApplicationException e) {
             //TODO  Change to a more defined exception to give the option to set in throws or even catch
             log.error("POST request: " + request, e);
-            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+            throw new RuntimeException(e.getResponse().readEntity(String.class), e);
         }
     }
 
     /**
-     * PUT a JSON representation of the requestPojo to the specified {@link WebResource} and return a POJO
+     * PUT a JSON representation of the requestPojo to the specified {@link WebTarget} and return a POJO
      * representation of the response.
      */
-    protected void put(WebResource webResource, Object requestPojo) throws IOException {
+    protected void put(WebTarget webResource, Object requestPojo) throws IOException {
         String request = writeValue(requestPojo);
         log.trace("PUT request: " + request);
         try {
-            setJsonMimeTypes(webResource).put(request);
-        } catch (UniformInterfaceException e) {
+            setJsonMimeTypes(webResource).put(Entity.json(request));
+        } catch (WebApplicationException e) {
             //TODO Change to a more defined exception to give the option to set in throws or even catch
             log.error("PUT request: " + request, e);
-            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+            throw new RuntimeException(e.getResponse().readEntity(String.class), e);
         }
     }
 
     /**
-     * Return a JSON representation of the response to a GET issued to the specified {@link WebResource}
+     * Return a JSON representation of the response to a GET issued to the specified {@link WebTarget}
      */
-    protected <T> T get(WebResource webResource, GenericType<T> genericType) {
+    protected <T> T get(WebTarget webResource, GenericType<T> genericType) {
         try {
             return setJsonMimeTypes(webResource).get(genericType);
-        } catch (UniformInterfaceException e) {
+        } catch (WebApplicationException e) {
             //TODO Change to a more defined exception to give the option to set in throws or even catch
-            log.error("GET request" + webResource.getURI(), e);
-            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+            log.error("GET request" + webResource.getUri(), e);
+            throw new RuntimeException(e.getResponse().readEntity(String.class), e);
         }
     }
 
     /**
-     * Return a JSON representation of the response to a GET issued to the specified {@link WebResource}
+     * Return a JSON representation of the response to a GET issued to the specified {@link WebTarget}
      */
-    protected void delete(WebResource webResource) {
+    protected void delete(WebTarget webResource) {
         try {
             setJsonMimeTypes(webResource).delete();
-        } catch (UniformInterfaceException e) {
+        } catch (WebApplicationException e) {
             //TODO Change to a more defined exception to give the option to set in throws or even catch
-            log.error("DELETE request" + webResource.getURI(), e);
-            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+            log.error("DELETE request" + webResource.getUri(), e);
+            throw new RuntimeException(e.getResponse().readEntity(String.class), e);
         }
     }
 }

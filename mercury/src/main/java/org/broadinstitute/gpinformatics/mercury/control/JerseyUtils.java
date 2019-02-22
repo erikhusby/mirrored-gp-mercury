@@ -1,20 +1,17 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -26,29 +23,31 @@ import java.util.Map;
 public class JerseyUtils {
     private static final int DEFAULT_TIMEOUT_MILLISECONDS = 300000;
 
-    public static WebResource.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
-        WebResource resource = getWebResourceBase(squidWSUrl, mediaType);
-        return resource.type(mediaType);
+    public static Invocation.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
+        WebTarget resource = getWebResourceBase(squidWSUrl, mediaType);
+        return resource.request(mediaType);
     }
 
-    public static WebResource.Builder getWebResource(String wSUrl, MediaType mediaType, Map<String, List<String>> parameters) {
-        WebResource resource = getWebResourceBase(wSUrl, mediaType);
-        MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-        params.putAll(parameters);
-        resource.queryParams(params);
-        return resource.queryParams(params).type(mediaType);
+    public static Invocation.Builder getWebResource(String wSUrl, MediaType mediaType, Map<String, List<String>> parameters) {
+        WebTarget resource = getWebResourceBase(wSUrl, mediaType);
+//        MultivaluedMap<String, String> params = new MultivaluedHashMap<>();
+//        params.putAll(parameters);
+        for (Map.Entry<String, List<String>> stringListEntry : parameters.entrySet()) {
+            resource = resource.queryParam(stringListEntry.getKey(), stringListEntry.getValue());
+        }
+        return resource.request(mediaType);
     }
 
-    public static WebResource getWebResourceBase(String wsUrl, MediaType mediaType) {
-        ClientConfig clientConfig = new DefaultClientConfig();
-        clientConfig.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, DEFAULT_TIMEOUT_MILLISECONDS);
-        clientConfig.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, DEFAULT_TIMEOUT_MILLISECONDS);
-        if (mediaType == MediaType.APPLICATION_JSON_TYPE) {
+    public static WebTarget getWebResourceBase(String wsUrl, MediaType mediaType) {
+        ClientConfig clientConfig = new ClientConfig();
+        clientConfig.property(ClientProperties.READ_TIMEOUT, DEFAULT_TIMEOUT_MILLISECONDS);
+        clientConfig.property(ClientProperties.CONNECT_TIMEOUT, DEFAULT_TIMEOUT_MILLISECONDS);
+        if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
             clientConfig.getClasses().add(JacksonJsonProvider.class);
         }
-        Client client = Client.create(clientConfig);
+        Client client = ClientBuilder.newClient(clientConfig);
 
-        return client.resource(wsUrl);
+        return client.target(wsUrl);
     }
 
     /**
@@ -61,10 +60,10 @@ public class JerseyUtils {
      * this is probably okay.
      *
      */
-    public static void acceptAllServerCertificates(ClientConfig config) {
+    public static void acceptAllServerCertificates(ClientBuilder clientBuilder) {
         try {
             // Create a trust manager that does not validate certificate chains
-            TrustManager[] trustAllCerts = new TrustManager[] {
+            TrustManager[] trustAllCerts = {
                     new X509TrustManager() {
                         @Override
                         public X509Certificate[] getAcceptedIssuers() {
@@ -82,15 +81,7 @@ public class JerseyUtils {
             SSLContext sc = SSLContext.getInstance("TLS");
             sc.init(null, trustAllCerts, new SecureRandom());
 
-
-            config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(
-                    new HostnameVerifier() {
-                        @Override
-                        public boolean verify(String s, SSLSession sslSession) {
-                            return true;
-                        }
-                    }, sc
-            ));
+            clientBuilder.sslContext(sc).hostnameVerifier((s, sslSession) -> true);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -101,8 +92,8 @@ public class JerseyUtils {
      * signed.  Mainly useful when testing which is where the existence of an unsigned certificate is most likely
      */
     public static ClientConfig getClientConfigAcceptCertificate() {
-        ClientConfig clientConfig = new DefaultClientConfig();
-        acceptAllServerCertificates(clientConfig);
-        return clientConfig;
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+        acceptAllServerCertificates(clientBuilder);
+        return (ClientConfig) clientBuilder.getConfiguration();
     }
 }

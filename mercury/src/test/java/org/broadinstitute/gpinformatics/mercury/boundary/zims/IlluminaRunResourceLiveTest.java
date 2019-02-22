@@ -1,9 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.json.JSONConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
@@ -11,6 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -19,6 +17,8 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 
@@ -83,22 +83,22 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
     }
 
     public static ZimsIlluminaRun getZimsIlluminaRun(URL baseUrl, String runName) throws Exception {
-        WebResource.Builder builder = getBuilder(baseUrl, runName);
+        Invocation.Builder builder = getBuilder(baseUrl, runName);
         return builder.get(ZimsIlluminaRun.class);
     }
 
     public static String getZimsIlluminaRunString(URL baseUrl, String runName) throws Exception {
-        WebResource.Builder builder = getBuilder(baseUrl, runName);
+        Invocation.Builder builder = getBuilder(baseUrl, runName);
         return builder.get(String.class);
     }
 
-    private static WebResource.Builder getBuilder(URL baseUrl, String runName) throws Exception {
+    private static Invocation.Builder getBuilder(URL baseUrl, String runName) throws Exception {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + IlluminaRunResourceTest.WEBSERVICE_URL;
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
-        return Client.create(clientConfig).resource(url)
+//        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+        return ClientBuilder.newClient(clientConfig).target(url)
                 .queryParam("runName", runName)
-                .accept(MediaType.APPLICATION_JSON);
+                .request(MediaType.APPLICATION_JSON);
     }
 }

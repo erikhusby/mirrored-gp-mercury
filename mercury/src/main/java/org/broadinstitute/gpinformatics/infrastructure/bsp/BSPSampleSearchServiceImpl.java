@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
@@ -10,6 +8,8 @@ import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientServ
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -96,7 +96,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                     ret.add(newMap);
                 }
             });
-        } catch (ClientHandlerException clientException) {
+        } catch (WebApplicationException clientException) {
             throw new BSPLookupException("Error connecting to BSP", clientException);
         } catch (UnsupportedEncodingException uex) {
             throw new RuntimeException(uex);

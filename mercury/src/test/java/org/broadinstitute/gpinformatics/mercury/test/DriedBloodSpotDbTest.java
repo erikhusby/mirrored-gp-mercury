@@ -1,23 +1,25 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.test.builders.DriedBloodSpotJaxbBuilder;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Tests Dried Blood Spot messaging, including persistence
@@ -25,6 +27,8 @@ import java.util.List;
 @Test(groups = TestGroups.STUBBY)
 @Dependent
 public class DriedBloodSpotDbTest extends StubbyContainerTest {
+
+    private final Logger logger = Logger.getLogger("DriedBloodSpotDbTest");
 
     public DriedBloodSpotDbTest(){}
 
@@ -43,8 +47,8 @@ public class DriedBloodSpotDbTest extends StubbyContainerTest {
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
-        Client client = Client.create(clientConfig);
-        client.addFilter(new LoggingFilter(System.out));
+        Client client = ClientBuilder.newClient(clientConfig);
+        client.register(new LoggingFeature(logger));
 
         DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder =
                 new DriedBloodSpotJaxbBuilder(ftaPaperBarcodes, batchId, timestamp);

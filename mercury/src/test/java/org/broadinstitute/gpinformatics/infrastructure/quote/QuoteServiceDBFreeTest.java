@@ -1,14 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.easymock.EasyMock;
+import org.glassfish.jersey.client.ClientResponse;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -59,7 +60,7 @@ public class QuoteServiceDBFreeTest {
         QuoteServiceImpl service = new QuoteServiceImpl(null);
         ClientResponse mockResponse = EasyMock.createMock(ClientResponse.class);
 
-        EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(ClientResponse.Status.BAD_REQUEST).atLeastOnce();
+        EasyMock.expect(mockResponse.getStatusInfo()).andReturn(Response.Status.BAD_REQUEST).atLeastOnce();
         EasyMock.replay(mockResponse);
         try {
             service.registerNewWork(mockResponse,quote, quotePriceItem,0.0001);
@@ -74,7 +75,7 @@ public class QuoteServiceDBFreeTest {
         QuoteServiceImpl service = new QuoteServiceImpl(null);
         ClientResponse mockResponse = EasyMock.createMock(ClientResponse.class);
         EasyMock.reset(mockResponse);
-        EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(null).atLeastOnce();
+        EasyMock.expect(mockResponse.getStatusInfo()).andReturn(null).atLeastOnce();
         EasyMock.replay(mockResponse);
         try {
             service.registerNewWork(mockResponse,quote, quotePriceItem,0.0001);
@@ -84,8 +85,8 @@ public class QuoteServiceDBFreeTest {
         EasyMock.verify(mockResponse);
 
         EasyMock.reset(mockResponse);
-        EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(ClientResponse.Status.OK).atLeastOnce();
-        EasyMock.expect(mockResponse.getEntity(String.class)).andReturn(null).atLeastOnce();
+        EasyMock.expect(mockResponse.getStatusInfo()).andReturn(Response.Status.OK).atLeastOnce();
+        EasyMock.expect(mockResponse.readEntity(String.class)).andReturn(null).atLeastOnce();
 
         EasyMock.replay(mockResponse);
         try {
@@ -102,8 +103,8 @@ public class QuoteServiceDBFreeTest {
         ClientResponse mockResponse = EasyMock.createMock(ClientResponse.class);
 
         EasyMock.reset(mockResponse);
-        EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(ClientResponse.Status.OK).atLeastOnce();
-        EasyMock.expect(mockResponse.getEntity(String.class)).andReturn("Oh Crap!").atLeastOnce();
+        EasyMock.expect(mockResponse.getStatusInfo()).andReturn(Response.Status.OK).atLeastOnce();
+        EasyMock.expect(mockResponse.readEntity(String.class)).andReturn("Oh Crap!").atLeastOnce();
 
         EasyMock.replay(mockResponse);
         try {
@@ -114,8 +115,8 @@ public class QuoteServiceDBFreeTest {
         EasyMock.verify(mockResponse);
 
         EasyMock.reset(mockResponse);
-        EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(ClientResponse.Status.OK).atLeastOnce();
-        EasyMock.expect(mockResponse.getEntity(String.class)).andReturn(QuoteServiceImpl.WORK_ITEM_ID + QuoteServiceImpl.WORK_ITEM_ID + "Oh\tCrap").atLeastOnce();
+        EasyMock.expect(mockResponse.getStatusInfo()).andReturn(Response.Status.OK).atLeastOnce();
+        EasyMock.expect(mockResponse.readEntity(String.class)).andReturn(QuoteServiceImpl.WORK_ITEM_ID + QuoteServiceImpl.WORK_ITEM_ID + "Oh\tCrap").atLeastOnce();
 
         EasyMock.replay(mockResponse);
         try {
@@ -126,8 +127,8 @@ public class QuoteServiceDBFreeTest {
         EasyMock.verify(mockResponse);
 
         EasyMock.reset(mockResponse);
-        EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(ClientResponse.Status.OK).atLeastOnce();
-        EasyMock.expect(mockResponse.getEntity(String.class)).andReturn(QuoteServiceImpl.WORK_ITEM_ID + " ").atLeastOnce();
+        EasyMock.expect(mockResponse.getStatusInfo()).andReturn(Response.Status.OK).atLeastOnce();
+        EasyMock.expect(mockResponse.readEntity(String.class)).andReturn(QuoteServiceImpl.WORK_ITEM_ID + " ").atLeastOnce();
 
         EasyMock.replay(mockResponse);
         try {

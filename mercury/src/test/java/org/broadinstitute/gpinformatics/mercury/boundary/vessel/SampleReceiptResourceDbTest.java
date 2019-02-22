@@ -1,13 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactoryTest;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.glassfish.jersey.client.ClientConfig;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -15,6 +13,9 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -40,16 +41,15 @@ public class SampleReceiptResourceDbTest extends StubbyContainerTest {
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
-        WebResource resource = Client.create(clientConfig)
-                .resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/samplereceipt");
-        String response = resource.type(MediaType.APPLICATION_XML_TYPE)
+        WebTarget resource = ClientBuilder.newClient(clientConfig)
+                .target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/samplereceipt");
+        String response = resource.request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
-                .entity(sampleReceiptBean)
-                .post(String.class);
+                .post(Entity.xml(sampleReceiptBean), String.class);
 
         // GET from the resource to verify persistence
         String batchName = response.substring(response.lastIndexOf(": ") + 2);
-        SampleReceiptBean sampleReceiptBeanGet = resource.path(batchName).get(SampleReceiptBean.class);
+        SampleReceiptBean sampleReceiptBeanGet = resource.path(batchName).request().get(SampleReceiptBean.class);
         Assert.assertEquals(sampleReceiptBeanGet.getParentVesselBeans().size(),
                 sampleReceiptBean.getParentVesselBeans().size(), "Wrong number of tubes");
     }

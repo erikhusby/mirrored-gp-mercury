@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury;
 
-import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
 
 /**
  * This contains common code used by all clients of BSP web services.

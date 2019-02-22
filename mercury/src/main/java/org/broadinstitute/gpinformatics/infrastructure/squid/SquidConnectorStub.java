@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import com.sun.jersey.api.client.UniformInterfaceException;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
@@ -12,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
 import javax.annotation.Nonnull;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 /**
@@ -26,38 +26,38 @@ public class SquidConnectorStub implements SquidConnector{
 
     @Override
     public SquidResponse saveReadStructure(@Nonnull ReadStructureRequest readStructureData, @Nonnull String squidWSUrl)
-            throws UniformInterfaceException {
+            throws WebApplicationException {
         return new SquidConnector.SquidResponse(Response.Status.CREATED.getStatusCode(), "");
     }
 
     @Override
-    public CreateProjectOptions getProjectCreationOptions() throws UniformInterfaceException {
+    public CreateProjectOptions getProjectCreationOptions() throws WebApplicationException {
         return new CreateProjectOptions();
     }
 
 
     @Override
-    public CreateWorkRequestOptions getWorkRequestOptions(String executionType) throws UniformInterfaceException {
+    public CreateWorkRequestOptions getWorkRequestOptions(String executionType) throws WebApplicationException {
         return new CreateWorkRequestOptions();
     }
 
     @Override
-    public ExecutionTypes getProjectExecutionTypes() throws UniformInterfaceException {
+    public ExecutionTypes getProjectExecutionTypes() throws WebApplicationException {
         return new ExecutionTypes();
     }
 
     @Override
-    public AutoWorkRequestOutput createSquidWorkRequest(AutoWorkRequestInput input) throws UniformInterfaceException {
+    public AutoWorkRequestOutput createSquidWorkRequest(AutoWorkRequestInput input) throws WebApplicationException {
         return new AutoWorkRequestOutput();
     }
 
     @Override
-    public OligioGroups getOligioGroups() throws UniformInterfaceException {
+    public OligioGroups getOligioGroups() throws WebApplicationException {
         return null;
     }
 
     @Override
-    public SampleReceptacleGroup getGroupReceptacles(String groupName) throws UniformInterfaceException {
+    public SampleReceptacleGroup getGroupReceptacles(String groupName) throws WebApplicationException {
         return null;
     }
 }

@@ -1,13 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.bsp;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.glassfish.jersey.client.ClientConfig;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -18,6 +16,8 @@ import org.testng.annotations.Test;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -86,8 +86,8 @@ public class BadgesProductionTest extends Arquillian {
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
-        final WebResource badgeResource =
-                Client.create(clientConfig).resource(appConfig.getUrl() + "rest/limsQuery/fetchUserIdForBadgeId");
+        final WebTarget badgeResource =
+                ClientBuilder.newClient(clientConfig).target(appConfig.getUrl() + "rest/limsQuery/fetchUserIdForBadgeId");
 
         while (badgesReader.ready()) {
             String[] columns = badgesReader.readLine().split(",");
@@ -103,7 +103,7 @@ public class BadgesProductionTest extends Arquillian {
                 assertThat(badgeId, equalTo(bspList.getByUsername(username).getBadgeNumber()));
                 String result =
                         badgeResource.queryParam("badgeId", badgeId)
-                                .accept(APPLICATION_JSON_TYPE)
+                                .request(APPLICATION_JSON_TYPE)
                                 .get(String.class);
 
                 assertThat(result, equalTo(username));

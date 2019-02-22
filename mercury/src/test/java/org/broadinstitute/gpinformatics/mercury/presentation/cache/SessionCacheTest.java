@@ -11,12 +11,12 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.cache;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockServletContext;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.codehaus.jackson.type.TypeReference;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -27,10 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.broadinstitute.gpinformatics.mercury.presentation.cache.SessionCacheTest.INVOCATION_COUNT;
 import static org.broadinstitute.gpinformatics.mercury.presentation.cache.SessionCacheTest.THREADPOOL_SIZE;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 
 @Test(groups = TestGroups.MULTITHREADED, threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT)

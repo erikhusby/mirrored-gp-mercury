@@ -11,32 +11,26 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import com.sun.jersey.api.client.ClientResponse;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.glassfish.jersey.client.ClientResponse;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasItemInArray;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsEmptyCollection.emptyCollectionOf;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, singleThreaded = true)
@@ -70,12 +64,12 @@ public class SubmissionsServiceImplTest {
 
     public void testServerResponseBadRequest() {
         ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
-        Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.BAD_REQUEST.getStatusCode());
+        Mockito.when(clientResponse.getStatus()).thenReturn(Response.Status.BAD_REQUEST.getStatusCode());
         String activityName = "just testing y'all";
         String exceptonMessage = "There was an error";
         String errorMessage = String.format("Error received while %s: %s (%d)", activityName, exceptonMessage,
-                ClientResponse.Status.BAD_REQUEST.getStatusCode());
-        Mockito.when(clientResponse.getEntity(String.class)).thenReturn(exceptonMessage);
+                Response.Status.BAD_REQUEST.getStatusCode());
+        Mockito.when(clientResponse.readEntity(String.class)).thenReturn(exceptonMessage);
         SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
         try {
             submissionsServiceImpl.validateResponseStatus(activityName, clientResponse);
@@ -90,7 +84,7 @@ public class SubmissionsServiceImplTest {
 
     public void testServerResponseOK() {
         ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
-        Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.OK.getStatusCode());
+        Mockito.when(clientResponse.getStatus()).thenReturn(Response.Status.OK.getStatusCode());
         SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
         try {
             submissionsServiceImpl.validateResponseStatus(null, clientResponse);

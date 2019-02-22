@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
-import com.sun.jersey.api.client.Client;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.workrequest.WorkRequest;
@@ -10,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
 
 /**
  * Common code for BSP service clients for working with various types of BSP work requests.

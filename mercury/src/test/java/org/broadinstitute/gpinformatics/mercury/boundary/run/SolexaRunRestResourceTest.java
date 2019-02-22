@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -32,7 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.glassfish.jersey.client.ClientConfig;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -43,6 +42,8 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -213,11 +214,11 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
-        Response response = Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun")
-                .type(MediaType.APPLICATION_XML_TYPE)
+        Response response = ClientBuilder.newClient(clientConfig).target(appConfig.getUrl() + "rest/solexarun")
+                .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
-                .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
-                        runFileDirectory, null)).post(Response.class);
+                .post(Entity.xml(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
+                        runFileDirectory, null)), Response.class);
 
 
         Assert.assertEquals(response.getStatus(), Response.Status.CREATED);
@@ -243,11 +244,11 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
-        Response response = Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun")
-                .type(MediaType.APPLICATION_XML_TYPE)
+        Response response = ClientBuilder.newClient(clientConfig).target(appConfig.getUrl() + "rest/solexarun")
+                .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
-                .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
-                        runFileDirectory, reagentKitBarcode)).post(Response.class);
+                .post(Entity.xml(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
+                        runFileDirectory, reagentKitBarcode)), Response.class);
 
 
         Assert.assertEquals(response.getStatus(), Response.Status.CREATED);
@@ -284,9 +285,9 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
         clientConfig.getClasses().add(JacksonJsonProvider.class);
 
         Response readStructureResult =
-                Client.create(clientConfig).resource(wsUrl)
-                        .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                        .entity(readStructureData).post(Response.class);
+                ClientBuilder.newClient(clientConfig).target(wsUrl)
+                        .request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
+                        .post(Entity.json(readStructureData), Response.class);
 
         Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getSetupReadStructure(),
                 readStructureData.getSetupReadStructure());
@@ -321,9 +322,9 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
 
-        ReadStructureRequest returnedReadStructureRequest = Client.create(clientConfig).resource(wsUrl).
-                type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(readStructureData).
-                post(ReadStructureRequest.class);
+        ReadStructureRequest returnedReadStructureRequest = ClientBuilder.newClient(clientConfig).target(wsUrl).
+                request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).
+                post(Entity.json(readStructureData), ReadStructureRequest.class);
 
         ZimsIlluminaRun zimsIlluminaRun = IlluminaRunResourceLiveTest.getZimsIlluminaRun(baseUrl,
                 "140225_SL-HDJ_0314_AFCH7HBEADXX");

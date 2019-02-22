@@ -1,21 +1,22 @@
 package org.broadinstitute.gpinformatics.infrastructure.decoder;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataBodyPart;
-import com.sun.jersey.multipart.FormDataMultiPart;
-import com.sun.jersey.multipart.MultiPart;
-import com.sun.jersey.multipart.file.FileDataBodyPart;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.barcode.generated.DecodeResponse;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.glassfish.jersey.client.ClientResponse;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.MultiPart;
+import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -47,8 +48,8 @@ public class BarcodeDecoderRestClient extends AbstractJerseyClientService {
     protected void customizeClient(Client client) {
     }
 
-    public WebResource getWebResource(String urlString) {
-        return getJerseyClient().resource(urlString);
+    public WebTarget getWebResource(String urlString) {
+        return getJerseyClient().target(urlString);
     }
 
     public DecodeResponse analyzeImage(File file, String eventClass) throws IOException {
@@ -65,14 +66,14 @@ public class BarcodeDecoderRestClient extends AbstractJerseyClientService {
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
 
         ClientResponse response = getWebResource(url)
-                .type(MediaType.MULTIPART_FORM_DATA_TYPE).accept(MediaType.APPLICATION_JSON)
-                .post(ClientResponse.class, multiPart);
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            String responseEntity = response.getEntity(String.class);
+                .request(MediaType.MULTIPART_FORM_DATA_TYPE).accept(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()),  ClientResponse.class);
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            String responseEntity = response.readEntity(String.class);
             log.error("Error when calling decode server: " + responseEntity);
             throw new RuntimeException("POST to " + url + " returned: " + responseEntity);
         } else {
-            String json = response.getEntity(String.class);
+            String json = response.readEntity(String.class);
             ObjectMapper mapper = new ObjectMapper();
             return mapper.readValue(json, DecodeResponse.class);
         }

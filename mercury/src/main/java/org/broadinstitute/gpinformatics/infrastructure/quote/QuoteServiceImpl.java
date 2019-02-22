@@ -1,13 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -16,9 +8,10 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.ClientResponse;
 import org.owasp.encoder.Encode;
 import org.w3c.dom.Document;
 
@@ -26,15 +19,22 @@ import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @ApplicationScoped
@@ -132,36 +132,38 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         String url = url(endpoint);
         log.info("Quote server endpoint is:  " + url);
 
-        MultivaluedMap<String, String> params = new MultivaluedMapImpl();
+        Map<String, String> params = new HashMap<>();
 
-        params.add("quote_alpha_id", quote.getAlphanumericId());
-        params.add("platform_name", quotePriceItem.getPlatformName());
-        params.add("category_name", quotePriceItem.getCategoryName());
+        params.put("quote_alpha_id", quote.getAlphanumericId());
+        params.put("platform_name", quotePriceItem.getPlatformName());
+        params.put("category_name", quotePriceItem.getCategoryName());
 
         // Handle replacement item logic.
         if (itemIsReplacing == null) {
             // This is not a replacement item, so just send the price item through.
-            params.add("price_item_name", quotePriceItem.getName());
+            params.put("price_item_name", quotePriceItem.getName());
         } else {
             // This IS a replacement item, so send the original price through and the real price item as a replacement.
-            params.add("price_item_name", itemIsReplacing.getName());
-            params.add("replacement_item_name", quotePriceItem.getName());
+            params.put("price_item_name", itemIsReplacing.getName());
+            params.put("replacement_item_name", quotePriceItem.getName());
         }
 
-        params.add("quantity", String.valueOf(numWorkUnits));
-        params.add("complete", Boolean.TRUE.toString());
-        params.add("completion_date", dateFormat.format(reportedCompletionDate));
-        params.add("url", callbackUrl);
-        params.add("object_type", callbackParameterName);
-        params.add("object_value", callbackParameterValue);
+        params.put("quantity", String.valueOf(numWorkUnits));
+        params.put("complete", Boolean.TRUE.toString());
+        params.put("completion_date", dateFormat.format(reportedCompletionDate));
+        params.put("url", callbackUrl);
+        params.put("object_type", callbackParameterName);
+        params.put("object_value", callbackParameterValue);
         if(priceAdjustment != null) {
-            params.add("price_adjustment", String.valueOf(priceAdjustment));
+            params.put("price_adjustment", String.valueOf(priceAdjustment));
         }
 
-        WebResource resource = getJerseyClient().resource(url);
-        resource.accept(MediaType.TEXT_PLAIN);
-        resource.queryParams(params);
-        ClientResponse response = resource.queryParams(params).get(ClientResponse.class);
+        WebTarget resource = getJerseyClient().target(url);
+        for (Map.Entry<String, String> stringStringEntry : params.entrySet()) {
+            resource = resource.queryParam(stringStringEntry.getKey(), stringStringEntry.getValue());
+        }
+
+        ClientResponse response = resource.request(MediaType.TEXT_PLAIN).get(ClientResponse.class);
         if (response == null) {
             throw newQuoteServerFailureException(quote, quotePriceItem, numWorkUnits);
         }
@@ -176,14 +178,14 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
      */
     String registerNewWork(@Nonnull ClientResponse response, Quote quote, QuotePriceItem quotePriceItem, double numWorkUnits) {
 
-        if (response.getClientResponseStatus() != ClientResponse.Status.OK) {
+        if (response.getStatusInfo() != Response.Status.OK) {
             throw new RuntimeException(
-                    "Quote server returned " + response.getClientResponseStatus() + ".  registering work for "
+                    "Quote server returned " + response.getStatus() + ".  registering work for "
                     + numWorkUnits + " of " + quotePriceItem.getName() + " against quote " + quote.getAlphanumericId()
                     + " appears to have failed.");
         }
 
-        String output = response.getEntity(String.class);
+        String output = response.readEntity(String.class);
         String workItemId;
 
         if (output == null) {
@@ -216,13 +218,13 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     @Override
-    protected void customizeConfig(ClientConfig clientConfig) {
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+    protected void customizeBuilder(ClientBuilder clientBuilder) {
+        JerseyUtils.acceptAllServerCertificates(clientBuilder);
     }
 
     @Override
     protected void customizeClient(Client client) {
-        client.setFollowRedirects(true);
+        client.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         specifyHttpAuthCredentials(client, quoteConfig);
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }
@@ -238,16 +240,12 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     private PriceList getPriceItemsByList(Endpoint targetPriceList) throws QuoteNotFoundException, QuoteServerException {
         String url = url(targetPriceList);
-        WebResource resource = getJerseyClient().resource(url);
+        WebTarget resource = getJerseyClient().target(url);
         PriceList prices;
         try {
-            prices = resource.accept(MediaType.APPLICATION_XML).get(PriceList.class);
-        } catch (UniformInterfaceException e) {
+            prices = resource.request(MediaType.APPLICATION_XML).get(PriceList.class);
+        } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find price list at " + url);
-        } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
-                    e.getLocalizedMessage()));
-
         }
         return prices;
     }
@@ -266,15 +264,13 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
         String url = url(Endpoint.ALL_SEQUENCING_QUOTES);
 
-        WebResource resource = getJerseyClient().resource(url);
+        WebTarget resource = getJerseyClient().target(url);
 
         Quotes quotes;
         try {
-            quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
-        } catch (UniformInterfaceException e) {
+            quotes = resource.request(MediaType.APPLICATION_XML).get(Quotes.class);
+        } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find quotes for sequencing at " + url);
-        } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format(COMMUNICATION_ERROR, url, e.getLocalizedMessage()));
         }
 
         return quotes;
@@ -309,18 +305,16 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         final String ENCODING = "UTF-8";
 
         try {
-            WebResource resource = getJerseyClient().resource(url + URLEncoder.encode(id, ENCODING));
+            WebTarget resource = getJerseyClient().target(url + URLEncoder.encode(id, ENCODING));
 
-            Quotes quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
+            Quotes quotes = resource.request(MediaType.APPLICATION_XML).get(Quotes.class);
             if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
                 throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
             }
-        } catch (UniformInterfaceException e) {
+        } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find quote " + Encode.forHtml(id) + " at " + url);
-        } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format(COMMUNICATION_ERROR, url, e.getLocalizedMessage()));
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("URL encoding not supported: '" + ENCODING + "'", e);
         }
@@ -338,17 +332,13 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     @Override
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
         String url = url( Endpoint.ALL_QUOTES );
-        WebResource resource = getJerseyClient().resource(url);
+        WebTarget resource = getJerseyClient().target(url);
 
         Quotes quotes;
         try {
-            quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
-        } catch (UniformInterfaceException e) {
+            quotes = resource.request(MediaType.APPLICATION_XML).get(Quotes.class);
+        } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
-        } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
-                    e.getLocalizedMessage()));
-
         }
 
         return quotes;
@@ -371,17 +361,14 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     @Override
     public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException {
         String url = url( Endpoint.ALL_FUNDINGS);
-        WebResource resource = getJerseyClient().resource(url);
+        WebTarget resource = getJerseyClient().target(url);
 
         try {
             GenericType<Document> document  = new GenericType<Document>() {};
-            Document doc = resource.accept(MediaType.APPLICATION_XML).get(document);
+            Document doc = resource.request(MediaType.APPLICATION_XML).get(document);
             return Funding.getFundingSet(doc);
-        } catch (UniformInterfaceException e) {
+        } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
-        } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
-                    e.getLocalizedMessage()));
         }
 
     }
@@ -394,7 +381,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         List<String> orderedCategoryNames = new ArrayList<>();
         List<String> orderedPlatformNames = new ArrayList<>();
         List<String> orderedEffectiveDates = new ArrayList<>();
-        MultivaluedMap<String, String> params = new MultivaluedMapImpl();
 
         for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
 
@@ -422,30 +408,31 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         final PriceList priceList;
 
-        params.add("effective_date", StringUtils.join(orderedEffectiveDates, ";;"));
-        params.add("priceitem_name", StringUtils.join(orderedPriceItemNames, ";;"));
-        params.add("platform_name", StringUtils.join(orderedPlatformNames, ";;"));
-        params.add("category_name", StringUtils.join(orderedCategoryNames, ";;"));
+        Map<String, String> params = new HashMap<>();
+        params.put("effective_date", StringUtils.join(orderedEffectiveDates, ";;"));
+        params.put("priceitem_name", StringUtils.join(orderedPriceItemNames, ";;"));
+        params.put("platform_name", StringUtils.join(orderedPlatformNames, ";;"));
+        params.put("category_name", StringUtils.join(orderedCategoryNames, ";;"));
 
         final String urlString = url(Endpoint.PRICE_ITEM_DETAILS);
 
-        WebResource resource = getJerseyClient().resource( urlString);
+        WebTarget resource = getJerseyClient().target( urlString);
 
         try {
-            resource.accept(MediaType.APPLICATION_XML);
-            final ClientResponse clientResponse = resource.queryParams(params).get(ClientResponse.class);
-            priceList = clientResponse.getEntity(PriceList.class);
+            for (Map.Entry<String, String> stringStringEntry : params.entrySet()) {
+                resource = resource.queryParam(stringStringEntry.getKey(), stringStringEntry.getValue());
+            }
+
+            final ClientResponse clientResponse = resource.request(MediaType.APPLICATION_XML).get(ClientResponse.class);
+            priceList = clientResponse.readEntity(PriceList.class);
 
             if(priceList == null) {
                 throw new QuoteServerException("No results returned when looking for price items :" + orderedPriceItemNames);
             }
-        } catch (UniformInterfaceException e) {
+        } catch (WebApplicationException e) {
             final String priceFindErrorMessage = "Could not find specific billing prices for the given work complete dates::";
             log.error(priceFindErrorMessage+urlString, e);
             throw new QuoteServerException(priceFindErrorMessage);
-        } catch (ClientHandlerException e) {
-            log.error("Communication error atempting to retrieve billing prices::" + urlString);
-            throw new QuoteServerException(String.format(COMMUNICATION_ERROR, urlString, e.getLocalizedMessage()));
         }
 
         return priceList;

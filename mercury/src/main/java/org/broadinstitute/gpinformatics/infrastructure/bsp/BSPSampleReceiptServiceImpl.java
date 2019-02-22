@@ -1,15 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import com.thoughtworks.xstream.XStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
+import org.glassfish.jersey.client.ClientResponse;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -60,11 +60,11 @@ public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPS
         // Change to the URL string and fire off the web service.
         String urlString = getUrl(WEB_SERVICE_URL + "?" + parameterString);
 
-        WebResource webResource = getJerseyClient().resource(urlString);
+        WebTarget webResource = getJerseyClient().target(urlString);
 
-        ClientResponse clientResponse = webResource.accept(MediaType.TEXT_PLAIN).post(ClientResponse.class);
+        ClientResponse clientResponse = webResource.request(MediaType.TEXT_PLAIN).post(null, ClientResponse.class);
 
-        InputStream inputStream = clientResponse.getEntityInputStream();
+        InputStream inputStream = clientResponse.getEntityStream();
         Reader reader = null;
 
         Object resultObject = null;

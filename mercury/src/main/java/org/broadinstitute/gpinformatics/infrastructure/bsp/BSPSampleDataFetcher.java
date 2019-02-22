@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
@@ -11,7 +8,11 @@ import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientServ
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.Serializable;
 import java.util.Arrays;
@@ -233,13 +234,12 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
         String urlString = getUrl(WS_SAMPLE_DETAILS);
 
         Map<String, GetSampleDetails.SampleInfo> map = new HashMap<>();
-        WebResource resource = getJerseyClient().resource(urlString);
+        WebTarget webTarget = getJerseyClient().target(urlString);
         // Use POST, rather than GET, to allow large number of barcodes without hitting 8K limit on URL.
-        MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
+        MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
         formData.add("barcodes", StringUtils.join(barcodes, ","));
-        GetSampleDetails.Details details = resource.accept(MediaType.TEXT_XML).post(
-                new GenericType<GetSampleDetails.Details>() {
-                }, formData);
+        GetSampleDetails.Details details = webTarget.request(MediaType.TEXT_XML).post(Entity.form(formData),
+                new GenericType<GetSampleDetails.Details>() {});
 
         // Fills in the map values using SampleDetails that were found in BSP.
         if (details.getSampleDetails().getSampleInfo() != null) {

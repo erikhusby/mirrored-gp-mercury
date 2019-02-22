@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import net.sourceforge.stripes.action.StreamingResolution;
@@ -87,8 +89,6 @@ import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -120,10 +120,7 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderActionBeanTest {
@@ -363,7 +360,7 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(returnedKitIndex, testKitQueryIndex,
                 "The kit index passed in should match the kit index returned");
 
-        Iterator<JsonNode> resultIterator = jsonNode.get("dataList").getElements();
+        Iterator<JsonNode> resultIterator = jsonNode.get("dataList").elements();
         String nodeKey = "key";
         String nodeChecked = "checked";
 

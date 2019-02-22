@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -14,6 +11,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -21,6 +21,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Test the messages sent by BSP during receipt, extraction, pico, normalization and plating.
@@ -35,6 +38,8 @@ import java.util.List;
 @Test(groups = TestGroups.STUBBY)
 @Dependent
 public class SamplesBatchMessagingEndToEndTest extends StubbyContainerTest {
+
+    private final Logger logger = Logger.getLogger("SamplesBatchMessagingEndToEndTest");
 
     public SamplesBatchMessagingEndToEndTest(){}
 
@@ -45,10 +50,10 @@ public class SamplesBatchMessagingEndToEndTest extends StubbyContainerTest {
     public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String timestamp = timestampFormat.format(new Date());
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
+        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
-        Client client = Client.create(clientConfig);
-        client.addFilter(new LoggingFilter(System.out));
+        Client client = ClientBuilder.newClient(clientConfig);
+        client.register(new LoggingFeature(logger));
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         List<String> sampleBarcodes = new ArrayList<>();
@@ -136,8 +141,9 @@ public class SamplesBatchMessagingEndToEndTest extends StubbyContainerTest {
         bettaLimsMessageTestFactory.advanceTime();
 
         LabEventResponseBean labEventResponseBean =
-                client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/batch")
+                client.target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/batch")
                         .path(batchId)
+                        .request()
                         .get(LabEventResponseBean.class);
         List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
         Assert.assertEquals(labEventBeans.size(), 6, "Wrong number of lab events");

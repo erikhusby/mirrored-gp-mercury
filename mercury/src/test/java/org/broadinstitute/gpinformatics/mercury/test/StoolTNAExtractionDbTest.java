@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -12,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAJaxbBuilder;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -19,11 +18,15 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.logging.Logger;
 
 /**
  * A database test of the Stool TNA Extraction process
@@ -31,6 +34,8 @@ import java.util.Date;
 @Test(groups = TestGroups.STUBBY)
 @Dependent
 public class StoolTNAExtractionDbTest extends StubbyContainerTest {
+
+    private final Logger logger = Logger.getLogger("StoolTNAExtractionDbTest");
 
     public StoolTNAExtractionDbTest(){}
 
@@ -55,8 +60,8 @@ public class StoolTNAExtractionDbTest extends StubbyContainerTest {
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
-        Client client = Client.create(clientConfig);
-        client.addFilter(new LoggingFilter(System.out));
+        Client client = ClientBuilder.newClient(clientConfig);
+        client.register(new LoggingFeature(logger));
 
         String batchResponse = createBatch(baseUrl, client, batchId, parentVesselBean);
         Assert.assertEquals(batchResponse, "Batch persisted");
@@ -67,11 +72,10 @@ public class StoolTNAExtractionDbTest extends StubbyContainerTest {
                                            ParentVesselBean parentVesselBean) throws Exception {
         LabBatchBean labBatchBean = new LabBatchBean(batchId, parentVesselBean, "jowalsh");
 
-        String response = client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labbatch")
-                .type(MediaType.APPLICATION_XML_TYPE)
+        String response = client.target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labbatch")
+                .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
-                .entity(labBatchBean)
-                .post(String.class);
+                .post(Entity.xml(labBatchBean), String.class);
         return response;
     }
 }

@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -16,6 +13,9 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -24,11 +24,7 @@ import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 
 /**
  * @author breilly
@@ -51,7 +47,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
+        WebTarget resource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
                 .queryParam("includeWorkRequestDetails", "true");
 
         String result1 = get(addQueryParam(resource, "q", asList("0099443960", "406164")));
@@ -79,12 +75,12 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchLibraryDetailsObjectByTubeBarcode(@ArquillianResource URL baseUrl) throws MalformedURLException {
-        WebResource webResource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
+        WebTarget webResource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
                 .queryParam("includeWorkRequestDetails", "true");
         webResource = webResource.queryParam("q", "0124675527");
 
         List<LibraryDataType> libraryDataTypes = webResource.queryParam("includeWorkRequestDetails", "true").
-                accept(APPLICATION_JSON_TYPE).get(new GenericType<List<LibraryDataType>>() {});
+                request(APPLICATION_JSON_TYPE).get(new GenericType<List<LibraryDataType>>() {});
         Assert.assertEquals(libraryDataTypes.size(), 1);
         List<SampleInfoType> sampleDetails = libraryDataTypes.get(0).getSampleDetails();
         Assert.assertEquals(sampleDetails.size(), 19);
@@ -96,12 +92,12 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchLibraryDetailsObjectByTubeBarcodeMercury(@ArquillianResource URL baseUrl) throws MalformedURLException {
-        WebResource webResource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
+        WebTarget webResource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
                 .queryParam("includeWorkRequestDetails", "true");
         webResource = webResource.queryParam("q", "0177174735");
 
         List<LibraryDataType> libraryDataTypes = webResource.queryParam("includeWorkRequestDetails", "true").
-                accept(APPLICATION_JSON_TYPE).get(new GenericType<List<LibraryDataType>>() {});
+                request(APPLICATION_JSON_TYPE).get(new GenericType<List<LibraryDataType>>() {});
         Assert.assertEquals(libraryDataTypes.size(), 1);
         List<SampleInfoType> sampleDetails = libraryDataTypes.get(0).getSampleDetails();
         Assert.assertEquals(sampleDetails.size(), 1);
@@ -114,7 +110,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testDoesLimsRecognizeAllTubes(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");
+        WebTarget resource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");
 
         String result1 = get(addQueryParam(resource, "q", asList("0099443960", "406164")));
         assertThat(result1, equalTo("true"));
@@ -127,7 +123,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchMaterialTypesForTubeBarcodes(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchMaterialTypesForTubeBarcodes");
+        WebTarget resource = makeWebResource(baseUrl, "fetchMaterialTypesForTubeBarcodes");
 
         String result1 = get(addQueryParam(resource, "q", asList("0099443960", "406164")));
         assertThat(result1,
@@ -138,7 +134,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindFlowcellDesignationByTaskName(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "14A_03.19.2012");
         String result = get(resource);
         assertThat(result, notNullValue());
@@ -148,9 +144,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindFlowcellDesignationByTaskNameInvalid(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "invalid_task");
-        UniformInterfaceException caught = getWithError(resource);
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("Designation not found for task name: invalid_task"));
     }
@@ -159,7 +155,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindFlowcellDesignationByFlowcellBarcode(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode")
+        WebTarget resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode")
                 .queryParam("flowcellBarcode", "C0GHCACXX");
         String result = get(resource);
         assertThat(result, notNullValue());
@@ -169,9 +165,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindFlowcellDesignationByFlowcellBarcodeInvalid(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode")
+        WebTarget resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode")
                 .queryParam("flowcellBarcode", "invalid_flowcell");
-        UniformInterfaceException caught = getWithError(resource);
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("Designation not found for flowcell barcode: invalid_flowcell"));
     }
@@ -180,7 +176,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindFlowcellDesignationByReagentBlockBarcode(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByReagentBlockBarcode")
+        WebTarget resource = makeWebResource(baseUrl, "findFlowcellDesignationByReagentBlockBarcode")
                 .queryParam("reagentBlockBarcode", "MS0000252-50");
         String result = get(resource);
         assertThat(result, notNullValue());
@@ -191,7 +187,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindImmediatePlateParents(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "findImmediatePlateParents").queryParam("plateBarcode", "000001383666");
         String result = get(resource);
         assertThat(result, containsString("\"000000010208\""));
@@ -202,7 +198,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchUserIdForBadgeId(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "8f03f000f7ff12e0");
         String result = get(resource);
         assertThat(result, equalTo("breilly"));
@@ -219,9 +215,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchUserIdForBadgeIdNotFound(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "invalid_badge_id");
-        UniformInterfaceException caught = getWithError(resource);
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("User not found for badge ID: invalid_badge_id"));
     }
@@ -230,7 +226,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchParentRackContentsForPlate(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "fetchParentRackContentsForPlate").queryParam("plateBarcode", "000003343552");
         String result = get(resource);
         assertThat(result, containsString("\"A01\":true"));
@@ -243,9 +239,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchParentRackContentsForPlateNotFound(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "fetchParentRackContentsForPlate").queryParam("plateBarcode", "invalid_plate");
-        UniformInterfaceException caught = getWithError(resource);
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("Plate not found for barcode: invalid_plate"));
     }
@@ -257,7 +253,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQpcrForTube(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "0075414288");
+        WebTarget resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "0075414288");
         String result = get(resource);
         assertThat(result, equalTo("19.37698653"));
     }
@@ -269,7 +265,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchMercuryQpcrForTube(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube")
+        WebTarget resource = makeWebResource(baseUrl, "fetchQpcrForTube")
                 .queryParam("tubeBarcode", "0212942357")
                 .queryParam("quantType", "VIIA QPCR");
         String result = get(resource);
@@ -285,7 +281,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         resource = makeWebResource(baseUrl, "fetchQpcrForTube")
                 .queryParam("tubeBarcode", "0212942357")
                 .queryParam("quantType", "Catch Pico");
-        UniformInterfaceException exception = getWithError(resource);
+        WebApplicationException exception = getWithError(resource);
         assertErrorResponse(exception, 500, "Tube or quant not found for barcode: 0212942357, quant type: Catch Pico");
 
         resource = makeWebResource(baseUrl, "fetchQpcrForTube")
@@ -302,7 +298,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void fetchQpcrForTubeAndType(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "fetchQpcrForTubeAndType").queryParam("tubeBarcode", "1037346690").
                         queryParam("qpcrType", "Denatured Library");
         String result = get(resource);
@@ -313,8 +309,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQpcrForTubeNotFound(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "invalid_tube");
-        UniformInterfaceException caught = getWithError(resource);
+        WebTarget resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "invalid_tube");
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("Tube or QPCR not found for barcode: invalid_tube"));
     }
@@ -323,8 +319,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQpcrForTubeNoQpcr(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "000001848862");
-        UniformInterfaceException caught = getWithError(resource);
+        WebTarget resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "000001848862");
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("Tube or QPCR not found for barcode: 000001848862"));
     }
@@ -336,7 +332,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQuantForTube(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600")
+        WebTarget resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600")
                 .queryParam("quantType", "Catch Pico");
         String result = get(resource);
         assertThat(result, equalTo("5.33803"));
@@ -346,9 +342,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQuantForTubeNotFound(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "invalid_tube")
+        WebTarget resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "invalid_tube")
                 .queryParam("quantType", "Catch Pico");
-        UniformInterfaceException caught = getWithError(resource);
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
                 equalTo("Tube or quant not found for barcode: invalid_tube, quant type: Catch Pico"));
@@ -361,9 +357,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQuantForTubeUnknownQuant(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600")
+        WebTarget resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600")
                 .queryParam("quantType", "Bogus Pico");
-        UniformInterfaceException caught = getWithError(resource);
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
                 equalTo("Tube or quant not found for barcode: 0108462600, quant type: Bogus Pico"));
@@ -373,9 +369,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQuantForTubeNoQuant(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "000001859062")
+        WebTarget resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "000001859062")
                 .queryParam("quantType", "Catch Pico");
-        UniformInterfaceException caught = getWithError(resource);
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
                 equalTo("Tube or quant not found for barcode: 000001859062, quant type: Catch Pico"));
@@ -388,7 +384,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchMercuryQuantForTube(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube")
+        WebTarget resource = makeWebResource(baseUrl, "fetchQuantForTube")
                 .queryParam("tubeBarcode", "0212942357")
                 .queryParam("quantType", "VIIA QPCR");
         String result = get(resource);
@@ -406,7 +402,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchUnfulfilledDesignations(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchUnfulfilledDesignations");
+        WebTarget resource = makeWebResource(baseUrl, "fetchUnfulfilledDesignations");
         String result = get(resource);
         // This is about all we can do because the result is going to change over time
         assertThat(result, notNullValue());
@@ -416,7 +412,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchSourceTubesForPlate(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "fetchSourceTubesForPlate").queryParam("plateBarcode", "000009873173");
         String result = get(resource);
         // quick spot check of one of the (191) source tubes
@@ -431,7 +427,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchTransfersForPlateFromSquid(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "fetchTransfersForPlate").queryParam("plateBarcode", "000009873173")
                         .queryParam("depth", "2");
         String result = get(resource);
@@ -443,7 +439,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchPoolGroups(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "fetchPoolGroups").queryParam("q", "0089526681").queryParam("q", "0089526682");
         String result = get(resource);
         assertThat(result, equalTo("[{\"name\":\"21490_pg\",\"tubeBarcodes\":[\"0089526682\",\"0089526681\"]}]"));
@@ -452,7 +448,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false) //todo emp enable after ProductFixupText.gplim4159()
     @RunAsClient
     public void testFetchIlluminaSeqTemplateWithFlowCell(@ArquillianResource URL baseUrl) throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").
+        WebTarget resource = makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").
                 queryParam("id", "HF7MVBBXX").queryParam("idType", "FLOWCELL").queryParam("isPoolTest", "false");
         String result = get(resource);
         assertThat(result, containsString("\"barcode\":\"HF7MVBBXX\""));
@@ -479,7 +475,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false) //todo emp enable after ProductFixupText.gplim4159()
     @RunAsClient
     public void testFetchIlluminaSeqTemplateWithStripTube(@ArquillianResource URL baseUrl) throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").
+        WebTarget resource = makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").
                 queryParam("id", "000006113311").queryParam("idType", "TUBE").queryParam("isPoolTest", "false");
         String result = get(resource);
         // A denature tube query would happen before the flowcell is loaded, so expect null flowcell barcode
@@ -500,7 +496,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false) //todo emp enable after ProductFixupText.gplim4159()
     @RunAsClient
     public void testFetchIlluminaSeqTemplatePoolTest(@ArquillianResource URL baseUrl) throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").
+        WebTarget resource = makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").
                 queryParam("id", "000006113311").queryParam("idType", "TUBE").queryParam("isPoolTest", "true");
         String result = get(resource);
         assertThat(result, containsString("\"barcode\":null"));
@@ -520,12 +516,12 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchIlluminaSeqTemplateBadEnum(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0089526681")
                         .queryParam("idType",
                                 "THISWILLFAIL").queryParam("isPoolTest", "true");
 
-        UniformInterfaceException caught = getWithError(resource);
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
                 containsString(
@@ -536,7 +532,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchConcentrationAndVolumeAndWeightForTubeBarcodes(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "fetchConcentrationAndVolumeAndWeightForTubeBarcodes");
+        WebTarget resource = makeWebResource(baseUrl, "fetchConcentrationAndVolumeAndWeightForTubeBarcodes");
 
         String result1 = get(addQueryParam(resource, "q", asList("1075671760", "1075671761")));
         assertThat(result1, notNullValue());
@@ -585,7 +581,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchIlluminaSeqTemplateByDilutionTube(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource =
+        WebTarget resource =
                 makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0115229204")
                         .queryParam("idType",
                                 "TUBE").queryParam("isPoolTest", "false");
@@ -604,7 +600,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindAllReagentsListedInEventWithReagent(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "findAllReagentsListedInEventWithReagent")
+        WebTarget resource = makeWebResource(baseUrl, "findAllReagentsListedInEventWithReagent")
                 .queryParam("name", "TruSeq Rapid SBS Kit").queryParam("lot", "15L03A0047")
                 .queryParam("expiration", "2016-06-28");
         String result = get(resource);
@@ -620,7 +616,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     public void testValidateWorkflow(@ArquillianResource URL baseUrl)
             throws Exception {
         String pondRegistrationSourcePlate = "000009163073";
-        WebResource resource = makeWebResource(baseUrl, "validateWorkflow")
+        WebTarget resource = makeWebResource(baseUrl, "validateWorkflow")
                 .queryParam("nextEventTypeName", "IceCatchEnrichmentCleanup")
                 .queryParam("q", pondRegistrationSourcePlate);
         String result = get(resource);
@@ -636,7 +632,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                 .queryParam("nextEventTypeName", "PondRegistration")
                 .queryParam("q", "IamAnUnknownBarcode");
 
-        UniformInterfaceException caught = getWithError(resource);
+        WebApplicationException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
                 startsWith(

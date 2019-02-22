@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.exports;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,8 +10,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import javax.annotation.Nonnull;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.MultivaluedHashMap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +29,7 @@ public class BSPExportsService implements Serializable {
     @Inject
     private BSPConfig bspConfig;
 
-    private Client client = Client.create();
+    private Client client = ClientBuilder.newClient();
 
     /**
      * Return the Set of ExternalSystems to which this collection of LabVessels has been exported.
@@ -45,13 +46,11 @@ public class BSPExportsService implements Serializable {
             }
         }
 
-        MultivaluedMap<String, String> parameters = new MultivaluedMapImpl();
-        parameters.put("barcode", barcodes);
         // Copy the resource above with the query parameters added.
         String url = bspConfig.getUrl("rest/exports/isExported");
-        WebResource resource = client.resource(url).queryParams(parameters);
+        WebTarget webTarget = client.target(url).queryParam("barcode", barcodes);
 
-        return resource.accept(MediaType.APPLICATION_XML_TYPE).get(IsExported.ExportResults.class);
+        return webTarget.request(MediaType.APPLICATION_XML_TYPE).get(IsExported.ExportResults.class);
     }
 
     /**
@@ -60,9 +59,10 @@ public class BSPExportsService implements Serializable {
      * @param userId user initiating export
      */
     public void export(String containerId, String userId) {
-        WebResource resource = client.resource(bspConfig.getUrl("rest/exports")).
-                queryParam("containerId", containerId).
-                queryParam("userId", userId);
-        resource.post();
+        WebTarget resource = client.target(bspConfig.getUrl("rest/exports"));
+        MultivaluedHashMap<String, String> formData = new MultivaluedHashMap<>();
+        formData.add("containerId", containerId);
+        formData.add("userId", userId);
+        resource.request().post(Entity.form(formData));
     }
 }

@@ -1,9 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.multipart.FormDataBodyPart;
-import com.sun.jersey.multipart.FormDataMultiPart;
-import com.sun.jersey.multipart.MultiPart;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -23,9 +19,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.MultiPart;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.ByteArrayInputStream;
@@ -144,7 +145,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
         String sheetName = "Sample Submission Form";
         Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheetName, rows);
         String urlString = bspRestClient.getUrl(BSP_KIT_REST_URL);
-        WebResource webResource = bspRestClient.getWebResource(urlString);
+        WebTarget webTarget = bspRestClient.getWebResource(urlString);
         try (FormDataMultiPart formDataMultiPart = new FormDataMultiPart()) {
             formDataMultiPart.field("collection", collection);
             formDataMultiPart.field("materialType", materialType);
@@ -156,8 +157,8 @@ public class BspNewRootHandler extends AbstractEventHandler {
             MultiPart multiPart = formDataMultiPart.bodyPart(
                     new FormDataBodyPart("spreadsheet", new ByteArrayInputStream(byteArrayOutputStream.toByteArray()),
                             MediaType.APPLICATION_OCTET_STREAM_TYPE));
-            CreateKitReturn createKitReturn = webResource.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(
-                    CreateKitReturn.class, multiPart);
+            CreateKitReturn createKitReturn = webTarget.request(MediaType.MULTIPART_FORM_DATA_TYPE).post(
+                    Entity.entity(multiPart, multiPart.getMediaType()), CreateKitReturn.class);
 
             // Set new sampleIds on vessels
             List<KitSample> samples = createKitReturn.getSamples();

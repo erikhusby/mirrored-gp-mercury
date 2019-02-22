@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -12,12 +9,14 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingJaxbBuilder;
+import org.glassfish.jersey.client.ClientConfig;
 
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
 import java.io.File;
@@ -174,14 +173,13 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Registering run " + runName + " with path " + runFilePath);
             System.out.println("URL to preview the run will be " + baseUrl.toExternalForm()
                                + "/rest/IlluminaRun/queryMercury?runName=" + runFile.getName());
-            ClientConfig clientConfig = new DefaultClientConfig();
-            JerseyUtils.acceptAllServerCertificates(clientConfig);
+            ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+            JerseyUtils.acceptAllServerCertificates(clientBuilder);
 
-            Client.create(clientConfig).resource(baseUrl.toExternalForm() + "/rest/solexarun")
-                    .type(MediaType.APPLICATION_XML_TYPE)
+            clientBuilder.build().target(baseUrl.toExternalForm() + "/rest/solexarun")
+                    .request(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
-                    .entity(solexaRunBean)
-                    .post(String.class);
+                    .post(Entity.xml(solexaRunBean), String.class);
 
             // User checks chain of custody, activity stream.
         } catch (FileNotFoundException e) {
@@ -194,11 +192,10 @@ public class ExomeExpressIntegrationTest {
     private void sendMessage(URL baseUrl, BettaLIMSMessage bean) {
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
-        Client.create(clientConfig).resource(baseUrl + "/rest/bettalimsmessage")
-                .type(MediaType.APPLICATION_XML_TYPE)
+        ClientBuilder.newClient(clientConfig).target(baseUrl + "/rest/bettalimsmessage")
+                .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
-                .entity(bean)
-                .post(String.class);
+                .post(Entity.xml(bean), String.class);
 
     }
 
