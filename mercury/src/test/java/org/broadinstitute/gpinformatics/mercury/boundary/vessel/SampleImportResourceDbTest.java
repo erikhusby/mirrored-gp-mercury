@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.glassfish.jersey.client.ClientConfig;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -61,10 +60,10 @@ public class SampleImportResourceDbTest extends StubbyContainerTest {
                 generateSourceSystemExportId(suffix), now,
                 parentVesselBeans, goodUserName);
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
         // POST to the resource
-        WebTarget resource = ClientBuilder.newClient(clientConfig)
+        WebTarget resource = clientBuilder.newClient()
                 .target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/sampleimport");
         String response = resource.request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)

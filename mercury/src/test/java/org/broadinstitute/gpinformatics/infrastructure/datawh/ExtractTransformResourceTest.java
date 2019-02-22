@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.glassfish.jersey.client.ClientResponse;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -47,13 +46,13 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
     public void testAnalyze(@ArquillianResource URL baseUrl)
             throws Exception {
         WebTarget resource = makeWebResource(baseUrl, "analyze/sequencingRun/1");
-        ClientResponse response = resource.request("text/html").get(ClientResponse.class);
+        Response response = resource.request("text/html").get();
         Assert.assertEquals(response.getStatusInfo(), Response.Status.OK);
         String result = response.readEntity(String.class);
         assertTrue(result.contains("canEtl"));
 
         resource = makeWebResource(baseUrl, "analyze/event/136213");
-        response = resource.request("text/html").get(ClientResponse.class);
+        response = resource.request("text/html").get();
         Assert.assertEquals(response.getStatusInfo(), Response.Status.OK);
         result = response.readEntity(String.class);
         assertTrue(result.contains("canEtl"));
@@ -66,30 +65,30 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
 
         // Tests incremental.
         WebTarget resource = makeWebResource(baseUrl, "incremental/20121120000000/20121120000001");
-        ClientResponse response = resource.request("text/plain").put(null, ClientResponse.class);
+        Response response = resource.request("text/plain").put(null);
         Assert.assertEquals(response.getStatusInfo(), Response.Status.OK);
 
         // Tests incremental.
         resource = makeWebResource(baseUrl, "incremental/20121120000001/20121120000000");
-        response = resource.request("text/plain").put(null, ClientResponse.class);
+        response = resource.request("text/plain").put(null);
         Assert.assertEquals(response.getStatusInfo(), Response.Status.INTERNAL_SERVER_ERROR);
 
         // Tests backfill.
         resource = makeWebResource(baseUrl,
                 "backfill/org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent/136213/136213");
-        response = resource.request("text/plain").put(null, ClientResponse.class);
+        response = resource.request("text/plain").put(null);
         Assert.assertEquals(response.getStatusInfo(), Response.Status.OK);
 
         // Tests invalid class.
         resource = makeWebResource(baseUrl,
                 "backfill/org.broadinstitute.gpinformatics.shouldNotHaveThisClassName/136213/136213");
-        response = resource.request("text/plain").put(null, ClientResponse.class);
+        response = resource.request("text/plain").put(null);
         Assert.assertEquals(response.getStatusInfo(), Response.Status.NOT_FOUND);
 
         // Tests invalid range.
         resource = makeWebResource(baseUrl,
                 "backfill/org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent/2/1");
-        response = resource.request("text/plain").put(null, ClientResponse.class);
+        response = resource.request("text/plain").put(null);
         Assert.assertEquals(response.getStatusInfo(), Response.Status.BAD_REQUEST);
         Assert.assertTrue(response.readEntity(String.class).startsWith("Invalid"));
     }

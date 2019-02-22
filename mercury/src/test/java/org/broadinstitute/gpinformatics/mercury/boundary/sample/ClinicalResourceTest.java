@@ -24,7 +24,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.glassfish.jersey.client.ClientResponse;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -72,9 +71,9 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
                 .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, true, 0);
 
         WebTarget resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
-        ClientResponse response = resource.request(MediaType.APPLICATION_JSON_TYPE)
+        Response response = resource.request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
-                .post(Entity.json(clinicalResourceBean), ClientResponse.class);
+                .post(Entity.json(clinicalResourceBean));
         assertThat(response.getStatus(), is(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
         String errorMessage = response.readEntity(String.class);
         assertThat(errorMessage, is(ClinicalResource.EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED));

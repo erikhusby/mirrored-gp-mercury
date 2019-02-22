@@ -10,8 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
-import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.client.ClientResponse;
 import org.owasp.encoder.Encode;
 import org.w3c.dom.Document;
 
@@ -163,7 +161,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             resource = resource.queryParam(stringStringEntry.getKey(), stringStringEntry.getValue());
         }
 
-        ClientResponse response = resource.request(MediaType.TEXT_PLAIN).get(ClientResponse.class);
+        Response response = resource.request(MediaType.TEXT_PLAIN).get();
         if (response == null) {
             throw newQuoteServerFailureException(quote, quotePriceItem, numWorkUnits);
         }
@@ -176,7 +174,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
      *
      * @return The work item id returned (as a string).
      */
-    String registerNewWork(@Nonnull ClientResponse response, Quote quote, QuotePriceItem quotePriceItem, double numWorkUnits) {
+    String registerNewWork(@Nonnull Response response, Quote quote, QuotePriceItem quotePriceItem, double numWorkUnits) {
 
         if (response.getStatusInfo() != Response.Status.OK) {
             throw new RuntimeException(
@@ -224,11 +222,10 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     @Override
     protected void customizeClient(Client client) {
-        client.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+//        client.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         specifyHttpAuthCredentials(client, quoteConfig);
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }
-
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
@@ -423,7 +420,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
                 resource = resource.queryParam(stringStringEntry.getKey(), stringStringEntry.getValue());
             }
 
-            final ClientResponse clientResponse = resource.request(MediaType.APPLICATION_XML).get(ClientResponse.class);
+            final Response clientResponse = resource.request(MediaType.APPLICATION_XML).get();
             priceList = clientResponse.readEntity(PriceList.class);
 
             if(priceList == null) {

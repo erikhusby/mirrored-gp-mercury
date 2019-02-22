@@ -1,23 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.resteasy.client.jaxrs.BasicAuthentication;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import java.net.MalformedURLException;
@@ -114,12 +110,12 @@ public class FingerprintResourceTest extends Arquillian {
     }
 
     private Client getClient(boolean basicAuth) {
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getClasses().add(JacksonJsonProvider.class);
-        Client client = ClientBuilder.newClient(clientConfig);
-        client.register(new LoggingFeature(logger));
+//        clientConfig.getClasses().add(JacksonJsonProvider.class);
+        Client client = JerseyUtils.getClientBuilderAcceptCertificate().newClient();
+
+        client.register(new JerseyUtils.LoggingFilter());
         if (basicAuth) {
-            client.register(HttpAuthenticationFeature.basic("thompson", "password"));
+            client.register(new BasicAuthentication("thompson", "password"));
         }
         return client;
     }

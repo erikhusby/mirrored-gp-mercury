@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructio
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingJaxbBuilder;
-import org.glassfish.jersey.client.ClientConfig;
 
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -190,9 +189,9 @@ public class ExomeExpressIntegrationTest {
     }
 
     private void sendMessage(URL baseUrl, BettaLIMSMessage bean) {
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        ClientBuilder.newClient(clientConfig).target(baseUrl + "/rest/bettalimsmessage")
+        clientBuilder.newClient().target(baseUrl + "/rest/bettalimsmessage")
                 .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(bean), String.class);

@@ -5,12 +5,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
-import org.glassfish.jersey.client.ClientResponse;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -62,9 +62,9 @@ public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPS
 
         WebTarget webResource = getJerseyClient().target(urlString);
 
-        ClientResponse clientResponse = webResource.request(MediaType.TEXT_PLAIN).post(null, ClientResponse.class);
+        Response clientResponse = webResource.request(MediaType.TEXT_PLAIN).post(null);
 
-        InputStream inputStream = clientResponse.getEntityStream();
+        InputStream inputStream = clientResponse.readEntity(InputStream.class);
         Reader reader = null;
 
         Object resultObject = null;

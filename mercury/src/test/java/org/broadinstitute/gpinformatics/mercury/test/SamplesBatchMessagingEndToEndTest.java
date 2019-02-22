@@ -11,9 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -30,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Test the messages sent by BSP during receipt, extraction, pico, normalization and plating.
@@ -38,8 +34,6 @@ import java.util.logging.Logger;
 @Test(groups = TestGroups.STUBBY)
 @Dependent
 public class SamplesBatchMessagingEndToEndTest extends StubbyContainerTest {
-
-    private final Logger logger = Logger.getLogger("SamplesBatchMessagingEndToEndTest");
 
     public SamplesBatchMessagingEndToEndTest(){}
 
@@ -49,11 +43,11 @@ public class SamplesBatchMessagingEndToEndTest extends StubbyContainerTest {
     @RunAsClient
     public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String timestamp = timestampFormat.format(new Date());
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
-        Client client = ClientBuilder.newClient(clientConfig);
-        client.register(new LoggingFeature(logger));
+        Client client = clientBuilder.newClient();
+        client.register(new JerseyUtils.LoggingFilter());
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         List<String> sampleBarcodes = new ArrayList<>();

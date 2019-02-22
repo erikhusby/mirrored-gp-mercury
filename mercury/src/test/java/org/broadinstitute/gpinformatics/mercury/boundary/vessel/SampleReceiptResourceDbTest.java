@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactoryTest;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.glassfish.jersey.client.ClientConfig;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -39,9 +38,9 @@ public class SampleReceiptResourceDbTest extends StubbyContainerTest {
         SampleReceiptBean sampleReceiptBean = LabVesselFactoryTest.buildTubes(dateFormat.format(new Date()));
         // POST to the resource
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        WebTarget resource = ClientBuilder.newClient(clientConfig)
+        WebTarget resource = clientBuilder.newClient()
                 .target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/samplereceipt");
         String response = resource.request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)

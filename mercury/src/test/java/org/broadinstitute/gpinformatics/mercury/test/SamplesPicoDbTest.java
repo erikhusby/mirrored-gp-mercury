@@ -10,9 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -29,7 +26,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * A database test of the Samples Pico process
@@ -37,8 +33,6 @@ import java.util.logging.Logger;
 @Test(groups = TestGroups.STUBBY)
 @Dependent
 public class SamplesPicoDbTest extends StubbyContainerTest {
-
-    private final Logger logger = Logger.getLogger("SamplesPicoDbTest");
 
     public SamplesPicoDbTest(){}
 
@@ -49,11 +43,11 @@ public class SamplesPicoDbTest extends StubbyContainerTest {
     public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String timestamp = timestampFormat.format(new Date());
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
-        Client client = ClientBuilder.newClient(clientConfig);
-        client.register(new LoggingFeature(logger));
+        Client client = clientBuilder.newClient();
+        client.register(new JerseyUtils.LoggingFilter());
 
         String batchId = "BP-" + timestamp;
         ArrayList<String> tubeBarcodes = new ArrayList<>();

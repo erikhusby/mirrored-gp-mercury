@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RegisterNonBroadTubesBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceivedBean;
-import org.glassfish.jersey.client.ClientResponse;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -38,7 +37,7 @@ public class BSPRestService implements Serializable {
         WebTarget webResource = bspRestClient.getWebResource(urlString).queryParam("kit_id", kitId);
 
         // Posts message to BSP using the specified REST url.
-        ClientResponse response = webResource.request(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+        Response response = webResource.request(MediaType.APPLICATION_JSON).get();
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
@@ -53,7 +52,7 @@ public class BSPRestService implements Serializable {
         WebTarget webResource = bspRestClient.getWebResource(urlString).queryParam("containerBarcode", containerId);
 
         // Posts message to BSP using the specified REST url.
-        ClientResponse response = webResource.request(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+        Response response = webResource.request(MediaType.APPLICATION_JSON).get();
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
@@ -85,8 +84,8 @@ public class BSPRestService implements Serializable {
 
         WebTarget webResource = bspRestClient.getWebResource(urlString);
 
-        ClientResponse response = webResource.request(MediaType.APPLICATION_XML)
-                .post(Entity.xml(registerNonBroadTubesBean), ClientResponse.class);
+        Response response = webResource.request(MediaType.APPLICATION_XML)
+                .post(Entity.xml(registerNonBroadTubesBean));
 
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             SampleKitReceivedBean receiptResponse = new SampleKitReceivedBean(false);

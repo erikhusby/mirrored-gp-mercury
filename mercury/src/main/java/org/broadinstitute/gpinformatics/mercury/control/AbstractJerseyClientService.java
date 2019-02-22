@@ -8,9 +8,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientResponse;
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.jboss.resteasy.client.jaxrs.BasicAuthentication;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -52,16 +50,16 @@ public abstract class AbstractJerseyClientService implements Serializable {
     /**
      * Subclasses can call this to turn on JSON processing support for client calls.
      */
-    protected void supportJson(ClientConfig clientConfig) {
+//    protected void supportJson(ClientConfig clientConfig) {
 //        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-    }
+//    }
 
     /**
      * Subclasses can call this to specify the username and password for HTTP Auth
      *
      */
     protected void specifyHttpAuthCredentials(Client client, LoginAndPassword loginAndPassword) {
-        client.register(HttpAuthenticationFeature.basic(loginAndPassword.getLogin(), loginAndPassword.getPassword()));
+        client.register(new BasicAuthentication(loginAndPassword.getLogin(), loginAndPassword.getPassword()));
     }
 
     /**
@@ -158,10 +156,10 @@ public abstract class AbstractJerseyClientService implements Serializable {
 
         BufferedReader reader = null;
         try {
-            ClientResponse clientResponse =
-                    webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(Entity.entity(paramString, MediaType.MULTIPART_FORM_DATA_TYPE), ClientResponse.class); // todo jmt is this right?
+            Response clientResponse =
+                    webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(Entity.entity(paramString, MediaType.MULTIPART_FORM_DATA_TYPE)); // todo jmt is this right?
 
-            InputStream is = clientResponse.getEntityStream();
+            InputStream is = clientResponse.readEntity(InputStream.class);
             reader = new BufferedReader(new InputStreamReader(is));
 
             Response.Status clientResponseStatus = Response.Status.fromStatusCode(clientResponse.getStatus());

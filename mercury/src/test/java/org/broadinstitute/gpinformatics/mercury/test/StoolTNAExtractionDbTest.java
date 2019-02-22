@@ -9,8 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAJaxbBuilder;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -26,7 +24,6 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.logging.Logger;
 
 /**
  * A database test of the Stool TNA Extraction process
@@ -34,8 +31,6 @@ import java.util.logging.Logger;
 @Test(groups = TestGroups.STUBBY)
 @Dependent
 public class StoolTNAExtractionDbTest extends StubbyContainerTest {
-
-    private final Logger logger = Logger.getLogger("StoolTNAExtractionDbTest");
 
     public StoolTNAExtractionDbTest(){}
 
@@ -58,10 +53,10 @@ public class StoolTNAExtractionDbTest extends StubbyContainerTest {
         StoolTNAJaxbBuilder stoolTNAJaxbBuilder = new StoolTNAJaxbBuilder(parentVesselBean.getManufacturerBarcode(),
                 childVesselBeans.size(), bettaLimsMessageTestFactory, "StoolXTR" + timestamp).invoke();
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        Client client = ClientBuilder.newClient(clientConfig);
-        client.register(new LoggingFeature(logger));
+        Client client = clientBuilder.newClient();
+        client.register(new JerseyUtils.LoggingFilter());
 
         String batchResponse = createBatch(baseUrl, client, batchId, parentVesselBean);
         Assert.assertEquals(batchResponse, "Batch persisted");

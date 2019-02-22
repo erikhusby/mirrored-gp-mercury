@@ -5,7 +5,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
-import org.glassfish.jersey.client.ClientResponse;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -45,11 +44,11 @@ public class BSPUserService extends BSPJerseyClient {
         MultivaluedHashMap<String, String> formData = new MultivaluedHashMap<>();
         formData.add("emailAddress", emailAddress);
         formData.add("createdById", String.valueOf(creator.getUserId()));
-        ClientResponse clientResponse =
+        Response clientResponse =
                 getJerseyClient().target(urlString)
                         .request(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
                         .accept(MediaType.TEXT_XML_TYPE)
-                        .post(Entity.form(formData), ClientResponse.class);
+                        .post(Entity.form(formData));
 
         BspUser bspUser = (BspUser) new XStream().fromXML(clientResponse.readEntity(String.class));
         Response.Status clientResponseStatus = Response.Status.fromStatusCode(clientResponse.getStatus());

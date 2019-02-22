@@ -25,7 +25,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJ
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
-import org.glassfish.jersey.client.ClientResponse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,6 +36,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -232,7 +232,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         String urlString = getBaseUrl() + "/user/picker";
 
         WebTarget webResource = getJerseyClient().target(urlString).queryParam("query", key);
-        ClientResponse response = webResource.request(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+        Response response = webResource.request(MediaType.APPLICATION_JSON_TYPE).get();
         JiraUserResponse jiraUserResponse = response.readEntity(JiraUserResponse.class);
 
         return jiraUserResponse.getJiraUsers();

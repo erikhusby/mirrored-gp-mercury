@@ -19,14 +19,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPart;
+import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.ByteArrayInputStream;
@@ -146,19 +145,24 @@ public class BspNewRootHandler extends AbstractEventHandler {
         Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheetName, rows);
         String urlString = bspRestClient.getUrl(BSP_KIT_REST_URL);
         WebTarget webTarget = bspRestClient.getWebResource(urlString);
-        try (FormDataMultiPart formDataMultiPart = new FormDataMultiPart()) {
-            formDataMultiPart.field("collection", collection);
-            formDataMultiPart.field("materialType", materialType);
-            formDataMultiPart.field("receptacleType", receptacleType);
-            formDataMultiPart.field("datasetName", "NewRoots");
-            formDataMultiPart.field("domain", "VIRAL");
+        MultipartFormDataOutput multipartFormDataOutput = new MultipartFormDataOutput();
+        try /*(FormDataMultiPart formDataMultiPart = new FormDataMultiPart())*/ {
+            multipartFormDataOutput.addFormData("collection", collection, MediaType.TEXT_PLAIN_TYPE);
+            multipartFormDataOutput.addFormData("materialType", materialType, MediaType.TEXT_PLAIN_TYPE);
+            multipartFormDataOutput.addFormData("receptacleType", receptacleType, MediaType.TEXT_PLAIN_TYPE);
+            multipartFormDataOutput.addFormData("datasetName", "NewRoots", MediaType.TEXT_PLAIN_TYPE);
+            multipartFormDataOutput.addFormData("domain", "VIRAL", MediaType.TEXT_PLAIN_TYPE);
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             workbook.write(byteArrayOutputStream);
-            MultiPart multiPart = formDataMultiPart.bodyPart(
-                    new FormDataBodyPart("spreadsheet", new ByteArrayInputStream(byteArrayOutputStream.toByteArray()),
-                            MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            multipartFormDataOutput.addFormData("spreadsheet",
+                    new ByteArrayInputStream(byteArrayOutputStream.toByteArray()),
+                    MediaType.APPLICATION_OCTET_STREAM_TYPE);
+            GenericEntity<MultipartFormDataOutput> entity = new GenericEntity<MultipartFormDataOutput>(
+                    multipartFormDataOutput) { };
+
             CreateKitReturn createKitReturn = webTarget.request(MediaType.MULTIPART_FORM_DATA_TYPE).post(
-                    Entity.entity(multiPart, multiPart.getMediaType()), CreateKitReturn.class);
+                    Entity.entity(multipartFormDataOutput, MediaType.MULTIPART_FORM_DATA_TYPE),
+                    CreateKitReturn.class);
 
             // Set new sampleIds on vessels
             List<KitSample> samples = createKitReturn.getSamples();

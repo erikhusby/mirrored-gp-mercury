@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.glassfish.jersey.client.ClientResponse;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -63,7 +62,7 @@ public class SubmissionsServiceImplTest {
     }
 
     public void testServerResponseBadRequest() {
-        ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
+        Response clientResponse = Mockito.mock(Response.class);
         Mockito.when(clientResponse.getStatus()).thenReturn(Response.Status.BAD_REQUEST.getStatusCode());
         String activityName = "just testing y'all";
         String exceptonMessage = "There was an error";
@@ -83,7 +82,7 @@ public class SubmissionsServiceImplTest {
     }
 
     public void testServerResponseOK() {
-        ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
+        Response clientResponse = Mockito.mock(Response.class);
         Mockito.when(clientResponse.getStatus()).thenReturn(Response.Status.OK.getStatusCode());
         SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
         try {

@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.integration;
 
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
-import org.glassfish.jersey.client.ClientProperties;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
@@ -74,7 +73,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
         JerseyUtils.acceptAllServerCertificates(clientBuilder);
 
         Client client = clientBuilder.build();
-        client.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+//        client.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         String newUrl = convertUrlToSecure(baseUrl);
         return client.target(
                 newUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);

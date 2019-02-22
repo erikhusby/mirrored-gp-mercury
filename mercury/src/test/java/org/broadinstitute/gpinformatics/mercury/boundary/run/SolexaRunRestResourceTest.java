@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -31,7 +30,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
-import org.glassfish.jersey.client.ClientConfig;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -212,9 +210,9 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
 
         Assert.assertTrue(result);
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        Response response = ClientBuilder.newClient(clientConfig).target(appConfig.getUrl() + "rest/solexarun")
+        Response response = clientBuilder.newClient().target(appConfig.getUrl() + "rest/solexarun")
                 .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
@@ -241,10 +239,9 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
 
         Assert.assertTrue(result);
 
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-
-        Response response = ClientBuilder.newClient(clientConfig).target(appConfig.getUrl() + "rest/solexarun")
+        Response response = clientBuilder.newClient().target(appConfig.getUrl() + "rest/solexarun")
                 .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
@@ -281,11 +278,11 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
         readStructureData.setActualReadStructure("76T8B8B76T");
 
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getClasses().add(JacksonJsonProvider.class);
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+//        clientConfig.getClasses().add(JacksonJsonProvider.class);
 
         Response readStructureResult =
-                ClientBuilder.newClient(clientConfig).target(wsUrl)
+                clientBuilder.newClient().target(wsUrl)
                         .request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
                         .post(Entity.json(readStructureData), Response.class);
 
@@ -319,10 +316,10 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
             readStructureData.getLaneStructures().add(laneReadStructure);
         }
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getClasses().add(JacksonJsonProvider.class);
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+//        clientConfig.getClasses().add(JacksonJsonProvider.class);
 
-        ReadStructureRequest returnedReadStructureRequest = ClientBuilder.newClient(clientConfig).target(wsUrl).
+        ReadStructureRequest returnedReadStructureRequest = clientBuilder.newClient().target(wsUrl).
                 request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).
                 post(Entity.json(readStructureData), ReadStructureRequest.class);
 

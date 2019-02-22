@@ -13,10 +13,9 @@ import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.resteasy.client.jaxrs.BasicAuthentication;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -87,10 +86,10 @@ public class VesselWeightTest extends Arquillian {
         // Verify that BSP Tare Weight annotation is set
         // http://bsp/ws/bsp/sample/gettareweight?manufacturer_barcodes=1082117278
         String getTareWeightUrl = bspConfig.getWSUrl("sample/gettareweight");
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        Client client = ClientBuilder.newClient(clientConfig);
-        client.register(HttpAuthenticationFeature.basic(bspConfig.getLogin(), bspConfig.getPassword()));
+        Client client = clientBuilder.newClient();
+        client.register(new BasicAuthentication(bspConfig.getLogin(), bspConfig.getPassword()));
         String response = client.target(getTareWeightUrl)
                 .queryParam("manufacturer_barcodes", tubeBarcodes.get(0))
                 .request()

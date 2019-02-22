@@ -176,7 +176,6 @@
         <site.path>/prodinfo/releng/m2-projects</site.path>
 
         <seam.version>3.1.0.Final</seam.version>
-        <jersey.version>2.28</jersey.version>
 
         <oracle.version>12.1.0.2</oracle.version>
 
@@ -1276,17 +1275,6 @@ nodePrinter.print(webapp)
 
         <dependencies>
             <dependency>
-                <groupId>org.glassfish.jersey</groupId> <!-- todo jmt-->
-                <artifactId>jersey-bundle</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.glassfish.jersey.media</groupId>
-                <artifactId>jersey-media-multipart</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.jboss.arquillian</groupId>
                 <artifactId>arquillian-bom</artifactId>
                 <version>1.4.0.Final</version>
@@ -1644,21 +1632,6 @@ nodePrinter.print(webapp)
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-multipart</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.inject</groupId>
-            <artifactId>jersey-hk2</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
 <!--
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
@@ -1669,7 +1642,17 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
             <artifactId>jackson-jaxrs-json-provider</artifactId>
-            <version>2.9.8</version>
+            <version>2.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>3.0.9.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-multipart-provider</artifactId>
+            <version>3.0.9.Final</version>
         </dependency>
 
         <dependency>

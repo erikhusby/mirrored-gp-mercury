@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.glassfish.jersey.client.ClientConfig;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
@@ -181,9 +180,9 @@ public class ImportFromBspTest extends StubbyContainerTest {
     }
 
     private void createBatch(LabBatchBean labBatchBean) {
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        String response = ClientBuilder.newClient(clientConfig).target(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/labbatch")
+        String response = clientBuilder.newClient().target(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/labbatch")
                 .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(labBatchBean), String.class);
@@ -191,10 +190,10 @@ public class ImportFromBspTest extends StubbyContainerTest {
     }
 
     public static String recordMetrics(VesselMetricRunBean vesselMetricRunBean) {
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
         String response =
-                ClientBuilder.newClient(clientConfig).target(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/vesselmetric")
+                clientBuilder.newClient().target(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/vesselmetric")
                         .request(MediaType.APPLICATION_XML_TYPE)
                         .accept(MediaType.APPLICATION_XML)
                         .post(Entity.xml(vesselMetricRunBean), String.class);
@@ -203,10 +202,10 @@ public class ImportFromBspTest extends StubbyContainerTest {
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
         String response =
-                ClientBuilder.newClient(clientConfig).target(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
+                clientBuilder.newClient().target(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
                         .request(MediaType.APPLICATION_XML_TYPE)
                         .accept(MediaType.APPLICATION_XML)
                         .post(Entity.xml(bettaLIMSMessage), String.class);

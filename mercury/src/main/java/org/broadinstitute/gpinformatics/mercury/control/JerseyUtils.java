@@ -1,27 +1,41 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Utility class to define common rest helper functions that can assist in most Jersey calls.
  */
+// todo jmt rename
 public class JerseyUtils {
     private static final int DEFAULT_TIMEOUT_MILLISECONDS = 300000;
+
+    public static class LoggingFilter implements ClientRequestFilter {
+        private static final Logger LOG = Logger.getLogger(LoggingFilter.class.getName());
+
+        @Override
+        public void filter(ClientRequestContext requestContext) throws IOException {
+            LOG.log(Level.INFO, requestContext.getEntity().toString());
+        }
+    }
 
     public static Invocation.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
         WebTarget resource = getWebResourceBase(squidWSUrl, mediaType);
@@ -39,13 +53,13 @@ public class JerseyUtils {
     }
 
     public static WebTarget getWebResourceBase(String wsUrl, MediaType mediaType) {
-        ClientConfig clientConfig = new ClientConfig();
-        clientConfig.property(ClientProperties.READ_TIMEOUT, DEFAULT_TIMEOUT_MILLISECONDS);
-        clientConfig.property(ClientProperties.CONNECT_TIMEOUT, DEFAULT_TIMEOUT_MILLISECONDS);
-        if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
-            clientConfig.getClasses().add(JacksonJsonProvider.class);
-        }
-        Client client = ClientBuilder.newClient(clientConfig);
+//        if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+//            clientConfig.getClasses().add(JacksonJsonProvider.class);
+//        }
+
+        Client client = new ResteasyClientBuilder()
+                .establishConnectionTimeout(DEFAULT_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS)
+                .socketTimeout(DEFAULT_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS).build();
 
         return client.target(wsUrl);
     }
@@ -91,9 +105,10 @@ public class JerseyUtils {
      * Generates a new client config which has been configured to ignore warnings that a certificate has not been
      * signed.  Mainly useful when testing which is where the existence of an unsigned certificate is most likely
      */
-    public static ClientConfig getClientConfigAcceptCertificate() {
+    public static ClientBuilder getClientBuilderAcceptCertificate() {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         acceptAllServerCertificates(clientBuilder);
-        return (ClientConfig) clientBuilder.getConfiguration();
+        return clientBuilder;
     }
+
 }

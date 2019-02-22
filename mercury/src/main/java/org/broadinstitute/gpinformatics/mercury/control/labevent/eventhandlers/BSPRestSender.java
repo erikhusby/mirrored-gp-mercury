@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.glassfish.jersey.client.ClientResponse;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -92,8 +91,7 @@ public class BSPRestSender implements Serializable {
         WebTarget webTarget = bspRestClient.getWebResource(urlString);
 
         // Posts message to BSP using the specified REST url.
-        ClientResponse response = webTarget.request(MediaType.APPLICATION_XML).post(Entity.xml(message),
-                ClientResponse.class);
+        Response response = webTarget.request(MediaType.APPLICATION_XML).post(Entity.xml(message));
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
@@ -395,12 +393,12 @@ public class BSPRestSender implements Serializable {
                 queryParam("username", bspUsername).
                 queryParam("filename", filename);
 
-        ClientResponse response = webTarget.request().post(Entity.entity(new StreamingOutput() {
+        Response response = webTarget.request().post(Entity.entity(new StreamingOutput() {
             @Override
             public void write(OutputStream outputStream) throws IOException, WebApplicationException {
                 IOUtils.copy(inputStream, outputStream);
             }
-        }, MediaType.APPLICATION_OCTET_STREAM_TYPE), ClientResponse.class);
+        }, MediaType.APPLICATION_OCTET_STREAM_TYPE));
 
         // Handles errors by throwing RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
@@ -425,8 +423,7 @@ public class BSPRestSender implements Serializable {
         formData.add("wellType", wellType);
 
         // Posts message to BSP using the specified REST url.
-        ClientResponse response = webTarget.request(MediaType.APPLICATION_FORM_URLENCODED).post(Entity.form(formData),
-                ClientResponse.class);
+        Response response = webTarget.request(MediaType.APPLICATION_FORM_URLENCODED).post(Entity.form(formData));
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
@@ -439,7 +436,7 @@ public class BSPRestSender implements Serializable {
     public GetSampleInfo.SampleInfos  getSampleInfo(String containerBarcode) {
         String urlString = bspRestClient.getUrl(BSP_CONTAINER_URL);
         WebTarget webTarget = bspRestClient.getWebResource(urlString).queryParam("containerBarcode", containerBarcode);
-        ClientResponse response = webTarget.request().get(ClientResponse.class);
+        Response response = webTarget.request().get();
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             logger.warn("Failed to find container info for " + containerBarcode);
             return null;

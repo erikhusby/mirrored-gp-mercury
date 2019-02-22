@@ -10,9 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.ReagentBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CadencePicoJaxbBuilder;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
@@ -26,7 +23,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Tests Cadence Pico messaging, including persistence
@@ -34,8 +30,6 @@ import java.util.logging.Logger;
 @Test(groups = TestGroups.STUBBY)
 @Dependent
 public class CadencePicoDbTest extends StubbyContainerTest {
-
-    private final Logger logger = Logger.getLogger("CadencePicoDbTest");
 
     public CadencePicoDbTest(){}
 
@@ -55,12 +49,12 @@ public class CadencePicoDbTest extends StubbyContainerTest {
             picoSampleTubeBarcodes.add("CadencePico" + testSuffix + rackPosition);
         }
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 //        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
-        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
-        Client client = ClientBuilder.newClient(clientConfig);
-        client.register(new LoggingFeature(logger));
+        Client client = clientBuilder.newClient();
+        client.register(new JerseyUtils.LoggingFilter());
 
         CadencePicoJaxbBuilder cadencePicoJaxbBuilder = new CadencePicoJaxbBuilder(
                 bettaLimsMessageTestFactory, testSuffix, picoSampleTubeBarcodes, sourceRackBarcode, dilutionFactor

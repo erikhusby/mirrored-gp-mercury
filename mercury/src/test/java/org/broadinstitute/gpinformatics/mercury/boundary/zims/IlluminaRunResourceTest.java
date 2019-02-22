@@ -29,8 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniReadType;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -142,11 +140,11 @@ public class IlluminaRunResourceTest extends Arquillian {
             throws Exception {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 //        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
-        ZimsIlluminaRun run = ClientBuilder.newClient(clientConfig).target(url)
+        ZimsIlluminaRun run = clientBuilder.newClient().target(url)
                 .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         Assert.assertNotNull(run);
         Assert.assertNotNull(run.getError());
@@ -168,15 +166,15 @@ public class IlluminaRunResourceTest extends Arquillian {
             throws Exception {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 //        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
-        ZimsIlluminaRun run = ClientBuilder.newClient(clientConfig).target(url)
+        ZimsIlluminaRun run = clientBuilder.newClient().target(url)
                 .queryParam("runName", RUN_NAME)
                 .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
 
-        String rawJson = ClientBuilder.newClient(clientConfig).target(url)
+        String rawJson = clientBuilder.newClient().target(url)
                 .queryParam("runName", RUN_NAME)
                 .request(MediaType.APPLICATION_JSON).get(String.class);
         Assert.assertFalse(rawJson.contains("@")); // might see this if you use XmlAttribute instead of XmlElement
@@ -237,7 +235,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(foundPdo);
         Assert.assertTrue(foundTumor);
 
-        run = ClientBuilder.newClient(clientConfig).target(url)
+        run = clientBuilder.newClient().target(url)
                 .queryParam("runName", "Cheese ball")
                 .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         Assert.assertNotNull(run.getError());
@@ -254,10 +252,10 @@ public class IlluminaRunResourceTest extends Arquillian {
     public void testZimsMercury() throws Exception {
         String url = ImportFromSquidTest.TEST_MERCURY_URL + "/rest/IlluminaRun/queryMercury";
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 //        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 
-        ZimsIlluminaRun run = ClientBuilder.newClient(clientConfig).target(url)
+        ZimsIlluminaRun run = clientBuilder.newClient().target(url)
                 .queryParam("runName", "TestRun03261516351364325439075.txt")
                 .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         Assert.assertEquals(run.getLanes().size(), 8, "Wrong number of lanes");

@@ -66,7 +66,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFctDto;
-import org.glassfish.jersey.client.ClientResponse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -1008,8 +1007,7 @@ public class LabBatchEjb {
             plateTransferEventType.setPlate(plateType);
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
             bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-            ClientResponse response = webTarget.request(MediaType.APPLICATION_XML).post(Entity.xml(bettaLIMSMessage),
-                    ClientResponse.class);
+            Response response = webTarget.request(MediaType.APPLICATION_XML).post(Entity.xml(bettaLIMSMessage));
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 bspExportsService.export(rackBarcode, userBean.getLoginUserName());
             } else {

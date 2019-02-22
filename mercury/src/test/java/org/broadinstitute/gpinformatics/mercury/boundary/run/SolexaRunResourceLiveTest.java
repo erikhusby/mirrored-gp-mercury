@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
@@ -11,7 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
-import org.glassfish.jersey.client.ClientConfig;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -63,10 +61,10 @@ public class SolexaRunResourceLiveTest extends Arquillian {
             readStructureData.getLaneStructures().add(laneReadStructure);
         }
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getClasses().add(JacksonJsonProvider.class);
+        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+//        clientConfig.getClasses().add(JacksonJsonProvider.class);
 
-        ReadStructureRequest returnedReadStructureRequest = ClientBuilder.newClient(clientConfig).target(wsUrl).
+        ReadStructureRequest returnedReadStructureRequest = clientBuilder.newClient().target(wsUrl).
                 request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).
                 post(Entity.json(readStructureData), ReadStructureRequest.class);
 

@@ -6,7 +6,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
-import org.glassfish.jersey.client.ClientResponse;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
@@ -73,9 +72,9 @@ public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCo
 
         try {
             WebTarget webResource = getJerseyClient().target(urlString);
-            ClientResponse clientResponse = webResource.request().get(ClientResponse.class);
+            Response clientResponse = webResource.request().get();
 
-            InputStream is = clientResponse.getEntityStream();
+            InputStream is = clientResponse.readEntity(InputStream.class);
             rdr = new BufferedReader(new InputStreamReader(is));
 
             // Check for OK status.

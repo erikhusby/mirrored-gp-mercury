@@ -4,7 +4,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.easymock.EasyMock;
-import org.glassfish.jersey.client.ClientResponse;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -58,7 +57,7 @@ public class QuoteServiceDBFreeTest {
     @Test(groups = DATABASE_FREE)
     public void test_bad_response_code() {
         QuoteServiceImpl service = new QuoteServiceImpl(null);
-        ClientResponse mockResponse = EasyMock.createMock(ClientResponse.class);
+        Response mockResponse = EasyMock.createMock(Response.class);
 
         EasyMock.expect(mockResponse.getStatusInfo()).andReturn(Response.Status.BAD_REQUEST).atLeastOnce();
         EasyMock.replay(mockResponse);
@@ -73,7 +72,7 @@ public class QuoteServiceDBFreeTest {
     @Test(groups = DATABASE_FREE)
     public void test_null_response() {
         QuoteServiceImpl service = new QuoteServiceImpl(null);
-        ClientResponse mockResponse = EasyMock.createMock(ClientResponse.class);
+        Response mockResponse = EasyMock.createMock(Response.class);
         EasyMock.reset(mockResponse);
         EasyMock.expect(mockResponse.getStatusInfo()).andReturn(null).atLeastOnce();
         EasyMock.replay(mockResponse);
@@ -100,7 +99,7 @@ public class QuoteServiceDBFreeTest {
     @Test(groups = DATABASE_FREE)
     public void test_bad_work_unit_return() {
         QuoteServiceImpl service = new QuoteServiceImpl(null);
-        ClientResponse mockResponse = EasyMock.createMock(ClientResponse.class);
+        Response mockResponse = EasyMock.createMock(Response.class);
 
         EasyMock.reset(mockResponse);
         EasyMock.expect(mockResponse.getStatusInfo()).andReturn(Response.Status.OK).atLeastOnce();
