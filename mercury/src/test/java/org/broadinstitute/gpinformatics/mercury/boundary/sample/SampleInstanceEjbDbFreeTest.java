@@ -152,7 +152,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
             Assert.assertNotNull(mercurySample.getSampleKey(), select(i, "SM-JT12", "SM-JT23"));
-            Assert.assertEquals(entity.getRootSample().getSampleKey(), select(i, "SM-46IRUT1", "SM-46IRUT2"));
+            Assert.assertEquals(mercurySample.getSampleData().getRootSample(), select(i, "SM-46IRUT1", "SM-46IRUT2"));
 
             Assert.assertEquals(entity.getMolecularIndexingScheme().getName(),
                     select(i, "Illumina_P5-Nijow_P7-Waren","Illumina_P5-Piwan_P7-Bidih"));
@@ -318,8 +318,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                         ExternalLibraryProcessor.Headers.SEX.getText(), 2, "SM-748OO"),
                 String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 3,
                         ExternalLibraryProcessor.Headers.ROOT_SAMPLE_NAME.getText(), 2, "SM-748OO"),
-                String.format(SampleInstanceEjb.NONEXISTENT, 3,
-                        ExternalLibraryProcessor.Headers.ROOT_SAMPLE_NAME.getText(), "SM-UNKNOWN", "Mercury"),
                 String.format(SampleInstanceEjb.DUPLICATE_IN_TUBE, 3,
                         ExternalLibraryProcessor.Headers.MOLECULAR_BARCODE_NAME.getText(), "01509634244"),
                 String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 3,

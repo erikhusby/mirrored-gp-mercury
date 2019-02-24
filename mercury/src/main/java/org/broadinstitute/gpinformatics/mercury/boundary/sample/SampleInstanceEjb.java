@@ -222,9 +222,6 @@ public class SampleInstanceEjb {
             if (StringUtils.isNotBlank(dto.getSampleName())) {
                 samplesToLookup.add(dto.getSampleName());
             }
-            if (StringUtils.isNotBlank(dto.getRootSampleName())) {
-                samplesToLookup.add(dto.getRootSampleName());
-            }
             if (StringUtils.isNotBlank(dto.getBarcode())) {
                 barcodesToLookup.add(dto.getBarcode());
             }
@@ -257,8 +254,8 @@ public class SampleInstanceEjb {
         processor.getSampleMap().putAll(mercurySampleDao.findMapIdToMercurySample(samplesToLookup));
         processor.getLabVesselMap().putAll(labVesselDao.findByBarcodes(new ArrayList<>(barcodesToLookup)));
 
-        // A sample data lookup is done on all samples and root samples. This returns either
-        // Mercury and BSP metadata for each sample, depending on the sample metadata source.
+        // A sample data lookup is done on all samples. This returns either Mercury or BSP metadata
+        // for each sample, depending on the sample metadata source.
         processor.getFetchedData().putAll(sampleDataFetcher.fetchSampleData(samplesToLookup));
 
         // Fetches the valid aggregation data type values.

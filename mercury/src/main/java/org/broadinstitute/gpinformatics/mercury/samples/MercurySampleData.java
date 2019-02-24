@@ -94,6 +94,9 @@ public class MercurySampleData implements SampleData {
                 break;
             case BROAD_PARTICIPANT_ID:
                 this.broadPatientId = value;
+                break;
+            case ROOT_SAMPLE:
+                this.rootSampleId = value;
             }
         }
     }
@@ -261,8 +264,8 @@ public class MercurySampleData implements SampleData {
     }
 
     /**
-     * For clinical samples, the root id is considered
-     * the same thing as the sample id.
+     * For clinical samples, the root id is considered the same thing as the sample id,
+     * so return the sample id as default when the root metadata is not explicitly set.
      */
     @Override
     public String getRootSample() {

@@ -1957,5 +1957,14 @@
             <column name="implied_sample_name" type="number(1,0)"/>
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-6065-5" author="epolk">
+      <dropForeignKeyConstraint constraintName="FK_SAMPL_INST_ROOT_SAMPLE" baseTableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-6" author="epolk">
+        <dropColumn columnName="ROOT_SAMPLE" tableName="SAMPLE_INSTANCE_ENTITY"/>
+    </changeSet>
+    <changeSet id="GPLIM-6065-7" author="epolk">
+        <dropColumn columnName="ROOT_SAMPLE" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+    </changeSet>
 
 </databaseChangeLog>

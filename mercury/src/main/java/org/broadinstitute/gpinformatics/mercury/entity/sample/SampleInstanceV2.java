@@ -121,6 +121,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private List<String> devConditions = new ArrayList<>();
     private TZDevExperimentData tzDevExperimentData = null;
     private Boolean impliedSampleName = null;
+    private String externalRootSampleName = null;
 
     /**
      * For a reagent-only sample instance.
@@ -141,10 +142,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
      * Constructs a sample instance from a LabVessel and an external library.
      */
     public SampleInstanceV2(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
-        if(sampleInstanceEntity.getRootSample() == null) {
-            sampleInstanceEntity.setRootSample(sampleInstanceEntity.getMercurySample());
-        }
-        rootMercurySamples.add(sampleInstanceEntity.getRootSample());
+        rootMercurySamples.add(sampleInstanceEntity.getMercurySample());
         initiateSampleInstanceV2(labVessel);
         applyVesselChanges(labVessel, sampleInstanceEntity);
     }
@@ -218,6 +216,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         umisPresent = other.getUmisPresent();
         expectedInsertSize = other.getExpectedInsertSize();
         impliedSampleName = other.getImpliedSampleName();
+        externalRootSampleName = other.getExternalRootSampleName();
     }
 
     /**
@@ -226,6 +225,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
      * that far.  May be null for a vessel that holds only reagents.  May be null for BSP samples that pre-date Mercury.
      */
     public String getMercuryRootSampleName() {
+        if (StringUtils.isNotBlank(externalRootSampleName)) {
+            return externalRootSampleName;
+        }
         if (rootMercurySamples.isEmpty()) {
             return null;
         }
@@ -547,7 +549,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
             mergePooledTubeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
             mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
-            mergeRootSamples(sampleInstanceEntity.getRootSample());
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
             aggregationParticle = sampleInstanceEntity.getAggregationParticle();
@@ -563,6 +564,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
                     reagentDesign.getDesignName() : null;
             mercurySamples.add(mercurySample);
             impliedSampleName = sampleInstanceEntity.getImpliedSampleName();
+            externalRootSampleName = sampleInstanceEntity.getMercurySample().getSampleData().getRootSample();
         } else {
             mergeDevConditions(labVessel);
             mercurySamples.addAll(labVessel.getMercurySamples());
@@ -820,6 +822,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     public Boolean getImpliedSampleName() {
         return impliedSampleName;
+    }
+
+    public String getExternalRootSampleName() {
+        return externalRootSampleName;
     }
 
     // todo jmt should these methods use nearest sample?

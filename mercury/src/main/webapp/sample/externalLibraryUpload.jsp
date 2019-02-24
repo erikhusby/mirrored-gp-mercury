@@ -8,12 +8,11 @@
     <stripes:layout-component name="extraHead"/>
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="uploadForm">
-            <h5>Instantiate samples/libraries via spreadsheet upload.
-                &MediumSpace; &MediumSpace;
-                <stripes:submit name="downloadTemplate" value="View Template" class="btn btn-primary"
-                                title="Click for a blank spreadsheet with valid headers and dropdowns showing all valid choices."/>
-            </h5>
             <div class="control-group">
+                <div class="controls" style="padding: 20px;">
+                    <stripes:submit name="downloadTemplate" value="Download Template" class="btn btn-primary"
+                                    title="Click for a blank spreadsheet with valid headers and dropdowns showing all valid choices."/>
+                </div>
                 <div class="controls" style="padding: 20px;">
                     <stripes:file name="samplesSpreadsheet" id="samplesSpreadsheet"
                                   title="Choose the .xlsx file to upload."/>

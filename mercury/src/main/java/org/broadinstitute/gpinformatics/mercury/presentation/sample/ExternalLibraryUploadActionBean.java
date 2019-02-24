@@ -210,60 +210,6 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         sheet2.autoSizeColumn(AGG_DATATYPE_LIST_COLUMN);
 
         // Writes the color coded headers in sheet1.
-        int rowIndex = 0;
-        // A blank row.
-        sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
-
-        // Writes rows of headerValue pairs, if any.
-        if (headerValues != null) {
-            for (HeaderValueRow headerValue : headerValues) {
-                Row row = sheet1.createRow(rowIndex++);
-                Cell cell = row.createCell(0);
-                cell.setCellValue(headerValue.getText());
-                // All the data in the header is currently ignored.
-                HSSFCellStyle style = workbook.createCellStyle();
-                style.setFillForegroundColor(colorMap.get(ExternalLibraryProcessor.DataPresence.IGNORED));
-                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
-                cell.setCellStyle(style);
-            }
-            sheet1.createRow(rowIndex++).createCell(0).setCellValue(""); //a blank row
-        }
-
-        // Writes the color coded headers in successive rows in a sheet1 column.
-        final int colorColumnIdx = 3;
-        final int maxColorRow = 5;
-        // Either uses the existing header-value rows, or creates some blank ones.
-        while(rowIndex < maxColorRow + 2) {
-            sheet1.createRow(rowIndex++);
-        }
-        int colorRowIdx = 1;
-        for (Pair<ExternalLibraryProcessor.DataPresence, String> pair : Arrays.asList(
-                Pair.of((ExternalLibraryProcessor.DataPresence)null, "Cell color indicates:"),
-                Pair.of(ExternalLibraryProcessor.DataPresence.REQUIRED, " Required "),
-                Pair.of(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE, " Required Once per Tube "),
-                Pair.of(ExternalLibraryProcessor.DataPresence.OPTIONAL, " Optional "))) {
-
-            HSSFCellStyle style = workbook.createCellStyle();
-            style.setBorderTop(colorRowIdx == 1 ? CellStyle.BORDER_THIN : CellStyle.BORDER_NONE);
-            style.setBorderTop(CellStyle.BORDER_NONE);
-            style.setBorderLeft(CellStyle.BORDER_THIN);
-            style.setBorderRight(CellStyle.BORDER_THIN);
-            style.setBorderBottom(CellStyle.BORDER_NONE);
-            if (pair.getLeft() != null) {
-                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
-                style.setFillForegroundColor(colorMap.get(pair.getLeft()));
-            }
-            Row row = sheet1.getRow(colorRowIdx++);
-            Cell cell = row.createCell(colorColumnIdx);
-            cell.setCellValue(pair.getRight());
-            cell.setCellStyle(style);
-        }
-        // Puts a border on the top and bottom color cells.
-        sheet1.getRow(1).getCell(colorColumnIdx).getCellStyle().setBorderTop(CellStyle.BORDER_THIN);
-        sheet1.getRow(colorRowIdx - 1).getCell(colorColumnIdx).getCellStyle().setBorderBottom(CellStyle.BORDER_THIN);
-
-        // A blank row.
-        sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
 
         // Makes the style elements to be used with the header row cells.
         Map<ExternalLibraryProcessor.DataPresence, HSSFCellStyle> headerStyles = new HashMap<>();
@@ -275,6 +221,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         }
 
         // Writes a row of header names in cells colored according to the column header properties.
+        int rowIndex = 0;
         Row headerRow = sheet1.createRow(rowIndex++);
         Row dropdownRow = sheet1.createRow(rowIndex);
         int column = 0;
@@ -328,6 +275,37 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 ++column;
             }
         }
+
+        // A blank row.
+        sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
+
+        // Writes the key to color coding.
+        int firstKeyRow = rowIndex;
+        int colorColumnIdx = 2;
+        for (Pair<ExternalLibraryProcessor.DataPresence, String> pair : Arrays.asList(
+                Pair.of((ExternalLibraryProcessor.DataPresence)null, "Cell color indicates:"),
+                Pair.of(ExternalLibraryProcessor.DataPresence.REQUIRED, " Required "),
+                Pair.of(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE, " Required Once per Tube "),
+                Pair.of(ExternalLibraryProcessor.DataPresence.OPTIONAL, " Optional "))) {
+
+            HSSFCellStyle style = workbook.createCellStyle();
+            style.setBorderTop(CellStyle.BORDER_NONE);
+            style.setBorderLeft(CellStyle.BORDER_THIN);
+            style.setBorderRight(CellStyle.BORDER_THIN);
+            style.setBorderBottom(CellStyle.BORDER_NONE);
+            if (pair.getLeft() != null) {
+                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+                style.setFillForegroundColor(colorMap.get(pair.getLeft()));
+            }
+            Row row = sheet1.createRow(rowIndex++);
+            Cell cell = row.createCell(colorColumnIdx);
+            cell.setCellValue(pair.getRight());
+            cell.setCellStyle(style);
+        }
+        // Puts a border on the top and bottom color cells.
+        sheet1.getRow(firstKeyRow).getCell(colorColumnIdx).getCellStyle().setBorderTop(CellStyle.BORDER_THIN);
+        sheet1.getRow(rowIndex - 1).getCell(colorColumnIdx).getCellStyle().setBorderBottom(CellStyle.BORDER_THIN);
+
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         workbook.write(stream);
         return stream;

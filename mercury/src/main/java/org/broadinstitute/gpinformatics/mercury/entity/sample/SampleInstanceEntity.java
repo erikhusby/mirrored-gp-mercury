@@ -59,10 +59,6 @@ public class SampleInstanceEntity {
     @JoinColumn(name = "MERCURY_SAMPLE")
     private MercurySample mercurySample;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "ROOT_SAMPLE")
-    private MercurySample rootSample;
-
     @OneToMany(mappedBy = "sampleInstanceEntity", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<SampleInstanceEntityTsk> sampleInstanceEntityTsks = new HashSet<>();
@@ -125,14 +121,6 @@ public class SampleInstanceEntity {
             subTaskNames.add(subTask.getSubTask());
         }
         return subTaskNames;
-    }
-
-    public MercurySample getRootSample() {
-        return rootSample;
-    }
-
-    public void setRootSample(MercurySample rootSample) {
-        this.rootSample = rootSample;
     }
 
     public void setLabVessel(LabVessel labVessel) {
