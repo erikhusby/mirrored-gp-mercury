@@ -96,6 +96,7 @@ public class SampleInstanceEntity {
     private String insertSize;
     private Boolean umisPresent;
     private String aggregationDataType;
+    private Boolean impliedSampleName;
 
     @Enumerated(EnumType.STRING)
     private IlluminaFlowcell.FlowcellType sequencerModel;
@@ -160,6 +161,14 @@ public class SampleInstanceEntity {
 
     public MercurySample getMercurySample() {
         return this.mercurySample;
+    }
+
+    public Boolean getImpliedSampleName() {
+        return impliedSampleName;
+    }
+
+    public void setImpliedSampleName(Boolean impliedSampleName) {
+        this.impliedSampleName = impliedSampleName;
     }
 
     public void setSampleLibraryName(String sampleLibraryName) {

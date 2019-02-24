@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -11,29 +13,33 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanc
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.io.ByteArrayInputStream;
-import java.util.Arrays;
+import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 @Test(groups = TestGroups.STANDARD)
 public class SampleInstanceEjbTest extends Arquillian {
-    final private boolean OVERWRITE = true;
     private Random random = new Random(System.currentTimeMillis());
+    private final String INDICATOR = "(";
 
     @Inject
     private SampleInstanceEjb sampleInstanceEjb;
@@ -52,157 +58,220 @@ public class SampleInstanceEjbTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    @Test
-    public void testUploadModified() throws Exception {
-        final String filename = "PooledTubeReg.xlsx";
-        final String base = String.format("%09d", random.nextInt(100000000));
+    private enum Pooled {Y, N}
 
-        for (boolean overwrite : new boolean[]{false, true}) {
-            MessageCollection messageCollection = new MessageCollection();
-            ExternalLibraryProcessor processor = new ExternalLibraryProcessor();
-            List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
-                    VarioskanParserTest.getSpreadsheet(filename), overwrite, processor, messageCollection, () -> {
-                        // Modifies the spreadsheet data to make unique barcode, library, sample name, and root.
-                        int count = processor.getBarcodes().size();
-                        for (int i = 0; i < count; ++i) {
-                            processor.getBarcodes().set(i, "E" + base + i);
-                            processor.getLibraryNames().set(i, "Library" + base + i);
-                            processor.getSampleNames().set(i, "SM-" + base + i);
-                            processor.getRootSampleNames().set(i, "SM-" + base + "0");
-                            if (overwrite) {
-                                // To make metadata differences in the second upload, this updates
-                                // sample data & root on the samples from the first test iteration.
-                                processor.getCollaboratorSampleIds().set(i, "COLB-100" + i);
-                                processor.getCollaboratorParticipantIds().set(i, "COLAB-P-100" + i);
-                                if (i == 1) {
-                                    processor.getSexes().set(i, "M");
-                                    processor.getRootSampleNames().set(i, "SM-" + base + i);
+    ;
+
+    private enum MetadataExists {Y, N}
+
+    ;
+
+    Object[][] testCases = new Object[][]{
+            // Spreadsheet with only the required headers and data. Tube barcodes and
+            // library names are generated but not sample names.
+            {"externalLibMinimal.xlsx", Pooled.N, MetadataExists.N},
+            // The tube barcodes and library names are generated. The spreadsheet has
+            // existing Mercury sample names. Metadata is not given in the spreadsheet.
+            {"externalLibExistingMetadata.xlsx", Pooled.N, MetadataExists.Y},
+            // One pooled tube with 384 libraries. The tube barcode and library names are
+            // generated but not sample names.
+            {"externalLibPooled384.xlsx", Pooled.Y, MetadataExists.N},
+            {
+                    // The first spreadsheet supplies every data field. The barcodes, library names,
+                    // sample names, and root sample names are generated by the test so they
+                    // will not already exist in Mercury.
+                    "externalLibWide.xlsx," +
+                            // The second spreadsheet reuses the same barcodes, libraries, and samples,
+                            // and gives updated values for other fields.
+                            "externalLibWideUpdate.xlsx," +
+                            // The thrid spreadsheet reuses the same tube barcodes and library names,
+                            // and gives blank values for all optional fields.
+                            // The sample names will be implied from the library names.
+                            "externalLibWideUpdateBlanks.xlsx", Pooled.N, MetadataExists.N}
+    };
+
+    /**
+     * Each test uploads a spreadsheet with generated randomized tube barcode and library name for uniqueness.
+     * The upload is expected to succeed. Entity data is validated by matching to what was in the spreadsheet.
+     */
+    @Test
+    public void testUploadSuccess() throws Exception {
+        for (Object[] testParameters : testCases) {
+            String[] filenames = ((String) testParameters[0]).split(",");
+            Pooled pooled = (Pooled) testParameters[1];
+            MetadataExists metadataExists = (MetadataExists) testParameters[2];
+            String base = String.format("%06d", random.nextInt(1000000));
+            boolean overwrite = false;
+
+            for (String filename : filenames) {
+                MessageCollection messageCollection = new MessageCollection();
+                ExternalLibraryProcessor processor = new ExternalLibraryProcessor();
+                sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(filename), overwrite,
+                        processor, messageCollection, () -> {
+                            // Supplies randomized value when the spreadsheet's value starts with an indicator.
+                            for (int i = 0; i < processor.getBarcodes().size(); ++i) {
+                                if (processor.getBarcodes().get(i).startsWith(INDICATOR)) {
+                                    // The pooled upload reuses the one barcode on all rows.
+                                    processor.getBarcodes().set(i, "LYfwuP" + base + (pooled == Pooled.Y ? "0" : i));
+                                }
+                                if (processor.getLibraryNames().get(i).startsWith(INDICATOR)) {
+                                    processor.getLibraryNames().set(i, "7eBqL" + base + i);
+                                }
+                                String sampleAndRootName = "w3TGc" + base + i;
+                                if (StringUtils.trimToEmpty(processor.getSampleNames().get(i)).startsWith(INDICATOR)) {
+                                    processor.getSampleNames().set(i, sampleAndRootName);
+                                }
+                                if (StringUtils.trimToEmpty(processor.getRootSampleNames().get(i))
+                                        .startsWith(INDICATOR)) {
+                                    processor.getRootSampleNames().set(i, sampleAndRootName);
                                 }
                             }
-                        }
-                    });
+                        });
 
-            Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
-                    StringUtils.join(messageCollection.getErrors(), "; "));
-            // Should have persisted all rows.
-            for (int i = 0; i < processor.getBarcodes().size(); ++i) {
-                Assert.assertNotNull(labVesselDao.findByIdentifier(processor.getBarcodes().get(i)),
-                        processor.getBarcodes().get(i));
-                String libraryName = processor.getLibraryNames().get(i);
-                Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName),
-                        filename + " " + libraryName);
+                // There should be no error messages.
+                Assert.assertTrue(messageCollection.getErrors().isEmpty(),
+                        "In " + filename + ": " + StringUtils.join(messageCollection.getErrors(), "; "));
 
-                String sampleName = SampleInstanceEjb.get(processor.getSampleNames(), i);
-                String msg = filename + " " + sampleName;
-                MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleName);
-                Assert.assertNotNull(mercurySample, msg);
-                SampleData sampleData = mercurySample.getSampleData();
+                // The result entities are bulk fetched.
+                Multimap<String, SampleInstanceEntity> sampleInstanceEntityMap = HashMultimap.create();
+                sampleInstanceEntityDao.findByBarcodes(processor.getBarcodes()).stream().
+                        distinct().
+                        forEach(sampleInstanceEntity ->
+                                sampleInstanceEntityMap.put(sampleInstanceEntity.getLabVessel().getLabel(),
+                                        sampleInstanceEntity));
+                Map<String, MercurySample> rootSampleMap = mercurySampleDao.findMapIdToMercurySample(
+                        processor.getRootSampleNames().stream().
+                                filter(StringUtils::isNotBlank).
+                                distinct().
+                                collect(Collectors.toList()));
 
-                String rootSampleName = sampleData.getRootSample();
-                MercurySample rootSample = mercurySampleDao.findBySampleKey(rootSampleName);
-                Assert.assertTrue(StringUtils.isBlank(rootSampleName) || rootSample != null,
-                        msg + " " + rootSampleName);
+                Set<String> uniqueBarcodes = new HashSet<>();
+                // Verifies each spreadsheet row is a SampleInstanceEntity having
+                // the correct tube, sample, and other values.
+                for (int i = 0; i < processor.getBarcodes().size(); ++i) {
+                    String msg = "In " + filename + " Row " + (i + 2) + " ";
+                    String barcode = processor.getBarcodes().get(i);
+                    boolean firstOccurrence = uniqueBarcodes.add(barcode);
+                    Collection<SampleInstanceEntity> sampleInstanceEntities = sampleInstanceEntityMap.get(barcode);
+                    String libraryName = processor.getLibraryNames().get(i);
+                    SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntities.stream().
+                            filter(entity -> entity.getSampleLibraryName().equals(libraryName)).
+                            findFirst().orElse(null);
+                    Assert.assertNotNull(sampleInstanceEntity, msg + "missing SampleInstanceEntity for " +
+                            barcode + ", " + libraryName);
 
-                Assert.assertEquals(sampleData.getCollaboratorsSampleName(),
-                        SampleInstanceEjb.get(processor.getCollaboratorSampleIds(), i), msg);
-                Assert.assertEquals(sampleData.getCollaboratorParticipantId(),
-                        SampleInstanceEjb.get(processor.getCollaboratorParticipantIds(), i), msg);
-                Assert.assertEquals(sampleData.getGender(),
-                        SampleInstanceEjb.get(processor.getSexes(), i), msg);
-                Assert.assertEquals(sampleData.getOrganism(),
-                        SampleInstanceEjb.get(processor.getOrganisms(), i), msg);
-
-                if (sampleData.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                    Set<String> uniqueKeyNames = new HashSet<>();
-                    for (Metadata metadata : mercurySample.getMetadata()) {
-                        Assert.assertTrue(uniqueKeyNames.add(metadata.getKey().name()),
-                                "Duplicate MercurySample metadata key " + metadata.getKey().name());
+                    String sampleName = SampleInstanceEjb.get(processor.getSampleNames(), i);
+                    if (StringUtils.isBlank(sampleName)) {
+                        // Expects the library name to be used as the implied sample name.
+                        sampleName = libraryName;
                     }
+                    MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
+                    Assert.assertNotNull(mercurySample, msg + "missing " + sampleName);
+                    Assert.assertEquals(mercurySample.getSampleKey(), sampleName, msg + sampleName);
+
+                    // A non-blank root that is not the sample name must exist in Mercury.
+                    String rootSampleName = SampleInstanceEjb.get(processor.getRootSampleNames(), i);
+                    if (StringUtils.isNotBlank(rootSampleName) && !rootSampleName.equals(sampleName)) {
+                        Assert.assertNotNull(rootSampleMap.get(rootSampleName), msg + " " + rootSampleName);
+                    }
+
+                    SampleData sampleData = mercurySample.getSampleData();
+                    // FYI if the spreadsheet's samples already exist and the the spreadsheet doesn't give
+                    // sample metadata, then there's nothing to test since SampleInstanceV2 will pick
+                    // up the metadata from the SampleData as usual.
+                    if (metadataExists == MetadataExists.N) {
+                        Assert.assertTrue(testEquals(processor.getCollaboratorSampleIds(), i,
+                                sampleData.getCollaboratorsSampleName()), msg + sampleName);
+                        Assert.assertTrue(testEquals(processor.getCollaboratorParticipantIds(), i,
+                                sampleData.getCollaboratorParticipantId()), msg + sampleName);
+                        Assert.assertTrue(testEquals(processor.getSexes(), i, sampleData.getGender()),
+                                msg + sampleName);
+                        Assert.assertTrue(testEquals(processor.getOrganisms(), i, sampleData.getOrganism()),
+                                msg + sampleName);
+                    }
+                    Assert.assertTrue(testEquals(processor.getMolecularBarcodeNames(), i,
+                            sampleInstanceEntity.getMolecularIndexingScheme() == null ?
+                                    null : sampleInstanceEntity.getMolecularIndexingScheme().getName()), msg);
+                    Assert.assertTrue(testEquals(processor.getBaits(), i,
+                            sampleInstanceEntity.getReagentDesign() == null ?
+                                    null : sampleInstanceEntity.getReagentDesign().getDesignName()), msg);
+                    Assert.assertTrue(testEquals(processor.getAggregationParticles(), i,
+                            sampleInstanceEntity.getAggregationParticle()), msg);
+                    Assert.assertTrue(testEquals(processor.getDataAnalysisTypes(), i,
+                            sampleInstanceEntity.getAnalysisType().getName()), msg);
+                    Assert.assertTrue(testEquals(processor.getAggregationDataTypes(), i,
+                            sampleInstanceEntity.getAggregationDataType()), msg);
+                    Assert.assertTrue(testEquals(processor.getReadLengths(), i, sampleInstanceEntity.getReadLength()),
+                            msg);
+                    Assert.assertTrue(testEquals(processor.getUmisPresents(), i,
+                            sampleInstanceEntity.getUmisPresent()), msg);
+                    // The "once per tube" values only need to match on the first occurrence of the tube
+                    // and may be blank after that.
+                    if (firstOccurrence || StringUtils.isNotBlank(SampleInstanceEjb.get(processor.getVolumes(), i))) {
+                        Assert.assertTrue(testEquals(processor.getVolumes(), i,
+                                sampleInstanceEntity.getLabVessel().getVolume()), msg);
+                    }
+                    if (firstOccurrence || StringUtils.isNotBlank(
+                            SampleInstanceEjb.get(processor.getFragmentSizes(), i))) {
+                        // There should be only one fragment size.
+                        List<LabMetric> metrics = sampleInstanceEntity.getLabVessel().
+                                getNearestMetricsOfType(LabMetric.MetricType.FINAL_LIBRARY_SIZE);
+                        Assert.assertEquals(metrics.size(), 1, msg);
+                        Assert.assertTrue(testEquals(processor.getFragmentSizes(), i, metrics.get(0).getValue()), msg);
+                    }
+                    if (firstOccurrence || StringUtils
+                            .isNotBlank(SampleInstanceEjb.get(processor.getConcentrations(), i))) {
+                        Assert.assertTrue(testEquals(processor.getConcentrations(), i,
+                                sampleInstanceEntity.getLabVessel().getConcentration()), msg);
+                    }
+                    Assert.assertTrue(testEquals(processor.getInsertSizes(), i, sampleInstanceEntity.getInsertSize()),
+                            msg);
+                    Assert.assertTrue(testEquals(processor.getReferenceSequences(), i,
+                            sampleInstanceEntity.getReferenceSequence() == null ?
+                                    null : sampleInstanceEntity.getReferenceSequence().getName()), msg);
+                    Assert.assertTrue(testEquals(processor.getSequencingTechnologies(), i,
+                            sampleInstanceEntity.getSequencerModel() == null ?
+                                    null : sampleInstanceEntity.getSequencerModel().getTechnology()), msg);
                 }
+                // Sets overwrite in case there is another upload in the same test case.
+                overwrite = true;
             }
         }
     }
 
-    @Test
-    public void testUpload() throws Exception {
-        for (String filename : Arrays.asList(
-                "externalLibArquillian2.xlsx",
-                "PooledTube_Test-363_case2.xls",
-                "PooledTube_Test-363_case4.xls")) {
-            MessageCollection messageCollection = new MessageCollection();
-            ExternalLibraryProcessor processor = new ExternalLibraryProcessor();
-            List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
-                    new ByteArrayInputStream(IOUtils.toByteArray(VarioskanParserTest.getSpreadsheet(filename))),
-                    true, processor, messageCollection, null);
-            // Should be no errors.
-            Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
-                    StringUtils.join(messageCollection.getErrors(), "; "));
-            // Should have persisted all rows.
-            Assert.assertEquals(entities.size(), processor.getBarcodes().size());
-            for (int i = 0; i < processor.getBarcodes().size(); ++i) {
-                Assert.assertNotNull(labVesselDao.findByIdentifier(processor.getBarcodes().get(i)),
-                        processor.getBarcodes().get(i));
-                String libraryName = processor.getLibraryNames().get(i);
-                Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName),
-                        filename + " " + libraryName);
-
-                String sampleName = SampleInstanceEjb.get(processor.getSampleNames(), i);
-                String msg = filename + " " + sampleName;
-                MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleName);
-                Assert.assertNotNull(mercurySample, msg);
-                SampleData sampleData = mercurySample.getSampleData();
-
-                String rootSampleName = sampleData.getRootSample();
-                MercurySample rootSample = mercurySampleDao.findBySampleKey(rootSampleName);
-                Assert.assertTrue(StringUtils.isBlank(rootSampleName) || rootSample != null,
-                        msg + " " + rootSampleName);
-
-                // This test uses sample SM-748OO with metadata in Mercury.
-                Assert.assertEquals(sampleData.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
-                Assert.assertEquals(sampleData.getPatientId(), "12001-015", msg);
-                Assert.assertEquals(sampleData.getCollaboratorsSampleName(), "12102402873", msg);
-                Assert.assertEquals(sampleData.getCollaboratorParticipantId(), "12001-015", msg);
-                Assert.assertEquals(sampleData.getGender(), "Male", msg);
-                Assert.assertTrue(StringUtils.isBlank(sampleData.getOrganism()), msg);
-                Assert.assertTrue(StringUtils.isBlank(sampleData.getSampleLsid()), msg);
-
-                Set<String> uniqueKeyNames = new HashSet<>();
-                for (Metadata metadata : mercurySample.getMetadata()) {
-                    Assert.assertTrue(uniqueKeyNames.add(metadata.getKey().name()),
-                            "Duplicate MercurySample metadata key " + metadata.getKey().name());
-                }
-            }
+    private boolean testEquals(List<String> spreadsheetValues, int index, String actualValue) {
+        String spreadsheetValue = SampleInstanceEjb.get(spreadsheetValues, index);
+        // For purposes of comparison, the delete token is equivalent to blank string.
+        if (ExternalLibraryProcessor.DELETE_TOKEN.equalsIgnoreCase(spreadsheetValue)) {
+            spreadsheetValue = "";
+        }
+        if (StringUtils.isBlank(spreadsheetValue)) {
+            return StringUtils.isBlank(actualValue);
+        } else {
+            return spreadsheetValue.equals(actualValue);
         }
     }
 
-    @Test
-    public void testTubeBarcodeUpdate() throws Exception {
-        String base = String.format("%09d", random.nextInt(100000000));
-
-        // First uploads some pooled tubes.
-        String filename1 = "PooledTubeReg.xlsx";
-        ExternalLibraryProcessor processor1 = new ExternalLibraryProcessor();
-        MessageCollection messages1 = new MessageCollection();
-        sampleInstanceEjb.doExternalUpload(VarioskanParserTest.getSpreadsheet(filename1), !OVERWRITE,
-                processor1, messages1, () -> {
-                    // Modifies the spreadsheet data to make unique barcode, library, sample name.
-                    int count = processor1.getBarcodes().size();
-                    for (int i = 0; i < count; ++i) {
-                        processor1.getBarcodes().set(i, "E" + base + i);
-                        processor1.getLibraryNames().set(i, "Library" + base + i);
-                        processor1.getSampleNames().set(i, "SM-" + base + i);
-                        processor1.getRootSampleNames().set(i, "");
-                    }
-                });
-        Assert.assertTrue(messages1.getErrors().isEmpty(), "In " + filename1 + ": " +
-                StringUtils.join(messages1.getErrors(), "; "));
-        // Should have persisted all rows.
-        for (int i = 0; i < processor1.getBarcodes().size(); ++i) {
-            Assert.assertNotNull(labVesselDao.findByIdentifier(processor1.getBarcodes().get(i)),
-                    processor1.getBarcodes().get(i));
-            String libraryName = processor1.getLibraryNames().get(i);
-            Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName),
-                    filename1 + " " + libraryName);
+    private boolean testEquals(List<String> spreadsheetValues, int index, BigDecimal actualValue) {
+        String spreadsheetValue = SampleInstanceEjb.get(spreadsheetValues, index);
+        if (StringUtils.isBlank(spreadsheetValue)) {
+            return actualValue == null || actualValue.equals(BigDecimal.ZERO);
+        } else {
+            return MathUtils.isSame(actualValue, new BigDecimal(spreadsheetValue));
         }
+    }
+
+    private boolean testEquals(List<String> spreadsheetValues, int index, Integer actualValue) {
+        String spreadsheetValue = SampleInstanceEjb.get(spreadsheetValues, index);
+        if (StringUtils.isBlank(spreadsheetValue)) {
+            return actualValue == null || actualValue.equals(0);
+        } else {
+            return actualValue.equals(new Integer(spreadsheetValue));
+        }
+    }
+
+    private boolean testEquals(List<String> spreadsheetValues, int index, Boolean actualValue) {
+        Boolean spreadsheetValue = ExternalLibraryProcessor.asBoolean(SampleInstanceEjb.get(spreadsheetValues, index));
+        return Objects.equals(actualValue, spreadsheetValue);
     }
 }

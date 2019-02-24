@@ -1947,5 +1947,15 @@
     <changeSet id="GPLIM-6065-2" author="epolk">
         <dropColumn columnName="COMMENTS" tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
     </changeSet>
+    <changeSet id="GPLIM-6065-3" author="epolk">
+        <addColumn schemaName="mercury" tableName="SAMPLE_INSTANCE_ENTITY">
+            <column name="implied_sample_name" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6065-4" author="epolk">
+        <addColumn schemaName="mercury" tableName="SAMPLE_INSTANCE_ENTITY_AUD">
+            <column name="implied_sample_name" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>

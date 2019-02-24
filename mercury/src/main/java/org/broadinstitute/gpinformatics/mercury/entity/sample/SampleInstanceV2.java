@@ -120,6 +120,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private int depth;
     private List<String> devConditions = new ArrayList<>();
     private TZDevExperimentData tzDevExperimentData = null;
+    private Boolean impliedSampleName = null;
+
     /**
      * For a reagent-only sample instance.
      */
@@ -215,7 +217,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         referenceSequence = other.getReferenceSequence();
         umisPresent = other.getUmisPresent();
         expectedInsertSize = other.getExpectedInsertSize();
-
+        impliedSampleName = other.getImpliedSampleName();
     }
 
     /**
@@ -560,6 +562,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             baitName = (reagentDesign != null && reagentDesign.getReagentType() == ReagentDesign.ReagentType.BAIT) ?
                     reagentDesign.getDesignName() : null;
             mercurySamples.add(mercurySample);
+            impliedSampleName = sampleInstanceEntity.getImpliedSampleName();
         } else {
             mergeDevConditions(labVessel);
             mercurySamples.addAll(labVessel.getMercurySamples());
@@ -813,6 +816,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
         }
         return metadataSources.iterator().next();
+    }
+
+    public Boolean getImpliedSampleName() {
+        return impliedSampleName;
     }
 
     // todo jmt should these methods use nearest sample?

@@ -189,6 +189,7 @@ public class ZimsIlluminaRunFactory {
                     }
                 }
                 sampleIds.add(sampleId);
+
                 LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
                 if (flowcellDesignation == null) {
                     // Only need one designation since all of them constituting this flowcell will have been
@@ -470,8 +471,8 @@ public class ZimsIlluminaRunFactory {
                 molIndexSecheme = libraryBean.getMolecularIndexingScheme().getName();
             }
 
-            String consolidationKey =
-                    makeConsolidationKey(libraryBean.getSampleId(), molIndexSecheme);
+            String consolidationKey = makeConsolidationKey(molIndexSecheme,
+                    libraryBean.isImpliedSampleName() ? libraryBean.getLibrary() : libraryBean.getSampleId());
             if (!previouslySeenSampleAndMis.add(consolidationKey)) {
                 iter.remove();
             }
@@ -580,6 +581,7 @@ public class ZimsIlluminaRunFactory {
             expectedInsertSize = sampleInstanceDto.sampleInstance.getExpectedInsertSize();
         }
         String aggregationParticle = sampleInstanceDto.sampleInstance.getAggregationParticle();
+        Boolean isImpliedSampleName = sampleInstanceDto.sampleInstance.getImpliedSampleName();
         if (aggregationDataType == null) {
             aggregationDataType = sampleInstanceDto.sampleInstance.getAggregationDataType();
         }
@@ -639,7 +641,7 @@ public class ZimsIlluminaRunFactory {
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
                 metadataSourceForPipelineAPI, aggregationDataType, jiraService, submissionMetadataList,
-                Boolean.TRUE.equals(analyzeUmi), aggregationParticle);
+                Boolean.TRUE.equals(analyzeUmi), aggregationParticle, Boolean.TRUE.equals(isImpliedSampleName));
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }

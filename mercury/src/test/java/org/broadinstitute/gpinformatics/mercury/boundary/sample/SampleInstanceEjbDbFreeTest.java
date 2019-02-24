@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -118,7 +117,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
     @Test
     public void testExternalLibrary() throws Exception {
-        String file = "testdata/externalLibDbFree1.xls";
+        String file = "testdata/externalLibDbFreeSuccess.xls";
         SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.EXTERNAL_LIBRARY);
         MessageCollection messageCollection = new MessageCollection();
         ExternalLibraryProcessor processor = new ExternalLibraryProcessor();
@@ -193,7 +192,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getSequencerModel().getTechnology(),
                     select(i, "HiSeq X 10", "HiSeq 2500 Rapid Run"));
 
-            Assert.assertEquals(entity.getAggregationDataType(), select(i, "Exome", ""));
+            Assert.assertEquals(entity.getAggregationDataType(), select(i, "", "Exome"));
         }
         assertSampleInstanceEntitiesPresent(mapBarcodeToTube.values(), entities);
 
@@ -294,7 +293,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
     @Test
     public void testExternalLibraryFail() throws Exception {
-        final String filename = "testdata/externalLibDbFree2.xls";
+        final String filename = "testdata/externalLibDbFreeFail.xls";
         SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.EXTERNAL_LIBRARY);
         MessageCollection messageCollection = new MessageCollection();
         ExternalLibraryProcessor processor = new ExternalLibraryProcessor();
@@ -337,6 +336,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                         ExternalLibraryProcessor.Headers.REFERENCE_SEQUENCE.getText()),
                 "Row #4 " + String.format(REQUIRED_VALUE_IS_MISSING,
                         ExternalLibraryProcessor.Headers.SEQUENCING_TECHNOLOGY.getText()),
+                String.format(SampleInstanceEjb.UNKNOWN, 4,
+                        ExternalLibraryProcessor.Headers.AGGREGATION_DATA_TYPE.getText(), "Mercury"),
 
                 "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
                         ExternalLibraryProcessor.Headers.TUBE_BARCODE.getText()),
@@ -549,26 +550,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                                 StringUtils.substringBeforeLast(businessKey, "|"),
                                 StringUtils.substringAfterLast(businessKey, "|"));
 
-                    }
-                });
-
-        // Jira ticket
-        Mockito.when(jiraService.getIssueInfo(Mockito.anyString(), Mockito.anyString())).thenAnswer(
-                new Answer<JiraIssue>() {
-                    @Override
-                    public JiraIssue answer(InvocationOnMock invocation) throws Throwable {
-                        String name = (String)invocation.getArguments()[0];
-                        JiraIssue jiraIssue = null;
-                        if ("DEV-7501".equals(name)) {
-                            jiraIssue = new JiraIssue(name, jiraService);
-                            List<String> conditionKeys = Arrays.asList("DEV-7538", "DEV-7539");
-                            jiraIssue.setConditions(conditionKeys, conditionKeys);
-                        } else if ("DEV-6796".equals(name)) {
-                            jiraIssue = new JiraIssue(name, jiraService);
-                            List<String> conditionKeys = Arrays.asList("DEV-6815", "DEV-6816");
-                            jiraIssue.setConditions(conditionKeys, conditionKeys);
-                        }
-                        return jiraIssue;
                     }
                 });
 

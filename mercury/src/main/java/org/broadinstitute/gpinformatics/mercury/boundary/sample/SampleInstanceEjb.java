@@ -60,6 +60,7 @@ import java.util.stream.Collectors;
 public class SampleInstanceEjb {
     // These are the only characters allowed in a library or sample name.
     public static final String RESTRICTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_";
+    // These are the only characters allowed in an alias (Collab Sample Id, Individual Id, etc).
     public static final String ALIAS_CHARS = RESTRICTED_CHARS + " @#&*()[]|;:<>,?/=+\"'";
 
     public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
@@ -69,8 +70,6 @@ public class SampleInstanceEjb {
     public static final String DUPLICATE_IN_TUBE = "Row #%d has a duplicate value for %s in tube %s.";
     public static final String DUPLICATE_S_M =
             "Row #%d repeats the combination of sample %s and index %s and indicates these tubes should not be pooled.";
-    public static final String IGNORING_ROOT =
-            "Row #%d sample has Mercury metadata source so the given root sample is ignored.";
     public static final String INCONSISTENT_SAMPLE_DATA =
             "Row #%d value for %s is not consistent with row #%d (Sample %s).";
     public static final String INCONSISTENT_TUBE =
@@ -180,7 +179,7 @@ public class SampleInstanceEjb {
                 messages.addWarning("Spreadsheet contains no valid data.");
             } else {
                 // Makes maps of samples, vessels, and other primary entities.
-                makeEntityMaps(processor, rowDtos, messages);
+                makeEntityMaps(processor, rowDtos);
                 // Validates the character set used in spreadsheet values that get passed on as-is.
                 processor.validateCharacterSet(rowDtos, messages);
                 // Validates the data.
@@ -215,7 +214,7 @@ public class SampleInstanceEjb {
      * After spreadsheet data is parsed, all entities referenced by the data is fetched and put in maps
      * on the dtos. All dtos have references to the same maps.
      */
-    private void makeEntityMaps(ExternalLibraryProcessor processor, List<RowDto> rowDtos, MessageCollection messages) {
+    private void makeEntityMaps(ExternalLibraryProcessor processor, List<RowDto> rowDtos) {
         Set<String> samplesToLookup = new HashSet<>();
         Set<String> barcodesToLookup = new HashSet<>();
 
@@ -430,6 +429,7 @@ public class SampleInstanceEjb {
         private String sex;
         private Boolean umisPresent; // null if not given in spreadsheet
         private BigDecimal volume;
+        private boolean impliedSampleName = false;
 
         private int rowNumber;
         private SampleInstanceEntity sampleInstanceEntity;
@@ -619,11 +619,8 @@ public class SampleInstanceEjb {
             return umisPresent;
         }
 
-        /** A true value starts with either upper or lower case T or Y, or the number 1. A blank value gives null. */
         public void setUmisPresent(String umisPresent) {
-            this.umisPresent = StringUtils.isBlank(umisPresent) ? null :
-                    "yt1".contains(umisPresent.toLowerCase().subSequence(0, 1)) ?
-                            Boolean.TRUE : Boolean.FALSE;
+            this.umisPresent = ExternalLibraryProcessor.asBoolean(umisPresent);
         }
 
         public String getAggregationDataType() {
@@ -632,6 +629,14 @@ public class SampleInstanceEjb {
 
         public void setAggregationDataType(String aggregationDataType) {
             this.aggregationDataType = aggregationDataType;
+        }
+
+        public boolean isImpliedSampleName() {
+            return impliedSampleName;
+        }
+
+        public void setImpliedSampleName(boolean impliedSampleName) {
+            this.impliedSampleName = impliedSampleName;
         }
     }
 }

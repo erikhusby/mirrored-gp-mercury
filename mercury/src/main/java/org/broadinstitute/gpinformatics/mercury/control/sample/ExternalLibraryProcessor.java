@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.sample;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
@@ -23,6 +26,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,14 +39,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ExternalLibraryProcessor extends TableProcessor {
-    public enum DataPresence {REQUIRED, ONCE_PER_TUBE, OPTIONAL, IGNORED};
+    private static final Log log = LogFactory.getLog(ExternalLibraryProcessor.class);
+    // The spreadsheet cell must contain the DELETE_TOKEN in order to remove an existing sample metadata value.
+    public static final String DELETE_TOKEN = "<delete>";
 
     // Maps tube barcode to the first dto that contains that barcode (and associated tube data).
-    protected Map<String, SampleInstanceEjb.RowDto> mapBarcodeToFirstRow = new HashMap<>();
+    private Map<String, SampleInstanceEjb.RowDto> mapBarcodeToFirstRow = new HashMap<>();
     // Maps sample name to the first dto that contains that sample name (and associated sample data).
-    protected Map<String, SampleInstanceEjb.RowDto> mapSampleNameToFirstRow = new HashMap<>();
+    private Map<String, SampleInstanceEjb.RowDto> mapSampleNameToFirstRow = new HashMap<>();
     // Spreadsheet's actual header names.
-    protected List<String> headerNames = new ArrayList<>();
+    private List<String> headerNames = new ArrayList<>();
     // Maps sample name to MercurySample.
     private Map<String, MercurySample> sampleMap = new HashMap<>();
     // Maps barcode to LabVessel.
@@ -81,6 +88,9 @@ public class ExternalLibraryProcessor extends TableProcessor {
         super(null);
     }
 
+    public enum DataPresence {REQUIRED, ONCE_PER_TUBE, OPTIONAL, IGNORED}
+    private final static boolean EXPLICIT_DELETE = true;
+
     public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
         TUBE_BARCODE("Sample Tube Barcode", DataPresence.REQUIRED),
         LIBRARY_NAME("Library Name", DataPresence.REQUIRED),
@@ -89,10 +99,10 @@ public class ExternalLibraryProcessor extends TableProcessor {
         MOLECULAR_BARCODE_NAME("Molecular Barcode Name", DataPresence.OPTIONAL),
         BAIT("Bait", DataPresence.OPTIONAL),
         DATA_AGGREGATOR("Data Aggregator/Project Title", DataPresence.OPTIONAL),
-        COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", DataPresence.OPTIONAL),
-        INDIVIDUAL_NAME("Individual Name (Patient Id)", DataPresence.OPTIONAL),
-        SEX("Sex", DataPresence.OPTIONAL),
-        ORGANISM("Organism", DataPresence.OPTIONAL),
+        COLLABORATOR_SAMPLE_ID("Collaborator Sample Id", DataPresence.OPTIONAL, EXPLICIT_DELETE),
+        INDIVIDUAL_NAME("Individual Name (Patient Id)", DataPresence.OPTIONAL, EXPLICIT_DELETE),
+        SEX("Sex", DataPresence.OPTIONAL, EXPLICIT_DELETE),
+        ORGANISM("Organism", DataPresence.OPTIONAL, EXPLICIT_DELETE),
         DATA_ANALYSIS_TYPE("Data Analysis Type", DataPresence.REQUIRED),
         AGGREGATION_DATA_TYPE("Aggregation Data Type", DataPresence.OPTIONAL),
         READ_LENGTH("Desired Read Length", DataPresence.REQUIRED),
@@ -107,10 +117,16 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
         private final String text;
         private final DataPresence dataPresence;
+        private final boolean explicitDelete;
 
         Headers(String text, DataPresence dataPresence) {
+            this(text, dataPresence, false);
+        }
+
+        Headers(String text, DataPresence dataPresence, boolean explicitDelete) {
             this.text = text;
             this.dataPresence = dataPresence;
+            this.explicitDelete = explicitDelete;
         }
 
         @Override
@@ -145,6 +161,11 @@ public class ExternalLibraryProcessor extends TableProcessor {
         public boolean isOncePerTube() {
             return dataPresence == DataPresence.ONCE_PER_TUBE;
         }
+
+        /** Indicates a DELETE_TOKEN is needed to remove an existing value. */
+        public boolean isExplicitDelete() {
+            return explicitDelete;
+        }
     }
 
     /** Returns the canonical header names, not the actual ones. */
@@ -170,34 +191,34 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
-        barcodes.add(getFromRow(dataRow, Headers.TUBE_BARCODE));
-        libraryNames.add(getFromRow(dataRow, Headers.LIBRARY_NAME));
-        sampleNames.add(getFromRow(dataRow, Headers.SAMPLE_NAME));
-        rootSampleNames.add(getFromRow(dataRow, Headers.ROOT_SAMPLE_NAME));
-        molecularBarcodeNames.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME));
-        baits.add(getFromRow(dataRow, Headers.BAIT));
-	    aggregationParticles.add(getFromRow(dataRow, Headers.DATA_AGGREGATOR));
-        collaboratorSampleIds.add(getFromRow(dataRow, Headers.COLLABORATOR_SAMPLE_ID));
-        collaboratorParticipantIds.add(getFromRow(dataRow, Headers.INDIVIDUAL_NAME));
-        sexes.add(getFromRow(dataRow, Headers.SEX));
-        organisms.add(getFromRow(dataRow, Headers.ORGANISM));
-        dataAnalysisTypes.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
-        aggregationDataTypes.add(getFromRow(dataRow, Headers.AGGREGATION_DATA_TYPE));
-        readLengths.add(getFromRow(dataRow, Headers.READ_LENGTH));
-        umisPresents.add(getFromRow(dataRow, Headers.UMIS_PRESENT));
-        volumes.add(getFromRow(dataRow, Headers.VOLUME));
-        fragmentSizes.add(getFromRow(dataRow, Headers.FRAGMENT_SIZE));
-        concentrations.add(getFromRow(dataRow, Headers.CONCENTRATION));
-        insertSizes.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE));
-        referenceSequences.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
-        sequencingTechnologies.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
+        barcodes.add(getFromRow(dataRow, Headers.TUBE_BARCODE, dataRowNumber));
+        libraryNames.add(getFromRow(dataRow, Headers.LIBRARY_NAME, dataRowNumber));
+        sampleNames.add(getFromRow(dataRow, Headers.SAMPLE_NAME, dataRowNumber));
+        rootSampleNames.add(getFromRow(dataRow, Headers.ROOT_SAMPLE_NAME, dataRowNumber));
+        molecularBarcodeNames.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME, dataRowNumber));
+        baits.add(getFromRow(dataRow, Headers.BAIT, dataRowNumber));
+	    aggregationParticles.add(getFromRow(dataRow, Headers.DATA_AGGREGATOR, dataRowNumber));
+        collaboratorSampleIds.add(getFromRow(dataRow, Headers.COLLABORATOR_SAMPLE_ID, dataRowNumber));
+        collaboratorParticipantIds.add(getFromRow(dataRow, Headers.INDIVIDUAL_NAME, dataRowNumber));
+        sexes.add(getFromRow(dataRow, Headers.SEX, dataRowNumber));
+        organisms.add(getFromRow(dataRow, Headers.ORGANISM, dataRowNumber));
+        dataAnalysisTypes.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE, dataRowNumber));
+        aggregationDataTypes.add(getFromRow(dataRow, Headers.AGGREGATION_DATA_TYPE, dataRowNumber));
+        readLengths.add(getFromRow(dataRow, Headers.READ_LENGTH, dataRowNumber));
+        umisPresents.add(getFromRow(dataRow, Headers.UMIS_PRESENT, dataRowNumber));
+        volumes.add(getFromRow(dataRow, Headers.VOLUME, dataRowNumber));
+        fragmentSizes.add(getFromRow(dataRow, Headers.FRAGMENT_SIZE, dataRowNumber));
+        concentrations.add(getFromRow(dataRow, Headers.CONCENTRATION, dataRowNumber));
+        insertSizes.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE, dataRowNumber));
+        referenceSequences.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE, dataRowNumber));
+        sequencingTechnologies.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY, dataRowNumber));
 
         this.requiredValuesPresent.add(requiredValuesPresent);
     }
 
     /**
      * Does self-consistency and other validation checks on the data.
-     * Entities fetched for the row data are accessed through maps referenced in the dtos.
+     * Entities have already been fetched for the row data, and are accessed through maps referenced in the dtos.
      */
     public void validateAllRows(List<SampleInstanceEjb.RowDto> dtos, boolean overwrite, MessageCollection messages) {
         // At this point all data is in dtos, and entities referenced by the data are in maps.
@@ -207,31 +228,11 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
         for (SampleInstanceEjb.RowDto dto : dtos) {
             if (!overwrite) {
-                // If library name, sample name, or tube barcode already exist in Mercury then this upload
-                // is assumed to be an update of a previous upload and Overwrite must be set.
-                if (dto.getSampleInstanceEntity() != null) {
-                    messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(),
-                            Headers.LIBRARY_NAME.getText(), dto.getLibraryName()));
-                }
-                if (getSampleMap().get(dto.getSampleName()) != null) {
-                    messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(),
-                            Headers.SAMPLE_NAME.getText(), dto.getLibraryName()));
-                }
-                if (getLabVesselMap().get(dto.getBarcode()) != null) {
+                // If an existing tube barcode is given then this upload will replace the contents
+                // of the tube and overwrite must be set.
+                if (labVesselMap.get(dto.getBarcode()) != null) {
                     messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(),
                             Headers.TUBE_BARCODE.getText(), dto.getBarcode()));
-                }
-            } else {
-                // The pipeline and elsewhere require a simple name so disallow chars that might cause trouble.
-                if (!StringUtils.containsOnly(dto.getLibraryName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                    messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                            Headers.LIBRARY_NAME.getText()));
-                }
-
-                // Tube barcode character set is restricted.
-                if (!StringUtils.containsOnly(dto.getBarcode(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                    messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                            Headers.TUBE_BARCODE.getText()));
                 }
             }
 
@@ -253,14 +254,14 @@ public class ExternalLibraryProcessor extends TableProcessor {
                         Headers.LIBRARY_NAME.getText()));
             }
 
-            LabVessel tube = getLabVesselMap().get(barcode);
+            LabVessel tube = labVesselMap.get(barcode);
             if (tube != null && !overwrite) {
                 messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber(),
                         Headers.TUBE_BARCODE.getText(), barcode));
             }
 
             if (StringUtils.isNotBlank(dto.getMisName())) {
-                if (getMolecularIndexingSchemeMap().get(dto.getMisName()) == null) {
+                if (molecularIndexingSchemeMap.get(dto.getMisName()) == null) {
                     messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                             Headers.MOLECULAR_BARCODE_NAME.getText(), "Mercury"));
                 }
@@ -279,34 +280,34 @@ public class ExternalLibraryProcessor extends TableProcessor {
                 }
             }
 
+            // If a root sample name is given it must exist in Mercury, or be the same as the row's sample name.
+            if (StringUtils.isNotBlank(dto.getRootSampleName()) &&
+                    !dto.getRootSampleName().equals(dto.getSampleName()) &&
+                    sampleMap.get(dto.getRootSampleName()) == null ) {
+                messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
+                        Headers.ROOT_SAMPLE_NAME.getText(), "Mercury"));
+            }
+
             // If a bait set name is given it must already be registered in Mercury.
             if (StringUtils.isNotBlank(dto.getBait()) && dto.getReagent() == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         Headers.BAIT.getText(), "Mercury"));
             }
 
-            // It's an error if the upload refers to a root that doesn't exist and was not given in the upload.
-            if (StringUtils.isNotBlank(dto.getRootSampleName()) &&
-                    !getSampleMap().containsKey(dto.getRootSampleName()) &&
-                    !mapSampleNameToFirstRow.containsKey(dto.getRootSampleName())) {
-                messages.addError(SampleInstanceEjb.NONEXISTENT, dto.getRowNumber(),
-                        Headers.ROOT_SAMPLE_NAME.getText(), dto.getRootSampleName(), "Mercury");
-            }
-
             if (StringUtils.isNotBlank(dto.getAnalysisTypeName()) &&
-                    getAnalysisTypeMap().get(dto.getAnalysisTypeName()) == null) {
+                    analysisTypeMap.get(dto.getAnalysisTypeName()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         Headers.DATA_ANALYSIS_TYPE.getText(), "Mercury"));
             }
 
             if (StringUtils.isNotBlank(dto.getAggregationDataType()) &&
-                    getAggregationDataTypeMap().get(dto.getAggregationDataType()) == null) {
+                    aggregationDataTypeMap.get(dto.getAggregationDataType()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         Headers.AGGREGATION_DATA_TYPE.getText(), "Mercury"));
             }
 
             if (StringUtils.isNotBlank(dto.getReferenceSequence()) &&
-                    getReferenceSequenceMap().get(dto.getReferenceSequence()) == null) {
+                    referenceSequenceMap.get(dto.getReferenceSequence()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         Headers.REFERENCE_SEQUENCE.getText(), "Mercury"));
             }
@@ -317,7 +318,15 @@ public class ExternalLibraryProcessor extends TableProcessor {
                         Headers.SEQUENCING_TECHNOLOGY.getText(), "Mercury"));
             }
 
-            errorBspMetadataChanges(dto, overwrite, messages);
+            // If the upload gives different sample metadata and it doesn't cause an error
+            // then the sample metadata is updated without changing SampleInstanceEntity.
+            //
+            // FYI if the upload gives different SampleInstanceEntity attributes (not sample metadata)
+            // and if the given tube barcode exists, all SampleInstanceEntities for the tube are deleted
+            // and replaced with the uploaded values (GPLIM-6043). If the tube barcode is new, then
+            // the upload makes new SampleInstanceEntities, possibly reusing an existing MercurySample,
+            // and possibly reusing an existing library name.
+            validateSampleMetadata(dto, overwrite, messages);
         }
     }
 
@@ -328,21 +337,23 @@ public class ExternalLibraryProcessor extends TableProcessor {
      */
     public List<SampleInstanceEntity> makeOrUpdateEntities(List<SampleInstanceEjb.RowDto> dtos) {
         makeTubesAndSamples(dtos);
-        List<SampleInstanceEntity> sampleInstanceEntities = makeSampleInstanceEntities(dtos);
-        return sampleInstanceEntities;
+        return makeSampleInstanceEntities(dtos);
     }
 
     /**
-     * Uses the first non-blank data value for the given headers.
+     * Returns the data value in the row for the given header.
      */
-    protected String getFromRow(Map<String, String> dataRow, ColumnHeader... headers) {
-        for (ColumnHeader header : headers) {
-            String data = dataRow.get(header.getText());
-            if (StringUtils.isNotBlank(data)) {
-                return data;
+    private String getFromRow(Map<String, String> dataRow, Headers header, int rowNumber) {
+        String data = dataRow.get(header.getText());
+        if (DELETE_TOKEN.equalsIgnoreCase(data)) {
+            if (header.isRequiredValue()) {
+                addDataMessage("Cannot use " + DELETE_TOKEN + " for " + header.getText(), rowNumber);
+            }
+            if (!header.isExplicitDelete()) {
+                data = "";
             }
         }
-        return "";
+        return data;
     }
 
     /** Converts the 0-based index into the row number shown at the far left side in Excel. */
@@ -367,6 +378,12 @@ public class ExternalLibraryProcessor extends TableProcessor {
             }
             dto.setLibraryName(get(getLibraryNames(), index));
             dto.setSampleName(get(getSampleNames(), index));
+            if (StringUtils.isBlank(dto.getSampleName())) {
+                // External library uploads do not require a sample name, but Mercury needs one so it uses the
+                // library name, and sets impliedSampleName so that the pipeline query outputs a null sample name.
+                dto.setImpliedSampleName(true);
+                dto.setSampleName(dto.getLibraryName());
+            }
             if (StringUtils.isNotBlank(dto.getSampleName()) &&
                     !mapSampleNameToFirstRow.containsKey(dto.getSampleName())) {
                 mapSampleNameToFirstRow.put(dto.getSampleName(), dto);
@@ -380,6 +397,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
             dto.setSex(get(getSexes(), index));
             dto.setOrganism(get(getOrganisms(), index));
             dto.setAnalysisTypeName(get(getDataAnalysisTypes(), index));
+            dto.setAggregationDataType(get(getAggregationDataTypes(), index));
             dto.setReadLength(asNonNegativeInteger(get(getReadLengths(), index),
                     Headers.READ_LENGTH.getText(), dto.getRowNumber(), messages));
             dto.setUmisPresent(get(getUmisPresents(), index));
@@ -401,7 +419,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
      * Compares the metadata and other sample-related data on the found dto to the expected dto and errors if
      * values are inconsistent, i.e. values must match or be blank on the found dto.
      */
-    protected void consistentSampleData(SampleInstanceEjb.RowDto expected, SampleInstanceEjb.RowDto found,
+    private void consistentSampleData(SampleInstanceEjb.RowDto expected, SampleInstanceEjb.RowDto found,
             MessageCollection messages) {
         Stream.of(
                 Triple.of(found.getRootSampleName(), expected.getRootSampleName(),
@@ -424,7 +442,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
      * Compares the tube data on the found dto to the expected dto and errors if
      * values are inconsistent, i.e. values must match or be blank on the found dto.
      */
-    protected void consistentTubeData(SampleInstanceEjb.RowDto expected, SampleInstanceEjb.RowDto found,
+    private void consistentTubeData(SampleInstanceEjb.RowDto expected, SampleInstanceEjb.RowDto found,
             MessageCollection messages) {
 
         if (expected.getRowNumber() == found.getRowNumber()) {
@@ -467,45 +485,33 @@ public class ExternalLibraryProcessor extends TableProcessor {
         }
     }
 
-    /**
-     * Checks the uploaded metadata against existing MercurySample metadata.
-     */
-    protected void errorBspMetadataChanges(SampleInstanceEjb.RowDto dto, boolean overwrite,
-            MessageCollection messages) {
+    /** Checks the uploaded metadata against existing metadata. */
+    private void validateSampleMetadata(SampleInstanceEjb.RowDto dto, boolean overwrite, MessageCollection messages) {
         SampleData sampleData = getFetchedData().get(dto.getSampleName());
         if (sampleData != null) {
-            // Excludes Material Type since user cannot control it.
-            Set<Metadata> changes = makeSampleMetadata(dto).stream().
-                    filter(metadata -> metadata.getKey() != Metadata.Key.MATERIAL_TYPE).
-                    collect(Collectors.toSet());
-            // Metadata equality is based on both the key and the value.
-            changes.removeAll(makeSampleMetadata(sampleData));
-            // Makes a string of header names of the columns having changes.
-            String columnNames = changes.stream().
+            // Collects the column names of metadata updates given in the upload.
+            List<String> columnNames = ((Collection<Metadata>) CollectionUtils.subtract(
+                    makeSampleMetadata(dto), makeSampleMetadata(sampleData))).
+                    stream().
                     map(metadata -> metadata.getKey().getDisplayName()).
-                    sorted().
-                    collect(Collectors.joining(", "));
-            // Checks BSP root sample name.
+                    collect(Collectors.toList());
+            // Checks for an updated root sample name .
             if (StringUtils.isNotBlank(dto.getRootSampleName()) &&
-                    sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP &&
                     !dto.getRootSampleName().equals(sampleData.getRootSample())) {
-                columnNames = StringUtils.join(columnNames, " Root Sample", ',');
+                columnNames.add(Headers.ROOT_SAMPLE_NAME.getText());
             }
+            Collections.sort(columnNames);
+
             // If the upload has different metadata than the MercurySample, it's an error if the
             // metadata source is BSP, or if the metadata source is Mercury and overwrite is not set.
-            if (StringUtils.isNotBlank(columnNames)) {
+            if (!columnNames.isEmpty()) {
                 if (sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                    messages.addError(SampleInstanceEjb.BSP_METADATA, dto.getRowNumber(), columnNames,
-                            dto.getSampleName());
+                    messages.addError(SampleInstanceEjb.BSP_METADATA, dto.getRowNumber(),
+                            StringUtils.join(columnNames, ", "), dto.getSampleName());
                 } else if (!overwrite) {
-                    messages.addError(SampleInstanceEjb.PREXISTING_VALUES, dto.getRowNumber(), columnNames);
+                    messages.addError(SampleInstanceEjb.PREXISTING_VALUES, dto.getRowNumber(),
+                            StringUtils.join(columnNames, ", "), dto.getSampleName());
                 }
-            }
-            // Issues a warning if the metadata source is Mercury and a root sample name was given.
-            if (sampleData.getMetadataSource() == MercurySample.MetadataSource.MERCURY &&
-                    StringUtils.isNotBlank(dto.getRootSampleName()) &&
-                    !dto.getRootSampleName().equals(dto.getSampleName())) {
-                messages.addWarning(SampleInstanceEjb.IGNORING_ROOT, dto.getRowNumber());
             }
         }
     }
@@ -515,106 +521,98 @@ public class ExternalLibraryProcessor extends TableProcessor {
      */
     public void validateCharacterSet(List<SampleInstanceEjb.RowDto> dtos, MessageCollection messages) {
         for (SampleInstanceEjb.RowDto dto : dtos) {
-            if (!StringUtils.containsOnly(dto.getBarcode(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                        Headers.TUBE_BARCODE.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
-            }
-            if (!StringUtils.containsOnly(dto.getLibraryName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                        Headers.LIBRARY_NAME.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
-            }
-            if (!StringUtils.containsOnly(dto.getLibraryName(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                        Headers.SAMPLE_NAME.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
-            }
-            if (!StringUtils.containsOnly(dto.getCollaboratorSampleId(), SampleInstanceEjb.ALIAS_CHARS)) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                        Headers.COLLABORATOR_SAMPLE_ID.getText(), SampleInstanceEjb.ALIAS_CHARS));
-            }
-            if (!StringUtils.containsOnly(dto.getCollaboratorParticipantId(), SampleInstanceEjb.ALIAS_CHARS)) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                        Headers.INDIVIDUAL_NAME.getText(), SampleInstanceEjb.ALIAS_CHARS));
-            }
-            if (StringUtils.isNotBlank(dto.getOrganism()) &&
-                    !StringUtils.containsOnly(dto.getOrganism(), SampleInstanceEjb.ALIAS_CHARS)) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                        Headers.ORGANISM.getText(), SampleInstanceEjb.ALIAS_CHARS));
-            }
-            if (StringUtils.isNotBlank(dto.getAggregationParticle()) &&
-                    !StringUtils.containsOnly(dto.getAggregationParticle(), SampleInstanceEjb.RESTRICTED_CHARS)) {
-                messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
-                        Headers.DATA_AGGREGATOR.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
-            }
+            // Barcode, library, and sample must be from the RESTRICTED_CHARS set.
+            Stream.of(Pair.of(dto.getBarcode(), Headers.TUBE_BARCODE),
+                    Pair.of(dto.getLibraryName(), Headers.LIBRARY_NAME),
+                    Pair.of(dto.getSampleName(), Headers.SAMPLE_NAME),
+                    Pair.of(dto.getAggregationParticle(), Headers.DATA_AGGREGATOR)).
+                    filter(pair -> StringUtils.isNotBlank(pair.getKey()) &&
+                            !StringUtils.containsOnly(pair.getKey(), SampleInstanceEjb.RESTRICTED_CHARS)).
+                    forEachOrdered(pair ->
+                            messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                                    pair.getValue().getText(), SampleInstanceEjb.RESTRICTED_CHARS)));
+
+            // Sample aliases must be from the ALIAS_CHARS set.
+            Stream.of(Pair.of(dto.getCollaboratorSampleId(), Headers.COLLABORATOR_SAMPLE_ID),
+                    Pair.of(dto.getCollaboratorParticipantId(), Headers.INDIVIDUAL_NAME),
+                    Pair.of(dto.getOrganism(), Headers.ORGANISM)).
+                    filter(pair -> StringUtils.isNotBlank(pair.getKey()) &&
+                            !DELETE_TOKEN.equals(pair.getKey()) &&
+                            !StringUtils.containsOnly(pair.getKey(), SampleInstanceEjb.ALIAS_CHARS)).
+                    forEachOrdered(pair ->
+                            messages.addError(String.format(SampleInstanceEjb.INVALID_CHARS, dto.getRowNumber(),
+                                    pair.getValue().getText(), SampleInstanceEjb.ALIAS_CHARS)));
         }
     }
 
     /**
      * Creates/updates tube and sample for each unique barcode and sample name.
      */
-    protected void makeTubesAndSamples(List<SampleInstanceEjb.RowDto> dtos) {
-        // Creates/updates tubes. Sets tube volume and concentration.
-        dtos.stream().
-                map(dto -> dto.getBarcode()).
-                filter(s -> StringUtils.isNotBlank(s)).
-                distinct().
-                forEach(barcode -> {
-                    LabVessel labVessel = getLabVesselMap().get(barcode);
-                    if (labVessel == null) {
-                        labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
-                        getLabVesselMap().put(barcode, labVessel);
-                    } else {
-                        // Tube is being re-uploaded, so clearing old samples is appropriate.
-                        labVessel.getMercurySamples().clear();
-                    }
-                    SampleInstanceEjb.RowDto firstRowHavingTube = mapBarcodeToFirstRow.get(barcode);
-                    labVessel.setVolume(firstRowHavingTube.getVolume());
-                    labVessel.setConcentration(firstRowHavingTube.getConcentration());
-                    SampleInstanceEjb.addLibrarySize(labVessel, new BigDecimal(firstRowHavingTube.getFragmentSize()));
-                });
-
-        // Collects all of the root sample names.
-        Set<String> rootNames = dtos.stream().
-                map(SampleInstanceEjb.RowDto::getRootSampleName).
-                filter(rootName -> StringUtils.isNotBlank(rootName)).
-                collect(Collectors.toSet());
-        // Creates/updates samples, sorted so that any of the samples that are referenced as root samples in
-        // the upload are created first.
-        dtos.stream().
-                map(SampleInstanceEjb.RowDto::getSampleName).
-                filter(sampleName -> StringUtils.isNotBlank(sampleName)).
-                distinct().
-                sorted((String o1, String o2) -> (rootNames.contains(o1) ? 0 : 1) - (rootNames.contains(o2) ? 0 : 1)).
-                forEach(sampleName ->
-                {
-                    SampleInstanceEjb.RowDto dto = mapSampleNameToFirstRow.get(sampleName);
-
-                    MercurySample mercurySample = getSampleMap().get(sampleName);
-                    SampleData sampleData = getFetchedData().get(sampleName);
-                    if (mercurySample == null) {
-                        if (sampleData != null) {
-                            // Can really be only BSP sample data, since otherwise mercurySample would exist.
-                            mercurySample = new MercurySample(sampleName, sampleData.getMetadataSource());
-                            mercurySample.setSampleData(sampleData);
+    private void makeTubesAndSamples(List<SampleInstanceEjb.RowDto> dtos) {
+        try {
+            // Creates/updates tubes. Sets tube volume and concentration.
+            dtos.stream().
+                    map(SampleInstanceEjb.RowDto::getBarcode).
+                    distinct().
+                    forEach(barcode -> {
+                        LabVessel labVessel = labVesselMap.get(barcode);
+                        if (labVessel == null) {
+                            labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
+                            labVesselMap.put(barcode, labVessel);
                         } else {
-                            // Mercury sample data.
-                            mercurySample = new MercurySample(sampleName, makeSampleMetadata(dto));
+                            // Tube is being re-uploaded, so clearing old samples is appropriate.
+                            labVessel.getMercurySamples().clear();
+                            labVessel.getMetrics().clear();
                         }
-                        getSampleMap().put(sampleName, mercurySample);
-                    } else if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                        // Adds new values or replaces existing values only for Mercury samples.
-                        mercurySample.updateMetadata(makeSampleMetadata(dto));
-                    }
-                });
+                        SampleInstanceEjb.RowDto firstRowHavingTube = mapBarcodeToFirstRow.get(barcode);
+                        labVessel.setVolume(firstRowHavingTube.getVolume());
+                        labVessel.setConcentration(firstRowHavingTube.getConcentration());
+                        SampleInstanceEjb.addLibrarySize(labVessel,
+                                new BigDecimal(firstRowHavingTube.getFragmentSize()));
+                    });
+
+            // Creates/updates samples.
+            dtos.stream().
+                    map(SampleInstanceEjb.RowDto::getSampleName).
+                    filter(StringUtils::isNotBlank).
+                    distinct().
+                    forEach(sampleName -> {
+                        SampleInstanceEjb.RowDto dto = mapSampleNameToFirstRow.get(sampleName);
+                        createOrUpdateSample(dto);
+                    });
+        } catch (Exception e) {
+            log.error(e);
+        }
+    }
+
+    private void createOrUpdateSample(SampleInstanceEjb.RowDto dto) {
+        String sampleName = dto.getSampleName();
+        MercurySample mercurySample = sampleMap.get(sampleName);
+        SampleData sampleData = getFetchedData().get(sampleName);
+        if (mercurySample == null) {
+            if (sampleData != null) {
+                // Can really be only BSP sample data, since otherwise mercurySample would exist.
+                mercurySample = new MercurySample(sampleName, sampleData.getMetadataSource());
+                mercurySample.setSampleData(sampleData);
+            } else {
+                // Mercury sample data.
+                mercurySample = new MercurySample(sampleName, makeSampleMetadata(dto));
+            }
+            sampleMap.put(sampleName, mercurySample);
+        } else if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+            // Adds new values and updates existing values.
+            mercurySample.updateMetadata(makeSampleMetadata(dto));
+        }
     }
 
     /**
      * Creates/updates tube and sample for each dto row.
      */
-    protected List<SampleInstanceEntity> makeSampleInstanceEntities(List<SampleInstanceEjb.RowDto> rowDtos) {
+    private List<SampleInstanceEntity> makeSampleInstanceEntities(List<SampleInstanceEjb.RowDto> rowDtos) {
         List<SampleInstanceEntity> sampleInstanceEntities = new ArrayList<>();
         for (SampleInstanceEjb.RowDto dto : rowDtos) {
-            LabVessel labVessel = getLabVesselMap().get(dto.getBarcode());
-            MercurySample mercurySample = getSampleMap().get(dto.getSampleName());
+            LabVessel labVessel = labVesselMap.get(dto.getBarcode());
+            MercurySample mercurySample = sampleMap.get(dto.getSampleName());
             mercurySample.addLabVessel(labVessel);
 
             SampleInstanceEntity sampleInstanceEntity = makeSampleInstanceEntity(dto, labVessel, mercurySample);
@@ -629,24 +627,25 @@ public class ExternalLibraryProcessor extends TableProcessor {
     /**
      * Makes Metadata from the spreadsheet row.
      */
-    protected Set<Metadata> makeSampleMetadata(SampleInstanceEjb.RowDto dto) {
+    private Set<Metadata> makeSampleMetadata(SampleInstanceEjb.RowDto dto) {
         // For each pair, if the data value is not blank, makes a new Metadata and puts it in a Set.
-        Set<Metadata> metadata = Stream.of(
+        // DELETE_TOKEN is turned into a blank.
+        return Stream.of(
                 Pair.of(dto.getCollaboratorSampleId(), Metadata.Key.SAMPLE_ID),
                 Pair.of(dto.getCollaboratorParticipantId(), Metadata.Key.PATIENT_ID),
                 Pair.of(dto.getSex(), Metadata.Key.GENDER),
                 Pair.of(dto.getOrganism(), Metadata.Key.SPECIES),
                 Pair.of(dto.getMaterialType(), Metadata.Key.MATERIAL_TYPE)).
                 filter(pair -> StringUtils.isNotBlank(pair.getLeft())).
-                map(pair -> new Metadata(pair.getRight(), pair.getLeft())).
+                map(pair -> new Metadata(pair.getRight(),
+                        DELETE_TOKEN.equalsIgnoreCase(pair.getLeft()) ? "" : pair.getLeft())).
                 collect(Collectors.toSet());
-        return metadata;
     }
 
     /**
      * Makes Metadata from SampleData.
      */
-    protected Set<Metadata> makeSampleMetadata(SampleData sampleData) {
+    private Set<Metadata> makeSampleMetadata(SampleData sampleData) {
         // For each pair, if the data value is not blank, makes a new Metadata and puts it in a Set.
         return Stream.of(
                 Pair.of(sampleData.getCollaboratorsSampleName(), Metadata.Key.SAMPLE_ID),
@@ -662,7 +661,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
     /**
      * Makes a new SampleInstanceEntity from the row data.
      */
-    protected SampleInstanceEntity makeSampleInstanceEntity(SampleInstanceEjb.RowDto dto, LabVessel labVessel,
+    private SampleInstanceEntity makeSampleInstanceEntity(SampleInstanceEjb.RowDto dto, LabVessel labVessel,
             MercurySample mercurySample) {
 
         SampleInstanceEntity sampleInstanceEntity = dto.getSampleInstanceEntity();
@@ -673,15 +672,16 @@ public class ExternalLibraryProcessor extends TableProcessor {
         // An existing Sample Instance Entity gets rewritten.
         sampleInstanceEntity.setAggregationDataType(dto.getAggregationDataType());
         sampleInstanceEntity.setAggregationParticle(dto.getAggregationParticle());
-        sampleInstanceEntity.setAnalysisType(getAnalysisTypeMap().get(dto.getAnalysisTypeName()));
+        sampleInstanceEntity.setAnalysisType(analysisTypeMap.get(dto.getAnalysisTypeName()));
         sampleInstanceEntity.setInsertSize(dto.getInsertSize());
         sampleInstanceEntity.setLabVessel(labVessel);
         sampleInstanceEntity.setMercurySample(mercurySample);
-        sampleInstanceEntity.setMolecularIndexingScheme(getMolecularIndexingSchemeMap().get(dto.getMisName()));
+        sampleInstanceEntity.setImpliedSampleName(dto.isImpliedSampleName());
+        sampleInstanceEntity.setMolecularIndexingScheme(molecularIndexingSchemeMap.get(dto.getMisName()));
         sampleInstanceEntity.setReadLength(dto.getReadLength());
         sampleInstanceEntity.setReagentDesign(dto.getReagent());
-        sampleInstanceEntity.setReferenceSequence(getReferenceSequenceMap().get(dto.getReferenceSequence()));
-        sampleInstanceEntity.setRootSample(getSampleMap().get(dto.getRootSampleName()));
+        sampleInstanceEntity.setReferenceSequence(referenceSequenceMap.get(dto.getReferenceSequence()));
+        sampleInstanceEntity.setRootSample(sampleMap.get(dto.getRootSampleName()));
         sampleInstanceEntity.setSequencerModel(IlluminaFlowcell.FlowcellType.getByTechnology(
                 dto.getSequencingTechnology()));
         sampleInstanceEntity.setUploadDate(new Date());
@@ -736,31 +736,19 @@ public class ExternalLibraryProcessor extends TableProcessor {
     }
 
     /**
-     * Returns true if string indicates a true value, meaning it's "t", "true", "y", "yes",
-     * or "1" (or any non-zero integer value), ignoring case.
+     * Returns true if it starts with upper or lower case "y" "t" or 1, false if starts with
+     * anything else, and null if it's blank.
      */
-    private static boolean isTrue(String value) {
-        return StringUtils.isNotBlank(value) && (isOneOf(value, "y", "yes", "t", "true") ||
-                (StringUtils.isNumeric(value) && Integer.parseInt(value) != 0));
-    }
-
-    /**
-     * Returns true if string is one of the given testString, ignoring case.
-     */
-    public static boolean isOneOf(String value, String... testStrings) {
-        for (String testString : testStrings) {
-            if (testString.equalsIgnoreCase(value)) {
-                return true;
-            }
-        }
-        return false;
+    public static Boolean asBoolean(String value) {
+        return StringUtils.isBlank(value) ? null :
+                "yt1".contains(value.toLowerCase().subSequence(0, 1)) ? Boolean.TRUE : Boolean.FALSE;
     }
 
     /**
      * Returns an integer range (two integers delimited with a hyphen), and adds an error message if the input
      * is not one or two integers delimited by space, comma, hyphen, underscore, pipe, slash, colon.
      */
-    public static String asIntegerRange(String input, String header, int rowNumber, MessageCollection messages) {
+    private static String asIntegerRange(String input, String header, int rowNumber, MessageCollection messages) {
         if (StringUtils.isNotBlank(input)) {
             Integer[] range = {null, null};
             String[] tokens = input.split("[ ,\\-_|/:]");
