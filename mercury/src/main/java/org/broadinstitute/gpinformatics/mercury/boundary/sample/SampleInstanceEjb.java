@@ -64,8 +64,7 @@ public class SampleInstanceEjb {
     public static final String ALIAS_CHARS = RESTRICTED_CHARS + " @#&*()[]|;:<>,?/=+\"'";
 
     public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
-    public static final String BSP_METADATA =
-            "Row #%d values for %s should be blank because BSP data for sample %s cannot be updated.";
+    public static final String BSP_METADATA = "Row #%d overwriting BSP sample metadata %s cannot be done here.";
     public static final String DUPLICATE = "Row #%d duplicate value for %s.";
     public static final String DUPLICATE_IN_TUBE = "Row #%d has a duplicate value for %s in tube %s.";
     public static final String DUPLICATE_S_M =
@@ -77,13 +76,13 @@ public class SampleInstanceEjb {
     public static final String INVALID_CHARS = "Row #%d %s characters must only be %s";
     public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
     public static final String MISSING = "Row #%d is missing a value for %s.";
-    public static final String NONEXISTENT = "Row #%d the value for %s \"%s\" does not exist in %s.";
     public static final String NONNEGATIVE_DECIMAL = "Row #%d %s must be a non-negative decimal number.";
     public static final String NONNEGATIVE_INTEGER = "Row #%d %s must be a non-negative integer number.";
     public static final String PREXISTING =
             "Row #%d %s named \"%s\" already exists in Mercury; set the Overwrite checkbox to re-upload.";
-    public static final String PREXISTING_VALUES =
-            "Row #%d values for %s already exist in Mercury; set the Overwrite checkbox to re-upload.";
+    public static final String MERCURY_METADATA = "Row #%d requires Overwrite checkbox to be set for " +
+            "updating Mercury sample metadata %s.";
+    public static final String TOO_LONG = "Row #$d the value for %s is too long (limit is %d).";
     public static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
 
     private static final Log log = LogFactory.getLog(SampleInstanceEjb.class);

@@ -23,7 +23,6 @@ import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
@@ -45,6 +44,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @UrlBinding(value = "/sample/ExternalLibraryUpload.action")
 public class ExternalLibraryUploadActionBean extends CoreActionBean {
@@ -87,19 +87,18 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         MessageCollection messageCollection = new MessageCollection();
         sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, processor, messageCollection, null);
         addMessages(messageCollection);
+        setOverWriteFlag(false);
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
     @HandlesEvent(DOWNLOAD_TEMPLATE)
     public Resolution template() {
-        HeaderValueRow[] headerValueRows = null;
-        ColumnHeader[] columnHeaders = ExternalLibraryProcessor.Headers.values();
         try {
-            ByteArrayOutputStream stream = templateSpreadsheet(headerValueRows, columnHeaders);
+            ByteArrayOutputStream stream = templateSpreadsheet(ExternalLibraryProcessor.Headers.values());
             final byte[] bytes = stream.toByteArray();
             IOUtils.closeQuietly(stream);
 
-            Resolution resolution = (request, response) -> {
+            return (request, response) -> {
                 response.setContentType("application/ms-excel");
                 response.setContentLength(bytes.length);
                 response.setHeader("Expires:", "0"); // eliminates browser caching
@@ -108,7 +107,6 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 outStream.write(bytes);
                 outStream.flush();
             };
-            return resolution;
 
         } catch (IOException e) {
             addMessage("Cannot generate spreadsheet: " + e.toString());
@@ -119,8 +117,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     /**
      * Makes a template spreadsheet containing headers.
      */
-    private ByteArrayOutputStream templateSpreadsheet(HeaderValueRow[] headerValues, ColumnHeader[] columnHeaders)
-            throws IOException {
+    private ByteArrayOutputStream templateSpreadsheet(ColumnHeader[] columnHeaders) throws IOException {
 
         // Makes data for the dropdown lists.
         String[] validAnalysisTypes = analysisTypeDao.findAll().stream().
@@ -276,23 +273,20 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
             }
         }
 
-        // A blank row.
+        // A couple blank rows.
+        sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
         sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
 
-        // Writes the key to color coding.
-        int firstKeyRow = rowIndex;
-        int colorColumnIdx = 2;
+        // Writes a color coding key.
+        int colorColumnIdx = 0;
         for (Pair<ExternalLibraryProcessor.DataPresence, String> pair : Arrays.asList(
-                Pair.of((ExternalLibraryProcessor.DataPresence)null, "Cell color indicates:"),
-                Pair.of(ExternalLibraryProcessor.DataPresence.REQUIRED, " Required "),
+                Pair.of((ExternalLibraryProcessor.DataPresence)null, "Header color indicates:"),
+                Pair.of(ExternalLibraryProcessor.DataPresence.REQUIRED, " Required value"),
                 Pair.of(ExternalLibraryProcessor.DataPresence.ONCE_PER_TUBE, " Required Once per Tube "),
-                Pair.of(ExternalLibraryProcessor.DataPresence.OPTIONAL, " Optional "))) {
+                Pair.of(ExternalLibraryProcessor.DataPresence.OPTIONAL, " Optional value"),
+                Pair.of((ExternalLibraryProcessor.DataPresence)null, "(please delete these rows before uploading)"))) {
 
             HSSFCellStyle style = workbook.createCellStyle();
-            style.setBorderTop(CellStyle.BORDER_NONE);
-            style.setBorderLeft(CellStyle.BORDER_THIN);
-            style.setBorderRight(CellStyle.BORDER_THIN);
-            style.setBorderBottom(CellStyle.BORDER_NONE);
             if (pair.getLeft() != null) {
                 style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
                 style.setFillForegroundColor(colorMap.get(pair.getLeft()));
@@ -302,10 +296,6 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
             cell.setCellValue(pair.getRight());
             cell.setCellStyle(style);
         }
-        // Puts a border on the top and bottom color cells.
-        sheet1.getRow(firstKeyRow).getCell(colorColumnIdx).getCellStyle().setBorderTop(CellStyle.BORDER_THIN);
-        sheet1.getRow(rowIndex - 1).getCell(colorColumnIdx).getCellStyle().setBorderBottom(CellStyle.BORDER_THIN);
-
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         workbook.write(stream);
         return stream;

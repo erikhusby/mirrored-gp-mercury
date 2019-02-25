@@ -89,6 +89,8 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
     public enum DataPresence {REQUIRED, ONCE_PER_TUBE, OPTIONAL, IGNORED}
     private final static boolean EXPLICIT_DELETE = true;
+    public final static int ALIAS_LENGTH_LIMIT = 25;
+    public final static int AGGREGATION_PARTICLE_LENGTH_LIMIT = 20;
 
     public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
         TUBE_BARCODE("Sample Tube Barcode", DataPresence.REQUIRED),
@@ -319,6 +321,20 @@ public class ExternalLibraryProcessor extends TableProcessor {
             // the upload makes new SampleInstanceEntities, possibly reusing an existing MercurySample,
             // and possibly reusing an existing library name.
             validateSampleMetadata(dto, overwrite, messages);
+
+            // Checks alias length for limits imposed by the pipeline.
+            Stream.of(Pair.of(dto.getCollaboratorSampleId(), Headers.COLLABORATOR_SAMPLE_ID),
+                    Pair.of(dto.getCollaboratorParticipantId(), Headers.INDIVIDUAL_NAME)).
+                    filter(pair -> StringUtils.isNotBlank(pair.getLeft()) &&
+                            pair.getLeft().length() > ALIAS_LENGTH_LIMIT).
+                    forEach(pair -> messages.addError(String.format(SampleInstanceEjb.TOO_LONG,
+                            dto.getRowNumber(), pair.getRight().getText(), ALIAS_LENGTH_LIMIT)));
+            // Checks aggregation particle length.
+            if (StringUtils.isNotBlank(dto.getAggregationParticle()) &&
+                    dto.getAggregationParticle().length() > AGGREGATION_PARTICLE_LENGTH_LIMIT) {
+                messages.addError(String.format(SampleInstanceEjb.TOO_LONG, dto.getRowNumber(),
+                        Headers.DATA_AGGREGATOR.getText(), AGGREGATION_PARTICLE_LENGTH_LIMIT));
+            }
         }
     }
 
@@ -481,23 +497,22 @@ public class ExternalLibraryProcessor extends TableProcessor {
     private void validateSampleMetadata(SampleInstanceEjb.RowDto dto, boolean overwrite, MessageCollection messages) {
         SampleData sampleData = getFetchedData().get(dto.getSampleName());
         if (sampleData != null) {
-            // Collects the column names of the metadata updates that will change the value.
-            String columnNames = ((Collection<Metadata>) CollectionUtils.subtract(makeSampleMetadata(dto, false),
-                    makeSampleMetadata(sampleData))).
-                    stream().
-                    map(metadata -> metadata.getKey().getDisplayName()).
-                    sorted().
-                    collect(Collectors.joining(", "));
-
+            // Collects the metadata updates that would cause a change.
+            Collection<Metadata> existingMetadata = makeSampleMetadata(sampleData);
+            Collection<Metadata> updates = CollectionUtils.subtract(makeSampleMetadata(dto, false), existingMetadata);
             // When updates are present it's an error if the metadata source is BSP, or if the metadata
             // source is Mercury and overwrite is not set.
-            if (!columnNames.isEmpty()) {
+            if (!updates.isEmpty()) {
+                Map<Metadata.Key, String> existingMap = existingMetadata.stream().
+                        collect(Collectors.toMap(Metadata::getKey, Metadata::getValue));
+                String changes = updates.stream().
+                        map(metadata -> metadata.getKey().getDisplayName() + "=" + existingMap.get(metadata.getKey())).
+                        sorted().
+                        collect(Collectors.joining(", "));
                 if (sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                    messages.addError(SampleInstanceEjb.BSP_METADATA, dto.getRowNumber(), columnNames,
-                            dto.getSampleName());
+                    messages.addError(SampleInstanceEjb.BSP_METADATA, dto.getRowNumber(), changes);
                 } else if (!overwrite) {
-                    messages.addError(SampleInstanceEjb.PREXISTING_VALUES, dto.getRowNumber(), columnNames,
-                            dto.getSampleName());
+                    messages.addError(SampleInstanceEjb.MERCURY_METADATA, dto.getRowNumber(), changes);
                 }
             }
         }
