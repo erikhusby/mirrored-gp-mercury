@@ -104,6 +104,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String PARSE_LIMS_FILE_ACTION = "parseLimsFile";
     public static final String SKIP_LIMS_FILE_ACTION = "skipLimsFile";
     public static final String DECODE_IMAGE_ACTION = "decodeImage";
+    public static final String BAD_STATION_NAME = "None";
     private final String syntheticBarcode = String.valueOf(System.currentTimeMillis());
 
     /** Parameter from batch workflow page. */
@@ -1079,6 +1080,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     }
                 }
             }
+        }
+
+        if (stationEvents.get(0).getStation().equalsIgnoreCase(BAD_STATION_NAME)) {
+            addGlobalValidationError("A valid station is required");
         }
 
         BettaLIMSMessage bettaLIMSMessage = null;
