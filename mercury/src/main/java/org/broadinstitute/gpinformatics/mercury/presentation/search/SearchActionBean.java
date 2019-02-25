@@ -275,8 +275,7 @@ public class SearchActionBean extends CoreActionBean {
         List<String> sampleIds = new ArrayList<>(valueArray.length);
         for (String value : valueArray) {
             if (!StringUtils.isBlank(value)) {
-                value = value.trim();
-//                value = StringUtils.normalizeSpace(value).trim();
+                value = StringUtils.normalizeSpace(value).trim();
 
                 if (includeSampleFixup && UPPERCASE_PATTERN.matcher(value).matches()) {
                     value = value.toUpperCase();

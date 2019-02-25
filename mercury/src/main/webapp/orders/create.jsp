@@ -212,7 +212,9 @@
                 }
                 return $j("<div></div>", {"class": "noOrsp", "text": "No ORSP Projects found."})[0].outerHTML
             }
-            $j.fn.dataTable.ext.errMode = function ( settings, helpPage, message ) {
+
+            // prevent datatables javascript error from appearing.
+            $j.fn.dataTable.ext.errMode = function (settings, helpPage, message) {
                 console.log(message);
             };
             regulatorySuggestionDT = $j("#regulatoryInfoSuggestions").DataTable({
