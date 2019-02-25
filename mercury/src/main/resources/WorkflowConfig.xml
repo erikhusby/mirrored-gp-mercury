@@ -1706,8 +1706,12 @@
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
-                    <reagentNames>Proteinase K</reagentNames>
-                    <reagentNames>Buffer AL</reagentNames>
+                    <reagentRequirements>
+                        <reagentName>Proteinase K</reagentName>
+                    </reagentRequirements>
+                    <reagentRequirements>
+                        <reagentName>Buffer AL</reagentName>
+                    </reagentRequirements>
                     <sourceVesselTypeGeometryString>RackType.FlipperRackRow8</sourceVesselTypeGeometryString>
                     <sourceSection>ROWOF8</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow8</targetVesselTypeGeometryString>
