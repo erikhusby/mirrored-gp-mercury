@@ -261,7 +261,7 @@ public class SearchActionBean extends CoreActionBean {
      *
      * @return {@link List<String>} of all the keys from the searchKey string
      */
-    private static List<String> cleanInputString(String searchKey, boolean includeSampleFixup) {
+    static List<String> cleanInputString(String searchKey, boolean includeSampleFixup) {
         if (searchKey == null) {
             return Collections.emptyList();
         }
@@ -276,6 +276,8 @@ public class SearchActionBean extends CoreActionBean {
         for (String value : valueArray) {
             if (!StringUtils.isBlank(value)) {
                 value = value.trim();
+//                value = StringUtils.normalizeSpace(value).trim();
+
                 if (includeSampleFixup && UPPERCASE_PATTERN.matcher(value).matches()) {
                     value = value.toUpperCase();
                 }
