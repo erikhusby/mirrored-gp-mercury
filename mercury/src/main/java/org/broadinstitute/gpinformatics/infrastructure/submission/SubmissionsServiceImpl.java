@@ -63,6 +63,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             Response response = clientResponseGet(SubmissionConfig.SUBMISSIONS_STATUS_URI, parameters);
             validateResponseStatus("querying submission status", response);
             SubmissionStatusResultBean result = response.readEntity(SubmissionStatusResultBean.class);
+            response.close();
             allResults.addAll(result.getSubmissionStatuses());
         }
 
@@ -115,6 +116,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 clientResponseGet(SubmissionConfig.LIST_BIOPROJECTS_ACTION, NO_PARAMETERS);
         BioProjects bioProjects = response.readEntity(BioProjects.class);
         validateResponseStatus("querying submission status", response);
+        response.close();
         return bioProjects.getBioprojects();
     }
 
@@ -132,6 +134,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         validateResponseStatus("posting submissions", response);
         List<SubmissionStatusDetailBean> submissionStatuses =
             response.readEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
+        response.close();
         return submissionStatuses;
     }
 
@@ -143,21 +146,29 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         Response response =
                 clientResponseGet(SubmissionConfig.SUBMISSION_SAMPLES_ACTION, parameterMap);
         validateResponseStatus("receiving submission samples list", response);
-        return response.readEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
+        List<String> submittedSampleIds = response.readEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
+        response.close();
+        return submittedSampleIds;
     }
 
     @Override
     public List<SubmissionRepository> getSubmissionRepositories() {
         Response response = clientResponseGet(SubmissionConfig.ALL_SUBMISSION_SITES, NO_PARAMETERS);
         validateResponseStatus("receiving Submission Repositories", response);
-        return response.readEntity(SubmissionRepositories.class).getSubmissionRepositories();
+        List<SubmissionRepository> submissionRepositories =
+                response.readEntity(SubmissionRepositories.class).getSubmissionRepositories();
+        response.close();
+        return submissionRepositories;
     }
 
     @Override
     public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
         Response response = clientResponseGet(SubmissionConfig.SUBMISSION_TYPES, NO_PARAMETERS);
         validateResponseStatus("receiving Submission Library Descriptors",response);
-        return response.readEntity(SubmissionLibraryDescriptors.class).getSubmissionLibraryDescriptors();
+        List<SubmissionLibraryDescriptor> submissionLibraryDescriptors =
+                response.readEntity(SubmissionLibraryDescriptors.class).getSubmissionLibraryDescriptors();
+        response.close();
+        return submissionLibraryDescriptors;
     }
 
     private Response clientResponseGet(String servicePath, Map<String, List<String>> parameters) {

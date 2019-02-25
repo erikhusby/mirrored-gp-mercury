@@ -72,6 +72,7 @@ public class BarcodeDecoderRestClient extends AbstractJerseyClientService {
         } else {
             String json = response.readEntity(String.class);
             ObjectMapper mapper = new ObjectMapper();
+            response.close();
             return mapper.readValue(json, DecodeResponse.class);
         }
     }

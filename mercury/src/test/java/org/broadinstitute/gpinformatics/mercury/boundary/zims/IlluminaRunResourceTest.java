@@ -144,7 +144,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 //        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 //        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
-        ZimsIlluminaRun run = clientBuilder.newClient().target(url)
+        ZimsIlluminaRun run = clientBuilder.build().target(url)
                 .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         Assert.assertNotNull(run);
         Assert.assertNotNull(run.getError());
@@ -170,11 +170,11 @@ public class IlluminaRunResourceTest extends Arquillian {
 //        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 //        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
-        ZimsIlluminaRun run = clientBuilder.newClient().target(url)
+        ZimsIlluminaRun run = clientBuilder.build().target(url)
                 .queryParam("runName", RUN_NAME)
                 .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
 
-        String rawJson = clientBuilder.newClient().target(url)
+        String rawJson = clientBuilder.build().target(url)
                 .queryParam("runName", RUN_NAME)
                 .request(MediaType.APPLICATION_JSON).get(String.class);
         Assert.assertFalse(rawJson.contains("@")); // might see this if you use XmlAttribute instead of XmlElement
@@ -235,7 +235,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(foundPdo);
         Assert.assertTrue(foundTumor);
 
-        run = clientBuilder.newClient().target(url)
+        run = clientBuilder.build().target(url)
                 .queryParam("runName", "Cheese ball")
                 .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         Assert.assertNotNull(run.getError());
@@ -255,7 +255,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 //        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 
-        ZimsIlluminaRun run = clientBuilder.newClient().target(url)
+        ZimsIlluminaRun run = clientBuilder.build().target(url)
                 .queryParam("runName", "TestRun03261516351364325439075.txt")
                 .request(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         Assert.assertEquals(run.getLanes().size(), 8, "Wrong number of lanes");

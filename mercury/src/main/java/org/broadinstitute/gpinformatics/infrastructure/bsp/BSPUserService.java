@@ -52,6 +52,7 @@ public class BSPUserService extends BSPJerseyClient {
 
         BspUser bspUser = (BspUser) new XStream().fromXML(clientResponse.readEntity(String.class));
         Response.Status clientResponseStatus = Response.Status.fromStatusCode(clientResponse.getStatus());
+        clientResponse.close();
 
         if (!EnumSet.of(ACCEPTED, OK).contains(clientResponseStatus)) {
             log.error("Got error code " + clientResponseStatus + " calling web service " + urlString +

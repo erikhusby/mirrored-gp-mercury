@@ -120,6 +120,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
             } else {
                 result = "Cannot set volume and concentration: " + firstLine + "(" + clientResponse.getStatus() + ")";
             }
+            clientResponse.close();
         } catch (Exception exp) {
             result = "Cannot set volume and concentration: " + exp.getMessage();
         } finally {

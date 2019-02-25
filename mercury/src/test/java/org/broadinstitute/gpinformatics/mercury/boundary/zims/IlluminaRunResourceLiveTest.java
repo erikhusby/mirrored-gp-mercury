@@ -95,7 +95,7 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 //        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 //        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
-        return clientBuilder.newClient().target(url)
+        return clientBuilder.build().target(url)
                 .queryParam("runName", runName)
                 .request(MediaType.APPLICATION_JSON);
     }

@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
+import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
@@ -46,8 +47,8 @@ public class SamplesPicoDbTest extends StubbyContainerTest {
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 //        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
-        Client client = clientBuilder.newClient();
-        client.register(new JerseyUtils.LoggingFilter());
+        Client client = clientBuilder.build();
+        client.register(new EntityLoggingFilter());
 
         String batchId = "BP-" + timestamp;
         ArrayList<String> tubeBarcodes = new ArrayList<>();

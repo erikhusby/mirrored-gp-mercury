@@ -105,7 +105,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         WebTarget resource = makeWebResource(baseUrl, "create");
 
         try {
-            resource.request().post(Entity.xml(data));
+            resource.request().post(Entity.xml(data), ProductOrderData.class);
             Assert.fail();
         } catch (WebApplicationException e) {
             Assert.assertEquals(e.getResponse().getStatusInfo().getStatusCode(),

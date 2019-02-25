@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAJaxbBuilder;
@@ -55,8 +56,8 @@ public class StoolTNAExtractionDbTest extends StubbyContainerTest {
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        Client client = clientBuilder.newClient();
-        client.register(new JerseyUtils.LoggingFilter());
+        Client client = clientBuilder.build();
+        client.register(new EntityLoggingFilter());
 
         String batchResponse = createBatch(baseUrl, client, batchId, parentVesselBean);
         Assert.assertEquals(batchResponse, "Batch persisted");

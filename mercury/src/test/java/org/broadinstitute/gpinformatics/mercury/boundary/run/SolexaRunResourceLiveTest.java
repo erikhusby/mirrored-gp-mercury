@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
+import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchDbTest;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
@@ -18,6 +19,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -62,9 +64,10 @@ public class SolexaRunResourceLiveTest extends Arquillian {
         }
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.getClasses().add(JacksonJsonProvider.class);
 
-        ReadStructureRequest returnedReadStructureRequest = clientBuilder.newClient().target(wsUrl).
+        Client client = clientBuilder.build();
+        client.register(new EntityLoggingFilter());
+        ReadStructureRequest returnedReadStructureRequest = client.target(wsUrl).
                 request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).
                 post(Entity.json(readStructureData), ReadStructureRequest.class);
 

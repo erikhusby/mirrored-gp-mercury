@@ -63,7 +63,7 @@ public class SampleImportResourceDbTest extends StubbyContainerTest {
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
         // POST to the resource
-        WebTarget resource = clientBuilder.newClient()
+        WebTarget resource = clientBuilder.build()
                 .target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/sampleimport");
         String response = resource.request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)

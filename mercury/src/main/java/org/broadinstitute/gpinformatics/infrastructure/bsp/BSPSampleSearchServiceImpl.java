@@ -12,8 +12,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -76,7 +74,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
         try {
             for (BSPSampleSearchColumn column : queryColumns) {
-                parameters.add("columns", URLEncoder.encode(column.columnName(), "UTF-8"));
+                parameters.add("columns", column.columnName());
             }
 
             parameters.add("sample_ids", StringUtils.join(sampleIDs, ","));
@@ -98,8 +96,6 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             });
         } catch (WebApplicationException clientException) {
             throw new BSPLookupException("Error connecting to BSP", clientException);
-        } catch (UnsupportedEncodingException uex) {
-            throw new RuntimeException(uex);
         }
 
         return ret;

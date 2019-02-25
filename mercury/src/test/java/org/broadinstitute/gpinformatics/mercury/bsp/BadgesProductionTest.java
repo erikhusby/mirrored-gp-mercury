@@ -86,7 +86,7 @@ public class BadgesProductionTest extends Arquillian {
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
         final WebTarget badgeResource =
-                clientBuilder.newClient().target(appConfig.getUrl() + "rest/limsQuery/fetchUserIdForBadgeId");
+                clientBuilder.build().target(appConfig.getUrl() + "rest/limsQuery/fetchUserIdForBadgeId");
 
         while (badgesReader.ready()) {
             String[] columns = badgesReader.readLine().split(",");

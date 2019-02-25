@@ -97,7 +97,9 @@ public class BSPRestSender implements Serializable {
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             throw new RuntimeException("POST to " + urlString + " returned: " + response.readEntity(String.class));
         }
-        return response.readEntity(TransferReturn.class);
+        TransferReturn transferReturn = response.readEntity(TransferReturn.class);
+        response.close();
+        return transferReturn;
     }
 
     private PlateCherryPickEvent plateTransferToCherryPick(PlateTransferEventType plateTransferEventType,
@@ -404,8 +406,10 @@ public class BSPRestSender implements Serializable {
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             String msg = "POST to " + urlString + " returned: " + response.readEntity(String.class);
             logger.error(msg);
+            response.close();
             throw new RuntimeException(msg);
         }
+        response.close();
     }
 
     /**
@@ -426,10 +430,12 @@ public class BSPRestSender implements Serializable {
         Response response = webTarget.request(MediaType.APPLICATION_FORM_URLENCODED).post(Entity.form(formData));
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
+        String entity = response.readEntity(String.class);
+        response.close();
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            throw new RuntimeException("POST to " + urlString + " returned: " + response.readEntity(String.class));
+            throw new RuntimeException("POST to " + urlString + " returned: " + entity);
         } else {
-            return response.readEntity(String.class);
+            return entity;
         }
     }
 
@@ -441,7 +447,9 @@ public class BSPRestSender implements Serializable {
             logger.warn("Failed to find container info for " + containerBarcode);
             return null;
         } else {
-            return response.readEntity(GetSampleInfo.SampleInfos.class);
+            GetSampleInfo.SampleInfos sampleInfos = response.readEntity(GetSampleInfo.SampleInfos.class);
+            response.close();
+            return sampleInfos;
         }
     }
 

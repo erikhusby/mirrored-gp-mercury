@@ -47,7 +47,9 @@ public class SquidConnectorImpl implements SquidConnector {
                         MediaType.APPLICATION_XML_TYPE).accept(MediaType.APPLICATION_XML)
                                                        .post(Entity.xml(runInformation));
 
-        return new SquidResponse(response.getStatus(), response.readEntity(String.class));
+        SquidResponse squidResponse = new SquidResponse(response.getStatus(), response.readEntity(String.class));
+        response.close();
+        return squidResponse;
 
     }
 
@@ -70,10 +72,12 @@ public class SquidConnectorImpl implements SquidConnector {
             solexaRunSynopsis.getSolexaRunLaneSynopsisBean().add(solexaRunLaneSynopsisBean);
         }
 
-        Response response = JerseyUtils.getWebResource(squidWSUrl, MediaType.APPLICATION_JSON_TYPE)
-                .accept(MediaType.APPLICATION_JSON).post(Entity.json(solexaRunSynopsis));
+        Response response = JerseyUtils.getWebResource(squidWSUrl, MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML_TYPE).post(Entity.xml(solexaRunSynopsis));
 
-        return new SquidResponse(response.getStatus(), response.readEntity(String.class));
+        SquidResponse squidResponse = new SquidResponse(response.getStatus(), response.readEntity(String.class));
+        response.close();
+        return squidResponse;
     }
 
     @Override
@@ -83,7 +87,9 @@ public class SquidConnectorImpl implements SquidConnector {
                 squidConfig.getUrl() + "/resources/projectresource/projectoptions",
                 MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get();
 
-        return response.readEntity(CreateProjectOptions.class);
+        CreateProjectOptions createProjectOptions = response.readEntity(CreateProjectOptions.class);
+        response.close();
+        return createProjectOptions;
     }
 
     @Override
@@ -94,7 +100,9 @@ public class SquidConnectorImpl implements SquidConnector {
                                                              + executionType,
                 MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get();
 
-        return response.readEntity(CreateWorkRequestOptions.class);
+        CreateWorkRequestOptions createWorkRequestOptions = response.readEntity(CreateWorkRequestOptions.class);
+        response.close();
+        return createWorkRequestOptions;
     }
 
     @Override
@@ -104,7 +112,9 @@ public class SquidConnectorImpl implements SquidConnector {
                 squidConfig.getUrl() + "/resources/projectresource/executiontypes",
                 MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get();
 
-        return response.readEntity(ExecutionTypes.class);
+        ExecutionTypes executionTypes = response.readEntity(ExecutionTypes.class);
+        response.close();
+        return executionTypes;
     }
 
     @Override
@@ -113,7 +123,9 @@ public class SquidConnectorImpl implements SquidConnector {
                 squidConfig.getUrl() + "/resources/projectresource/oligioGroups",
                 MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get();
 
-        return response.readEntity(OligioGroups.class);
+        OligioGroups oligioGroups = response.readEntity(OligioGroups.class);
+        response.close();
+        return oligioGroups;
     }
 
     @Override
@@ -123,7 +135,9 @@ public class SquidConnectorImpl implements SquidConnector {
                         squidConfig.getUrl() + "/resources/projectresource/groupReceptacles/" + groupName,
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get();
 
-        return response.readEntity(SampleReceptacleGroup.class);
+        SampleReceptacleGroup sampleReceptacleGroup = response.readEntity(SampleReceptacleGroup.class);
+        response.close();
+        return sampleReceptacleGroup;
     }
 
     @Override
@@ -140,6 +154,7 @@ public class SquidConnectorImpl implements SquidConnector {
         } else {
             throw new InformaticsServiceException(response.readEntity(String.class));
         }
+        response.close();
         return result;
     }
 

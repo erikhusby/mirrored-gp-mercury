@@ -41,10 +41,13 @@ public class BSPRestService implements Serializable {
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            response.close();
             throw new RuntimeException("GET to " + urlString + " returned: " + response.readEntity(String.class));
         }
 
-        return response.readEntity(SampleKitInfo.class);
+        SampleKitInfo sampleKitInfo = response.readEntity(SampleKitInfo.class);
+        response.close();
+        return sampleKitInfo;
     }
 
     public GetSampleDetails.SampleDetails getSampleInfoForContainer(String containerId) {
@@ -59,7 +62,9 @@ public class BSPRestService implements Serializable {
             throw new RuntimeException("GET to " + urlString + " returned: " + response.readEntity(String.class));
         }
 
-        return response.readEntity(GetSampleDetails.SampleDetails.class);
+        GetSampleDetails.SampleDetails sampleDetails = response.readEntity(GetSampleDetails.SampleDetails.class);
+        response.close();
+        return sampleDetails;
     }
 
     /**
@@ -90,10 +95,13 @@ public class BSPRestService implements Serializable {
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             SampleKitReceivedBean receiptResponse = new SampleKitReceivedBean(false);
             logger.warn("POST to " + urlString + " returned: " + response.readEntity(String.class));
+            response.close();
             return receiptResponse;
         }
 
-        return response.readEntity(SampleKitReceivedBean.class);
+        SampleKitReceivedBean sampleKitReceivedBean = response.readEntity(SampleKitReceivedBean.class);
+        response.close();
+        return sampleKitReceivedBean;
     }
 
     public void setBspRestClient(BSPRestClient bspRestClient) {

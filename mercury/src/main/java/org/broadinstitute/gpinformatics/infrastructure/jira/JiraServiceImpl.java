@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJ
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
+import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -234,6 +235,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         WebTarget webResource = getJerseyClient().target(urlString).queryParam("query", key);
         Response response = webResource.request(MediaType.APPLICATION_JSON_TYPE).get();
         JiraUserResponse jiraUserResponse = response.readEntity(JiraUserResponse.class);
+        response.close();
 
         return jiraUserResponse.getJiraUsers();
     }
@@ -442,7 +444,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public Map<String, CustomFieldDefinition> getCustomFields(String... fieldNames) throws IOException {
         String urlString = getBaseUrl() + "/field";
 
-        String jsonResponse = getJerseyClient().target(urlString).request().get(String.class);
+        Response response = getJerseyClient().target(urlString).request().get();
+        String jsonResponse = response.readEntity(String.class);
+        response.close();
+        if (response.getStatus() >= 300) {
+            ClientInvocation.handleErrorStatus(response);
+        }
+
         Map<String, CustomFieldDefinition> customFieldDefinitionMap = CustomFieldJsonParser
                 .parseCustomFields(jsonResponse);
 

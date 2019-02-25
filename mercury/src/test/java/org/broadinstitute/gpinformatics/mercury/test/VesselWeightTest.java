@@ -88,7 +88,7 @@ public class VesselWeightTest extends Arquillian {
         String getTareWeightUrl = bspConfig.getWSUrl("sample/gettareweight");
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        Client client = clientBuilder.newClient();
+        Client client = clientBuilder.build();
         client.register(new BasicAuthentication(bspConfig.getLogin(), bspConfig.getPassword()));
         String response = client.target(getTareWeightUrl)
                 .queryParam("manufacturer_barcodes", tubeBarcodes.get(0))

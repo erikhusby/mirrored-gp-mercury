@@ -40,7 +40,7 @@ public class SampleReceiptResourceDbTest extends StubbyContainerTest {
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        WebTarget resource = clientBuilder.newClient()
+        WebTarget resource = clientBuilder.build()
                 .target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/samplereceipt");
         String response = resource.request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)

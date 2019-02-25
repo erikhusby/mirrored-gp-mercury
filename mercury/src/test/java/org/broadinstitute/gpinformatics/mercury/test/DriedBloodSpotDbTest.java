@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.test.builders.DriedBloodSpotJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -42,8 +43,8 @@ public class DriedBloodSpotDbTest extends StubbyContainerTest {
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        Client client = clientBuilder.newClient();
-        client.register(new JerseyUtils.LoggingFilter());
+        Client client = clientBuilder.build();
+        client.register(new EntityLoggingFilter());
 
         DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder =
                 new DriedBloodSpotJaxbBuilder(ftaPaperBarcodes, batchId, timestamp);

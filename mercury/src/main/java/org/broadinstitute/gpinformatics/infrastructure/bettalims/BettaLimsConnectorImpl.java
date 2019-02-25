@@ -45,7 +45,9 @@ public class BettaLimsConnectorImpl implements BettaLimsConnector {
                 .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(message), Response.class);
-        return new BettaLimsResponse(response.getStatus(), response.readEntity(String.class));
+        BettaLimsResponse bettaLimsResponse = new BettaLimsResponse(response.getStatus(), response.readEntity(String.class));
+        response.close();
+        return bettaLimsResponse;
     }
 
     @Override
@@ -55,7 +57,9 @@ public class BettaLimsConnectorImpl implements BettaLimsConnector {
                 .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(qpcrRunBean), Response.class);
-        return Response.status(response.getStatus()).build();
+        Response build = Response.status(response.getStatus()).build();
+        response.close();
+        return build;
     }
 
     @Override
@@ -65,6 +69,8 @@ public class BettaLimsConnectorImpl implements BettaLimsConnector {
                 .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(libraryQuantRunBean), Response.class);
-        return Response.status(response.getStatus()).build();
+        Response build = Response.status(response.getStatus()).build();
+        response.close();
+        return build;
     }
 }

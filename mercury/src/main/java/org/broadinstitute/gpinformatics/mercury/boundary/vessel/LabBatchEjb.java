@@ -1010,8 +1010,10 @@ public class LabBatchEjb {
             Response response = webTarget.request(MediaType.APPLICATION_XML).post(Entity.xml(bettaLIMSMessage));
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 bspExportsService.export(rackBarcode, userBean.getLoginUserName());
+                response.close();
             } else {
                 messageReporter.addMessage(response.readEntity(String.class));
+                response.close();
                 throw new RuntimeException("Failed to update layout in BSP.");
             }
         }

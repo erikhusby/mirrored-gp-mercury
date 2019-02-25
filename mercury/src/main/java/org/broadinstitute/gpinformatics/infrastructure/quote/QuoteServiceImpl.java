@@ -166,7 +166,9 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             throw newQuoteServerFailureException(quote, quotePriceItem, numWorkUnits);
         }
 
-        return registerNewWork(response, quote, quotePriceItem, numWorkUnits);
+        String registerNewWork = registerNewWork(response, quote, quotePriceItem, numWorkUnits);
+        response.close();
+        return registerNewWork;
     }
 
     /**
@@ -422,6 +424,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
             final Response clientResponse = resource.request(MediaType.APPLICATION_XML).get();
             priceList = clientResponse.readEntity(PriceList.class);
+            clientResponse.close();
 
             if(priceList == null) {
                 throw new QuoteServerException("No results returned when looking for price items :" + orderedPriceItemNames);

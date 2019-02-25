@@ -33,6 +33,7 @@ public class GapHandler {
             if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
                 throw new RuntimeException("POST to " + urlString + " returned: " + response.readEntity(String.class));
             }
+            response.close();
         }
     }
 }

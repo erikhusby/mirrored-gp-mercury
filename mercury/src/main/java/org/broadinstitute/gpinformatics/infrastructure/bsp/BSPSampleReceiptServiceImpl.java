@@ -65,6 +65,7 @@ public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPS
         Response clientResponse = webResource.request(MediaType.TEXT_PLAIN).post(null);
 
         InputStream inputStream = clientResponse.readEntity(InputStream.class);
+        clientResponse.close();
         Reader reader = null;
 
         Object resultObject = null;

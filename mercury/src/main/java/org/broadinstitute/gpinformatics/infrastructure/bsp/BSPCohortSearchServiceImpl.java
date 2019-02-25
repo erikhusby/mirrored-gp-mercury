@@ -83,6 +83,7 @@ public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCo
                 logger.error(errMsg + " : " + rdr.readLine());
                 throw new RuntimeException(errMsg);
             }
+            clientResponse.close();
 
             // Skip the header line.
             rdr.readLine();

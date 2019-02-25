@@ -212,7 +212,7 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        Response response = clientBuilder.newClient().target(appConfig.getUrl() + "rest/solexarun")
+        Response response = clientBuilder.build().target(appConfig.getUrl() + "rest/solexarun")
                 .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
@@ -241,7 +241,7 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 
-        Response response = clientBuilder.newClient().target(appConfig.getUrl() + "rest/solexarun")
+        Response response = clientBuilder.build().target(appConfig.getUrl() + "rest/solexarun")
                 .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
@@ -282,7 +282,7 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
 //        clientConfig.getClasses().add(JacksonJsonProvider.class);
 
         Response readStructureResult =
-                clientBuilder.newClient().target(wsUrl)
+                clientBuilder.build().target(wsUrl)
                         .request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
                         .post(Entity.json(readStructureData), Response.class);
 
@@ -319,7 +319,7 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
 //        clientConfig.getClasses().add(JacksonJsonProvider.class);
 
-        ReadStructureRequest returnedReadStructureRequest = clientBuilder.newClient().target(wsUrl).
+        ReadStructureRequest returnedReadStructureRequest = clientBuilder.build().target(wsUrl).
                 request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).
                 post(Entity.json(readStructureData), ReadStructureRequest.class);
 

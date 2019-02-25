@@ -7,19 +7,14 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.ClientRequestContext;
-import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Utility class to define common rest helper functions that can assist in most Jersey calls.
@@ -27,15 +22,6 @@ import java.util.logging.Logger;
 // todo jmt rename
 public class JerseyUtils {
     private static final int DEFAULT_TIMEOUT_MILLISECONDS = 300000;
-
-    public static class LoggingFilter implements ClientRequestFilter {
-        private static final Logger LOG = Logger.getLogger(LoggingFilter.class.getName());
-
-        @Override
-        public void filter(ClientRequestContext requestContext) throws IOException {
-            LOG.log(Level.INFO, requestContext.getEntity().toString());
-        }
-    }
 
     public static Invocation.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
         WebTarget resource = getWebResourceBase(squidWSUrl, mediaType);
@@ -74,7 +60,7 @@ public class JerseyUtils {
      * this is probably okay.
      *
      */
-    public static void acceptAllServerCertificates(ClientBuilder clientBuilder) {
+    public static void acceptAllServerCertificates(ClientBuilder clientBuilder) { // todo jmt should this return clientBuilder?
         try {
             // Create a trust manager that does not validate certificate chains
             TrustManager[] trustAllCerts = {

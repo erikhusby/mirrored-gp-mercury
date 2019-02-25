@@ -156,8 +156,9 @@ public abstract class AbstractJerseyClientService implements Serializable {
         WebTarget webTarget = getJerseyClient().target(urlString);
 
         BufferedReader reader = null;
+        Response clientResponse = null;
         try {
-            Response clientResponse = webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+            clientResponse = webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
                     .post(Entity.form(params));
 
             InputStream is = clientResponse.readEntity(InputStream.class);
@@ -202,6 +203,9 @@ public abstract class AbstractJerseyClientService implements Serializable {
             logger.error(e);
         } finally {
             IOUtils.closeQuietly(reader);
+            if (clientResponse != null) {
+                clientResponse.close();
+            }
         }
     }
 

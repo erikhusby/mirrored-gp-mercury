@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -111,11 +112,11 @@ public class FingerprintResourceTest extends Arquillian {
 
     private Client getClient(boolean basicAuth) {
 //        clientConfig.getClasses().add(JacksonJsonProvider.class);
-        Client client = JerseyUtils.getClientBuilderAcceptCertificate().newClient();
+        Client client = JerseyUtils.getClientBuilderAcceptCertificate().build();
 
-        client.register(new JerseyUtils.LoggingFilter());
+        client.register(new EntityLoggingFilter());
         if (basicAuth) {
-            client.register(new BasicAuthentication("thompson", "password"));
+            client.register(new BasicAuthentication("thompson", "C0lumn!stClaims"));
         }
         return client;
     }
