@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
-import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
 import org.broadinstitute.gpinformatics.infrastructure.ShortDateAdapter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -15,7 +15,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 @XmlRootElement(name = "Funding")
 public class Funding implements Displayable {
@@ -291,6 +297,25 @@ public class Funding implements Displayable {
         }
 
         return fundingSet;
+    }
+
+    public boolean isFundsReservation() {
+        return StringUtils.isNotBlank(fundingType) && fundingType.equals(Funding.FUNDS_RESERVATION);
+    }
+
+    public boolean isPurchaseOrder() {
+        return StringUtils.isNotBlank(fundingType) && fundingType.equals(Funding.PURCHASE_ORDER);
+    }
+
+
+    public boolean isGrantActiveForDate(Date effectiveDate) {
+        Date relativeDate = DateUtils.truncate(new Date(), Calendar.DATE);
+
+        if(effectiveDate != null && effectiveDate.compareTo(relativeDate) != 0) {
+            relativeDate = DateUtils.truncate(effectiveDate, Calendar.DATE);
+        }
+
+        return FundingLevel.isGrantActiveForDate(relativeDate, this);
     }
 
     public static final Comparator<Funding> byDisplayName = new Comparator<Funding>() {

@@ -1575,7 +1575,7 @@
     <changeSet id="GPLIM-4712-207" author="epolk">
         <addForeignKeyConstraint constraintName="FK_SMPL_INST_ANALYSIS_TYPE"
                                  baseTableSchemaName="mercury" baseTableName="sample_instance_entity" baseColumnNames="analysis_type"
-             
+
                     referencedTableSchemaName="mercury" referencedTableName="analysis_type" referencedColumnNames="analysis_type_id"/>
     </changeSet>
     <changeSet id="GPLIM-4712-210" author="epolk">
@@ -1917,5 +1917,27 @@
         <createIndex tableName="FP_GENOTYPE_AUD" indexName="IX_FGA_FP_GENOTYPE_ID">
             <column name="FP_GENOTYPE_ID"/>
         </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-5973-01" author="epolk">
+        <addColumn tableName="sample_instance_entity" schemaName="mercury">
+            <column name="aggregation_data_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5973-02" author="epolk">
+        <addColumn tableName="sample_instance_entity_aud" schemaName="mercury">
+            <column name="aggregation_data_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jsacco" id="GPLIM-5218-1">
+        <addColumn schemaName="mercury" tableName="abandon_vessel">
+            <column name="abandoned_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jsacco" id="GPLIM-5218-2">
+        <addColumn schemaName="mercury" tableName="abandon_vessel_aud">
+            <column name="abandoned_by" type="number(19,0)"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

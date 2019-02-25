@@ -21,10 +21,13 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -56,8 +59,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -69,7 +74,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
@@ -79,6 +83,7 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
+import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -86,6 +91,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;
@@ -96,6 +102,7 @@ import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -115,6 +122,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -138,10 +146,13 @@ public class ProductOrderActionBeanTest {
     private PriceListCache priceListCache;
 
     private QuoteService mockQuoteService;
-    public SapIntegrationService mockSAPService;
+    private QuoteService stubQuoteService = new QuoteServiceStub();
+    public SapIntegrationServiceImpl mockSAPService;
     public SAPProductPriceCache stubProductPriceCache;
     public ProductOrderDao mockProductOrderDao;
     public ProductOrder testOrder;
+    private SapIntegrationClientImpl mockSapClient;
+    private SAPAccessControlEjb mockAccessController;
 
 
     @BeforeMethod
@@ -152,9 +163,15 @@ public class ProductOrderActionBeanTest {
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
         priceListCache = new PriceListCache(mockQuoteService);
         actionBean.setPriceListCache(priceListCache);
-        mockSAPService = Mockito.mock(SapIntegrationService.class);
+
+        mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
+        mockSAPService = new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV),
+                mockQuoteService, Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
+                stubProductPriceCache, mockAccessController);
         stubProductPriceCache = new SAPProductPriceCache(mockSAPService);
-        final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
+        mockSapClient = Mockito.mock(SapIntegrationClientImpl.class);
+        mockSAPService.setWrappedClient(mockSapClient);
+
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
         stubProductPriceCache.setAccessControlEjb(mockAccessController);
         actionBean.setProductPriceCache(stubProductPriceCache);
@@ -171,6 +188,7 @@ public class ProductOrderActionBeanTest {
         actionBean.setProductOrderEjb(productOrderEjb);
         actionBean.setProductOrderDao(mockProductOrderDao);
         actionBean.setSapService(mockSAPService);
+        actionBean.setQuoteService(mockQuoteService);
 
         jsonObject = new JSONObject();
         pdo = newPdo();
@@ -879,29 +897,18 @@ public class ProductOrderActionBeanTest {
                 "Put it on the sequencer"));
         seqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
 
-        final SAPMaterial seqMaterial= new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
-                Collections.<DeliveryCondition,BigDecimal>emptyMap());
-        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(seqMaterial);
+        addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
-        final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                primaryMaterial);
-        final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                nonSeqMaterial);
+        addSapMaterial(returnMaterials, testOrder.getProduct(), "2000",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, addonNonSeqProduct, "1573",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500"
         );
-        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
 
@@ -1013,37 +1020,25 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500");
 
 
-        final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                primaryMaterial);
-        final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                nonSeqMaterial);
-        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
-                Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(seqMaterial);
+        addSapMaterial(returnMaterials, testOrder.getProduct(), "2000",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, addonNonSeqProduct, "1573",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
-        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
         Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Collections.singletonList(testOrder));
-        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(),
-                Mockito.anyString(), Mockito.any(ProductOrder.class)
-        )).thenReturn(new OrderCalculatedValues(
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
+                Mockito.any(SapIntegrationClientImpl.SystemIdentifier.class),
+                Mockito.any(OrderCriteria.class))).thenReturn(new OrderCalculatedValues(
                 BigDecimal.ZERO, Collections.<OrderValue>emptySet()));
 
         actionBean.setEditOrder(testOrder);
-
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote,0, null),
                 (double) (1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
@@ -1154,25 +1149,14 @@ public class ProductOrderActionBeanTest {
         );
 
 
-        final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                primaryMaterial);
-        final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(
-                nonSeqMaterial);
-        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
-                Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(seqMaterial);
+        addSapMaterial(returnMaterials, testOrder.getProduct(), "2000",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, addonNonSeqProduct, "1573",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
-        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
@@ -1188,10 +1172,9 @@ public class ProductOrderActionBeanTest {
         final OrderCalculatedValues testCalculatedValues = new OrderCalculatedValues(
                 BigDecimal.ZERO, sapOrderValues);
 
-        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(),
-                Mockito.anyString(), Mockito.any(ProductOrder.class)
-        )).thenReturn(
-                testCalculatedValues);
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(),
+                Mockito.any(SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
 
         actionBean.setEditOrder(testOrder);
 
@@ -1247,6 +1230,461 @@ public class ProductOrderActionBeanTest {
                 ) + 82);
     }
 
+    /**
+     * This unit test primarily tests a pretty basic case:
+     * <ol>
+     *     <li>Attempt to place a new order where there are no existing orders associated with the Given quote</li>
+     *     <li>Validate that the Calculated value of that one order matches what is expected</li>
+     *     <li> "Place" the order</li>
+     *     <li>attempt to modify that order and estimate the new calculated value</li>
+     *     <li>add on more sample to the order and ensure that the Action bean logic rejects this addition since there
+     *     is no more money left on the quote to support it.</li>
+     * </ol>
+     * @param quoteName Identifier for the Quote to use.  Quote definition is pulled from quoteTestData.xml
+     * @param sapBlocked Set true if the test case is to mimic that all SAP access is blocked
+     * @param productBlockedFromSap Set true if the test case is to mimic that the price item for the product on the
+     *                              order is blocked from going to SAP
+     * @throws Exception
+     */
+    @Test(dataProvider = "quoteDataProvider")
+    public void testEstimateOpenOrdersWeirdQuotes(String quoteName, boolean sapBlocked, boolean productBlockedFromSap,
+                                                  boolean productExistInSap)
+            throws Exception {
+
+        Quote testQuote = stubQuoteService.getQuoteByAlphaId(quoteName);
+
+        final SAPAccessControl enabledControl = new SAPAccessControl();
+        if(sapBlocked) {
+            enabledControl.setAccessStatus(AccessStatus.DISABLED);
+        } else {
+            enabledControl.setAccessStatus(AccessStatus.ENABLED);
+        }
+
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(enabledControl);
+        stubProductPriceCache.setAccessControlEjb(mockAccessController);
+
+        Product primaryProduct = new Product();
+        primaryProduct.setPartNumber("P-Test_Prime");
+        primaryProduct.setPrimaryPriceItem(new PriceItem("primary", "GP", "primary size", "overfundme"));
+        primaryProduct
+                .setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName()));
+
+        if (productBlockedFromSap) {
+            enabledControl.addDisabledItem(new AccessItem(primaryProduct.getPrimaryPriceItem().getName()));
+        }
+        testOrder = new ProductOrder();
+        testOrder.setProduct(primaryProduct);
+        testOrder.setQuoteId(testQuote.getAlphanumericId());
+
+        List<ProductOrderSample> sampleList = new ArrayList<>();
+        final int sampleTestSize = 75;
+        for (int i = 0; i < sampleTestSize; i++) {
+            sampleList.add(new ProductOrderSample("SM-Test" + i));
+        }
+        testOrder.setSamples(sampleList);
+
+        PriceList priceList = new PriceList();
+        Set<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> materials = new HashSet<>();
+
+        final double priceItemPrice = (new BigDecimal(testQuote.getQuoteFunding().getFundsRemaining())
+                .divide(BigDecimal.valueOf(testOrder.getSamples().size()),2, RoundingMode.FLOOR))
+                .doubleValue();
+        final String stringPrice = String.valueOf(priceItemPrice);
+        addPriceItemForProduct(testQuote.getAlphanumericId(), priceList, quoteItems, testOrder.getProduct(),
+                stringPrice, "1000", stringPrice);
+        if(productExistInSap) {
+            addSapMaterial(materials, testOrder.getProduct(), stringPrice,
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        }
+
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materials);
+        stubProductPriceCache.refreshCache();
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenReturn(testQuote);
+
+        double calculatedValue = testOrder.getSamples().size() * priceItemPrice;
+        OrderCalculatedValues testCalculatedValues =
+                new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedValue):null, Collections.emptySet());
+
+        Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
+        actionBean.setEditOrder(testOrder);
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) calculatedValue);
+
+        testOrder.setJiraTicketKey("PDO-1294");
+
+        SapOrderDetail sapReference = new SapOrderDetail("test001", sampleTestSize, testOrder.getQuoteId(),
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
+        testOrder.addSapOrderDetail(sapReference);
+
+        Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Collections.singletonList(testOrder));
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) calculatedValue);
+
+        actionBean.validateQuoteDetails(testQuote, 0);
+
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+priceItemPrice);
+
+
+        testOrder.addSample(new ProductOrderSample("SM-Test" + 76));
+        calculatedValue = testOrder.getSamples().size() * priceItemPrice;
+        testCalculatedValues =
+                new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedValue):null,
+                        Collections.emptySet());
+
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
+        actionBean.validateQuoteDetails(testQuote, 0);
+
+        Assert.assertFalse(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+priceItemPrice + " Calculated Value is " + calculatedValue);
+    }
+
+    /**
+     * This test case sort of does a full gamut of testing order estimation with regards to SAP and not SAP.  It
+     * utilizes the same inputs as the prior test case to show that the diverse quote setups will provide the same
+     * results.
+     *
+     * In order to adjust the needs of this test case to the varying setups of the quotes (specifically available funds)
+     * the price of each product is dynamically calculated using the size of the orders which will be used with respect
+     * to the available funding on the quote.  This way the orders being used will just use up all the remaining funds
+     * on the quote.  After that has been determined to calculate according to the estimates, the test will add one
+     * more sample to put the total unbilled count just over the funds remaining and thus causing an error.  That error
+     * will be considered a successful test.
+     *
+     * The sequence of events mimicked in this test case are as follows:
+     * <ol>
+     *     <li>create and validate a product order that has not been placed.  Mimics the validation called when the
+     *     order is attempting to be placed</li>
+     *     <li>Mimic that the order has been placed and has gone to SAP</li>
+     *     <li>Mimic validating the order again after another order has been placed and gone to SAP</li>
+     *     <li>Mimic validating the order again after that second order has had a customized price set on it</li>
+     *     <li>Force the Quote to no longer be eligible for SAP</li>
+     *     <li>Mimic validating the order again after a third order has been placed, but is not in SAP (due to the fact
+     *     that the quote is not eligible for SAP</li>
+     *     <li>Add one more sample to the main product order</li>
+     *     <li>Mimic validating this order again after the sample has been added to it</li>
+     *     <li>Ensure that valdiateQuoteDetails returns an error due to the fact that the Quote now is over extended</li>
+     * </ol>
+     *
+     * @param quoteId Identifier for the Quote to use.  Quote definition is pulled from quoteTestData.xml
+     * @param sapBlocked Set true if the test case is to mimic that all SAP access is blocked
+     * @param productBlockedFromSap Set true if the test case is to mimic that the price item for the product on the
+     *                              order is blocked from going to SAP
+     * @throws Exception
+     */
+    @Test(dataProvider = "quoteDataProvider")
+    public void testSapEligibleQuoteThenNot(String quoteId, boolean sapBlocked, boolean productBlockedFromSap,
+                                            boolean productExistInSap)
+            throws Exception {
+        Quote testQuote = stubQuoteService.getQuoteByAlphaId(quoteId);
+        final int sampleTestSize = 15;
+
+        final SAPAccessControl enabledControl = new SAPAccessControl();
+        if(sapBlocked) {
+            enabledControl.setAccessStatus(AccessStatus.DISABLED);
+        } else {
+            enabledControl.setAccessStatus(AccessStatus.ENABLED);
+        }
+
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(enabledControl);
+        stubProductPriceCache.setAccessControlEjb(mockAccessController);
+
+        // to derive price, each sample for this product is worth 1
+        Product primaryProduct = new Product();
+        primaryProduct.setPartNumber("P-Test_Prime");
+        primaryProduct.setPrimaryPriceItem(new PriceItem("primary", "GP", "primary size", "overfundme"));
+        primaryProduct
+                .setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName()));
+
+        // to derive price, each sample for this product is worth .5
+        Product secondaryProduct = new Product();
+        secondaryProduct.setPartNumber("P-TEST-SECOND");
+        secondaryProduct.setPrimaryPriceItem(new PriceItem("secondary", "GP", "primary size", "second"));
+        secondaryProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()));
+
+        // to derive price, each sample for this product is worth .25
+        Product addOnProduct = new Product();
+        addOnProduct.setPartNumber("P-ADD-ON");
+        addOnProduct.setPrimaryPriceItem(new PriceItem("addon", "GP", "primary size", "addon"));
+        addOnProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
+
+        if (productBlockedFromSap) {
+            enabledControl.addDisabledItem(new AccessItem(primaryProduct.getPrimaryPriceItem().getName()));
+            enabledControl.addDisabledItem(new AccessItem(secondaryProduct.getPrimaryPriceItem().getName()));
+        }
+        testOrder = new ProductOrder();
+        testOrder.setProduct(primaryProduct);
+        testOrder.setQuoteId(testQuote.getAlphanumericId());
+
+        ProductOrder secondOrder = new ProductOrder();
+        secondOrder.setProduct(secondaryProduct);
+        secondOrder.updateAddOnProducts(Collections.singletonList(addOnProduct));
+        secondOrder.setQuoteId(testQuote.getAlphanumericId());
+        secondOrder.setJiraTicketKey("PDO-Second");
+
+        SapOrderDetail secondOrderSap = new SapOrderDetail("test002", sampleTestSize, secondOrder.getQuoteId(),
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
+        secondOrder.addSapOrderDetail(secondOrderSap);
+        secondOrder.setLaneCount(7);
+
+
+        ProductOrder nonSAPOrder = new ProductOrder();
+        nonSAPOrder.setProduct(primaryProduct);
+        nonSAPOrder.updateAddOnProducts(Collections.singletonList(addOnProduct));
+        nonSAPOrder.setQuoteId(testQuote.getAlphanumericId());
+        nonSAPOrder.setJiraTicketKey("PDO-NOSAP");
+        nonSAPOrder.setLaneCount(3);
+
+        List<ProductOrderSample> sampleList = new ArrayList<>();
+        List<ProductOrderSample> secondSampleList = new ArrayList<>();
+        List<ProductOrderSample> nonSapSampleList = new ArrayList<>();
+        for (int i = 0; i < sampleTestSize; i++) {
+            sampleList.add(new ProductOrderSample("SM-Test" + i));
+            secondSampleList.add(new ProductOrderSample("SM-second" +i));
+            if(i % 2 == 0) {
+                nonSapSampleList.add(new ProductOrderSample("SM-NonSAP" +i));
+            }
+        }
+        testOrder.setSamples(sampleList);
+        secondOrder.setSamples(secondSampleList);
+        nonSAPOrder.setSamples(nonSapSampleList);
+
+        PriceList priceList = new PriceList();
+        Set<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> materials = new HashSet<>();
+
+        // Using the size of the orders we plan to use, figure out the price for each product to make the funds
+        // remaining just cover our orders.  This way when we add a sample to any order, it will put us over the mark
+        // and allow us to test the condition of running out of funds
+        final double primaryPriceItemPrice = (new BigDecimal(testQuote.getQuoteFunding().getFundsRemaining())
+                .divide(BigDecimal.valueOf(
+                        testOrder.getSamples().size() +
+                        secondOrder.getSamples().size() * .5 + // Price of the second product will be 1/2 the primary price, so the samples will count as 1/2 a sample
+                        secondOrder.getLaneCount() * .25 + // Price of the addon product will be 1/4 the primary price, so lane count will count as 1/4 of a lane
+                        nonSAPOrder.getSamples().size() + // non sap order will use the primary product for its product
+                        nonSAPOrder.getLaneCount() * .25),2, RoundingMode.FLOOR
+                ))
+                .doubleValue();
+
+        double secondaryPrice = primaryPriceItemPrice * .5; // Define the price of the second product/price item to be half the price of the primary product/price item
+        double addonPrice = primaryPriceItemPrice * .25; // Define the price of the addon product/price item to be 1/4 the price of the primary product/price item
+
+        final String primaryStringPrice = String.valueOf(primaryPriceItemPrice);
+        final String secondaryStringPrice = String.valueOf(secondaryPrice);
+        final String addonStringPrice = String.valueOf(addonPrice);
+        addPriceItemForProduct(testQuote.getAlphanumericId(), priceList, quoteItems, primaryProduct,
+                primaryStringPrice, "1000", primaryStringPrice);
+        addPriceItemForProduct(testQuote.getAlphanumericId(), priceList, quoteItems, secondaryProduct,
+                secondaryStringPrice, "1000", secondaryStringPrice);
+        addPriceItemForProduct(testQuote.getAlphanumericId(), priceList, quoteItems, addOnProduct,
+                addonStringPrice, "1000", addonStringPrice);
+
+        if(productExistInSap) {
+            addSapMaterial(materials, primaryProduct, primaryStringPrice,
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            addSapMaterial(materials, secondaryProduct, secondaryStringPrice,
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            addSapMaterial(materials, addOnProduct, addonStringPrice,
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        }
+
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(materials);
+        stubProductPriceCache.refreshCache();
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenReturn(testQuote);
+
+        double calculatedMainOrderValue = testOrder.getSamples().size() * primaryPriceItemPrice;
+        double calculatedSecondOrderValue = secondOrder.getSamples().size() * (secondaryPrice) +
+                                            secondOrder.getLaneCount() * (addonPrice);
+        double calculatedNonSapOrderValue = nonSAPOrder.getSamples().size() * (primaryPriceItemPrice) +
+                                            nonSAPOrder.getLaneCount()* (addonPrice);
+        OrderCalculatedValues testCalculatedValues =
+                new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedMainOrderValue):null, Collections.emptySet());
+
+        Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
+        actionBean.setEditOrder(testOrder);
+
+        // Estimate the Order now
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) calculatedMainOrderValue);
+        actionBean.validateQuoteDetails(testQuote, 0);
+
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
+
+
+        //
+        // Now the order gets placed in mercury and gets submitted to SAP
+        //
+        testOrder.setJiraTicketKey("PDO-1294");
+
+        SapOrderDetail sapReference = new SapOrderDetail("test001", sampleTestSize, testOrder.getQuoteId(),
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
+        testOrder.addSapOrderDetail(sapReference);
+
+        Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Collections.singletonList(testOrder));
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) calculatedMainOrderValue);
+
+        actionBean.validateQuoteDetails(testQuote, 0);
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
+
+
+        //Now the second order is palced and we validate the test order again
+        Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Arrays.asList(testOrder, secondOrder));
+
+        testCalculatedValues =
+                new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedMainOrderValue):null,
+                        Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
+                                BigDecimal.valueOf(calculatedSecondOrderValue))));
+
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) (calculatedMainOrderValue + calculatedSecondOrderValue));
+
+        actionBean.validateQuoteDetails(testQuote, 0);
+
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
+
+        // Now set a custom price adjustment for the second order
+        final ProductOrderPriceAdjustment customPriceAdjustment =
+                new ProductOrderPriceAdjustment(BigDecimal.valueOf(secondaryPrice - .75d), null, null);
+        secondOrder.setCustomPriceAdjustment(customPriceAdjustment);
+
+        calculatedSecondOrderValue = secondOrder.getSamples().size() * (secondaryPrice - .75d) +
+                                    secondOrder.getLaneCount() * (addonPrice);
+
+        testCalculatedValues = new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedMainOrderValue):null,
+                Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
+                        BigDecimal.valueOf(calculatedSecondOrderValue))));
+
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) (calculatedMainOrderValue + calculatedSecondOrderValue));
+
+        actionBean.validateQuoteDetails(testQuote, 0);
+
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
+
+
+        //Now set a custom price adjustment for the primary order
+        final ProductOrderPriceAdjustment primaryCustomPriceAdjustment =
+                new ProductOrderPriceAdjustment(BigDecimal.valueOf(primaryPriceItemPrice -.25d), null, null);
+        testOrder.setCustomPriceAdjustment(primaryCustomPriceAdjustment);
+        calculatedMainOrderValue = testOrder.getSamples().size() * (primaryPriceItemPrice - .25d);
+
+        testCalculatedValues = new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedMainOrderValue):null,
+                Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),BigDecimal.valueOf(calculatedSecondOrderValue))));
+
+
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) (calculatedMainOrderValue + calculatedSecondOrderValue));
+
+        actionBean.validateQuoteDetails(testQuote, 0);
+
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
+
+
+
+
+
+
+        // Now make the Quote split funding so that attempting to go to SAP will fail
+        final FundingLevel fundingLevel = new FundingLevel();
+        final FundingLevel fundingLevel2 = new FundingLevel();
+        Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
+        Funding funding2 = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel2.setFunding(Collections.singleton(funding2));
+        Collection<FundingLevel> fundingLevelCollection = Arrays.asList(fundingLevel, fundingLevel2);
+        QuoteFunding quoteFunding = new QuoteFunding(testQuote.getQuoteFunding().getFundsRemaining(),fundingLevelCollection);
+
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuote.getAlphanumericId())).thenReturn(testQuote);
+        testCalculatedValues =
+                new OrderCalculatedValues(null,
+                        Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
+                                BigDecimal.valueOf(calculatedSecondOrderValue))));
+
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
+
+        // Now SAP should be down and we have placed a new order, but it doesn't go to SAP
+        Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Arrays.asList(testOrder, secondOrder, nonSAPOrder));
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) (calculatedMainOrderValue + calculatedSecondOrderValue + calculatedNonSapOrderValue));
+
+        actionBean.validateQuoteDetails(testQuote, 0);
+
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
+
+
+        // Now, add another sample to the primary order
+        testOrder.addSample(new ProductOrderSample("SM-test" +(testOrder.getSamples().size()+1)));
+        calculatedMainOrderValue = testOrder.getSamples().size() * (primaryPriceItemPrice - .25d);
+        testCalculatedValues =
+                new OrderCalculatedValues(null,
+                        Collections.singleton(new OrderValue(secondOrder.getSapOrderNumber(),
+                                BigDecimal.valueOf(calculatedSecondOrderValue))));
+
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenReturn(testCalculatedValues);
+
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
+                (double) (calculatedMainOrderValue + calculatedSecondOrderValue + calculatedNonSapOrderValue));
+
+        actionBean.validateQuoteDetails(testQuote, 0);
+
+        Assert.assertFalse(actionBean.getContext().getValidationErrors().isEmpty(),
+                "Errors occurred validating Quote details.  Funds remaining is "
+                +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
+    }
+
     public void testEstimateSAPOrdersWithUpdateCurrentSapOrder() throws Exception {
         final String testQuoteIdentifier = "testQuote";
         Quote testQuote = buildSingleTestQuote(testQuoteIdentifier, "71000");
@@ -1288,36 +1726,23 @@ public class ProductOrderActionBeanTest {
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(),"","");
         testOrder.addSapOrderDetail(sapReference);
 
-
-
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> returnMaterials = new HashSet<>();
-
 
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, testOrder.getProduct(), "2000", "2000",
                 "1000");
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, addonNonSeqProduct, "1573", "2000", "573");
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500");
 
-
-        final SAPMaterial primaryMaterial =
-                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(primaryMaterial);
-        final SAPMaterial nonSeqMaterial =
-                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(nonSeqMaterial);
-        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition, BigDecimal>emptyMap(),
-                Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(seqMaterial);
+        addSapMaterial(returnMaterials, testOrder.getProduct(), "2000",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, addonNonSeqProduct, "1573",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        addSapMaterial(returnMaterials, seqProduct, "3500", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
 
-        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
@@ -1336,10 +1761,9 @@ public class ProductOrderActionBeanTest {
         final OrderCalculatedValues testCalculatedValues = new OrderCalculatedValues(
                 new BigDecimal(overrideCalculatedOrderValue), sapOrderValues);
 
-        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(),
-                Mockito.anyString(), Mockito.any(ProductOrder.class)
-        )).thenReturn(
-                testCalculatedValues);
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class),
+                Mockito.any(OrderCriteria.class))).thenReturn(testCalculatedValues);
 
         actionBean.setEditOrder(testOrder);
 
@@ -1383,10 +1807,19 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 
-        actionBean.validateQuoteDetails(testQuote, CoreActionBean.ErrorLevel.ERROR, true, 0);
+        actionBean.validateQuoteDetails(testQuote, 0);
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 
+    }
+
+    private void addSapMaterial(Set<SAPMaterial> returnMaterials, Product product, String basePrice,
+                               SapIntegrationClientImpl.SAPCompanyConfiguration broad) {
+        final SAPMaterial material =
+                new SAPMaterial(product.getPartNumber(), basePrice, Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
+        material.setCompanyCode(broad);
+        returnMaterials.add(material);
     }
 
     private void addPriceItemForProduct(String testQuoteIdentifier, PriceList priceList,
@@ -1453,6 +1886,101 @@ public class ProductOrderActionBeanTest {
         }
     }
 
+    @DataProvider(name = "sapConditionsForOrderEstimation")
+    public Iterator<Object[]> sapConditionsForOrderEstimation() {
+        List<Object[]> testcases = new ArrayList<>();
+
+        testcases.add(new Object[]{true, true});
+        testcases.add(new Object[]{true, false});
+        testcases.add(new Object[]{false, true});
+        testcases.add(new Object[]{false, false});
+
+        return testcases.iterator();
+    }
+
+    @DataProvider(name = "quoteDataProvider")
+    public Iterator<Object[]> quoteDataProvider() {
+        List<Object[]> testCases = new ArrayList<>();
+
+        // Using quotes defined in quoteTestData.xml
+
+        // Quote ID, SAP Access status, is the Product Blocked from SAP
+
+        testCases.add(new Object[]{"GP87U",  true, true, true});   // common catch all quote used by PDMs
+        testCases.add(new Object[]{"GP87U",  true, false, true});  // Split funded
+        testCases.add(new Object[]{"GP87U",  false, true, true});
+        testCases.add(new Object[]{"GP87U",  false, false, true});
+        testCases.add(new Object[]{"GP87U",  true, true, false});
+        testCases.add(new Object[]{"GP87U",  true, false, false});
+        testCases.add(new Object[]{"GP87U",  false, true, false});
+        testCases.add(new Object[]{"GP87U",  false, false, false});
+
+        testCases.add(new Object[]{"STCIL1", true, true, true});  // Single funded quote in which the funding source
+        testCases.add(new Object[]{"STCIL1", true, false, true}); // is split among 2 cost objects
+        testCases.add(new Object[]{"STCIL1", false, true, true});
+        testCases.add(new Object[]{"STCIL1", false, false, true});
+        testCases.add(new Object[]{"STCIL1", true, true, false});
+        testCases.add(new Object[]{"STCIL1", true, false, false});
+        testCases.add(new Object[]{"STCIL1", false, true, false});
+        testCases.add(new Object[]{"STCIL1", false, false, false});
+
+        testCases.add(new Object[]{"GAN1GX", true, true, true});  // Split funded quote in which the funding sources are
+        testCases.add(new Object[]{"GAN1GX", true, false, true}); // each fund reservations
+        testCases.add(new Object[]{"GAN1GX", false, true, true});
+        testCases.add(new Object[]{"GAN1GX", false, false, true});
+        testCases.add(new Object[]{"GAN1GX", true, true, false});
+        testCases.add(new Object[]{"GAN1GX", true, false, false});
+        testCases.add(new Object[]{"GAN1GX", false, true, false});
+        testCases.add(new Object[]{"GAN1GX", false, false, false});
+
+        testCases.add(new Object[]{"GAN1MB", true, true, true});  // Split funded quote in which the funding sources are
+        testCases.add(new Object[]{"GAN1MB", true, false, true}); // each purchase orders
+        testCases.add(new Object[]{"GAN1MB", false, true, true});
+        testCases.add(new Object[]{"GAN1MB", false, false, true});
+        testCases.add(new Object[]{"GAN1MB", true, true, false});
+        testCases.add(new Object[]{"GAN1MB", true, false, false});
+        testCases.add(new Object[]{"GAN1MB", false, true, false});
+        testCases.add(new Object[]{"GAN1MB", false, false, false});
+
+        testCases.add(new Object[]{"MPG1X6", true, true, true});  // Single funded quote in which the funding source is
+        testCases.add(new Object[]{"MPG1X6", true, false, true}); // a purchase order
+        testCases.add(new Object[]{"MPG1X6", false, true, true});
+        testCases.add(new Object[]{"MPG1X6", false, false, true});
+        testCases.add(new Object[]{"MPG1X6", true, true, false});
+        testCases.add(new Object[]{"MPG1X6", true, false, false});
+        testCases.add(new Object[]{"MPG1X6", false, true, false});
+        testCases.add(new Object[]{"MPG1X6", false, false, false});
+
+        testCases.add(new Object[]{"MPG20W", true, true, true});  // Single funded quote in which the funding source
+        testCases.add(new Object[]{"MPG20W", true, false, true}); // is a fund reservation.
+        testCases.add(new Object[]{"MPG20W", false, true, true});
+        testCases.add(new Object[]{"MPG20W", false, false, true});
+        testCases.add(new Object[]{"MPG20W", true, true, false});
+        testCases.add(new Object[]{"MPG20W", true, false, false});
+        testCases.add(new Object[]{"MPG20W", false, true, false});
+        testCases.add(new Object[]{"MPG20W", false, false, false});
+
+        testCases.add(new Object[]{"GAN1GX2", true, true, true});  // Same setup as GAN1GX only the percentage of each
+        testCases.add(new Object[]{"GAN1GX2", true, false, true});
+        testCases.add(new Object[]{"GAN1GX2", false, true, true});
+        testCases.add(new Object[]{"GAN1GX2", false, false, true});
+        testCases.add(new Object[]{"GAN1GX2", true, true, false});
+        testCases.add(new Object[]{"GAN1GX2", true, false, false});
+        testCases.add(new Object[]{"GAN1GX2", false, true, false});
+        testCases.add(new Object[]{"GAN1GX2", false, false, false});
+
+        testCases.add(new Object[]{"MPG183", true, true, true});  // Single funded quote, Cost Object, LOT of money to use.
+        testCases.add(new Object[]{"MPG183", true, false, true});
+        testCases.add(new Object[]{"MPG183", false, true, true});
+        testCases.add(new Object[]{"MPG183", false, false, true});
+        testCases.add(new Object[]{"MPG183", true, true, false});
+        testCases.add(new Object[]{"MPG183", true, false, false});
+        testCases.add(new Object[]{"MPG183", false, true, false});
+        testCases.add(new Object[]{"MPG183", false, false, false});
+
+        return testCases.iterator();
+    }
+
     @DataProvider(name = "getSamplesForAjaxDataProvider")
     public Iterator<Object[]> getSamplesForAjaxDataProvider() {
         List<Object[]> testCases = new ArrayList<>();
@@ -1516,5 +2044,82 @@ public class ProductOrderActionBeanTest {
         return samples;
     }
 
+    public void testQuoteOptionsFundsReservation() throws Exception {
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
+        funding.setGrantNumber("1234");
+        funding.setGrantStartDate(new Date());
+        Date oneWeek = DateUtils.getOneWeek();
+        funding.setGrantEndDate(oneWeek);
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel.setPercent("100");
+
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteService(mockQuoteService);
+
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
+
+        assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
+        assertThat(fundingDetails.get("grantEndDate"), equalTo(DateUtils.getDate(oneWeek)));
+        assertThat(fundingDetails.get("activeGrant"), is(true));
+        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7));
+    }
+
+    public void testQuoteOptionsPurchaseOrder() throws Exception {
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.PURCHASE_ORDER, "test", "c333");
+        funding.setPurchaseOrderNumber("1234");
+        funding.setGrantStartDate(new Date());
+        Date oneWeek = DateUtils.getOneWeek();
+        funding.setGrantEndDate(oneWeek);
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel.setPercent("100");
+
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteService(mockQuoteService);
+
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
+        assertThat(quoteFundingJson.getString("key"), is(quoteId));
+        assertThat(quoteFundingJson.getString("fundsRemaining"), equalTo("$100.00"));
+        assertThat(quoteFundingJson.getString("status"), equalTo("Funded"));
+
+        // Purchase Orders do not have funding details
+        assertThat(fundingDetails.length(), is(0));
+
+    }
+
+    public void testQuoteOptionsNoFunding() throws Exception {
+         String quoteId = "DNA4JD";
+         testOrder = new ProductOrder();
+         FundingLevel fundingLevel = new FundingLevel();
+         Funding funding = new Funding();
+         fundingLevel.setFunding(Collections.singleton(funding));
+         QuoteFunding quoteFunding = new QuoteFunding();
+         Quote testQuote = buildSingleTestQuote(quoteId, "2");
+         testQuote.setQuoteFunding(quoteFunding);
+         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+         actionBean.setQuoteIdentifier(quoteId);
+         actionBean.setQuoteService(mockQuoteService);
+
+         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        assertThat(quoteFundingJson.getString("error"), is("Unable to complete evaluating order values:  null"));
+         assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
+     }
 
 }
