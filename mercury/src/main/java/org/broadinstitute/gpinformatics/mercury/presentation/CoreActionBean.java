@@ -129,11 +129,9 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     private DateRangeSelector dateRange = new DateRangeSelector(DateRangeSelector.THIS_MONTH);
 
     @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private QuoteService quoteService;
+    protected QuoteService quoteService;
     @Inject
     private SapIntegrationService sapService;
-
 
     public enum ErrorLevel {
         WARNING,
@@ -718,5 +716,10 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
             displayableItems.add(new DisplayableItem(item.getBusinessKey(), item.getName()));
         }
         return displayableItems;
+    }
+
+    @Inject
+    public void setQuoteService(QuoteService quoteService) {
+        this.quoteService = quoteService;
     }
 }

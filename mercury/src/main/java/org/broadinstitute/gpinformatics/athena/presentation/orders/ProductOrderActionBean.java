@@ -107,7 +107,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
@@ -294,8 +293,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private SampleDataSourceResolver sampleDataSourceResolver;
-
-    private QuoteService quoteService;
 
     private PriceListCache priceListCache;
 
@@ -739,7 +736,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private void doValidation(String action) {
+    protected void doValidation(String action) {
         requireField(editOrder.getCreatedBy(), "an owner", action);
         if (editOrder.getCreatedBy() != null) {
             String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
@@ -938,7 +935,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     double estimateOutstandingOrders(Quote foundQuote, int addedSampleCount, ProductOrder productOrder)
             throws InvalidProductException, SAPIntegrationException {
 
-        List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId());
+        //Creating a new array list to be able to remove items from it if need be
+        List<ProductOrder> ordersWithCommonQuote = new ArrayList<>(productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId()));
 
         OrderCalculatedValues calculatedValues = null;
         try {
@@ -955,6 +953,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (calculatedValues != null &&
             calculatedValues.getPotentialOrderValue() != null) {
 
+            ordersWithCommonQuote.remove(productOrder);
+
             value += calculatedValues.getPotentialOrderValue().doubleValue();
 
             for (OrderValue orderValue : calculatedValues.getValue()) {
@@ -965,7 +965,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
                 sapOrderIDsToExclude.add(orderValue.getSapOrderID());
             }
-        } else if (productOrder != null) {
+        } else if (productOrder != null &&
+                   !ordersWithCommonQuote.contains(productOrder)) {
 
             // This is not a SAP quote.
             ordersWithCommonQuote.add(productOrder);
@@ -3743,11 +3744,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     protected void setSapService(SapIntegrationService sapService) {
         this.sapService = sapService;
-    }
-
-    @Inject
-    protected void setQuoteService(QuoteService quoteService) {
-        this.quoteService = quoteService;
     }
 
     @HandlesEvent(SAVE_SEARCH_DATA)
