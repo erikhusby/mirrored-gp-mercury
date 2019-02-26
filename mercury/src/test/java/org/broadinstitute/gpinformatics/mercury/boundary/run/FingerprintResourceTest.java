@@ -116,7 +116,7 @@ public class FingerprintResourceTest extends Arquillian {
 
         client.register(new EntityLoggingFilter());
         if (basicAuth) {
-            client.register(new BasicAuthentication("thompson", "C0lumn!stClaims"));
+            client.register(new BasicAuthentication("thompson", "password"));
         }
         return client;
     }

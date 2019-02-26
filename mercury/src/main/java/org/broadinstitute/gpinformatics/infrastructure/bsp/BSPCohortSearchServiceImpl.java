@@ -70,9 +70,10 @@ public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCo
         String urlString = getUrl(Endpoint.ALL_COHORTS.getSuffixUrl());
         SortedSet<Cohort> usersCohorts = new TreeSet<>(Cohort.COHORT_BY_ID);
 
+        Response clientResponse = null;
         try {
             WebTarget webResource = getJerseyClient().target(urlString);
-            Response clientResponse = webResource.request().get();
+            clientResponse = webResource.request().get();
 
             InputStream is = clientResponse.readEntity(InputStream.class);
             rdr = new BufferedReader(new InputStreamReader(is));
@@ -83,7 +84,6 @@ public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCo
                 logger.error(errMsg + " : " + rdr.readLine());
                 throw new RuntimeException(errMsg);
             }
-            clientResponse.close();
 
             // Skip the header line.
             rdr.readLine();
@@ -117,6 +117,9 @@ public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCo
         } finally {
             // Close the reader, which will close the underlying input stream.
             IOUtils.closeQuietly(rdr);
+            if (clientResponse != null) {
+                clientResponse.close();
+            }
         }
 
         return usersCohorts;
