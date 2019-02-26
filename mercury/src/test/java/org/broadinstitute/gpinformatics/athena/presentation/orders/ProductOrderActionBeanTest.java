@@ -80,10 +80,13 @@ import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Search;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
+import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -1920,11 +1923,13 @@ public class ProductOrderActionBeanTest {
     }
 
     private void addSapMaterial(Set<SAPMaterial> returnMaterials, Product product, String basePrice,
-                               SapIntegrationClientImpl.SAPCompanyConfiguration broad) {
+                               SapIntegrationClientImpl.SAPCompanyConfiguration broad) throws SAPIntegrationException {
         final SAPMaterial material =
-                new SAPMaterial(product.getPartNumber(), basePrice, Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
-        material.setCompanyCode(broad);
+                new SAPMaterial(product.getPartNumber(),broad, broad.getDefaultWbs(),"description",
+                        basePrice,SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,"Test Description",
+                        "", "",
+                        new Date(), new Date(),Collections.<Condition, BigDecimal>emptyMap(),
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "GP01");
         returnMaterials.add(material);
     }
 
