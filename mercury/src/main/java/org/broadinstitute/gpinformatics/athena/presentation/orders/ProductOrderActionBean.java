@@ -872,7 +872,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     double estimateOutstandingOrders(Quote foundQuote, int addedSampleCount, ProductOrder productOrder)
             throws InvalidProductException, SAPIntegrationException {
 
-        List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId());
+        //Creating a new array list to be able to remove items from it if need be
+        List<ProductOrder> ordersWithCommonQuote = new ArrayList<>(productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId()));
 
         OrderCalculatedValues calculatedValues = null;
         try {
@@ -889,6 +890,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (calculatedValues != null &&
             calculatedValues.getPotentialOrderValue() != null) {
 
+            ordersWithCommonQuote.remove(productOrder);
+
             value += calculatedValues.getPotentialOrderValue().doubleValue();
 
             for (OrderValue orderValue : calculatedValues.getValue()) {
@@ -899,7 +902,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
                 sapOrderIDsToExclude.add(orderValue.getSapOrderID());
             }
-        } else if (productOrder != null) {
+        } else if (productOrder != null &&
+                   !ordersWithCommonQuote.contains(productOrder)) {
 
             // This is not a SAP quote.
             ordersWithCommonQuote.add(productOrder);
