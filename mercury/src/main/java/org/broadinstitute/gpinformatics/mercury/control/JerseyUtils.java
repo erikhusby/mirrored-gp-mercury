@@ -30,10 +30,10 @@ public class JerseyUtils {
 
     public static Invocation.Builder getWebResource(String wSUrl, MediaType mediaType, Map<String, List<String>> parameters) {
         WebTarget resource = getWebResourceBase(wSUrl, mediaType);
-//        MultivaluedMap<String, String> params = new MultivaluedHashMap<>();
-//        params.putAll(parameters);
         for (Map.Entry<String, List<String>> stringListEntry : parameters.entrySet()) {
-            resource = resource.queryParam(stringListEntry.getKey(), stringListEntry.getValue());
+            for (String s : stringListEntry.getValue()) {
+                resource = resource.queryParam(stringListEntry.getKey(), s);
+            }
         }
         return resource.request(mediaType);
     }

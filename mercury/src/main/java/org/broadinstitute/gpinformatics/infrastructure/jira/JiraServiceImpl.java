@@ -188,7 +188,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         }
 
         try {
-                WebTarget webResource = getJerseyClient().target(urlString).queryParam("fields", fieldList.toString());
+                WebTarget webResource = getJerseyClient().target(urlString).queryParam("fields", fieldList.toString()); // todo jmt
 
                 String queryResponse = webResource.request().get(String.class);
 
@@ -560,7 +560,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         String url = getBaseUrl() + "/issue/" + jiraIssueKey + "?fields=" + fieldArgs;
         log.debug(url);
         WebTarget webResource =
-                getJerseyClient().target(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs);
+                getJerseyClient().target(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs); // todo jmt
 
         return get(webResource, new GenericType<IssueFieldsResponse>() {
         });

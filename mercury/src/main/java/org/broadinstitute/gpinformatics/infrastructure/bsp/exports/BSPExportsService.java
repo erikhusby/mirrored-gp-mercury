@@ -48,7 +48,7 @@ public class BSPExportsService implements Serializable {
 
         // Copy the resource above with the query parameters added.
         String url = bspConfig.getUrl("rest/exports/isExported");
-        WebTarget webTarget = client.target(url).queryParam("barcode", barcodes);
+        WebTarget webTarget = client.target(url).queryParam("barcode", barcodes); // todo jmt
 
         return webTarget.request(MediaType.APPLICATION_XML_TYPE).get(IsExported.ExportResults.class);
     }
