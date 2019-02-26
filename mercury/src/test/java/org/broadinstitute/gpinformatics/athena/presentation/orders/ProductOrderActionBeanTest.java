@@ -176,6 +176,7 @@ public class ProductOrderActionBeanTest {
                 mockQuoteService, Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
                 stubProductPriceCache, mockAccessController);
         stubProductPriceCache = new SAPProductPriceCache(mockSAPService);
+        mockSAPService.setProductPriceCache(stubProductPriceCache);
         mockSapClient = Mockito.mock(SapIntegrationClientImpl.class);
         mockSAPService.setWrappedClient(mockSapClient);
 
@@ -358,6 +359,7 @@ public class ProductOrderActionBeanTest {
      *
      * @throws Exception
      */
+    @Test
     public void testDoValidationMethodQuoteOnOrder() throws Exception {
 
         pdo = ProductOrderTestFactory.createDummyProductOrder();
