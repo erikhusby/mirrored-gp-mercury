@@ -3556,6 +3556,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                    <endStatus>In LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Malaria PCRTail 2</name>
@@ -3570,6 +3575,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Malaria Miseq PCR Pool SPRI</name>
@@ -3577,6 +3587,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Ready for Sequencing</statusTransition>
+                    <endStatus>Ready for Sequencing</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -4864,7 +4879,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <batchJiraIssueType>MALARIA</batchJiraIssueType>
             <effectiveDate>2017-06-06T10:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>Dried Blood Spots</workflowProcessDefs>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
