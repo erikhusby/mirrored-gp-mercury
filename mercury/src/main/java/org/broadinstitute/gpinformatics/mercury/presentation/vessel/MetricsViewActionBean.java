@@ -15,6 +15,8 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.rackscan.ScannerException;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -27,6 +29,7 @@ import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -34,6 +37,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -42,11 +47,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.inject.Inject;
+import java.awt.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.Format;
@@ -60,16 +65,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 
-@UrlBinding(value = "/view/metricsView.action")
-public class MetricsViewActionBean extends CoreActionBean {
+@UrlBinding(value = MetricsViewActionBean.ACTION_BEAN_URL)
+public class MetricsViewActionBean extends RackScanActionBean {
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);
+    static final String ACTION_BEAN_URL = "/view/metricsView.action";
+    private static final String PAGE_TITLE = "Metrics Viewer";
     private static final Format DATE_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy");
 
     private static final String VIEW_PAGE = "/vessel/vessel_metrics_view.jsp";
 
     private static final String SEARCH_ACTION = "search";
+
+    public static final String RACK_SCAN_EVENT = "rackScan";
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -91,6 +101,9 @@ public class MetricsViewActionBean extends CoreActionBean {
 
     private Map<String, Set<ProductOrder>> barcodeToProductOrders;
     private List<StaticPlate> staticPlates;
+    private Map<String, LabVessel> mapBarcodeToVessel;
+    private Map<VesselPosition, LabVessel> mapPositionToVessel;
+    private Map<String, String> mapBarcodeToPosition;
     private Map<String, GenotypingChip> barcodeToGenotypingChip;
     private Map<String, Set<String>> barcodeToChipTypes;
     private PlateMap plateMap;
@@ -105,8 +118,15 @@ public class MetricsViewActionBean extends CoreActionBean {
     private final static String BLUE = "#d9edf7";
     private final static String SLATE_GRAY = "slategray";
 
+    public interface DisplayMetrics {
+        String getDisplayName();
+        boolean isDisplayValue();
+        ChartType getChartType();
+        String getEvalType();
+    }
+
     @JsonSerialize(using = PlateMapMetricsJsonSerializer.class)
-    public enum PlateMapMetrics {
+    public enum PlateMapMetrics implements DisplayMetrics {
         AUTOCALL_CALL_RATE("AutoCall Call Rate", true, ChartType.Category, "greaterThanOrEqual"),
         CALL_RATE("zCall Call Rate", true, ChartType.Category, "greaterThanOrEqual"),
         HET_PCT("Heterozygosity (%)", true, ChartType.Category, "greaterThanOrEqual"),
@@ -126,6 +146,41 @@ public class MetricsViewActionBean extends CoreActionBean {
         private String evalType;
 
         PlateMapMetrics(String displayName, boolean displayValue, ChartType chartType, String evalType) {
+            this.displayName = displayName;
+            this.displayValue = displayValue;
+            this.chartType = chartType;
+            this.evalType = evalType;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public boolean isDisplayValue() {
+            return displayValue;
+        }
+
+        public ChartType getChartType() {
+            return chartType;
+        }
+
+        public String getEvalType() {
+            return evalType;
+        }
+    }
+
+    @JsonSerialize(using = PlateMapMetricsJsonSerializer.class)
+    public enum RackMetrics implements DisplayMetrics {
+        INDEX_CHECK("Index Clash Check", false, ChartType.Duplicate, "duplicate"),
+        EXPECTED_BAIT("Expected Bait (PDO)", false, ChartType.Category, "equals"),
+        BAIT("Bait", false, ChartType.Category, "equals");
+
+        private String displayName;
+        private final boolean displayValue;
+        private final ChartType chartType;
+        private String evalType;
+
+        RackMetrics(String displayName, boolean displayValue, ChartType chartType, String evalType) {
             this.displayName = displayName;
             this.displayValue = displayValue;
             this.chartType = chartType;
@@ -643,6 +698,189 @@ public class MetricsViewActionBean extends CoreActionBean {
         return plateMap;
     }
 
+    @HandlesEvent(RACK_SCAN_EVENT)
+    public Resolution rackScan() throws ScannerException {
+        scan();
+        rackScan.entrySet().removeIf(pair -> pair.getValue().isEmpty());
+        MessageCollection messageCollection = new MessageCollection();
+
+        mapBarcodeToPosition = rackScan.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+
+        mapPositionToVessel = new HashMap<>();
+
+        mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(rackScan.values()));
+        for (Map.Entry<String, LabVessel> barcodeLabVesselEntry : mapBarcodeToVessel.entrySet()) {
+            LabVessel labVessel = barcodeLabVesselEntry.getValue();
+            if (labVessel == null) {
+                addValidationError("barcodes", barcodeLabVesselEntry.getKey() + " not found.");
+                continue;
+            }
+            String position = mapBarcodeToPosition.get(labVessel.getLabel());
+            VesselPosition vesselPosition = VesselPosition.getByName(position);
+            mapPositionToVessel.put(vesselPosition, labVessel);
+        }
+        if (!getValidationErrors().isEmpty()) {
+            return new ForwardResolution(VIEW_PAGE);
+        }
+
+        plateMap = new PlateMap();
+
+        Map<RackMetrics, WellDataset> metricsWellDatasetMap = new HashMap<>();
+        for (RackMetrics rackMetric: RackMetrics.values()) {
+            WellDataset wellDataset = new WellDataset(rackMetric);
+            metricsWellDatasetMap.put(rackMetric, wellDataset);
+            plateMap.getDatasets().add(wellDataset);
+        }
+
+        List<Options> indexClashOptions = new OptionsBuilder().
+                addOption("Index Clash", null, RED).
+                addOption("No Clash", null, GREEN).
+                addOption("None", "", SLATE_GRAY).build();
+
+        Set<String> allBaitsSet = new HashSet<>();
+        WellDataset baitDataSet = metricsWellDatasetMap.get(RackMetrics.BAIT);
+
+        Set<String> allExpectedBaitsSet = new HashSet<>();
+        WellDataset expectedBaitDataSet = metricsWellDatasetMap.get(RackMetrics.EXPECTED_BAIT);
+
+        for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
+            LabVessel labVessel = entry.getValue();
+            String position = mapBarcodeToPosition.get(labVessel.getLabel());
+            VesselPosition vesselPosition = VesselPosition.getByName(position);
+
+            List<Metadata> metadata = new ArrayList<>();
+            metadata.add(Metadata.create("Well Name", position));
+            metadata.add(Metadata.create("Barcode", labVessel.getLabel()));
+
+            Set<String> indexes = new HashSet<>();
+            Set<String> baits = new HashSet<>();
+            Set<String> expectedBaits = new HashSet<>();
+            for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
+                MolecularIndexingScheme molecularIndexingScheme = sampleInstanceV2.getMolecularIndexingScheme();
+                if (molecularIndexingScheme != null) {
+                    String name = molecularIndexingScheme.getName();
+                    if (!indexes.add(name)) {
+                        addValidationError("barcodes", "Vessel has a duplicate index "
+                                                       + labVessel.getLabel() + " " + name);
+                    }
+                }
+                for (ReagentDesign reagentDesign: sampleInstanceV2.getReagentsDesigns()) {
+                    String bait = reagentDesign.getName();
+                    baits.add(bait);
+                    allBaitsSet.add(bait);
+                }
+
+                LimsQueries.fetchExpectedReagentDesignsForSample(sampleInstanceV2, expectedBaits);
+                allExpectedBaitsSet.addAll(expectedBaits);
+            }
+
+            if (baits.size() > 1) {
+                addValidationError("barcodes", "Vessel has multiple baits "
+                                                   + labVessel.getLabel() + " " + String.join(" ", baits));
+            }
+
+            if (expectedBaits.size() > 1) {
+                addValidationError("barcodes", "Vessel has multiple expected baits "
+                                               + labVessel.getLabel() + " " + String.join(" ", expectedBaits));
+            }
+
+            WellDataset wellDataset = metricsWellDatasetMap.get(RackMetrics.INDEX_CHECK);
+            wellDataset.getWellData().add(new WellData(vesselPosition.name(), String.join(" ", indexes)));
+            wellDataset.setOptions(indexClashOptions);
+
+            if (indexes.size() <= 2) {
+                metadata.add(Metadata.create("Indexes", String.join(" ", indexes)));
+            } else {
+                metadata.add(Metadata.create("Indexes", indexes.size() + " total indexes."));
+            }
+            metadata.add(Metadata.create("Bait", String.join(" ", baits)));
+            metadata.add(Metadata.create("Expected Bait", String.join(" ", expectedBaits)));
+
+            baitDataSet.getWellData().add(new WellData(vesselPosition.name(), String.join(" ", baits)));
+
+            expectedBaitDataSet.getWellData().add(new WellData(vesselPosition.name(), String.join(" ", expectedBaits)));
+
+            plateMap.getWellMetadataMap().put(vesselPosition.name(), metadata);
+        }
+
+        generateOptionsForDataSet(baitDataSet, new ArrayList<>(allBaitsSet));
+        generateOptionsForDataSet(expectedBaitDataSet, new ArrayList<>(allExpectedBaitsSet));
+
+        foundResults = true;
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            metricsTableJson = mapper.writeValueAsString(Collections.singleton(plateMap));
+        } catch (IOException e) {
+            logger.error("Error building Rack Metrics Table", e);
+            addGlobalValidationError("Failed to generate metrics view");
+        }
+
+        addMessages(messageCollection);
+
+        return new ForwardResolution(VIEW_PAGE);
+    }
+
+    private void generateOptionsForDataSet(WellDataset dataset, List<String> names) {
+        List<String> colors = generateColors(names.size());
+        List<Options> options = new ArrayList<>();
+        for (int i = 0; i < names.size(); i++) {
+            String name = names.get(i);
+            Options option = new Options();
+            option.setName(name);
+            option.setValue(name);
+            option.setColor(colors.get(i));
+            options.add(option);
+        }
+        options.add(new Options("None", "", SLATE_GRAY));
+        dataset.setOptions(options);
+    }
+
+    /**
+     * Generates colors from a preferred color palette if the number of datapoints is <= 10. If greater,
+     * then randomly generate the colors.
+     * @param numColors - number of colors to generate
+     * @return color palette list thats the size of numColors
+     */
+    private List<String> generateColors(int numColors) {
+        List<String> preferredPalette = Arrays.asList(
+                "#fee8c8",
+                "#fdbb84",
+                "#ffa600",
+                "#ff7c43",
+                "#f95d6a",
+                "#d45087",
+                "#a05195",
+                "#665191",
+                "#2f4b7c",
+                "#003f5c"
+        );
+        if (numColors <= preferredPalette.size()) {
+            return preferredPalette.subList(0, numColors);
+        }
+        List<String> colors = new ArrayList<>();
+        float inc = 1.0f / numColors;
+        for(float hue = 0; hue < 1; hue += inc) {
+            final float saturation = 0.9f;
+            final float luminance = 1.0f;
+            Color color = Color.getHSBColor(hue, saturation, luminance);
+            String hex = "#" + Integer.toHexString(color.getRGB()).substring(2);
+            colors.add(hex);
+        }
+        return colors;
+    }
+
+    @Override
+    public String getRackScanPageUrl() {
+        return ACTION_BEAN_URL;
+    }
+
+    @Override
+    public String getPageTitle() {
+        return PAGE_TITLE;
+    }
+
     public String getBarcodes() {
         return barcodes;
     }
@@ -691,6 +929,32 @@ public class MetricsViewActionBean extends CoreActionBean {
     public void setAttributeArchetypeDao(
             AttributeArchetypeDao attributeArchetypeDao) {
         this.attributeArchetypeDao = attributeArchetypeDao;
+    }
+
+    public Map<String, LabVessel> getMapBarcodeToVessel() {
+        return mapBarcodeToVessel;
+    }
+
+    public void setMapBarcodeToVessel(
+            Map<String, LabVessel> mapBarcodeToVessel) {
+        this.mapBarcodeToVessel = mapBarcodeToVessel;
+    }
+
+    public Map<String, String> getMapBarcodeToPosition() {
+        return mapBarcodeToPosition;
+    }
+
+    public void setMapBarcodeToPosition(Map<String, String> mapBarcodeToPosition) {
+        this.mapBarcodeToPosition = mapBarcodeToPosition;
+    }
+
+    public Map<VesselPosition, LabVessel> getMapPositionToVessel() {
+        return mapPositionToVessel;
+    }
+
+    public void setMapPositionToVessel(
+            Map<VesselPosition, LabVessel> mapPositionToVessel) {
+        this.mapPositionToVessel = mapPositionToVessel;
     }
 
     /**
@@ -763,16 +1027,16 @@ public class MetricsViewActionBean extends CoreActionBean {
     }
 
     public class WellDataset {
-        PlateMapMetrics plateMapMetrics;
+        DisplayMetrics displayMetrics;
         List<WellData> wellData;
         List<Options> options;
 
-        public WellDataset(PlateMapMetrics plateMapMetrics) {
-            this.plateMapMetrics = plateMapMetrics;
+        public WellDataset(DisplayMetrics displayMetrics) {
+            this.displayMetrics = displayMetrics;
         }
 
-        public PlateMapMetrics getPlateMapMetrics() {
-            return plateMapMetrics;
+        public DisplayMetrics getDisplayMetrics() {
+            return displayMetrics;
         }
 
         public List<WellData> getWellData() {
@@ -811,7 +1075,7 @@ public class MetricsViewActionBean extends CoreActionBean {
     }
 
     public enum ChartType {
-        Category, Heatmap
+        Duplicate, Category, Heatmap
     }
 
     /**
@@ -886,6 +1150,15 @@ public class MetricsViewActionBean extends CoreActionBean {
         private String name;
 
         private Object value;
+
+        public Options() {
+        }
+
+        public Options(String name, String value, String color) {
+            this.name = name;
+            this.value = value;
+            this.color = color;
+        }
 
         public String getColor ()
         {

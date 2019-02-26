@@ -14,6 +14,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -42,6 +43,7 @@ public class GenericEntityEtlDbFreeTest {
     private final LabVessel.ContainerType type = LabVessel.ContainerType.TUBE;
     private String vesselName = "vessel_name";
     private Date vesselCreated = new Date();
+    private BigDecimal vesselVolume = new BigDecimal("101.999");
 
     private final String datafileDir = System.getProperty("java.io.tmpdir");
 
@@ -97,6 +99,7 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getType()).andReturn(type);
         expect(obj.getName()).andReturn(vesselName);
         expect(obj.getCreatedOn()).andReturn(vesselCreated);
+        expect(obj.getVolume()).andReturn(vesselVolume);
 
         auditReader.clear();
 
@@ -160,6 +163,7 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getType()).andReturn(type).times(2);
         expect(obj.getName()).andReturn(vesselName).times(2);
         expect(obj.getCreatedOn()).andReturn(vesselCreated).times(2);
+        expect(obj.getVolume()).andReturn(vesselVolume).times(2);
         replay(mocks);
 
         tst.setAuditReaderDao(auditReader);
