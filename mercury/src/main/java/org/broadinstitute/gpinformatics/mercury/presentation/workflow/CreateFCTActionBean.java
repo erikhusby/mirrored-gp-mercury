@@ -270,7 +270,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                 }
             }
         }
-        Collections.sort(createFctDtos, CreateFctDto.BY_BARCODE);
+        Collections.sort(createFctDtos, (d0, d1) -> d0.getBarcode().compareTo(d1.getBarcode()));
         return new ForwardResolution(VIEW_PAGE);
     }
 

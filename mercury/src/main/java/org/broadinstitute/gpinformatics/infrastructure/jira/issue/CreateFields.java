@@ -149,6 +149,8 @@ public class CreateFields extends UpdateFields {
         // jiraName is defined by JIRA and must not be based on Mercury Workflow.
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS("Exome Express"),
+        MICROBIAL("Microbial"),
+        GERMLINE_EXOME("Germline Exome"),
         CDNA_TRUSEQ_SS("cDNA TruSeq Strand Specific Large Insert"),
         CDNA_LASSO("Lasso"),
         PRODUCT_ORDER("Product Order"),
@@ -159,7 +161,8 @@ public class CreateFields extends UpdateFields {
         HISEQ_4000("HiSeq 4000"),
         HISEQ_X_10("HiSeq X 10"),
         MALARIA("Malaria"),
-        NOVASEQ("NovaSeq"),
+        NOVASEQ("NovaSeq S2"),
+        NOVASEQ_S1("NovaSeq S1"),
         NOVASEQ_S4("NovaSeq S4"),
         NEXTSEQ("NextSeq"),
         MISEQ("MiSeq"),
