@@ -605,6 +605,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
 
+        // adding customizations in order to allow it to be validated against the quote.
+        if (StringUtils.isNotBlank(customizationJsonString)) {
+            buildJsonObjectFromEditOrderProductCustomizations();
+            editOrder.updateCustomSettings(productCustomizations);
+        }
+
         if(editOrder.getProduct() != null) {
             if(ProductOrder.OrderAccessType.COMMERCIAL.getDisplayName().equals(orderType) &&
                (!editOrder.getProduct().hasExternalCounterpart() || !editOrder.getProduct().isClinicalProduct() ||
@@ -1718,9 +1724,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                         editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
 //                }
             }
-            if (StringUtils.isNotBlank(customizationJsonString)) {
-                buildJsonObjectFromEditOrderProductCustomizations();
-            }
         }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
@@ -1729,8 +1732,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         try {
-            productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
-                    productCustomizations, saveOrderMessageCollection);
+            productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails, saveOrderMessageCollection);
             originalBusinessKey = null;
 
 
