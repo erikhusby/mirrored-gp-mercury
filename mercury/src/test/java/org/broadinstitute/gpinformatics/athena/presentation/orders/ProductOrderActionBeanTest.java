@@ -152,7 +152,6 @@ public class ProductOrderActionBeanTest {
     private QuoteService stubQuoteService = new QuoteServiceStub();
 
     private QuoteService mockQuoteService;
-    private QuoteService stubQuoteService = new QuoteServiceStub();
     public SapIntegrationServiceImpl mockSAPService;
     public SAPProductPriceCache stubProductPriceCache;
     public ProductOrderDao mockProductOrderDao;
@@ -385,11 +384,14 @@ public class ProductOrderActionBeanTest {
             returnMaterials.add(addonMaterial);
         }
 
-        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn((Collections.singletonList(pdo)));
-        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.anyInt(), Mockito.anyString(), Mockito.any(ProductOrder.class)))
+        Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
                 .thenReturn(new OrderCalculatedValues(BigDecimal.valueOf(pdo.getSamples().size()*10),Collections.emptySet()));
 
         actionBean.setEditOrder(pdo);
@@ -426,6 +428,17 @@ public class ProductOrderActionBeanTest {
         actionBean.clearValidationErrors();
 
         pdo.setQuoteId(null);
+        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+        Assert.assertEquals(1, actionBean.getValidationErrors().size());
+
+        //////////////////////////////////////////////////////
+        // Now test some of the other validations
+        //////////////////////////////////////////////////////
+        actionBean.clearValidationErrors();
+
+        pdo.setQuoteId("");
         actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
 
         Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
