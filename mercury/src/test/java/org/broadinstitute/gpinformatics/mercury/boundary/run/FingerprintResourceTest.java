@@ -22,7 +22,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -32,10 +31,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.STANDARD)
 public class FingerprintResourceTest extends Arquillian {
 
-    private static Logger logger = Logger.getLogger("FingerprintResourceTest");
-
     private static final String WS_BASE = "rest/external/fingerprint";
-
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -111,7 +107,6 @@ public class FingerprintResourceTest extends Arquillian {
     }
 
     private Client getClient(boolean basicAuth) {
-//        clientConfig.getClasses().add(JacksonJsonProvider.class);
         Client client = JerseyUtils.getClientBuilderAcceptCertificate().build();
 
         client.register(new EntityLoggingFilter());

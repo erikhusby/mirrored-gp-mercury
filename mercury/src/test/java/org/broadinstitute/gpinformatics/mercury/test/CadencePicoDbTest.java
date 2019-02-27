@@ -51,7 +51,6 @@ public class CadencePicoDbTest extends StubbyContainerTest {
         }
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
 //        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
         Client client = clientBuilder.build();

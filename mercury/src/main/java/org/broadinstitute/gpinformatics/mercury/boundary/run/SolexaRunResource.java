@@ -151,7 +151,6 @@ public class SolexaRunResource {
                 }
             } catch (Exception e) {
                 LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
-//                messageSender.postMessageToGpLims("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR);
                 if (route == SystemRouter.System.MERCURY) {
                     throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
                 }

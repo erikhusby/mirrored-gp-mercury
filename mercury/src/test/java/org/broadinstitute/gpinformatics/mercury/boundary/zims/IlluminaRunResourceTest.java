@@ -141,7 +141,6 @@ public class IlluminaRunResourceTest extends Arquillian {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 //        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
         ZimsIlluminaRun run = clientBuilder.build().target(url)
@@ -167,7 +166,6 @@ public class IlluminaRunResourceTest extends Arquillian {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 //        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
         ZimsIlluminaRun run = clientBuilder.build().target(url)
@@ -253,7 +251,6 @@ public class IlluminaRunResourceTest extends Arquillian {
         String url = ImportFromSquidTest.TEST_MERCURY_URL + "/rest/IlluminaRun/queryMercury";
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 
         ZimsIlluminaRun run = clientBuilder.build().target(url)
                 .queryParam("runName", "TestRun03261516351364325439075.txt")

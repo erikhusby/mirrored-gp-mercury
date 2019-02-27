@@ -15,7 +15,10 @@ import java.net.URL;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.*;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.testng.Assert.fail;
@@ -37,8 +40,6 @@ public abstract class RestServiceContainerTest extends Arquillian {
     private static final String SERVLET_MAPPING_PREFIX = "rest";
     public static final String JBOSS_HTTPS_PORT_SYSTEM_PROPERTY = "jbossHttpsPort";
 
-//    private ClientConfig clientConfig;
-
     /**
      * Returns the base path of the resource under test with no leading or
      * trailing slashes. Effectively, the value of the resource's @Path
@@ -50,10 +51,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
 
     @BeforeMethod(groups = {EXTERNAL_INTEGRATION, ALTERNATIVES, STUBBY, STANDARD})
     public void setUp() throws Exception {
-//        clientConfig = new ClientConfig();
-//        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 //        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
-//        clientConfig.getClasses().add(JacksonJsonProvider.class);
     }
 
     /**

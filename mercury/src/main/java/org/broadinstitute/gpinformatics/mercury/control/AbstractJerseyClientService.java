@@ -46,13 +46,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
     private Deployment deployment;
 
     public AbstractJerseyClientService() {}
-    
-    /**
-     * Subclasses can call this to turn on JSON processing support for client calls.
-     */
-//    protected void supportJson(ClientConfig clientConfig) {
-//        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-//    }
 
     /**
      * Subclasses can call this to specify the username and password for HTTP Auth

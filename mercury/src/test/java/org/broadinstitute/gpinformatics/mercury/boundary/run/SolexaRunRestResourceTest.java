@@ -279,7 +279,6 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
 
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.getClasses().add(JacksonJsonProvider.class);
 
         Response readStructureResult =
                 clientBuilder.build().target(wsUrl)
@@ -317,7 +316,6 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
         }
 
         ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.getClasses().add(JacksonJsonProvider.class);
 
         ReadStructureRequest returnedReadStructureRequest = clientBuilder.build().target(wsUrl).
                 request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).

@@ -27,7 +27,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.broadinstitute.gpinformatics.mercury.presentation.cache.SessionCacheTest.INVOCATION_COUNT;
 import static org.broadinstitute.gpinformatics.mercury.presentation.cache.SessionCacheTest.THREADPOOL_SIZE;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 
 @Test(groups = TestGroups.MULTITHREADED, threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT)
