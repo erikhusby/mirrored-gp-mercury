@@ -99,13 +99,11 @@
         </stripes:form>
     </c:when>
     <c:otherwise>
-        <p class="alert alert-block" style="font-weight: bold">No results found in Mercury or the ORSP Portal.</p>
+        <script type="application/javascript">
+            resetRegulatoryInfoDialog("No results found in the ORSP Portal.");
+        </script>
     </c:otherwise>
 </c:choose>
-
-<c:if test="${actionBean.addRegulatoryInfoAllowed}">
-    <jsp:include page="regulatory_info_search_insert.jsp"/>
-</c:if>
 
 <script type="text/javascript">
     (function() {

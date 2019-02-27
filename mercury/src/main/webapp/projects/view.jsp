@@ -47,7 +47,7 @@
                     openRegulatoryInfoDialog(
                             '${actionBean.editResearchProject.businessKey}',
                         '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.webSafeTitle}',
-                            function() {
+                            function(reOpenDialog) {
                                 location.reload(true);
                             }
                     );

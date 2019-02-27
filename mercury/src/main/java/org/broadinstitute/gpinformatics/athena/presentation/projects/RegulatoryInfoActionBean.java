@@ -97,7 +97,8 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
             final List<OrspProject> orspResults = orspProjectDao.findListByList(regulatoryInfoIdentifiers);
             final Optional<Set<String>> orspResultNames = Optional.ofNullable(orspResults.stream().map(OrspProject::getName).collect(Collectors.toSet()));
 
-            if(orspResultNames.isPresent()) {
+            if(orspResultNames.isPresent() && !orspResultNames.get().isEmpty()) {
+
                 searchResults.forEach(regulatoryInfo -> {
                     regulatoryInfo.setUserEdit(orspResultNames.get().contains(regulatoryInfo.getIdentifier()));
                 });
