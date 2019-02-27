@@ -1708,9 +1708,11 @@
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
                     <reagentRequirements>
                         <reagentName>Proteinase K</reagentName>
+                        <expirationDateIncluded>true</expirationDateIncluded>
                     </reagentRequirements>
                     <reagentRequirements>
                         <reagentName>Buffer AL</reagentName>
+                        <expirationDateIncluded>true</expirationDateIncluded>
                     </reagentRequirements>
                     <sourceVesselTypeGeometryString>RackType.FlipperRackRow8</sourceVesselTypeGeometryString>
                     <sourceSection>ROWOF8</sourceSection>
