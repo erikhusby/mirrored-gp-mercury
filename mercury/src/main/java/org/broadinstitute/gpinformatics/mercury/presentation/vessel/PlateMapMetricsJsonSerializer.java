@@ -7,9 +7,9 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 
 import java.io.IOException;
 
-public class PlateMapMetricsJsonSerializer extends JsonSerializer<MetricsViewActionBean.PlateMapMetrics> {
+public class PlateMapMetricsJsonSerializer extends JsonSerializer<MetricsViewActionBean.DisplayMetrics> {
     @Override
-    public void serialize(MetricsViewActionBean.PlateMapMetrics value, JsonGenerator generator,
+    public void serialize(MetricsViewActionBean.DisplayMetrics value, JsonGenerator generator,
                           SerializerProvider provider) throws IOException {
         generator.writeStartObject();
         generator.writeFieldName("displayName");
