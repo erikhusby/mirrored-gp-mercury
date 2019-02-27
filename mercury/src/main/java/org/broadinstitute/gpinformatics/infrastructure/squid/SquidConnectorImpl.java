@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunSynopsisBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
-import org.broadinstitute.gpinformatics.mercury.squid.generated.SolexaRunSynopsisBean;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.Dependent;
