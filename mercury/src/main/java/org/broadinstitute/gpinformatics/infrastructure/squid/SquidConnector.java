@@ -1,12 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
-import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
-import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
-import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
-import edu.mit.broad.prodinfo.bean.generated.OligioGroups;
-import edu.mit.broad.prodinfo.bean.generated.SampleReceptacleGroup;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
@@ -67,15 +60,4 @@ public interface SquidConnector extends Serializable {
     SquidResponse saveReadStructure(@Nonnull ReadStructureRequest readStructureData,
                            @Nonnull String squidWSUrl) throws WebApplicationException;
 
-    CreateProjectOptions getProjectCreationOptions() throws WebApplicationException;
-
-    CreateWorkRequestOptions getWorkRequestOptions(String executionType) throws WebApplicationException;
-
-    ExecutionTypes getProjectExecutionTypes() throws WebApplicationException;
-
-    OligioGroups getOligioGroups() throws WebApplicationException;
-
-    SampleReceptacleGroup getGroupReceptacles(String groupName) throws WebApplicationException;
-
-    AutoWorkRequestOutput createSquidWorkRequest(AutoWorkRequestInput input) throws WebApplicationException;
 }

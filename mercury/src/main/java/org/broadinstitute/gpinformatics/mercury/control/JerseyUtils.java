@@ -39,14 +39,9 @@ public class JerseyUtils {
     }
 
     public static WebTarget getWebResourceBase(String wsUrl, MediaType mediaType) {
-//        if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
-//            clientConfig.getClasses().add(JacksonJsonProvider.class);
-//        }
-
         Client client = new ResteasyClientBuilder()
                 .establishConnectionTimeout(DEFAULT_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS)
                 .socketTimeout(DEFAULT_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS).build();
-
         return client.target(wsUrl);
     }
 

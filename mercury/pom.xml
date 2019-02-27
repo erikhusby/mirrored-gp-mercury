@@ -2072,26 +2072,10 @@ nodePrinter.print(webapp)
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
                             <schemaFiles>SolexaRun.xsd</schemaFiles>
-                            <schemaDirectory>${project.basedir}/target/xsd-includes/XSD</schemaDirectory>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
                             <packageName>org.broadinstitute.gpinformatics.mercury.squid.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.SolexaRunSynopsisXjcStaleFlag</staleFile>
-                            <!-- all executions, except the first, need clearOutputDir set to false -->
-                            <clearOutputDir>false</clearOutputDir>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>ProjectResourceBeans</id>
-                        <goals>
-                            <goal>xjc</goal>
-                        </goals>
-                        <configuration>
-                            <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>WorkRequest.xsd</schemaFiles>
-                            <schemaDirectory>${project.basedir}/target/xsd-includes/XSD</schemaDirectory>
-                            <packageName>edu.mit.broad.prodinfo.bean.generated</packageName>
-                            <!-- each execution must have a unique staleFile -->
-                            <staleFile>${project.build.directory}/jaxb2/.ProjectResourceXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>
@@ -2243,25 +2227,6 @@ nodePrinter.print(webapp)
                                     <artifactId>jaxws-api</artifactId>
                                     <version>2.2.8</version>
                                     <type>jar</type>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>SquidWS</groupId>
-                                    <artifactId>squidWS</artifactId>
-                                    <version>1.0-SNAPSHOT</version>
-                                    <classifier>XSD</classifier>
-                                    <type>tar</type>
-                                    <outputDirectory>${project.basedir}/target/xsd-includes</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

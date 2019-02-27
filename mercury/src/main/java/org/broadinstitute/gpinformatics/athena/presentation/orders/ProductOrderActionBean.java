@@ -191,7 +191,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
     private static final String UNABANDON_SAMPLES_ACTION = "unAbandonSamples";
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
-    public static final String SQUID_COMPONENTS_ACTION = "createSquidComponents";
     private static final String SET_RISK = "setRisk";
     private static final String SET_PROCEED_OOS = "setProceedOos";
     private static final String RECALCULATE_RISK = "recalculateRisk";
@@ -1669,11 +1668,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private Resolution createViewResolution(String businessKey) {
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER,
                 businessKey);
-    }
-
-    @HandlesEvent(SQUID_COMPONENTS_ACTION)
-    public Resolution createSquidComponents() {
-        return new ForwardResolution(SquidComponentActionBean.class, SquidComponentActionBean.ENTER_COMPONENTS_ACTION);
     }
 
     @HandlesEvent(VALIDATE_ORDER)

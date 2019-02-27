@@ -1,13 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
-import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
-import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
-import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
-import edu.mit.broad.prodinfo.bean.generated.OligioGroups;
-import edu.mit.broad.prodinfo.bean.generated.SampleReceptacleGroup;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
@@ -72,90 +64,12 @@ public class SquidConnectorImpl implements SquidConnector {
             solexaRunSynopsis.getSolexaRunLaneSynopsisBean().add(solexaRunLaneSynopsisBean);
         }
 
-        Response response = JerseyUtils.getWebResource(squidWSUrl, MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML_TYPE).post(Entity.xml(solexaRunSynopsis));
+        Response response = JerseyUtils.getWebResource(squidWSUrl, MediaType.APPLICATION_JSON_TYPE)
+                .accept(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(solexaRunSynopsis));
 
         SquidResponse squidResponse = new SquidResponse(response.getStatus(), response.readEntity(String.class));
         response.close();
         return squidResponse;
-    }
-
-    @Override
-    public CreateProjectOptions getProjectCreationOptions() throws WebApplicationException {
-
-        Response response = JerseyUtils.getWebResource(
-                squidConfig.getUrl() + "/resources/projectresource/projectoptions",
-                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get();
-
-        CreateProjectOptions createProjectOptions = response.readEntity(CreateProjectOptions.class);
-        response.close();
-        return createProjectOptions;
-    }
-
-    @Override
-    public CreateWorkRequestOptions getWorkRequestOptions(String executionType) throws WebApplicationException {
-
-        Response response = JerseyUtils.getWebResource(squidConfig.getUrl() +
-                                                             "/resources/projectresource/workrequestoptions/"
-                                                             + executionType,
-                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get();
-
-        CreateWorkRequestOptions createWorkRequestOptions = response.readEntity(CreateWorkRequestOptions.class);
-        response.close();
-        return createWorkRequestOptions;
-    }
-
-    @Override
-    public ExecutionTypes getProjectExecutionTypes() throws WebApplicationException {
-
-        Response response = JerseyUtils.getWebResource(
-                squidConfig.getUrl() + "/resources/projectresource/executiontypes",
-                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get();
-
-        ExecutionTypes executionTypes = response.readEntity(ExecutionTypes.class);
-        response.close();
-        return executionTypes;
-    }
-
-    @Override
-    public OligioGroups getOligioGroups() throws WebApplicationException {
-        Response response = JerseyUtils.getWebResource(
-                squidConfig.getUrl() + "/resources/projectresource/oligioGroups",
-                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get();
-
-        OligioGroups oligioGroups = response.readEntity(OligioGroups.class);
-        response.close();
-        return oligioGroups;
-    }
-
-    @Override
-    public SampleReceptacleGroup getGroupReceptacles(String groupName) throws WebApplicationException {
-        Response response =
-                JerseyUtils.getWebResource(
-                        squidConfig.getUrl() + "/resources/projectresource/groupReceptacles/" + groupName,
-                        MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get();
-
-        SampleReceptacleGroup sampleReceptacleGroup = response.readEntity(SampleReceptacleGroup.class);
-        response.close();
-        return sampleReceptacleGroup;
-    }
-
-    @Override
-    public AutoWorkRequestOutput createSquidWorkRequest(AutoWorkRequestInput input) throws WebApplicationException {
-
-        Response response = JerseyUtils.getWebResource(
-                squidConfig.getUrl() + "/resources/projectresource/createWorkRequest",
-                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                .post(Entity.json(input));
-
-        AutoWorkRequestOutput result = null;
-        if(response.getStatus() == Response.Status.OK.getStatusCode()) {
-            result = response.readEntity(AutoWorkRequestOutput.class);
-        } else {
-            throw new InformaticsServiceException(response.readEntity(String.class));
-        }
-        response.close();
-        return result;
     }
 
 }
