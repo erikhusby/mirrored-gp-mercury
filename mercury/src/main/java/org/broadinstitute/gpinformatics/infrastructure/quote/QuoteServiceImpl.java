@@ -180,7 +180,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         if (response.getStatusInfo() != Response.Status.OK) {
             throw new RuntimeException(
-                    "Quote server returned " + response.getStatus() + ".  registering work for "
+                    "Quote server returned " + response.getStatusInfo().getStatusCode() + ".  registering work for "
                     + numWorkUnits + " of " + quotePriceItem.getName() + " against quote " + quote.getAlphanumericId()
                     + " appears to have failed.");
         }
