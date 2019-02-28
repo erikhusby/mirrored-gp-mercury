@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJ
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 
 import javax.annotation.Nonnull;
@@ -190,7 +191,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         try {
                 WebTarget webResource = getJerseyClient().target(urlString).queryParam("fields", fieldList.toString()); // todo jmt
 
-                String queryResponse = webResource.request().get(String.class);
+                String queryResponse = JerseyUtils.getAndCheck(webResource.request(), String.class);
 
                 JiraSearchIssueData data = parseSearch(queryResponse, fields);
 
@@ -431,12 +432,11 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String urlString = getBaseUrl() + "/issue/createmeta";
 
-        String jsonResponse = getJerseyClient().target(urlString)
+        String jsonResponse = JerseyUtils.getAndCheck(getJerseyClient().target(urlString)
                 .queryParam("projectKeys", project.getProjectType().getKeyPrefix())
                 .queryParam("issuetypeName", issueType.getJiraName())
                 .queryParam("expand", "projects.issuetypes.fields")
-                .request()
-                .get(String.class);
+                .request(), String.class);
         return CustomFieldJsonParser.parseRequiredFields(jsonResponse);
     }
 
@@ -484,8 +484,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         WebTarget webResource =
                 getJerseyClient().target(urlString).queryParam("expand", "transitions.fields");
 
-        return get(webResource, new GenericType<IssueTransitionListResponse>() {
-        });
+        return get(webResource, new GenericType<IssueTransitionListResponse>() {});
     }
 
     @Override
@@ -527,9 +526,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public boolean isValidUser(String username) {
         String urlString = getBaseUrl() + "/user/search";
 
-        String jsonResponse = getJerseyClient().target(urlString).
+        String jsonResponse = JerseyUtils.getAndCheck(getJerseyClient().target(urlString).
                 queryParam("username", username).
-                queryParam("maxResults", "1000").request().get(String.class);
+                queryParam("maxResults", "1000").request(), String.class);
         try {
             @SuppressWarnings("unchecked")
             List<Map<String, String>> response = new ObjectMapper().readValue(jsonResponse, List.class);
@@ -562,8 +561,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         WebTarget webResource =
                 getJerseyClient().target(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs); // todo jmt
 
-        return get(webResource, new GenericType<IssueFieldsResponse>() {
-        });
+        return get(webResource, new GenericType<IssueFieldsResponse>() {});
     }
 
     @Override

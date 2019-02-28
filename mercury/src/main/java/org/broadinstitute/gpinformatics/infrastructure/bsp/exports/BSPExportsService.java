@@ -5,6 +5,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
@@ -50,7 +51,7 @@ public class BSPExportsService implements Serializable {
         String url = bspConfig.getUrl("rest/exports/isExported");
         WebTarget webTarget = client.target(url).queryParam("barcode", barcodes); // todo jmt
 
-        return webTarget.request(MediaType.APPLICATION_XML_TYPE).get(IsExported.ExportResults.class);
+        return JerseyUtils.getAndCheck(webTarget.request(MediaType.APPLICATION_XML_TYPE), IsExported.ExportResults.class);
     }
 
     /**

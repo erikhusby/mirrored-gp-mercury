@@ -1,15 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -90,6 +94,44 @@ public class JerseyUtils {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         acceptAllServerCertificates(clientBuilder);
         return clientBuilder;
+    }
+
+    public static <T> T getAndCheck(Invocation.Builder builder, GenericType<T> result) {
+        Response response = builder.get();
+        throwIfError(response);
+        T t = response.readEntity(result);
+        response.close();
+        return t;
+    }
+
+    public static void throwIfError(Response response) {
+        if (response.getStatus() >= 300) {
+            ClientInvocation.handleErrorStatus(response);
+        }
+    }
+
+    public static <T> T getAndCheck(Invocation.Builder builder, Class<T> result) {
+        Response response = builder.get();
+        throwIfError(response);
+        T t = response.readEntity(result);
+        response.close();
+        return t;
+    }
+
+    public static <T, U> T postAndCheck(Invocation.Builder builder, Entity<U> entity, GenericType<T> result) {
+        Response response = builder.post(entity);
+        throwIfError(response);
+        T t = response.readEntity(result);
+        response.close();
+        return t;
+    }
+
+    public static <T, U> T postAndCheck(Invocation.Builder builder, Entity<U> entity, Class<T> result) {
+        Response response = builder.post(entity);
+        throwIfError(response);
+        T t = response.readEntity(result);
+        response.close();
+        return t;
     }
 
 }

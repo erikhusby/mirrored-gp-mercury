@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.control;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
@@ -58,9 +57,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
             T ret = response.readEntity(responseGenericType);
             log.trace("POST response: " + ret);
             response.close();
-            if (response.getStatus() >= 300) {
-                ClientInvocation.handleErrorStatus(response);
-            }
+            JerseyUtils.throwIfError(response);
             return ret;
         } catch (WebApplicationException e) {
             //TODO   Change to a more defined exception to give the option to set in throws or even catch
@@ -81,9 +78,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         try {
             Response response = setJsonMimeTypes(webResource).post(Entity.json(request));
             response.close();
-            if (response.getStatus() >= 300) {
-                ClientInvocation.handleErrorStatus(response);
-            }
+            JerseyUtils.throwIfError(response);
         } catch (WebApplicationException e) {
             //TODO  Change to a more defined exception to give the option to set in throws or even catch
             log.error("POST request: " + request, e);
@@ -112,13 +107,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      */
     protected <T> T get(WebTarget webResource, GenericType<T> genericType) {
         try {
-            Response response = setJsonMimeTypes(webResource).get();
-            if (response.getStatus() >= 300) {
-                ClientInvocation.handleErrorStatus(response);
-            }
-            T t = response.readEntity(genericType);
-            response.close();
-            return t;
+            return JerseyUtils.getAndCheck(setJsonMimeTypes(webResource), genericType);
         } catch (WebApplicationException e) {
             //TODO Change to a more defined exception to give the option to set in throws or even catch
             log.error("GET request" + webResource.getUri(), e);
