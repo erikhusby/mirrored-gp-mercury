@@ -74,9 +74,13 @@
         .divCell.right {
             float: right;
         }
+        .changed {
+            border: #3a87ad 1.5px solid
+        }
     </style>
         <script src="${ctxpath}/resources/scripts/clipboard.min.js" type="text/javascript"></script>
         <script src="${ctxpath}/resources/scripts/bindWithDelay.js" type="text/javascript"></script>
+        <script src="${ctxpath}/resources/scripts/modalMessages.js" type="text/javascript"></script>
         <script type="text/javascript">
 
         var duration = {'duration' : 400};
@@ -910,8 +914,22 @@
                 priceListText += "Clinical list price: " + data.clinicalPrice;
             }
 
-            if (data.productAgp !== undefined && $j("#aggregationParticle").val() === "") {
-                $j("#aggregationParticle").val(data.productAgp);
+            var $aggregationParticle = $j("#aggregationParticle");
+            if (data.productAgp !== undefined && $aggregationParticle.val() === "") {
+                if ($aggregationParticle.text() !== data.productAgp) {
+                    var agpModalMessage = modalMessages("info", {
+                        onClose: function(){
+                            $j($aggregationParticle).removeClass("changed")
+                        }
+                    });
+
+                    $aggregationParticle.val(data.productAgp);
+                    $j($aggregationParticle).addClass("changed");
+
+                    agpModalMessage
+                        .add("The selected product defines a default aggregation particle. This order will now aggregate on '"
+                            + $aggregationParticle.find(":selected").text() + "' unless you override this manually.", "AGP_CHANGED");
+                }
             }
 
             $j("#primaryProductListPrice").text(priceListText);
