@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
@@ -339,6 +340,44 @@ public class ProductOrderActionBeanTest {
     public void testCanEmptyRinScoreBeUsedForOnRiskCalculation() {
         SampleData emptyRinScoreSample = getSampleDTOWithEmptyRinScore();
         Assert.assertTrue(emptyRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
+    }
+
+    @DataProvider(name = "regulatorySuggestionSampleInputs")
+    public Iterator<Object[]> regulatorySuggestionSampleInputs() {
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{"SM-1234"});
+
+        testCases.add(new Object[]{String.format("%s%s%s", "\u00a0","x", "\u00a0")});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u1680","x", "\u1680")});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u180e","x", "\u180e")});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u2000","x", "\u2000")});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u202f","x", "\u202f")});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u205f","x", "\u205f")});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u3000","x", "\u3000")});
+
+        return testCases.iterator();
+    }
+
+
+    @Test(dataProvider = "regulatorySuggestionSampleInputs")
+    public void testRegulatorySuggestionInput(String sampleId) throws Exception {
+        Product product = new Product();
+        pdo.setProduct(product);
+        ResearchProjectDao mockResearchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        Mockito.when(mockResearchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(new ResearchProject());
+        actionBean.setResearchProjectDao(mockResearchProjectDao);
+        actionBean.setResearchProjectKey("somekey");
+        actionBean.setEditOrder(pdo);
+        actionBean.setProduct("test product");
+
+        // Show that the input is not ascii printable
+        assertThat(StringUtils.isAsciiPrintable(sampleId), is(false));
+        actionBean.setSampleList(sampleId);
+        try {
+            actionBean.suggestRegulatoryInfo();
+        } catch (Exception e) {
+            Assert.fail("Calling suggestRegulatoryInfo() should not have resulted in an exception being thrown", e);
+        }
     }
 
     public void testPostReceiveOptions() throws Exception {

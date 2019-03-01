@@ -275,8 +275,9 @@ public class SearchActionBean extends CoreActionBean {
         List<String> sampleIds = new ArrayList<>(valueArray.length);
         for (String value : valueArray) {
             if (!StringUtils.isBlank(value)) {
-                value = StringUtils.normalizeSpace(value).trim();
 
+                // '\h' matches a horizontal whitespace character, which trim() won't remove.
+                value = StringUtils.trim(value.replaceAll("(^\\h*)|(\\h*$)", ""));
                 if (includeSampleFixup && UPPERCASE_PATTERN.matcher(value).matches()) {
                     value = value.toUpperCase();
                 }

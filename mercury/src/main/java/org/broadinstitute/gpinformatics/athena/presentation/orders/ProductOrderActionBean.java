@@ -239,7 +239,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
-    @Inject
     private ResearchProjectDao researchProjectDao;
 
     @Inject
@@ -3764,6 +3763,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setCustomizationJsonString(String customizationJsonString) {
         this.customizationJsonString = customizationJsonString;
+    }
+
+    @Inject
+    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
+        this.researchProjectDao = researchProjectDao;
     }
 
     public String getClinicalAttestationMessage() {
