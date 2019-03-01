@@ -1082,7 +1082,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
             }
         }
 
-        if (stationEvents.get(0).getStation().equalsIgnoreCase(BAD_STATION_NAME)) {
+        if (stationEvents.get(0).getStation() != null &&
+                stationEvents.get(0).getStation().equalsIgnoreCase(BAD_STATION_NAME)) {
             addGlobalValidationError("A valid station is required");
         }
 
