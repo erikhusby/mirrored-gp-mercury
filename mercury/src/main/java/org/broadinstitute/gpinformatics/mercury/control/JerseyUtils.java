@@ -106,6 +106,7 @@ public class JerseyUtils {
 
     public static void throwIfError(Response response) {
         if (response.getStatus() >= 300) {
+            response.close();
             ClientInvocation.handleErrorStatus(response);
         }
     }

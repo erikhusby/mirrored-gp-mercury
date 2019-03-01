@@ -94,7 +94,8 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         String request = writeValue(requestPojo);
         log.trace("PUT request: " + request);
         try {
-            setJsonMimeTypes(webResource).put(Entity.json(request));
+            Response response = setJsonMimeTypes(webResource).put(Entity.json(request));
+            response.close();
         } catch (WebApplicationException e) {
             //TODO Change to a more defined exception to give the option to set in throws or even catch
             log.error("PUT request: " + request, e);
@@ -120,7 +121,8 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      */
     protected void delete(WebTarget webResource) {
         try {
-            setJsonMimeTypes(webResource).delete();
+            Response response = setJsonMimeTypes(webResource).delete();
+            response.close();
         } catch (WebApplicationException e) {
             //TODO Change to a more defined exception to give the option to set in throws or even catch
             log.error("DELETE request" + webResource.getUri(), e);
