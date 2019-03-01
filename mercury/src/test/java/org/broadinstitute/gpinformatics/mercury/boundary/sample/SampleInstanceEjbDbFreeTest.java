@@ -577,7 +577,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         // SampleInstanceEntity
         Mockito.when(sampleInstanceEntityDao.findByName(anyString())).thenReturn(null);
 
-        return new SampleInstanceEjb(molecularIndexingSchemeDao, jiraService,
+        return new SampleInstanceEjb(molecularIndexingSchemeDao,
                 reagentDesignDao, labVesselDao, mercurySampleDao, sampleInstanceEntityDao,
                 analysisTypeDao, sampleDataFetcher, referenceSequenceDao, productDao);
     }

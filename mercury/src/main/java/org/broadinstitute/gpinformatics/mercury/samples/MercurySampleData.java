@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -196,6 +198,18 @@ public class MercurySampleData implements SampleData {
     @Override
     public String getReceptacleType() {
         return null;
+    }
+
+    /**
+     * Merges in metadata from a metadata inheritance root. Existing values are overwritten.
+     */
+    public void mergeIn(SampleData other) {
+        if (other != null) {
+            collaboratorSampleId = other.getCollaboratorsSampleName();
+            patientId = other.getCollaboratorParticipantId();
+            gender = other.getGender();
+            species = other.getOrganism();
+        }
     }
 
     /**

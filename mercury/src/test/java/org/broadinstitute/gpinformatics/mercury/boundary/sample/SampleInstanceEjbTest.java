@@ -195,9 +195,8 @@ public class SampleInstanceEjbTest extends Arquillian {
 
                     SampleData sampleData = mercurySample.getSampleData();
                     if (metadataExists == MetadataExists.Y) {
-                        // FYI if the spreadsheet's samples already exist and the the spreadsheet doesn't give
-                        // sample metadata, then the only thing to test is that the existing metadata was not
-                        // removed.
+                        // If the spreadsheet's samples or root samples exist and the the spreadsheet
+                        // doesn't give sample metadata, then just test that some metadata is present.
                         Assert.assertTrue(StringUtils.isBlank(
                                 SampleInstanceEjb.get(processor.getCollaboratorParticipantIds(), i)) &&
                                 StringUtils.isNotBlank(sampleData.getPatientId()), msg + sampleName);

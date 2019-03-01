@@ -76,6 +76,8 @@ public class ExternalLibraryProcessor extends TableProcessor {
     private List<String> organisms = new ArrayList<>();
     private List<String> readLengths = new ArrayList<>();
     private List<String> referenceSequences = new ArrayList<>();
+    // Root sample name are treated like sample metadata and get passed on in the pipeline query.
+    // Roots are not part of Mercury's chain of custody.
     private List<String> rootSampleNames = new ArrayList<>();
     private List<String> sampleNames = new ArrayList<>();
     private List<String> sequencingTechnologies = new ArrayList<>();
@@ -89,8 +91,8 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
     public enum DataPresence {REQUIRED, ONCE_PER_TUBE, OPTIONAL, IGNORED}
     private final static boolean EXPLICIT_DELETE = true;
-    public final static int ALIAS_LENGTH_LIMIT = 25;
-    public final static int AGGREGATION_PARTICLE_LENGTH_LIMIT = 20;
+    private final static int ALIAS_LENGTH_LIMIT = 25;
+    private final static int AGGREGATION_PARTICLE_LENGTH_LIMIT = 20;
 
     public enum Headers implements ColumnHeader, ColumnHeader.Ignorable {
         TUBE_BARCODE("Sample Tube Barcode", DataPresence.REQUIRED),
@@ -246,13 +248,14 @@ public class ExternalLibraryProcessor extends TableProcessor {
                 }
             }
 
-            // If the sample appears in multiple spreadsheet rows, the sample metadata values must match the
-            // first occurrence, or be blank. The first occurrence must have all of the sample metadata.
+            // If the sample appears in multiple spreadsheet rows, the first occurrence supplies all of the
+            // sample metadata and subsequent rows must be consistent (match the first, or be blank).
             if (StringUtils.isNotBlank(dto.getSampleName())) {
                 consistentSampleData(mapSampleNameToFirstRow.get(dto.getSampleName()), dto, messages);
             }
 
-            // If a tube appears multiple times in the upload, the vessel attributes must be consistent.
+            // If a tube appears multiple times in the upload, the vessel attributes must be consistent with
+            // the first occurrence.
             String barcode = dto.getBarcode();
             if (StringUtils.isNotBlank(barcode)) {
                 consistentTubeData(mapBarcodeToFirstRow.get(barcode), dto, messages);
@@ -277,7 +280,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
                 // Errors if a tube has duplicate Molecular Index Scheme.
                 if (StringUtils.isNotBlank(barcode) && !uniqueTubeAndMis.add(barcode + " " + dto.getMisName())) {
                     messages.addError(String.format(SampleInstanceEjb.DUPLICATE_IN_TUBE, dto.getRowNumber(),
-                            Headers.MOLECULAR_BARCODE_NAME.getText(),  barcode));
+                            Headers.MOLECULAR_BARCODE_NAME.getText(), barcode));
                 }
                 // Warns if the spreadsheet has duplicate combination of Broad Sample and Molecular Index Scheme.
                 // It's not an error as long as the tubes don't get pooled later on. This can't be known at
@@ -319,16 +322,40 @@ public class ExternalLibraryProcessor extends TableProcessor {
                         Headers.SEQUENCING_TECHNOLOGY.getText(), "Mercury"));
             }
 
-            // If the upload gives different sample metadata and it's for a Mercury metadata sample,
-            // and doesn't cause an error then the sample metadata is updated without changing
-            // SampleInstanceEntity.
-            //
-            // FYI if the upload gives different SampleInstanceEntity attributes (not sample metadata)
-            // and if the given tube barcode exists, all SampleInstanceEntities for the tube are deleted
-            // and replaced with the uploaded values (GPLIM-6043). If the tube barcode is new, then
-            // the upload makes new SampleInstanceEntities, possibly reusing an existing MercurySample,
-            // and possibly reusing an existing library name.
-            validateSampleMetadata(dto, overwrite, messages);
+            // For new samples any metadata is acceptable. For existing samples, updates to metadata
+            // are ok if it's the source is Mercury and Overwrite is set. The SampleInstanceEntity
+            // is not affected. If the metadata source is BSP (either sample is in BSP or a new
+            // Mercury sample given a root sample that is in BSP) then metadata updates cause an error.
+
+            SampleData sampleData = getFetchedData().get(dto.getSampleName());
+            boolean isNewMercurySample = (sampleData == null);
+            if (isNewMercurySample) {
+                // A new sample that has a BSP root will validate against the root sample metadata
+                // that will be copied to the new sample.
+                sampleData = getFetchedData().get(dto.getRootSampleName());
+            }
+            if (sampleData != null) {
+                // Collects the metadata updates from the upload that would cause a change.
+                Collection<Metadata> existing = makeSampleMetadata(sampleData);
+                Collection<Metadata> updates = CollectionUtils.subtract(makeSampleMetadata(dto, false), existing);
+                if (!updates.isEmpty()) {
+                    Map<Metadata.Key, String> existingValues = existing.stream().
+                            collect(Collectors.toMap(Metadata::getKey, Metadata::getValue));
+                    String message = updates.stream().
+                            map(metadata -> String.format("%s (=%s)", keyToHeader.get(metadata.getKey()),
+                                    existingValues.get(metadata.getKey()))).
+                            sorted().
+                            collect(Collectors.joining(", "));
+                    if (sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+
+                        messages.addError(isNewMercurySample ?
+                                SampleInstanceEjb.BSP_ROOT_METADATA : SampleInstanceEjb.BSP_METADATA,
+                                dto.getRowNumber(), message);
+                    } else if (!overwrite) {
+                        messages.addError(SampleInstanceEjb.MERCURY_METADATA, dto.getRowNumber(), message);
+                    }
+                }
+            }
 
             // Checks alias length for limits imposed by the pipeline.
             Stream.of(Pair.of(dto.getCollaboratorSampleId(), Headers.COLLABORATOR_SAMPLE_ID),
@@ -501,32 +528,6 @@ public class ExternalLibraryProcessor extends TableProcessor {
         }
     }
 
-    /** Checks the uploaded metadata against existing metadata. */
-    private void validateSampleMetadata(SampleInstanceEjb.RowDto dto, boolean overwrite, MessageCollection messages) {
-        SampleData sampleData = getFetchedData().get(dto.getSampleName());
-        if (sampleData != null) {
-            // Collects the metadata updates that would cause a change.
-            Collection<Metadata> existingMetadata = makeSampleMetadata(sampleData);
-            Collection<Metadata> updates = CollectionUtils.subtract(makeSampleMetadata(dto, false), existingMetadata);
-            // When updates are present it's an error if the metadata source is BSP, or if the metadata
-            // source is Mercury and overwrite is not set.
-            if (!updates.isEmpty()) {
-                Map<Metadata.Key, String> existingMap = existingMetadata.stream().
-                        collect(Collectors.toMap(Metadata::getKey, Metadata::getValue));
-                String changes = updates.stream().
-                        map(metadata -> String.format("%s (=%s)", keyToHeader.get(metadata.getKey()),
-                                existingMap.get(metadata.getKey()))).
-                        sorted().
-                        collect(Collectors.joining(", "));
-                if (sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                    messages.addError(SampleInstanceEjb.BSP_METADATA, dto.getRowNumber(), changes);
-                } else if (!overwrite) {
-                    messages.addError(SampleInstanceEjb.MERCURY_METADATA, dto.getRowNumber(), changes);
-                }
-            }
-        }
-    }
-
     /**
      * Does character set validation of the spreadsheet data.
      */
@@ -596,23 +597,30 @@ public class ExternalLibraryProcessor extends TableProcessor {
         }
     }
 
+    /** Makes or updates a sample along with its sample metadata. */
     private void createOrUpdateSample(SampleInstanceEjb.RowDto dto) {
         String sampleName = dto.getSampleName();
         MercurySample mercurySample = sampleMap.get(sampleName);
-        SampleData sampleData = getFetchedData().get(sampleName);
         if (mercurySample == null) {
-            if (sampleData != null) {
-                // Can really be only BSP sample data, since otherwise mercurySample would exist.
-                mercurySample = new MercurySample(sampleName, sampleData.getMetadataSource());
-                mercurySample.setSampleData(sampleData);
-            } else {
-                // Mercury sample data.
-                mercurySample = new MercurySample(sampleName, makeSampleMetadata(dto, true));
-            }
+            mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY);
             sampleMap.put(sampleName, mercurySample);
-        } else if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+        }
+        if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+            // When the upload gives a root sample name that is either in BSP or Mercury, its
+            // sample metadata values are copied to the Mercury sample metadata. The metadata
+            // source must remain Mercury so the metadata gets fetched correctly in the future.
+            SampleData rootSampleData = getFetchedData().get(dto.getRootSampleName());
+            Set<Metadata> metadataSet;
+            if (rootSampleData == null) {
+                metadataSet = makeSampleMetadata(dto, true);
+            } else {
+                metadataSet = makeSampleMetadata(rootSampleData);
+                // The upload metadata has already been checked that it's valid, and should
+                // supercede any root metadata (I'm thinking of material type).
+                metadataSet.addAll(makeSampleMetadata(dto, true));
+            }
             // Adds new values and updates existing values.
-            mercurySample.updateMetadata(makeSampleMetadata(dto, true));
+            mercurySample.updateMetadata(metadataSet);
         }
     }
 

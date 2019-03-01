@@ -1,21 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
-import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
@@ -35,7 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.WalkUpSequencing;
 
 import javax.ejb.Stateful;
@@ -44,7 +37,6 @@ import javax.inject.Inject;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -55,8 +47,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * This class handles the external library creation from walkup sequencing web serivce calls, pooled tube
- * spreadsheet upload, and EZPass/New Tech external library spreadsheet uploads.
+ * This class handles the external library creation from walkup sequencing web serivce calls and
+ * External Library spreadsheet uploads.
  * In all cases a SampleInstanceEntity and associated MercurySample and LabVessel are created or overwritten.
  */
 @Stateful
@@ -68,7 +60,9 @@ public class SampleInstanceEjb {
     public static final String ALIAS_CHARS = RESTRICTED_CHARS + " @#&*()[]|;:<>,?/=+\"'";
 
     public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
-    public static final String BSP_METADATA = "Row #%d cannot overwrite BSP sample metadata: %s.";
+    public static final String BSP_METADATA = "Row #%d cannot overwrite this BSP sample metadata: %s.";
+    public static final String BSP_ROOT_METADATA = "Row #%d cannot overwrite this BSP sample metadata " +
+            "obtained from the root sample: %s.";
     public static final String DUPLICATE = "Row #%d duplicate value for %s.";
     public static final String DUPLICATE_IN_TUBE = "Row #%d has a duplicate value for %s in tube %s.";
     public static final String DUPLICATE_S_M =
@@ -84,17 +78,14 @@ public class SampleInstanceEjb {
     public static final String NONNEGATIVE_INTEGER = "Row #%d %s must be a non-negative integer number.";
     public static final String PREXISTING =
             "Row #%d requires Overwrite to be checked when re-uploading an existing tube.";
-    public static final String MERCURY_METADATA = "Row #%d requires Overwrite to be checked when updating existing %s.";
-    public static final String TOO_LONG = "Row #$d the value for %s is too long (limit is %d).";
+    public static final String MERCURY_METADATA = "Row #%d requires Overwrite to be checked to update the existing %s.";
+    public static final String TOO_LONG = "Row #%d the value for %s is too long (limit is %d).";
     public static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
 
     private static final Log log = LogFactory.getLog(SampleInstanceEjb.class);
 
     @Inject
     private MolecularIndexingSchemeDao molecularIndexingSchemeDao;
-
-    @Inject
-    private JiraService jiraService;
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
@@ -118,15 +109,6 @@ public class SampleInstanceEjb {
     private ReferenceSequenceDao referenceSequenceDao;
 
     @Inject
-    private EmailSender emailSender;
-
-    @Inject
-    private UserBean userBean;
-
-    @Inject
-    private Deployment deployment;
-
-    @Inject
     private ProductDao productDao;
 
     public SampleInstanceEjb() {
@@ -135,12 +117,11 @@ public class SampleInstanceEjb {
     /**
      * Constructor used for unit testing.
      */
-    public SampleInstanceEjb(MolecularIndexingSchemeDao molecularIndexingSchemeDao, JiraService jiraService,
+    public SampleInstanceEjb(MolecularIndexingSchemeDao molecularIndexingSchemeDao,
             ReagentDesignDao reagentDesignDao, LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao,
             SampleInstanceEntityDao sampleInstanceEntityDao, AnalysisTypeDao analysisTypeDao,
             SampleDataFetcher sampleDataFetcher, ReferenceSequenceDao referenceSequenceDao, ProductDao productDao) {
         this.molecularIndexingSchemeDao = molecularIndexingSchemeDao;
-        this.jiraService = jiraService;
         this.reagentDesignDao = reagentDesignDao;
         this.labVesselDao = labVesselDao;
         this.mercurySampleDao = mercurySampleDao;
@@ -225,32 +206,21 @@ public class SampleInstanceEjb {
     }
 
     /**
-     * Removes the SampleInstanceEntities linked to a tube.
-     */
-    private void removeOldSampleInstanceEntities(List<RowDto> rowDtos) {
-        for (LabVessel tube : labVesselDao.findByListIdentifiers(rowDtos.stream().
-                map(RowDto::getBarcode).
-                distinct().
-                collect(Collectors.toList()))) {
-            if (tube != null) {
-                tube.getSampleInstanceEntities().stream().
-                        forEach(sampleInstanceEntity -> sampleInstanceEntityDao.remove(sampleInstanceEntity));
-                tube.getSampleInstanceEntities().clear();
-            }
-        }
-    }
-
-    /**
      * After spreadsheet data is parsed, all entities referenced by the data is fetched and put in maps
      * on the dtos. All dtos have references to the same maps.
      */
     private void makeEntityMaps(ExternalLibraryProcessor processor, List<RowDto> rowDtos) {
         Set<String> samplesToLookup = new HashSet<>();
+        Set<String> samplesToDataFetch = new HashSet<>();
         Set<String> barcodesToLookup = new HashSet<>();
 
         for (RowDto dto : rowDtos) {
             if (StringUtils.isNotBlank(dto.getSampleName())) {
                 samplesToLookup.add(dto.getSampleName());
+                samplesToDataFetch.add(dto.getSampleName());
+            }
+            if (StringUtils.isNotBlank(dto.getRootSampleName())) {
+                samplesToDataFetch.add(dto.getRootSampleName());
             }
             if (StringUtils.isNotBlank(dto.getBarcode())) {
                 barcodesToLookup.add(dto.getBarcode());
@@ -284,9 +254,8 @@ public class SampleInstanceEjb {
         processor.getSampleMap().putAll(mercurySampleDao.findMapIdToMercurySample(samplesToLookup));
         processor.getLabVesselMap().putAll(labVesselDao.findByBarcodes(new ArrayList<>(barcodesToLookup)));
 
-        // A sample data lookup is done on all samples. This returns either Mercury or BSP metadata
-        // for each sample, depending on the sample metadata source.
-        processor.getFetchedData().putAll(sampleDataFetcher.fetchSampleData(samplesToLookup));
+        // Fetches sample metadata for all samples.
+        processor.getFetchedData().putAll(sampleDataFetcher.fetchSampleData(samplesToDataFetch));
 
         // Fetches the valid aggregation data type values.
         // todo emp GPLIM-6001 should make this map be String->Entity for only the values present.
