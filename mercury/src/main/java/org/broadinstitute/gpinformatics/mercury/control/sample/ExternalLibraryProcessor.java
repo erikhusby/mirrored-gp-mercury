@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
@@ -56,6 +57,8 @@ public class ExternalLibraryProcessor extends TableProcessor {
     private Map<String, SampleData> fetchedData = new HashMap<>();
     // Maps of spreadsheet values to entities.
     private Map<String, AnalysisType> analysisTypeMap = new HashMap<>();
+    // Maps of spreadsheet values to entities.
+    private Map<String, ReagentDesign> baitMap = new HashMap<>();
     private Map<String, MolecularIndexingScheme> molecularIndexingSchemeMap = new HashMap<>();
     private Map<String, ReferenceSequence> referenceSequenceMap = new HashMap<>();
     private Map<String, String> aggregationDataTypeMap = new HashMap<>();
@@ -231,23 +234,15 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
     /**
      * Does self-consistency and other validation checks on the data.
-     * Entities have already been fetched for the row data, and are accessed through maps referenced in the dtos.
+     * Entities have already been fetched for the row data, and are accessed
+     * through maps referenced in the dtos.
      */
     public void validateAllRows(List<SampleInstanceEjb.RowDto> dtos, boolean overwrite, MessageCollection messages) {
-        // At this point all data is in dtos, and entities referenced by the data are in maps.
         Set<String> uniqueBarcodeAndLibrary = new HashSet<>();
         Set<String> uniqueTubeAndMis = new HashSet<>();
         Set<String> uniqueSampleAndMis = new HashSet<>();
 
         for (SampleInstanceEjb.RowDto dto : dtos) {
-            if (!overwrite) {
-                // If an existing tube barcode is given then this upload will replace the contents
-                // of the tube and overwrite must be set.
-                if (labVesselMap.get(dto.getBarcode()) != null) {
-                    messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber()));
-                }
-            }
-
             // If the sample appears in multiple spreadsheet rows, the first occurrence supplies all of the
             // sample metadata and subsequent rows must be consistent (match the first, or be blank).
             if (StringUtils.isNotBlank(dto.getSampleName())) {
@@ -255,7 +250,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
             }
 
             // If a tube appears multiple times in the upload, the vessel attributes must be consistent with
-            // the first occurrence.
+            // the first occurrence (match the first, or be blank).
             String barcode = dto.getBarcode();
             if (StringUtils.isNotBlank(barcode)) {
                 consistentTubeData(mapBarcodeToFirstRow.get(barcode), dto, messages);
@@ -268,6 +263,8 @@ public class ExternalLibraryProcessor extends TableProcessor {
             }
 
             LabVessel tube = labVesselMap.get(barcode);
+            // If an existing tube barcode is given then this upload will replace the contents
+            // of the tube and overwrite must be set.
             if (tube != null && !overwrite) {
                 messages.addError(String.format(SampleInstanceEjb.PREXISTING, dto.getRowNumber()));
             }
@@ -293,7 +290,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
             }
 
             // If a bait set name is given it must already be registered in Mercury.
-            if (StringUtils.isNotBlank(dto.getBait()) && dto.getReagent() == null) {
+            if (StringUtils.isNotBlank(dto.getBait()) && baitMap.get(dto.getBait()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         Headers.BAIT.getText(), "Mercury"));
             }
@@ -322,37 +319,40 @@ public class ExternalLibraryProcessor extends TableProcessor {
                         Headers.SEQUENCING_TECHNOLOGY.getText(), "Mercury"));
             }
 
-            // For new samples any metadata is acceptable. For existing samples, updates to metadata
-            // are ok if it's the source is Mercury and Overwrite is set. The SampleInstanceEntity
-            // is not affected. If the metadata source is BSP (either sample is in BSP or a new
-            // Mercury sample given a root sample that is in BSP) then metadata updates cause an error.
-
-            SampleData sampleData = getFetchedData().get(dto.getSampleName());
-            boolean isNewMercurySample = (sampleData == null);
-            if (isNewMercurySample) {
-                // A new sample that has a BSP root will validate against the root sample metadata
-                // that will be copied to the new sample.
-                sampleData = getFetchedData().get(dto.getRootSampleName());
-            }
-            if (sampleData != null) {
-                // Collects the metadata updates from the upload that would cause a change.
-                Collection<Metadata> existing = makeSampleMetadata(sampleData);
-                Collection<Metadata> updates = CollectionUtils.subtract(makeSampleMetadata(dto, false), existing);
-                if (!updates.isEmpty()) {
-                    Map<Metadata.Key, String> existingValues = existing.stream().
-                            collect(Collectors.toMap(Metadata::getKey, Metadata::getValue));
-                    String message = updates.stream().
-                            map(metadata -> String.format("%s (=%s)", keyToHeader.get(metadata.getKey()),
-                                    existingValues.get(metadata.getKey()))).
-                            sorted().
-                            collect(Collectors.joining(", "));
-                    if (sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP) {
-
-                        messages.addError(isNewMercurySample ?
-                                SampleInstanceEjb.BSP_ROOT_METADATA : SampleInstanceEjb.BSP_METADATA,
-                                dto.getRowNumber(), message);
-                    } else if (!overwrite) {
-                        messages.addError(SampleInstanceEjb.MERCURY_METADATA, dto.getRowNumber(), message);
+            // Compares the spreadsheet sample metadata to existing metadata to determine if there are updates.
+            // Overwrite must be set to update Mercury metadata. Inherited metadata and BSP metadata cannot be updated.
+            if (mapSampleNameToFirstRow.get(dto.getSampleName()).equals(dto)) {
+                MercurySample mercurySample = sampleMap.get(dto.getSampleName());
+                SampleData sampleData = getFetchedData().get(dto.getSampleName());
+                SampleData rootSampleData = getFetchedData().get(dto.getRootSampleName());
+                // Metadata inherited from the root sample is used for spreadsheet validation
+                // only when the root sample exists and the sample metadata source is Mercury
+                // (including when the sample is new to Mercury and not in BSP).
+                boolean isMercurySource = (mercurySample != null &&
+                        mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) ||
+                        (mercurySample == null && sampleData == null);
+                if (isMercurySource && rootSampleData != null && !dto.getSampleName().equals(dto.getRootSampleName())) {
+                    Collection<Metadata> existingMetadata = makeSampleMetadata(rootSampleData, true);
+                    Collection<Metadata> dtoMetadata = makeSampleMetadata(dto, true, false);
+                    // Finds changes and new additions to the inheritance metadata.
+                    Collection<Metadata> updates = CollectionUtils.subtract(dtoMetadata, existingMetadata);
+                    if (!updates.isEmpty()) {
+                        messages.addError(SampleInstanceEjb.ROOT_METADATA, dto.getRowNumber(),
+                                formatMetadataChanges(updates, existingMetadata));
+                    }
+                }
+                // Validates spreadsheet against sample metadata.
+                if (sampleData != null) {
+                    Collection<Metadata> existingMetadata = makeSampleMetadata(sampleData, false);
+                    Collection<Metadata> dtoMetadata = makeSampleMetadata(dto, false, false);
+                    Collection<Metadata> updates = CollectionUtils.subtract(dtoMetadata, existingMetadata);
+                    if (!updates.isEmpty()) {
+                        String message = formatMetadataChanges(updates, existingMetadata);
+                        if (sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                            messages.addError(SampleInstanceEjb.BSP_METADATA, dto.getRowNumber(), message);
+                        } else if (!overwrite) {
+                            messages.addError(SampleInstanceEjb.MERCURY_METADATA, dto.getRowNumber(), message);
+                        }
                     }
                 }
             }
@@ -371,6 +371,19 @@ public class ExternalLibraryProcessor extends TableProcessor {
                         Headers.DATA_AGGREGATOR.getText(), AGGREGATION_PARTICLE_LENGTH_LIMIT));
             }
         }
+    }
+
+    private String formatMetadataChanges(Collection<Metadata> changes, Collection<Metadata> existing) {
+        Map<Metadata.Key, String> existingValues = existing.stream().
+                collect(Collectors.toMap(Metadata::getKey, Metadata::getValue));
+        return StringUtils.trimToEmpty(changes.stream().
+                map(metadata -> {
+                    String oldValue = existingValues.get(metadata.getKey());
+                    return String.format(StringUtils.isBlank(oldValue) ? "%s (currently blank)" : "%s (=%s)",
+                            keyToHeader.get(metadata.getKey()), oldValue);
+                }).
+                sorted().
+                collect(Collectors.joining(", ")));
     }
 
     /**
@@ -589,8 +602,20 @@ public class ExternalLibraryProcessor extends TableProcessor {
                     filter(StringUtils::isNotBlank).
                     distinct().
                     forEach(sampleName -> {
-                        SampleInstanceEjb.RowDto dto = mapSampleNameToFirstRow.get(sampleName);
-                        createOrUpdateSample(dto);
+                        MercurySample mercurySample = sampleMap.get(sampleName);
+                        if (mercurySample == null) {
+                            SampleData sampleData = getFetchedData().get(sampleName);
+                            MercurySample.MetadataSource source = (sampleData != null) ?
+                                    // If the mercurySample is null but there is fetched sampleData
+                                    // for the sample, assumes it must be a BSP sample.
+                                    MercurySample.MetadataSource.BSP : MercurySample.MetadataSource.MERCURY;
+                            mercurySample = new MercurySample(sampleName, source);
+                            sampleMap.put(sampleName, mercurySample);
+                        }
+                        if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                            SampleInstanceEjb.RowDto firstDto = mapSampleNameToFirstRow.get(sampleName);
+                            mercurySample.updateMetadata(makeSampleMetadata(firstDto, false, true));
+                        }
                     });
         } catch (Exception e) {
             log.error(e);
@@ -599,29 +624,6 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
     /** Makes or updates a sample along with its sample metadata. */
     private void createOrUpdateSample(SampleInstanceEjb.RowDto dto) {
-        String sampleName = dto.getSampleName();
-        MercurySample mercurySample = sampleMap.get(sampleName);
-        if (mercurySample == null) {
-            mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY);
-            sampleMap.put(sampleName, mercurySample);
-        }
-        if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-            // When the upload gives a root sample name that is either in BSP or Mercury, its
-            // sample metadata values are copied to the Mercury sample metadata. The metadata
-            // source must remain Mercury so the metadata gets fetched correctly in the future.
-            SampleData rootSampleData = getFetchedData().get(dto.getRootSampleName());
-            Set<Metadata> metadataSet;
-            if (rootSampleData == null) {
-                metadataSet = makeSampleMetadata(dto, true);
-            } else {
-                metadataSet = makeSampleMetadata(rootSampleData);
-                // The upload metadata has already been checked that it's valid, and should
-                // supercede any root metadata (I'm thinking of material type).
-                metadataSet.addAll(makeSampleMetadata(dto, true));
-            }
-            // Adds new values and updates existing values.
-            mercurySample.updateMetadata(metadataSet);
-        }
     }
 
     /**
@@ -637,7 +639,6 @@ public class ExternalLibraryProcessor extends TableProcessor {
             SampleInstanceEntity sampleInstanceEntity = makeSampleInstanceEntity(dto, labVessel, mercurySample);
 
             labVessel.getSampleInstanceEntities().add(sampleInstanceEntity);
-            dto.setSampleInstanceEntity(sampleInstanceEntity);
             sampleInstanceEntities.add(sampleInstanceEntity);
         }
         return sampleInstanceEntities;
@@ -646,36 +647,42 @@ public class ExternalLibraryProcessor extends TableProcessor {
     /**
      * Makes Metadata from the spreadsheet row.
      */
-    private Set<Metadata> makeSampleMetadata(SampleInstanceEjb.RowDto dto, boolean includeMaterialType) {
-        // For each pair, if the data value is not blank, makes a new Metadata and puts it in a Set.
-        // DELETE_TOKEN is turned into a blank. Adds in the material type, unless told not to (since it
-        // does not appear in the spreadsheet it should not be used in validation).
-        return Stream.of(
-                Pair.of(dto.getCollaboratorSampleId(), Metadata.Key.SAMPLE_ID),
-                Pair.of(dto.getCollaboratorParticipantId(), Metadata.Key.PATIENT_ID),
-                Pair.of(dto.getSex(), Metadata.Key.GENDER),
-                Pair.of(dto.getOrganism(), Metadata.Key.SPECIES),
-                Pair.of(dto.getRootSampleName(), Metadata.Key.ROOT_SAMPLE),
-                Pair.of(dto.getMaterialType(), Metadata.Key.MATERIAL_TYPE)).
+    private Set<Metadata> makeSampleMetadata(SampleInstanceEjb.RowDto dto, boolean onlyInheritanceMetadata,
+            boolean includeMaterialType) {
+
+        return (new ArrayList<Pair<String, Metadata.Key>>() {{
+            add(Pair.of(dto.getCollaboratorSampleId(), Metadata.Key.SAMPLE_ID));
+            add(Pair.of(dto.getCollaboratorParticipantId(), Metadata.Key.PATIENT_ID));
+            add(Pair.of(dto.getSex(), Metadata.Key.GENDER));
+            add(Pair.of(dto.getOrganism(), Metadata.Key.SPECIES));
+            if (!onlyInheritanceMetadata) {
+                add(Pair.of(dto.getRootSampleName(), Metadata.Key.ROOT_SAMPLE));
+                if (includeMaterialType) {
+                    add(Pair.of(dto.getMaterialType(), Metadata.Key.MATERIAL_TYPE));
+                }
+            }
+        }}).stream().
                 filter(pair -> StringUtils.isNotBlank(pair.getLeft())).
-                filter(pair -> includeMaterialType || pair.getRight() != Metadata.Key.MATERIAL_TYPE).
-                map(pair -> new Metadata(pair.getRight(),
-                        DELETE_TOKEN.equalsIgnoreCase(pair.getLeft()) ? "" : pair.getLeft())).
-                collect(Collectors.toSet());
+                map(pair -> DELETE_TOKEN.equalsIgnoreCase(pair.getLeft()) ?
+                        new Metadata(pair.getRight(), "") :  // DELETE_TOKEN is blanked out.
+                        new Metadata(pair.getRight(), pair.getLeft())).
+                        collect(Collectors.toSet());
     }
 
     /**
      * Makes Metadata from SampleData.
      */
-    private Set<Metadata> makeSampleMetadata(SampleData sampleData) {
-        // For each pair, if the data value is not blank, makes a new Metadata and puts it in a Set.
-        return Stream.of(
-                Pair.of(sampleData.getCollaboratorsSampleName(), Metadata.Key.SAMPLE_ID),
-                Pair.of(sampleData.getCollaboratorParticipantId(), Metadata.Key.PATIENT_ID),
-                Pair.of(sampleData.getGender(), Metadata.Key.GENDER),
-                Pair.of(sampleData.getOrganism(), Metadata.Key.SPECIES),
-                Pair.of(sampleData.getRootSample(), Metadata.Key.ROOT_SAMPLE),
-                Pair.of(sampleData.getMaterialType(), Metadata.Key.MATERIAL_TYPE)).
+    private Set<Metadata> makeSampleMetadata(SampleData sampleData, boolean onlyInheritanceMetadata) {
+        return (new ArrayList<Pair<String, Metadata.Key>>() {{
+            add(Pair.of(sampleData.getCollaboratorsSampleName(), Metadata.Key.SAMPLE_ID));
+            add(Pair.of(sampleData.getCollaboratorParticipantId(), Metadata.Key.PATIENT_ID));
+            add(Pair.of(sampleData.getGender(), Metadata.Key.GENDER));
+            add(Pair.of(sampleData.getOrganism(), Metadata.Key.SPECIES));
+            if (!onlyInheritanceMetadata) {
+                add(Pair.of(sampleData.getRootSample(), Metadata.Key.ROOT_SAMPLE));
+                add(Pair.of(sampleData.getMaterialType(), Metadata.Key.MATERIAL_TYPE));
+            }
+        }}).stream().
                 filter(pair -> StringUtils.isNotBlank(pair.getLeft())).
                 map(pair -> new Metadata(pair.getRight(), pair.getLeft())).
                 collect(Collectors.toSet());
@@ -687,22 +694,18 @@ public class ExternalLibraryProcessor extends TableProcessor {
     private SampleInstanceEntity makeSampleInstanceEntity(SampleInstanceEjb.RowDto dto, LabVessel labVessel,
             MercurySample mercurySample) {
 
-        SampleInstanceEntity sampleInstanceEntity = dto.getSampleInstanceEntity();
-        if (sampleInstanceEntity == null) {
-            sampleInstanceEntity = new SampleInstanceEntity();
-            sampleInstanceEntity.setSampleLibraryName(dto.getLibraryName());
-        }
-        // An existing Sample Instance Entity gets rewritten.
+        SampleInstanceEntity sampleInstanceEntity = new SampleInstanceEntity();
+        sampleInstanceEntity.setLabVessel(labVessel);
+        sampleInstanceEntity.setLibraryName(dto.getLibraryName());
         sampleInstanceEntity.setAggregationDataType(dto.getAggregationDataType());
         sampleInstanceEntity.setAggregationParticle(dto.getAggregationParticle());
         sampleInstanceEntity.setAnalysisType(analysisTypeMap.get(dto.getAnalysisTypeName()));
         sampleInstanceEntity.setInsertSize(dto.getInsertSize());
-        sampleInstanceEntity.setLabVessel(labVessel);
         sampleInstanceEntity.setMercurySample(mercurySample);
         sampleInstanceEntity.setImpliedSampleName(dto.isImpliedSampleName());
         sampleInstanceEntity.setMolecularIndexingScheme(molecularIndexingSchemeMap.get(dto.getMisName()));
         sampleInstanceEntity.setReadLength(dto.getReadLength());
-        sampleInstanceEntity.setReagentDesign(dto.getReagent());
+        sampleInstanceEntity.setReagentDesign(baitMap.get(dto.getBait()));
         sampleInstanceEntity.setReferenceSequence(referenceSequenceMap.get(dto.getReferenceSequence()));
         sampleInstanceEntity.setSequencerModel(IlluminaFlowcell.FlowcellType.getByTechnology(
                 dto.getSequencingTechnology()));
@@ -767,8 +770,8 @@ public class ExternalLibraryProcessor extends TableProcessor {
     }
 
     /**
-     * Returns an integer range (two integers delimited with a hyphen), and adds an error message if the input
-     * is not one or two integers delimited by space, comma, hyphen, underscore, pipe, slash, colon.
+     * If input is one integer, or two integers delimited by one of these chars: [ ,-_|/:] then
+     * returns an integer range consisting of two integers delimited with a hyphen.
      */
     private static String asIntegerRange(String input, String header, int rowNumber, MessageCollection messages) {
         if (StringUtils.isNotBlank(input)) {
@@ -822,6 +825,10 @@ public class ExternalLibraryProcessor extends TableProcessor {
 
     public Map<String, AnalysisType> getAnalysisTypeMap() {
         return analysisTypeMap;
+    }
+
+    public Map<String, ReagentDesign> getBaitMap() {
+        return baitMap;
     }
 
     public Map<String, ReferenceSequence> getReferenceSequenceMap() {

@@ -9,6 +9,7 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
@@ -21,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryPr
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -60,9 +62,8 @@ public class SampleInstanceEjb {
     public static final String ALIAS_CHARS = RESTRICTED_CHARS + " @#&*()[]|;:<>,?/=+\"'";
 
     public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
-    public static final String BSP_METADATA = "Row #%d cannot overwrite this BSP sample metadata: %s.";
-    public static final String BSP_ROOT_METADATA = "Row #%d cannot overwrite this BSP sample metadata " +
-            "obtained from the root sample: %s.";
+    public static final String BSP_METADATA = "Row #%d cannot overwrite sample data from BSP: %s.";
+    public static final String ROOT_METADATA = "Row #%d cannot overwrite sample data from the root sample: %s.";
     public static final String DUPLICATE = "Row #%d duplicate value for %s.";
     public static final String DUPLICATE_IN_TUBE = "Row #%d has a duplicate value for %s in tube %s.";
     public static final String DUPLICATE_S_M =
@@ -128,7 +129,6 @@ public class SampleInstanceEjb {
         this.sampleInstanceEntityDao = sampleInstanceEntityDao;
         this.analysisTypeDao = analysisTypeDao;
         this.sampleDataFetcher = sampleDataFetcher;
-        this.reagentDesignDao = reagentDesignDao;
         this.referenceSequenceDao = referenceSequenceDao;
         this.productDao = productDao;
     }
@@ -169,16 +169,20 @@ public class SampleInstanceEjb {
                 processor.validateAllRows(rowDtos, overwrite, messages);
                 if (!messages.hasErrors()) {
                     // When a tube is re-uploaded, its old SampleInstanceEntities must be removed,
-                    // otherwise both old and new ones end up in the tube.
-                    if (overwrite) {
+                    // otherwise both old and new ones end up in the tube. FYI an existing
+                    // SampleInstanceEntity doesn't get updated, it gets deleted and replaced.
+                    Set<SampleInstanceEntity> existingSampleInstanceEntities = processor.getLabVesselMap().values().
+                            stream().
+                            filter(tube -> tube != null && tube.getSampleInstanceEntities() != null).
+                            flatMap(tube -> tube.getSampleInstanceEntities().stream()).
+                            collect(Collectors.toSet());
+                    if (!existingSampleInstanceEntities.isEmpty()) {
+                        existingSampleInstanceEntities.stream().
+                                forEach(entity -> sampleInstanceEntityDao.remove(entity));
                         processor.getLabVesselMap().values().stream().
                                 filter(tube -> tube != null).
-                                forEach(tube -> {
-                                    tube.getSampleInstanceEntities().stream().
-                                            forEach(sampleInstanceEntity ->
-                                                    sampleInstanceEntityDao.remove(sampleInstanceEntity));
-                                    tube.getSampleInstanceEntities().clear();
-                                });
+                                forEach(tube -> tube.getSampleInstanceEntities().clear());
+                        sampleInstanceEntityDao.flush();
                     }
                     // Creates or updates the SampleInstanceEntities, MercurySamples, LabVessels.
                     List<SampleInstanceEntity> instanceEntities = processor.makeOrUpdateEntities(rowDtos);
@@ -211,53 +215,67 @@ public class SampleInstanceEjb {
      */
     private void makeEntityMaps(ExternalLibraryProcessor processor, List<RowDto> rowDtos) {
         Set<String> samplesToLookup = new HashSet<>();
-        Set<String> samplesToDataFetch = new HashSet<>();
+        Set<String> sampleDataToFetch = new HashSet<>();
         Set<String> barcodesToLookup = new HashSet<>();
+        Set<String> misNamesToLookup = new HashSet<>();
+        Set<String> baitNamesToLookup = new HashSet<>();
+        Set<String> referenceSequencesToLookup = new HashSet<>();
+        Set<String> analysisTypesToLookup = new HashSet<>();
 
         for (RowDto dto : rowDtos) {
-            if (StringUtils.isNotBlank(dto.getSampleName())) {
-                samplesToLookup.add(dto.getSampleName());
-                samplesToDataFetch.add(dto.getSampleName());
-            }
-            if (StringUtils.isNotBlank(dto.getRootSampleName())) {
-                samplesToDataFetch.add(dto.getRootSampleName());
-            }
             if (StringUtils.isNotBlank(dto.getBarcode())) {
                 barcodesToLookup.add(dto.getBarcode());
             }
-            if (StringUtils.isNotBlank(dto.getLibraryName())) {
-                dto.setSampleInstanceEntity(sampleInstanceEntityDao.findByName(dto.getLibraryName()));
+            if (StringUtils.isNotBlank(dto.getSampleName())) {
+                samplesToLookup.add(dto.getSampleName());
+                sampleDataToFetch.add(dto.getSampleName());
+            }
+            if (StringUtils.isNotBlank(dto.getRootSampleName())) {
+                sampleDataToFetch.add(dto.getRootSampleName());
             }
             if (StringUtils.isNotBlank(dto.getMisName())) {
-                processor.getMolecularIndexingSchemeMap().put(dto.getMisName(),
-                        molecularIndexingSchemeDao.findByName(dto.getMisName()));
+                misNamesToLookup.add(dto.getMisName());
             }
             if (StringUtils.isNotBlank(dto.getBait())) {
-                dto.setReagent(reagentDesignDao.findByBusinessKey(dto.getBait()));
+                baitNamesToLookup.add(dto.getBait());
             }
             if (StringUtils.isNotBlank(dto.getReferenceSequence())) {
-                ReferenceSequence referenceSequence = dto.getReferenceSequence().contains("|") ?
-                        referenceSequenceDao.findByBusinessKey(dto.getReferenceSequence()) :
-                        referenceSequenceDao.findCurrent(dto.getReferenceSequence());
-                if (referenceSequence != null) {
-                    processor.getReferenceSequenceMap().put(dto.getReferenceSequence(), referenceSequence);
-                }
+                referenceSequencesToLookup.add(dto.getReferenceSequence());
             }
-
             if (StringUtils.isNotBlank(dto.getAnalysisTypeName())) {
-                AnalysisType analysisType = analysisTypeDao.findByBusinessKey(dto.getAnalysisTypeName());
-                if (analysisType != null) {
-                    processor.getAnalysisTypeMap().put(dto.getAnalysisTypeName(), analysisType);
-                }
+                analysisTypesToLookup.add(dto.getAnalysisTypeName());
             }
         }
         processor.getSampleMap().putAll(mercurySampleDao.findMapIdToMercurySample(samplesToLookup));
         processor.getLabVesselMap().putAll(labVesselDao.findByBarcodes(new ArrayList<>(barcodesToLookup)));
+        processor.getFetchedData().putAll(sampleDataFetcher.fetchSampleData(sampleDataToFetch,
+                BSPSampleSearchColumn.EXTERNAL_LIBRARY_COLUMNS));
 
-        // Fetches sample metadata for all samples.
-        processor.getFetchedData().putAll(sampleDataFetcher.fetchSampleData(samplesToDataFetch));
+        processor.getMolecularIndexingSchemeMap().putAll(
+                molecularIndexingSchemeDao.findByNames(misNamesToLookup).stream().
+                        filter(scheme -> scheme != null).
+                        collect(Collectors.toMap(MolecularIndexingScheme::getName, Function.identity())));
 
-        // Fetches the valid aggregation data type values.
+        processor.getReferenceSequenceMap().putAll(referenceSequencesToLookup.stream().
+                filter(key -> key.contains("|")).
+                map(key -> referenceSequenceDao.findByBusinessKey(key)).
+                filter(refSeq -> refSeq != null).
+                collect(Collectors.toMap(ReferenceSequence::getBusinessKey, Function.identity())));
+        processor.getReferenceSequenceMap().putAll(referenceSequencesToLookup.stream().
+                filter(name -> !name.contains("|")).
+                map(name -> referenceSequenceDao.findCurrent(name)).
+                filter(refSeq -> refSeq != null).
+                collect(Collectors.toMap(ReferenceSequence::getName, Function.identity())));
+
+        processor.getAnalysisTypeMap().putAll(analysisTypesToLookup.stream().
+                map(name -> analysisTypeDao.findByBusinessKey(name)).
+                filter(analysisType -> analysisType != null).
+                collect(Collectors.toMap(AnalysisType::getName, Function.identity())));
+
+        processor.getBaitMap().putAll(reagentDesignDao.findByBusinessKeys(baitNamesToLookup).
+                stream().
+                collect(Collectors.toMap(ReagentDesign::getBusinessKey, Function.identity())));
+
         // todo emp GPLIM-6001 should make this map be String->Entity for only the values present.
         processor.getAggregationDataTypeMap().putAll(productDao.findAggregationDataTypes().stream().
                 collect(Collectors.toMap(Function.identity(), Function.identity())));
@@ -342,11 +360,15 @@ public class SampleInstanceEjb {
             mercurySample.addLabVessel(labVessel);
             newEntities.add(mercurySample);
 
-            SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(
-                    walkUpSequencing.getLibraryName());
+            SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.
+                    findByBarcodes(Collections.singletonList(walkUpSequencing.getTubeBarcode())).
+                    stream().
+                    filter(entity -> entity.getLibraryName().equals(walkUpSequencing.getLibraryName())).
+                    findFirst().orElse(null);
+
             if (sampleInstanceEntity == null) {
                 sampleInstanceEntity = new SampleInstanceEntity();
-                sampleInstanceEntity.setSampleLibraryName(walkUpSequencing.getLibraryName());
+                sampleInstanceEntity.setLibraryName(walkUpSequencing.getLibraryName());
                 newEntities.add(sampleInstanceEntity);
             }
             sampleInstanceEntity.setPairedEndRead(StringUtils.startsWithIgnoreCase(walkUpSequencing.getReadType(),
@@ -428,8 +450,6 @@ public class SampleInstanceEjb {
         private boolean impliedSampleName = false;
 
         private int rowNumber;
-        private SampleInstanceEntity sampleInstanceEntity;
-        private ReagentDesign reagent;
 
         public RowDto(int rowNumber) {
             this.rowNumber = rowNumber;
@@ -593,22 +613,6 @@ public class SampleInstanceEjb {
 
         public int getRowNumber() {
             return rowNumber;
-        }
-
-        public SampleInstanceEntity getSampleInstanceEntity() {
-            return sampleInstanceEntity;
-        }
-
-        public void setSampleInstanceEntity(SampleInstanceEntity sampleInstanceEntity) {
-            this.sampleInstanceEntity = sampleInstanceEntity;
-        }
-
-        public ReagentDesign getReagent() {
-            return reagent;
-        }
-
-        public void setReagent(ReagentDesign reagent) {
-            this.reagent = reagent;
         }
 
         public Boolean getUmisPresent() {

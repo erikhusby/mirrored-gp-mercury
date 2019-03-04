@@ -508,7 +508,7 @@ public class ZimsIlluminaRunFactory {
 
         //If this is an uploaded pooled tube, create the label based on the provided library name.
         if(isPooledTube) {
-            label = sampleInstanceDto.getSampleInstance().getSampleLibraryName();
+            label = sampleInstanceDto.getSampleInstance().getLibraryName();
             libraryCreationDate = dateFormat.format(sampleInstanceDto.getSampleInstance().getLibraryCreationDate());
         }
         else {

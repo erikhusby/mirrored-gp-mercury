@@ -75,9 +75,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor.REQUIRED_VALUE_IS_MISSING;
 import static org.broadinstitute.gpinformatics.mercury.test.LabEventTest.FCT_TICKET;
+import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -144,7 +146,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getLabel(), "JT041431");
 
             String libraryName = select(i, "Jon_Test_3a", "Jon_Test_4b");
-            Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
+            Assert.assertEquals(entity.getLibraryName(), libraryName);
             MercurySample mercurySample = entity.getMercurySample();
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
@@ -342,6 +344,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                         ExternalLibraryProcessor.Headers.REFERENCE_SEQUENCE.getText()),
                 "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
                         ExternalLibraryProcessor.Headers.SEQUENCING_TECHNOLOGY.getText()),
+                String.format(SampleInstanceEjb.UNKNOWN, 5, ExternalLibraryProcessor.Headers.BAIT.getText(), "Mercury"),
 
                 "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
                         ExternalLibraryProcessor.Headers.LIBRARY_NAME.getText()),
@@ -536,34 +539,43 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 });
 
         // MolecularIndexingScheme
-        Mockito.when(molecularIndexingSchemeDao.findByName(Mockito.anyString())).thenAnswer(
-                new Answer<MolecularIndexingScheme>() {
+        Mockito.when(molecularIndexingSchemeDao.findByNames(Mockito.anyCollection())).thenAnswer(
+                new Answer<List<MolecularIndexingScheme>>() {
                     @Override
-                    public MolecularIndexingScheme answer(InvocationOnMock invocation) throws Throwable {
-                        String name = (String)invocation.getArguments()[0];
-                        MolecularIndexingScheme molecularIndexingScheme = null;
-                        if (StringUtils.isNotBlank(name) && name.startsWith("Illumina_")) {
-                            molecularIndexingScheme = new MolecularIndexingScheme();
-                            molecularIndexingScheme.setName(name);
-                        }
-                        return molecularIndexingScheme;
+                    public List<MolecularIndexingScheme> answer(InvocationOnMock invocation) throws Throwable {
+                        return ((Collection<String>)invocation.getArguments()[0]).stream().
+                                filter(name -> StringUtils.isNotBlank(name) && name.startsWith("Illumina_")).
+                                map(name -> new MolecularIndexingScheme() {{
+                                    setName(name);
+                                }}).
+                                collect(Collectors.toList());
                     }
                 });
 
         // ReagentDesign
-        Mockito.when(reagentDesignDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<ReagentDesign>() {
-            @Override
-            public ReagentDesign answer(InvocationOnMock invocation) throws Throwable {
-                String name = (String)invocation.getArguments()[0];
-                ReagentDesign reagentDesign = null;
-                if (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) {
-                    return null;
-                }
-                reagentDesign = new ReagentDesign();
-                reagentDesign.setDesignName(name);
-                return reagentDesign;
-            }
-        });
+        Mockito.when(reagentDesignDao.findByBusinessKey(Mockito.anyString())).thenAnswer(
+                new Answer<ReagentDesign>() {
+                    @Override
+                    public ReagentDesign answer(InvocationOnMock invocation) throws Throwable {
+                        String name = (String)invocation.getArguments()[0];
+                        return (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) ? null :
+                                new ReagentDesign() {{
+                                    setDesignName(name);
+                                }};
+                    }
+                });
+        Mockito.when(reagentDesignDao.findByBusinessKeys(Mockito.anyCollection())).thenAnswer(
+                new Answer<List<ReagentDesign>>() {
+                    @Override
+                    public List<ReagentDesign> answer(InvocationOnMock invocation) throws Throwable {
+                        return ((Collection<String>)(invocation.getArguments()[0])).stream().
+                                filter(name -> StringUtils.isNotBlank(name) && !name.equalsIgnoreCase("unknown")).
+                                map(name -> new ReagentDesign() {{
+                                    setDesignName(name);
+                                }}).
+                                collect(Collectors.toList());
+                    }
+                });
 
         // Product.aggregationDataType
         Mockito.when(productDao.findAggregationDataTypes()).thenAnswer(new Answer<List<String>>() {
@@ -575,7 +587,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         });
 
         // SampleInstanceEntity
-        Mockito.when(sampleInstanceEntityDao.findByName(anyString())).thenReturn(null);
+        Mockito.when(sampleInstanceEntityDao.findByBarcodes(anyCollection())).thenReturn(Collections.emptyList());
 
         return new SampleInstanceEjb(molecularIndexingSchemeDao,
                 reagentDesignDao, labVesselDao, mercurySampleDao, sampleInstanceEntityDao,

@@ -92,7 +92,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
     private boolean isPooledTube;
-    private String sampleLibraryName;
+    private String libraryName;
     private Integer readLength;
     private String aggregationParticle;
     private String aggregationDataType;
@@ -205,7 +205,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         tzDevExperimentData = other.getTzDevExperimentData();
         devConditions = other.getDevConditions();
         isPooledTube = other.getIsPooledTube();
-        sampleLibraryName = other.getSampleLibraryName();
+        libraryName = other.getLibraryName();
         readLength = other.getReadLength();
         baitName = other.getBaitName();
         catName = other.getCatName();
@@ -546,7 +546,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
             mergePooledTubeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
             mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
-            mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
+            mergeLibraryName(sampleInstanceEntity.getLibraryName());
             mergeReadLength(sampleInstanceEntity);
             aggregationParticle = sampleInstanceEntity.getAggregationParticle();
             aggregationDataType = sampleInstanceEntity.getAggregationDataType();
@@ -703,12 +703,12 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     public Integer getReadLength() { return readLength;  }
 
-    public String getSampleLibraryName() {
-        return sampleLibraryName;
+    public String getLibraryName() {
+        return libraryName;
     }
 
-    public void mergeSampleLibraryName(String sampleLibraryName) {
-        this.sampleLibraryName = sampleLibraryName;
+    public void mergeLibraryName(String libraryName) {
+        this.libraryName = libraryName;
     }
 
     /**

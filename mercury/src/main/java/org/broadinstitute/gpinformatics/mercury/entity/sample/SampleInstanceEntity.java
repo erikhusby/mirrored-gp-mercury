@@ -13,7 +13,6 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -79,9 +78,7 @@ public class SampleInstanceEntity {
     @JoinColumn(name = "REFERENCE_SEQUENCE")
     private ReferenceSequence referenceSequence;
 
-    @Column(unique = true)
-    private String sampleLibraryName;
-
+    private String LibraryName;
     private String experiment;
     private Integer readLength;
     private Date uploadDate;
@@ -149,8 +146,8 @@ public class SampleInstanceEntity {
         this.impliedSampleName = impliedSampleName;
     }
 
-    public void setSampleLibraryName(String sampleLibraryName) {
-        this.sampleLibraryName = sampleLibraryName;
+    public void setLibraryName(String libraryName) {
+        this.LibraryName = libraryName;
     }
 
     public String getExperiment() {
@@ -199,8 +196,9 @@ public class SampleInstanceEntity {
         return labVessel;
     }
 
-    public String getSampleLibraryName() {
-        return sampleLibraryName;
+    @Nonnull
+    public String getLibraryName() {
+        return LibraryName;
     }
 
     public void setUploadDate(Date uploadDate) {

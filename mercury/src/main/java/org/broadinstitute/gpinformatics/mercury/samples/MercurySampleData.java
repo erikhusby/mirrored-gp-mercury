@@ -203,7 +203,7 @@ public class MercurySampleData implements SampleData {
     /**
      * Merges in metadata from a metadata inheritance root. Existing values are overwritten.
      */
-    public void mergeIn(SampleData other) {
+    public void mergeInheritedMetadata(SampleData other) {
         if (other != null) {
             collaboratorSampleId = other.getCollaboratorsSampleName();
             patientId = other.getCollaboratorParticipantId();

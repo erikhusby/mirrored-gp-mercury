@@ -34,12 +34,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Dependent
 public class SampleDataFetcher implements Serializable {
-
-    @Inject
-    private SampleDataSourceResolver sampleDataSourceResolver;
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
@@ -63,11 +61,9 @@ public class SampleDataFetcher implements Serializable {
     }
 
     public SampleDataFetcher(@Nonnull MercurySampleDao mercurySampleDao,
-                             @Nonnull SampleDataSourceResolver sampleDataSourceResolver,
-                             @Nonnull BSPSampleDataFetcher bspSampleDataFetcher,
-                             @Nonnull MercurySampleDataFetcher mercurySampleDataFetcher) {
+            @Nonnull BSPSampleDataFetcher bspSampleDataFetcher,
+            @Nonnull MercurySampleDataFetcher mercurySampleDataFetcher) {
         this.mercurySampleDao = mercurySampleDao;
-        this.sampleDataSourceResolver = sampleDataSourceResolver;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.mercurySampleDataFetcher = mercurySampleDataFetcher;
     }
@@ -118,39 +114,61 @@ public class SampleDataFetcher implements Serializable {
             Map<String, ProductOrderSample> quantOverrides, BSPSampleSearchColumn[] bspSampleSearchColumns) {
 
         // Looks for metadata inheritance roots. Mercury samples that have Mercury metadata source and have
-        // a metadata ROOT_SAMPLE that is in BSP will inherit its Collaborator Sample Id, Collaborator
-        // Participant Id, Sex, and Organism.
-        Map<String, String> mercurySampleToInheritanceRoot = mercuryFetches.stream().
-                filter(sample -> sample.getSampleData() != null &&
-                        BSPUtil.isInBspFormat(sample.getSampleData().getRootSample()) &&
-                        !sample.getSampleKey().equals(sample.getSampleData().getRootSample())).
-                collect(Collectors.toMap(MercurySample::getSampleKey,
-                        sample -> sample.getSampleData().getRootSample()));
-
+        // a metadata ROOT_SAMPLE (not the chain of custody root) in Mercury or BSP will inherit the root's
+        // Collaborator Sample Id, Collaborator Participant Id, Sex, and Organism.
+        Map<String, String> mercurySampleToInheritanceRoot = new HashMap<>();
+        for (MercurySample sample : mercuryFetches) {
+            if (sample.getMetadata() != null) {
+                sample.getMetadata().stream().
+                        filter(metadata -> metadata.getKey() == Metadata.Key.ROOT_SAMPLE).
+                        map(Metadata::getValue).
+                        filter(value -> !sample.getSampleKey().equals(value)).
+                        findFirst().
+                        ifPresent(value -> mercurySampleToInheritanceRoot.put(sample.getSampleKey(), value));
+            }
+        }
         // Fetches the BSP sample metadata.
         Map<String, BspSampleData> bspSampleData = bspSampleDataFetcher.fetchSampleData(
-                CollectionUtils.union(bspFetches, mercurySampleToInheritanceRoot.values()), bspSampleSearchColumns);
+                Stream.concat(bspFetches.stream(), mercurySampleToInheritanceRoot.values().stream()).
+                        filter(BSPUtil::isInBspFormatOrBareId).
+                        collect(Collectors.toSet()),
+                bspSampleSearchColumns);
         // Overrides the BSP quant values if the product indicates it.
         bspSampleData.keySet().stream().
-                filter(sampleId -> quantOverrides.containsKey(sampleId)).
+                filter(quantOverrides::containsKey).
                 forEach(sampleId ->
                         bspSampleData.get(sampleId).overrideWithMercuryQuants(quantOverrides.get(sampleId)));
 
-        // Collects sampleData of the Mercury source samples.
-        Map<String, MercurySampleData> mercurySampleData =
-                mercurySampleDataFetcher.fetchSampleData(mercuryFetches);
+        // The remaining inheritance roots that may be in Mercury.
+        Set<MercurySample> remainingInheritanceRoots = (Set<MercurySample>)mercurySampleDao.findMapIdToMercurySample(
+                CollectionUtils.subtract(mercurySampleToInheritanceRoot.values(), bspSampleData.keySet())).
+                values().stream().
+                filter(mercurySample -> mercurySample != null).
+                collect(Collectors.toSet());
 
-        // Merges in BSP metadata from any inheritance root samples.
+        // Collects sampleData of the Mercury source samples and any Mercury roots.
+        Map<String, MercurySampleData> mercurySampleData = mercurySampleDataFetcher.fetchSampleData(
+                CollectionUtils.union(mercuryFetches, remainingInheritanceRoots));
+
+        // Merges in metadata for samples inheriting from their root sample.
         mercurySampleData.entrySet().stream().
-                filter(mapEntry -> mercurySampleToInheritanceRoot.containsKey(mapEntry.getKey())).
-                forEach(mapEntry -> mapEntry.getValue().mergeIn(
-                        bspSampleData.get(mercurySampleToInheritanceRoot.get(mapEntry.getKey()))));
+                forEach(mapEntry -> {
+                    String inheritanceRoot = mercurySampleToInheritanceRoot.get(mapEntry.getKey());
+                    MercurySampleData sampleData = mapEntry.getValue();
+                    if (bspSampleData.get(inheritanceRoot) != null) {
+                        sampleData.mergeInheritedMetadata(bspSampleData.get(inheritanceRoot));
+                    } else if (mercurySampleData.get(inheritanceRoot) != null) {
+                        sampleData.mergeInheritedMetadata(mercurySampleData.get(inheritanceRoot));
+                    }
+                });
 
+        // Returns a map of the requested Mercury and BSP sample names with any sampleData found (null if not found).
         Map<String, SampleData> sampleData = new HashMap<>();
-        // Returns the sampleData for Mercury samples.
-        sampleData.putAll(mercurySampleData);
-        // Returns the requested BSP sample names with any BSP sampleData found (null if not found).
-        bspFetches.stream().forEach(bspName -> sampleData.put(bspName, bspSampleData.get(bspName)));
+        mercuryFetches.stream().
+                map(MercurySample::getSampleKey).
+                forEach(sampleName -> sampleData.put(sampleName, mercurySampleData.get(sampleName)));
+        bspFetches.stream().
+                forEach(bspName -> sampleData.put(bspName, bspSampleData.get(bspName)));
         return sampleData;
     }
 
