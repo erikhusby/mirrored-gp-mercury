@@ -277,10 +277,10 @@
 
             /* Date passed in is expected to be in the format of mm-dd-yyyy or mm/dd/yyyy. */
             function isDatePast(dateText) {
+                var today = new Date();
                 // If a slash is found, use that as delimiter otherwise use a dash.
                 var delimUsed = dateText.indexOf("/") > 0 ? "/" : "-";
                 var inputDate = dateText.split(delimUsed);
-                var today = new Date();
                 // Note that we subtract one from month because of weird date indexing by Date() class.
                 inputDate = new Date(inputDate[2], (inputDate[0] - 1), inputDate[1], 0, 0, 0, 0);
                 today = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
