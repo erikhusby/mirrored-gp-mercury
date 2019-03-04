@@ -24,6 +24,7 @@ import net.sourceforge.stripes.exception.SourcePageNotFoundException;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -2283,7 +2284,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     logger.error(e);
                 } finally {
                     if (jsonGenerator!=null) {
-                        jsonGenerator.close();
+                        IOUtils.closeQuietly(jsonGenerator);
                     }
                 }
             }

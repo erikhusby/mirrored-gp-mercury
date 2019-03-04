@@ -180,48 +180,49 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public JiraIssue getIssueInfo(String key, String... fields) throws IOException {
         String urlString = getBaseUrl() + "/issue/" + key;
 
-        StringBuilder fieldList = new StringBuilder("summary,description,duedate,created,reporter,subtasks,status,parent");
-
-        if (null != fields) {
-            for (String currField : fields) {
-                fieldList.append(",").append(currField);
-            }
-        }
+        String[] defaultFields = {"summary", "description", "duedate", "created", "reporter", "subtasks", "status", "parent"};
 
         try {
-                WebTarget webResource = getJerseyClient().target(urlString).queryParam("fields", fieldList.toString()); // todo jmt
-
-                String queryResponse = JerseyUtils.getAndCheck(webResource.request(), String.class);
-
-                JiraSearchIssueData data = parseSearch(queryResponse, fields);
-
-                JiraIssue issueResult = new JiraIssue(key, this);
-                issueResult.setSummary(data.summary);
-                issueResult.setStatus(data.status);
-                if( data.description != null ) {
-                    issueResult.setDescription(data.description);
-                }
-                if( data.dueDate != null ) {
-                    issueResult.setDueDate(data.dueDate);
-                }
-                issueResult.setCreated(data.created);
-                issueResult.setReporter(data.reporter);
-
-                if( data.subTasks != null ) {
-                    issueResult.setSubTasks(data.subTasks);
-                }
-                issueResult.setParent(data.parent);
-                issueResult.setConditions(data.subTaskSummaries, data.subTaskKeys);
-
-                if (null != fields) {
-                    for (String currField : fields) {
-                        issueResult.addFieldValue(currField, data.extraFields.get(currField));
-                    }
-                }
-             return issueResult;
+            WebTarget target = getJerseyClient().target(urlString);
+            for (String field : defaultFields) {
+                target = target.queryParam("fields", field);
             }
-        catch (Exception ex)
-        {
+
+            if (null != fields) {
+                for (String currField : fields) {
+                    target = target.queryParam("fields", currField);
+                }
+            }
+
+            String queryResponse = JerseyUtils.getAndCheck(target.request(), String.class);
+
+            JiraSearchIssueData data = parseSearch(queryResponse, fields);
+
+            JiraIssue issueResult = new JiraIssue(key, this);
+            issueResult.setSummary(data.summary);
+            issueResult.setStatus(data.status);
+            if (data.description != null) {
+                issueResult.setDescription(data.description);
+            }
+            if (data.dueDate != null) {
+                issueResult.setDueDate(data.dueDate);
+            }
+            issueResult.setCreated(data.created);
+            issueResult.setReporter(data.reporter);
+
+            if (data.subTasks != null) {
+                issueResult.setSubTasks(data.subTasks);
+            }
+            issueResult.setParent(data.parent);
+            issueResult.setConditions(data.subTaskSummaries, data.subTaskKeys);
+
+            if (null != fields) {
+                for (String currField : fields) {
+                    issueResult.addFieldValue(currField, data.extraFields.get(currField));
+                }
+            }
+            return issueResult;
+        } catch (Exception ex) {
             return null;
         }
     }
@@ -555,13 +556,14 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
             fieldIds.add(customFieldDefinition.getJiraCustomFieldId());
         }
 
-        String fieldArgs = StringUtils.join(fieldIds, ",");
-        String url = getBaseUrl() + "/issue/" + jiraIssueKey + "?fields=" + fieldArgs;
+        String url = getBaseUrl() + "/issue/" + jiraIssueKey;
         log.debug(url);
-        WebTarget webResource =
-                getJerseyClient().target(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs); // todo jmt
+        WebTarget target = getJerseyClient().target(getBaseUrl() + "/issue/" + jiraIssueKey);
+        for (String fieldId : fieldIds) {
+            target.queryParam("fields", fieldId);
+        }
 
-        return get(webResource, new GenericType<IssueFieldsResponse>() {});
+        return get(target, new GenericType<IssueFieldsResponse>() {});
     }
 
     @Override

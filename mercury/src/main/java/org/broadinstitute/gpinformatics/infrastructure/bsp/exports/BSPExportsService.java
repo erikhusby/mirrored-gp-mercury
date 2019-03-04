@@ -13,14 +13,10 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedHashMap;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 @Dependent
 public class BSPExportsService implements Serializable {
@@ -40,18 +36,16 @@ public class BSPExportsService implements Serializable {
             throw new InformaticsServiceException("Null or empty collection of LabVessels submitted for export check.");
         }
 
-        List<String> barcodes = new ArrayList<>();
+        // Copy the resource above with the query parameters added.
+        String url = bspConfig.getUrl("rest/exports/isExported");
+        WebTarget target = client.target(url);
         for (LabVessel labVessel : labVessels) {
             if (labVessel != null) {
-                barcodes.add(labVessel.getLabel());
+                target = target.queryParam("barcode", labVessel.getLabel());
             }
         }
 
-        // Copy the resource above with the query parameters added.
-        String url = bspConfig.getUrl("rest/exports/isExported");
-        WebTarget webTarget = client.target(url).queryParam("barcode", barcodes); // todo jmt
-
-        return JerseyUtils.getAndCheck(webTarget.request(MediaType.APPLICATION_XML_TYPE), IsExported.ExportResults.class);
+        return JerseyUtils.getAndCheck(target.request(MediaType.APPLICATION_XML_TYPE), IsExported.ExportResults.class);
     }
 
     /**
@@ -60,10 +54,9 @@ public class BSPExportsService implements Serializable {
      * @param userId user initiating export
      */
     public void export(String containerId, String userId) {
-        WebTarget resource = client.target(bspConfig.getUrl("rest/exports"));
-        MultivaluedHashMap<String, String> formData = new MultivaluedHashMap<>();
-        formData.add("containerId", containerId);
-        formData.add("userId", userId);
-        resource.request().post(Entity.form(formData));
+        WebTarget resource = client.target(bspConfig.getUrl("rest/exports"))
+                .queryParam("containerId", containerId)
+                .queryParam("userId", userId);
+        resource.request().post(null);
     }
 }

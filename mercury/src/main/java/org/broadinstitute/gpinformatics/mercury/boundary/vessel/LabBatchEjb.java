@@ -1007,7 +1007,7 @@ public class LabBatchEjb {
             plateTransferEventType.setPlate(plateType);
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
             bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-            Response response = webTarget.request(MediaType.APPLICATION_XML).post(Entity.xml(bettaLIMSMessage));
+            Response response = webTarget.request(MediaType.TEXT_PLAIN).post(Entity.xml(bettaLIMSMessage));
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 bspExportsService.export(rackBarcode, userBean.getLoginUserName());
                 response.close();

@@ -38,8 +38,6 @@ import static javax.ws.rs.core.Response.Status.OK;
 public abstract class AbstractJerseyClientService implements Serializable {
     private static final long serialVersionUID = 460875882310020779L;
 
-    private transient Client jerseyClient;
-
     private static final Log logger = LogFactory.getLog(AbstractJerseyClientService.class);
 
     @Inject
@@ -79,16 +77,14 @@ public abstract class AbstractJerseyClientService implements Serializable {
      * Method for subclasses to retrieve the {@link Client} for making webservice calls.
      */
     protected Client getJerseyClient() {
-        if (jerseyClient == null) {
-            ClientBuilder clientBuilder = ClientBuilder.newBuilder();
-            if(deployment != Deployment.PROD) {
-                JerseyUtils.acceptAllServerCertificates(clientBuilder);
-            }
-            customizeBuilder(clientBuilder);
-
-            jerseyClient = clientBuilder.build();
-            customizeClient(jerseyClient);
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+        if(deployment != Deployment.PROD) {
+            JerseyUtils.acceptAllServerCertificates(clientBuilder);
         }
+        customizeBuilder(clientBuilder);
+
+        Client jerseyClient = clientBuilder.build();
+        customizeClient(jerseyClient);
         return jerseyClient;
     }
 
@@ -200,9 +196,5 @@ public abstract class AbstractJerseyClientService implements Serializable {
                 clientResponse.close();
             }
         }
-    }
-
-    protected void clearClient() {
-        jerseyClient = null;
     }
 }

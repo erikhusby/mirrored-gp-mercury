@@ -37,7 +37,7 @@ public class BSPRestService implements Serializable {
         WebTarget webResource = bspRestClient.getWebResource(urlString).queryParam("kit_id", kitId);
 
         // Posts message to BSP using the specified REST url.
-        Response response = webResource.request(MediaType.APPLICATION_JSON).get();
+        Response response = webResource.request(MediaType.APPLICATION_XML_TYPE).get();
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
