@@ -95,6 +95,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private String sampleLibraryName;
     private Integer readLength;
     private String aggregationParticle;
+    private String aggregationDataType;
     private Boolean umisPresent;
     private String expectedInsertSize;
     private ReferenceSequence referenceSequence;
@@ -209,6 +210,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         baitName = other.getBaitName();
         catName = other.getCatName();
         aggregationParticle = other.getAggregationParticle();
+        aggregationDataType = other.getAggregationDataType();
         analysisType = other.getAnalysisType();
         referenceSequence = other.getReferenceSequence();
         umisPresent = other.getUmisPresent();
@@ -547,6 +549,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
             aggregationParticle = sampleInstanceEntity.getAggregationParticle();
+            aggregationDataType = sampleInstanceEntity.getAggregationDataType();
             analysisType = sampleInstanceEntity.getAnalysisType();
             referenceSequence = sampleInstanceEntity.getReferenceSequence();
             umisPresent = sampleInstanceEntity.getUmisPresent();
@@ -772,12 +775,25 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return aggregationParticle;
     }
 
+    public String getAggregationDataType() {
+        return aggregationDataType;
+    }
+
     public Boolean getUmisPresent() {
         return umisPresent;
     }
 
     public String getExpectedInsertSize() {
         return expectedInsertSize;
+    }
+
+    /** Returns the integer value of insert size. Returns the last value if an integer range such as 200-254. */
+    public Integer getExpectedInsertSizeInteger() {
+        if (StringUtils.isNotBlank(expectedInsertSize)) {
+            String[] values = expectedInsertSize.split("[\\s-]");
+            return Integer.parseInt(values[values.length - 1]);
+        }
+        return null;
     }
 
     /**
