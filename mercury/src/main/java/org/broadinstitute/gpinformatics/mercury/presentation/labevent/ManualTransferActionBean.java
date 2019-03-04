@@ -78,7 +78,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -107,6 +106,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String PARSE_LIMS_FILE_ACTION = "parseLimsFile";
     public static final String SKIP_LIMS_FILE_ACTION = "skipLimsFile";
     public static final String DECODE_IMAGE_ACTION = "decodeImage";
+    public static final String BAD_STATION_NAME = "None";
     private static final String VIEW_TRANSFER_ACTION = "viewTransfer";
 
     private final String syntheticBarcode = String.valueOf(System.currentTimeMillis());
@@ -269,24 +269,25 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
     public Resolution chooseLabEventType() {
-        List<String> reagentNames;
-        int[] reagentFieldCounts;
+        List<String> reagentNames = new ArrayList<>();
+        Map<String, LabEventType.ReagentRequirements> mapReagentNameToRequirement;
         if (workflowStepDef != null && !CollectionUtils.isEmpty(workflowStepDef.getReagentTypes())) {
             reagentNames = workflowStepDef.getReagentTypes();
-            reagentFieldCounts = new int[reagentNames.size()];
-            Arrays.fill(reagentFieldCounts, 1);
+            mapReagentNameToRequirement = new HashMap<>(reagentNames.size());
+            for (String reagentName : reagentNames) {
+                mapReagentNameToRequirement.put(reagentName, new LabEventType.ReagentRequirements(reagentName));
+            }
+
         } else {
-            reagentNames = Arrays.asList(manualTransferDetails.getReagentNames());
-            reagentFieldCounts = manualTransferDetails.getReagentFieldCounts();
+            reagentNames.addAll(manualTransferDetails.getReagentNames());
+            mapReagentNameToRequirement = manualTransferDetails.getMapReagentNameToRequirements();
         }
-        int reagentIndex = 0;
         for (String reagentName : reagentNames) {
-            for (int fieldIndex = 0; fieldIndex < reagentFieldCounts[reagentIndex]; fieldIndex++) {
+            for (int fieldIndex = 0; fieldIndex < mapReagentNameToRequirement.get(reagentName).getFieldCount(); fieldIndex++) {
                 ReagentType reagentType = new ReagentType();
                 reagentType.setKitType(reagentName);
                 stationEvents.get(0).getReagent().add(reagentType);
             }
-            reagentIndex++;
         }
 
         initializeMessageObjects();
@@ -1135,19 +1136,38 @@ public class ManualTransferActionBean extends RackScanActionBean {
             addMessages(messageCollection);
         }
 
+        Map<String, LabEventType.ReagentRequirements> mapReagentNameToRequirements =
+                manualTransferDetails.getMapReagentNameToRequirements();
         for (ReagentType reagentType : stationEvents.get(0).getReagent()) {
             if (StringUtils.isBlank(reagentType.getKitType())) {
                 addGlobalValidationError("Reagent type is required");
             }
-            if (manualTransferDetails.getMapReagentNameToCount().get(reagentType.getKitType()) == 1) {
+            LabEventType.ReagentRequirements reagentRequirements =
+                    mapReagentNameToRequirements.get(reagentType.getKitType());
+
+            // If the reagent barcode is not blank, check to see if the barcode is valid based off requirements defined.
+            if (!StringUtils.isBlank(reagentType.getBarcode()) && !reagentRequirements.verifyBarcode(reagentType.getBarcode())){
+                addGlobalValidationError("The reagent barcode " + reagentType.getBarcode() + " is in an invalid format.");
+            }
+
+            // We're only checking for reagent requirements if there is only one instance of a reagent expected.
+            if (reagentRequirements.getFieldCount() == 1) {
                 if (StringUtils.isBlank(reagentType.getBarcode())) {
                     addGlobalValidationError("Reagent barcode is required");
                 }
-                if (manualTransferDetails.isExpirationDateIncluded() &&
-                        reagentType.getExpiration() == null) {
-                    addGlobalValidationError("Reagent expiration is required");
+                // If a expiration date is expected, add an error if one is not found.
+                // The manual transfer page is expected to handle validating dates and provide a warning accordingly.
+                if (reagentRequirements.isExpirationDateIncluded()) {
+                    if (reagentType.getExpiration() == null) {
+                        addGlobalValidationError("Reagent expiration is required");
+                    }
                 }
             }
+        }
+
+        if (stationEvents.get(0).getStation() != null &&
+                stationEvents.get(0).getStation().equalsIgnoreCase(BAD_STATION_NAME)) {
+            addGlobalValidationError("A valid station is required");
         }
 
         BettaLIMSMessage bettaLIMSMessage = null;
@@ -1157,7 +1177,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             while (reagentIterator.hasNext()) {
                 ReagentType reagentType = reagentIterator.next();
                 if (StringUtils.isBlank(reagentType.getBarcode()) &&
-                        manualTransferDetails.getMapReagentNameToCount().get(reagentType.getKitType()) > 1) {
+                    mapReagentNameToRequirements.get(reagentType.getKitType()).getFieldCount() > 1) {
                     reagentIterator.remove();
                 }
             }

@@ -42,16 +42,21 @@
             <%@ include file="/run/designation_tube_list_include.jsp" %>
 
 
-            <div style="float: left; width: 20%;">
+            <div style="float: left; width: 25%;">
                 <c:if test="${not empty actionBean.dtos}">
-                    <div class="control-group">
+                    <stripes:label for="diversifySamplesFlag"
+                                   title="Each flowcell gets one lane from each sample; a second lane is taken only if needed to complete the flowcell.">
+                        Maximize sample diversity
+                        <stripes:checkbox id="diversifySamplesFlag" name="diversifySamplesFlag"/>
+                    </stripes:label>
+                    <div style="position: relative; top: 20px;">
                         <stripes:submit id="createFctBtn" name="createFct" value="Create FCT"
                                         class="btn btn-primary" onclick="updateHiddenInputs()" disabled="disabled"
                                         title="Creates FCTs from the selected rows."/>
                     </div>
                 </c:if>
             </div>
-            <div style="float: right; width: 80%;">
+            <div style="float: right; width: 75%;">
                 <c:if test="${actionBean.createdFcts.size() > 0}">
                     <div class="control-group">
                         <h5>Created FCT Tickets</h5>
