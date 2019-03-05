@@ -11,7 +11,7 @@ import net.sourceforge.stripes.mock.MockHttpServletResponse;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
@@ -345,22 +345,25 @@ public class ProductOrderActionBeanTest {
     @DataProvider(name = "regulatorySuggestionSampleInputs")
     public Iterator<Object[]> regulatorySuggestionSampleInputs() {
         List<Object[]> testCases = new ArrayList<>();
-        testCases.add(new Object[]{"SM-1234"});
+        testCases.add(new Object[]{"SM-1234", true});
+        testCases.add(new Object[]{"SM-HJILE ", false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u00a0","x", "\u00a0"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u1680","x", "\u1680"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u180e","x", "\u180e"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u2000","x", "\u2000"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u202f","x", "\u202f"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u205f","x", "\u205f"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u3000","x", "\u3000"), false});
+        testCases.add(new Object[]{"SM-HBYE9\nSM-I2QU9\nSM-I43WJ\nSM-HJILE \nSM-GM6ND", false});
+        testCases.add(new Object[]{"SM-HOW1Z\nSM-HGTBZ\nSM-HPNGW\nSM-HK6O2\nSM-HJQFA\nSM-HG3GT", true});
 
-        testCases.add(new Object[]{String.format("%s%s%s", "\u00a0","x", "\u00a0")});
-        testCases.add(new Object[]{String.format("%s%s%s", "\u1680","x", "\u1680")});
-        testCases.add(new Object[]{String.format("%s%s%s", "\u180e","x", "\u180e")});
-        testCases.add(new Object[]{String.format("%s%s%s", "\u2000","x", "\u2000")});
-        testCases.add(new Object[]{String.format("%s%s%s", "\u202f","x", "\u202f")});
-        testCases.add(new Object[]{String.format("%s%s%s", "\u205f","x", "\u205f")});
-        testCases.add(new Object[]{String.format("%s%s%s", "\u3000","x", "\u3000")});
 
         return testCases.iterator();
     }
 
 
     @Test(dataProvider = "regulatorySuggestionSampleInputs")
-    public void testRegulatorySuggestionInput(String sampleId) throws Exception {
+    public void testRegulatorySuggestionInput(String sampleId, boolean inputIsAsciiPrintable) throws Exception {
         Product product = new Product();
         pdo.setProduct(product);
         ResearchProjectDao mockResearchProjectDao = Mockito.mock(ResearchProjectDao.class);
@@ -370,8 +373,10 @@ public class ProductOrderActionBeanTest {
         actionBean.setEditOrder(pdo);
         actionBean.setProduct("test product");
 
-        // Show that the input is not ascii printable
-        assertThat(StringUtils.isAsciiPrintable(sampleId), is(false));
+        // Show that the input is not ascii printable. Mimics what is called in the ProductOrderSample constructor.
+        Arrays.asList(sampleId.split("\\s"))
+            .forEach(s -> assertThat(StringUtils.isAsciiPrintable(s), is(inputIsAsciiPrintable)));
+
         actionBean.setSampleList(sampleId);
         try {
             actionBean.suggestRegulatoryInfo();
