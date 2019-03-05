@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventRespon
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -44,7 +44,7 @@ public class SamplesPicoDbTest extends StubbyContainerTest {
     public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String timestamp = timestampFormat.format(new Date());
 
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 //        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
         Client client = clientBuilder.build();

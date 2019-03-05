@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -107,7 +107,7 @@ public class FingerprintResourceTest extends Arquillian {
     }
 
     private Client getClient(boolean basicAuth) {
-        Client client = JerseyUtils.getClientBuilderAcceptCertificate().build();
+        Client client = JaxRsUtils.getClientBuilderAcceptCertificate().build();
 
         client.register(new EntityLoggingFilter());
         if (basicAuth) {

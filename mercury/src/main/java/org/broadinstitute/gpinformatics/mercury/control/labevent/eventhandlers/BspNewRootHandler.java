@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -162,7 +162,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
             GenericEntity<MultipartFormDataOutput> entity = new GenericEntity<MultipartFormDataOutput>(
                     multipartFormDataOutput) { };
 
-            CreateKitReturn createKitReturn = JerseyUtils.postAndCheck(webTarget.request(MediaType.TEXT_XML),
+            CreateKitReturn createKitReturn = JaxRsUtils.postAndCheck(webTarget.request(MediaType.TEXT_XML),
                     Entity.entity(multipartFormDataOutput, MediaType.MULTIPART_FORM_DATA_TYPE),
                     CreateKitReturn.class);
 

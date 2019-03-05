@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.common.QueryStringSplitter;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.annotation.Nonnull;
@@ -128,7 +128,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     @Override
     public Collection<SubmissionStatusDetailBean> postSubmissions(SubmissionRequestBean submissions) {
         Response response =
-                JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMIT_ACTION),
+                JaxRsUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMIT_ACTION),
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
                            .post(Entity.json(submissions));
         validateResponseStatus("posting submissions", response);
@@ -173,7 +173,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
 
     private Response clientResponseGet(String servicePath, Map<String, List<String>> parameters) {
         try {
-            return JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
+            return JaxRsUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
                     MediaType.APPLICATION_JSON_TYPE, parameters).get();
         } catch (Exception e) {
             throw new InformaticsServiceException(

@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -86,7 +86,7 @@ public class VesselWeightTest extends Arquillian {
         // Verify that BSP Tare Weight annotation is set
         // http://bsp/ws/bsp/sample/gettareweight?manufacturer_barcodes=1082117278
         String getTareWeightUrl = bspConfig.getWSUrl("sample/gettareweight");
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
         Client client = clientBuilder.build();
         client.register(new BasicAuthentication(bspConfig.getLogin(), bspConfig.getPassword()));

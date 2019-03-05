@@ -5,13 +5,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -26,8 +25,6 @@ public class BSPExportsService implements Serializable {
     @Inject
     private BSPConfig bspConfig;
 
-    private Client client = ClientBuilder.newClient();
-
     /**
      * Return the Set of ExternalSystems to which this collection of LabVessels has been exported.
      */
@@ -38,14 +35,14 @@ public class BSPExportsService implements Serializable {
 
         // Copy the resource above with the query parameters added.
         String url = bspConfig.getUrl("rest/exports/isExported");
-        WebTarget target = client.target(url);
+        WebTarget target = ClientBuilder.newClient().target(url);
         for (LabVessel labVessel : labVessels) {
             if (labVessel != null) {
                 target = target.queryParam("barcode", labVessel.getLabel());
             }
         }
 
-        return JerseyUtils.getAndCheck(target.request(MediaType.APPLICATION_XML_TYPE), IsExported.ExportResults.class);
+        return JaxRsUtils.getAndCheck(target.request(MediaType.APPLICATION_XML_TYPE), IsExported.ExportResults.class);
     }
 
     /**
@@ -54,7 +51,7 @@ public class BSPExportsService implements Serializable {
      * @param userId user initiating export
      */
     public void export(String containerId, String userId) {
-        WebTarget resource = client.target(bspConfig.getUrl("rest/exports"))
+        WebTarget resource = ClientBuilder.newClient().target(bspConfig.getUrl("rest/exports"))
                 .queryParam("containerId", containerId)
                 .queryParam("userId", userId);
         resource.request().post(null);

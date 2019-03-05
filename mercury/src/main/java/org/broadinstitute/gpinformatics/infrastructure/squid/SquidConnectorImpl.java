@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.squid;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunSynopsisBean;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
@@ -35,7 +35,7 @@ public class SquidConnectorImpl implements SquidConnector {
     public SquidResponse createRun(SolexaRunBean runInformation) {
 
         Response response =
-                JerseyUtils.getWebResource(squidConfig.getUrl() + "/resources/solexarun",
+                JaxRsUtils.getWebResource(squidConfig.getUrl() + "/resources/solexarun",
                         MediaType.APPLICATION_XML_TYPE).accept(MediaType.APPLICATION_XML)
                                                        .post(Entity.xml(runInformation));
 
@@ -64,7 +64,7 @@ public class SquidConnectorImpl implements SquidConnector {
             solexaRunSynopsis.getSolexaRunLaneSynopsisBean().add(solexaRunLaneSynopsisBean);
         }
 
-        Response response = JerseyUtils.getWebResource(squidWSUrl, MediaType.APPLICATION_JSON_TYPE)
+        Response response = JaxRsUtils.getWebResource(squidWSUrl, MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(solexaRunSynopsis));
 
         SquidResponse squidResponse = new SquidResponse(response.getStatus(), response.readEntity(String.class));

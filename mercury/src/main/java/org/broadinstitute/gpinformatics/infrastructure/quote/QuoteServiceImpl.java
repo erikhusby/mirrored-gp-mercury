@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.owasp.encoder.Encode;
 import org.w3c.dom.Document;
 
@@ -219,7 +219,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     @Override
     protected void customizeBuilder(ClientBuilder clientBuilder) {
-        JerseyUtils.acceptAllServerCertificates(clientBuilder);
+        JaxRsUtils.acceptAllServerCertificates(clientBuilder);
     }
 
     @Override
@@ -242,7 +242,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         WebTarget resource = getJerseyClient().target(url);
         PriceList prices;
         try {
-            prices = JerseyUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), PriceList.class);
+            prices = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), PriceList.class);
         } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find price list at " + url);
         }
@@ -267,7 +267,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         Quotes quotes;
         try {
-            quotes = JerseyUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
+            quotes = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
         } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find quotes for sequencing at " + url);
         }
@@ -306,7 +306,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         try {
             WebTarget resource = getJerseyClient().target(url + URLEncoder.encode(id, ENCODING));
 
-            Quotes quotes = JerseyUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
+            Quotes quotes = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
             if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
@@ -335,7 +335,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         Quotes quotes;
         try {
-            quotes = JerseyUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
+            quotes = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
         } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
         }
@@ -364,7 +364,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         try {
             GenericType<Document> document  = new GenericType<Document>() {};
-            Document doc = JerseyUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), document);
+            Document doc = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), document);
             return Funding.getFundingSet(doc);
         } catch (WebApplicationException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);

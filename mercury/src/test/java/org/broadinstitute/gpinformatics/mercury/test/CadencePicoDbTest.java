@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventRespon
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.MetadataBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.ReagentBean;
 import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CadencePicoJaxbBuilder;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -50,7 +50,7 @@ public class CadencePicoDbTest extends StubbyContainerTest {
             picoSampleTubeBarcodes.add("CadencePico" + testSuffix + rackPosition);
         }
 
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 //        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
         Client client = clientBuilder.build();

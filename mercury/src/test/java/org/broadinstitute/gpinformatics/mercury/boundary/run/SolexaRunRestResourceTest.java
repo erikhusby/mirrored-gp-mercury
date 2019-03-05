@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -210,7 +210,7 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
 
         Assert.assertTrue(result);
 
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
         Response response = clientBuilder.build().target(appConfig.getUrl() + "rest/solexarun")
                 .request(MediaType.APPLICATION_XML_TYPE)
@@ -239,7 +239,7 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
 
         Assert.assertTrue(result);
 
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
         Response response = clientBuilder.build().target(appConfig.getUrl() + "rest/solexarun")
                 .request(MediaType.APPLICATION_XML_TYPE)
@@ -278,7 +278,7 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
         readStructureData.setActualReadStructure("76T8B8B76T");
 
 
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
         Response readStructureResult =
                 clientBuilder.build().target(wsUrl)
@@ -315,7 +315,7 @@ public class SolexaRunRestResourceTest extends StubbyContainerTest {
             readStructureData.getLaneStructures().add(laneReadStructure);
         }
 
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
         ReadStructureRequest returnedReadStructureRequest = clientBuilder.build().target(wsUrl).
                 request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).

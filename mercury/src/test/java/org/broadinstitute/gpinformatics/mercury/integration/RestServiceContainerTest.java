@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.integration;
 
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
@@ -68,7 +68,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
      */
     protected WebTarget makeWebResource(URL baseUrl, String serviceUrl) throws MalformedURLException {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
-        JerseyUtils.acceptAllServerCertificates(clientBuilder);
+        JaxRsUtils.acceptAllServerCertificates(clientBuilder);
 
         Client client = clientBuilder.build();
 //        client.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);

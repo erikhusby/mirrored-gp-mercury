@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.testng.annotations.Test;
 
@@ -180,7 +180,7 @@ public class ImportFromBspTest extends StubbyContainerTest {
     }
 
     private void createBatch(LabBatchBean labBatchBean) {
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
         String response = clientBuilder.build().target(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/labbatch")
                 .request(MediaType.APPLICATION_XML_TYPE)
@@ -190,7 +190,7 @@ public class ImportFromBspTest extends StubbyContainerTest {
     }
 
     public static String recordMetrics(VesselMetricRunBean vesselMetricRunBean) {
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
         String response =
                 clientBuilder.build().target(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/vesselmetric")
@@ -202,7 +202,7 @@ public class ImportFromBspTest extends StubbyContainerTest {
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
         String response =
                 clientBuilder.build().target(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")

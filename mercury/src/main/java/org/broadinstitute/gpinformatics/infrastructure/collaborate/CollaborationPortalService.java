@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -102,7 +102,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
                         sampleKitRecipient, collaborationMessage);
 
         try {
-            return JerseyUtils.postAndCheck(resource.request(MediaType.APPLICATION_XML), Entity.xml(collaboration),
+            return JaxRsUtils.postAndCheck(resource.request(MediaType.APPLICATION_XML), Entity.xml(collaboration),
                     String.class);
         } catch (WebApplicationException e) {
             rethrowIfCollaborationError(e);
@@ -117,7 +117,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         WebTarget resource = getJerseyClient().target(url);
 
         try {
-            return JerseyUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), CollaborationData.class);
+            return JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), CollaborationData.class);
         } catch (WebApplicationException e) {
             throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
         }
@@ -130,7 +130,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         WebTarget resource = getJerseyClient().target(url);
 
         try {
-            return JerseyUtils.postAndCheck(resource.request(), null, String.class);
+            return JaxRsUtils.postAndCheck(resource.request(), null, String.class);
         } catch (WebApplicationException e) {
             rethrowIfCollaborationError(e);
             throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);

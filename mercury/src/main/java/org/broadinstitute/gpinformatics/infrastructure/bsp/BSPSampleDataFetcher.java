@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -242,7 +242,7 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
         // Use POST, rather than GET, to allow large number of barcodes without hitting 8K limit on URL.
         MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
         formData.add("barcodes", StringUtils.join(barcodes, ","));
-        GetSampleDetails.Details details = JerseyUtils.postAndCheck(webTarget.request(MediaType.TEXT_XML),
+        GetSampleDetails.Details details = JaxRsUtils.postAndCheck(webTarget.request(MediaType.TEXT_XML),
                 Entity.form(formData),
                 new GenericType<GetSampleDetails.Details>() {});
 

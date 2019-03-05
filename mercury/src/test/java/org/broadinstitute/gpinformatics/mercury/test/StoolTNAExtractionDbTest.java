@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -54,7 +54,7 @@ public class StoolTNAExtractionDbTest extends StubbyContainerTest {
         StoolTNAJaxbBuilder stoolTNAJaxbBuilder = new StoolTNAJaxbBuilder(parentVesselBean.getManufacturerBarcode(),
                 childVesselBeans.size(), bettaLimsMessageTestFactory, "StoolXTR" + timestamp).invoke();
 
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
         Client client = clientBuilder.build();
         client.register(new EntityLoggingFilter());

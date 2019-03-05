@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -84,7 +84,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
         WebTarget resource = makeWebResource(baseUrl, "create");
 
-        ProductOrderData productOrderData = JerseyUtils.postAndCheck(resource.request(), Entity.xml(data),
+        ProductOrderData productOrderData = JaxRsUtils.postAndCheck(resource.request(), Entity.xml(data),
                 new GenericType<ProductOrderData>() {});
         Assert.assertEquals(productOrderData.getStatus(), ProductOrder.OrderStatus.Pending.name());
     }
@@ -139,7 +139,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     private ProductOrderData sendCreateWithKitRequest(URL baseUrl, String username) throws Exception {
         WebTarget resource = makeWebResource(baseUrl, "createWithKitRequest");
-        return JerseyUtils.postAndCheck(resource.request(), Entity.xml(createTestProductOrderData(username)),
+        return JaxRsUtils.postAndCheck(resource.request(), Entity.xml(createTestProductOrderData(username)),
                 new GenericType<ProductOrderData>() {});
     }
 

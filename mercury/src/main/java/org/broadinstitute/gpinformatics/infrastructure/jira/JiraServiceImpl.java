@@ -25,7 +25,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJ
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 
 import javax.annotation.Nonnull;
@@ -194,7 +194,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
                 }
             }
 
-            String queryResponse = JerseyUtils.getAndCheck(target.request(), String.class);
+            String queryResponse = JaxRsUtils.getAndCheck(target.request(), String.class);
 
             JiraSearchIssueData data = parseSearch(queryResponse, fields);
 
@@ -433,7 +433,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String urlString = getBaseUrl() + "/issue/createmeta";
 
-        String jsonResponse = JerseyUtils.getAndCheck(getJerseyClient().target(urlString)
+        String jsonResponse = JaxRsUtils.getAndCheck(getJerseyClient().target(urlString)
                 .queryParam("projectKeys", project.getProjectType().getKeyPrefix())
                 .queryParam("issuetypeName", issueType.getJiraName())
                 .queryParam("expand", "projects.issuetypes.fields")
@@ -527,7 +527,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public boolean isValidUser(String username) {
         String urlString = getBaseUrl() + "/user/search";
 
-        String jsonResponse = JerseyUtils.getAndCheck(getJerseyClient().target(urlString).
+        String jsonResponse = JaxRsUtils.getAndCheck(getJerseyClient().target(urlString).
                 queryParam("username", username).
                 queryParam("maxResults", "1000").request(), String.class);
         try {
@@ -560,7 +560,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         log.debug(url);
         WebTarget target = getJerseyClient().target(getBaseUrl() + "/issue/" + jiraIssueKey);
         for (String fieldId : fieldIds) {
-            target.queryParam("fields", fieldId);
+            target = target.queryParam("fields", fieldId);
         }
 
         return get(target, new GenericType<IssueFieldsResponse>() {});

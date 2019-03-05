@@ -46,8 +46,7 @@ public class BSPUserService extends BSPJerseyClient {
         formData.add("createdById", String.valueOf(creator.getUserId()));
         Response clientResponse =
                 getJerseyClient().target(urlString)
-                        .request(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
-                        .accept(MediaType.TEXT_XML_TYPE)
+                        .request(MediaType.TEXT_XML_TYPE)
                         .post(Entity.form(formData));
 
         BspUser bspUser = (BspUser) new XStream().fromXML(clientResponse.readEntity(String.class));

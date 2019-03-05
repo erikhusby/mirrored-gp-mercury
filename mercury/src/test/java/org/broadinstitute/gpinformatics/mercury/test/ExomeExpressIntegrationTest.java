@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
@@ -173,7 +173,7 @@ public class ExomeExpressIntegrationTest {
             System.out.println("URL to preview the run will be " + baseUrl.toExternalForm()
                                + "/rest/IlluminaRun/queryMercury?runName=" + runFile.getName());
             ClientBuilder clientBuilder = ClientBuilder.newBuilder();
-            JerseyUtils.acceptAllServerCertificates(clientBuilder);
+            JaxRsUtils.acceptAllServerCertificates(clientBuilder);
 
             clientBuilder.build().target(baseUrl.toExternalForm() + "/rest/solexarun")
                     .request(MediaType.APPLICATION_XML_TYPE)
@@ -189,7 +189,7 @@ public class ExomeExpressIntegrationTest {
     }
 
     private void sendMessage(URL baseUrl, BettaLIMSMessage bean) {
-        ClientBuilder clientBuilder = JerseyUtils.getClientBuilderAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
         clientBuilder.build().target(baseUrl + "/rest/bettalimsmessage")
                 .request(MediaType.APPLICATION_XML_TYPE)

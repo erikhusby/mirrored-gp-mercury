@@ -38,7 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
@@ -1128,7 +1128,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         if (false) {
             // JAX-RS
             ClientBuilder clientBuilder = ClientBuilder.newBuilder();
-            JerseyUtils.acceptAllServerCertificates(clientBuilder);
+            JaxRsUtils.acceptAllServerCertificates(clientBuilder);
 
             response = clientBuilder.build().target(testMercuryUrl + "/rest/bettalimsmessage")
                     .request(MediaType.APPLICATION_XML_TYPE)
@@ -1216,7 +1216,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         try {
 
             ClientBuilder clientBuilder = ClientBuilder.newBuilder();
-            JerseyUtils.acceptAllServerCertificates(clientBuilder);
+            JaxRsUtils.acceptAllServerCertificates(clientBuilder);
 
             String response = clientBuilder.build()
                     .target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/bettalimsmessage")

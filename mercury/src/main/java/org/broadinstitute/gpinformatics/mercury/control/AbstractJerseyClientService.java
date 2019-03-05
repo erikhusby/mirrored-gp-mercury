@@ -79,7 +79,7 @@ public abstract class AbstractJerseyClientService implements Serializable {
     protected Client getJerseyClient() {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         if(deployment != Deployment.PROD) {
-            JerseyUtils.acceptAllServerCertificates(clientBuilder);
+            JaxRsUtils.acceptAllServerCertificates(clientBuilder);
         }
         customizeBuilder(clientBuilder);
 
@@ -147,8 +147,7 @@ public abstract class AbstractJerseyClientService implements Serializable {
         BufferedReader reader = null;
         Response clientResponse = null;
         try {
-            clientResponse = webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
-                    .post(Entity.form(params));
+            clientResponse = webTarget.request().post(Entity.form(params));
 
             InputStream is = clientResponse.readEntity(InputStream.class);
             reader = new BufferedReader(new InputStreamReader(is));

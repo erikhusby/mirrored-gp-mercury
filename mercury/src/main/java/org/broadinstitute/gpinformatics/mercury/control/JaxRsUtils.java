@@ -1,12 +1,17 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.params.BasicHttpParams;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
 import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -18,22 +23,20 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Utility class to define common rest helper functions that can assist in most Jersey calls.
  */
-// todo jmt rename
-public class JerseyUtils {
+public class JaxRsUtils {
     private static final int DEFAULT_TIMEOUT_MILLISECONDS = 300000;
 
     public static Invocation.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
-        WebTarget resource = getWebResourceBase(squidWSUrl, mediaType);
+        WebTarget resource = getWebResourceBase(squidWSUrl);
         return resource.request(mediaType);
     }
 
     public static Invocation.Builder getWebResource(String wSUrl, MediaType mediaType, Map<String, List<String>> parameters) {
-        WebTarget resource = getWebResourceBase(wSUrl, mediaType);
+        WebTarget resource = getWebResourceBase(wSUrl);
         for (Map.Entry<String, List<String>> stringListEntry : parameters.entrySet()) {
             for (String s : stringListEntry.getValue()) {
                 resource = resource.queryParam(stringListEntry.getKey(), s);
@@ -42,11 +45,24 @@ public class JerseyUtils {
         return resource.request(mediaType);
     }
 
-    public static WebTarget getWebResourceBase(String wsUrl, MediaType mediaType) {
-        Client client = new ResteasyClientBuilder()
-                .establishConnectionTimeout(DEFAULT_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS)
-                .socketTimeout(DEFAULT_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS).build();
-        return client.target(wsUrl);
+    public static WebTarget getWebResourceBase(String wsUrl) {
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(DEFAULT_TIMEOUT_MILLISECONDS)
+                .setConnectionRequestTimeout(DEFAULT_TIMEOUT_MILLISECONDS)
+                .setSocketTimeout(DEFAULT_TIMEOUT_MILLISECONDS).build();
+        HttpClient httpClient = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build();
+
+        // Deprecated Apache classes cleanup https://issues.jboss.org/browse/RESTEASY-1357
+        // Client Framework not honoring connection timeouts Apache Client 4.3 https://issues.jboss.org/browse/RESTEASY-975
+        ApacheHttpClient4Engine engine = new ApacheHttpClient4Engine(httpClient) {
+            @Override
+            protected void loadHttpMethod(ClientInvocation request, HttpRequestBase httpMethod) throws Exception {
+                super.loadHttpMethod(request, httpMethod);
+                httpMethod.setParams(new BasicHttpParams());
+            }
+        };
+
+        return new ResteasyClientBuilder().httpEngine(engine).build().target(wsUrl);
     }
 
     /**
@@ -59,7 +75,7 @@ public class JerseyUtils {
      * this is probably okay.
      *
      */
-    public static void acceptAllServerCertificates(ClientBuilder clientBuilder) { // todo jmt should this return clientBuilder?
+    public static void acceptAllServerCertificates(ClientBuilder clientBuilder) {
         try {
             // Create a trust manager that does not validate certificate chains
             TrustManager[] trustAllCerts = {

@@ -57,7 +57,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
             T ret = response.readEntity(responseGenericType);
             log.trace("POST response: " + ret);
             response.close();
-            JerseyUtils.throwIfError(response);
+            JaxRsUtils.throwIfError(response);
             return ret;
         } catch (WebApplicationException e) {
             //TODO   Change to a more defined exception to give the option to set in throws or even catch
@@ -78,7 +78,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         try {
             Response response = setJsonMimeTypes(webResource).post(Entity.json(request));
             response.close();
-            JerseyUtils.throwIfError(response);
+            JaxRsUtils.throwIfError(response);
         } catch (WebApplicationException e) {
             //TODO  Change to a more defined exception to give the option to set in throws or even catch
             log.error("POST request: " + request, e);
@@ -108,7 +108,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      */
     protected <T> T get(WebTarget webResource, GenericType<T> genericType) {
         try {
-            return JerseyUtils.getAndCheck(setJsonMimeTypes(webResource), genericType);
+            return JaxRsUtils.getAndCheck(setJsonMimeTypes(webResource), genericType);
         } catch (WebApplicationException e) {
             //TODO Change to a more defined exception to give the option to set in throws or even catch
             log.error("GET request" + webResource.getUri(), e);
