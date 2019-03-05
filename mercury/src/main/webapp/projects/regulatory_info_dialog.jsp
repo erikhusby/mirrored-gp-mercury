@@ -15,13 +15,12 @@
         });
 
         function resetRegulatoryInfoDialog(errorMessage) {
+            $j('#regInfoErrors').html('');
             $j('#regulatoryInfoQuery').val('');
             $j('#addRegulatoryInfoDialogSheet2').html('');
             $j('#regInfoErrors').html('');
             $j('#addRegulatoryInfoDialogSheet1').show();
-            // $j('#statusMessage').hide();
             if(errorMessage) {
-                // $j('#regInfoErrors').show();
                 $j('#regInfoErrors').html(errorMessage);
             }
         }
@@ -57,6 +56,7 @@
             if (event) {
                 event.preventDefault();
             }
+            $j('#regInfoErrors').html('');
             $j.ajax({
                 url: '${ctxpath}/projects/regulatoryInfo.action',
                 data: {
