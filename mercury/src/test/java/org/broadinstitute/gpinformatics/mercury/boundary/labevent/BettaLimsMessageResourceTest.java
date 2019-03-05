@@ -1132,7 +1132,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
             response = clientBuilder.build().target(testMercuryUrl + "/rest/bettalimsmessage")
                     .request(MediaType.APPLICATION_XML_TYPE)
-                    .accept(MediaType.APPLICATION_XML)
                     .post(Entity.xml(bettaLIMSMessage), String.class);
         }
 
@@ -1221,7 +1220,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             String response = clientBuilder.build()
                     .target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/bettalimsmessage")
                     .request(MediaType.APPLICATION_XML_TYPE)
-                    .accept(MediaType.APPLICATION_XML)
                     .post(Entity.xml(file), String.class);
             System.out.println(response);
         } catch (Exception e) {

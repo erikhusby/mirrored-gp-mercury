@@ -44,8 +44,7 @@ public class FingerprintResourceTest extends Arquillian {
         Client client = getClient(true);
 
         String rsidsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/rsids";
-        RsIdsBean rsIdsBean = client.target(rsidsUrl).request(MediaType.APPLICATION_JSON_TYPE).
-                accept(MediaType.APPLICATION_JSON).get(RsIdsBean.class);
+        RsIdsBean rsIdsBean = client.target(rsidsUrl).request(MediaType.APPLICATION_JSON_TYPE).get(RsIdsBean.class);
 
         String postUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE;
         List<FingerprintCallsBean> calls = new ArrayList<>();
@@ -57,7 +56,7 @@ public class FingerprintResourceTest extends Arquillian {
         FingerprintBean fingerprintBean = new FingerprintBean("", "P", aliquotLsid,
                 "FLUIDIGM", "HG19", "FluidigmFPv5", new Date(), "M", calls);
         String response = client.target(postUrl).request(MediaType.APPLICATION_JSON_TYPE).
-                accept(MediaType.APPLICATION_JSON).post(Entity.json(fingerprintBean), String.class);
+                post(Entity.json(fingerprintBean), String.class);
 
         String getUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/query";
         FingerprintsBean fingerprintsBean = client.target(getUrl).queryParam("lsids", aliquotLsid).

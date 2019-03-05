@@ -63,7 +63,7 @@ public class BarcodeDecoderRestClient extends AbstractJerseyClientService {
 
         GenericEntity<MultipartFormDataOutput> entity = new GenericEntity<MultipartFormDataOutput>(mdo) { };
         Response response = getWebResource(url)
-                .request(MediaType.MULTIPART_FORM_DATA_TYPE).accept(MediaType.APPLICATION_JSON)
+                .request(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(entity, MediaType.MULTIPART_FORM_DATA_TYPE));
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             String responseEntity = response.readEntity(String.class);

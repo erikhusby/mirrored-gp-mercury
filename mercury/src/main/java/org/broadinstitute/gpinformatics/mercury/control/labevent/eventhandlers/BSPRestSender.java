@@ -91,7 +91,7 @@ public class BSPRestSender implements Serializable {
         WebTarget webTarget = bspRestClient.getWebResource(urlString);
 
         // Posts message to BSP using the specified REST url.
-        Response response = webTarget.request(MediaType.APPLICATION_XML).post(Entity.xml(message));
+        Response response = webTarget.request().post(Entity.xml(message));
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
@@ -427,7 +427,7 @@ public class BSPRestSender implements Serializable {
         formData.add("wellType", wellType);
 
         // Posts message to BSP using the specified REST url.
-        Response response = webTarget.request(MediaType.APPLICATION_FORM_URLENCODED).post(Entity.form(formData));
+        Response response = webTarget.request().post(Entity.form(formData));
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         String entity = response.readEntity(String.class);

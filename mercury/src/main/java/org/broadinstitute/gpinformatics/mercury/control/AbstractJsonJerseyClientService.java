@@ -40,7 +40,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      * Set the JSON MIME types for both request and response on the {@link WebTarget}
      */
     protected Invocation.Builder setJsonMimeTypes(WebTarget webResource) {
-        return webResource.request(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON_TYPE);
+        return webResource.request(MediaType.APPLICATION_JSON_TYPE);
     }
 
     /**

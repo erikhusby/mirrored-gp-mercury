@@ -43,7 +43,6 @@ public class BettaLimsConnectorImpl implements BettaLimsConnector {
         Response response = ClientBuilder.newClient().target("http://" + bettaLimsConfig.getWsHost() + ":" +
                                                            bettaLimsConfig.getWsPort() + "/bettalimsmessage")
                 .request(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(message));
         BettaLimsResponse bettaLimsResponse = new BettaLimsResponse(response.getStatus(), response.readEntity(String.class));
         response.close();
@@ -55,7 +54,6 @@ public class BettaLimsConnectorImpl implements BettaLimsConnector {
         Response response = ClientBuilder.newClient().target("http://" + bettaLimsConfig.getWsHost() + ":" +
                                                            bettaLimsConfig.getWsPort() + "/libraryquant/qpcrrun")
                 .request(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(qpcrRunBean));
         Response build = Response.status(response.getStatus()).build();
         response.close();
@@ -67,7 +65,6 @@ public class BettaLimsConnectorImpl implements BettaLimsConnector {
         Response response = ClientBuilder.newClient().target("http://" + bettaLimsConfig.getWsHost() + ":" +
                                                            bettaLimsConfig.getWsPort() + "/libraryquant")
                 .request(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML)
                 .post(Entity.xml(libraryQuantRunBean));
         Response build = Response.status(response.getStatus()).build();
         response.close();

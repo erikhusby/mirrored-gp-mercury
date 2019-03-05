@@ -8,7 +8,6 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
@@ -27,7 +26,7 @@ public class GapHandler {
             String urlString = gapRestClient.getUrl("bettalims");
             WebTarget webTarget = gapRestClient.getWebResource(urlString);
             // todo jmt reduce copy / paste
-            Response response = webTarget.request(MediaType.TEXT_PLAIN).post(Entity.xml(message));
+            Response response = webTarget.request().post(Entity.xml(message));
 
             // This is called in context of bettalims message handling which handles errors via RuntimeException.
             if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
