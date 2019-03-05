@@ -6,11 +6,21 @@ import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
 import edu.mit.broad.prodinfo.thrift.lims.PoolGroup;
 import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.Strings;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
@@ -19,6 +29,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -44,6 +56,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -55,12 +73,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.zip.GZIPInputStream;
 
 /**
  * @author breilly
  */
 @Path("/limsQuery")
 public class LimsQueryResource {
+
+    private static final Log log = LogFactory.getLog(Strings.class);
 
     @Inject
     private ThriftService thriftService;
@@ -88,6 +109,15 @@ public class LimsQueryResource {
 
     @Inject
     private WorkflowValidator workflowValidator;
+
+    @Inject
+    private ProductEjb productEjb;
+
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
+
+    @Inject
+    private InfiniumStarterConfig infiniumStarterConfig;
 
     public LimsQueryResource() {
     }
@@ -597,5 +627,102 @@ public class LimsQueryResource {
     @Path("/fetchExpectedReagentDesignsForTubeBarcodes")
     public List<ReagentDesignType> fetchExpectedReagentDesignsForTubeBarcodes(@QueryParam("q") List<String> tubeBarcodes) {
         return limsQueries.fetchExpectedReagentDesignsForTubeBarcodes(tubeBarcodes);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/verifyChipTypes")
+    public boolean verifyChipTypes(@QueryParam("plateBarcode") String plateBarcode, @QueryParam("chip") List<String> chips)
+            throws FileNotFoundException {
+
+        List<String> fileOutput;
+        String fileChipType;
+        LabVessel mapBarcodeToVessel = labVesselDao.findByIdentifier(plateBarcode);
+        ProductOrder productOrder;
+        Set<ProductOrder> productOrders = new HashSet<>();
+
+        for (SampleInstanceV2 sampleInstanceV2: mapBarcodeToVessel.getSampleInstancesV2()) {
+            ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (pdoSampleForSingleBucket == null) {
+                for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                    productOrders.add(productOrderSample.getProductOrder());
+                }
+            } else {
+                productOrders.add(pdoSampleForSingleBucket.getProductOrder());
+            }
+        }
+
+        if (productOrders.size() >= 1) {
+            productOrder = productOrders.iterator().next();
+        } else {
+            throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        GenotypingChip chipType = findChipType(productOrder, new Date());
+        if (chipType == null) {
+            throw new ResourceException("Failed to find PDO " + productOrder.getBusinessKey(),
+                     Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        String PDOChipType = chipType.getChipName();
+
+        String dataPathStr = infiniumStarterConfig.getDecodeDataPath();
+        File dataPath = new File(dataPathStr);
+
+        for (String chip: chips) {
+            // TODO find the chip in the neon file thing and grab the ... compare to above genotypingChip
+            // TODO \\neon\humgen_illumina_decode_data\Decode_data\chip\chip_R01C01_1.dmap.gz
+            String fileName = String.format("%s_R01C01_1.dmap.gz", chip);
+            File targetFolder = new File(dataPath, chip);
+            File targetFile = new File(targetFolder, fileName);
+
+            GZIPInputStream DMAP = null;
+            try {
+                DMAP = LimsQueryResource.createReader(targetFile, "Cp1252"); //TODO Encoding?
+            }
+            catch (IOException e) {
+                log.error("Failed to parse file", e); // TODO log and throw runtime exception
+            }
+            fileOutput = Strings.process(DMAP);
+            fileChipType = String.join("_",fileOutput.get(4),fileOutput.get(5)); // TODO if DMAP file format changes will need to check if still true
+
+            if (PDOChipType.startsWith(fileChipType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private GenotypingChip findChipType(ProductOrder productOrder, Date effectiveDate) {
+        GenotypingChip chip = null;
+        Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(productOrder,
+                effectiveDate);
+        if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
+            chip = attributeArchetypeDao.findGenotypingChip(chipFamilyAndName.getLeft(),
+                    chipFamilyAndName.getRight());
+            if (chip == null) {
+                throw new ResourceException("Chip " + chipFamilyAndName.getRight() + " is not configured",
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        }
+        return chip;
+    }
+
+    public static GZIPInputStream createReader (File f, String encoding) throws IOException
+    {
+        try
+        {
+            InputStream in = new FileInputStream(f);
+            if (f.getName ().endsWith (".gz"))
+                return new GZIPInputStream(in, 10240);
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            throw new RuntimeException("Missing encoding "+encoding, e);
+        }
+        return null;
+    }
+
+    public void setInfiniumStarterConfig(InfiniumStarterConfig infiniumStarterConfig) {
+        this.infiniumStarterConfig = infiniumStarterConfig;
     }
 }

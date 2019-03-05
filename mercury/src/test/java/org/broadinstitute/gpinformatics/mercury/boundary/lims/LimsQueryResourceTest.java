@@ -3,8 +3,11 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserContainerTest;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
@@ -13,11 +16,22 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.rules.TemporaryFolder;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -29,12 +43,17 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author breilly
  */
 @Test(groups = TestGroups.STANDARD)
 public class LimsQueryResourceTest extends RestServiceContainerTest {
+
+    @Inject
+    private LimsQueryResource limsQueryResource;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -651,5 +670,16 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught),
                 startsWith(
                         "Incompatible vessel types: [000006893901]"));
+    }
+
+    @Test
+    public void testVerifyChipTypes() throws IOException {
+        //String ampPlate = "000017270009";
+        //String chipBarcode = "202951080042";
+        String ampPlate = "000017259109";
+        String chipBarcode = "203293610273";
+
+        boolean result = limsQueryResource.verifyChipTypes(ampPlate, Collections.singletonList(chipBarcode));
+        Assert.assertEquals(result, true);
     }
 }
