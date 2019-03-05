@@ -107,7 +107,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
 
             WebTarget webTarget = getJerseyClient().target(urlString);
             Response clientResponse =
-                    webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(null); // todo jmt is this right?
+                    webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(null);
 
             InputStream is = clientResponse.readEntity(InputStream.class);
             rdr = new BufferedReader(new InputStreamReader(is));

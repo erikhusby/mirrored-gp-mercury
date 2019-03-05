@@ -235,7 +235,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         String urlString = getBaseUrl() + "/user/picker";
 
         WebTarget webResource = getJerseyClient().target(urlString).queryParam("query", key);
-        Response response = webResource.request(MediaType.APPLICATION_JSON_TYPE).get();
+        Response response = webResource.request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         JiraUserResponse jiraUserResponse = response.readEntity(JiraUserResponse.class);
         response.close();
 
