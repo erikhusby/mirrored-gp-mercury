@@ -361,4 +361,31 @@ public class ProductFixupTest extends Arquillian {
         }
         System.out.println(StringUtils.join(errors,"\n"));
     }
+
+    /**
+     *
+     * This test makes use of an input file "mercury/src/test/resources/testdata/changeProductCommercialStatus.txt"
+     * to get the products which are to have their commercial status updated.
+     *
+     * File format will be a summary on line 1, followed by one or more lines indicating the Partnumber and true/false
+     *      indicating if the product will be Sold as commercial only:
+     * SUPPORT-5166 Change the commercial status for products
+     * P-EX-0001 TRUE
+     * P-EX-0001 FALSE
+     *
+     *
+     * @throws Exception
+     */
+    @Test(enabled=false)
+    public void fixupChangeProductCommercialStatus() throws Exception {
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("changeProductCommercialStatus.txt"));
+        String fixupReason = lines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason needs to be defined");
+        final List<String> productsWithCommercialStatuses = lines.subList(1, lines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(productsWithCommercialStatuses));
+
+
+    }
+
 }
