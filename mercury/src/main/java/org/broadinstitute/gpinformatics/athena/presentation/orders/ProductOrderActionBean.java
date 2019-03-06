@@ -2386,7 +2386,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if(productEntity.isClinicalProduct()) {
                 priceTitle = "clinicalPrice";
             }
-
+            productInfo.put("productAgp", productEntity.getDefaultAggregationParticle());
             BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
             productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
 //            String externalPrice = null;
