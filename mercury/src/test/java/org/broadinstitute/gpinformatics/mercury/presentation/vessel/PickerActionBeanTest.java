@@ -46,7 +46,6 @@ public class PickerActionBeanTest extends BaseEventTest {
     private PickerActionBean actionBean;
     private LabVesselDao labVesselDaoMock;
     private LabBatchDao labBatchMock;
-    private BSPUserList bspUserListMock;
 
     public static final String BARCODE_SUFFIX = "1";
     private static final BigDecimal BIG_DECIMAL_12_33 = new BigDecimal("12.33");
@@ -70,8 +69,6 @@ public class PickerActionBeanTest extends BaseEventTest {
         actionBean.setLabVesselDao(labVesselDaoMock);
         labBatchMock = mock(LabBatchDao.class);
         actionBean.setLabBatchDao(labBatchMock);
-        bspUserListMock = mock(BSPUserList.class);
-        actionBean.setBspUserList(bspUserListMock);
 
         productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         runDate = new Date();

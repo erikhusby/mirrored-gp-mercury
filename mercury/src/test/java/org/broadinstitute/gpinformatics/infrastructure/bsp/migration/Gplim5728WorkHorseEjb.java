@@ -245,7 +245,7 @@ public class Gplim5728WorkHorseEjb {
                         if( rs.next() ) {
                             String sampleId = rs.getString(1);
                             addSampleToVessel( storedVessel, receptacleId, sampleId, labelToBspReceptaclIdMap);
-                            createCheckInEvent(storedVessel, new Date(), labelToBspReceptaclIdMap.size());
+                            createCheckInEvent(storedVessel, null, new Date(), labelToBspReceptaclIdMap.size());
                             tubeCount++;
                         } else {
                             // Sanity test
@@ -278,6 +278,7 @@ public class Gplim5728WorkHorseEjb {
             processPhaseTwoLog.write( "\n\n");
             processPhaseTwoLog.flush();
 
+            storageLocationDao.flush();
             utx.commit();
 
             storageLocationDao.clear();
@@ -642,10 +643,10 @@ public class Gplim5728WorkHorseEjb {
             // Add entry for rack
             labelToBspReceptaclIdMap.add( new String[]{RACK, rackOfTubes.getLabel(), tubeFormation.getLabel(), containerId.toString(), EMPTY, EMPTY});
 
-            createCheckInEvent(tubeFormation, eventdate, labelToBspReceptaclIdMap.size());
+            createCheckInEvent(tubeFormation, rackOfTubes, eventdate, labelToBspReceptaclIdMap.size());
         } else if (staticPlate != null) {
             labelToBspReceptaclIdMap.add( new String[]{PLATE, staticPlate.getLabel(), EMPTY, containerId.toString(), EMPTY, EMPTY});
-            createCheckInEvent(staticPlate, eventdate, labelToBspReceptaclIdMap.size());
+            createCheckInEvent(staticPlate, null, eventdate, labelToBspReceptaclIdMap.size());
         }
 
         return childCount;
@@ -832,9 +833,10 @@ public class Gplim5728WorkHorseEjb {
 
     }
 
-    private void createCheckInEvent( LabVessel inPlaceVessel, Date eventdate, int disambiguator) {
+    private void createCheckInEvent( LabVessel inPlaceVessel, RackOfTubes rack, Date eventdate, int disambiguator) {
         LabEvent checkInEvent = new LabEvent(LabEventType.STORAGE_CHECK_IN, eventdate, "Mercury", Long.valueOf(disambiguator), userBean.getBspUser().getUserId(),"Mercury");
         checkInEvent.setInPlaceLabVessel(inPlaceVessel);
+        checkInEvent.setAncillaryInPlaceVessel(rack);
         storageLocationDao.persist(checkInEvent);
     }
 

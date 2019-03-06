@@ -9,14 +9,10 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.PickerVesselPlugin;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -32,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -72,14 +69,6 @@ public class PickerActionBean extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
 
-    @Inject
-    private BSPUserList bspUserList;
-    @Inject
-    private JiraConfig jiraConfig;
-    @Inject
-    private PriceListCache priceListCache;
-    @Inject
-    private QuoteLink quoteLink;
     @Validate(required = true, on = {SEARCH_ACTION})
     private String barcodes;
 
@@ -166,11 +155,6 @@ public class PickerActionBean extends CoreActionBean {
         this.unpickableBarcodes = new HashSet<>();
         Set<String> tubesNotInStorage = new HashSet<>();
         SearchContext searchContext = new SearchContext();
-        searchContext.setBspUserList(bspUserList);
-        searchContext.setUserBean(userBean);
-        searchContext.setJiraConfig(jiraConfig);
-        searchContext.setPriceListCache(priceListCache);
-        searchContext.setQuoteLink(quoteLink);
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("XL20 Picker");
         searchTerm.setPluginClass(PickerVesselPlugin.class);
@@ -195,9 +179,16 @@ public class PickerActionBean extends CoreActionBean {
         try {
             configurableList.addRows(searchTerms, searchContext);
             this.resultList = configurableList.getResultList();
-            for (ConfigurableList.ResultRow resultRow : resultList.getResultRows()) {
-                String storageLocation = resultRow.getRenderableCells().get(0);
-                this.storageLocations.add(storageLocation);
+            for(Iterator<ConfigurableList.ResultRow> iter = resultList.getResultRows().iterator(); iter.hasNext(); ) {
+                ConfigurableList.ResultRow resultRow = iter.next();
+                List<String> values = resultRow.getRenderableCells();
+                if( values.get(1).isEmpty() ) {
+                    // No container - not pickable
+                    unpickableBarcodes.add(resultRow.getResultId());
+                    iter.remove();
+                } else {
+                    this.storageLocations.add(values.get(0));
+                }
             }
         } catch (NotInStorageException e) {
             for (String missing: e.getMissingVessels()) {
@@ -271,7 +262,4 @@ public class PickerActionBean extends CoreActionBean {
         this.labBatchDao = labBatchDao;
     }
 
-    public void setBspUserList(BSPUserList bspUserList) {
-        this.bspUserList = bspUserList;
-    }
 }
