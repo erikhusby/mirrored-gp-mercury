@@ -4,7 +4,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -48,6 +50,9 @@ public class ProductFixupTest extends Arquillian {
 
     @Inject
     ProductDao productDao;
+
+    @Inject
+    ProductOrderDao productOrderDao;
 
     @Inject
     private UserBean userBean;
@@ -403,6 +408,15 @@ public class ProductFixupTest extends Arquillian {
 
         for (Product product : productsToUpdate) {
             product.setExternalOnlyProduct(commercialStatusByProduct.get(product.getPartNumber()));
+
+            final List<ProductOrder> ordersWithCommonProduct =
+                    productOrderDao.findOrdersWithCommonProduct(product.getPartNumber());
+
+            for (ProductOrder productOrder : ordersWithCommonProduct) {
+                productOrder.setOrderType((commercialStatusByProduct.get(product.getPartNumber()))?
+                        ProductOrder.OrderAccessType.COMMERCIAL: ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+                productOrderDao.persist(productOrder);
+            }
             productDao.persist(product);
         }
 
