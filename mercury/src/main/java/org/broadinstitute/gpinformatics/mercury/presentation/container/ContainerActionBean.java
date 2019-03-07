@@ -7,8 +7,10 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
@@ -48,6 +50,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -344,10 +347,19 @@ public class ContainerActionBean extends RackScanActionBean {
         ajaxRequest = true;
         showLayout = true;
         validateVesselExist();
-        buildPositionMappingForInStorage();
+        // For an ajax call, just display any validation errors in the output location
         if (hasErrors()) {
-            throw new RuntimeException("Failed to find lab vessel: " + containerBarcode);
+            StringBuilder errDisp = new StringBuilder("<div class=\"alert alert-error\"><ul>");
+            ValidationErrors errs = getValidationErrors();
+            for(Map.Entry<String,List<ValidationError>> entry : errs.entrySet() ) {
+                for(ValidationError err : entry.getValue() ) {
+                    errDisp.append("<li>").append(err.getMessage(Locale.US)).append("</li>");
+                }
+            }
+            errDisp.append("</ul></div>");
+            return new StreamingResolution("text/html", errDisp.toString());
         }
+        buildPositionMappingForInStorage();
         return new ForwardResolution(CONTAINER_VIEW_SHIM_PAGE);
     }
 
