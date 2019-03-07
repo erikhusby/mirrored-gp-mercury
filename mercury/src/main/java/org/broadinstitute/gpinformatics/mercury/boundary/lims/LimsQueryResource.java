@@ -81,7 +81,7 @@ import java.util.zip.GZIPInputStream;
 @Path("/limsQuery")
 public class LimsQueryResource {
 
-    private static final Log log = LogFactory.getLog(Strings.class);
+    private static final Log log = LogFactory.getLog(LimsQueryResource.class);
 
     @Inject
     private ThriftService thriftService;
@@ -637,11 +637,16 @@ public class LimsQueryResource {
 
         List<String> fileOutput;
         String fileChipType;
-        LabVessel mapBarcodeToVessel = labVesselDao.findByIdentifier(plateBarcode);
         ProductOrder productOrder;
         Set<ProductOrder> productOrders = new HashSet<>();
 
-        for (SampleInstanceV2 sampleInstanceV2: mapBarcodeToVessel.getSampleInstancesV2()) {
+        LabVessel labVessel = labVesselDao.findByIdentifier(plateBarcode);
+        if (labVessel == null) {
+            throw new ResourceException("Failed to find Sample Plate" + plateBarcode,
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        for (SampleInstanceV2 sampleInstanceV2: labVessel.getSampleInstancesV2()) {
             ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
             if (pdoSampleForSingleBucket == null) {
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
@@ -669,21 +674,34 @@ public class LimsQueryResource {
         File dataPath = new File(dataPathStr);
 
         for (String chip: chips) {
-            // TODO find the chip in the neon file thing and grab the ... compare to above genotypingChip
-            // TODO \\neon\humgen_illumina_decode_data\Decode_data\chip\chip_R01C01_1.dmap.gz
             String fileName = String.format("%s_R01C01_1.dmap.gz", chip);
             File targetFolder = new File(dataPath, chip);
             File targetFile = new File(targetFolder, fileName);
 
             GZIPInputStream DMAP = null;
             try {
-                DMAP = LimsQueryResource.createReader(targetFile, "Cp1252"); //TODO Encoding?
+                DMAP = LimsQueryResource.createReader(targetFile, "Cp1252");
             }
             catch (IOException e) {
-                log.error("Failed to parse file", e); // TODO log and throw runtime exception
+                log.error("Failed to unzip file", e);
             }
+            finally {
+                if (DMAP == null) {
+                    throw new ResourceException("Failed to unzip DMAP File " + targetFile,
+                            Response.Status.INTERNAL_SERVER_ERROR);
+                }
+            }
+
             fileOutput = Strings.process(DMAP);
-            fileChipType = String.join("_",fileOutput.get(4),fileOutput.get(5)); // TODO if DMAP file format changes will need to check if still true
+            if (fileOutput == null){
+                throw new ResourceException("Failed to parse DMAP File " + targetFile,
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            } else if (fileOutput.size() != 17){
+                throw new ResourceException("Unexpected DMAP File output size " + fileOutput.size(),
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            }
+
+            fileChipType = fileOutput.get(4) + "_" + fileOutput.get(5);
 
             if (PDOChipType.startsWith(fileChipType)) {
                 return true;
@@ -707,16 +725,14 @@ public class LimsQueryResource {
         return chip;
     }
 
-    public static GZIPInputStream createReader (File f, String encoding) throws IOException
-    {
-        try
-        {
+    public static GZIPInputStream createReader (File f, String encoding) throws IOException {
+
+        try {
             InputStream in = new FileInputStream(f);
             if (f.getName ().endsWith (".gz"))
                 return new GZIPInputStream(in, 10240);
         }
-        catch (UnsupportedEncodingException e)
-        {
+        catch (UnsupportedEncodingException e) {
             throw new RuntimeException("Missing encoding "+encoding, e);
         }
         return null;
