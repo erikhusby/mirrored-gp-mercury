@@ -1913,6 +1913,12 @@ nodePrinter.print(webapp)
             <artifactId>csrfguard</artifactId>
             <version>3.1.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.5</version>
+        </dependency>
     </dependencies>
 
     <build>

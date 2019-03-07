@@ -12,6 +12,8 @@ package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
 
 import javax.xml.bind.DatatypeConverter;
 import java.text.DateFormat;
@@ -596,6 +598,13 @@ public class DateUtils {
 
         return (int)( (end.getTime() - start.getTime()) / MILLISECONDS_IN_DAY);
     }
+
+    public static int getJodaNumDaysBetween(Date startDate, Date endDate) {
+        return Days.daysBetween(
+                new LocalDate(startDate.getTime()),
+                new LocalDate(endDate.getTime())).getDays();
+    }
+
 
     public static Date parseXmlDate(String s) {
         return DatatypeConverter.parseDate(s).getTime();

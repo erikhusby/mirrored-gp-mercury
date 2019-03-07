@@ -771,7 +771,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 quote.get().getFunding().stream()
                     .filter(Funding::isFundsReservation)
                     .forEach(funding -> {
-                        int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                        int numDaysBetween = DateUtils.getJodaNumDaysBetween(new Date(), funding.getGrantEndDate());
                         if (numDaysBetween > 0 && numDaysBetween < 45) {
                             addMessage(
                                 String.format("The Funding Source %s on %s  Quote expires in %d days. If it is likely "
@@ -1425,7 +1425,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                             fundingInfo.put("activeGrant", FundingLevel.isGrantActiveForDate(todayTruncated, funding));
                             fundingInfo.put("daysTillExpire",
-                                DateUtils.getNumDaysBetween(todayTruncated, funding.getGrantEndDate()));
+                                DateUtils.getJodaNumDaysBetween(todayTruncated, funding.getGrantEndDate()));
                             fundingDetails.put(fundingInfo);
                         } catch (JSONException e) {
                             throw new RuntimeException(e);
