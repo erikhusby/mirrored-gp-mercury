@@ -367,10 +367,10 @@ public class ProductFixupTest extends Arquillian {
      * This test makes use of an input file "mercury/src/test/resources/testdata/changeProductCommercialStatus.txt"
      * to get the products which are to have their commercial status updated.
      *
-     * File format will be a summary on line 1, followed by one or more lines indicating the Partnumber and true/false
-     *      indicating if the product will be Sold as commercial only:
+     * File format will be a summary on line 1, followed by one or more lines indicating the Part number and true/false
+     *      indicating if the product will be Sold as commercial only.  The lines are tab delimited:
      * SUPPORT-5166 Change the commercial status for products
-     * P-EX-0001 TRUE
+     * P-EX-0001\tTRUE
      * P-EX-0001 FALSE
      *
      *
@@ -379,13 +379,36 @@ public class ProductFixupTest extends Arquillian {
     @Test(enabled=false)
     public void fixupChangeProductCommercialStatus() throws Exception {
 
+        userBean.loginOSUser();
+        utx.begin();
+
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("changeProductCommercialStatus.txt"));
         String fixupReason = lines.get(0);
         Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason needs to be defined");
         final List<String> productsWithCommercialStatuses = lines.subList(1, lines.size());
         Assert.assertTrue(CollectionUtils.isNotEmpty(productsWithCommercialStatuses));
 
+        Map<String, Boolean> commercialStatusByProduct = new HashMap<>();
 
+        for (String productsWithStatus : productsWithCommercialStatuses) {
+            final String[] splitProductsFromStatus = productsWithStatus.split("\t");
+            Assert.assertTrue(splitProductsFromStatus.length == 2, "Either one of the items in the line is missing or they are not separated by a tab");
+            Assert.assertTrue(StringUtils.isNotBlank(splitProductsFromStatus[0])&&
+                              StringUtils.isNotBlank(splitProductsFromStatus[1]),"Either the product or the commercial status has not been set");
+
+            commercialStatusByProduct.put(splitProductsFromStatus[0], Boolean.valueOf(splitProductsFromStatus[1]));
+        }
+
+        final List<Product> productsToUpdate = productDao.findByPartNumbers(new ArrayList<>(commercialStatusByProduct.keySet()));
+
+        for (Product product : productsToUpdate) {
+            product.setExternalOnlyProduct(commercialStatusByProduct.get(product.getPartNumber()));
+            productDao.persist(product);
+        }
+
+        System.out.println("Commercial statuses updated: "+ StringUtils.join(commercialStatusByProduct.keySet(), ", "));
+
+        productDao.persist(new FixupCommentary(fixupReason));
+        utx.commit();
     }
-
 }
