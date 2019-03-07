@@ -415,7 +415,6 @@ public class ProductFixupTest extends Arquillian {
             for (ProductOrder productOrder : ordersWithCommonProduct) {
                 productOrder.setOrderType((commercialStatusByProduct.get(product.getPartNumber()))?
                         ProductOrder.OrderAccessType.COMMERCIAL: ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
-                productOrderDao.persist(productOrder);
             }
             productDao.persist(product);
         }
