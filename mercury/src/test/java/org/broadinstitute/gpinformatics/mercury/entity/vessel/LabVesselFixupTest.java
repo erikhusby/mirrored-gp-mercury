@@ -1745,7 +1745,7 @@ public class LabVesselFixupTest extends Arquillian {
     @Test(enabled = false, groups = TestGroups.FIXUP)
     public void gplim_5743BackPopulateCrspPortalMetadataSource() throws IOException {
         List<String> sampleIds = IOUtils.readLines(VarioskanParserTest.getTestResource("crsp_metadata_source.txt"));
-        List<LabVessel> crspPortalLabVessels = labVesselDao.findBySampleKeyList(sampleIds);
+        List<LabVessel> crspPortalLabVessels = labVesselDao.findByUnknownBarcodeTypeList(sampleIds);
         for (LabVessel labVessel : crspPortalLabVessels) {
             if (!CollectionUtils.isEmpty(labVessel.getMercurySamples())) {
 

@@ -126,7 +126,7 @@
             <c:if test="${fn:length(actionBean.allowedQueueSpecializations) > 0}">
             Select applicable Queue Specialization:
             <stripes:select name="queueSpecialization">
-                <stripes:option label="Select One: " />
+                <stripes:option label="Select One: " value="" />
                 <stripes:options-collection collection="${actionBean.allowedQueueSpecializations}" value="name" label="displayName" />
             </stripes:select><br />
             </c:if>

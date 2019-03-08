@@ -43,7 +43,7 @@ public class QueueResource {
 
         QueueType queueType = QueueType.valueOf(QueueType.class, enqueueContents.getQueueType().name());
         Collection<LabVessel> labVessels = labVesselDao.findByBarcodes(enqueueContents.getTubeBarcodes()).values();
-        labVessels.addAll(labVesselDao.findBySampleKeyList(enqueueContents.getTubeBarcodes()));
+        labVessels.addAll(labVesselDao.findByUnknownBarcodeTypeList(enqueueContents.getTubeBarcodes()));
         labVessels.removeAll(Collections.singletonList(null));
         QueueOrigin queueOrigin = QueueOrigin.RECEIVING;
         if (enqueueContents.getReadableName().startsWith("Ext")) {

@@ -129,7 +129,7 @@ public class ReceiveSamplesEjb {
                 }
 
                 List<LabVessel> vesselsForPico = new ArrayList<>();
-                List<LabVessel> labVessels = labVesselDao.findBySampleKeyList(sampleIds);
+                List<LabVessel> labVessels = labVesselDao.findByUnknownBarcodeTypeList(sampleIds);
                 labVessels.addAll(labVesselDao.findByBarcodes(sampleIds).values());
 
                 for (LabVessel labVessel : labVessels) {
@@ -178,7 +178,7 @@ public class ReceiveSamplesEjb {
                     }
 
                     List<LabVessel> vesselsForPico = new ArrayList<>();
-                    List<LabVessel> labVessels = labVesselDao.findBySampleKeyList(kit.getSamples());
+                    List<LabVessel> labVessels = labVesselDao.findByUnknownBarcodeTypeList(kit.getSamples());
                     labVessels.addAll(labVesselDao.findByBarcodes(kit.getSamples()).values());
 
                     for (LabVessel labVessel : labVessels) {

@@ -71,18 +71,18 @@ public class LabVesselDao extends GenericDao {
         return findSingle(LabVessel.class, LabVessel_.labVesselId, vid);
     }
 
-    public List<LabVessel> findBySampleKeyList(List<String> sampleKeys) {
-        return findBySampleKeyList((Collection<String>) sampleKeys);
-    }
+    public List<LabVessel> findByUnknownBarcodeTypeList(Collection<String> sampleKeys) {
 
-    public List<LabVessel> findBySampleKeyList(Collection<String> sampleKeys) {
-        List<LabVessel> resultList = new ArrayList<>();
+        List<LabVessel> labVessels = new ArrayList<>();
+        List<MercurySample> mercurySamples = findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
 
-        for (String sampleKey : sampleKeys) {
-            resultList.addAll(findBySampleKey(sampleKey));
+        for (MercurySample mercurySample : mercurySamples) {
+            labVessels.addAll(mercurySample.getLabVessel());
         }
 
-        return resultList;
+        labVessels.addAll(findListByList(LabVessel.class, LabVessel_.label, sampleKeys));
+
+        return labVessels;
     }
 
     /**

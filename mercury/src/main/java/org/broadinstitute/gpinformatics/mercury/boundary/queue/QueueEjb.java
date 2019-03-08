@@ -90,7 +90,7 @@ public class QueueEjb {
      */
     public Long enqueueBySampleIdList(List<String> sampleIds, QueueType queueType, @Nullable String readableText,
                                       @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
-        List<LabVessel> labVessels = labVesselDao.findBySampleKeyList(sampleIds);
+        List<LabVessel> labVessels = labVesselDao.findByUnknownBarcodeTypeList(sampleIds);
         return enqueueLabVessels(labVessels, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
     }
 
@@ -460,7 +460,7 @@ public class QueueEjb {
      * @param messageCollection     Messages back to the user.
      */
     public void excludeItemsById(List<String> excludeVessels, QueueType queueType, MessageCollection messageCollection) {
-        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(excludeVessels);
+        List<LabVessel> vessels = labVesselDao.findByUnknownBarcodeTypeList(excludeVessels);
 
         vessels.addAll(labVesselDao.findByBarcodes(excludeVessels).values());
         vessels.removeAll(Collections.singletonList(null));

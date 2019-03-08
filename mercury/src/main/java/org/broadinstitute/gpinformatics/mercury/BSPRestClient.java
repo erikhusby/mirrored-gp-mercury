@@ -14,6 +14,8 @@ package org.broadinstitute.gpinformatics.mercury;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.LoggingFilter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
@@ -21,6 +23,9 @@ import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientServ
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
+import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,9 +34,11 @@ import java.util.List;
 @Dependent
 public class BSPRestClient extends AbstractJerseyClientService {
 
-    private static final String EXOMEEXPRESS_CHECK_IS_EXEX = "exomeexpress/check_is_exex";
+    private static final String EXOMEEXPRESS_CHECK_IS_EXEX = "exomeexpress/check_is_exex_with_wrapper";
 
     private static final long serialVersionUID = 5472586820069306030L;
+
+    private static final Log logger = LogFactory.getLog(BSPRestClient.class);
 
     @Inject
     private BSPConfig bspConfig;
@@ -60,9 +67,22 @@ public class BSPRestClient extends AbstractJerseyClientService {
         return getJerseyClient().resource(urlString);
     }
 
-
     public ExomeExpressCheckResponse callExomeExpressCheck(List<String> barcodes) {
         WebResource webResource = getWebResource(getUrl(EXOMEEXPRESS_CHECK_IS_EXEX));
-        return webResource.type(MediaType.APPLICATION_FORM_URLENCODED).post(ExomeExpressCheckResponse.class, makeQueryString("barcodes", barcodes));
+        webResource.addFilter(new LoggingFilter(System.out));
+        return webResource.type(MediaType.APPLICATION_JSON).post(ExomeExpressCheckResponse.class, new ListWrapper(barcodes));
+    }
+
+    @XmlRootElement
+    public static class ListWrapper {
+        public ListWrapper() {
+            this(Collections.emptyList());
+        }
+
+        public ListWrapper(List<String> list) {
+            this.list = list.toArray(new String[0]);
+        }
+
+        public String[] list;
     }
 }
