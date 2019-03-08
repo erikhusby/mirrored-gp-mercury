@@ -32,7 +32,7 @@ public class ConcordanceCalculatorTest extends Arquillian {
     }
 
     @Test
-    public void test() {
+    public void testNa12878() {
         MercurySample mercurySample1 = mercurySampleDao.findBySampleKey("SM-IFXLP");
         Fingerprint fingerprint1 = fingerprintDao.findBySampleAndDateGenerated(mercurySample1,
                 new GregorianCalendar(2019, Calendar.FEBRUARY, 5, 12, 27, 06).getTime());

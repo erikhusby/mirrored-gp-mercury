@@ -1892,9 +1892,9 @@ nodePrinter.print(webapp)
         </dependency>
 -->
         <dependency>
-            <groupId>com.github.broadinstitute</groupId>
-            <artifactId>picard-private</artifactId>
-            <version>1.2</version>
+            <groupId>org.broadinstitute</groupId>
+            <artifactId>picard-private-all</artifactId>
+            <version>21e938027233911b1eaa0a2ffc94efc817c14489</version>
         </dependency>
 
         <dependency>
