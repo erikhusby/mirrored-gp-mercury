@@ -674,10 +674,17 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test
     public void testVerifyChipTypes() throws IOException {
-        //String ampPlate = "000017270009";
-        //String chipBarcode = "202951080042";
-        String ampPlate = "000017259109";
+        /*
+         Chip Type GSAMD-24v1-0
+         */
+        //String ampPlate = "000017259109";
         String chipBarcode = "203293610273";
+        /*
+
+        Chip Type Multi-EthnicGlobal
+         */
+        String ampPlate = "000016899009";
+        //String chipBarcode = "200803750060";
 
         boolean result = limsQueryResource.verifyChipTypes(ampPlate, Collections.singletonList(chipBarcode));
         Assert.assertEquals(result, true);

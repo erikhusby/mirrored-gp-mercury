@@ -674,9 +674,17 @@ public class LimsQueryResource {
         File dataPath = new File(dataPathStr);
 
         for (String chip: chips) {
-            String fileName = String.format("%s_R01C01_1.dmap.gz", chip);
+            String fileName = String.format("%s_R01C01_01.dmap.gz", chip);
             File targetFolder = new File(dataPath, chip);
             File targetFile = new File(targetFolder, fileName);
+            if (!targetFile.exists()){
+                StringBuilder retryFileName = new StringBuilder(fileName).deleteCharAt(fileName.length() - 10);
+                targetFile = new File(targetFolder, retryFileName.toString());
+                if (!targetFile.exists()){
+                    throw new ResourceException("Failed to find target DMAP File" + targetFile,
+                            Response.Status.INTERNAL_SERVER_ERROR);
+                }
+            }
 
             GZIPInputStream DMAP = null;
             try {
@@ -696,12 +704,12 @@ public class LimsQueryResource {
             if (fileOutput == null){
                 throw new ResourceException("Failed to parse DMAP File " + targetFile,
                         Response.Status.INTERNAL_SERVER_ERROR);
-            } else if (fileOutput.size() != 17){
+            } else if (fileOutput.size() < 4){
                 throw new ResourceException("Unexpected DMAP File output size " + fileOutput.size(),
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
 
-            fileChipType = fileOutput.get(4) + "_" + fileOutput.get(5);
+            fileChipType = fileOutput.get(4);
 
             if (PDOChipType.startsWith(fileChipType)) {
                 return true;
