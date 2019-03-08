@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
@@ -568,7 +569,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         }
 
         // order of assignments is same as order of fields
-        reagents.addAll(labVessel.getReagentContents());
+        for( Reagent reagent : labVessel.getReagentContents() ) {
+            addReagent(reagent);
+        }
 
         List<LabBatchStartingVessel> labBatchStartingVesselsByDate = labVessel.getLabBatchStartingVesselsByDate();
         allLabBatchStartingVessels.addAll(labBatchStartingVesselsByDate);
@@ -763,10 +766,18 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     public String getAggregationParticle() {
         ProductOrderSample productOrderSample = getProductOrderSampleForSingleBucket();
         if (productOrderSample != null) {
-            if (productOrderSample.getAggregationParticle() != null) {
+            if (productOrderSample.getAggregationParticle() == null) {
+                ProductOrder productOrder = productOrderSample.getProductOrder();
+                Product.AggregationParticle defaultAggregationParticle = productOrder.getDefaultAggregationParticle();
+                if (defaultAggregationParticle != null) {
+                    return defaultAggregationParticle
+                        .build(getNearestMercurySampleName(), productOrder.getJiraTicketKey());
+                }
+            } else {
                 return productOrderSample.getAggregationParticle();
             }
         }
+
         return aggregationParticle;
     }
 
