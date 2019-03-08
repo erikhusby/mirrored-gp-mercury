@@ -915,7 +915,8 @@
             }
 
             var $aggregationParticle = $j("#aggregationParticle");
-            if (data.productAgp !== undefined && $aggregationParticle.val() === "") {
+            var agpFieldChanged = data.productAgp !== undefined && $aggregationParticle.val() !== data.productAgp;
+            if (agpFieldChanged && $j("#orderId").length === 0) {
                 if ($aggregationParticle.text() !== data.productAgp) {
                     var agpModalMessage = modalMessages("info", {
                         onClose: function(){
@@ -930,6 +931,8 @@
                         .add("The selected product defines a default aggregation particle. This order will now aggregate on '"
                             + $aggregationParticle.find(":selected").text() + "' unless you override this manually.", "AGP_CHANGED");
                 }
+            } else {
+                modalMessages("info","AGP_CHANGED").clear();
             }
 
             $j("#primaryProductListPrice").text(priceListText);
@@ -1467,7 +1470,7 @@
                                     DRAFT
                                 </c:when>
                                 <c:otherwise>
-                                    <a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">
+                                    <a id="orderId" target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">
                                             ${actionBean.editOrder.jiraTicketKey}
                                     </a>
                                 </c:otherwise>
