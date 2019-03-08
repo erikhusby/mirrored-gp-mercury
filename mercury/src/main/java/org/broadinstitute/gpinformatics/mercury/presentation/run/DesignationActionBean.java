@@ -282,13 +282,6 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                             startingVessels.add(startingVessel.getLabVessel());
                         }
                     }
-                    log.debug("Loading tube " + loadingTube.getLabel() +
-                            " (" + sampleInstance.getNearestMercurySampleName() + ") is in " +
-                            lcset.getBatchName() + " and has starting vessels " +
-                            sampleInstance.getAllBatchVessels(lcset.getLabBatchType()).stream().
-                                    filter(lbsv -> lcset.equals(lbsv.getLabBatch().getBatchName())).
-                                    map(lbsv -> lbsv.getLabVessel().getLabel()).
-                                    collect(Collectors.joining(" ")));
 
                     // Finds bucket entries for this lcset.
                     for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
@@ -296,10 +289,6 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                             loadingTubeToBucketEntry.put(loadingTube, bucketEntry);
                         }
                     }
-                } else {
-                    log.debug("Loading tube " + loadingTube.getLabel() +
-                            " (" + sampleInstance.getNearestMercurySampleName() + ") is not in " +
-                            lcset.getBatchName());
                 }
             }
 
