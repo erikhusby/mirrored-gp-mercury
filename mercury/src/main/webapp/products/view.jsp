@@ -288,7 +288,7 @@
                 </div>
 
                 <div class="view-control-group control-group">
-                    <label class="control-label label-form">Aggregation Particle</label>
+                    <label class="control-label label-form">Custom Aggregation Particle</label>
                     <div class="controls">
                         <div class="form-value">
                                 ${actionBean.editProduct.defaultAggregationParticle.displayName}
