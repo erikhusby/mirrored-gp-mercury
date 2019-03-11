@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
@@ -208,6 +209,7 @@ public class LibraryBean {
     @JsonProperty("aggregationParticle")
     private String aggregationParticle;
 
+    @JsonIgnore
     private boolean impliedSampleName = false;
 
     public LibraryBean() {}
