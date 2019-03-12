@@ -692,10 +692,10 @@
 
                         <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
                             <div class="control-group">
-                                <stripes:label for="aggregationParticle" name="aggregationParticle"
+                                <stripes:label for="aggregationParticle" name="customAggregationParticle"
                                                class="control-label"/>
                                 <div class="controls">
-                                    <stripes:select style="width: auto;" id="aggregationParticle"
+                                    <stripes:select style="width: auto;" id="customAggregationParticle"
                                                     name="editProduct.defaultAggregationParticle"
                                                     title="Select the custom aggregation particle which the pipleine will appended to their default aggregation. By default the pipeline aggregates on the research project.">
                                         <stripes:option value="">Pipeline Default</stripes:option>
