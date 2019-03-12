@@ -1636,7 +1636,7 @@
                         <stripes:select style="width: auto;" id="customAggregationParticle"
                                         name="editOrder.defaultAggregationParticle"
                                         title="Select the custom aggregation particle which the pipleine will appended to their default aggregation. By default the pipeline aggregates on the research project.">
-                            <stripes:option value="">Pipeline Default</stripes:option>
+                            <stripes:option value=""><%=Product.AggregationParticle.DEFAULT_LABEL%></stripes:option>
                             <stripes:options-enumeration label="displayName"
                                                          enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
                         </stripes:select>
