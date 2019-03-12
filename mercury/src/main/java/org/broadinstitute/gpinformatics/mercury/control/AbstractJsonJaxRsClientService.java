@@ -17,15 +17,15 @@ import java.io.OutputStream;
 
 
 /**
- * Abstract subclass of {@link AbstractJerseyClientService} with helpful methods for JSON-based RESTful web services.
+ * Abstract subclass of {@link AbstractJaxRsClientService} with helpful methods for JSON-based RESTful web services.
  *
  */
 // FIXME: This code is not OOP, and would be better abstracted as a helper class instead of a base class.
-public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClientService {
+public abstract class AbstractJsonJaxRsClientService extends AbstractJaxRsClientService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     
-    private static final Log log = LogFactory.getLog(AbstractJsonJerseyClientService.class);
+    private static final Log log = LogFactory.getLog(AbstractJsonJaxRsClientService.class);
 
     /**
      * Write a JSON representation of the bean parameter to a {@link String} and return.

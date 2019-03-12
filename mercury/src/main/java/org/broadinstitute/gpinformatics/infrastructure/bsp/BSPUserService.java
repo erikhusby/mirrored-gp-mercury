@@ -4,7 +4,7 @@ import com.thoughtworks.xstream.XStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
+import org.broadinstitute.gpinformatics.mercury.BSPJaxRsClient;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -21,7 +21,7 @@ import static javax.ws.rs.core.Response.Status.OK;
  * BSP API for creating a user. Currently only used to create an external collaborator.
  */
 @Dependent
-public class BSPUserService extends BSPJerseyClient {
+public class BSPUserService extends BSPJaxRsClient {
     private static final long serialVersionUID = 2587957568965043063L;
 
     private static final Log log = LogFactory.getLog(BSPUserService.class);

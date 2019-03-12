@@ -4,7 +4,7 @@ import com.thoughtworks.xstream.XStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
-import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
+import org.broadinstitute.gpinformatics.mercury.BSPJaxRsClient;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
@@ -24,7 +24,7 @@ import java.util.List;
  */
 @Dependent
 @Default
-public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPSampleReceiptService {
+public class BSPSampleReceiptServiceImpl extends BSPJaxRsClient implements BSPSampleReceiptService {
 
     private static final String WEB_SERVICE_URL = "sample/receivesamples";
     private static final XStream XSTREAM = new XStream();

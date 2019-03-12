@@ -35,15 +35,15 @@ import java.util.List;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.OK;
 
-public abstract class AbstractJerseyClientService implements Serializable {
+public abstract class AbstractJaxRsClientService implements Serializable {
     private static final long serialVersionUID = 460875882310020779L;
 
-    private static final Log logger = LogFactory.getLog(AbstractJerseyClientService.class);
+    private static final Log logger = LogFactory.getLog(AbstractJaxRsClientService.class);
 
     @Inject
     private Deployment deployment;
 
-    public AbstractJerseyClientService() {}
+    public AbstractJaxRsClientService() {}
 
     /**
      * Subclasses can call this to specify the username and password for HTTP Auth

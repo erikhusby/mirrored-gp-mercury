@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
-import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
+import org.broadinstitute.gpinformatics.mercury.BSPJaxRsClient;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
@@ -24,7 +24,7 @@ import java.util.TreeSet;
  */
 @Dependent
 @Default
-public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCohortSearchService {
+public class BSPCohortSearchServiceImpl extends BSPJaxRsClient implements BSPCohortSearchService {
 
     private static final long serialVersionUID = -1765914773249771569L;
 

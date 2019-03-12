@@ -24,7 +24,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Iss
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJaxRsClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 
@@ -54,7 +54,7 @@ import java.util.Set;
 
 @Default
 @Dependent
-public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
+public class JiraServiceImpl extends AbstractJsonJaxRsClientService implements JiraService {
 
     @Inject
     private JiraConfig jiraConfig;

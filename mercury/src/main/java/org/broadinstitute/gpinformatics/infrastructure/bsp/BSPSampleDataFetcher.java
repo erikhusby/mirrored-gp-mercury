@@ -2,8 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
-import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.BSPJaxRsClient;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 
 import javax.annotation.Nonnull;
@@ -30,7 +30,7 @@ import java.util.Set;
  * Wrapper around {@link BSPSampleSearchService} that
  * does a bit more object-ifying and type-safety.
  */
-public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Serializable {
+public abstract class BSPSampleDataFetcher extends BSPJaxRsClient implements Serializable {
     static final long serialVersionUID = -1432207534876411738L;
 
     @Inject
@@ -161,7 +161,7 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
             final int SAMPLE_BARCODE = 0;
             final int FFPE = 1;
 
-            post(urlString, params, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
+            post(urlString, params, ExtraTab.FALSE, new AbstractJaxRsClientService.PostCallback() {
                 @Override
                 public void callback(String[] bspOutput) {
                     BspSampleData bspSampleData = barcodeToSampleDataMap.get(bspOutput[SAMPLE_BARCODE]);
@@ -190,7 +190,7 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
         params.addAll("sample_lsid", new ArrayList<>(lsidToSampleDataMap.keySet()));
         final int LSID = 1;
         final int PLASTIC_BARCODE = 16;
-        post(urlString, params, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
+        post(urlString, params, ExtraTab.FALSE, new AbstractJaxRsClientService.PostCallback() {
             @Override
             public void callback(String[] bspOutput) {
                 BspSampleData bspSampleData = lsidToSampleDataMap.get(bspOutput[LSID]);

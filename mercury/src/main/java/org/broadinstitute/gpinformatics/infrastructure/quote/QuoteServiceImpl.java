@@ -8,7 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.owasp.encoder.Encode;
 import org.w3c.dom.Document;
@@ -37,7 +37,7 @@ import java.util.Set;
 
 @ApplicationScoped
 @Default
-public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
+public class QuoteServiceImpl extends AbstractJaxRsClientService implements QuoteService {
 
     public static final String COMMUNICATION_ERROR = "Could not communicate with quote server at %s: %s";
 

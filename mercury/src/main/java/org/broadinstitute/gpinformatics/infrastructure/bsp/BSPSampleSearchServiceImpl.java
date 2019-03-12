@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
@@ -21,7 +21,7 @@ import java.util.Map;
 
 @Dependent
 @Default
-public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
+public class BSPSampleSearchServiceImpl extends AbstractJaxRsClientService implements BSPSampleSearchService {
     private static final long serialVersionUID = 3432255750259397293L;
 
     public static final String SEARCH_RUN_SAMPLE_SEARCH = "search/runSampleSearch";

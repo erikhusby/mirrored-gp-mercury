@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitRecipi
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 
 import javax.annotation.Nonnull;
@@ -27,7 +27,7 @@ import javax.ws.rs.core.Response;
  */
 @Default
 @Dependent
-public class CollaborationPortalService extends AbstractJerseyClientService {
+public class CollaborationPortalService extends AbstractJaxRsClientService {
 
     private static final long serialVersionUID = 5340477906783139812L;
 

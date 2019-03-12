@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.barcode.generated.DecodeResponse;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
 
 import javax.enterprise.context.Dependent;
@@ -22,7 +22,7 @@ import java.io.IOException;
  * This contains common code used by all clients of Barcode Decoder rest (ie: non-broadcore) services.
  */
 @Dependent
-public class BarcodeDecoderRestClient extends AbstractJerseyClientService {
+public class BarcodeDecoderRestClient extends AbstractJaxRsClientService {
     private static final Log log = LogFactory.getLog(BarcodeDecoderRestClient.class);
 
     @Inject

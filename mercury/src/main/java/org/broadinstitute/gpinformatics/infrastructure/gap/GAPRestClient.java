@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.gap;
 
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -11,7 +11,7 @@ import javax.ws.rs.client.WebTarget;
  * This contains common code used by all clients of GAP rest (ie: non-broadcore) services.
  */
 @Dependent
-public class GAPRestClient extends AbstractJerseyClientService {
+public class GAPRestClient extends AbstractJaxRsClientService {
 
     private static final long serialVersionUID = 20150720L;
 
