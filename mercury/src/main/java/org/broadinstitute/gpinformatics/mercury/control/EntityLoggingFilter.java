@@ -18,6 +18,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
+/**
+ * In tests, use client.register with this, to see the payload of web service calls.
+ */
 @Priority(Integer.MIN_VALUE)
 public class EntityLoggingFilter implements ClientRequestFilter, ClientResponseFilter, WriterInterceptor {
 

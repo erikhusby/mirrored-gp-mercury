@@ -166,7 +166,6 @@ public class IlluminaRunResourceTest extends Arquillian {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
         ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
         ZimsIlluminaRun run = clientBuilder.build().target(url)
                 .queryParam("runName", RUN_NAME)

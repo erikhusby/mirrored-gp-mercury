@@ -30,6 +30,7 @@ public class GapHandler {
 
             // This is called in context of bettalims message handling which handles errors via RuntimeException.
             if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+                response.close();
                 throw new RuntimeException("POST to " + urlString + " returned: " + response.readEntity(String.class));
             }
             response.close();

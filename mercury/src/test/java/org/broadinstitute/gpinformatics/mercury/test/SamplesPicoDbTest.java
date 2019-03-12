@@ -45,7 +45,6 @@ public class SamplesPicoDbTest extends StubbyContainerTest {
         String timestamp = timestampFormat.format(new Date());
 
         ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
         Client client = clientBuilder.build();
         client.register(new EntityLoggingFilter());

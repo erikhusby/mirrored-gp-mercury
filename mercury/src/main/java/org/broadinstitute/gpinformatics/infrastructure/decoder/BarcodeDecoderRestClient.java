@@ -54,11 +54,6 @@ public class BarcodeDecoderRestClient extends AbstractJerseyClientService {
         mdo.addFormData("file",
                 file,
                 MediaType.APPLICATION_OCTET_STREAM_TYPE);
-//        fileDataBodyPart.setContentDisposition(
-//                FormDataContentDisposition.name("file")
-//                        .fileName(file.getName()).build());
-
-//        final MultiPart multiPart = new FormDataMultiPart().bodyPart(fileDataBodyPart);
         mdo.addFormData("eventClass", eventClass, MediaType.MULTIPART_FORM_DATA_TYPE);
 
         GenericEntity<MultipartFormDataOutput> entity = new GenericEntity<MultipartFormDataOutput>(mdo) { };

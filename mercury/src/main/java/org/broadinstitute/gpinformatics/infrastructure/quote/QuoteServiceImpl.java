@@ -162,9 +162,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
 
         Response response = resource.request(MediaType.TEXT_PLAIN).get();
-        if (response == null) {
-            throw newQuoteServerFailureException(quote, quotePriceItem, numWorkUnits);
-        }
 
         String registerNewWork = registerNewWork(response, quote, quotePriceItem, numWorkUnits);
         response.close();
@@ -224,7 +221,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     @Override
     protected void customizeClient(Client client) {
-//        client.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         specifyHttpAuthCredentials(client, quoteConfig);
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }

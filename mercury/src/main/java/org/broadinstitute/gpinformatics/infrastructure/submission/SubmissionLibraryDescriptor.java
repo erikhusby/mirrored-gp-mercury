@@ -23,7 +23,7 @@ import java.io.Serializable;
 
 // setting the access order to alphabetical helps the tests pass more reliably.
 @JsonPropertyOrder(alphabetic = true)
-@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY) // todo jmt
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionLibraryDescriptor implements Serializable {
     private static final long serialVersionUID = 2140289148823382712L;

@@ -51,7 +51,6 @@ public class CadencePicoDbTest extends StubbyContainerTest {
         }
 
         ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
         Client client = clientBuilder.build();
         client.register(new EntityLoggingFilter());

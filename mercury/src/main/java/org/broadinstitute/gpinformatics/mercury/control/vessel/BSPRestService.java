@@ -59,6 +59,7 @@ public class BSPRestService implements Serializable {
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            response.close();
             throw new RuntimeException("GET to " + urlString + " returned: " + response.readEntity(String.class));
         }
 

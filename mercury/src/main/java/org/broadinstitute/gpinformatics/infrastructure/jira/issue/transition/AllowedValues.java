@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition;
 
+/**
+ * DTO to accept results from JIRA web service call (not currently used, but mapper throws exception without it).
+ */
 public class AllowedValues {
     private String self;
     private String value;

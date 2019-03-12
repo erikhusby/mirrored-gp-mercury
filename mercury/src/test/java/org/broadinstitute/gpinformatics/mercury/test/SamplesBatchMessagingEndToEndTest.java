@@ -45,7 +45,6 @@ public class SamplesBatchMessagingEndToEndTest extends StubbyContainerTest {
     public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String timestamp = timestampFormat.format(new Date());
         ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
-//        clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
         Client client = clientBuilder.build();
         client.register(new EntityLoggingFilter());
