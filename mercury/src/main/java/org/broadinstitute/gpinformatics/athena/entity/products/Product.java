@@ -425,6 +425,16 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.indexType = indexType;
     }
 
+    @Transient
+    public String getAggregationParticleDisplayName() {
+        String displayValue = Product.AggregationParticle.DEFAULT_LABEL;
+        if (defaultAggregationParticle != null) {
+            displayValue = defaultAggregationParticle.getDisplayName();
+        }
+        return displayValue;
+    }
+
+
     public AggregationParticle getDefaultAggregationParticle() {
         return defaultAggregationParticle;
     }
@@ -1033,6 +1043,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         private static final Log log = LogFactory.getLog(AggregationParticle.class);
 
         private final String displayName;
+        public static final String DEFAULT_LABEL = "Pipeline Default";
 
         AggregationParticle(String displayName) {
             this.displayName = displayName;
