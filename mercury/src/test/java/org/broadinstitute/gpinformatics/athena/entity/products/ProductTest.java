@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -27,10 +28,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductTest {
@@ -106,7 +107,8 @@ public class ProductTest {
       public void testDefaultAggregationParticleDefaultValueNeverNull(Product.AggregationParticle aggregationParticle, String displayValue) {
           Product product = new Product();
           product.setDefaultAggregationParticle(aggregationParticle);
-          assertThat(displayValue, notNullValue());
+
+          assertThat(StringUtils.isNotBlank(displayValue), is(true));
           assertThat(product.getAggregationParticleDisplayName(), equalTo(displayValue));
       }
 }
