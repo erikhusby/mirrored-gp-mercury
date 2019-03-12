@@ -45,7 +45,7 @@ public class BSPUserService extends BSPJaxRsClient {
         formData.add("emailAddress", emailAddress);
         formData.add("createdById", String.valueOf(creator.getUserId()));
         Response clientResponse =
-                getJerseyClient().target(urlString)
+                getJaxRsClient().target(urlString)
                         .request(MediaType.TEXT_XML_TYPE)
                         .post(Entity.form(formData));
 

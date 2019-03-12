@@ -156,7 +156,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
             params.put("price_adjustment", String.valueOf(priceAdjustment));
         }
 
-        WebTarget resource = getJerseyClient().target(url);
+        WebTarget resource = getJaxRsClient().target(url);
         for (Map.Entry<String, String> stringStringEntry : params.entrySet()) {
             resource = resource.queryParam(stringStringEntry.getKey(), stringStringEntry.getValue());
         }
@@ -235,7 +235,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
     private PriceList getPriceItemsByList(Endpoint targetPriceList) throws QuoteNotFoundException, QuoteServerException {
         String url = url(targetPriceList);
-        WebTarget resource = getJerseyClient().target(url);
+        WebTarget resource = getJaxRsClient().target(url);
         PriceList prices;
         try {
             prices = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), PriceList.class);
@@ -259,7 +259,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
         String url = url(Endpoint.ALL_SEQUENCING_QUOTES);
 
-        WebTarget resource = getJerseyClient().target(url);
+        WebTarget resource = getJaxRsClient().target(url);
 
         Quotes quotes;
         try {
@@ -300,7 +300,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
         final String ENCODING = "UTF-8";
 
         try {
-            WebTarget resource = getJerseyClient().target(url + URLEncoder.encode(id, ENCODING));
+            WebTarget resource = getJaxRsClient().target(url + URLEncoder.encode(id, ENCODING));
 
             Quotes quotes = JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), Quotes.class);
             if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
@@ -327,7 +327,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     @Override
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
         String url = url( Endpoint.ALL_QUOTES );
-        WebTarget resource = getJerseyClient().target(url);
+        WebTarget resource = getJaxRsClient().target(url);
 
         Quotes quotes;
         try {
@@ -356,7 +356,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     @Override
     public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException {
         String url = url( Endpoint.ALL_FUNDINGS);
-        WebTarget resource = getJerseyClient().target(url);
+        WebTarget resource = getJaxRsClient().target(url);
 
         try {
             GenericType<Document> document  = new GenericType<Document>() {};
@@ -411,7 +411,7 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
         final String urlString = url(Endpoint.PRICE_ITEM_DETAILS);
 
-        WebTarget resource = getJerseyClient().target( urlString);
+        WebTarget resource = getJaxRsClient().target( urlString);
 
         try {
             for (Map.Entry<String, String> stringStringEntry : params.entrySet()) {

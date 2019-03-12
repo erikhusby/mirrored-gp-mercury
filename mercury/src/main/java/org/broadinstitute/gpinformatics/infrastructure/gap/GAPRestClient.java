@@ -35,6 +35,6 @@ public class GAPRestClient extends AbstractJaxRsClientService {
     }
 
     public WebTarget getWebResource(String urlString) {
-        return getJerseyClient().target(urlString);
+        return getJaxRsClient().target(urlString);
     }
 }

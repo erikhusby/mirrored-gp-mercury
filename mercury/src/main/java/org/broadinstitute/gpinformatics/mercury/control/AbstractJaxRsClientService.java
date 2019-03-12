@@ -76,7 +76,7 @@ public abstract class AbstractJaxRsClientService implements Serializable {
     /**
      * Method for subclasses to retrieve the {@link Client} for making webservice calls.
      */
-    protected Client getJerseyClient() {
+    protected Client getJaxRsClient() {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         if(deployment != Deployment.PROD) {
             JaxRsUtils.acceptAllServerCertificates(clientBuilder);
@@ -142,7 +142,7 @@ public abstract class AbstractJaxRsClientService implements Serializable {
     public void post(@Nonnull String urlString, @Nonnull MultivaluedMap<String, String> params,
                      @Nonnull ExtraTab extraTab, @Nonnull PostCallback callback) {
         logger.debug(String.format("URL string is '%s'", urlString));
-        WebTarget webTarget = getJerseyClient().target(urlString);
+        WebTarget webTarget = getJaxRsClient().target(urlString);
 
         BufferedReader reader = null;
         Response clientResponse = null;

@@ -94,7 +94,7 @@ public class CollaborationPortalService extends AbstractJaxRsClientService {
         }
 
         String url = config.getUrlBase() + Endpoint.BEGIN_COLLABORATION.getSuffixUrl();
-        WebTarget resource = getJerseyClient().target(url);
+        WebTarget resource = getJaxRsClient().target(url);
 
         CollaborationData collaboration =
                 new CollaborationData(researchProject.getName(), researchProject.getSynopsis(),
@@ -114,7 +114,7 @@ public class CollaborationPortalService extends AbstractJaxRsClientService {
             throws CollaborationNotFoundException, CollaborationPortalException {
 
         String url = config.getUrlBase() + Endpoint.GET_COLLABORATION_DETAILS.getSuffixUrl() + researchProjectKey;
-        WebTarget resource = getJerseyClient().target(url);
+        WebTarget resource = getJaxRsClient().target(url);
 
         try {
             return JaxRsUtils.getAndCheck(resource.request(MediaType.APPLICATION_XML), CollaborationData.class);
@@ -127,7 +127,7 @@ public class CollaborationPortalService extends AbstractJaxRsClientService {
     public String resendInvitation(@Nonnull String researchProjectKey) throws CollaborationPortalException {
 
         String url = config.getUrlBase() + Endpoint.RESEND_INVITATION.getSuffixUrl() + researchProjectKey;
-        WebTarget resource = getJerseyClient().target(url);
+        WebTarget resource = getJaxRsClient().target(url);
 
         try {
             return JaxRsUtils.postAndCheck(resource.request(), null, String.class);

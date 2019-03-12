@@ -60,7 +60,7 @@ public class BSPSampleReceiptServiceImpl extends BSPJaxRsClient implements BSPSa
         // Change to the URL string and fire off the web service.
         String urlString = getUrl(WEB_SERVICE_URL + "?" + parameterString);
 
-        WebTarget webResource = getJerseyClient().target(urlString);
+        WebTarget webResource = getJaxRsClient().target(urlString);
 
         Response clientResponse = webResource.request(MediaType.TEXT_PLAIN).post(null);
 

@@ -105,7 +105,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJaxRsClient implements BSP
             String queryString = getQueryString(barcode, volume, concentration, receptacleWeight, terminateAction.getTerminateDepleted());
             String urlString = getUrl(queryString);
 
-            WebTarget webTarget = getJerseyClient().target(urlString);
+            WebTarget webTarget = getJaxRsClient().target(urlString);
             Response clientResponse =
                     webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(null);
 

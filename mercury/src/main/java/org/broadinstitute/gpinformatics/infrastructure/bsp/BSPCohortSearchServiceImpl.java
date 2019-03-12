@@ -72,7 +72,7 @@ public class BSPCohortSearchServiceImpl extends BSPJaxRsClient implements BSPCoh
 
         Response clientResponse = null;
         try {
-            WebTarget webResource = getJerseyClient().target(urlString);
+            WebTarget webResource = getJaxRsClient().target(urlString);
             clientResponse = webResource.request().get();
 
             InputStream is = clientResponse.readEntity(InputStream.class);

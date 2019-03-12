@@ -238,7 +238,7 @@ public abstract class BSPSampleDataFetcher extends BSPJaxRsClient implements Ser
         String urlString = getUrl(WS_SAMPLE_DETAILS);
 
         Map<String, GetSampleDetails.SampleInfo> map = new HashMap<>();
-        WebTarget webTarget = getJerseyClient().target(urlString);
+        WebTarget webTarget = getJaxRsClient().target(urlString);
         // Use POST, rather than GET, to allow large number of barcodes without hitting 8K limit on URL.
         MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
         formData.add("barcodes", StringUtils.join(barcodes, ","));

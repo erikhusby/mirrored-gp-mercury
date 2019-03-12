@@ -45,7 +45,7 @@ public class BarcodeDecoderRestClient extends AbstractJaxRsClientService {
     }
 
     public WebTarget getWebResource(String urlString) {
-        return getJerseyClient().target(urlString);
+        return getJaxRsClient().target(urlString);
     }
 
     public DecodeResponse analyzeImage(File file, String eventClass) throws IOException {
