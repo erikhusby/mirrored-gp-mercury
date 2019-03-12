@@ -914,7 +914,7 @@
                 priceListText += "Clinical list price: " + data.clinicalPrice;
             }
 
-            var $aggregationParticle = $j("#aggregationParticle");
+            var $aggregationParticle = $j("#customAggregationParticle");
             var agpFieldChanged = data.productAgp !== undefined && $aggregationParticle.val() !== data.productAgp;
             if (agpFieldChanged && $j("#orderId").length === 0) {
                 if ($aggregationParticle.text() !== data.productAgp) {
@@ -1631,7 +1631,7 @@
 
             <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
                 <div class="control-group">
-                    <stripes:label for="aggregationParticle" name="customAggregationParticle" class="control-label"/>
+                    <stripes:label for="customAggregationParticle" class="control-label"/>
                     <div class="controls">
                         <stripes:select style="width: auto;" id="customAggregationParticle"
                                         name="editOrder.defaultAggregationParticle"
