@@ -88,6 +88,10 @@ public class SampleInstanceEntity {
     private String insertSize;
     private Boolean umisPresent;
     private String aggregationDataType;
+    /**
+     * Implied sample name means there was no explicit sample name provided in the upload and that the library
+     * name is used instead for Mercury internal purposes, but not sent to the pipeline.
+     */
     private Boolean impliedSampleName;
 
     @Enumerated(EnumType.STRING)

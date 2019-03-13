@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
-import com.ibm.wsdl.extensions.mime.MIMEContentSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme_;
