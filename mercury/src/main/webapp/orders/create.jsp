@@ -1,6 +1,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 
@@ -503,6 +503,8 @@
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
                     $j("#skipRegulatoryInfoCheckbox").on("change", toggleSkipRegulatory);
+                    $j("#notFromHumansCheckbox").on("change", toggleSkipRegulatoryReason);
+                    $j("#clinicalLineCheckbox").on("change", toggleSkipRegulatoryReason);
                     $j("#regulatorySelect").change(function () {
                         $j("#attestationConfirmed").attr("checked", false)
                     });
@@ -553,13 +555,32 @@
             handleUpdateRegulatory(skipRegulatoryChecked);
         }
 
+        function toggleSkipRegulatoryReason() {
+            var checked = $(this).prop("checked");
+            var notFromHumansElement = $j("#notFromHumansCheckbox");
+            var clinicalLineElement = $j("#clinicalLineCheckbox");
+            if (checked) {
+                if($(this).is(notFromHumansElement)) {
+                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}");
+                    $j("#clinicalLineCheckbox").attr("checked", false);
+                } else {
+                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.FROM_CLINICAL_CELL_LINE}");
+                    $j("#notFromHumansCheckbox").attr("checked", false);
+                }
+            } else {
+                $j("#skipRegulatoryInfoReason").val("");
+            }
+
+        }
         function handleUpdateRegulatory(skipRegulatoryChecked){
             if (skipRegulatoryChecked) {
-                $j("#regulatorySelect :selected").prop("selected", false)
+                $j("#regulatorySelect :selected").prop("selected", false);
                 $j("#regulatorySelect").hide();
                 $j("#skipRegulatoryDiv").show();
             } else {
                 $j("#skipRegulatoryInfoReason").val("");
+                $j("#notFromHumansCheckbox").attr("checked", false);
+                $j("#clinicalLineCheckbox").attr("checked", false);
                 $j("#skipRegulatoryDiv").hide();
                 $j("#regulatorySelect").show();
                 populateRegulatorySelect();
@@ -1520,10 +1541,13 @@
                                     Review Required
                                 </div>
                                 <div id="skipRegulatoryDiv" class="controls controls-text">
-                                        ${actionBean.complianceStatement}<br/>
-                                    <stripes:text id="skipRegulatoryInfoReason"
-                                                  name="editOrder.skipRegulatoryReason"
-                                                  maxlength="255"/>
+
+                                    <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
+                                                      My project does not involve samples that originated from humans.<br/>
+                                    <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
+                                                      My project has samples derived from a clinical cell line.<br/>
+                                    <stripes:hidden id="skipRegulatoryInfoReason"
+                                                    name="editOrder.skipRegulatoryReason"/>
                                 </div>
                                 <div id="regulatorySelect" class="controls controls-text"></div>
                                 <div id="attestationDiv" class="controls controls-text">

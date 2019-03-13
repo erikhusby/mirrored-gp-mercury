@@ -161,6 +161,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
@@ -328,6 +329,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private boolean skipRegulatoryInfo;
 
+    private boolean notFromHumans;
+    private boolean fromClinicalLine;
+
     private GenotypingChip genotypingChip;
 
     private GenotypingProductOrderMapping genotypingProductOrderMapping;
@@ -469,10 +473,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                + "regulatory requirements and/or falsification of information may lead to quarantining of data. "
                + "If you have any questions regarding the federal regulations associated with your project, "
                + "please contact orsp@broadinstitute.org.";
-    }
-
-    public String getComplianceStatement() {
-        return String.format(ResearchProject.REGULATORY_COMPLIANCE_STATEMENT, "this order involves");
     }
 
     /**
@@ -1299,6 +1299,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
 
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
+
+            Optional<String> skipRegulatoryReason = Optional.ofNullable(editOrder.getSkipRegulatoryReason());
+            skipRegulatoryReason.ifPresent(reason -> {
+                if(reason.equals(ResearchProject.FROM_CLINICAL_CELL_LINE)) {
+                    fromClinicalLine = true;
+                } else {
+                    notFromHumans = true;
+                }
+            });
 
             sampleDataSourceResolver.populateSampleDataSources(editOrder);
 
@@ -3417,6 +3426,23 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSkipRegulatoryInfo(boolean skipRegulatoryInfo) {
         this.skipRegulatoryInfo = skipRegulatoryInfo;
+    }
+
+
+    public boolean isNotFromHumans() {
+        return notFromHumans;
+    }
+
+    public void setNotFromHumans(boolean notFromHumans) {
+        this.notFromHumans = notFromHumans;
+    }
+
+    public boolean isFromClinicalLine() {
+        return fromClinicalLine;
+    }
+
+    public void setFromClinicalLine(boolean fromClinicalLine) {
+        this.fromClinicalLine = fromClinicalLine;
     }
 
     @Inject

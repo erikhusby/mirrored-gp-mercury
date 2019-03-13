@@ -64,11 +64,22 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public static final String REGULATORY_COMPLIANCE_STATEMENT =
             "If orders created from this Research Project involve human-derived samples (even if commercially "
-            + "available, or established cell lines), a Broad ORSP ID number is required (e.g. ORSP-1212, IRB-1234, NE-1234, NHSR-1234). "
-            + "Contact orsp@broadinstitute.org for more information about obtaining an ORSP ID number. Note: Internal "
-            + "technical development/validation projects using a Coriell cell line have already received a blanket "
-            + "determination (ORSP-995).<br/><br/> If your order does not involve any material derived from humans "
+            + "available, or established cell lines), a Broad ORSP ID number is required (e.g. ORSP-1212, IRB-1234, "
+            + "NE-1234, NHSR-1234).  Contact orsp@broadinstitute.org for more information about obtaining an ORSP ID "
+            + "number. Note: Internal technical development/validation projects using a Coriell cell line have already "
+            + "received a blanket determination (ORSP-995).";
+
+    public static final String REGULATORY_COMPLIANCE_STATEMENT_2 =
+            "If your order does not involve any material derived from humans "
             + "(e.g. synthetic DNA, mouse samples), then neither ORSP nor IRB review is required.";
+
+    public static final String NOT_FROM_HUMANS_REASON_FILL =
+            "The samples are derived from a cell that is not derived from humans";
+
+    public static final String FROM_CLINICAL_CELL_LINE =
+            "The samples are derived from a clinical cell line";
+
+
 
     public boolean isResearchOnly() {
         return getRegulatoryDesignation() == RegulatoryDesignation.RESEARCH_ONLY;

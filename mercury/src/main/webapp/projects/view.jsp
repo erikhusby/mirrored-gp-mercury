@@ -1,6 +1,7 @@
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
@@ -482,7 +483,8 @@
         </security:authorizeBlock>
             </div>
         <div>
-            <h5>${actionBean.complianceStatement}</h5>
+            <h5>${ResearchProject.REGULATORY_COMPLIANCE_STATEMENT}<br><br>
+                    ${ResearchProject.REGULATORY_COMPLIANCE_STATEMENT_2}</h5>
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}">
