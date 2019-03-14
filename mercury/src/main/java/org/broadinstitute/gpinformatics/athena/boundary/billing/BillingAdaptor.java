@@ -147,8 +147,8 @@ public class BillingAdaptor implements Serializable {
         boolean errorsInBilling = false;
 
         List<BillingEjb.BillingResult> results = new ArrayList<>();
-        Quote quote = null;
-        Quote sapQuote = null;
+//        Quote quote = null;
+//        SapQuote sapQuote = null;
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
         try {
@@ -174,12 +174,15 @@ public class BillingAdaptor implements Serializable {
                     priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(itemForPriceUpdate));
                     itemForPriceUpdate.setPriceOnWorkDate(priceItemsForDate);
 
-                    quote = itemForPriceUpdate.getProductOrder().getQuote(quoteService);
-                    if (itemForPriceUpdate.getProductOrder().hasSapQuote()) {
-                        sapQuote = itemForPriceUpdate.getProductOrder().getSapQuote(sapService);
+                    if (itemForPriceUpdate.isSapOrder()) {
+//                        sapQuote = ;
+                        itemForPriceUpdate.setSapQuote(itemForPriceUpdate.getProductOrder().getSapQuote(sapService));
+                    } else {
+//                        quote = ;
+                        itemForPriceUpdate.setQuote(itemForPriceUpdate.getProductOrder().getQuote(quoteService));
+
                     }
 
-                    itemForPriceUpdate.setQuote(quote);
 
                 } catch (QuoteServerException|QuoteNotFoundException| SAPIntegrationException e) {
                     BillingEjb.BillingResult result = new BillingEjb.BillingResult(itemForPriceUpdate);
@@ -217,8 +220,11 @@ public class BillingAdaptor implements Serializable {
                         item.setPriceOnWorkDate(priceItemsForDate);
                     }
 
-                    quote = item.getProductOrder().hasSapQuote()?item.getProductOrder().getSapQuote(sapService):item.getProductOrder().getQuote(quoteService);
-                    item.setQuote(quote);
+                    if(item.isSapOrder()) {
+                        item.setSapQuote(item.getProductOrder().getSapQuote(sapService));
+                    } else {
+                        item.setQuote(item.getProductOrder().getQuote(quoteService));
+                    }
                     isQuoteFunded = quote.isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
                     // TODO SGM -- Need an isfunded for SAP /\
                     if(!item.isBillingCredit()) {

@@ -4,9 +4,9 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
@@ -94,5 +94,5 @@ public interface SapIntegrationService {
      * @return
      * @throws SAPIntegrationException
      */
-    Quote findSapQuote(String sapQuoteId) throws SAPIntegrationException;
+    SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException;
 }

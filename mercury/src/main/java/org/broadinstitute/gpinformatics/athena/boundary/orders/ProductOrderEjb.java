@@ -341,40 +341,39 @@ public class ProductOrderEjb {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
                                          boolean allowCreateOrder) throws SAPInterfaceException {
-        ProductOrder orderToPublish = editedProductOrder;
 
         if (!editedProductOrder.hasSapQuote()) {
             throw new SAPInterfaceException("This order is ineligible to create in SAP since it is not associated with "
                                             + "an SAP quote");
         }
 
-        List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
+        List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(editedProductOrder);
         try {
             productPriceCache.determineIfProductsExist(allProductsOrdered, editedProductOrder.getSapCompanyConfigurationForProductOrder());
-            Quote quote = orderToPublish.hasSapQuote()?orderToPublish.getSapQuote(sapService):orderToPublish.getQuote(quoteService);
+//            Quote quote = editedProductOrder.hasSapQuote()?editedProductOrder.getSapQuote(sapService):editedProductOrder.getQuote(quoteService);
+            
+            final boolean quoteIdChange = editedProductOrder.isSavedInSAP() &&
+                                          !editedProductOrder.getQuoteId()
+                                                  .equals(editedProductOrder.latestSapOrderDetail().getQuoteId());
 
-            final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
-                                          !orderToPublish.getQuoteId()
-                                                  .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
-
-            if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
-                final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange,
+            if ((!editedProductOrder.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
+                final String newSapOrderNumber = createOrderInSAP(editedProductOrder, quoteIdChange,
                         allProductsOrdered, messageCollection, true);
 
 
-            } else if (orderToPublish.isSavedInSAP()) {
+            } else if (editedProductOrder.isSavedInSAP()) {
 
-                updateOrderInSap(orderToPublish, allProductsOrdered, messageCollection,
+                updateOrderInSap(editedProductOrder, allProductsOrdered, messageCollection,
                         CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),
-                                Collections.singleton(orderToPublish.getOrderStatus()))
-                        && !orderToPublish.isPriorToSAP1_5());
+                                Collections.singleton(editedProductOrder.getOrderStatus()))
+                        && !editedProductOrder.isPriorToSAP1_5());
 
             }
-            productOrderDao.persist(orderToPublish);
-        } catch (SAPIntegrationException | QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
+            productOrderDao.persist(editedProductOrder);
+        } catch (SAPIntegrationException | InvalidProductException e) {
             StringBuilder errorMessage = new StringBuilder();
             errorMessage.append("Unable to ");
-            if (!orderToPublish.isSavedInSAP()) {
+            if (!editedProductOrder.isSavedInSAP()) {
                 errorMessage.append("create ");
             } else {
                 errorMessage.append("update ");
@@ -382,7 +381,7 @@ public class ProductOrderEjb {
             errorMessage.append("this order in SAP at this point in time: ").append(e.getMessage());
             messageCollection.addError(errorMessage.toString());
             log.error(errorMessage, e);
-            if (orderToPublish.isSavedInSAP()) {
+            if (editedProductOrder.isSavedInSAP()) {
                 throw new SAPInterfaceException(errorMessage.toString(), e);
             }
         }
@@ -1689,8 +1688,8 @@ public class ProductOrderEjb {
             SAPIntegrationException {
         List<String> errorMessages = new ArrayList<>();
 
-        Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
-        Map<String, Quote> usedSAPQuotesMiniCache = new HashMap<>();
+//        Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
+//        Map<String, SapQuote> usedSAPQuotesMiniCache = new HashMap<>();
 
         Map<String, Boolean> updatedOrderMap = new HashMap<>();
 
@@ -1701,17 +1700,17 @@ public class ProductOrderEjb {
             if(!updatedOrderMap.containsKey(productOrderSample.getProductOrder().getBusinessKey()) ||
                !updatedOrderMap.get(productOrderSample.getProductOrder().getBusinessKey())) {
 
-                Quote orderQuote = usedQuotesMiniCache.get(productOrderSample.getProductOrder().getQuoteId());
+//                Quote orderQuote = usedQuotesMiniCache.get(productOrderSample.getProductOrder().getQuoteId());
 
-                if(orderQuote == null) {
-                    if(productOrderSample.getProductOrder().hasSapQuote()) {
-                        orderQuote = sapService.findSapQuote(productOrderSample.getProductOrder().getQuoteId());
-                        usedSAPQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
-                    } else {
-                        orderQuote = quoteService.getQuoteByAlphaId(productOrderSample.getProductOrder().getQuoteId());
-                        usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
-                    }
-                }
+//                if(orderQuote == null) {
+//                    if(productOrderSample.getProductOrder().hasSapQuote()) {
+//                        orderQuote = sapService.findSapQuote(productOrderSample.getProductOrder().getQuoteId());
+//                        usedSAPQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
+//                    } else {
+//                        orderQuote = quoteService.getQuoteByAlphaId(productOrderSample.getProductOrder().getQuoteId());
+//                        usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
+//                    }
+//                }
 
                 updatedOrderMap.put(productOrderSample.getProductOrder().getBusinessKey(), Boolean.TRUE);
             }

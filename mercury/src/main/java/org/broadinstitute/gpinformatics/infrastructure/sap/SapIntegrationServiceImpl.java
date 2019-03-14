@@ -33,6 +33,7 @@ import org.broadinstitute.sap.entity.SAPOrder;
 import org.broadinstitute.sap.entity.SAPOrderItem;
 import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
@@ -477,10 +478,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public Quote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
+    public SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
         final SapIntegrationClientImpl sapClient = getClient();
 
-        throw new SAPIntegrationException("SAP Quotes are not available at this time");
+        return getClient().findQuoteDetails(sapQuoteId);
+
     }
 
     private boolean productsFoundInSap(ProductOrder productOrder) {

@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
@@ -120,11 +121,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return cachedQuote;
     }
 
-    public Quote getSapQuote(SapIntegrationService sapService) throws SAPIntegrationException {
-        if (cachedQuote == null) {
-            cachedQuote = sapService.findSapQuote(quoteId);
+    public SapQuote getSapQuote(SapIntegrationService sapService) throws SAPIntegrationException {
+        if (cachedSapQuote == null) {
+            cachedSapQuote = sapService.findSapQuote(quoteId);
         }
-        return cachedQuote;
+        return cachedSapQuote;
     }
 
     public enum SaveType {CREATING, UPDATING}
@@ -305,6 +306,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Transient
     private Quote cachedQuote;
+    @Transient
+    private SapQuote cachedSapQuote;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.

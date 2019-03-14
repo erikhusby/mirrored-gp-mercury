@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
@@ -41,6 +42,7 @@ public class QuoteImportItem {
 
     private PriceList priceOnWorkDate;
     private Quote quote;
+    private SapQuote sapQuote;
 
     public QuoteImportItem(
             String quoteId, PriceItem priceItem, String quotePriceType, List<LedgerEntry> ledgerItems, Date billToDate,
@@ -350,4 +352,14 @@ public class QuoteImportItem {
     public boolean isBillingCredit() {
         return getQuantity() < 0;
     }
+
+    public SapQuote getSapQuote() {
+        return sapQuote;
+    }
+
+    public void setSapQuote(SapQuote sapQuote) {
+        this.sapQuote = sapQuote;
+    }
+
+    public boolean isSapOrder() { return productOrder.hasSapQuote();}
 }
