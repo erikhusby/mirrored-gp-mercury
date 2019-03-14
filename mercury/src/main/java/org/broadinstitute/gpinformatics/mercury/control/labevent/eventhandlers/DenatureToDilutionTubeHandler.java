@@ -171,8 +171,7 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
             }
         }
         if (!loadingTube.getContainers().isEmpty()) {
-            LabVessel tubeFormation = loadingTube.getContainers().iterator().next();
-            List<LabVessel.VesselEvent> ancestors = tubeFormation.getContainerRole().getAncestors(loadingTube);
+            List<LabVessel.VesselEvent> ancestors = loadingTube.getAncestors();
             if (ancestors != null && !ancestors.isEmpty()) {
                 LabVessel.VesselEvent vesselEvent = ancestors.get(0);
                 LabVessel ancestorTube = vesselEvent.getSourceLabVessel();
