@@ -502,7 +502,7 @@
                     initializeQuoteOptions();
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
-                    $j("#skipRegulatoryInfoCheckbox").on("change", toggleSkipRegulatory);
+                    // $j("#skipRegulatoryInfoCheckbox").on("change", toggleSkipRegulatory);
                     $j("#notFromHumansCheckbox").on("change", toggleSkipRegulatoryReason);
                     $j("#clinicalLineCheckbox").on("change", toggleSkipRegulatoryReason);
                     $j("#regulatorySelect").change(function () {
@@ -549,17 +549,14 @@
         </c:forEach>
 
         var quoteBeforeSkipping;
-        function toggleSkipRegulatory() {
-            var skipRegulatoryChecked = $j("#skipRegulatoryInfoCheckbox").prop("checked");
-            $j("#attestationConfirmed").attr("checked", false);
-            handleUpdateRegulatory(skipRegulatoryChecked);
-        }
 
         function toggleSkipRegulatoryReason() {
             var checked = $(this).prop("checked");
             var notFromHumansElement = $j("#notFromHumansCheckbox");
             var clinicalLineElement = $j("#clinicalLineCheckbox");
+            handleUpdateRegulatory(checked);
             if (checked) {
+                $j("#attestationConfirmed").attr("checked", false);
                 if($(this).is(notFromHumansElement)) {
                     $j("#skipRegulatoryInfoReason").val("${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}");
                     $j("#clinicalLineCheckbox").attr("checked", false);
@@ -567,8 +564,6 @@
                     $j("#skipRegulatoryInfoReason").val("${ResearchProject.FROM_CLINICAL_CELL_LINE}");
                     $j("#notFromHumansCheckbox").attr("checked", false);
                 }
-            } else {
-                $j("#skipRegulatoryInfoReason").val("");
             }
 
         }
@@ -581,7 +576,6 @@
                 $j("#skipRegulatoryInfoReason").val("");
                 $j("#notFromHumansCheckbox").attr("checked", false);
                 $j("#clinicalLineCheckbox").attr("checked", false);
-                $j("#skipRegulatoryDiv").hide();
                 $j("#regulatorySelect").show();
                 populateRegulatorySelect();
             }
@@ -639,11 +633,9 @@
             var projectKey = $j("#researchProject").val();
             var skipRegulatory = false;
             skipRegulatory = ${actionBean.editOrder.canSkipRegulatoryRequirements()};
-            $j("#skipRegulatoryInfoCheckbox").prop('checked', skipRegulatory);
 
             if (projectKey == null || projectKey == "") {
                 $j("#regulatorySelect").text('When you select a project, its regulatory options will show up here');
-                $j("#regulatoryActive").hide();
                 $j("#attestationDiv").hide();
                 $j("#skipRegulatoryDiv").hide();
                 $j("#regulatoryInfo").hide();
@@ -656,7 +648,7 @@
                     populateRegulatorySelect();
                  }
                 $j("#regulatoryInfo").show();
-                $j("#regulatoryActive").show();
+                $j("#skipRegulatoryDiv").show();
                 $j("#attestationDiv").show();
 
             }
@@ -1534,18 +1526,12 @@
                                     Regulatory Information
                                 </stripes:label>
 
-
-                                <div id="regulatoryActive" class="controls">
-                                    <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
-                                                      title="Click if no IRB/ORSP review is required."/>No IRB/ORSP
-                                    Review Required
-                                </div>
                                 <div id="skipRegulatoryDiv" class="controls controls-text">
 
                                     <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
                                                       My project does not involve samples that originated from humans.<br/>
                                     <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
-                                                      My project has samples derived from a clinical cell line.<br/>
+                                                      My project has Samples received for clinical sequencing with signed requisition.<br/>
                                     <stripes:hidden id="skipRegulatoryInfoReason"
                                                     name="editOrder.skipRegulatoryReason"/>
                                 </div>

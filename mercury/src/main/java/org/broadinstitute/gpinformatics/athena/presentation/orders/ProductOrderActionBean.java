@@ -3326,7 +3326,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (action.equals(SAVE_ACTION)) {
-            if (skipRegulatoryInfo) {
+            if (isNotFromHumans() || isFromClinicalLine()) {
                 requireField(editOrder.canSkipRegulatoryRequirements(),
                         "a reason for bypassing the regulatory requirements", action);
             }

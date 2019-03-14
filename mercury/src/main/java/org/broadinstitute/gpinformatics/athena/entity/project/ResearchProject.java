@@ -77,7 +77,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             "The samples are derived from a cell that is not derived from humans";
 
     public static final String FROM_CLINICAL_CELL_LINE =
-            "The samples are derived from a clinical cell line";
+            "Samples received for clinical sequencing with signed requisition.";
 
 
 
