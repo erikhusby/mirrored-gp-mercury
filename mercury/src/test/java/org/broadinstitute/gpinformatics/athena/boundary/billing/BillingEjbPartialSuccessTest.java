@@ -60,6 +60,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.*;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.UnsuccessfullyBilled.unsuccessfullyBilled;
@@ -299,7 +300,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(PartiallySuccessfulQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, PartiallySuccessfulQuoteServiceStub.class);
     }
 
     /**
