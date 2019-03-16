@@ -18,9 +18,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.sap.entity.Condition;
@@ -522,51 +519,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         String customerNumber = null;
-        Optional <Quote> foundQuote = null;
+        Optional <SapQuote> foundQuote = null;
         OrderCriteria orderCriteria = null;
 
-        try {
-            foundQuote = Optional.ofNullable(productOrder.getQuote(quoteService));
-        } catch (QuoteServerException | QuoteNotFoundException e) {
-            if(!forOrderValueQuery) {
-                throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
-            }
-        }
-        if(foundQuote.isPresent()) {
-            Optional<FundingLevel> fundingLevel = Optional.ofNullable(foundQuote.get().getFirstRelevantFundingLevel());
-
-            if (fundingLevel.isPresent() && CollectionUtils.isEmpty(fundingLevel.get().getFunding())) {
-                // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
-                // of funding
-                if (!forOrderValueQuery) {
-                    throw new SAPIntegrationException(
-                            "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
-                }
-            }
-
-            if (fundingLevel.isPresent()) {
-                if (!forOrderValueQuery && fundingLevel.get().getFunding().size() > 1) {
-                    throw new SAPIntegrationException(
-                            "This order is ineligible to save to SAP since there are multiple "
-                            + "funding sources associated with the given quote " +
-                            productOrder.getQuoteId());
-                }
-                for (Funding funding : fundingLevel.get().getFunding()) {
-                    if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                        customerNumber =
-                                findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(),
-                                        fundingLevel.get());
-                    } else {
-                        customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
-                    }
-                }
-            }
-        }
-
-        if(customerNumber != null) {
-            orderCriteria = new OrderCriteria(customerNumber, productOrder.getSapCompanyConfigurationForProductOrder(),
+        //todo  The customer number is no longer necessary for the order criteria.
+        orderCriteria = new OrderCriteria(customerNumber, productOrder.getSapCompanyConfigurationForProductOrder(),
                     sapOrderItems);
-        }
         return orderCriteria;
     }
 

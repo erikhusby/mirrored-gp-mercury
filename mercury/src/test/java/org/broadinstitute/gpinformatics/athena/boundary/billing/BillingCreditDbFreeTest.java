@@ -144,8 +144,6 @@ public class BillingCreditDbFreeTest {
         Mockito.when(quoteService.registerNewWork(Mockito.any(Quote.class), Mockito.any(QuotePriceItem.class),
             Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
             Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class))).thenReturn("workId-" + quoteId);
-        Mockito.when(productOrderEjb.isOrderFunded(Mockito.any(ProductOrder.class), Mockito.any(Date.class)))
-                .thenReturn(true);
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
             SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
