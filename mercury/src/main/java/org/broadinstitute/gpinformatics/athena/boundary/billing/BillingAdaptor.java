@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.annotation.Nonnull;
@@ -147,8 +148,6 @@ public class BillingAdaptor implements Serializable {
         boolean errorsInBilling = false;
 
         List<BillingEjb.BillingResult> results = new ArrayList<>();
-//        Quote quote = null;
-//        SapQuote sapQuote = null;
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
         try {
@@ -175,14 +174,10 @@ public class BillingAdaptor implements Serializable {
                     itemForPriceUpdate.setPriceOnWorkDate(priceItemsForDate);
 
                     if (itemForPriceUpdate.isSapOrder()) {
-//                        sapQuote = ;
                         itemForPriceUpdate.setSapQuote(itemForPriceUpdate.getProductOrder().getSapQuote(sapService));
                     } else {
-//                        quote = ;
                         itemForPriceUpdate.setQuote(itemForPriceUpdate.getProductOrder().getQuote(quoteService));
-
                     }
-
 
                 } catch (QuoteServerException|QuoteNotFoundException| SAPIntegrationException e) {
                     BillingEjb.BillingResult result = new BillingEjb.BillingResult(itemForPriceUpdate);
@@ -222,18 +217,21 @@ public class BillingAdaptor implements Serializable {
 
                     if(item.isSapOrder()) {
                         item.setSapQuote(item.getProductOrder().getSapQuote(sapService));
+                        //TODO replace the line below with a helper method on SAP Quote to determine if it is funded.
+                        isQuoteFunded = item.getSapQuote().getQuoteHeader().getQuoteStatus() == FundingStatus.APPROVED;
                     } else {
                         item.setQuote(item.getProductOrder().getQuote(quoteService));
+                        isQuoteFunded = item.getQuote().isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
                     }
-                    isQuoteFunded = quote.isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
+
                     // TODO SGM -- Need an isfunded for SAP /\
                     if(!item.isBillingCredit()) {
                         if (item.getProductOrder().hasSapQuote()) {
-                            ProductOrder.checkSapQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
+                            ProductOrder.checkSapQuoteValidity(item.getSapQuote(), DateUtils.truncate(item.getWorkCompleteDate(),
                                     Calendar.DATE));
 
                         } else {
-                            ProductOrder.checkQuoteValidity(quote, DateUtils.truncate(item.getWorkCompleteDate(),
+                            ProductOrder.checkQuoteValidity(item.getQuote(), DateUtils.truncate(item.getWorkCompleteDate(),
                                     Calendar.DATE));
                         }
                     }
@@ -321,12 +319,12 @@ public class BillingAdaptor implements Serializable {
 
                                 if (singlePriceAdjustment == null) {
                                     workId = quoteService
-                                            .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                            .registerNewWork(item.getQuote(), priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                     item.getWorkCompleteDate(), item.getQuantity(),
                                                     pageUrl, "billingSession", sessionKey, null);
                                 } else {
                                     workId = quoteService
-                                            .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                            .registerNewWork(item.getQuote(), priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                     item.getWorkCompleteDate(), item.getQuantity(),
                                                     pageUrl, "billingSession", sessionKey,
                                                     singlePriceAdjustment.getAdjustmentValue());
@@ -388,7 +386,6 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
 
                     // Not sure I see the point of the next two lines!!!!
@@ -405,8 +402,8 @@ public class BillingAdaptor implements Serializable {
                         errorMessage.append("A problem occurred attempting to post to the quote server for ")
                                 .append(billingSession.getBusinessKey()).append(".");
 
-                    } else if (StringUtils.isBlank(result.getSAPBillingId()) && quote != null
-                               && isQuoteFunded && item.getProductOrder().isSavedInSAP()) {
+                    } else if (StringUtils.isBlank(result.getSAPBillingId()) && item.getSapQuote() != null
+                               && isQuoteFunded && item.isSapOrder()) {
 
                         errorMessage.append("A problem occured attempting to post to SAP for ")
                                 .append(billingSession.getBusinessKey()).append(".");

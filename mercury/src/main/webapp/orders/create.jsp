@@ -1,8 +1,10 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.QuoteSourceType" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType" %>
 
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -1069,30 +1071,41 @@
 
             if (data.fundsRemaining && !data.error) {
                 var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                        ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
+                    ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
                 var fundingDetails = data.fundingDetails;
 
-                if(data.status != "Funded" ||
-                        Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
+                if((data.status !== (data.quoteType===${QuoteSourceType.QUOTE_SERVER.displayName})?"Funded":"Approved" )  ||
+                    Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
                     quoteWarning = true;
                 }
 
                 for(var detailIndex in fundingDetails) {
+                    fundsRemainingNotification += '\n' + fundingDetails[detailIndex].fundingType;
+                    if(fundingDetails[detailIndex].fundingStatus !== "Active") {
+                        quoteWarning = true;
+                    }
+
                     fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
-                    if(fundingDetails[detailIndex].activeGrant) {
-                        fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
-                        if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
-                                ' days. If it is likely this work will not be completed by then, please work on updating the ' +
-                                'Funding Source so Billing Errors can be avoided.';
+
+                    if(data.quoteType===${QuoteSourceType.SAP_SOURCE.displayName}) {
+                        fundsRemainingNotification += ' funding split percentage=' + fundingDetails[detailIndex].fundingSplit + ' ';
+                    }
+
+                    if(fundingDetails[detailIndex].fundingType === ${FundingType.FUNDS_RESERVATION}) {
+                        if (fundingDetails[detailIndex].activeGrant) {
+                            fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
+                            if (fundingDetails[detailIndex].daysTillExpire < 45) {
+                                fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
+                                    ' days. If it is likely this work will not be completed by then, please work on updating the ' +
+                                    'Funding Source so Billing Errors can be avoided.';
+                                quoteWarning = true;
+                            }
+                        } else {
+                            fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
                             quoteWarning = true;
                         }
                     } else {
-                        fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
-                        quoteWarning = true;
-                    }
-                    if(fundingDetails[detailIndex].grantStatus != "Active") {
-                        quoteWarning = true;
+                        fundsRemainingNotification += fundingDetails[detailIndex].purchaseOrderNumber
                     }
                     fundsRemainingNotification += '\n';
                 }

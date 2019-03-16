@@ -2344,7 +2344,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if (Objects.nonNull(quote)) {
             quote.getFunding().stream()
                 .filter(Funding::isFundsReservation)
-                .filter(funding -> !FundingLevel.isGrantActiveForDate(todayTruncated, funding))
+                .filter(funding -> !FundingLevel.isGrantActiveForDate(todayTruncated, funding.getGrantEndDate()))
                 .forEach(funding -> {
                     errors.add(String.format("The funding source %s has expired making this quote currently unfunded.",
                         funding.getGrantNumber()));
@@ -2356,14 +2356,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
-    public static void checkSapQuoteValidity(Quote quote) throws QuoteServerException {
-        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
-
-        checkSapQuoteValidity(quote, todayTruncated);
+    public static void checkSapQuoteValidity(SapQuote quote) throws QuoteServerException {
+        checkSapQuoteValidity(quote, new Date());
     }
 
-    public static void checkSapQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
+    public static void checkSapQuoteValidity(SapQuote quote, Date todayTruncated) throws QuoteServerException {
+        final Date truncatedDate = DateUtils.truncate(new Date(), Calendar.DATE);
+        final Set<String> errors = new HashSet<>();
 
+        if(Objects.nonNull(quote)) {
+            quote.getFundingDetails().stream()
+                    .filter(fundingDetail -> fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION)
+                    .filter(fundingDetail -> !FundingLevel.isGrantActiveForDate(todayTruncated, fundingDetail.getDateEnd()))
+                    .forEach(fundingDetail -> errors.add(String.format("The funding source %s has expired making this quote currently unfunded", fundingDetail.getItemNumber())));
+        }
+
+        if (CollectionUtils.isNotEmpty(errors)) {
+            throw new QuoteServerException(errors.toString());
+        }
     }
 
     /**

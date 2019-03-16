@@ -128,7 +128,10 @@ import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderValue;
+import org.broadinstitute.sap.entity.quote.FundingStatus;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -771,31 +774,36 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         final Quote quote = (editOrder.hasQuoteServerQuote())?validateQuote(editOrder):null;
-        final Quote sapQuote = (editOrder.hasSapQuote())?validateSapQuote(editOrder):null;
+        final SapQuote sapQuote = (editOrder.hasSapQuote())?validateSapQuote(editOrder):null;
 
         try {
             if (editOrder.hasSapQuote()) {
                 if (sapQuote != null) {
                     ProductOrder.checkSapQuoteValidity(sapQuote);
+                    sapQuote.getFundingDetails().stream().filter(fundingDetail -> {
+                        return fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION;
+                    }).forEach(fundingDetail -> {
+                        if(fundingDetail.getFundingStatus() != FundingStatus.APPROVED ) {
+                            addMessage("The funding source %s is considered to be expired and may likely not "
+                                       + "work for billing.  Please work on updating the funding sourcd so billing "
+                                       + "errors can be avoided");
+                        } else {
+                            validateGrantEndDate(fundingDetail.getDateEnd(),
+                                    fundingDetail.getItemNumber().toString(),
+                                    sapQuote.getQuoteHeader().getQuoteNumber() + " -- " +
+                                    sapQuote.getQuoteHeader().getProjectName());
+                        }
+                    });
                 }
                 validateSapQuoteDetails(sapQuote, 0);
             } else if (editOrder.hasQuoteServerQuote()) {
                 if (quote != null) {
                     ProductOrder.checkQuoteValidity(quote);
-                    final String[] error = new String[1];
                     quote.getFunding().stream()
                             .filter(Funding::isFundsReservation)
                             .forEach(funding -> {
-                                int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
-                                if (numDaysBetween > 0 && numDaysBetween < 45) {
-                                    addMessage(
-                                            String.format(
-                                                    "The Funding Source %s on %s  Quote expires in %d days. If it is likely "
-                                                    + "this work will not be completed by then, please work on updating the "
-                                                    + "Funding Source so Billing Errors can be avoided.",
-                                                    funding.getDisplayName(), quote.getAlphanumericId(), numDaysBetween)
-                                    );
-                                }
+                                validateGrantEndDate(funding.getGrantEndDate(), funding.getDisplayName(),
+                                        quote.getAlphanumericId());
                             });
                 }
             }
@@ -822,6 +830,19 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    private void validateGrantEndDate(Date grantEndDate, String grantDisplayName, String quoteIdentifier) {
+        int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), grantEndDate);
+        if (numDaysBetween > 0 && numDaysBetween < 45) {
+            addMessage(
+                    String.format(
+                            "The Funding Source %s on %s  Quote expires in %d days. If it is likely "
+                            + "this work will not be completed by then, please work on updating the "
+                            + "funding source so billing errors can be avoided.",
+                            grantDisplayName, quoteIdentifier, numDaysBetween)
+            );
+        }
+    }
+
     /**
      * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
      * remaining on the quote
@@ -832,12 +853,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             throws InvalidProductException, SAPIntegrationException {
 
         Quote quote = null;
-        Quote sapQuote = null;
+        SapQuote sapQuote = null;
 
         if(productOrder.hasSapQuote()) {
             sapQuote = validateSapQuote(productOrder);
             if (sapQuote != null) {
-                validateSapQuoteDetails(quote, 0);
+                validateSapQuoteDetails(sapQuote, 0);
             }
         } else {
             quote = validateQuote(productOrder);
@@ -845,7 +866,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 validateQuoteDetails(quote, 0);
             }
         }
-
     }
 
     /**
@@ -861,7 +881,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void validateQuoteDetailsWithAddedSamples(ProductOrder productOrder, int additionalSamplesCount)
             throws InvalidProductException, QuoteServerException, SAPIntegrationException {
         Quote quote = null;
-        Quote sapQuote = null;
+        SapQuote sapQuote = null;
         if(productOrder.hasSapQuote()) {
             sapQuote = validateSapQuote(productOrder);
             ProductOrder.checkSapQuoteValidity(sapQuote);
@@ -910,20 +930,27 @@ public class ProductOrderActionBean extends CoreActionBean {
      *               include in evaluating and the funds remaining
      * @param additionalSampleCount
      */
-    protected void validateSapQuoteDetails(Quote quote, int additionalSampleCount) throws InvalidProductException,
+    protected void validateSapQuoteDetails(SapQuote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
-        if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
-            String unFundedMessage = "A quote should be funded in order to be used for a product order.";
+        if (!quote.getQuoteHeader().getFundingHeaderStatus().equals(FundingStatus.APPROVED)) {
+            String unFundedMessage = "A quote should be approved in order to be used for a product order.";
+            addGlobalValidationError(unFundedMessage);
+        } else if (!quote.isAllFundingApproved()) {
+            String unFundedMessage = "A quote should have all funding sources defined and approved in order to be used for a product order.";
             addGlobalValidationError(unFundedMessage);
         }
 
-        double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, editOrder);
+        BigDecimal fundsRemaining = quote.getQuoteHeader().getQuoteTotal().subtract(quote.getQuoteHeader().getQuoteOpenValue());
+        double outstandingEstimate = estimateSapOutstandingOrders(quote, additionalSampleCount, editOrder);
         double valueOfCurrentOrder = 0;
 
-        if (fundsRemaining <= 0d || (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
+        if ((fundsRemaining.compareTo(BigDecimal.ZERO) <= 0)
+            || (fundsRemaining.compareTo(BigDecimal.valueOf(outstandingEstimate + valueOfCurrentOrder))<0)) {
             String insufficientFundsMessage =
-                "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
+                "Insufficient funds are available on " +
+                //todo replace the following with a helper method for quote display
+                quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName() +
+                " to place a new Product order";
             addGlobalValidationError(insufficientFundsMessage);
         }
     }
@@ -938,41 +965,56 @@ public class ProductOrderActionBean extends CoreActionBean {
         //Creating a new array list to be able to remove items from it if need be
         List<ProductOrder> ordersWithCommonQuote = new ArrayList<>(productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId()));
 
-        OrderCalculatedValues calculatedValues = null;
-        try {
-            calculatedValues = sapService
-                    .calculateOpenOrderValues(addedSampleCount, foundQuote.getAlphanumericId(), productOrder);
-        } catch (SAPIntegrationException e) {
-            logger.info("Attempting to calculate order from SAP yielded an error", e);
-        }
-
         Set<String> sapOrderIDsToExclude = new HashSet<>();
 
         double value = 0d;
 
-        if (calculatedValues != null &&
-            calculatedValues.getPotentialOrderValue() != null) {
-
-            ordersWithCommonQuote.remove(productOrder);
-
-            value += calculatedValues.getPotentialOrderValue().doubleValue();
-
-            for (OrderValue orderValue : calculatedValues.getValue()) {
-
-                if (productOrder == null || (productOrder != null && !StringUtils
-                        .equals(orderValue.getSapOrderID(), productOrder.getSapOrderNumber()))) {
-                    value += orderValue.getValue().doubleValue();
-                }
-                sapOrderIDsToExclude.add(orderValue.getSapOrderID());
-            }
-        } else if (productOrder != null &&
-                   !ordersWithCommonQuote.contains(productOrder)) {
+        if (productOrder != null && !ordersWithCommonQuote.contains(productOrder)) {
 
             // This is not a SAP quote.
             ordersWithCommonQuote.add(productOrder);
         }
 
         return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote, sapOrderIDsToExclude);
+    }
+
+    /**
+     * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
+     * @return total dollar amount of the monitary value of orders associated with the given quote
+     */
+    double estimateSapOutstandingOrders(SapQuote foundQuote, int addedSampleCount, ProductOrder productOrder)
+            throws InvalidProductException, SAPIntegrationException {
+
+        double value = 0d;
+
+        if(productOrder == null) {
+            value = foundQuote.getQuoteHeader().getQuoteOpenValue().doubleValue();
+        } else {
+            OrderCalculatedValues calculatedValues = null;
+            try {
+                calculatedValues = sapService
+                        .calculateOpenOrderValues(addedSampleCount, foundQuote.getQuoteHeader().getQuoteNumber(),
+                                productOrder);
+            } catch (SAPIntegrationException e) {
+                logger.info("Attempting to calculate order from SAP yielded an error", e);
+            }
+
+
+            if (calculatedValues != null &&
+                calculatedValues.getPotentialOrderValue() != null) {
+
+                value += calculatedValues.getPotentialOrderValue().doubleValue();
+
+                for (OrderValue orderValue : calculatedValues.getValue()) {
+
+                    if (productOrder == null || (productOrder != null && !StringUtils
+                            .equals(orderValue.getSapOrderID(), productOrder.getSapOrderNumber()))) {
+                        value += orderValue.getValue().doubleValue();
+                    }
+                }
+            }
+        }
+        return value;
     }
 
     /**
@@ -1458,10 +1500,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             item.put("key", quoteIdentifier);
             if (StringUtils.isNotBlank(quoteIdentifier)) {
+                final Date todayTruncated =
+                        org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
+
                 if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName()) ) {
                     Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
                     final QuoteFunding quoteFunding = quote.getQuoteFunding();
                     double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
+                    item.put("quoteType", ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
                     item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                     item.put("status", quote.getApprovalStatus().getValue());
 
@@ -1470,35 +1516,87 @@ public class ProductOrderActionBean extends CoreActionBean {
                             outstandingOrdersValue));
                     JSONArray fundingDetails = new JSONArray();
 
-                    final Date todayTruncated =
-                            org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
-                    Funding funding = null;
-                    if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
-                        funding = quote.getFunding().stream().findFirst().orElse(null);
-                    }
-
-                    if (funding == null) {
+                    if (CollectionUtils.isEmpty(quoteFunding.getFundingLevel())) {
                         item.put("error", "This quote has no active Funding Sources.");
                     } else {
-                        if (funding.isFundsReservation()) {
-                            try {
-                                JSONObject fundingInfo = new JSONObject();
-                                fundingInfo.put("grantTitle", funding.getDisplayName());
-                                fundingInfo.put("grantEndDate", DateUtils.getDate(funding.getGrantEndDate()));
-                                fundingInfo.put("grantNumber", funding.getGrantNumber());
-                                fundingInfo.put("grantStatus", funding.getGrantStatus());
+                        quoteFunding.getFundingLevel().forEach(fundingLevel -> {
+                            fundingLevel.getFunding().forEach(funding -> {
+                                try {
+                                    if (funding.isFundsReservation()) {
+                                        JSONObject fundingInfo = new JSONObject();
+                                        fundingInfo.put("fundingType",
+                                                SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION
+                                                        .getPrimaryAlias());
+                                        fundingInfo.put("fundingStatus", funding.getGrantStatus());
+                                        fundingInfo.put("grantTitle", funding.getDisplayName());
+                                        fundingInfo.put("grantEndDate", DateUtils.getDate(funding.getGrantEndDate()));
+                                        fundingInfo.put("grantNumber", funding.getGrantNumber());
 
-                                fundingInfo
-                                        .put("activeGrant", FundingLevel.isGrantActiveForDate(todayTruncated, funding));
-                                fundingInfo.put("daysTillExpire",
-                                        DateUtils.getNumDaysBetween(todayTruncated, funding.getGrantEndDate()));
+                                        fundingInfo
+                                                .put("activeGrant", FundingLevel.isGrantActiveForDate(todayTruncated,
+                                                        funding.getGrantEndDate()));
+                                        fundingInfo.put("daysTillExpire",
+                                                DateUtils.getNumDaysBetween(todayTruncated, funding.getGrantEndDate()));
+                                        fundingDetails.put(fundingInfo);
+                                    } else {
+                                        JSONObject fundingInfo = new JSONObject();
+                                        fundingInfo.put("purchaseOrderNumber", funding.getPurchaseOrderNumber());
+                                        fundingDetails.put(fundingInfo);
+                                    }
+                                } catch (JSONException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+                        });
+                    }
+                    item.put("fundingDetails", fundingDetails);
+                } else if (StringUtils.equals(quoteSource, ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName())) {
+                    SapQuote quote = sapService.findSapQuote(quoteIdentifier);
+                    item.put("quoteType", ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
+
+                    item.put("fundsRemaining",
+                            NumberFormat.getCurrencyInstance()
+                                    .format(quote.getQuoteHeader().getQuoteTotal()
+                                            .subtract(quote.getQuoteHeader().getQuoteOpenValue())));
+                    item.put("status", quote.getQuoteHeader().getFundingHeaderStatus().getStatusText());
+                    item.put("outstandingEstimate",
+                            NumberFormat.getCurrencyInstance()
+                                    .format(estimateSapOutstandingOrders(quote, 0, null)));
+
+                    if(CollectionUtils.isEmpty(quote.getFundingDetails())) {
+                        item.put("error", "This quote has no active Funding Sources.");
+                    } else {
+
+                        JSONArray fundingDetails = new JSONArray();
+
+                        quote.getFundingDetails().forEach(fundingDetail -> {
+
+                            JSONObject fundingInfo = new JSONObject();
+
+                            try {
+                                fundingInfo.put("fundingType", fundingDetail.getFundingType().getPrimaryAlias());
+                                fundingInfo.put("fundingStatus", fundingDetail.getFundingStatus().getStatusText());
+                                fundingInfo.put("fundingSplit", fundingDetail.getSplitPercentage() + "%");
+                                if (fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION) {
+                                    fundingInfo.put("grantTitle", fundingDetail.getDocumentNumber() + " -- " +
+                                                                  fundingDetail.getCostObject() + ": " + fundingDetail.getCostObjectType());
+                                    fundingInfo.put("grantNumber", fundingDetail.getItemNumber());
+//                                    fundingInfo.put()
+                                    fundingInfo.put("grantEndDate", DateUtils.getDate(fundingDetail.getDateEnd()));
+//                                    fundingInfo.put("grantStatus", fundingDetail.getFundingStatus().getStatusText());
+                                    fundingInfo.put("activeGrant", DateUtils.getNumDaysBetween(todayTruncated, fundingDetail.getDateEnd())>0);
+                                    fundingInfo.put("daysTillExpire", DateUtils.getNumDaysBetween(todayTruncated, fundingDetail.getDateEnd()));
+                                } else {
+                                    fundingInfo.put("purchaseOrderNumber", fundingDetail.getCustomerPoNumber());
+                                }
                                 fundingDetails.put(fundingInfo);
                             } catch (JSONException e) {
                                 throw new RuntimeException(e);
                             }
-                        }
+                        });
+
+                        item.put("fundingDetails", fundingDetails);
                     }
-                    item.put("fundingDetails", fundingDetails);
                 }
             }
 

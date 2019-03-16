@@ -1,12 +1,14 @@
 <%--suppress ALL --%>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.QuoteSourceType" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver" %>
+<%@ page import="org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -817,11 +819,12 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
             },
             success: function (json) {
                 if (json) {
-                    for (var item of json.data) {
+                    // for (var item of json.data) {
+                    json.data.forEach(function(item) {
                         var row = table.row("#"+item.rowId);
                         row.data(item);
                         row.invalidate;
-                    }
+                    });
 
                     updateSampleDataProgress(json.rowsWithSampleData, recordsTotal);
                 }
@@ -895,27 +898,38 @@ function updateFunds(data) {
                 ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
         var fundingDetails = data.fundingDetails;
 
-        if(data.status != "Funded" ||
+        if((data.status !== (data.quoteType===${QuoteSourceType.QUOTE_SERVER.displayName})?"Funded":"Approved" )  ||
                 Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
             quoteWarning = true;
         }
 
         for(var detailIndex in fundingDetails) {
+            fundsRemainingNotification += '\n' + fundingDetails[detailIndex].fundingType;
+            if(fundingDetails[detailIndex].fundingStatus != "Active") {
+                quoteWarning = true;
+            }
+
             fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
-            if(fundingDetails[detailIndex].activeGrant) {
-                fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
-                if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                    fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
-                        ' days. If it is likely this work will not be completed by then, please work on updating the ' +
-                        'Funding Source so Billing Errors can be avoided.';
+
+            if(data.quoteType==${QuoteSourceType.SAP_SOURCE.displayName}) {
+                fundsRemainingNotification += ' funding split percentage=' + fundingDetails[detailIndex].fundingSplit + ' ';
+            }
+
+            if(fundingDetails[detailIndex].fundingType === ${FundingType.FUNDS_RESERVATION}) {
+                if (fundingDetails[detailIndex].activeGrant) {
+                    fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
+                    if (fundingDetails[detailIndex].daysTillExpire < 45) {
+                        fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
+                            ' days. If it is likely this work will not be completed by then, please work on updating the ' +
+                            'Funding Source so Billing Errors can be avoided.';
+                        quoteWarning = true;
+                    }
+                } else {
+                    fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
                     quoteWarning = true;
                 }
             } else {
-                fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
-                quoteWarning = true;
-            }
-            if(fundingDetails[detailIndex].grantStatus != "Active") {
-                quoteWarning = true;
+                fundsRemainingNotification += fundingDetails[detailIndex].purchaseOrderNumber
             }
             fundsRemainingNotification += '\n';
         }

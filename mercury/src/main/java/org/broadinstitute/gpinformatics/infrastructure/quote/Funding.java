@@ -315,7 +315,7 @@ public class Funding implements Displayable {
             relativeDate = DateUtils.truncate(effectiveDate, Calendar.DATE);
         }
 
-        return FundingLevel.isGrantActiveForDate(relativeDate, this);
+        return FundingLevel.isGrantActiveForDate(relativeDate, this.getGrantEndDate());
     }
 
     public static final Comparator<Funding> byDisplayName = new Comparator<Funding>() {
