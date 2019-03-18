@@ -769,20 +769,20 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
-        final Quote quote = (editOrder.hasQuoteServerQuote())?validateQuote(editOrder):null;
-        final Quote sapQuote = (editOrder.hasSapQuote())?validateSapQuote(editOrder):null;
+        final Optional<Quote> quote = (editOrder.hasQuoteServerQuote())?Optional.ofNullable(validateQuote(editOrder)):Optional.ofNullable(null);
+        final Optional<Quote> sapQuote = (editOrder.hasSapQuote())?Optional.ofNullable(validateSapQuote(editOrder)):Optional.ofNullable(null);
 
         try {
             if (editOrder.hasSapQuote()) {
-                if (sapQuote != null) {
-                    ProductOrder.checkSapQuoteValidity(sapQuote);
+                if (sapQuote.isPresent()) {
+                    ProductOrder.checkSapQuoteValidity(sapQuote.get());
                 }
-                validateSapQuoteDetails(sapQuote, 0);
+                validateSapQuoteDetails(sapQuote.get(), 0);
             } else if (editOrder.hasQuoteServerQuote()) {
-                if (quote != null) {
-                    ProductOrder.checkQuoteValidity(quote);
+                if (quote.isPresent()) {
+                    ProductOrder.checkQuoteValidity(quote.get());
                     final String[] error = new String[1];
-                    quote.getFunding().stream()
+                    quote.get().getFunding().stream()
                             .filter(Funding::isFundsReservation)
                             .forEach(funding -> {
                                 int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
@@ -792,7 +792,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                                     "The Funding Source %s on %s  Quote expires in %d days. If it is likely "
                                                     + "this work will not be completed by then, please work on updating the "
                                                     + "Funding Source so Billing Errors can be avoided.",
-                                                    funding.getDisplayName(), quote.getAlphanumericId(), numDaysBetween)
+                                                    funding.getDisplayName(), quote.get().getAlphanumericId(), numDaysBetween)
                                     );
                                 }
                             });

@@ -374,17 +374,11 @@ public class ProductOrderActionBeanTest {
         Collection<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> returnMaterials = new HashSet<>();
         addPriceItemForProduct("BSP252", priceList, quoteItems, pdo.getProduct(), "10", "20", "10");
-        final SAPMaterial productMaterial =
-                new SAPMaterial(pdo.getProduct().getPartNumber(), "10", Collections.emptyMap(), Collections.emptyMap());
-        productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-        returnMaterials.add(productMaterial);
+        addSapMaterial(returnMaterials,pdo.getProduct(), "10", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
         for (ProductOrderAddOn addOn : pdo.getAddOns()) {
             addPriceItemForProduct("BSP252", priceList, quoteItems, addOn.getAddOn(), "20", "20", "20");
-            final SAPMaterial addonMaterial =
-                    new SAPMaterial(addOn.getAddOn().getPartNumber(), "20", Collections.emptyMap(), Collections.emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
-            returnMaterials.add(addonMaterial);
+            addSapMaterial(returnMaterials, addOn.getAddOn(),"20",SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         }
 
         Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
