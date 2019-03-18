@@ -930,7 +930,9 @@ function updateFunds(data) {
                     quoteWarning = true;
                 }
             } else {
-                fundsRemainingNotification += '<BR>' + fundingDetails[detailIndex].purchaseOrderNumber
+                if(fundingDetails[detailIndex].purchaseOrderNumber) {
+                    fundsRemainingNotification += '<BR>' + fundingDetails[detailIndex].purchaseOrderNumber;
+                }
             }
             if(data.quoteType==="SAP Quote") {
                 fundsRemainingNotification += '<br>funding split percentage=' + fundingDetails[detailIndex].fundingSplit + ' ';

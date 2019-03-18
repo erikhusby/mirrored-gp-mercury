@@ -1558,7 +1558,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                             NumberFormat.getCurrencyInstance()
                                     .format(quote.getQuoteHeader().getQuoteTotal()
                                             .subtract(quote.getQuoteHeader().getQuoteOpenValue())));
-                    item.put("status", quote.getQuoteHeader().getFundingHeaderStatus().getStatusText());
+                    final Optional<FundingStatus> fundingHeaderStatus = Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
+                    if(fundingHeaderStatus.isPresent()) {
+                        item.put("status", fundingHeaderStatus.get().getStatusText());
+                    }
                     item.put("outstandingEstimate",
                             NumberFormat.getCurrencyInstance()
                                     .format(estimateSapOutstandingOrders(quote, 0, null)));
@@ -1574,20 +1577,47 @@ public class ProductOrderActionBean extends CoreActionBean {
                             JSONObject fundingInfo = new JSONObject();
 
                             try {
-                                fundingInfo.put("fundingType", fundingDetail.getFundingType().getDisplayName());
-                                fundingInfo.put("fundingStatus", fundingDetail.getFundingStatus().getStatusText());
-                                fundingInfo.put("fundingSplit", fundingDetail.getSplitPercentage() + "%");
-                                if (fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION) {
-                                    fundingInfo.put("grantTitle", fundingDetail.getDocumentNumber() + " -- " +
-                                                                  fundingDetail.getCostObject() + ": " + fundingDetail.getCostObjectType());
-                                    fundingInfo.put("grantNumber", fundingDetail.getItemNumber());
-//                                    fundingInfo.put()
-                                    fundingInfo.put("grantEndDate", DateUtils.getDate(fundingDetail.getDateEnd()));
-//                                    fundingInfo.put("grantStatus", fundingDetail.getFundingStatus().getStatusText());
-                                    fundingInfo.put("activeGrant", DateUtils.getNumDaysBetween(todayTruncated, fundingDetail.getDateEnd())>0);
-                                    fundingInfo.put("daysTillExpire", DateUtils.getNumDaysBetween(todayTruncated, fundingDetail.getDateEnd()));
+                                final Optional<SapIntegrationClientImpl.FundingType> fundingType = Optional.ofNullable(fundingDetail.getFundingType());
+
+                                if(fundingType.isPresent()) {
+                                    fundingInfo.put("fundingType", fundingType.get().getDisplayName());
                                 } else {
-                                    fundingInfo.put("purchaseOrderNumber", fundingDetail.getCustomerPoNumber());
+                                    fundingInfo.put("fundingType", "Unable to determine funding type");
+
+                                }
+
+                                final Optional<FundingStatus> fundingStatus = Optional.ofNullable(fundingDetail.getFundingStatus());
+
+                                if(fundingStatus.isPresent() ){
+                                    fundingInfo.put("fundingStatus", fundingStatus.get().getStatusText());
+                                }
+
+                                fundingInfo.put("fundingSplit", fundingDetail.getSplitPercentage() + "%");
+                                if (fundingType.isPresent()) {
+                                    if (fundingType.get() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION) {
+                                        fundingInfo.put("grantTitle", fundingDetail.getDocumentNumber() + " -- " +
+                                                                      fundingDetail.getCostObject() + ": " + fundingDetail.getCostObjectType());
+                                        fundingInfo.put("grantNumber", fundingDetail.getItemNumber());
+                                        final Optional<Date> grantDateEnd = Optional.ofNullable(fundingDetail.getDateEnd());
+                                        if(grantDateEnd.isPresent()) {
+                                            fundingInfo.put("grantEndDate", DateUtils.getDate(grantDateEnd.get()));
+                                            fundingInfo.put("activeGrant",
+                                                    DateUtils.getNumDaysBetween(todayTruncated, grantDateEnd.get())
+                                                    > 0);
+                                            fundingInfo.put("daysTillExpire", DateUtils
+                                                    .getNumDaysBetween(todayTruncated, grantDateEnd.get()));
+                                        } else {
+                                            fundingInfo.put("grantEndDate", "No funds Reservation end date found");
+                                            fundingInfo.put("activeGrant", "unable to determine if grant is active");
+                                            fundingInfo.put("daysTillExpire", "unable to determine expiration date");
+                                        }
+
+                                    } else {
+                                        fundingInfo.put("purchaseOrderNumber", fundingDetail.getCustomerPoNumber());
+                                    }
+                                } else {
+                                    fundingInfo.put("grantTitle", "unable to determine funding type");
+
                                 }
                                 fundingDetails.put(fundingInfo);
                             } catch (JSONException e) {
