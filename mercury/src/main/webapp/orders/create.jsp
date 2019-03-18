@@ -1084,19 +1084,15 @@
                     quoteWarning = true;
                 }
                 if(fundingDetails) {
-                    fundsRemainingNotification += '<br><h3>Funding Information</h3>';
+                    fundsRemainingNotification += '<br><B>Funding Information</b>';
                 }
 
                 for(var detailIndex in fundingDetails) {
-                    fundsRemainingNotification += '<br>' + fundingDetails[detailIndex].fundingStatus
-                        + " " + fundingDetails[detailIndex].fundingType;
+                    fundsRemainingNotification += '<br>' + fundingDetails[detailIndex].fundingType
+                        + ": " + fundingDetails[detailIndex].fundingStatus;
 
                     if(fundingDetails[detailIndex].fundingStatus !== "Active") {
                         quoteWarning = true;
-                    }
-
-                    if(data.quoteType==="SAP Quote") {
-                        fundsRemainingNotification += '<br>funding split percentage=' + fundingDetails[detailIndex].fundingSplit + ' ';
                     }
 
                     if(fundingDetails[detailIndex].fundingType === "FUNDS_RESERVATION") {
@@ -1115,13 +1111,17 @@
                             quoteWarning = true;
                         }
                     } else {
-                        fundsRemainingNotification += fundingDetails[detailIndex].purchaseOrderNumber
+                        fundsRemainingNotification += '<BR>' + fundingDetails[detailIndex].purchaseOrderNumber
                     }
+                    if(data.quoteType==="SAP Quote") {
+                        fundsRemainingNotification += '<br>funding split percentage=' + fundingDetails[detailIndex].fundingSplit + ' ';
+                    }
+
                     fundsRemainingNotification += '<br>';
                 }
-                $j("#fundsRemaining").innerHTML(fundsRemainingNotification);
+                $j("#fundsRemaining").html(fundsRemainingNotification);
             } else {
-                $j("#fundsRemaining").innerHTML('Error: ' + data.error);
+                $j("#fundsRemaining").html('Error: ' + data.error);
                 quoteWarning = true;
             }
 
