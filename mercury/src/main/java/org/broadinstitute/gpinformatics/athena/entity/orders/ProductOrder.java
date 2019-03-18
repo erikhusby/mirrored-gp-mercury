@@ -185,6 +185,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.Draft;
 
+    @Enumerated(EnumType.STRING)
+    private Product.AggregationParticle defaultAggregationParticle;
     /**
      * Alphanumeric Id
      */
@@ -852,6 +854,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    public Product.AggregationParticle getDefaultAggregationParticle() {
+        return defaultAggregationParticle;
+    }
+
+    public void setDefaultAggregationParticle(Product.AggregationParticle defaultAggregationParticle) {
+        this.defaultAggregationParticle = defaultAggregationParticle;
     }
 
     public String getComments() {
