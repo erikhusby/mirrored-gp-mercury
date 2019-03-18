@@ -60,7 +60,6 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.*;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.UnsuccessfullyBilled.unsuccessfullyBilled;
@@ -81,6 +80,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         super();
         Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
         billingAdaptorLogger.setLevel(Level.ALL);
+        Arrays.stream(billingAdaptorLogger.getHandlers())
+            .filter(handler -> !(handler instanceof TestLogHandler)).forEach(billingAdaptorLogger::removeHandler);
         testLogHandler = TestLogHandler.newInstance();
         billingAdaptorLogger.addHandler(testLogHandler);
         testLogHandler.setLevel(Level.ALL);
@@ -300,7 +301,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, PartiallySuccessfulQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(PartiallySuccessfulQuoteServiceStub.class);
     }
 
     /**
