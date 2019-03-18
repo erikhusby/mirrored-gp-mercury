@@ -269,18 +269,7 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    BigDecimal replacementMultiplier = null;
                     double quantityForSAP = item.getQuantityForSAP();
-                    if(primaryPriceItemIfReplacementForSAP != null) {
-                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
-                        BigDecimal replacementPrice  = new BigDecimal(price);
-
-                        if(item.getProductOrder().isPriorToSAP1_5() && quantityForSAP > 0) {
-                            replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN))
-                                    .multiply(BigDecimal.valueOf(quantityForSAP))
-                                    .setScale(3, BigDecimal.ROUND_DOWN);
-                        }
-                    }
 
                     if(item.getProductOrder().hasSapQuote()
                        && !item.getProductOrder().getOrderStatus().canPlace()
@@ -312,8 +301,8 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     if (item.getProductOrder().getQuoteSource() != null) {
-                        if (!item.getProductOrder().hasSapQuote()) {
-                            if(StringUtils.isBlank(workId)) {
+                        if(StringUtils.isBlank(workId)) {
+                            if (item.getProductOrder().hasQuoteServerQuote()) {
                                 PriceAdjustment singlePriceAdjustment =
                                         item.getProductOrder().getAdjustmentForProduct(item.getProduct());
 
@@ -344,7 +333,8 @@ public class BillingAdaptor implements Serializable {
                                 && StringUtils.isBlank(item.getSapItems())) {
 
                                 if (quantityForSAP > 0) {
-                                    sapBillingId = sapService.billOrder(item, replacementMultiplier, new Date());
+                                    //todo, validate if the quantity override parameter is still necessary
+                                    sapBillingId = sapService.billOrder(item, null, new Date());
                                     result.setSAPBillingId(sapBillingId);
                                     billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId,
                                             sapBillingId,
@@ -375,8 +365,7 @@ public class BillingAdaptor implements Serializable {
                                         item.setBillingMessages(BillingSession.BILLING_CREDIT);
                                         sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
                                         result.setSAPBillingId(sapBillingId);
-                                        billingEjb
-                                                .updateLedgerEntries(item, primaryPriceItemIfReplacement, workId,
+                                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId,
                                                         sapBillingId,
                                                         BillingSession.BILLING_CREDIT);
                                     }

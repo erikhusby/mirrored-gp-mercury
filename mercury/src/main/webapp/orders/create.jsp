@@ -1,10 +1,10 @@
-<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.QuoteSourceType" %>
+<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.QuoteSourceType.*" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
 <%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
-<%@ page import="org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType" %>
+<%@ page import="static org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType.*" %>
 
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -1074,24 +1074,29 @@
                     ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
                 var fundingDetails = data.fundingDetails;
 
-                if((data.status !== (data.quoteType===${QuoteSourceType.QUOTE_SERVER.displayName})?"Funded":"Approved" )  ||
+                if((data.status !== (data.quoteType==="Quote Server Quote")?"Funded":"Approved" )  ||
                     Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
                     quoteWarning = true;
                 }
+                if(fundingDetails) {
+                    fundsRemainingNotification += '<br><h3>Funding Information</h3>';
+                }
 
                 for(var detailIndex in fundingDetails) {
-                    fundsRemainingNotification += '\n' + fundingDetails[detailIndex].fundingType;
+                    fundsRemainingNotification += '<br>' + fundingDetails[detailIndex].fundingStatus
+                        + " " + fundingDetails[detailIndex].fundingType;
+
                     if(fundingDetails[detailIndex].fundingStatus !== "Active") {
                         quoteWarning = true;
                     }
 
-                    fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
-
-                    if(data.quoteType===${QuoteSourceType.SAP_SOURCE.displayName}) {
-                        fundsRemainingNotification += ' funding split percentage=' + fundingDetails[detailIndex].fundingSplit + ' ';
+                    if(data.quoteType==="SAP Quote") {
+                        fundsRemainingNotification += '<br>funding split percentage=' + fundingDetails[detailIndex].fundingSplit + ' ';
                     }
 
-                    if(fundingDetails[detailIndex].fundingType === ${FundingType.FUNDS_RESERVATION}) {
+                    if(fundingDetails[detailIndex].fundingType === "FUNDS_RESERVATION") {
+                        fundsRemainingNotification += '<br>'+fundingDetails[detailIndex].grantTitle;
+
                         if (fundingDetails[detailIndex].activeGrant) {
                             fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
                             if (fundingDetails[detailIndex].daysTillExpire < 45) {
@@ -1107,11 +1112,11 @@
                     } else {
                         fundsRemainingNotification += fundingDetails[detailIndex].purchaseOrderNumber
                     }
-                    fundsRemainingNotification += '\n';
+                    fundsRemainingNotification += '<br>';
                 }
-                $j("#fundsRemaining").text(fundsRemainingNotification);
+                $j("#fundsRemaining").innerHTML(fundsRemainingNotification);
             } else {
-                $j("#fundsRemaining").text('Error: ' + data.error);
+                $j("#fundsRemaining").innerHTML('Error: ' + data.error);
                 quoteWarning = true;
             }
 

@@ -1526,7 +1526,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                         JSONObject fundingInfo = new JSONObject();
                                         fundingInfo.put("fundingType",
                                                 SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION
-                                                        .getPrimaryAlias());
+                                                        .getDisplayName());
                                         fundingInfo.put("fundingStatus", funding.getGrantStatus());
                                         fundingInfo.put("grantTitle", funding.getDisplayName());
                                         fundingInfo.put("grantEndDate", DateUtils.getDate(funding.getGrantEndDate()));
@@ -1574,7 +1574,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                             JSONObject fundingInfo = new JSONObject();
 
                             try {
-                                fundingInfo.put("fundingType", fundingDetail.getFundingType().getPrimaryAlias());
+                                fundingInfo.put("fundingType", fundingDetail.getFundingType().getDisplayName());
                                 fundingInfo.put("fundingStatus", fundingDetail.getFundingStatus().getStatusText());
                                 fundingInfo.put("fundingSplit", fundingDetail.getSplitPercentage() + "%");
                                 if (fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION) {
