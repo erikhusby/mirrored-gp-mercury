@@ -772,14 +772,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
-        final Quote quote = (editOrder.hasQuoteServerQuote())?validateQuote(editOrder):null;
-        final SapQuote sapQuote = (editOrder.hasSapQuote())?validateSapQuote(editOrder):null;
+        final Optional<Quote> quote = (editOrder.hasQuoteServerQuote())?Optional.ofNullable(validateQuote(editOrder)):Optional.ofNullable(null);
+        final Optional<SapQuote> sapQuote = (editOrder.hasSapQuote())?Optional.ofNullable(validateSapQuote(editOrder)):Optional.ofNullable(null);
 
         try {
             if (editOrder.hasSapQuote()) {
-                if (sapQuote != null) {
-                    ProductOrder.checkSapQuoteValidity(sapQuote);
-                    sapQuote.getFundingDetails().stream().filter(fundingDetail -> {
+                if (sapQuote.isPresent()) {
+                    ProductOrder.checkSapQuoteValidity(sapQuote.get());
+                    sapQuote.get().getFundingDetails().stream().filter(fundingDetail -> {
                         return fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION;
                     }).forEach(fundingDetail -> {
                         if(fundingDetail.getFundingStatus() != FundingStatus.APPROVED ) {
@@ -789,20 +789,20 @@ public class ProductOrderActionBean extends CoreActionBean {
                         } else {
                             validateGrantEndDate(fundingDetail.getDateEnd(),
                                     fundingDetail.getItemNumber().toString(),
-                                    sapQuote.getQuoteHeader().getQuoteNumber() + " -- " +
-                                    sapQuote.getQuoteHeader().getProjectName());
+                                    sapQuote.get().getQuoteHeader().getQuoteNumber() + " -- " +
+                                    sapQuote.get().getQuoteHeader().getProjectName());
                         }
                     });
                 }
                 validateSapQuoteDetails(sapQuote.get(), 0);
             } else if (editOrder.hasQuoteServerQuote()) {
-                if (quote != null) {
-                    ProductOrder.checkQuoteValidity(quote);
-                    quote.getFunding().stream()
+                if (quote.isPresent()) {
+                    ProductOrder.checkQuoteValidity(quote.get());
+                    quote.get().getFunding().stream()
                             .filter(Funding::isFundsReservation)
                             .forEach(funding -> {
                                 validateGrantEndDate(funding.getGrantEndDate(), funding.getDisplayName(),
-                                        quote.getAlphanumericId());
+                                        quote.get().getAlphanumericId());
                             });
                 }
             }
