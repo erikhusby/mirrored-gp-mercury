@@ -690,6 +690,22 @@
                             </div>
                         </div>
 
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                            <div class="control-group">
+                                <stripes:label for="aggregationParticle" name="aggregationParticle"
+                                               class="control-label"/>
+                                <div class="controls">
+                                    <stripes:select style="width: auto;" id="aggregationParticle"
+                                                    name="editProduct.defaultAggregationParticle"
+                                                    title="Select the aggregation particle to use for pipeline aggregation. By default the pipeline aggregates on the research project.">
+                                        <stripes:option value="">RP (eg: RP-1243)</stripes:option>
+                                        <stripes:options-enumeration label="displayName"
+                                                                     enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
+                                    </stripes:select>
+                                </div>
+                            </div>
+                        </security:authorizeBlock>
+
                         <div class="control-group">
                             <stripes:label for="analysisTypeKey" name="Analysis Type" class="control-label"/>
                             <div class="controls">

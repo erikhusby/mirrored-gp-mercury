@@ -18,6 +18,9 @@ import java.text.DateFormat;
 import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -590,11 +593,13 @@ public class DateUtils {
         if (org.apache.commons.lang3.time.DateUtils.isSameDay(startDate, endDate)) {
             return 0;
         }
-        
-        Date start = getStartOfDay(startDate);
-        Date end = getStartOfDay(endDate);
 
-        return (int)( (end.getTime() - start.getTime()) / MILLISECONDS_IN_DAY);
+        LocalDate start = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate end = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        Period timePeriod = Period.between(start, end);
+
+        return timePeriod.getDays();
     }
 
     public static Date parseXmlDate(String s) {

@@ -127,7 +127,7 @@
                 return confirm(numberOfLanes.val() + " for the total number of lanes on the order\n\n" +
                     "By Clicking 'OK' you are declaring that you wish to accept the entered number of lanes for the entire order.  Do you wish to continue?")
             }
-            
+
             return true;
         }
         $j(document).ready(
@@ -910,6 +910,11 @@
 
                 priceListText += "Clinical list price: " + data.clinicalPrice;
             }
+
+            if (data.productAgp !== undefined && $j("#aggregationParticle").val() === "") {
+                $j("#aggregationParticle").val(data.productAgp);
+            }
+
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
                 $j("#primaryProductListPrice").show();
@@ -1606,7 +1611,20 @@
                     </div>
                 </div>
 
-
+            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                <div class="control-group">
+                    <stripes:label for="aggregationParticle" name="aggregationParticle" class="control-label"/>
+                    <div class="controls">
+                        <stripes:select style="width: auto;" id="aggregationParticle"
+                                        name="editOrder.defaultAggregationParticle"
+                                        title="Select the aggregation particle to use for pipeline aggregation. By default the pipeline aggregates on the research project.">
+                            <stripes:option value="">RP (eg: RP-1243)</stripes:option>
+                            <stripes:options-enumeration label="displayName"
+                                                         enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
+                        </stripes:select>
+                    </div>
+                </div>
+            </security:authorizeBlock>
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
                 <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
                     <div class="control-group">
@@ -1616,7 +1634,7 @@
                             <div class="form-value" id="customizationContent"></div>
                         </div>
                     </div>
-                    
+
                 </c:if>
             </security:authorizeBlock>
 

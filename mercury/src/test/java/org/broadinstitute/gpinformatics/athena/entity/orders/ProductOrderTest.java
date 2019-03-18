@@ -140,6 +140,7 @@ public class ProductOrderTest {
                 .ignoreProperty("clinicalAttestationConfirmed")
                 .ignoreProperty("analyzeUmiOverride")
                 .ignoreProperty("reagentDesignKey")
+                .ignoreProperty("defaultAggregationParticle")
                 .ignoreProperty("quoteSource")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
