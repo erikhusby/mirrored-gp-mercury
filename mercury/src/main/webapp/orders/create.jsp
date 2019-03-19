@@ -1088,7 +1088,7 @@
                 }
 
                 for(var detailIndex in fundingDetails) {
-                    fundsRemainingNotification += '<br>' + fundingDetails[detailIndex].fundingType
+                    fundsRemainingNotification += '<br>' + (detailIndex+1) +") " +fundingDetails[detailIndex].fundingType
                         + ": " + fundingDetails[detailIndex].fundingStatus;
 
                     if(fundingDetails[detailIndex].fundingStatus !== "Active") {

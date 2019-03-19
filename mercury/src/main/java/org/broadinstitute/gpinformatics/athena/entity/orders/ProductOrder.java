@@ -2377,7 +2377,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if(Objects.nonNull(quote)) {
             quote.getFundingDetails().stream()
                     .filter(fundingDetail -> fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION)
-                    .filter(fundingDetail -> !FundingLevel.isGrantActiveForDate(todayTruncated, fundingDetail.getDateEnd()))
+                    .filter(fundingDetail -> !FundingLevel.isGrantActiveForDate(todayTruncated, fundingDetail.getFundingHeaderChangeDate()))
                     .forEach(fundingDetail -> errors.add(String.format("The funding source %s has expired making this quote currently unfunded", fundingDetail.getItemNumber())));
         }
 

@@ -784,7 +784,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                        + "work for billing.  Please work on updating the funding sourcd so billing "
                                        + "errors can be avoided");
                         } else {
-                            validateGrantEndDate(fundingDetail.getDateEnd(),
+                            validateGrantEndDate(fundingDetail.getFundingHeaderChangeDate(),
                                     fundingDetail.getItemNumber().toString(),
                                     sapQuote.get().getQuoteHeader().getQuoteNumber() + " -- " +
                                     sapQuote.get().getQuoteHeader().getProjectName());
@@ -1599,12 +1599,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                                 fundingInfo.put("fundingSplit", fundingDetail.getSplitPercentage() + "%");
                                 if (fundingType.isPresent()) {
                                     if (fundingType.get() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION) {
-                                        fundingInfo.put("grantTitle", fundingDetail.getDocumentNumber() + " -- " +
-                                                                      fundingDetail.getCostObject() + ": " + fundingDetail.getCostObjectType());
-                                        fundingInfo.put("grantNumber", fundingDetail.getItemNumber());
-                                        final Optional<Date> grantDateEnd = Optional.ofNullable(fundingDetail.getDateEnd());
+//                                        fundingInfo.put("grantTitle", fundingDetail.getDocumentNumber() + " -- " +
+//                                                                      fundingDetail.getCostObject() + ": " + fundingDetail.getCostObjectType());
+//                                        fundingInfo.put("grantNumber", fundingDetail.getItemNumber());
+                                        fundingInfo.put("fundsReservationNumber", fundingDetail.getDocumentNumber());
+                                        final Optional<Date> grantDateEnd = Optional.ofNullable(fundingDetail.getFundingHeaderChangeDate());
                                         if(grantDateEnd.isPresent()) {
-                                            fundingInfo.put("grantEndDate", DateUtils.getDate(grantDateEnd.get()));
+                                            fundingInfo.put("fundsReservationEndDate", DateUtils.getDate(grantDateEnd.get()));
+//                                            fundingInfo.put("grantEndDate", DateUtils.getDate(grantDateEnd.get()));
                                             fundingInfo.put("activeGrant",
                                                     DateUtils.getNumDaysBetween(todayTruncated, grantDateEnd.get())
                                                     > 0);

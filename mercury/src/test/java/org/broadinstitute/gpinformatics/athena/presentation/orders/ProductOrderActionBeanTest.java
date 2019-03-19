@@ -2312,20 +2312,45 @@ public class ProductOrderActionBeanTest {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
         testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
-        FundingLevel fundingLevel = new FundingLevel();
-        Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
-        funding.setGrantNumber("1234");
-        funding.setGrantStartDate(new Date());
         Date oneWeek = DateUtils.getOneWeek();
-        funding.setGrantEndDate(oneWeek);
-        fundingLevel.setFunding(Collections.singleton(funding));
-        fundingLevel.setPercent("100");
 
-        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
-        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
-        Quote testQuote = buildSingleTestQuote(quoteId, "2");
-        testQuote.setQuoteFunding(quoteFunding);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
+            @Override
+            public SapQuote answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
+                sapQHeader.setPROJECTNAME("TestProject");
+                sapQHeader.setQUOTENAME(quoteId);
+                sapQHeader.setQUOTESTATUS(FundingStatus.SUBMITTED.name());
+                sapQHeader.setSALESORG("GP01");
+                sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
+                sapQHeader.setCUSTOMER("");
+                sapQHeader.setDISTCHANNEL("GE");
+                sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.name());
+                sapQHeader.setQUOTESTATUSTXT("");
+                sapQHeader.setQUOTETOTAL(BigDecimal.valueOf(198));
+                sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(98));
+
+                QuoteHeader header = new QuoteHeader(sapQHeader);
+
+                final Set<FundingDetail> fundingDetailsCollection = new HashSet<>();
+
+                ZESDFUNDINGDET sapFundDetail = ZESDFUNDINGDET.Factory.newInstance();
+                sapFundDetail.setFUNDTYPE(SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.name());
+                sapFundDetail.setSPLITPER(BigDecimal.valueOf(100));
+                sapFundDetail.setAPPSTATUS(FundingStatus.APPROVED.name());
+                sapFundDetail.setAUTHAMOUNT(BigDecimal.valueOf(100));
+                sapFundDetail.setITEMNO("1234");
+                sapFundDetail.setCOSTOBJ("c333");
+                sapFundDetail.setCOENDDATE(DateUtils.getDate(oneWeek));
+
+                fundingDetailsCollection.add(new FundingDetail(sapFundDetail));
+
+                return new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), Collections.emptySet());
+            }
+        });
+
+
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
 
