@@ -1622,7 +1622,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                                 }
                                 fundingDetails.put(fundingInfo);
-                            } catch (JSONException e) {
+                            } catch ( Exception e) {
                                 throw new RuntimeException(e);
                             }
                         });

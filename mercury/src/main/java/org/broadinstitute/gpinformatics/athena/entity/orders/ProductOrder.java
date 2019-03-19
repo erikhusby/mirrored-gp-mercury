@@ -115,14 +115,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
 
     public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
-        if (cachedQuote == null) {
+        if (cachedQuote == null ||
+            !StringUtils.equals(quoteId,cachedQuote.getAlphanumericId())) {
             cachedQuote = quoteService.getQuoteByAlphaId(quoteId);
         }
         return cachedQuote;
     }
 
     public SapQuote getSapQuote(SapIntegrationService sapService) throws SAPIntegrationException {
-        if (cachedSapQuote == null) {
+        if (cachedSapQuote == null ||
+            !StringUtils.equals(cachedSapQuote.getQuoteHeader().getQuoteNumber(), quoteId)) {
             cachedSapQuote = sapService.findSapQuote(quoteId);
         }
         return cachedSapQuote;

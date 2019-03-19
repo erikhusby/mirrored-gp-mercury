@@ -369,7 +369,8 @@ public class ProductOrderActionBeanTest {
     public void testDoValidationMethodQuoteOnOrder(ProductOrder.QuoteSourceType quoteSource) throws Exception {
 
         pdo = ProductOrderTestFactory.createDummyProductOrder();
-        pdo.setQuoteId("BSP252");
+        final String quoteId = "BSP252";
+        pdo.setQuoteId(quoteId);
         pdo.setQuoteSource(quoteSource);
         pdo.addRegulatoryInfo(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
         pdo.setAttestationConfirmed(true);
@@ -379,11 +380,11 @@ public class ProductOrderActionBeanTest {
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> returnMaterials = new HashSet<>();
-        addPriceItemForProduct("BSP252", priceList, quoteItems, pdo.getProduct(), "10", "20", "10");
+        addPriceItemForProduct(quoteId, priceList, quoteItems, pdo.getProduct(), "10", "20", "10");
         addSapMaterial(returnMaterials,pdo.getProduct(), "10", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
 
         for (ProductOrderAddOn addOn : pdo.getAddOns()) {
-            addPriceItemForProduct("BSP252", priceList, quoteItems, addOn.getAddOn(), "20", "20", "20");
+            addPriceItemForProduct(quoteId, priceList, quoteItems, addOn.getAddOn(), "20", "20", "20");
             addSapMaterial(returnMaterials, addOn.getAddOn(),"20",SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         }
 
@@ -391,8 +392,7 @@ public class ProductOrderActionBeanTest {
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn((Collections.singletonList(pdo)));
-        Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
-                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
+
         Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
                 SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
                 .thenReturn(new OrderCalculatedValues(BigDecimal.valueOf(pdo.getSamples().size()*10),Collections.emptySet()));
@@ -412,36 +412,63 @@ public class ProductOrderActionBeanTest {
                     }
                 });
 
+
+        ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
+        sapQHeader.setPROJECTNAME("TestProject");
+        sapQHeader.setQUOTENAME(quoteId);
+        sapQHeader.setQUOTESTATUS(FundingStatus.APPROVED.name());
+        sapQHeader.setSALESORG("GP01");
+        sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
+        sapQHeader.setCUSTOMER("");
+        sapQHeader.setDISTCHANNEL("GE");
+        sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
+        sapQHeader.setQUOTESTATUSTXT("");
+        sapQHeader.setQUOTETOTAL(BigDecimal.valueOf(37387.90));
+        sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(30000.00));
+
+        QuoteHeader header = new QuoteHeader(sapQHeader);
+
+        final Set<FundingDetail> fundingDetailsCollection = new HashSet<>();
+
+        ZESDFUNDINGDET sapFundDetail = ZESDFUNDINGDET.Factory.newInstance();
+        sapFundDetail.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
+        sapFundDetail.setSPLITPER(BigDecimal.valueOf(100));
+        sapFundDetail.setAPPSTATUS(FundingStatus.APPROVED.name());
+        sapFundDetail.setAUTHAMOUNT(BigDecimal.valueOf(100));
+        sapFundDetail.setPONUMBER("0004224044");
+        sapFundDetail.setITEMNO("0004224044");
+
+        fundingDetailsCollection.add(new FundingDetail(sapFundDetail));
+
+        final SapQuote sapMockQuote =
+                new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), Collections.emptySet());
+
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapMockQuote);
+
         Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
         actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
         Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
 
-        pdo.setQuoteId("MPG183");
-        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
+        if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
+            pdo.setQuoteId("MPG183");
+            actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
 
-        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
-        Assert.assertEquals(1, actionBean.getValidationErrors().size());
-        actionBean.clearValidationErrors();
+            Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+            Assert.assertEquals(1, actionBean.getValidationErrors().size());
+            actionBean.clearValidationErrors();
+        }
 
         pdo.setQuoteId("ScottInvalid");
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(null);
         actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
 
         Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
         Assert.assertEquals(1, actionBean.getValidationErrors().size());
-        actionBean.clearValidationErrors();
-
-        pdo.setQuoteId(null);
-        actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
-
-        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
-        Assert.assertEquals(1, actionBean.getValidationErrors().size());
-
-        //////////////////////////////////////////////////////
-        // Now test some of the other validations
-        //////////////////////////////////////////////////////
         actionBean.clearValidationErrors();
 
         pdo.setQuoteId("");
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(null);
+
         actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
 
         Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
@@ -452,7 +479,9 @@ public class ProductOrderActionBeanTest {
         //////////////////////////////////////////////////////
         actionBean.clearValidationErrors();
 
-        pdo.setQuoteId("BSP252");
+        pdo.setQuoteId(quoteId);
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapMockQuote);
+
         actionBean.doValidation(ProductOrderActionBean.PLACE_ORDER_ACTION);
         Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
 
