@@ -131,8 +131,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     protected QuoteService quoteService;
-    @Inject
-    private SapIntegrationService sapService;
+    protected SapIntegrationService sapService;
 
     public enum ErrorLevel {
         WARNING,
@@ -722,5 +721,10 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     @Inject
     public void setQuoteService(QuoteService quoteService) {
         this.quoteService = quoteService;
+    }
+
+    @Inject
+    public void setSapService(SapIntegrationService sapService) {
+        this.sapService = sapService;
     }
 }

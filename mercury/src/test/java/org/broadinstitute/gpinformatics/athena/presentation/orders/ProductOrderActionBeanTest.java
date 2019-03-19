@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
+import functions.rfc.sap.document.sap_com.ZESDFUNDINGDET;
+import functions.rfc.sap.document.sap_com.ZESDQUOTEHEADER;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.controller.DispatcherServlet;
 import net.sourceforge.stripes.controller.StripesFilter;
@@ -22,8 +24,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -88,6 +88,10 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.entity.quote.FundingDetail;
+import org.broadinstitute.sap.entity.quote.FundingStatus;
+import org.broadinstitute.sap.entity.quote.QuoteHeader;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.codehaus.jackson.JsonNode;
@@ -359,12 +363,14 @@ public class ProductOrderActionBeanTest {
      * validates that the do Validation method acts as it should.
      *
      * @throws Exception
+     * @param quoteSource
      */
-    @Test
-    public void testDoValidationMethodQuoteOnOrder() throws Exception {
+    @Test(dataProvider = "quoteSourceProvider")
+    public void testDoValidationMethodQuoteOnOrder(ProductOrder.QuoteSourceType quoteSource) throws Exception {
 
         pdo = ProductOrderTestFactory.createDummyProductOrder();
         pdo.setQuoteId("BSP252");
+        pdo.setQuoteSource(quoteSource);
         pdo.addRegulatoryInfo(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
         pdo.setAttestationConfirmed(true);
         pdo.setJiraTicketKey("");
@@ -619,6 +625,7 @@ public class ProductOrderActionBeanTest {
         return product;
     }
 
+    //todo modify this to coincide with allowing PDMs to opt out of any order
     @Test(enabled = false)
     public void testQuoteOptOutAjaxCallStripes() throws Exception {
         Product product = createSimpleProduct("P-EX-0001",
@@ -662,6 +669,7 @@ public class ProductOrderActionBeanTest {
         return productDao;
     }
 
+    //todo modify this to coincide with allowing PDMs to opt out of any order
     public void testQuoteOptOutAllowed() throws Exception {
         Product product = createSimpleProduct("P-EX-0001",
                 ProductFamily.ProductFamilyInfo.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
@@ -673,6 +681,7 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(roundtrip.getResponse().getOutputString(), "{\"supportsSkippingQuote\":true}");
     }
 
+    //todo modify this to coincide with allowing PDMs to opt out of any order
     public void testQuoteOptOutNotAllowed() throws Exception {
         Product product = createSimpleProduct("P-EX-0001", "Some product family that doesn't support optional quotes");
         ProductDao productDao = setupMockProductDao(product);
@@ -681,6 +690,14 @@ public class ProductOrderActionBeanTest {
         roundtrip.addParameter("product", product.getPartNumber());
         roundtrip.execute("getSupportsSkippingQuote");
         Assert.assertEquals(roundtrip.getResponse().getOutputString(), "{\"supportsSkippingQuote\":false}");
+    }
+
+    @DataProvider(name="quoteSourceProvider")
+    public Object[][] quoteSourceProvider() {
+        return new Object[][]{
+                {ProductOrder.QuoteSourceType.QUOTE_SERVER},
+                {ProductOrder.QuoteSourceType.SAP_SOURCE}
+        };
     }
 
     @DataProvider(name = "quoteOptionsDataProvider")
@@ -1041,7 +1058,8 @@ public class ProductOrderActionBeanTest {
         assertThat(pdo.getSkipRegulatoryReason(), not(isEmptyOrNullString()));
     }
 
-    public void testValueOfOrder() throws Exception {
+    @Test(dataProvider = "quoteSourceProvider")
+    public void testValueOfOrder(ProductOrder.QuoteSourceType quoteSource) throws Exception {
 
         final FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
@@ -1064,6 +1082,7 @@ public class ProductOrderActionBeanTest {
         testOrder.setJiraTicketKey(jiraTicketKey);
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuoteIdentifier);
+        testOrder.setQuoteSource(quoteSource);
 
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
@@ -1180,7 +1199,8 @@ public class ProductOrderActionBeanTest {
                 ));
     }
 
-    public void testEstimateNoSAPOrders() throws Exception {
+    @Test(dataProvider = "quoteSourceProvider")
+    public void testEstimateNoSAPOrders(ProductOrder.QuoteSourceType quoteSource) throws Exception {
         final String testQuoteIdentifier = "testQuote";
         Quote testQuote = buildSingleTestQuote(testQuoteIdentifier, null);
 
@@ -1207,6 +1227,7 @@ public class ProductOrderActionBeanTest {
         testOrder.setJiraTicketKey("PDO-TESTPDOValue");
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuoteIdentifier);
+        testOrder.setQuoteSource(quoteSource);
         testOrder.updateAddOnProducts(Collections.singletonList(addonNonSeqProduct));
 
 
@@ -1308,8 +1329,8 @@ public class ProductOrderActionBeanTest {
                 ));
     }
 
-
-    public void testEstimateSomeSAPOrders() throws Exception {
+    @Test(dataProvider = "quoteSourceProvider")
+    public void testEstimateSomeSAPOrders(ProductOrder.QuoteSourceType quoteSource) throws Exception {
         final String testQuoteIdentifier = "testQuote";
         Quote testQuote = buildSingleTestQuote(testQuoteIdentifier, null);
 
@@ -1335,6 +1356,7 @@ public class ProductOrderActionBeanTest {
         testOrder.setJiraTicketKey("PDO-TESTPDOValue");
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuoteIdentifier);
+        testOrder.setQuoteSource(quoteSource);
         testOrder.updateAddOnProducts(Collections.singletonList(addonNonSeqProduct));
 
         List<ProductOrderSample> sampleList = new ArrayList<>();
@@ -1456,28 +1478,18 @@ public class ProductOrderActionBeanTest {
      *     <li>add on more sample to the order and ensure that the Action bean logic rejects this addition since there
      *     is no more money left on the quote to support it.</li>
      * </ol>
+     * @param quoteSource
      * @param quoteName Identifier for the Quote to use.  Quote definition is pulled from quoteTestData.xml
-     * @param sapBlocked Set true if the test case is to mimic that all SAP access is blocked
-     * @param productBlockedFromSap Set true if the test case is to mimic that the price item for the product on the
-     *                              order is blocked from going to SAP
      * @throws Exception
      */
     @Test(dataProvider = "quoteDataProvider")
-    public void testEstimateOpenOrdersWeirdQuotes(String quoteName, boolean sapBlocked, boolean productBlockedFromSap,
-                                                  boolean productExistInSap)
+    public void testEstimateOpenOrdersWeirdQuotes(String quoteName, boolean productExistInSap,
+                                                  ProductOrder.QuoteSourceType quoteSource)
             throws Exception {
 
         Quote testQuote = stubQuoteService.getQuoteByAlphaId(quoteName);
 
         final SAPAccessControl enabledControl = new SAPAccessControl();
-        if(sapBlocked) {
-            enabledControl.setAccessStatus(AccessStatus.DISABLED);
-        } else {
-            enabledControl.setAccessStatus(AccessStatus.ENABLED);
-        }
-
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(enabledControl);
-        stubProductPriceCache.setAccessControlEjb(mockAccessController);
 
         Product primaryProduct = new Product();
         primaryProduct.setPartNumber("P-Test_Prime");
@@ -1485,12 +1497,10 @@ public class ProductOrderActionBeanTest {
         primaryProduct
                 .setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName()));
 
-        if (productBlockedFromSap) {
-            enabledControl.addDisabledItem(new AccessItem(primaryProduct.getPrimaryPriceItem().getName()));
-        }
         testOrder = new ProductOrder();
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuote.getAlphanumericId());
+        testOrder.setQuoteSource(quoteSource);
 
         List<ProductOrderSample> sampleList = new ArrayList<>();
         final int sampleTestSize = 75;
@@ -1596,25 +1606,18 @@ public class ProductOrderActionBeanTest {
      *     <li>Ensure that valdiateQuoteDetails returns an error due to the fact that the Quote now is over extended</li>
      * </ol>
      *
+     * @param quoteSource
      * @param quoteId Identifier for the Quote to use.  Quote definition is pulled from quoteTestData.xml
-     * @param sapBlocked Set true if the test case is to mimic that all SAP access is blocked
-     * @param productBlockedFromSap Set true if the test case is to mimic that the price item for the product on the
-     *                              order is blocked from going to SAP
      * @throws Exception
      */
     @Test(dataProvider = "quoteDataProvider")
-    public void testSapEligibleQuoteThenNot(String quoteId, boolean sapBlocked, boolean productBlockedFromSap,
-                                            boolean productExistInSap)
+    public void testSapEligibleQuoteThenNot(String quoteId, boolean productExistInSap,
+                                            ProductOrder.QuoteSourceType quoteSource)
             throws Exception {
         Quote testQuote = stubQuoteService.getQuoteByAlphaId(quoteId);
         final int sampleTestSize = 15;
 
         final SAPAccessControl enabledControl = new SAPAccessControl();
-        if(sapBlocked) {
-            enabledControl.setAccessStatus(AccessStatus.DISABLED);
-        } else {
-            enabledControl.setAccessStatus(AccessStatus.ENABLED);
-        }
 
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(enabledControl);
         stubProductPriceCache.setAccessControlEjb(mockAccessController);
@@ -1638,13 +1641,10 @@ public class ProductOrderActionBeanTest {
         addOnProduct.setPrimaryPriceItem(new PriceItem("addon", "GP", "primary size", "addon"));
         addOnProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
 
-        if (productBlockedFromSap) {
-            enabledControl.addDisabledItem(new AccessItem(primaryProduct.getPrimaryPriceItem().getName()));
-            enabledControl.addDisabledItem(new AccessItem(secondaryProduct.getPrimaryPriceItem().getName()));
-        }
         testOrder = new ProductOrder();
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuote.getAlphanumericId());
+        testOrder.setQuoteSource(quoteSource);
 
         ProductOrder secondOrder = new ProductOrder();
         secondOrder.setProduct(secondaryProduct);
@@ -1839,11 +1839,6 @@ public class ProductOrderActionBeanTest {
                 "Errors occurred validating Quote details.  Funds remaining is "
                 +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
 
-
-
-
-
-
         // Now make the Quote split funding so that attempting to go to SAP will fail
         final FundingLevel fundingLevel = new FundingLevel();
         final FundingLevel fundingLevel2 = new FundingLevel();
@@ -1901,7 +1896,8 @@ public class ProductOrderActionBeanTest {
                 +testQuote.getQuoteFunding().getFundsRemaining()+" and price is "+primaryStringPrice);
     }
 
-    public void testEstimateSAPOrdersWithUpdateCurrentSapOrder() throws Exception {
+    @Test(dataProvider = "quoteSourceProvider")
+    public void testEstimateSAPOrdersWithUpdateCurrentSapOrder(ProductOrder.QuoteSourceType quoteSource) throws Exception {
         final String testQuoteIdentifier = "testQuote";
         Quote testQuote = buildSingleTestQuote(testQuoteIdentifier, "71000");
 
@@ -1927,6 +1923,7 @@ public class ProductOrderActionBeanTest {
         testOrder.setJiraTicketKey("PDO-TESTPDOValue");
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuoteIdentifier);
+        testOrder.setQuoteSource(quoteSource);
         testOrder.updateAddOnProducts(Collections.singletonList(addonNonSeqProduct));
 
         List<ProductOrderSample> sampleList = new ArrayList<>();
@@ -2030,8 +2027,8 @@ public class ProductOrderActionBeanTest {
 
     }
 
-
-    public void testEstimateCustomHigherThanQuote() throws Exception {
+    @Test(dataProvider = "quoteSourceProvider")
+    public void testEstimateCustomHigherThanQuote(ProductOrder.QuoteSourceType quoteSource) throws Exception {
 
         final String testQuoteIdentifier = "testQuote";
         Quote testQuote = buildSingleTestQuote(testQuoteIdentifier, "12000");
@@ -2047,6 +2044,7 @@ public class ProductOrderActionBeanTest {
         testOrder.setJiraTicketKey("PDO-TESTPDOValue");
         testOrder.setProduct(primaryProduct);
         testOrder.setQuoteId(testQuoteIdentifier);
+        testOrder.setQuoteSource(quoteSource);
         List<ProductOrderSample> sampleList = new ArrayList<>();
 
         for (int i = 0; i < 75;i++) {
@@ -2054,9 +2052,6 @@ public class ProductOrderActionBeanTest {
         }
 
         testOrder.setSamples(sampleList);
-//        SapOrderDetail sapReference = new SapOrderDetail("test001", 75, testOrder.getQuoteId(),
-//                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(),"","");
-//        testOrder.addSapOrderDetail(sapReference);
 
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
@@ -2174,79 +2169,47 @@ public class ProductOrderActionBeanTest {
 
         // Using quotes defined in quoteTestData.xml
 
-        // Quote ID, SAP Access status, is the Product Blocked from SAP
+        // Quote ID, is the product in SAP, quote source type
 
-        testCases.add(new Object[]{"GP87U",  true, true, true});   // common catch all quote used by PDMs
-        testCases.add(new Object[]{"GP87U",  true, false, true});  // Split funded
-        testCases.add(new Object[]{"GP87U",  false, true, true});
-        testCases.add(new Object[]{"GP87U",  false, false, true});
-        testCases.add(new Object[]{"GP87U",  true, true, false});
-        testCases.add(new Object[]{"GP87U",  true, false, false});
-        testCases.add(new Object[]{"GP87U",  false, true, false});
-        testCases.add(new Object[]{"GP87U",  false, false, false});
+        testCases.add(new Object[]{"GP87U", true, ProductOrder.QuoteSourceType.SAP_SOURCE});   // common catch all quote used by PDMs
+        testCases.add(new Object[]{"GP87U", true, ProductOrder.QuoteSourceType.QUOTE_SERVER});  // Split funded
+        testCases.add(new Object[]{"GP87U", false, ProductOrder.QuoteSourceType.SAP_SOURCE});
+        testCases.add(new Object[]{"GP87U", false, ProductOrder.QuoteSourceType.QUOTE_SERVER});
 
-        testCases.add(new Object[]{"STCIL1", true, true, true});  // Single funded quote in which the funding source
-        testCases.add(new Object[]{"STCIL1", true, false, true}); // is split among 2 cost objects
-        testCases.add(new Object[]{"STCIL1", false, true, true});
-        testCases.add(new Object[]{"STCIL1", false, false, true});
-        testCases.add(new Object[]{"STCIL1", true, true, false});
-        testCases.add(new Object[]{"STCIL1", true, false, false});
-        testCases.add(new Object[]{"STCIL1", false, true, false});
-        testCases.add(new Object[]{"STCIL1", false, false, false});
+        testCases.add(new Object[]{"STCIL1", true, ProductOrder.QuoteSourceType.SAP_SOURCE});  // Single funded quote in which the funding source
+        testCases.add(new Object[]{"STCIL1", true, ProductOrder.QuoteSourceType.QUOTE_SERVER}); // is split among 2 cost objects
+        testCases.add(new Object[]{"STCIL1", false, ProductOrder.QuoteSourceType.SAP_SOURCE});
+        testCases.add(new Object[]{"STCIL1", false, ProductOrder.QuoteSourceType.QUOTE_SERVER});
 
-        testCases.add(new Object[]{"GAN1GX", true, true, true});  // Split funded quote in which the funding sources are
-        testCases.add(new Object[]{"GAN1GX", true, false, true}); // each fund reservations
-        testCases.add(new Object[]{"GAN1GX", false, true, true});
-        testCases.add(new Object[]{"GAN1GX", false, false, true});
-        testCases.add(new Object[]{"GAN1GX", true, true, false});
-        testCases.add(new Object[]{"GAN1GX", true, false, false});
-        testCases.add(new Object[]{"GAN1GX", false, true, false});
-        testCases.add(new Object[]{"GAN1GX", false, false, false});
+        testCases.add(new Object[]{"GAN1GX", true,  ProductOrder.QuoteSourceType.SAP_SOURCE});  // Split funded quote in which the funding sources are
+        testCases.add(new Object[]{"GAN1GX", true,  ProductOrder.QuoteSourceType.QUOTE_SERVER}); // each fund reservations
+        testCases.add(new Object[]{"GAN1GX", false, ProductOrder.QuoteSourceType.SAP_SOURCE});
+        testCases.add(new Object[]{"GAN1GX", false, ProductOrder.QuoteSourceType.QUOTE_SERVER});
 
-        testCases.add(new Object[]{"GAN1MB", true, true, true});  // Split funded quote in which the funding sources are
-        testCases.add(new Object[]{"GAN1MB", true, false, true}); // each purchase orders
-        testCases.add(new Object[]{"GAN1MB", false, true, true});
-        testCases.add(new Object[]{"GAN1MB", false, false, true});
-        testCases.add(new Object[]{"GAN1MB", true, true, false});
-        testCases.add(new Object[]{"GAN1MB", true, false, false});
-        testCases.add(new Object[]{"GAN1MB", false, true, false});
-        testCases.add(new Object[]{"GAN1MB", false, false, false});
+        testCases.add(new Object[]{"GAN1MB", true,  ProductOrder.QuoteSourceType.SAP_SOURCE});  // Split funded quote in which the funding sources are
+        testCases.add(new Object[]{"GAN1MB", true,  ProductOrder.QuoteSourceType.QUOTE_SERVER}); // each purchase orders
+        testCases.add(new Object[]{"GAN1MB", false, ProductOrder.QuoteSourceType.SAP_SOURCE});
+        testCases.add(new Object[]{"GAN1MB", false, ProductOrder.QuoteSourceType.QUOTE_SERVER});
 
-        testCases.add(new Object[]{"MPG1X6", true, true, true});  // Single funded quote in which the funding source is
-        testCases.add(new Object[]{"MPG1X6", true, false, true}); // a purchase order
-        testCases.add(new Object[]{"MPG1X6", false, true, true});
-        testCases.add(new Object[]{"MPG1X6", false, false, true});
-        testCases.add(new Object[]{"MPG1X6", true, true, false});
-        testCases.add(new Object[]{"MPG1X6", true, false, false});
-        testCases.add(new Object[]{"MPG1X6", false, true, false});
-        testCases.add(new Object[]{"MPG1X6", false, false, false});
+        testCases.add(new Object[]{"MPG1X6", true,  ProductOrder.QuoteSourceType.SAP_SOURCE});  // Single funded quote in which the funding source is
+        testCases.add(new Object[]{"MPG1X6", true,  ProductOrder.QuoteSourceType.QUOTE_SERVER}); // a purchase order
+        testCases.add(new Object[]{"MPG1X6", false, ProductOrder.QuoteSourceType.SAP_SOURCE});
+        testCases.add(new Object[]{"MPG1X6", false, ProductOrder.QuoteSourceType.QUOTE_SERVER});
 
-        testCases.add(new Object[]{"MPG20W", true, true, true});  // Single funded quote in which the funding source
-        testCases.add(new Object[]{"MPG20W", true, false, true}); // is a fund reservation.
-        testCases.add(new Object[]{"MPG20W", false, true, true});
-        testCases.add(new Object[]{"MPG20W", false, false, true});
-        testCases.add(new Object[]{"MPG20W", true, true, false});
-        testCases.add(new Object[]{"MPG20W", true, false, false});
-        testCases.add(new Object[]{"MPG20W", false, true, false});
-        testCases.add(new Object[]{"MPG20W", false, false, false});
+        testCases.add(new Object[]{"MPG20W", true,  ProductOrder.QuoteSourceType.SAP_SOURCE});  // Single funded quote in which the funding source
+        testCases.add(new Object[]{"MPG20W", true,  ProductOrder.QuoteSourceType.QUOTE_SERVER}); // is a fund reservation.
+        testCases.add(new Object[]{"MPG20W", false, ProductOrder.QuoteSourceType.SAP_SOURCE});
+        testCases.add(new Object[]{"MPG20W", false, ProductOrder.QuoteSourceType.QUOTE_SERVER});
 
-        testCases.add(new Object[]{"GAN1GX2", true, true, true});  // Same setup as GAN1GX only the percentage of each
-        testCases.add(new Object[]{"GAN1GX2", true, false, true});
-        testCases.add(new Object[]{"GAN1GX2", false, true, true});
-        testCases.add(new Object[]{"GAN1GX2", false, false, true});
-        testCases.add(new Object[]{"GAN1GX2", true, true, false});
-        testCases.add(new Object[]{"GAN1GX2", true, false, false});
-        testCases.add(new Object[]{"GAN1GX2", false, true, false});
-        testCases.add(new Object[]{"GAN1GX2", false, false, false});
+        testCases.add(new Object[]{"GAN1GX2", true,  ProductOrder.QuoteSourceType.SAP_SOURCE});  // Same setup as GAN1GX only the percentage of each
+        testCases.add(new Object[]{"GAN1GX2", true,  ProductOrder.QuoteSourceType.QUOTE_SERVER});
+        testCases.add(new Object[]{"GAN1GX2", false, ProductOrder.QuoteSourceType.SAP_SOURCE});
+        testCases.add(new Object[]{"GAN1GX2", false, ProductOrder.QuoteSourceType.QUOTE_SERVER});
 
-        testCases.add(new Object[]{"MPG183", true, true, true});  // Single funded quote, Cost Object, LOT of money to use.
-        testCases.add(new Object[]{"MPG183", true, false, true});
-        testCases.add(new Object[]{"MPG183", false, true, true});
-        testCases.add(new Object[]{"MPG183", false, false, true});
-        testCases.add(new Object[]{"MPG183", true, true, false});
-        testCases.add(new Object[]{"MPG183", true, false, false});
-        testCases.add(new Object[]{"MPG183", false, true, false});
-        testCases.add(new Object[]{"MPG183", false, false, false});
+        testCases.add(new Object[]{"MPG183", true,  ProductOrder.QuoteSourceType.SAP_SOURCE});  // Single funded quote, Cost Object, LOT of money to use.
+        testCases.add(new Object[]{"MPG183", true,  ProductOrder.QuoteSourceType.SAP_SOURCE});
+        testCases.add(new Object[]{"MPG183", false, ProductOrder.QuoteSourceType.SAP_SOURCE});
+        testCases.add(new Object[]{"MPG183", false, ProductOrder.QuoteSourceType.SAP_SOURCE});
 
         return testCases.iterator();
     }
@@ -2314,6 +2277,7 @@ public class ProductOrderActionBeanTest {
         return samples;
     }
 
+
     public void testQuoteOptionsFundsReservation() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
@@ -2333,8 +2297,37 @@ public class ProductOrderActionBeanTest {
         testQuote.setQuoteFunding(quoteFunding);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
-        actionBean.setQuoteService(mockQuoteService);
         actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
+
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
+
+        assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
+        assertThat(fundingDetails.get("grantEndDate"), equalTo(DateUtils.getDate(oneWeek)));
+        assertThat(fundingDetails.get("activeGrant"), is(true));
+        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7));
+    }
+
+    public void testSapQuoteOptionsFundsReservation() throws Exception {
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
+        funding.setGrantNumber("1234");
+        funding.setGrantStartDate(new Date());
+        Date oneWeek = DateUtils.getOneWeek();
+        funding.setGrantEndDate(oneWeek);
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel.setPercent("100");
+
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
@@ -2364,8 +2357,68 @@ public class ProductOrderActionBeanTest {
         testQuote.setQuoteFunding(quoteFunding);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
-        actionBean.setQuoteService(mockQuoteService);
         actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
+
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
+        assertThat(quoteFundingJson.getString("key"), is(quoteId));
+        assertThat(quoteFundingJson.getString("fundsRemaining"), equalTo("$100.00"));
+        assertThat(quoteFundingJson.getString("status"), equalTo("Funded"));
+
+        // Purchase Orders do not have funding details
+        assertThat(fundingDetails.length(), is(0));
+
+    }
+
+    public void testSapQuoteOptionsPurchaseOrder() throws Exception {
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
+            @Override
+            public SapQuote answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
+                sapQHeader.setPROJECTNAME("TestProject");
+                sapQHeader.setQUOTENAME(quoteId);
+                sapQHeader.setQUOTESTATUS(FundingStatus.SUBMITTED.getStatusText());
+                sapQHeader.setSALESORG("GP01");
+                sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.getStatusText());
+                sapQHeader.setCUSTOMER("");
+                sapQHeader.setDISTCHANNEL("GE");
+                sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
+                sapQHeader.setQUOTESTATUSTXT("");
+
+                QuoteHeader header = new QuoteHeader(sapQHeader);
+
+                final Set<FundingDetail> fundingDetailsCollection = Collections.emptySet();
+
+                ZESDFUNDINGDET sapFundDetail = ZESDFUNDINGDET.Factory.newInstance();
+                sapFundDetail.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.getDisplayName());
+
+
+                return new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), Collections.emptySet());
+            }
+        });
+
+
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.PURCHASE_ORDER, "test", "c333");
+        funding.setPurchaseOrderNumber("1234");
+        funding.setGrantStartDate(new Date());
+        Date oneWeek = DateUtils.getOneWeek();
+        funding.setGrantEndDate(oneWeek);
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel.setPercent("100");
+
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
@@ -2390,11 +2443,43 @@ public class ProductOrderActionBeanTest {
         testQuote.setQuoteFunding(quoteFunding);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
-        actionBean.setQuoteService(mockQuoteService);
         actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         assertThat(quoteFundingJson.getString("error"), is("Unable to complete evaluating order values:  null"));
+        assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
+     }
+
+    public void testSapQuoteOptionsNoFunding() throws Exception {
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
+            @Override
+            public SapQuote answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
+                sapQHeader.setPROJECTNAME("TestProject");
+                sapQHeader.setQUOTENAME(quoteId);
+                sapQHeader.setQUOTESTATUS(FundingStatus.SUBMITTED.getStatusText());
+                sapQHeader.setSALESORG("GP01");
+                sapQHeader.setFUNDHEADERSTATUS("");
+                sapQHeader.setCUSTOMER("");
+                sapQHeader.setDISTCHANNEL("GE");
+                sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.name());
+                sapQHeader.setQUOTESTATUSTXT("");
+
+                QuoteHeader header = new QuoteHeader(sapQHeader);
+                return new SapQuote(header, Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
+            }
+        });
+
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
+
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        assertThat(quoteFundingJson.getString("error"), is("This quote has no active Funding Sources."));
         assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
      }
 

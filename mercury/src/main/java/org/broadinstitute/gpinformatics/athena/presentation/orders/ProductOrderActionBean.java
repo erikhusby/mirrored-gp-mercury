@@ -109,7 +109,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -311,8 +310,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
-
-    private SapIntegrationService sapService;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -794,7 +791,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                         }
                     });
                 }
-                validateSapQuoteDetails(sapQuote.get(), 0);
+                validateSapQuoteDetails(sapQuote.orElseThrow(() -> new SAPIntegrationException("A Quote was not found for " + editOrder.getQuoteId())), 0);
             } else if (editOrder.hasQuoteServerQuote()) {
                 if (quote.isPresent()) {
                     ProductOrder.checkQuoteValidity(quote.get());
@@ -805,9 +802,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                                         quote.get().getAlphanumericId());
                             });
                 }
+                validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
+                                                                                      editOrder.getQuoteId())), 0);
             }
-            validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
-                                                                                  editOrder.getQuoteId())), 0);
 
 
         } catch (QuoteServerException e) {
@@ -988,7 +985,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         double value = 0d;
 
         if(productOrder == null) {
-            value = foundQuote.getQuoteHeader().getQuoteOpenValue().doubleValue();
+            final Optional<BigDecimal> quoteOpenValue = Optional.ofNullable(foundQuote.getQuoteHeader().getQuoteOpenValue());
+            if(quoteOpenValue.isPresent()) {
+                value = quoteOpenValue.get().doubleValue();
+            }
         } else {
             OrderCalculatedValues calculatedValues = null;
             try {
@@ -1554,10 +1554,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                     SapQuote quote = sapService.findSapQuote(quoteIdentifier);
                     item.put("quoteType", ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
 
-                    item.put("fundsRemaining",
-                            NumberFormat.getCurrencyInstance()
-                                    .format(quote.getQuoteHeader().getQuoteTotal()
-                                            .subtract(quote.getQuoteHeader().getQuoteOpenValue())));
+                    final Optional<BigDecimal> quoteTotal = Optional.ofNullable(quote.getQuoteHeader().getQuoteTotal());
+                    final Optional<BigDecimal> quoteOpenValue = Optional.ofNullable(quote.getQuoteHeader().getQuoteOpenValue());
+
+                    if(quoteTotal.isPresent() && quoteOpenValue.isPresent()) {
+                        item.put("fundsRemaining",
+                                NumberFormat.getCurrencyInstance()
+                                        .format(quoteTotal.get().subtract(quoteOpenValue.get())));
+                    }
                     final Optional<FundingStatus> fundingHeaderStatus = Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
                     if(fundingHeaderStatus.isPresent()) {
                         item.put("status", fundingHeaderStatus.get().getStatusText());
@@ -3865,11 +3869,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     protected void setProductOrderDao(ProductOrderDao productOrderDao) {
         this.productOrderDao = productOrderDao;
-    }
-
-    @Inject
-    protected void setSapService(SapIntegrationService sapService) {
-        this.sapService = sapService;
     }
 
     @HandlesEvent(SAVE_SEARCH_DATA)
