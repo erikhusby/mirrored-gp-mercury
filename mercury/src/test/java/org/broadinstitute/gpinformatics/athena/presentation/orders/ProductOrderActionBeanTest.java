@@ -2374,6 +2374,7 @@ public class ProductOrderActionBeanTest {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
         testOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
+        Date oneWeek = DateUtils.getOneWeek();
 
         Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenAnswer(new Answer<SapQuote>() {
             @Override
@@ -2382,41 +2383,34 @@ public class ProductOrderActionBeanTest {
                 ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
                 sapQHeader.setPROJECTNAME("TestProject");
                 sapQHeader.setQUOTENAME(quoteId);
-                sapQHeader.setQUOTESTATUS(FundingStatus.SUBMITTED.getStatusText());
+                sapQHeader.setQUOTESTATUS(FundingStatus.SUBMITTED.name());
                 sapQHeader.setSALESORG("GP01");
-                sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.getStatusText());
+                sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
                 sapQHeader.setCUSTOMER("");
                 sapQHeader.setDISTCHANNEL("GE");
                 sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
                 sapQHeader.setQUOTESTATUSTXT("");
+                sapQHeader.setQUOTETOTAL(BigDecimal.valueOf(198));
+                sapQHeader.setQUOTEOPENVAL(BigDecimal.valueOf(98));
 
                 QuoteHeader header = new QuoteHeader(sapQHeader);
 
-                final Set<FundingDetail> fundingDetailsCollection = Collections.emptySet();
+                final Set<FundingDetail> fundingDetailsCollection = new HashSet<>();
 
                 ZESDFUNDINGDET sapFundDetail = ZESDFUNDINGDET.Factory.newInstance();
-                sapFundDetail.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.getDisplayName());
+                sapFundDetail.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
+                sapFundDetail.setSPLITPER(BigDecimal.valueOf(100));
+                sapFundDetail.setAPPSTATUS(FundingStatus.APPROVED.name());
+                sapFundDetail.setAUTHAMOUNT(BigDecimal.valueOf(100));
+                sapFundDetail.setPONUMBER("1234");
+                sapFundDetail.setITEMNO("1234");
 
+                fundingDetailsCollection.add(new FundingDetail(sapFundDetail));
 
                 return new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), Collections.emptySet());
             }
         });
 
-
-        FundingLevel fundingLevel = new FundingLevel();
-        Funding funding = new Funding(Funding.PURCHASE_ORDER, "test", "c333");
-        funding.setPurchaseOrderNumber("1234");
-        funding.setGrantStartDate(new Date());
-        Date oneWeek = DateUtils.getOneWeek();
-        funding.setGrantEndDate(oneWeek);
-        fundingLevel.setFunding(Collections.singleton(funding));
-        fundingLevel.setPercent("100");
-
-        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
-        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
-        Quote testQuote = buildSingleTestQuote(quoteId, "2");
-        testQuote.setQuoteFunding(quoteFunding);
-        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName());
 
@@ -2424,11 +2418,16 @@ public class ProductOrderActionBeanTest {
         JSONArray fundingDetails = quoteFundingJson.getJSONArray("fundingDetails");
         assertThat(quoteFundingJson.getString("key"), is(quoteId));
         assertThat(quoteFundingJson.getString("fundsRemaining"), equalTo("$100.00"));
-        assertThat(quoteFundingJson.getString("status"), equalTo("Funded"));
+        assertThat(quoteFundingJson.getString("status"), equalTo(FundingStatus.APPROVED.getStatusText()));
+        assertThat(quoteFundingJson.getString("quoteType"), equalTo(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName()));
+        assertThat(quoteFundingJson.getString("outstandingEstimate"), equalTo("$98.00"));
 
-        // Purchase Orders do not have funding details
-        assertThat(fundingDetails.length(), is(0));
 
+        assertThat(fundingDetails.getJSONObject(0).getString("fundingStatus"), equalTo(FundingStatus.APPROVED.getStatusText()));
+        assertThat(fundingDetails.getJSONObject(0).getString("fundingType"), equalTo(
+                SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.getDisplayName()));
+        assertThat(fundingDetails.getJSONObject(0).getString("fundingSplit"),equalTo("100%"));
+        assertThat(fundingDetails.getJSONObject(0).getString("purchaseOrderNumber"), equalTo("1234"));
     }
 
     public void testQuoteOptionsNoFunding() throws Exception {
