@@ -2323,7 +2323,7 @@ public class ProductOrderActionBeanTest {
                 sapQHeader.setQUOTENAME(quoteId);
                 sapQHeader.setQUOTESTATUS(FundingStatus.SUBMITTED.name());
                 sapQHeader.setSALESORG("GP01");
-                sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
+                sapQHeader.setFUNDHEADERSTATUS(FundingStatus.SUBMITTED.name());
                 sapQHeader.setCUSTOMER("");
                 sapQHeader.setDISTCHANNEL("GE");
                 sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.name());
@@ -2343,6 +2343,7 @@ public class ProductOrderActionBeanTest {
                 sapFundDetail.setITEMNO("1234");
                 sapFundDetail.setCOSTOBJ("c333");
                 sapFundDetail.setCOENDDATE(DateUtils.getDate(oneWeek));
+                sapFundDetail.setFRDOCU("2341");
 
                 fundingDetailsCollection.add(new FundingDetail(sapFundDetail));
 
@@ -2357,10 +2358,22 @@ public class ProductOrderActionBeanTest {
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
 
-        assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
-        assertThat(fundingDetails.get("grantEndDate"), equalTo(DateUtils.getDate(oneWeek)));
+//        assertThat(fundingDetails.get("fundsReservationNumber"), equalTo("CO-1234"));
+        assertThat(fundingDetails.get("fundsReservationEndDate"), equalTo(DateUtils.getDate(oneWeek)));
         assertThat(fundingDetails.get("activeGrant"), is(true));
         assertThat(fundingDetails.get("daysTillExpire"), equalTo(7));
+
+        assertThat(quoteFundingJson.getString("status"), equalTo(FundingStatus.SUBMITTED.getStatusText()));
+        assertThat(quoteFundingJson.getString("quoteType"), equalTo(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName()));
+        assertThat(quoteFundingJson.getString("outstandingEstimate"), equalTo("$98.00"));
+
+
+        assertThat(fundingDetails.getString("fundingStatus"), equalTo(FundingStatus.APPROVED.getStatusText()));
+        assertThat(fundingDetails.getString("fundingType"), equalTo(
+                SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION.getDisplayName()));
+        assertThat(fundingDetails.getString("fundingSplit"),equalTo("100%"));
+        assertThat(fundingDetails.getString("fundsReservationNumber"), equalTo("2341"));
+
     }
 
     public void testQuoteOptionsPurchaseOrder() throws Exception {

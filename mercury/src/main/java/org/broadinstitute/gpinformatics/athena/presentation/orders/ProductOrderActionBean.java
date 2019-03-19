@@ -1599,21 +1599,17 @@ public class ProductOrderActionBean extends CoreActionBean {
                                 fundingInfo.put("fundingSplit", fundingDetail.getSplitPercentage() + "%");
                                 if (fundingType.isPresent()) {
                                     if (fundingType.get() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION) {
-//                                        fundingInfo.put("grantTitle", fundingDetail.getDocumentNumber() + " -- " +
-//                                                                      fundingDetail.getCostObject() + ": " + fundingDetail.getCostObjectType());
-//                                        fundingInfo.put("grantNumber", fundingDetail.getItemNumber());
                                         fundingInfo.put("fundsReservationNumber", fundingDetail.getDocumentNumber());
                                         final Optional<Date> grantDateEnd = Optional.ofNullable(fundingDetail.getFundingHeaderChangeDate());
                                         if(grantDateEnd.isPresent()) {
                                             fundingInfo.put("fundsReservationEndDate", DateUtils.getDate(grantDateEnd.get()));
-//                                            fundingInfo.put("grantEndDate", DateUtils.getDate(grantDateEnd.get()));
                                             fundingInfo.put("activeGrant",
                                                     DateUtils.getNumDaysBetween(todayTruncated, grantDateEnd.get())
                                                     > 0);
                                             fundingInfo.put("daysTillExpire", DateUtils
                                                     .getNumDaysBetween(todayTruncated, grantDateEnd.get()));
                                         } else {
-                                            fundingInfo.put("grantEndDate", "No funds Reservation end date found");
+                                            fundingInfo.put("fundsReservationEndDate", "No funds Reservation end date found");
                                             fundingInfo.put("activeGrant", "unable to determine if grant is active");
                                             fundingInfo.put("daysTillExpire", "unable to determine expiration date");
                                         }

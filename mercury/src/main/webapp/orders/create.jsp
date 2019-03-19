@@ -1096,10 +1096,10 @@
                     }
 
                     if(fundingDetails[detailIndex].fundingType === "FUNDS_RESERVATION") {
-                        fundsRemainingNotification += '<br>'+fundingDetails[detailIndex].grantTitle;
+                        fundsRemainingNotification += '<br>'+fundingDetails[detailIndex].fundsReservationNumber;
 
                         if (fundingDetails[detailIndex].activeGrant) {
-                            fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
+                            fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].fundsReservationEndDate;
                             if (fundingDetails[detailIndex].daysTillExpire < 45) {
                                 fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
                                     ' days. If it is likely this work will not be completed by then, please work on updating the ' +
@@ -1107,7 +1107,7 @@
                                 quoteWarning = true;
                             }
                         } else {
-                            fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
+                            fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].fundsReservationEndDate;
                             quoteWarning = true;
                         }
                     } else {
