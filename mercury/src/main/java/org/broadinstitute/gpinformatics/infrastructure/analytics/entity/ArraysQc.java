@@ -134,15 +134,15 @@ public class ArraysQc {
     }
 
     public Character getAutocallGender() {
-        return autocallGender==null?' ':autocallGender;
+        return autocallGender==null?Character.MIN_VALUE:autocallGender;
     }
 
     public Character getFpGender() {
-        return fpGender==null?' ':fpGender;
+        return fpGender==null?Character.MIN_VALUE:fpGender;
     }
 
     public Character getReportedGender() {
-        return reportedGender==null?' ':reportedGender;
+        return reportedGender==null?Character.MIN_VALUE:reportedGender;
     }
 
     /**
@@ -170,7 +170,7 @@ public class ArraysQc {
         }
 
         // Handle the thousand or so nulls (overwrites DB NULL value)
-        if( theFpGender.equals(' ') || theAutocallGender.equals(' ') ) {
+        if( theFpGender.equals(Character.MIN_VALUE) || theAutocallGender.equals(Character.MIN_VALUE) ) {
             return "N/A";
         }
 
