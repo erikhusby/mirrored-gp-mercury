@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -26,7 +27,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@Test
+@Test(groups = TestGroups.DATABASE_FREE)
 public class DateUtilsTest {
     @DataProvider(name = "daysBetweenTestProvider")
     public Iterator<Object[]> daysBetweenTestProvider() throws ParseException {
