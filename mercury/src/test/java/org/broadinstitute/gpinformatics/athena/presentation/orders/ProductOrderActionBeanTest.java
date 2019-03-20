@@ -2193,9 +2193,6 @@ public class ProductOrderActionBeanTest {
         }
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
-        mockPDOListAnswer.clear();
-        mockPDOListAnswer.addAll(allOrders);
-
 
         if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
@@ -2206,8 +2203,6 @@ public class ProductOrderActionBeanTest {
         }
 
         testOrder.setProduct(seqProduct);
-        mockPDOListAnswer.clear();
-        mockPDOListAnswer.addAll(allOrders);
 
         if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
             Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder),
