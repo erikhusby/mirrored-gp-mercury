@@ -116,6 +116,10 @@ public class ManifestSession implements Updatable {
     @Column(name = "RECEIPT_TICKET")
     private String receiptTicket;
 
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "MANIFEST_FILE")
+    private ManifestFile manifestFile;
+
     /**
      * For JPA.
      */
@@ -158,6 +162,10 @@ public class ManifestSession implements Updatable {
      */
     public String getSessionName() {
         return sessionPrefix.trim() + "-" + manifestSessionId;
+    }
+
+    public String getSessionPrefix() {
+        return sessionPrefix;
     }
 
     public SessionStatus getStatus() {
@@ -690,5 +698,13 @@ public class ManifestSession implements Updatable {
                 .append("sessionPrefix", sessionPrefix)
                 .append("status", status)
                 .toString();
+    }
+
+    public ManifestFile getManifestFile() {
+        return manifestFile;
+    }
+
+    public void setManifestFile(ManifestFile manifestFile) {
+        this.manifestFile = manifestFile;
     }
 }

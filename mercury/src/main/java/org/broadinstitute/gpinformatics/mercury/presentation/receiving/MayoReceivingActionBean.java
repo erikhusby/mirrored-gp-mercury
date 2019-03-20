@@ -15,23 +15,15 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestImportProcessor;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Handles receipt of Mayo samples. There are two receivables from Mayo - a manifest file that describes the
@@ -62,20 +54,16 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     public static final String SAVE_EVENT = "saveBtn";
 
     private MessageCollection messageCollection = new MessageCollection();
-    private boolean previousMayoRack = false;
-    private boolean overwriteFlag = false;
+    private boolean previousMayoRack;
+    private boolean overwriteFlag;
+    private String filename;
     private VesselGeometry vesselGeometry = null;
     private List<String> rackScanEntries = new ArrayList<>();
     private List<String> rackScanBarcodes = new ArrayList<>();
-    private String filename;
-    private List<String> manifestSheetnames;
-    private Map<String, String[][]> manifestArray = new HashMap<>();
+    private String[][] manifestArray;
 
     @Inject
     private MayoManifestEjb mayoManifestEjb;
-
-    @Inject
-    private LabVesselDao labVesselDao;
 
     @Validate(required = true, on = {SCAN_EVENT, SHOW_MANIFEST_EVENT, SAVE_EVENT})
     private String packageBarcode;
@@ -90,62 +78,14 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     @HandlesEvent(SCAN_EVENT)
     public Resolution scanEvent() throws ScannerException {
-        // Checks if the rack barcode matches an existing vessel. If so, it must be a Mayo rack.
-        LabVessel existingVessel = labVesselDao.findByIdentifier(rackBarcode);
-        if (existingVessel != null) {
-            previousMayoRack = mayoManifestEjb.isMayoRack(existingVessel);
-            if (!previousMayoRack) {
-                messageCollection.addError("Cannot continue. " + rackBarcode +
-                        " exists in Mercury but is not a Mayo rack.");
-            }
-        }
-
         // Performs the rack scan.
-        if (!messageCollection.hasErrors()) {
-            runRackScan(false);
-            if (rackScan == null || rackScan.isEmpty()) {
-                messageCollection.addError("The rack scan is empty.");
-            }
+        runRackScan(false);
+        if (rackScan == null || rackScan.isEmpty()) {
+            messageCollection.addError("The rack scan is empty.");
+        } else {
+            // Parses the rack scan into tubes and positions. Looks up the manifest file.
+            mayoManifestEjb.processScan(this);
         }
-
-        // Checks that the positions are valid.
-        if (!messageCollection.hasErrors()) {
-            String invalidPositions = rackScan.keySet().stream().
-                    filter(position -> VesselPosition.getByName(position) == null).
-                    collect(Collectors.joining(", "));
-            if (StringUtils.isNotBlank(invalidPositions)) {
-                messageCollection.addError("Rack scan has unknown position: " + invalidPositions);
-            }
-        }
-
-        // Checks if the tubes exist. If so they must be Mayo tubes.
-        if (!messageCollection.hasErrors()) {
-            rackScanBarcodes = rackScan.values().stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
-            List<LabVessel> existingVessels = labVesselDao.findByListIdentifiers(rackScanBarcodes);
-            if (!existingVessels.isEmpty()) {
-                List<LabVessel> nonMayoTubes = mayoManifestEjb.nonMayoTubes(existingVessels);
-                if (!nonMayoTubes.isEmpty()) {
-                    messageCollection.addError("Cannot continue. Tubes exist in Mercury but are not Mayo tubes: " +
-                            nonMayoTubes.stream().map(LabVessel::getLabel).collect(Collectors.joining(" ")));
-                }
-            }
-        }
-
-        // Turns the rack scan into a list of position & sample to pass to and from jsp.
-        if (!messageCollection.hasErrors()) {
-            rackScanEntries = rackScan.entrySet().stream().
-                    map(mapEntry -> StringUtils.join(mapEntry.getKey(), " ", mapEntry.getValue())).
-                    sorted().collect(Collectors.toList());
-            // Figures out the minimal rack that will accommodate all vessel positions.
-            RackOfTubes.RackType rackType = mayoManifestEjb.inferRackType(rackScan.keySet());
-            if (rackType != null) {
-                vesselGeometry = rackType.getVesselGeometry();
-            } else {
-                messageCollection.addError("Cannot find a rack type for scanned positions " +
-                        rackScan.keySet().stream().sorted().collect(Collectors.joining(", ")));
-            }
-        }
-
         addMessages(messageCollection);
         return new ForwardResolution(messageCollection.hasErrors() ? PAGE1 : PAGE2);
     }
@@ -155,42 +95,30 @@ public class MayoReceivingActionBean extends RackScanActionBean {
      */
     @HandlesEvent(SHOW_MANIFEST_EVENT)
     public Resolution showManifest() {
-        Map<String, List<List<String>>> manifestCells = mayoManifestEjb.readFileAsCellGrid(filename, messageCollection);
-        if (!manifestCells.values().isEmpty()) {
+        List<List<String>> manifestCellGrid = mayoManifestEjb.readManifestAsCellGrid(this);
+        if (!manifestCellGrid.isEmpty() && !hasErrors()) {
             // Formats the manifest upload spreadsheet cells into an array of strings indexed by
-            // sheet, row, and column for display purposes.
-            manifestSheetnames = manifestCells.keySet().stream().
-                    sorted(Comparator.reverseOrder()).collect(Collectors.toList());
-            for (String sheetname : manifestSheetnames) {
-                List<List<String>> cellGrid = manifestCells.get(sheetname);
-                int numRows = cellGrid.size();
-                int maxColumns = cellGrid.stream().mapToInt(List::size).max().orElse(0);
-                String[][] dataArray = new String[numRows][maxColumns];
-                manifestArray.put(sheetname, dataArray);
-                if (!cellGrid.isEmpty()) {
-                    MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
-                    processor.initHeaders(cellGrid.get(0), null);
-                    for (int rowIdx = 0; rowIdx < numRows; ++rowIdx) {
-                        List<String> columns = manifestCells.get(sheetname).get(rowIdx);
-                        for (int columnIdx = 0; columnIdx < columns.size(); ++columnIdx) {
-                            String value = columns.get(columnIdx);
-                            // Calculates the date string when the column is a parsable number that represents a date.
-                            if (rowIdx > 0 && processor.isDateColumn(columnIdx) && NumberUtils.isParsable(value)) {
-                                value = PoiSpreadsheetParser.convertDoubleStringToDateString(value);
-                            }
-                            dataArray[rowIdx][columnIdx] = value;
-                        }
+            // row and column for display in the jsp.
+            int maxColumnCount = manifestCellGrid.stream().mapToInt(List::size).max().orElse(0);
+            manifestArray = new String[manifestCellGrid.size()][maxColumnCount];
+            MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
+            processor.initHeaders(manifestCellGrid.get(0), filename, null);
+            for (int rowIdx = 0; rowIdx < manifestCellGrid.size(); ++rowIdx) {
+                List<String> columns = manifestCellGrid.get(rowIdx);
+                for (int columnIdx = 0; columnIdx < columns.size(); ++columnIdx) {
+                    String value = columns.get(columnIdx);
+                    // Calculates the date string when the column is a parsable number that represents a date.
+                    if (rowIdx > 0 && processor.isDateColumn(columnIdx) && NumberUtils.isParsable(value)) {
+                        value = PoiSpreadsheetParser.convertDoubleStringToDateString(value);
                     }
+                    manifestArray[rowIdx][columnIdx] = value;
                 }
             }
-            addMessages(messageCollection);
-            return new ForwardResolution(PAGE3);
-
         } else {
-            messageCollection.addWarning("Cannot find %s in Google Storage.", filename);
-            addMessages(messageCollection);
-            return new ForwardResolution(PAGE1);
+            messageCollection.addError("Cannot find %s in Google Storage.", filename);
         }
+        addMessages(messageCollection);
+        return new ForwardResolution(hasErrors() ? PAGE1 : PAGE3);
     }
 
     /**
@@ -200,61 +128,17 @@ public class MayoReceivingActionBean extends RackScanActionBean {
      */
     @HandlesEvent(SAVE_EVENT)
     public Resolution saveEvent() {
-        boolean missingRackScan = false;
-        if (!messageCollection.hasErrors()) {
-            // Errors if the package barcode, rack barcode, or rackScan is blank.
-            if (StringUtils.isBlank(packageBarcode) && StringUtils.isBlank(rackBarcode)) {
-                messageCollection.addError("Package or rack barcode is blank.");
-            }
-            // Reconstructs the rackScan from the jsp's mapEntries.
-            rackScan = new LinkedHashMap<>();
-            for (String rackScanEntry : rackScanEntries) {
-                String[] tokens = rackScanEntry.split(" ");
-                rackScan.put(tokens[0], (tokens.length > 1) ? tokens[1] : "");
-            }
-            rackScanBarcodes = rackScan.values().stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
-            if (rackScanBarcodes.isEmpty()) {
-                missingRackScan = true;
-                messageCollection.addWarning("Rack scan is blank.");
+        // Reconstructs the rackScan from the jsp's mapEntries.
+        rackScan = new LinkedHashMap<>();
+        for (String rackScanEntry : rackScanEntries) {
+            String[] tokens = rackScanEntry.split(" ");
+            String value = (tokens.length > 1) ? tokens[1] : "";
+            rackScan.put(tokens[0], value);
+            if (StringUtils.isNotBlank(value)) {
+                rackScanBarcodes.add(value);
             }
         }
-        LabVessel existingRack = null;
-        if (!messageCollection.hasErrors()) {
-            existingRack = labVesselDao.findByIdentifier(rackBarcode);
-            if (existingRack != null) {
-                // An existing rack will have already been checked (in the scanEvent() method) that it is
-                // a Mayo rack. Makes an error message if overwrite is not set.
-                if (overwriteFlag) {
-                    messageCollection.addInfo("Rack " + rackBarcode + " already exists and will be updated.");
-                } else {
-                    messageCollection.addError("Cannot update an existing rack unless overwrite is selected.");
-                }
-            }
-        }
-
-        if (!messageCollection.hasErrors()) {
-            if (existingRack == null) {
-                // If the rack is new but tube barcodes match an existing vessel overwrite must be set.
-                List<LabVessel> existingTubes = labVesselDao.findByListIdentifiers(rackScan.values().stream().
-                        filter(StringUtils::isNotBlank).collect(Collectors.toList()));
-                if (!existingTubes.isEmpty()) {
-                    String tubeBarcodes = existingTubes.stream().
-                            map(LabVessel::getLabel).collect(Collectors.joining(" "));
-                    if (!overwriteFlag) {
-                        messageCollection.addError(
-                                "Overwrite must be selected in order to re-save existing tubes: " + tubeBarcodes);
-                    } else {
-                        messageCollection.addInfo("Existing tubes will be overwritten: " + tubeBarcodes);
-                    }
-                }
-            }
-        }
-        if (!messageCollection.hasErrors()) {
-            // Does the receipt of rack or of rack and tubes if rack scan is present. If tubes are given
-            // then does a manifest lookup and comparison. If no mismatches, does sample accession.
-            mayoManifestEjb.receiveAndAccession(packageBarcode, rackBarcode, rackScan, filename,
-                    overwriteFlag, messageCollection);
-        }
+        mayoManifestEjb.saveScan(this);
         addMessages(messageCollection);
         return new ForwardResolution(PAGE1);
     }
@@ -268,7 +152,6 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     public String getPageTitle() {
         return "Mayo Sample Receipt";
     }
-
 
     public VesselGeometry getVesselGeometry() {
         return vesselGeometry;
@@ -288,7 +171,6 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 	public String getSampleAt(String rowName, String columnName) {
         return StringUtils.trimToEmpty(rackScan.get(rowName + columnName));
     }
-
 
     public List<String> getRackScanEntries() {
         return rackScanEntries;
@@ -318,12 +200,8 @@ public class MayoReceivingActionBean extends RackScanActionBean {
         this.vesselGeometry = vesselGeometry;
     }
 
-    public String[][] getManifestArray(String sheetname) {
-        return manifestArray.get(sheetname);
-    }
-
-    public List<String> getManifestSheetnames() {
-        return manifestSheetnames;
+    public String[][] getManifestArray() {
+        return manifestArray;
     }
 
     public String getPackageBarcode() {
@@ -332,13 +210,6 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     public void setPackageBarcode(String packageBarcode) {
         this.packageBarcode = packageBarcode;
-        // Sets the filename too.
-        filename = makeFilename(packageBarcode);
-    }
-
-    /** Makes a filename from the given package name. */
-    private String makeFilename(String packageName) {
-        return packageName + ".xlsx";
     }
 
     public String getRackBarcode() {
@@ -359,5 +230,17 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     public void setPreviousMayoRack(boolean previousMayoRack) {
         this.previousMayoRack = previousMayoRack;
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
+
+    public List<String> getRackScanBarcodes() {
+        return rackScanBarcodes;
+    }
+
+    public void setMayoManifestEjb(MayoManifestEjb mayoManifestEjb) {
+        this.mayoManifestEjb = mayoManifestEjb;
     }
 }

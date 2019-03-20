@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormation
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestFile;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -34,6 +35,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoReceivingActionBean;
+import org.jetbrains.annotations.NotNull;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -54,6 +57,7 @@ import java.util.stream.Collectors;
 @Stateful
 public class MayoManifestEjb {
     private static Log logger = LogFactory.getLog(MayoManifestEjb.class);
+    private static final String FILE_DELIMITER = ",";
     public static final String MISSING_MANIFEST = "Cannot find a manifest for package %s.";
     public static final String RACK_NOT_IN_MANIFEST = "Rack %s is not in the manifest.";
     public static final String TUBE_NOT_IN_MANIFEST = "Some rack scan tubes are not in the manifest: %s";
@@ -75,11 +79,13 @@ public class MayoManifestEjb {
     private UserBean userBean;
     private LabVesselDao labVesselDao;
     private MercurySampleDao mercurySampleDao;
-    private MayoManifestConfig mayoManifestConfig;
     private TubeFormationDao tubeFormationDao;
     private JiraService jiraService;
+    private MayoManifestConfig mayoManifestConfig;
 
-    /** CDI constructor. */
+    /**
+     * CDI constructor.
+     */
     @SuppressWarnings("UnusedDeclaration")
     public MayoManifestEjb() {
     }
@@ -96,56 +102,123 @@ public class MayoManifestEjb {
         this.tubeFormationDao = tubeFormationDao;
         this.jiraService = jiraService;
         // This config is from the yaml file.
-        mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
+        this.mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
                 getConfig(MayoManifestConfig.class, deployment);
-        this.googleBucketDao.setConfigGoogleStorageConfig(mayoManifestConfig);
+        googleBucketDao.setConfigGoogleStorageConfig(mayoManifestConfig);
     }
 
-    /**
-     * Searches database for an existing ManifestSession associated with the package barcode. If none
-     * found, queries Google Storage for the manifest file, parses it and persists the ManifestSession.
-     * Errors are put in the MessageCollection.
-     * @param redoLookup if true then the Google storage file is re-read.
-     */
-    public ManifestSession lookupOrMakeManifestSession(String packageBarcode, String filename,
-            boolean redoLookup, MessageCollection messages) {
-
-        ManifestSession manifestSession = null;
-        List<ManifestSession> manifestSessions = manifestSessionDao.getSessionsForPackage(packageBarcode);
-        if (manifestSessions.size() == 1) {
-            manifestSession = manifestSessions.iterator().next();
-        } else if (manifestSessions.size() > 1) {
-            messages.addInfo("Using most recent of " + manifestSessions.size() + " sessions found for package " +
-                    packageBarcode + ".");
-            manifestSession = manifestSessions.stream().
-                    sorted(Comparator.comparingLong(ManifestSession::getManifestSessionId).reversed()).
-                    findFirst().get();
+    public void processScan(MayoReceivingActionBean bean) {
+        // Checks if the rack barcode matches an existing vessel. If so, it needs to be a Mayo rack.
+        LabVessel existingVessel = labVesselDao.findByIdentifier(bean.getRackBarcode());
+        if (existingVessel != null) {
+            bean.setPreviousMayoRack(isMayoRack(existingVessel));
+            if (!bean.isPreviousMayoRack()) {
+                bean.getMessageCollection().addError("Cannot continue. " + bean.getRackBarcode() +
+                        " exists in Mercury but is not a Mayo rack.");
+            }
         }
-        // Reads or re-reads the file from Google storage. If file doesn't exist that is not an error.
-        if (manifestSessions.isEmpty() || redoLookup) {
-            MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
-            Map<String, List<List<String>>> cells = readFileAsCellGrid(filename, messages);
-            if (cells != null) {
-                List<ManifestRecord> manifestRecordsFromFile = processor.makeManifestRecords(cells, messages);
-                if (CollectionUtils.isNotEmpty(manifestRecordsFromFile)) {
-                    if (manifestSessions.isEmpty()) {
-                        manifestSession = new ManifestSession(null, packageBarcode, userBean.getBspUser(), false,
-                                manifestRecordsFromFile);
-                        manifestSessionDao.persist(manifestSession);
-                    } else if (redoLookup) {
-                        // Persist the new version of manifest only if different from the existing one.
-                        if (!CollectionUtils.isEqualCollection(
-                                processor.flattenedListOfMetadata(manifestSession.getRecords()),
-                                processor.flattenedListOfMetadata(manifestRecordsFromFile))) {
-                            manifestSession = new ManifestSession(null, packageBarcode, userBean.getBspUser(), false,
-                                    manifestRecordsFromFile);
-                            manifestSessionDao.persist(manifestSession);
+        // Checks that the positions are valid.
+        if (!bean.getMessageCollection().hasErrors()) {
+            String invalidPositions = bean.getRackScan().keySet().stream().
+                    filter(position -> VesselPosition.getByName(position) == null).
+                    collect(Collectors.joining(", "));
+            if (StringUtils.isNotBlank(invalidPositions)) {
+                bean.getMessageCollection().addError("Rack scan has unknown position: " + invalidPositions);
+            }
+        }
+        // Checks if the tubes exist. If so they need to be Mayo tubes.
+        if (!bean.getMessageCollection().hasErrors()) {
+            bean.getRackScanBarcodes().addAll(bean.getRackScan().values().stream().
+                    filter(StringUtils::isNotBlank).collect(Collectors.toList()));
+            List<LabVessel> existingVessels = labVesselDao.findByListIdentifiers(bean.getRackScanBarcodes());
+            if (!existingVessels.isEmpty()) {
+                String nonMayoTubes = nonMayoTubes(existingVessels).stream().
+                        map(LabVessel::getLabel).
+                        collect(Collectors.joining(" "));
+                if (!nonMayoTubes.isEmpty()) {
+                    bean.getMessageCollection().addError("Cannot continue. Tubes exist in Mercury " +
+                            "but are not Mayo tubes: " + nonMayoTubes);
+                }
+            }
+        }
+        // Turns the rack scan into a list of position & sample to pass to and from jsp.
+        if (!bean.getMessageCollection().hasErrors()) {
+            bean.getRackScanEntries().addAll(bean.getRackScan().entrySet().stream().
+                    map(mapEntry -> StringUtils.join(mapEntry.getKey(), " ", mapEntry.getValue())).
+                    sorted().collect(Collectors.toList()));
+            // Figures out the minimal rack that will accommodate all vessel positions.
+            RackOfTubes.RackType rackType = inferRackType(bean.getRackScan().keySet());
+            if (rackType != null) {
+                bean.setVesselGeometry(rackType.getVesselGeometry());
+            } else {
+                bean.getMessageCollection().addError("Cannot find a rack type for scanned positions " +
+                        bean.getRackScan().keySet().stream().sorted().collect(Collectors.joining(", ")));
+            }
+        }
+    }
+
+    public void saveScan(MayoReceivingActionBean bean) {
+        if (!bean.getMessageCollection().hasErrors()) {
+            if (StringUtils.isBlank(bean.getPackageBarcode())) {
+                bean.getMessageCollection().addError("Package barcode is blank.");
+            } else if (StringUtils.isBlank(bean.getRackBarcode())) {
+                bean.getMessageCollection().addError("Rack barcode is blank.");
+            } else if (bean.getRackScanBarcodes().isEmpty()) {
+                bean.getMessageCollection().addWarning("Rack scan is blank.");
+            } else {
+                LabVessel existingRack = labVesselDao.findByIdentifier(bean.getRackBarcode());
+                if (existingRack == null) {
+                    // If the rack is new but tube barcodes match an existing vessel overwrite must be set.
+                    List<LabVessel> existingTubes = labVesselDao.findByListIdentifiers(bean.getRackScanBarcodes());
+                    if (!existingTubes.isEmpty()) {
+                        String tubeBarcodes = existingTubes.stream().
+                                map(LabVessel::getLabel).collect(Collectors.joining(" "));
+                        if (!bean.isOverwriteFlag()) {
+                            bean.getMessageCollection().addError(
+                                    "Overwrite must be selected in order to re-save existing tubes: " + tubeBarcodes);
+                        } else {
+                            bean.getMessageCollection().addInfo("Existing tubes will be overwritten: " + tubeBarcodes);
                         }
+                    }
+                } else {
+                    // FYI an existing rack will have already been checked that it is a Mayo rack.
+                    if (bean.isOverwriteFlag()) {
+                        bean.getMessageCollection().addInfo("Rack " + bean.getRackBarcode() +
+                                " already exists and will be updated.");
+                    } else {
+                        bean.getMessageCollection().addError(
+                                "Cannot update an existing rack unless overwrite is selected.");
                     }
                 }
             }
         }
-        return manifestSession;
+        if (!bean.getMessageCollection().hasErrors()) {
+            receiveAndAccession(bean);
+        }
+    }
+
+    /**
+     * Using package info from the UI, looks up a manifest session, finds the manifest filename,
+     * reads the file content from storage, and parses content into a cell grid (either csv or Excel).
+     * @return spreadsheet content including headers, or empty list if there is no manifest session or file found.
+     */
+    public @NotNull List<List<String>> readManifestAsCellGrid(MayoReceivingActionBean bean) {
+        List<List<String>> cellGrid = Collections.emptyList();
+        ManifestSession manifestSession = lookupManifestSession(bean);
+        if (manifestSession == null || manifestSession.getManifestFile() == null) {
+            bean.getMessageCollection().addInfo("No manifest file found for package " + bean.getPackageBarcode());
+        } else {
+            String bucketName = mayoManifestConfig.getBucketName();
+            String[] fileAndBucket = manifestSession.getManifestFile().getQualifiedFilename().split(FILE_DELIMITER);
+            if (fileAndBucket.length > 1 && bucketName.equals(fileAndBucket[1])) {
+                bean.setFilename(fileAndBucket[0]);
+                cellGrid = readFileAsCellGrid(fileAndBucket[0], bean.getMessageCollection());
+            } else {
+                bean.getMessageCollection().addError("Manifest session file " + fileAndBucket[0] +
+                        " is not in the configured storage bucket " + bucketName);
+            }
+        }
+        return cellGrid;
     }
 
     /**
@@ -153,12 +226,14 @@ public class MayoManifestEjb {
      * Returns null if the manifest file doesn't exist or could not be read. This is not an error.
      * Errors are put in the MessageCollection.
      */
-    public Map<String, List<List<String>>> readFileAsCellGrid(String filename, MessageCollection messages) {
-        byte[] spreadsheet = googleBucketDao.download(filename, messages);
-        if (spreadsheet != null && spreadsheet.length > 0) {
-            return MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, messages);
+    private @NotNull List<List<String>> readFileAsCellGrid(String filename, MessageCollection messageCollection) {
+        if (StringUtils.isNotBlank(filename)) {
+            byte[] spreadsheet = googleBucketDao.download(filename, messageCollection);
+            if (spreadsheet != null && spreadsheet.length > 0) {
+                return MayoManifestImportProcessor.parseAsCellGrid(spreadsheet, filename, messageCollection);
+            }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     /**
@@ -168,17 +243,16 @@ public class MayoManifestEjb {
      * persist the empty rack (in order to find the RCT when the rack is processed again).
      * At most it will make an RCT accessioned ticket and persist rack, tubes, and samples.
      */
-    public void receiveAndAccession(String packageBarcode, String rackBarcode,
-            Map<String, String> rackScan, String filename, boolean overwrite, MessageCollection messages) {
-
+    private void receiveAndAccession(MayoReceivingActionBean bean) {
         // If the ManifestSession exists, makes maps of sample name to sample metadata.
         Multimap<String, Metadata> sampleMetadata = HashMultimap.create();
         Map<String, VesselPosition> manifestPositions = new HashMap<>();
         Map<String, String> sampleToTube = new HashMap<>();
         Map<String, String> tubeToSample = new HashMap<>();
-        ManifestSession manifestSession = lookupOrMakeManifestSession(packageBarcode, filename, overwrite, messages);
+        ManifestSession manifestSession = lookupManifestSession(bean);
         if (manifestSession != null) {
-            for (ManifestRecord manifestRecord : manifestSession.findRecordsByKey(rackBarcode, Metadata.Key.BOX_ID)) {
+            for (ManifestRecord manifestRecord : manifestSession.findRecordsByKey(bean.getRackBarcode(),
+                    Metadata.Key.BOX_ID)) {
                 String sampleName = manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID);
                 sampleMetadata.putAll(sampleName, manifestRecord.getMetadata());
 
@@ -186,7 +260,7 @@ public class MayoManifestEjb {
                 String positionName = manifestRecord.getValueByKey(Metadata.Key.WELL);
                 VesselPosition position = VesselPosition.getByName(positionName);
                 if (position == null) {
-                    messages.addError(UNKNOWN_WELL, positionName);
+                    bean.getMessageCollection().addError(UNKNOWN_WELL, positionName);
                 } else {
                     manifestPositions.put(tubeBarcode, position);
                 }
@@ -194,17 +268,17 @@ public class MayoManifestEjb {
                 tubeToSample.put(tubeBarcode, sampleName);
             }
             if (tubeToSample.isEmpty()) {
-                messages.addError(RACK_NOT_IN_MANIFEST, rackBarcode);
+                bean.getMessageCollection().addError(RACK_NOT_IN_MANIFEST, bean.getRackBarcode());
             }
         } else {
-            messages.addWarning(MISSING_MANIFEST, packageBarcode);
+            bean.getMessageCollection().addWarning(MISSING_MANIFEST, bean.getPackageBarcode());
         }
 
         final Map<String, VesselPosition> reverseRackScan = new HashMap<>();
         Map<String, BarcodedTube> tubeMap = new HashMap<>();
-        if (!messages.hasErrors()) {
+        if (!bean.getMessageCollection().hasErrors()) {
             // Makes a reverse mapped rackScan for the non-blank barcode entries.
-            reverseRackScan.putAll(rackScan.entrySet().stream().
+            reverseRackScan.putAll(bean.getRackScan().entrySet().stream().
                     filter(mapEntry -> StringUtils.isNotBlank(mapEntry.getValue())).
                     collect(Collectors.toMap(Map.Entry::getValue,
                             mapEntry -> VesselPosition.valueOf(mapEntry.getKey()))));
@@ -215,31 +289,31 @@ public class MayoManifestEjb {
                     String missingFromManifest = StringUtils.join(
                             CollectionUtils.subtract(reverseRackScan.keySet(), manifestPositions.keySet()), " ");
                     if (StringUtils.isNotBlank(missingFromManifest)) {
-                        messages.addError(TUBE_NOT_IN_MANIFEST, missingFromManifest);
+                        bean.getMessageCollection().addError(TUBE_NOT_IN_MANIFEST, missingFromManifest);
                     }
                     String missingFromRackscan = StringUtils.join(
                             CollectionUtils.subtract(manifestPositions.keySet(), reverseRackScan.keySet()), " ");
                     if (StringUtils.isNotBlank(missingFromRackscan)) {
-                        messages.addError(TUBE_NOT_IN_RACKSCAN, missingFromRackscan);
+                        bean.getMessageCollection().addError(TUBE_NOT_IN_RACKSCAN, missingFromRackscan);
                     }
                 } else {
                     reverseRackScan.keySet().stream().
                             filter(tube -> !reverseRackScan.get(tube).equals(manifestPositions.get(tube))).
-                            forEachOrdered(tube -> messages.addError(WRONG_POSITION, tube,
+                            forEachOrdered(tube -> bean.getMessageCollection().addError(WRONG_POSITION, tube,
                                     manifestPositions.get(tube), reverseRackScan.get(tube)));
                 }
             }
         }
         RackOfTubes rack = null;
-        if (!messages.hasErrors()) {
+        if (!bean.getMessageCollection().hasErrors()) {
             // Finds existing vessels.
             for (LabVessel vessel : labVesselDao.findListByList(LabVessel.class, LabVessel_.label,
                     new ArrayList<String>() {{
                         addAll(reverseRackScan.keySet());
-                        add(rackBarcode);
+                        add(bean.getRackBarcode());
                     }})) {
                 String barcode = vessel.getLabel();
-                if (barcode.equals(rackBarcode)) {
+                if (barcode.equals(bean.getRackBarcode())) {
                     if (OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
                         rack = OrmUtil.proxySafeCast(vessel, RackOfTubes.class);
                     }
@@ -247,14 +321,13 @@ public class MayoManifestEjb {
                     if (OrmUtil.proxySafeIsInstance(vessel, BarcodedTube.class)) {
                         tubeMap.put(barcode, OrmUtil.proxySafeCast(vessel, BarcodedTube.class));
                     } else {
-                        messages.addError(NOT_A_TUBE, barcode);
+                        bean.getMessageCollection().addError(NOT_A_TUBE, barcode);
                     }
                 }
             }
         }
-        List<String> sampleNames = Collections.emptyList();
         List<Object> newEntities = new ArrayList<>();
-        if (!messages.hasErrors()) {
+        if (!bean.getMessageCollection().hasErrors()) {
             // Creates or updates tubes.
             Map<VesselPosition, BarcodedTube> vesselPositionToTube = new HashMap<>();
             for (String barcode : reverseRackScan.keySet()) {
@@ -280,25 +353,27 @@ public class MayoManifestEjb {
 
             // Creates or updates the rack. Uses a new or existing tube formation obtained from the rackScan.
             List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
-            for (String positionName : rackScan.keySet()) {
-                positionBarcodeList.add(Pair.of(VesselPosition.getByName(positionName), rackScan.get(positionName)));
+            for (String positionName : bean.getRackScan().keySet()) {
+                positionBarcodeList.add(Pair.of(VesselPosition.getByName(positionName),
+                        bean.getRackScan().get(positionName)));
             }
             String digest = TubeFormation.makeDigest(positionBarcodeList);
             TubeFormation tubeFormation = tubeFormationDao.findByDigest(digest);
-            RackOfTubes.RackType rackType = (rack != null) ? rack.getRackType() : inferRackType(rackScan.keySet());
+            RackOfTubes.RackType rackType = (rack != null) ?
+                    rack.getRackType() : inferRackType(bean.getRackScan().keySet());
             if (tubeFormation == null) {
                 tubeFormation = new TubeFormation(vesselPositionToTube, rackType);
                 newEntities.add(tubeFormation);
             }
             if (rack == null) {
-                rack = new RackOfTubes(rackBarcode, rackType);
+                rack = new RackOfTubes(bean.getRackBarcode(), rackType);
                 newEntities.add(rack);
             }
             tubeFormation.addRackOfTubes(rack);
 
             // If manifest is known, creates or updates samples.
             Map<String, MercurySample> sampleMap = mercurySampleDao.findMapIdToMercurySample(sampleMetadata.keySet());
-            sampleNames = sampleMap.entrySet().stream().
+            List<String> sampleNames = sampleMap.entrySet().stream().
                     filter(mapEntry -> mapEntry.getValue() != null).
                     map(Map.Entry::getKey).sorted().
                     collect(Collectors.toList());
@@ -315,16 +390,71 @@ public class MayoManifestEjb {
                 // Links sample to tube.
                 tubeMap.get(sampleToTube.get(sampleName)).addSample(mercurySample);
             }
-        }
-        JiraTicket jiraTicket = makeOrUpdateRct(packageBarcode, rack, reverseRackScan.keySet(), sampleNames, messages);
-        if (jiraTicket != null) {
-            newEntities.add(jiraTicket);
-            labVesselDao.persistAll(newEntities);
+            JiraTicket jiraTicket =  makeOrUpdateRct(bean.getPackageBarcode(), rack, reverseRackScan.keySet(),
+                    sampleNames, bean.getMessageCollection());
+            if (jiraTicket != null) {
+                newEntities.add(jiraTicket);
+                labVesselDao.persistAll(newEntities);
+            }
         }
     }
 
+    /**
+     * Returns the ManifestSession associated with the package barcode. If it doesn't already exist,
+     * reads new files from manifest file storage and makes new ManifestSessions, and then searches
+     * those. Returns null if no matching manifest session found.
+     */
+    private ManifestSession lookupManifestSession(MayoReceivingActionBean bean) {
+        List<ManifestSession> manifestSessions = manifestSessionDao.getSessionsForPackage(bean.getPackageBarcode());
+        if (manifestSessions.isEmpty()) {
+            // Looks at storage for unprocessed files and makes new Manifest Sessions from them.
+            manifestSessions = processNewManifestFiles(bean);
+        }
+        if (manifestSessions.size() > 1) {
+            bean.getMessageCollection().addInfo("Using most recent of " + manifestSessions.size() +
+                    " sessions found for package " + bean.getPackageBarcode() + ".");
+        }
+        return manifestSessions.stream().findFirst().orElse(null);
+    }
+
+    /**
+     * Queries Google Storage for all new manifest files and persists them as ManifestSessions.
+     * Returns manifest sessions that match the bean info, or empty collection if none found.
+     */
+    private List<ManifestSession> processNewManifestFiles(MayoReceivingActionBean bean) {
+        List<ManifestSession> manifestSessions = new ArrayList<>();
+        String bucketName = mayoManifestConfig.getBucketName();
+        List<String> filenames = googleBucketDao.list(bean.getMessageCollection());
+        // Removes the files in the bucket that have already been seed. A qualifiedFilename consists of
+        // filename + delimiter + bucket name.
+        filenames.removeAll(manifestSessionDao.getQualifiedFilenames().stream().
+                filter(name -> bucketName.equals(StringUtils.substringAfter(name, FILE_DELIMITER))).
+                map(name -> StringUtils.substringBefore(name, FILE_DELIMITER)).
+                collect(Collectors.toList()));
+        Collection<Object> newEntities = new ArrayList<>();
+        for (String filename : filenames) {
+            ManifestFile manifestFile = new ManifestFile(filename + FILE_DELIMITER + bucketName);
+            newEntities.add(manifestFile);
+            List<List<String>> cellGrid = readFileAsCellGrid(filename, bean.getMessageCollection());
+            if (!cellGrid.isEmpty()) {
+                MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
+                List<ManifestRecord> manifestRecordsFromFile = processor.makeManifestRecords(cellGrid,
+                        filename, bean.getMessageCollection());
+                if (CollectionUtils.isNotEmpty(manifestRecordsFromFile)) {
+                    ManifestSession manifestSession = new ManifestSession(null, bean.getPackageBarcode(),
+                            userBean.getBspUser(), false, manifestRecordsFromFile);
+                    manifestSession.setManifestFile(manifestFile);
+                    newEntities.add(manifestSession);
+                    manifestSessions.add(manifestSession);
+                }
+            }
+        }
+        manifestSessionDao.persistAll(newEntities);
+        return manifestSessionDao.getSessionsForPackage(bean.getPackageBarcode(), manifestSessions);
+    }
+
     // Infers the rack type from the vessel positions in the rackScan.
-    public RackOfTubes.RackType inferRackType(Collection<String> positionNames) {
+    private RackOfTubes.RackType inferRackType(Collection<String> positionNames) {
         // Prefers the default rack type over any others.
         List<RackOfTubes.RackType> searchList = new ArrayList<>();
         searchList.add(DEFAULT_RACK_TYPE);
@@ -342,7 +472,7 @@ public class MayoManifestEjb {
     }
 
     /** Returns true if the existing vessel is a rack of tubes and linked to an RCT. */
-    public boolean isMayoRack(LabVessel existingVessel) {
+    private boolean isMayoRack(LabVessel existingVessel) {
         return OrmUtil.proxySafeIsInstance(existingVessel, RackOfTubes.class) &&
                 OrmUtil.proxySafeCast(existingVessel, RackOfTubes.class).getJiraTickets().stream().
                         filter(ticket -> ticket.getTicketName().
@@ -351,7 +481,7 @@ public class MayoManifestEjb {
     }
 
     /** Returns the existing tubes that are not Mayo uploaded tubes. */
-    public List<LabVessel> nonMayoTubes(Collection<LabVessel> existingTubes) {
+    private List<LabVessel> nonMayoTubes(Collection<LabVessel> existingTubes) {
         List<LabVessel> nonMayoTubes = new ArrayList<>();
         for (LabVessel tube : existingTubes) {
             if (!OrmUtil.proxySafeIsInstance(tube, BarcodedTube.class)) {
@@ -364,7 +494,7 @@ public class MayoManifestEjb {
                         filter(container -> OrmUtil.proxySafeIsInstance(container, TubeFormation.class)).
                         flatMap(container ->
                                 OrmUtil.proxySafeCast(container, TubeFormation.class).getRacksOfTubes().stream()).
-                        filter(rack -> isMayoRack(rack)).
+                        filter(this::isMayoRack).
                         findAny().isPresent()) {
                     nonMayoTubes.add(tube);
                 }
@@ -387,10 +517,13 @@ public class MayoManifestEjb {
         JiraTicket jiraTicket = null;
         try {
             // Gets the most recent linked RCT ticket for the rack.
-            jiraTicket = rack.getJiraTickets().stream().
-                    filter(t -> t.getTicketName().startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
-                    sorted(Comparator.comparing(JiraTicket::getTicketName).reversed()).
-                    findFirst().orElse(null);
+            if (rack.getJiraTickets() != null) {
+                jiraTicket = rack.getJiraTickets().stream().
+                        filter(t -> t.getTicketName().
+                                startsWith(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())).
+                        sorted(Comparator.comparing(JiraTicket::getTicketName).reversed()).
+                        findFirst().orElse(null);
+            }
             JiraIssue jiraIssue;
             String title = String.format("Mayo package %s rack %s", packageBarcode, rack.getLabel());
             String comment;
@@ -433,7 +566,7 @@ public class MayoManifestEjb {
             jiraIssue.addComment(comment);
 
         } catch (Exception e) {
-            logger.error(JIRA_PROBLEM, e);
+            logger.error(String.format(JIRA_PROBLEM, ""), e);
             messages.addError(JIRA_PROBLEM, e.toString());
         }
         return jiraTicket;

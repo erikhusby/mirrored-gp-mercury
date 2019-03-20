@@ -12,6 +12,11 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This class accesses Google Storage buckets. For OAuth2 authentication a pre-configured stored
@@ -22,6 +27,25 @@ import java.io.FileInputStream;
 public class GoogleBucketDao {
     private GoogleStorageConfig googleStorageConfig;
     private Credentials credentials = null;
+
+    public void setConfigGoogleStorageConfig(GoogleStorageConfig googleStorageConfig) {
+        this.googleStorageConfig = googleStorageConfig;
+    }
+
+    /** Returns a list of the files' blobIds in the bucket. */
+    public List<String> list(MessageCollection messageCollection) {
+        if (credentials == null) {
+            authorizeServiceAccountKey(messageCollection);
+        }
+        if (credentials != null) {
+            Storage storage = StorageOptions.newBuilder().setCredentials(credentials)
+                    .setProjectId(googleStorageConfig.getProject()).build().getService();
+            Set<String> names = new HashSet<>();
+            storage.list(googleStorageConfig.getBucketName()).iterateAll().forEach(blob -> names.add(blob.getName()));
+            return names.stream().sorted().collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+    }
 
     /**
      * Reads and returns content of a file as bytes, or null if no such file.
@@ -53,9 +77,5 @@ public class GoogleBucketDao {
         } catch (Exception e) {
             messages.addError("Google service account authorization failed: %s", e.toString());
         }
-    }
-
-    public void setConfigGoogleStorageConfig(GoogleStorageConfig googleStorageConfig) {
-        this.googleStorageConfig = googleStorageConfig;
     }
 }

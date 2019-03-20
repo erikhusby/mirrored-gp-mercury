@@ -1916,7 +1916,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-storage</artifactId>
-            <version>1.55.0</version>
+            <version>1.64.0</version>
         </dependency>
     </dependencies>
 
