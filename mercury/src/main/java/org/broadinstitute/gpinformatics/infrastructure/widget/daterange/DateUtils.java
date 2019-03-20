@@ -18,9 +18,7 @@ import java.text.DateFormat;
 import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -584,22 +582,17 @@ public class DateUtils {
 
     /**
      * Returns the number of days between the two dates.  First it zeroes outs the time so it compares midnight to midnight. 
-     * 
+     *
      * @param startDate Earlier date to compare
      * @param endDate Later date to compare
      */
-    public static int getNumDaysBetween(Date startDate, Date endDate) {
+    public static long getNumDaysBetween(Date startDate, Date endDate) {
 
         if (org.apache.commons.lang3.time.DateUtils.isSameDay(startDate, endDate)) {
             return 0;
         }
 
-        LocalDate start = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate end = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-        Period timePeriod = Period.between(start, end);
-
-        return timePeriod.getDays();
+        return ChronoUnit.DAYS.between(startDate.toInstant(),endDate.toInstant());
     }
 
     public static Date parseXmlDate(String s) {
