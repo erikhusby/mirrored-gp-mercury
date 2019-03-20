@@ -2239,6 +2239,7 @@ public class ProductOrderActionBeanTest {
         assertThat(fundingDetails.get("activeGrant"), is(true));
         assertThat(fundingDetails.get("daysTillExpire"), equalTo(7l));
     }
+
     public void testQuoteOptionsFundsReservationExpiresAfterLeapYear() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
