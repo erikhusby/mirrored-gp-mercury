@@ -6,6 +6,9 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.collection.BspGroupCollectionManager;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.response.AllCollectionsResponse;
+import org.broadinstitute.bsp.client.site.AllSitesResponse;
+import org.broadinstitute.bsp.client.site.BspSiteManager;
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
@@ -138,5 +141,15 @@ public class BSPGroupCollectionList extends AbstractCache implements Serializabl
         // Create an immutable map since this is an application scoped object that's returned directly to the caller.
         // We don't want to allow one thread to affect another by modifying this.
         collections = ImmutableMap.copyOf(collectionsMap);
+    }
+
+    public List<Site> getSitesForCollection(long collectionId) {
+        BspSiteManager siteManager = bspManagerFactory.createSiteManager();
+        AllSitesResponse applicableSites = siteManager.getApplicableSites(collectionId);
+        if (applicableSites.isSuccess()) {
+            return applicableSites.getResult();
+        } else {
+            return Collections.emptyList();
+        }
     }
 }

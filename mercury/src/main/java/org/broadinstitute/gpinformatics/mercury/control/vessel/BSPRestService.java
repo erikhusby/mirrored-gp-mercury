@@ -7,6 +7,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ExternalSamplesRequest;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.IdNames;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.PlateRegistrationBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RegisterNonBroadTubesBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceivedBean;
@@ -17,6 +20,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,6 +31,9 @@ public class BSPRestService implements Serializable {
     public static final String BSP_SAMPLE_KIT_INFO = "sampleKit/getSampleKitDetails";
     public static final String BSP_CONTAINER_SAMPLE_INFO = "container/getSampleInfo";
     public static final String BSP_RECEIVE_NON_BROAD_SAMPLE = "sampleKit/receiveNonBroadTubes";
+    public static final String BSP_GET_LABELS = "receptacle/getLabelFormats";
+    public static final String BSP_GET_CHILD_RECEPTACLES = "receptacle/getChildReceptacleTypesForBarcode";
+    public static final String BSP_RECEIVE_EXT_TUBES = "sampleKit/receiveExternalTubes";
 
     private static final Log logger = LogFactory.getLog(BSPRestService.class);
 
@@ -97,6 +104,55 @@ public class BSPRestService implements Serializable {
             SampleKitReceivedBean receiptResponse = new SampleKitReceivedBean(false);
             logger.warn("POST to " + urlString + " returned: " + response.getEntity(String.class));
             return receiptResponse;
+        }
+
+        return response.getEntity(SampleKitReceivedBean.class);
+    }
+
+    public IdNames getLabelFormats(String receptacleName) {
+        String urlString = bspRestClient.getUrl(BSP_GET_LABELS);
+        MultivaluedMap<String, String> parameters = new MultivaluedMapImpl();
+        parameters.add("receptacleName", receptacleName);
+        WebResource webResource = bspRestClient.getWebResource(urlString).queryParams(parameters);
+
+        // Posts message to BSP using the specified REST url.
+        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).get(ClientResponse.class);
+
+        // This is called in context of bettalims message handling which handles errors via RuntimeException.
+        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            throw new RuntimeException("GET to " + urlString + " returned: " + response.getEntity(String.class));
+        }
+
+        return response.getEntity(IdNames.class);
+    }
+
+    public IdNames getChildReceptacleTypesForBarcode(String receptacleBarcode) {
+        String urlString = bspRestClient.getUrl(BSP_GET_CHILD_RECEPTACLES);
+        MultivaluedMap<String, String> parameters = new MultivaluedMapImpl();
+        parameters.add("receptacleBarcode", receptacleBarcode);
+        WebResource webResource = bspRestClient.getWebResource(urlString).queryParams(parameters);
+
+        // Posts message to BSP using the specified REST url.
+        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).get(ClientResponse.class);
+
+        // This is called in context of bettalims message handling which handles errors via RuntimeException.
+        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            throw new RuntimeException("GET to " + urlString + " returned: " + response.getEntity(String.class));
+        }
+
+        return response.getEntity(IdNames.class);
+    }
+
+    public SampleKitReceivedBean receiveExternalTubes(ExternalSamplesRequest sampleContents) {
+        String urlString = bspRestClient.getUrl(BSP_RECEIVE_EXT_TUBES);
+
+        WebResource webResource = bspRestClient.getWebResource(urlString);
+
+        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, sampleContents);
+
+        // This is called in context of bettalims message handling which handles errors via RuntimeException.
+        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            throw new RuntimeException(response.getEntity(String.class));
         }
 
         return response.getEntity(SampleKitReceivedBean.class);

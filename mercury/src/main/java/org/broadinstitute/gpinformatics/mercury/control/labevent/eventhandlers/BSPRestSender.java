@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.PlateRegistrationBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.TransferReturn;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -67,6 +68,7 @@ import java.util.stream.Collectors;
 public class BSPRestSender implements Serializable {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
     public static final String BSP_CREATE_DISSASSOC_PLATE_URL = "plate/createDisassociatedPlate";
+    public static final String BSP_REGISTER_PLATE = "plate/register";
     public static final String BSP_CONTAINER_URL = "container/getSampleInfo";
     public static final String BSP_UPLOAD_QUANT_URL = "quant/upload";
     public static final String BSP_KIT_REST_URL = "kit";
@@ -433,6 +435,22 @@ public class BSPRestSender implements Serializable {
         } else {
             return response.getEntity(GetSampleInfo.SampleInfos.class);
         }
+    }
+
+    public String registerEmptyPlate(String receptacleType, String receptacleName) {
+        String urlString = bspRestClient.getUrl(BSP_REGISTER_PLATE);
+
+        PlateRegistrationBean plateRegistrationBean = new PlateRegistrationBean(receptacleType, receptacleName);
+        WebResource webResource = bspRestClient.getWebResource(urlString);
+
+        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, plateRegistrationBean);
+
+        // This is called in context of bettalims message handling which handles errors via RuntimeException.
+        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
+        }
+
+        return "CO-" + response.getEntity(String.class);
     }
 
 }

@@ -7,6 +7,7 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.SimpleError;
@@ -28,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocat
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -44,8 +46,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -103,6 +109,9 @@ public class ContainerActionBean extends RackScanActionBean {
     @Inject
     private LabEventDao labEventDao;
 
+    @Inject
+    private BSPRestSender bspRestSender;
+
     private String containerBarcode;
     private String storageName;
 
@@ -118,6 +127,8 @@ public class ContainerActionBean extends RackScanActionBean {
     private StaticPlate staticPlate;
     private boolean ajaxRequest;
     private boolean showLayout;
+    private boolean inBsp;
+    private String receptacleType;
 
     public ContainerActionBean() {
         super(CREATE_CONTAINER, EDIT_CONTAINER, CONTAINER_PARAMETER);
@@ -141,23 +152,47 @@ public class ContainerActionBean extends RackScanActionBean {
 
     @ValidationMethod(on = CREATE_CONTAINER_ACTION)
     public void labVesselDoesntExist(ValidationErrors errors) {
-        if (StringUtils.isEmpty(containerBarcode)) {
+        if (StringUtils.isEmpty(containerBarcode) && !inBsp) {
             addValidationError("containerBarcode", "Container Barcode is required.");
             return;
         }
-        if (labVesselDao.findByIdentifier(containerBarcode) != null) {
+        if (labVesselDao.findByIdentifier(containerBarcode) != null  && !inBsp) {
             errors.add(containerBarcode, new SimpleError("Barcode is already associated with another lab vessel"));
+        }
+
+        if (inBsp && StringUtils.isEmpty(receptacleType)) {
+            errors.add(receptacleType, new SimpleError("Receptacle Type is required for BSP"));
         }
     }
 
     @HandlesEvent(CREATE_CONTAINER_ACTION)
     public Resolution createContainer() {
+        if (inBsp) {
+            containerBarcode = bspRestSender.registerEmptyPlate(rackType.getDisplayName(), "");
+            if (containerBarcode == null) {
+                throw new RuntimeException("Failed to create container barcode in BSP");
+            }
+        }
+
         RackOfTubes rackOfTubes = new RackOfTubes(containerBarcode, rackType);
         labVesselDao.persist(rackOfTubes);
         labVesselDao.flush();
-        addMessage("Successfully created new container: " + containerBarcode);
-        return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_ACTION)
-                .addParameter(CONTAINER_PARAMETER, containerBarcode);
+
+        if (!inBsp) {
+            addMessage("Successfully created new container: " + containerBarcode);
+            return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_ACTION)
+                    .addParameter(CONTAINER_PARAMETER, containerBarcode);
+        } else {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                ObjectNode objectNode = mapper.createObjectNode();
+                objectNode.put("containerBarcode", containerBarcode);
+                return new StreamingResolution("application/json", new StringReader(mapper.writeValueAsString(objectNode)));
+            } catch (IOException e) {
+                logger.error("Failed to generate json", e);
+                throw new RuntimeException("Failed to generate JSON");
+            }
+        }
     }
 
     @ValidationMethod(on = {VIEW_CONTAINER_ACTION, EDIT_ACTION, SAVE_ACTION, SAVE_LOCATION_ACTION,
@@ -769,6 +804,22 @@ public class ContainerActionBean extends RackScanActionBean {
 
     public void setShowLayout(boolean showLayout) {
         this.showLayout = showLayout;
+    }
+
+    public boolean isInBsp() {
+        return inBsp;
+    }
+
+    public void setInBsp(boolean inBsp) {
+        this.inBsp = inBsp;
+    }
+
+    public String getReceptacleType() {
+        return receptacleType;
+    }
+
+    public void setReceptacleType(String receptacleType) {
+        this.receptacleType = receptacleType;
     }
 
     /** For testing. **/

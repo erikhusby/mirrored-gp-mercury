@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ExternalSamplesRequest;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitInfo;
@@ -167,6 +168,41 @@ public class ReceiveSamplesEjb {
                     }
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
                             parentVesselBeans, bspUser.getUsername());
+                    sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
+                }
+            }
+        }
+
+        return sampleKitReceivedBean;
+    }
+
+    /**
+     * For samples that arrive in external tubes, e.g. Blood Spot Cards without SM-IDs but have a Collaborator
+     * Sample ID. Technician will link these Collaborator Sample IDs to newly created SM-IDs.
+     * @return SampleKitReceivedBean received from BSP.
+     */
+    public SampleKitReceivedBean receiveExternalTubes(ExternalSamplesRequest externalRequest,
+                                                      MessageCollection messageCollection) {
+        SampleKitReceivedBean sampleKitReceivedBean = null;
+
+        if (!messageCollection.hasErrors()) {
+
+            sampleKitReceivedBean = bspRestService.receiveExternalTubes(externalRequest);
+
+            if (sampleKitReceivedBean.isSuccess()) {
+
+                for (SampleKitReceivedBean.KitInfo kit: sampleKitReceivedBean.getReceivedSamplesPerKit()) {
+
+                    Map<String, String> sampleToType = sampleKitReceivedBean.getTubeTypePerSample()
+                            .stream().collect(Collectors.toMap(SampleKitReceivedBean.TubeTypePerSample::getSampleId,
+                                    SampleKitReceivedBean.TubeTypePerSample::getTubeType));
+                    List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+                    for (String barcode : kit.getSamples()) {
+                        String tubeType = sampleToType.get(barcode);
+                        parentVesselBeans.add(new ParentVesselBean(null, barcode, tubeType,null));
+                    }
+                    SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
+                            parentVesselBeans, externalRequest.getUsername());
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
                 }
             }

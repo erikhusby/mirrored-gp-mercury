@@ -337,6 +337,11 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceivingActionBean"
                                       event="bySkId">Receive By SK-ID</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="receiveExternalTubes"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceiveExternalActionBean"
+                                      event="byReceiveExternalTube">Receive External Tubes</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>
