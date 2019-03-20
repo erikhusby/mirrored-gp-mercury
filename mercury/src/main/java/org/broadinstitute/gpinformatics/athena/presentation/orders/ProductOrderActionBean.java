@@ -769,10 +769,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                     action);
         }
 
-        final Optional<Quote> quote = (editOrder.hasQuoteServerQuote())?Optional.ofNullable(validateQuote(editOrder)):Optional.ofNullable(null);
-        final Optional<SapQuote> sapQuote = (editOrder.hasSapQuote())?Optional.ofNullable(validateSapQuote(editOrder)):Optional.ofNullable(null);
-
         try {
+            final Optional<Quote> quote = (editOrder.hasQuoteServerQuote())?Optional.ofNullable(validateQuote(editOrder)):Optional.ofNullable(null);
+            final Optional<SapQuote> sapQuote = (editOrder.hasSapQuote())?Optional.ofNullable(validateSapQuote(editOrder)):Optional.ofNullable(null);
+
             if (editOrder.hasSapQuote()) {
                 if (sapQuote.isPresent()) {
                     ProductOrder.checkSapQuoteValidity(sapQuote.get());
@@ -809,8 +809,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
-        } catch (InvalidProductException |
-            SAPIntegrationException e) {
+            logger.error(e);
+        } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " +
                                      editOrder.getQuoteId() + ": " + e.getMessage());
             logger.error(e);
@@ -1077,7 +1077,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return value;
     }
 
-    private int getUnbilledCountForProduct(ProductOrder productOrder, int sampleCount, Product product) {
+    protected int getUnbilledCountForProduct(ProductOrder productOrder, int sampleCount, Product product) {
         int unbilledCount = sampleCount;
 
         final PriceAdjustment adjustmentForProduct = productOrder.getAdjustmentForProduct(product);
