@@ -1529,9 +1529,9 @@
                                 <div id="skipRegulatoryDiv" class="controls controls-text">
 
                                     <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
-                                                      My project does not involve samples that originated from humans.<br/>
+                                    ${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}<br/>
                                     <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
-                                                      My project has Samples received for clinical sequencing with signed requisition.<br/>
+                                    ${ResearchProject.FROM_CLINICAL_CELL_LINE}<br/>
                                     <stripes:hidden id="skipRegulatoryInfoReason"
                                                     name="editOrder.skipRegulatoryReason"/>
                                 </div>

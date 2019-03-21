@@ -74,10 +74,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             + "(e.g. synthetic DNA, mouse samples), then neither ORSP nor IRB review is required.";
 
     public static final String NOT_FROM_HUMANS_REASON_FILL =
-            "The samples are derived from a cell that is not derived from humans";
+            "My project does not involve samples or cell lines that originated from humans.";
 
     public static final String FROM_CLINICAL_CELL_LINE =
-            "Samples received for clinical sequencing with signed requisition.";
+            "Samples will be processed through a clinical workflow and were received with a signed clinical requisition.";
 
 
 
