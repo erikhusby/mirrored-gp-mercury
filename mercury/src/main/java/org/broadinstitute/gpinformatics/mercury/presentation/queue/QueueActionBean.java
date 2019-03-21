@@ -82,6 +82,7 @@ public class QueueActionBean extends CoreActionBean {
     private int totalExomeExpress;
     private int totalClinical;
     private int totalNeedRework;
+    private Map<Long, Long> remainingEntities = new HashMap<>();
 
 
     @DefaultHandler
@@ -119,6 +120,12 @@ public class QueueActionBean extends CoreActionBean {
                         totalNeedRework++;
                         totalNeedPico++;
                     }
+                }
+            }
+            for (QueueEntity queueEntity : grouping.getQueuedEntities()) {
+                if (queueEntity.getQueueStatus() == QueueStatus.Active) {
+                    long currentCount = remainingEntities.get(queueGrouping.getQueueGroupingId()) == null ? 0 : remainingEntities.get(queueGrouping.getQueueGroupingId());
+                    remainingEntities.put(queueGrouping.getQueueGroupingId(), currentCount + 1);
                 }
             }
         }
@@ -375,5 +382,9 @@ public class QueueActionBean extends CoreActionBean {
 
     public int getTotalNeedRework() {
         return totalNeedRework;
+    }
+
+    public Map<Long, Long> getRemainingEntities() {
+        return remainingEntities;
     }
 }

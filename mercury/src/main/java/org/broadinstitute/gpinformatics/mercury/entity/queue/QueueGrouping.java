@@ -49,11 +49,6 @@ public class QueueGrouping {
     @Enumerated(EnumType.STRING)
     private QueueOrigin queueOrigin;
 
-    @NotAudited
-    @Formula("(select count(*) from mercury.queue_entity where queue_entity.queue_status = 'Active'" +
-            " and queue_entity.queue_grouping_id = queue_grouping_id)")
-    private Integer remainingEntities;
-
     @Column(name = "sort_order")
     private Long sortOrder;
 
@@ -149,14 +144,6 @@ public class QueueGrouping {
             return o1.getSortOrder().compareTo(o2.getSortOrder());
         }
     };
-
-    public Integer getRemainingEntities() {
-        return remainingEntities;
-    }
-
-    public void setRemainingEntities(Integer remainingEntities) {
-        this.remainingEntities = remainingEntities;
-    }
 
     public QueuePriority getQueuePriority() {
         return queuePriority;
