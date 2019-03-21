@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -7,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -154,6 +157,13 @@ public class RackOfTubes extends LabVessel {
     private RackType rackType;
 
     /**
+     * Reagent additions and machine loaded events, i.e. not transfers
+     */
+    @OneToMany(mappedBy = "ancillaryInPlaceVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @BatchSize(size = 20)
+    private Set<LabEvent> ancillaryInPlaceEvents = new HashSet<>();
+
+    /**
      * For JPA
      */
     protected RackOfTubes() {
@@ -185,5 +195,13 @@ public class RackOfTubes extends LabVessel {
 
     public Set<TubeFormation> getTubeFormations() {
         return tubeFormations;
+    }
+
+    @Override
+    public Set<LabEvent> getInPlaceLabEvents() {
+        Set<LabEvent> allInPlaceEvents = new HashSet<>();
+        allInPlaceEvents.addAll(super.getInPlaceLabEvents());
+        allInPlaceEvents.addAll(ancillaryInPlaceEvents);
+        return allInPlaceEvents;
     }
 }
