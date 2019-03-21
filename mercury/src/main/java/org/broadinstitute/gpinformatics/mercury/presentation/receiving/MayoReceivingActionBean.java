@@ -7,12 +7,10 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestImportProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
@@ -95,23 +93,19 @@ public class MayoReceivingActionBean extends RackScanActionBean {
      */
     @HandlesEvent(SHOW_MANIFEST_EVENT)
     public Resolution showManifest() {
+        // Finds the manifest filename but looking up the manifest session from info in the UI.
+        // Puts the file content into a cell grid.
         List<List<String>> manifestCellGrid = mayoManifestEjb.readManifestAsCellGrid(this);
         if (!manifestCellGrid.isEmpty() && !hasErrors()) {
-            // Formats the manifest upload spreadsheet cells into an array of strings indexed by
-            // row and column for display in the jsp.
             int maxColumnCount = manifestCellGrid.stream().mapToInt(List::size).max().orElse(0);
             manifestArray = new String[manifestCellGrid.size()][maxColumnCount];
             MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
             processor.initHeaders(manifestCellGrid.get(0), filename, null);
+            processor.fixupDates(manifestCellGrid.subList(1, manifestCellGrid.size()), filename);
             for (int rowIdx = 0; rowIdx < manifestCellGrid.size(); ++rowIdx) {
                 List<String> columns = manifestCellGrid.get(rowIdx);
                 for (int columnIdx = 0; columnIdx < columns.size(); ++columnIdx) {
-                    String value = columns.get(columnIdx);
-                    // Calculates the date string when the column is a parsable number that represents a date.
-                    if (rowIdx > 0 && processor.isDateColumn(columnIdx) && NumberUtils.isParsable(value)) {
-                        value = PoiSpreadsheetParser.convertDoubleStringToDateString(value);
-                    }
-                    manifestArray[rowIdx][columnIdx] = value;
+                    manifestArray[rowIdx][columnIdx] = columns.get(columnIdx);
                 }
             }
         } else {

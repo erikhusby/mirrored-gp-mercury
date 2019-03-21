@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -422,16 +423,19 @@ public class MayoManifestEjb {
      * Returns manifest sessions that match the bean info, or empty collection if none found.
      */
     private List<ManifestSession> processNewManifestFiles(MayoReceivingActionBean bean) {
-        List<ManifestSession> manifestSessions = new ArrayList<>();
         String bucketName = mayoManifestConfig.getBucketName();
         List<String> filenames = googleBucketDao.list(bean.getMessageCollection());
-        // Removes the files in the bucket that have already been seed. A qualifiedFilename consists of
-        // filename + delimiter + bucket name.
+        // Removes the filenames already seen from those found in the bucket.
+        // Expects qualifiedFilename = filename + delimiter + bucket name.
         filenames.removeAll(manifestSessionDao.getQualifiedFilenames().stream().
                 filter(name -> bucketName.equals(StringUtils.substringAfter(name, FILE_DELIMITER))).
                 map(name -> StringUtils.substringBefore(name, FILE_DELIMITER)).
                 collect(Collectors.toList()));
+
         Collection<Object> newEntities = new ArrayList<>();
+        List<ManifestSession> manifestSessions = new ArrayList<>();
+        // If the file in the storage bucket can be parsed as a manifest file, it made
+        // into a new Mercury ManifestSession.
         for (String filename : filenames) {
             ManifestFile manifestFile = new ManifestFile(filename + FILE_DELIMITER + bucketName);
             newEntities.add(manifestFile);
@@ -450,7 +454,12 @@ public class MayoManifestEjb {
             }
         }
         manifestSessionDao.persistAll(newEntities);
-        return manifestSessionDao.getSessionsForPackage(bean.getPackageBarcode(), manifestSessions);
+        // Sorts manifests by modified date with most recent first.
+        return manifestSessions.stream().
+                filter(session -> Objects.equals(session.getSessionPrefix(), bean.getPackageBarcode())).
+                sorted((a, b) -> b.getUpdateData().getModifiedDate().compareTo(a.getUpdateData().getModifiedDate())).
+                distinct().
+                collect(Collectors.toList());
     }
 
     // Infers the rack type from the vessel positions in the rackScan.

@@ -207,6 +207,22 @@ public class MayoManifestImportProcessor {
         }
     }
 
+    public void fixupDates(List<List<String>> dataRows, String filename) {
+        for (List<String> columns : dataRows) {
+            for (int columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
+                Header header = sheetHeaders.get(columnIndex);
+                if (header != null) {
+                    String value = columns.get(columnIndex);
+                    if (header.isDate() && StringUtils.isNotBlank(value) && NumberUtils.isParsable(value) &&
+                            isExcel(filename)) {
+                        // Makes a date string when the column is an Excel internal date representation.
+                        columns.set(columnIndex, PoiSpreadsheetParser.convertDoubleStringToDateString(value));
+                    }
+                }
+            }
+        }
+    }
+
     public boolean isDateColumn(int columnIndex) {
         return sheetHeaders.size() > columnIndex &&
                 sheetHeaders.get(columnIndex) != null &&
@@ -271,6 +287,7 @@ public class MayoManifestImportProcessor {
             }
             // Makes headers from the first row in the cell grid.
             initHeaders(cellGrid.get(0), filename, messages);
+            fixupDates(cellGrid.subList(1, cellGrid.size()), filename);
             // Error if a required header is missing from the spreadsheet.
             Arrays.asList(Header.values()).stream().
                     filter(header -> header.isRequired() && !sheetHeaders.contains(header)).
@@ -302,9 +319,6 @@ public class MayoManifestImportProcessor {
                                         messages.addError(NOT_NUMBER, filename, header.getText(), value);
                                         value = "";
                                     }
-                                } else if (header.isDate() && NumberUtils.isParsable(value) && isExcel(filename)) {
-                                    // Makes a date string when the column is an Excel internal date representation.
-                                    value = PoiSpreadsheetParser.convertDoubleStringToDateString(value);
                                 }
                                 manifestRecord.addMetadata(header.getMetadataKey(), value);
 
@@ -335,7 +349,7 @@ public class MayoManifestImportProcessor {
     /**
      * Determines if the file is an Excel spreadsheet.
      */
-    private static boolean isExcel(String filename) {
+    public static boolean isExcel(String filename) {
         return filename.endsWith("xls") || filename.endsWith("xlsx");
     }
 }

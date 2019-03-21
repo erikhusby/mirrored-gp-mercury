@@ -16,10 +16,8 @@ import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -95,17 +93,6 @@ public class ManifestSessionDao extends GenericDao {
      */
     public List<ManifestSession> getSessionsForPackage(String packageId) {
         return findList(ManifestSession.class, ManifestSession_.sessionPrefix, packageId).stream().
-                sorted((o1, o2) ->
-                        o2.getUpdateData().getModifiedDate().compareTo(o1.getUpdateData().getModifiedDate())).
-                collect(Collectors.toList());
-    }
-
-    /**
-     * Returns the manifests that contain the given package id, sorted by modified date, most recent first.
-     */
-    public List<ManifestSession> getSessionsForPackage(String packageId, List<ManifestSession> sessions) {
-        return sessions.stream().
-                filter(manifestSession -> Objects.equals(manifestSession.getSessionPrefix(), packageId)).
                 sorted((o1, o2) ->
                         o2.getUpdateData().getModifiedDate().compareTo(o1.getUpdateData().getModifiedDate())).
                 collect(Collectors.toList());
