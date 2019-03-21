@@ -146,24 +146,34 @@ public class ReceiveSamplesEjb {
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
                 }
 
-                List<LabVessel> vesselsForPico = new ArrayList<>();
-                List<LabVessel> labVessels = labVesselDao.findByUnknownBarcodeTypeList(sampleIds);
-                labVessels.addAll(labVesselDao.findByBarcodes(sampleIds).values());
-
-                for (LabVessel labVessel : labVessels) {
-                    if (labVessel.isDNA()) {
-                        vesselsForPico.add(labVessel);
-                    }
-                }
-                QueueSpecialization queueSpecialization =
-                        PicoEnqueueOverride.determinePicoQueueSpecialization(vesselsForPico);
-                queueEjb.enqueueLabVessels(vesselsForPico, QueueType.PICO,
-                        "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
-                        QueueOrigin.RECEIVING, queueSpecialization);
+                addToPicoQueueIfNecessary(sampleIds, messageCollection);
             }
         }
 
         return receiptResponse;
+    }
+
+    /**
+     * Adds all DNA samples to pico queue.
+     *
+     * @param sampleIds             SampleIDs which are being received.
+     * @param messageCollection     Messages back to the user.
+     */
+    private void addToPicoQueueIfNecessary(List<String> sampleIds, MessageCollection messageCollection) {
+        List<LabVessel> vesselsForPico = new ArrayList<>();
+        List<LabVessel> labVessels = labVesselDao.findByUnknownBarcodeTypeList(sampleIds);
+        labVessels.addAll(labVesselDao.findByBarcodes(sampleIds).values());
+
+        for (LabVessel labVessel : labVessels) {
+            if (labVessel.isDNA()) {
+                vesselsForPico.add(labVessel);
+            }
+        }
+        QueueSpecialization queueSpecialization =
+                PicoEnqueueOverride.determinePicoQueueSpecialization(vesselsForPico);
+        queueEjb.enqueueLabVessels(vesselsForPico, QueueType.PICO,
+                "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
+                QueueOrigin.RECEIVING, queueSpecialization);
     }
 
     /**
@@ -195,20 +205,8 @@ public class ReceiveSamplesEjb {
                         parentVesselBeans.add(new ParentVesselBean(null, barcode, tubeType,null));
                     }
 
-                    List<LabVessel> vesselsForPico = new ArrayList<>();
-                    List<LabVessel> labVessels = labVesselDao.findByUnknownBarcodeTypeList(kit.getSamples());
-                    labVessels.addAll(labVesselDao.findByBarcodes(kit.getSamples()).values());
+                    addToPicoQueueIfNecessary(kit.getSamples(), messageCollection);
 
-                    for (LabVessel labVessel : labVessels) {
-                        if (labVessel.isDNA()) {
-                            vesselsForPico.add(labVessel);
-                        }
-                    }
-                    QueueSpecialization queueSpecialization =
-                            PicoEnqueueOverride.determinePicoQueueSpecialization(vesselsForPico);
-                    queueEjb.enqueueLabVessels(vesselsForPico, QueueType.PICO,
-                            "Received on " + DateUtils.convertDateTimeToString(new Date()),
-                            messageCollection, QueueOrigin.RECEIVING, queueSpecialization);
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
                             parentVesselBeans, bspUser.getUsername());
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);

@@ -1646,25 +1646,6 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="GPLIM-5743-17" author="pdunlea">
-        <createTable schemaName="mercury" tableName="queue_aud">
-            <column name="queue_id" type="number">
-                <constraints nullable="false" />
-            </column>
-            <column name="queue_type" type="varchar2(255)">
-                <constraints nullable="false" />
-            </column>
-            <column name="queue_name" type="varchar2(255)" />
-            <column name="queue_description" type="varchar2(500)" />
-            <column name="rev" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="revtype" type="number(19,0)">
-                <constraints nullable="true"/>
-            </column>
-        </createTable>
-    </changeSet>
-
     <changeSet id="GPLIM-5743-18" author="pdunlea">
         <createTable schemaName="mercury" tableName="queue_grouping_aud">
             <column name="queue_grouping_Id" type="number">
