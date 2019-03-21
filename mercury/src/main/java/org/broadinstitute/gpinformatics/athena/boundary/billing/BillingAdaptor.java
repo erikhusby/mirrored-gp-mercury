@@ -333,6 +333,8 @@ public class BillingAdaptor implements Serializable {
                                 item.getProductOrder().latestSapOrderDetail().addLedgerEntries(item.getLedgerItems());
                             }
                         }
+                    } else {
+                        throw new BillingException("Unable to determine the source of the Quote for the order.");
                     }
 
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
