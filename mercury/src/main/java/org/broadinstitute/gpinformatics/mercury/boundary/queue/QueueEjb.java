@@ -308,17 +308,17 @@ public class QueueEjb {
      */
     void excludeItems(Collection<? extends LabVessel> labVesselsToExclude, QueueType queueType, MessageCollection messageCollection) {
 
-        GenericQueue genericQueue = findQueueByType(queueType);
-
+        List<Long> labVesselIds = new ArrayList<>();
         for (LabVessel labVessel : labVesselsToExclude) {
-            for (QueueGrouping queueGrouping : genericQueue.getQueueGroupings()) {
-                for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
-                    if (getApplicableLabVesselIds(Collections.singleton(queueEntity.getLabVessel())).contains(labVessel.getLabVesselId())) {
-                        updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Excluded);
-                    }
-                }
-            }
+            labVesselIds.add(labVessel.getLabVesselId());
         }
+
+        List<QueueEntity> queueEntities = genericQueueDao.findEntitiesByVesselIds(queueType, labVesselIds);
+
+        for (QueueEntity queueEntity : queueEntities) {
+            updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Excluded);
+        }
+
     }
 
     private void updateQueueEntityStatus(MessageCollection messageCollection, QueueEntity queueEntity, QueueStatus queueStatus) {
