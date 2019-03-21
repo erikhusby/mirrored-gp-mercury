@@ -785,7 +785,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     quote.get().getFunding().stream()
                             .filter(Funding::isFundsReservation)
                             .forEach(funding -> {
-                                int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                                long numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
                                 if (numDaysBetween > 0 && numDaysBetween < 45) {
                                     addMessage(
                                             String.format(
@@ -2027,8 +2027,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                     priceTitle = "clinicalPrice";
                 }
 
-                BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
-                item.put(priceTitle , NumberFormat.getCurrencyInstance().format(priceForFormat));
+                QuotePriceItem quoteForAddon = priceListCache.findByKeyFields(addOn.getPrimaryPriceItem());
+                if (quoteForAddon != null) {
+                    BigDecimal priceForFormat = new BigDecimal(quoteForAddon.getPrice());
+                    item.put(priceTitle , NumberFormat.getCurrencyInstance().format(priceForFormat));
+                    itemList.put(item);
+                }
 
 //                String externalPrice = null;
 //                if (addOn.getExternalPriceItem() != null) {
@@ -2040,7 +2044,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 //
 //                item.put("externalListPrice", (externalPrice != null) ?externalPrice:"");
 
-                itemList.put(item);
             }
         }
         return itemList;
