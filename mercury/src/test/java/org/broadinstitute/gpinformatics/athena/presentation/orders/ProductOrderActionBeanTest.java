@@ -1851,8 +1851,6 @@ public class ProductOrderActionBeanTest {
         OrderCalculatedValues testCalculatedValues =
                 new OrderCalculatedValues(testQuote.isEligibleForSAP()?new BigDecimal(calculatedMainOrderValue):null, Collections.emptySet());
 
-        Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
-                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
         Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
                 SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
                 .thenReturn(testCalculatedValues);

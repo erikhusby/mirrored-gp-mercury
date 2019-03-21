@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -28,7 +27,6 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
-import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -164,41 +162,6 @@ public class BillingAdaptor implements Serializable {
                 throw new BillingException(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
             }
 
-            //**************************** Temporarily Re-adding **********************************
-
-            for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
-                try {
-
-                    // get and set the priceItem (reallly PriceList) for this quoteImportItem
-                    priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(itemForPriceUpdate));
-                    itemForPriceUpdate.setPriceOnWorkDate(priceItemsForDate);
-
-                    if (itemForPriceUpdate.isSapOrder()) {
-                        itemForPriceUpdate.setSapQuote(itemForPriceUpdate.getProductOrder().getSapQuote(sapService));
-                    } else {
-                        itemForPriceUpdate.setQuote(itemForPriceUpdate.getProductOrder().getQuote(quoteService));
-                    }
-
-                } catch (QuoteServerException|QuoteNotFoundException| SAPIntegrationException e) {
-                    BillingEjb.BillingResult result = new BillingEjb.BillingResult(itemForPriceUpdate);
-
-                    final String errorMessage = "Failed Price check for " +itemForPriceUpdate.getProductOrder().getBusinessKey()+": "+e.getMessage();
-                    itemForPriceUpdate.setBillingMessages(errorMessage);
-                    result.setErrorMessage(errorMessage);
-                    errorsInBilling = true;
-
-                    results.add(result);
-
-                    log.error(errorMessage);
-                }
-            }
-
-            if(!results.isEmpty()) {
-                throw new BillingException("Pricing Validation Failed.  Unable to complete Billing Session at this time");
-            }
-
-            //**************************************************************************
-
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
@@ -210,16 +173,13 @@ public class BillingAdaptor implements Serializable {
                 boolean isQuoteFunded = false;
                 try {
 
-                    if (!item.getProductOrder().hasSapQuote()) {
-                        priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
-                        item.setPriceOnWorkDate(priceItemsForDate);
-                    }
-
                     if(item.isSapOrder()) {
                         item.setSapQuote(item.getProductOrder().getSapQuote(sapService));
                         //TODO replace the line below with a helper method on SAP Quote to determine if it is funded.
                         isQuoteFunded = item.getSapQuote().getQuoteHeader().getQuoteStatus() == FundingStatus.APPROVED;
                     } else {
+                        priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
+                        item.setPriceOnWorkDate(priceItemsForDate);
                         item.setQuote(item.getProductOrder().getQuote(quoteService));
                         isQuoteFunded = item.getQuote().isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
                     }
