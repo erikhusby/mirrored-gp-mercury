@@ -182,8 +182,10 @@ public class FingerprintResource {
                         List<FingerprintCallsBean> calls = new ArrayList<>();
                         if (fingerprint.getDisposition() == Fingerprint.Disposition.PASS) {
                             for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
-                                calls.add(new FingerprintCallsBean(fpGenotype.getSnp().getRsId(), fpGenotype.getGenotype(),
-                                        fpGenotype.getCallConfidence().toString()));
+                                if (fpGenotype != null) {
+                                    calls.add(new FingerprintCallsBean(fpGenotype.getSnp().getRsId(), fpGenotype.getGenotype(),
+                                            fpGenotype.getCallConfidence().toString()));
+                                }
                             }
                         }
 

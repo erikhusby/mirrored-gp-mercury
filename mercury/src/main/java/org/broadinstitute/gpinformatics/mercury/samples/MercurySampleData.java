@@ -210,6 +210,11 @@ public class MercurySampleData implements SampleData {
         return null;
     }
 
+    @Override
+    public String getReceptacleType() {
+        return null;
+    }
+
     /**
      * A sample may have a root MetadataSource of BSP (i.e. BspSampleData), but have aliquots that are managed by
      * Mercury.  This class returns Mercury quant information.

@@ -17,6 +17,7 @@
                         {"bSortable": true} ,
                         {"bSortable": true} ,
                         {"bSortable": true} ,
+                        {"bSortable": true},
                         {"bSortable": true}
                     ]
                 });
@@ -54,12 +55,13 @@
                     <tr>
                         <th width="30px">
                             <input type="checkbox" class="sample-checkAll" title="Check All"/>
-                            <span id="count" class="samples-checkedCount"></span>
+                            <span id="count" class="sample-checkedCount"></span>
                         </th>
                         <th>Sample Info</th>
                         <th>Sample Kit</th>
                         <th>Status</th>
                         <th>Material Type</th>
+                        <th>Original Material Type</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -71,6 +73,7 @@
                             <td>${sampleData.sampleId}</td>
                             <td>${sampleData.sampleKitId}</td>
                             <td>${sampleData.sampleStatus}</td>
+                            <td>${sampleData.materialType}</td>
                             <td>${sampleData.originalMaterialType}</td>
                         </tr>
                     </c:forEach>

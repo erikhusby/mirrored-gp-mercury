@@ -449,7 +449,7 @@ public class ConfigurableSearchTest extends Arquillian {
         SearchInstance.SearchValue quoteSearchValue = searchInstance.addTopLevelTerm("Quote Identifier",
                 configurableSearchDefinition);
         quoteSearchValue.setOperator(SearchInstance.Operator.EQUALS);
-        quoteSearchValue.setValues(Collections.singletonList("GPSPIE8"));
+        quoteSearchValue.setValues(Collections.singletonList("GPE8X"));
 
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER);
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER);
@@ -518,10 +518,11 @@ public class ConfigurableSearchTest extends Arquillian {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 SearchDefinitionFactory.getForEntity(productOrderEntityName);
 
-        SearchInstance.SearchValue quoteSearchValue = searchInstance.addTopLevelTerm("Quote Identifier",
+        SearchInstance.SearchValue quoteSearchValue =
+            searchInstance.addTopLevelTerm(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER,
                 configurableSearchDefinition);
         quoteSearchValue.setOperator(SearchInstance.Operator.EQUALS);
-        quoteSearchValue.setValues(Collections.singletonList("GPSPIE8"));
+        quoteSearchValue.setValues(Collections.singletonList("GPE8X"));
 
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER);
         searchInstance.getPredefinedViewColumns().add(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER);
@@ -554,9 +555,9 @@ public class ConfigurableSearchTest extends Arquillian {
         }
 
         List<String> rowValues = row.getRenderableCells();
-        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER)), "Draft-220113 -- Johan Nilsson_Lund University_Heart Transplant_PCR-PLUS_FFPE_XXTimepoints", "Incorrect PDO found");
-        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER)), "GPSPIE8", "Incorrect quote found");
+        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PDO_TICKET_COLUMN_HEADER)), "Draft-121106 -- IBS-CACO_PICOallsamples_12.2.2014", "Incorrect PDO found");
+        Assert.assertEquals(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.QUOTE_IDENTIFIER_COLUMN_HEADER)), "GPE8X", "Incorrect quote found");
 
-        Assert.assertTrue(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER)).contains("XTNL-WGS-010307"), "Incorrect product part number found");
+        Assert.assertTrue(rowValues.get(colunnNumbersByHeader.get(ProductOrderSearchDefinition.PRODUCTS_COLUMN_HEADER)).contains("P-ESH-0016"), "Incorrect product part number found");
     }
 }

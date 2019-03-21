@@ -6,11 +6,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
@@ -53,7 +53,7 @@ import java.util.Set;
 
 /**
  * This class handles the external library creation from walkup sequencing web serivce calls, pooled tube
- * spreadsheet upload, and the various external library spreadsheet uploads.
+ * spreadsheet upload, and EZPass/New Tech external library spreadsheet uploads.
  * In all cases a SampleInstanceEntity and associated MercurySample and LabVessel are created or overwritten.
  */
 @Stateful
@@ -61,7 +61,7 @@ import java.util.Set;
 public class SampleInstanceEjb {
     // These are the only characters allowed in a library or sample name.
     public static final String RESTRICTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_";
-    public static final String RESTRICTED_MESSAGE = "a-z, A-Z, 0-9, '.', '-', or '_'";
+    public static final String ALIAS_CHARS = RESTRICTED_CHARS + " @#&*()[]|;:<>,?/=+\"'";
 
     public static final String BAD_RANGE = "Row #%d %s must contain integer-integer (such as 225-350).";
     public static final String BSP_FORMAT = "Row #%d the new %s \"%s\" must not have a BSP sample name format.";
@@ -77,7 +77,7 @@ public class SampleInstanceEjb {
             "Row #%d value for %s is not consistent with row #%d (Sample %s).";
     public static final String INCONSISTENT_TUBE =
             "Row #%d value for %s is not consistent with row #%d (Tube Barcode %s).";
-    public static final String INVALID_CHARS = "Row #%d %s characters must only be " + RESTRICTED_CHARS;
+    public static final String INVALID_CHARS = "Row #%d %s characters must only be %s";
     public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
     public static final String MISSING = "Row #%d is missing a value for %s.";
     public static final String MUST_NOT_HAVE_BOTH = "Row #%d must not have both %s and %s.";
@@ -89,7 +89,6 @@ public class SampleInstanceEjb {
     public static final String PREXISTING_VALUES =
             "Row #%d values for %s already exist in Mercury; set the Overwrite checkbox to re-upload.";
     public static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
-    public static final String UNKNOWN_COND = "Row #%d each Condition must be a Jira ticket id for a sub-task of %s.";
     /**
      * A string of the available sequencer model names.
      */
@@ -134,6 +133,9 @@ public class SampleInstanceEjb {
     @Inject
     private Deployment deployment;
 
+    @Inject
+    private ProductDao productDao;
+
     static {
         for (IlluminaFlowcell.FlowcellType flowcellType : CreateFCTActionBean.FLOWCELL_TYPES) {
             String sequencer = makeSequencerValue(flowcellType);
@@ -151,7 +153,7 @@ public class SampleInstanceEjb {
     public SampleInstanceEjb(MolecularIndexingSchemeDao molecularIndexingSchemeDao, JiraService jiraService,
             ReagentDesignDao reagentDesignDao, LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao,
             SampleInstanceEntityDao sampleInstanceEntityDao, AnalysisTypeDao analysisTypeDao,
-            SampleDataFetcher sampleDataFetcher, ReferenceSequenceDao referenceSequenceDao) {
+            SampleDataFetcher sampleDataFetcher, ReferenceSequenceDao referenceSequenceDao, ProductDao productDao) {
         this.molecularIndexingSchemeDao = molecularIndexingSchemeDao;
         this.jiraService = jiraService;
         this.reagentDesignDao = reagentDesignDao;
@@ -162,6 +164,7 @@ public class SampleInstanceEjb {
         this.sampleDataFetcher = sampleDataFetcher;
         this.reagentDesignDao = reagentDesignDao;
         this.referenceSequenceDao = referenceSequenceDao;
+        this.productDao = productDao;
     }
 
     /**
@@ -194,6 +197,8 @@ public class SampleInstanceEjb {
             } else {
                 // Makes maps of samples, vessels, and other primary entities.
                 makeEntityMaps(processor, rowDtos, messages);
+                // Validates the character set used in spreadsheet values that get passed on as-is.
+                processor.validateCharacterSet(rowDtos, messages);
                 // Validates the data.
                 processor.validateAllRows(rowDtos, overwrite, messages);
                 if (!messages.hasErrors()) {
@@ -229,7 +234,7 @@ public class SampleInstanceEjb {
     private void makeEntityMaps(ExternalLibraryProcessor processor, List<RowDto> rowDtos, MessageCollection messages) {
         Set<String> samplesToLookup = new HashSet<>();
         Set<String> barcodesToLookup = new HashSet<>();
-        Exception jiraException = null;
+        boolean lookupAggregationDataType = false;
 
         for (RowDto dto : rowDtos) {
             if (StringUtils.isNotBlank(dto.getSampleName())) {
@@ -253,14 +258,6 @@ public class SampleInstanceEjb {
                     reagentDesignDao.findByBusinessKey(dto.getBait()) :
                     (StringUtils.isNotBlank(dto.getCat()) ?
                             reagentDesignDao.findByBusinessKey(dto.getCat()) : null));
-            if (StringUtils.isNotBlank(dto.getExperiment())) {
-                try {
-                    JiraIssue jiraIssue = jiraService.getIssueInfo(dto.getExperiment(), (String[]) null);
-                    processor.getJiraIssueMap().put(dto.getExperiment(), jiraIssue);
-                } catch (Exception e) {
-                    jiraException = e;
-                }
-            }
 
             if (StringUtils.isNotBlank(dto.getReferenceSequenceName())) {
                 ReferenceSequence referenceSequence = dto.getReferenceSequenceName().contains("|") ?
@@ -284,18 +281,21 @@ public class SampleInstanceEjb {
                     processor.getAnalysisTypeMap().put(dto.getAnalysisTypeName(), analysisType);
                 }
             }
-
+            if (StringUtils.isNotBlank(dto.getAggregationDataType())) {
+                lookupAggregationDataType = true;
+            }
         }
         processor.getSampleMap().putAll(mercurySampleDao.findMapIdToMercurySample(samplesToLookup));
         processor.getLabVesselMap().putAll(labVesselDao.findByBarcodes(new ArrayList<>(barcodesToLookup)));
 
-        if (jiraException != null) {
-            messages.addError("Failed to lookup Jira tickets: " + jiraException.toString());
-        }
-
         // A sample data lookup is done on all samples and root samples. This returns either
         // Mercury and BSP metadata for each sample, depending on the sample metadata source.
         processor.getFetchedData().putAll(sampleDataFetcher.fetchSampleData(samplesToLookup));
+
+        // Fetches the valid aggregation data type values if they are needed.
+        if (lookupAggregationDataType) {
+            processor.setValidAggregationDataTypes(productDao.findAggregationDataTypes());
+        }
     }
 
     /**
@@ -454,6 +454,7 @@ public class SampleInstanceEjb {
     public static class RowDto {
         private String additionalAssemblyInformation;
         private String additionalSampleInformation;
+        private String aggregationDataType;
         private String aggregationParticle;
         private String analysisTypeName;
         private String bait;
@@ -462,8 +463,6 @@ public class SampleInstanceEjb {
         private String collaboratorParticipantId;
         private String collaboratorSampleId;
         private BigDecimal concentration;
-        private List<String> conditions;
-        private String experiment;
         private String insertSize;
         private String irbNumber;
         private String libraryName;
@@ -569,22 +568,6 @@ public class SampleInstanceEjb {
 
         public void setConcentration(BigDecimal concentration) {
             this.concentration = concentration;
-        }
-
-        public List<String> getConditions() {
-            return conditions;
-        }
-
-        public void setConditions(List<String> conditions) {
-            this.conditions = conditions;
-        }
-
-        public String getExperiment() {
-            return experiment;
-        }
-
-        public void setExperiment(String experiment) {
-            this.experiment = experiment;
         }
 
         public String getInsertSize() {
@@ -756,6 +739,14 @@ public class SampleInstanceEjb {
             this.umisPresent = StringUtils.isBlank(umisPresent) ? null :
                     "yt1".contains(umisPresent.toLowerCase().subSequence(0, 1)) ?
                             Boolean.TRUE : Boolean.FALSE;
+        }
+
+        public String getAggregationDataType() {
+            return aggregationDataType;
+        }
+
+        public void setAggregationDataType(String aggregationDataType) {
+            this.aggregationDataType = aggregationDataType;
         }
     }
 }

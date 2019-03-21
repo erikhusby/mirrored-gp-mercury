@@ -3,10 +3,14 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.SAPMaterial;
@@ -21,6 +25,8 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -123,6 +129,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private BigDecimal loadingConcentration;
     private Boolean pairedEndRead;
 
+    @Enumerated(EnumType.STRING)
+    private FlowcellDesignation.IndexType indexType;
+
+    @Enumerated(EnumType.STRING)
+    private AggregationParticle defaultAggregationParticle;
     /**
      * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
      * performance hit of looking for Mercury quants in Products that don't have them.
@@ -248,6 +259,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         clonedProduct.setInsertSize(productToClone.getInsertSize());
         clonedProduct.setLoadingConcentration(productToClone.getLoadingConcentration());
         clonedProduct.setPairedEndRead(productToClone.getPairedEndRead());
+        clonedProduct.setIndexType(productToClone.getIndexType());
         clonedProduct.setClinicalProduct(productToClone.isClinicalProduct());
 
         for (RiskCriterion riskCriterion : productToClone.getRiskCriteria()) {
@@ -403,6 +415,32 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public void setPairedEndRead(Boolean pairedEndRead) {
         // Disallows setting a non-null value to null.
         this.pairedEndRead = (this.pairedEndRead != null) ? Boolean.TRUE.equals(pairedEndRead) : pairedEndRead;
+    }
+
+    public FlowcellDesignation.IndexType getIndexType() {
+        return indexType == null ? FlowcellDesignation.IndexType.DUAL : indexType;
+    }
+
+    public void setIndexType(FlowcellDesignation.IndexType indexType) {
+        this.indexType = indexType;
+    }
+
+    @Transient
+    public String getAggregationParticleDisplayName() {
+        String displayValue = Product.AggregationParticle.DEFAULT_LABEL;
+        if (defaultAggregationParticle != null) {
+            displayValue = defaultAggregationParticle.getDisplayName();
+        }
+        return displayValue;
+    }
+
+
+    public AggregationParticle getDefaultAggregationParticle() {
+        return defaultAggregationParticle;
+    }
+
+    public void setDefaultAggregationParticle(AggregationParticle defaultAggregationParticle) {
+        this.defaultAggregationParticle = defaultAggregationParticle;
     }
 
     public boolean isTopLevelProduct() {
@@ -997,5 +1035,46 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             }
         }
         return fee;
+    }
+
+    public enum AggregationParticle implements Displayable {
+        PDO("PDO (eg: PDO-1243)"),
+        PDO_ALIQUOT("PDO, Aliquot (eg: PDO-12.SM-34)");
+        private static final Log log = LogFactory.getLog(AggregationParticle.class);
+
+        private final String displayName;
+        public static final String DEFAULT_LABEL = "Pipeline Default";
+
+        AggregationParticle(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        /**
+         * Build an AggregationParticle based on the sampleId and productOrderKey.
+         *
+         * @param sampleId When the sample aliquot is used as as a part of the AGP, The sampleID passed in should
+         *                 be the sampleID of the plating event in order to guarantee uniqueness.
+         * @param productOrderKey the PDO key
+         */
+        public String build(String sampleId, String productOrderKey) {
+            switch (this) {
+            case PDO:
+                return productOrderKey;
+            case PDO_ALIQUOT:
+                if (!StringUtils.isAnyBlank(sampleId, productOrderKey)) {
+                    return String.format("%s.%s", productOrderKey, sampleId);
+                } else {
+                    log.error(String.format(
+                        "null value passed into AggregationParticle.build [sampleId: %s, productOrderKey: %s]",
+                        sampleId, productOrderKey));
+                }
+            }
+            return null;
+        }
     }
 }

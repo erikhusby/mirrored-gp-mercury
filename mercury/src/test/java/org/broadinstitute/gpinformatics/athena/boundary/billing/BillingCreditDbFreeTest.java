@@ -38,6 +38,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
@@ -53,6 +54,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -95,7 +98,7 @@ public class BillingCreditDbFreeTest {
     private final Double qtyNegativeTwo = (double) Math.negateExact(qtyPositiveTwo.longValue());
 
     @BeforeMethod
-    public void setUp() throws QuoteNotFoundException, QuoteServerException, InvalidProductException {
+    public void setUp() throws QuoteNotFoundException, QuoteServerException, InvalidProductException, SAPInterfaceException {
         resetMocks();
         pdo = ProductOrderTestFactory.createDummyProductOrder(2, "PDO-1234");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
@@ -138,7 +141,9 @@ public class BillingCreditDbFreeTest {
             Mockito.any(QuotePriceItem.class), Mockito.any(Date.class), Mockito.anyDouble(), Mockito.anyString(),
             Mockito.anyString(), Mockito.anyString(), Mockito.any(BigDecimal.class))).thenReturn("workId-" + quoteId);
         Mockito.when(productOrderEjb.areProductsBlocked(Mockito.anySetOf(AccessItem.class))).thenReturn(false);
-        Mockito.when(productOrderEjb.isOrderEligibleForSAP(Mockito.any(ProductOrder.class), Mockito.any(Date.class)))
+        Mockito.when(productOrderEjb.isOrderEligibleForSAP(Mockito.any(ProductOrder.class)))
+            .thenReturn(true);
+        Mockito.when(productOrderEjb.isOrderFunded(Mockito.any(ProductOrder.class), Mockito.any(Date.class)))
             .thenReturn(true);
 
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
@@ -164,6 +169,35 @@ public class BillingCreditDbFreeTest {
 
         List<BillingEjb.BillingResult> billingResults = bill(billingMap);
         validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
+
+        billingMap.clear();
+        billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
+        billingResults = bill(billingMap);
+        validateBillingResults(pdoSample, billingResults, 0);
+
+        Mockito.verify(mockEmailSender, Mockito.times(1))
+            .sendHtmlEmail(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyBoolean(), Mockito.anyBoolean());
+
+    }
+
+    public void testCreateBillingCreditRequestNoFunding() throws QuoteNotFoundException, QuoteServerException {
+        ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
+
+        HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
+        billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
+
+        List<BillingEjb.BillingResult> billingResults = bill(billingMap);
+        validateBillingResults(pdoSample, billingResults, qtyPositiveTwo);
+
+        Quote quote = pdo.getQuote(quoteService);
+        java.sql.Date expirationDate = java.sql.Date.valueOf(LocalDate.now().minus(1, ChronoUnit.MONTHS));
+        quote.getFunding().forEach(funding -> {
+            funding.setFundingType(Funding.FUNDS_RESERVATION);
+            funding.setGrantEndDate(expirationDate);
+        });
+
+        assertThat(quote.isFunded(), is(false));
 
         billingMap.clear();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));

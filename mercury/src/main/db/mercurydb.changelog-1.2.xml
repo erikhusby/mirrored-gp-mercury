@@ -1825,7 +1825,74 @@
     <changeSet id="GPLIM-4712-308" author="epolk">
         <dropColumn tableName="sample_instance_entity_aud" columnName="submit_date"/>
     </changeSet>
+    <changeSet id="GPLIM-5839" author="jsacco">
+        <sql>
+            update lab_vessel set tube_type = 'Cryovial3028_Gates' where label = 'SM-1YPGF';
+            update lab_vessel set tube_type = 'EppendorfFliptop15' where label = 'SM-B5FXV';
+            update lab_vessel set tube_type = 'MatrixTubeSC05' where label in (
+            'SM-7MXSQ', 'SM-7MXSR', 'SM-7MXSS', 'SM-7MXST', 'SM-7MXSU', 'SM-7MXSV', 'SM-7MXSW', 'SM-7MXSX',
+            'SM-7MXSY', 'SM-7MXSZ', 'SM-7N8IJ', 'SM-7N8IK', 'SM-7N8IL', 'SM-7N8IM', 'SM-7N8IN', 'SM-7N8IO',
+            'SM-7N8IP', 'SM-7N8IQ', 'SM-7N8WH', 'SM-7N8WI', 'SM-7N9E3', 'SM-7N9E4', 'SM-7N9E5', 'SM-7N9E6',
+            'SM-7N9E7', 'SM-7N9E8', 'SM-7N9E9', 'SM-7N9EA', 'SM-7N9EB', 'SM-7N9EC', 'SM-7N9ED', 'SM-7N9EE',
+            'SM-7N9EF', 'SM-7N9EG', 'SM-7N9EH', 'SM-7N9EI', 'SM-7N9EJ', 'SM-7N9EK', 'SM-7N9EL', 'SM-7N9EM', 'SM-7N9EN' );
+            update lab_vessel set tube_type = 'EppendorfFliptop20' where label in (
+            'SM-9QHL3', 'SM-9TEMC', 'SM-9TEMD', 'SM-9TEME', 'SM-9TEMF', 'SM-9TEMG', 'SM-9VCTE', 'SM-9WN39',
+            'SM-AEK9E', 'SM-AEK9F', 'SM-AEK9G', 'SM-AEK9H', 'SM-AEK9I', 'SM-AIT9A', 'SM-AJ6ZB', 'SM-AM4BS',
+            'SM-AM4BT', 'SM-6V6OS', 'SM-6ZIZT', 'SM-73H6O', 'SM-73H6P', 'SM-73H6Q', 'SM-73H6R', 'SM-73H6S',
+            'SM-73H6T', 'SM-73H6U', 'SM-73H6V', 'SM-76UCM', 'SM-77IU4' );
 
+            -- Audit tables will also cause failures
+            update lab_vessel_aud set tube_type = 'Cryovial3028_Gates' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where label = 'SM-1YPGF' );
+            update lab_vessel_aud set tube_type = 'EppendorfFliptop15' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where label = 'SM-B5FXV' );
+            update lab_vessel_aud set tube_type = 'MatrixTubeSC05' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where label in (
+            'SM-7MXSQ', 'SM-7MXSR', 'SM-7MXSS', 'SM-7MXST', 'SM-7MXSU', 'SM-7MXSV', 'SM-7MXSW', 'SM-7MXSX',
+            'SM-7MXSY', 'SM-7MXSZ', 'SM-7N8IJ', 'SM-7N8IK', 'SM-7N8IL', 'SM-7N8IM', 'SM-7N8IN', 'SM-7N8IO',
+            'SM-7N8IP', 'SM-7N8IQ', 'SM-7N8WH', 'SM-7N8WI', 'SM-7N9E3', 'SM-7N9E4', 'SM-7N9E5', 'SM-7N9E6',
+            'SM-7N9E7', 'SM-7N9E8', 'SM-7N9E9', 'SM-7N9EA', 'SM-7N9EB', 'SM-7N9EC', 'SM-7N9ED', 'SM-7N9EE',
+            'SM-7N9EF', 'SM-7N9EG', 'SM-7N9EH', 'SM-7N9EI', 'SM-7N9EJ', 'SM-7N9EK', 'SM-7N9EL', 'SM-7N9EM', 'SM-7N9EN' ) );
+            update lab_vessel_aud set tube_type = 'EppendorfFliptop20' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where label in (
+            'SM-9QHL3', 'SM-9TEMC', 'SM-9TEMD', 'SM-9TEME', 'SM-9TEMF', 'SM-9TEMG', 'SM-9VCTE', 'SM-9WN39',
+            'SM-AEK9E', 'SM-AEK9F', 'SM-AEK9G', 'SM-AEK9H', 'SM-AEK9I', 'SM-AIT9A', 'SM-AJ6ZB', 'SM-AM4BS',
+            'SM-AM4BT', 'SM-6V6OS', 'SM-6ZIZT', 'SM-73H6O', 'SM-73H6P', 'SM-73H6Q', 'SM-73H6R', 'SM-73H6S',
+            'SM-73H6T', 'SM-73H6U', 'SM-73H6V', 'SM-76UCM', 'SM-77IU4' ) );
+
+            commit;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-5839a" author="jsacco">
+        <sql>
+            update lab_vessel set tube_type = 'EppendorfFliptop15_Gates' where label = 'SM-7LG4A';
+
+            -- Audit tables will also cause failures
+            update lab_vessel_aud set tube_type = 'EppendorfFliptop15_Gates' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where  label = 'SM-7LG4A' );
+            commit;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-5839b" author="jsacco">
+        <sql>
+            update lab_vessel set tube_type = 'EppendorfScrewcap20' where label in ( 'SM-AH35W', 'SM-AH35V', 'SM-AH35X' );
+
+            -- Audit tables will also cause failures
+            update lab_vessel_aud set tube_type = 'EppendorfScrewcap20' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where  label in ( 'SM-AH35W', 'SM-AH35V', 'SM-AH35X' ) );
+            commit;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-5839c" author="jsacco">
+        <sql>
+            update lab_vessel set tube_type = 'EppendorfScrewcap20' where label = 'SM-AH35Y';
+
+            -- Audit tables will also cause failures
+            update lab_vessel_aud set tube_type = 'EppendorfScrewcap20' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where label = 'SM-AH35Y' );
+            commit;
+        </sql>
+    </changeSet>
     <changeSet id="GPLIM-5122-1" author="thompson">
         <createTable tableName="fingerprint" schemaName="mercury">
             <column name="fingerprint_id" type="number(19,0)">
@@ -2042,5 +2109,27 @@
         <createIndex tableName="FP_GENOTYPE_AUD" indexName="IX_FGA_FP_GENOTYPE_ID">
             <column name="FP_GENOTYPE_ID"/>
         </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-5973-01" author="epolk">
+        <addColumn tableName="sample_instance_entity" schemaName="mercury">
+            <column name="aggregation_data_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5973-02" author="epolk">
+        <addColumn tableName="sample_instance_entity_aud" schemaName="mercury">
+            <column name="aggregation_data_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jsacco" id="GPLIM-5218-1">
+        <addColumn schemaName="mercury" tableName="abandon_vessel">
+            <column name="abandoned_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jsacco" id="GPLIM-5218-2">
+        <addColumn schemaName="mercury" tableName="abandon_vessel_aud">
+            <column name="abandoned_by" type="number(19,0)"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

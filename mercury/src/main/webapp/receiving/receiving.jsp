@@ -52,7 +52,7 @@
         <stripes:form beanclass="${actionBean.class.name}"
                       id="rackScanForm" class="form-horizontal">
             <div class="control-group">
-                <stripes:label for="rackBarcode" name="Rack Barcode" class="control-label"/>
+                <label for="rackBarcode" class="control-label">SK-ID</label>
                 <div class="controls">
                     <input type="text" id="rackBarcode" autocomplete="off" name="rackBarcode" value="${actionBean.rackBarcode}"
                            class="clearable barcode unique" required="" aria-required="true">
@@ -124,7 +124,7 @@
                         <tr>
                             <th width="30px">
                                 <input type="checkbox" class="sample-checkAll" title="Check All"/>
-                                <span id="count" class="samples-checkedCount"></span>
+                                <span id="count" class="sample-checkedCount"></span>
                             </th>
                             <th>Sample Info</th>
                             <th>Sample Kit</th>

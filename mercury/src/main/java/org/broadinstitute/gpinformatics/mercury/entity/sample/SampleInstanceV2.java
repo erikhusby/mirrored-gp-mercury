@@ -3,10 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
@@ -94,6 +96,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private String sampleLibraryName;
     private Integer readLength;
     private String aggregationParticle;
+    private String aggregationDataType;
     private Boolean umisPresent;
     private String expectedInsertSize;
     private ReferenceSequence referenceSequence;
@@ -117,7 +120,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private String catName;
     private int depth;
     private List<String> devConditions = new ArrayList<>();
-    private TZDevExperimentData tzDevExperimentData;
+    private TZDevExperimentData tzDevExperimentData = null;
     /**
      * For a reagent-only sample instance.
      */
@@ -208,6 +211,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         baitName = other.getBaitName();
         catName = other.getCatName();
         aggregationParticle = other.getAggregationParticle();
+        aggregationDataType = other.getAggregationDataType();
         analysisType = other.getAnalysisType();
         referenceSequence = other.getReferenceSequence();
         umisPresent = other.getUmisPresent();
@@ -546,6 +550,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
             aggregationParticle = sampleInstanceEntity.getAggregationParticle();
+            aggregationDataType = sampleInstanceEntity.getAggregationDataType();
             analysisType = sampleInstanceEntity.getAnalysisType();
             referenceSequence = sampleInstanceEntity.getReferenceSequence();
             umisPresent = sampleInstanceEntity.getUmisPresent();
@@ -562,7 +567,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         }
 
         // order of assignments is same as order of fields
-        reagents.addAll(labVessel.getReagentContents());
+        for( Reagent reagent : labVessel.getReagentContents() ) {
+            addReagent(reagent);
+        }
 
         List<LabBatchStartingVessel> labBatchStartingVesselsByDate = labVessel.getLabBatchStartingVesselsByDate();
         allLabBatchStartingVessels.addAll(labBatchStartingVesselsByDate);
@@ -729,24 +736,27 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     private void mergePooledTubeDevConditions(String experimentName, List<String> subTasks)
     {
-        devConditions.addAll(subTasks);
-        tzDevExperimentData = new TZDevExperimentData(experimentName,subTasks);
-
+        // tzDevExperimentData must also be null to prevent resurrecting the experiment in DevExperimentDataBean.
+        if (StringUtils.isNotBlank(experimentName)) {
+            devConditions.addAll(subTasks);
+            tzDevExperimentData = new TZDevExperimentData(experimentName, subTasks);
+        }
     }
 
     private void mergeDevConditions(LabVessel labVessel)
     {
-
-        for(JiraTicket ticket : labVessel.getJiraTickets()) {
-            if(ticket != null){
-                devConditions.add(ticket.getTicketId());
+        // DEV Pooled tube upload is the only way to add experiment & conditions to a sample instance.
+        if (!getIsPooledTube()) {
+            for (JiraTicket ticket : labVessel.getJiraTickets()) {
+                if (ticket != null) {
+                    devConditions.add(ticket.getTicketId());
+                }
+            }
+            if (devConditions.size() > 0) {
+                //The experiment data will be populated from the parent Jira ticket.
+                tzDevExperimentData = new TZDevExperimentData(null, devConditions);
             }
         }
-        if(devConditions.size() > 0 ) {
-            //The experiment data will be populated from the parent Jira ticket.
-            tzDevExperimentData = new TZDevExperimentData(null, devConditions);
-        }
-
     }
 
 
@@ -761,11 +771,23 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     public String getAggregationParticle() {
         ProductOrderSample productOrderSample = getProductOrderSampleForSingleBucket();
         if (productOrderSample != null) {
-            if (productOrderSample.getAggregationParticle() != null) {
+            if (productOrderSample.getAggregationParticle() == null) {
+                ProductOrder productOrder = productOrderSample.getProductOrder();
+                Product.AggregationParticle defaultAggregationParticle = productOrder.getDefaultAggregationParticle();
+                if (defaultAggregationParticle != null) {
+                    return defaultAggregationParticle
+                        .build(getNearestMercurySampleName(), productOrder.getJiraTicketKey());
+                }
+            } else {
                 return productOrderSample.getAggregationParticle();
             }
         }
+
         return aggregationParticle;
+    }
+
+    public String getAggregationDataType() {
+        return aggregationDataType;
     }
 
     public Boolean getUmisPresent() {
@@ -774,6 +796,15 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     public String getExpectedInsertSize() {
         return expectedInsertSize;
+    }
+
+    /** Returns the integer value of insert size. Returns the last value if an integer range such as 200-254. */
+    public Integer getExpectedInsertSizeInteger() {
+        if (StringUtils.isNotBlank(expectedInsertSize)) {
+            String[] values = expectedInsertSize.split("[\\s-]");
+            return Integer.parseInt(values[values.length - 1]);
+        }
+        return null;
     }
 
     /**

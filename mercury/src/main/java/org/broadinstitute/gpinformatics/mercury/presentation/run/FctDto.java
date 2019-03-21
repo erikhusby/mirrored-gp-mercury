@@ -10,10 +10,10 @@ public interface FctDto {
     public String getLcset();
     public BigDecimal getLoadingConc();
     public Integer getNumberLanes();
-    public boolean isAllocated();
-    public void setAllocated(boolean wasAllocated);
-    public int getAllocationOrder();
-    public FctDto split(int numberAlocatedLanes);
+    public void setAllocatedLanes(int allocatedCount);
+    public int getAllocatedLanes();
+    public int getPriorityValue();
+    public FctDto split();
     public String getProduct();
     public List<String> getProductNames();
     public <DTO_TYPE extends FctDto> boolean isCompatible(Collection<DTO_TYPE> groupDtos);

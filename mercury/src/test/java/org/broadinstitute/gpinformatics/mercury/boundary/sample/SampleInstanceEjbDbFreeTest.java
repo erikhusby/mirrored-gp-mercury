@@ -4,6 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -100,6 +101,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     private JiraService jiraService = Mockito.mock(JiraService.class);
     private ReferenceSequenceDao referenceSequenceDao = Mockito.mock(ReferenceSequenceDao.class);
     private AnalysisTypeDao analysisTypeDao = Mockito.mock(AnalysisTypeDao.class);
+    private ProductDao productDao = Mockito.mock(ProductDao.class);
 
     enum TestType {EZPASS, NONPOOLED, POOLED, MULTIORGANISM, POOLEDTUBE, WALKUP};
 
@@ -428,7 +430,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         for (int i = 0; i < entities.size(); ++i) {
             SampleInstanceEntity entity = entities.get(i);
 
-            String libraryName = select(i, "Jon Test 3a", "Jon Test 4b");
+            String libraryName = select(i, "Jon_Test_3a", "Jon_Test_4b");
             Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
 
             Assert.assertNull(entity.getSequencerModel());
@@ -459,9 +461,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getVolume(), new BigDecimal("0.60"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getExperiment(), "DEV-7501");
-            Assert.assertEquals(entity.getSubTasks().get(0), select(i, "DEV-7538", "DEV-7539"));
-
             Assert.assertEquals(entity.getReadLength().intValue(), new int[]{4, 2}[i]);
             Assert.assertNull(entity.getLibraryType());
             Assert.assertEquals(entity.getAggregationParticle(), select(i, "1", ""));
@@ -474,6 +473,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getReagentDesign().getName(), "NewtonCheh_NatPepMDC_12genes3regions_Sep2011");
             Assert.assertEquals(entity.getMolecularIndexingScheme().getName(),
                     select(i, "Illumina_P5-Nijow_P7-Waren","Illumina_P5-Piwan_P7-Bidih"));
+
+            Assert.assertEquals(entity.getAggregationDataType(), select(i, "Exome", ""));
         }
         assertSampleInstanceEntitiesPresent(mapBarcodeToTube.values(), entities);
 
@@ -612,14 +613,14 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
                 VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
-        errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
-        errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                VesselPooledTubesProcessor.Headers.CONDITIONS.getText()));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 5,
+                VesselPooledTubesProcessor.Headers.AGGREATION_DATA_TYPE.getText(), "Mercury"));
 
         errorIfMissing(errors, filename, "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
                 VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText()));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 6, "Volume"));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 6,
+                VesselPooledTubesProcessor.Headers.AGGREATION_DATA_TYPE.getText(), "Mercury"));
 
         errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
                 VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
@@ -627,7 +628,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_HAVE_BOTH, 7,
                 VesselPooledTubesProcessor.Headers.BAIT.getText(), VesselPooledTubesProcessor.Headers.CAT.getText()));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 7, "DEV-6796"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_TUBE, 7,
                 VesselPooledTubesProcessor.Headers.VOLUME.getText(), 6, "01509634249"));
 
@@ -637,7 +637,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "01509634249"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_HAVE_BOTH, 8,
                 VesselPooledTubesProcessor.Headers.BAIT.getText(), VesselPooledTubesProcessor.Headers.CAT.getText()));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 8, "DEV-6796"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INCONSISTENT_SAMPLE_DATA, 8,
                 VesselPooledTubesProcessor.Headers.LSID.getText(), 2, "SM-748OO"));
         errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 8,
@@ -649,9 +648,24 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 VesselPooledTubesProcessor.Headers.READ_LENGTH.getText()));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.NONNEGATIVE_DECIMAL, 9,
                 VesselPooledTubesProcessor.Headers.VOLUME.getText()));
-        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 9, "DEV-6796"));
         errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 9,
                 VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
+
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.DATA_AGGREGATOR.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.LIBRARY_NAME.getText(), SampleInstanceEjb.RESTRICTED_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(),
+                SampleInstanceEjb.ALIAS_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), SampleInstanceEjb.ALIAS_CHARS));
+        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.INVALID_CHARS, 10,
+                VesselPooledTubesProcessor.Headers.LSID.getText(), SampleInstanceEjb.ALIAS_CHARS));
 
         Assert.assertTrue(errors.isEmpty(), "Found unexpected errors: " + StringUtils.join(errors, "; "));
 
@@ -921,12 +935,21 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             }
         });
 
+        // Product.aggregationDataType
+        Mockito.when(productDao.findAggregationDataTypes()).thenAnswer(new Answer<List<String>>() {
+            @Override
+            public List<String> answer(InvocationOnMock invocation) throws Throwable {
+                return Arrays.asList("10X_WGS", "16S", "CustomHybSel", "Custom_Selection", "Exome", "ExomePlus",
+                        "Jump", "PCR", "RNA", "RRBS", "ShortRangePCR", "WGS");
+            }
+        });
+
         // SampleInstanceEntity
         Mockito.when(sampleInstanceEntityDao.findByName(anyString())).thenReturn(null);
 
         return new SampleInstanceEjb(molecularIndexingSchemeDao, jiraService,
                 reagentDesignDao, labVesselDao, mercurySampleDao, sampleInstanceEntityDao,
-                analysisTypeDao, sampleDataFetcher, referenceSequenceDao);
+                analysisTypeDao, sampleDataFetcher, referenceSequenceDao, productDao);
     }
 
 }

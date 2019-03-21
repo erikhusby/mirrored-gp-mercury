@@ -118,6 +118,8 @@ public interface SampleData {
 
     String getSampleStatus();
 
+    String getReceptacleType();
+
     String containerName();
 
     String getManufacturerBarcode();

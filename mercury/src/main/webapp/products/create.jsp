@@ -1,6 +1,6 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -690,6 +690,22 @@
                             </div>
                         </div>
 
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                            <div class="control-group">
+                                <stripes:label for="aggregationParticle" name="customAggregationParticle"
+                                               class="control-label"/>
+                                <div class="controls">
+                                    <stripes:select style="width: auto;" id="customAggregationParticle"
+                                                    name="editProduct.defaultAggregationParticle"
+                                                    title="Select the custom aggregation particle which the pipleine will appended to their default aggregation. By default the pipeline aggregates on the research project.">
+                                        <stripes:option value=""><%=Product.AggregationParticle.DEFAULT_LABEL%></stripes:option>
+                                        <stripes:options-enumeration label="displayName"
+                                                                     enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
+                                    </stripes:select>
+                                </div>
+                            </div>
+                        </security:authorizeBlock>
+
                         <div class="control-group">
                             <stripes:label for="analysisTypeKey" name="Analysis Type" class="control-label"/>
                             <div class="controls">
@@ -761,6 +777,17 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="pairedEndRead" name="editProduct.pairedEndRead" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="indexType" class="control-label">Index Type</stripes:label>
+                            <div class="controls">
+                                <stripes:select name="editProduct.indexType">
+                                    <stripes:options-enumeration
+                                            enum="org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation.IndexType"
+                                            label="displayName"/>
+                                </stripes:select>
                             </div>
                         </div>
 

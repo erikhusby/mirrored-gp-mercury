@@ -476,6 +476,22 @@ public class ProductOrderDao extends GenericDao {
         );
     }
 
+    public List<ProductOrder> findOrdersWithCommonProduct(String productPartNumber) {
+        return findAll(ProductOrder.class, new ProductOrderDaoCallback() {
+            @Override
+            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrderRoot) {
+                super.callback(criteriaQuery, productOrderRoot);
+                criteriaQuery.distinct(true);
+
+                CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
+
+                Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
+                Predicate predicate = builder.equal(productJoin.get(Product_.partNumber),productPartNumber);
+                criteriaQuery.where(predicate);
+            }
+        });
+    }
+
     public List<ProductOrder> findOrdersWithSAPOrdersAndBilledSamples() {
         return findAll(ProductOrder.class,new ProductOrderDaoCallback(FetchSpec.SAMPLES, FetchSpec.LEDGER_ITEMS,
                 FetchSpec.SAP_ORDER_INFO){

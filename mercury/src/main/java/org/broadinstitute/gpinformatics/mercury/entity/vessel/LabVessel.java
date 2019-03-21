@@ -953,7 +953,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return A list of ancestor vessel events
      */
-    List<VesselEvent> getAncestors() {
+    public List<VesselEvent> getAncestors() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             VesselEvent vesselEvent = new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null, vesselToVesselTransfer.getLabEvent(),
