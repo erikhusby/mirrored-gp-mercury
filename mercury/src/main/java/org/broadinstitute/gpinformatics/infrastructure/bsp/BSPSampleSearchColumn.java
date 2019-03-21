@@ -39,7 +39,6 @@ public enum BSPSampleSearchColumn {
     ORIGINAL_MATERIAL_TYPE("Original Material Type"),
     DV200("DV200"),
     RECEPTACLE_TYPE("Receptacle Type"),
-    DV200("DV200"),
     MANUFACTURER_BARCODE("Manufacturer Tube Barcode"),
     POSITION("Position"),
     LOCATION("Location");
