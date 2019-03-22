@@ -40,6 +40,9 @@ public class PicoEnqueueOverride extends AbstractEnqueueOverride {
 
     private BSPRestClient bspRestClientImpl;
 
+    /**
+     * Currently only specialization is if something is FFPE
+     */
     @Nullable
     public static QueueSpecialization determinePicoQueueSpecialization(Collection<LabVessel> targetLabVessels) {
         List<MercurySample> mercurySamples = new ArrayList<>();
@@ -55,6 +58,7 @@ public class PicoEnqueueOverride extends AbstractEnqueueOverride {
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(mercurySamples, BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE);
 
+        // Check for FFPE
         for (SampleData sampleData : sampleDataMap.values()) {
             if (sampleData.getFfpeStatus()) {
                 queueSpecialization = QueueSpecialization.FFPE;
@@ -69,6 +73,9 @@ public class PicoEnqueueOverride extends AbstractEnqueueOverride {
         return new QueuePriority[] { QueuePriority.CLIA, QueuePriority.EXOME_EXPRESS };
     }
 
+    /**
+     * Current special priority types are: CLIA & ExomeExpress.
+     */
     @Override
     protected QueuePriority checkForSpecialPriorityType(Collection<MercurySample> mercurySamples) {
         QueuePriority queuePriority = getDefaultPriority();

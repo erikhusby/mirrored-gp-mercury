@@ -3,6 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 
+/**
+ * Used to generate the data dump for the Pico queue
+ */
 public class PicoDataDumpGenerator extends AbstractDataDumpGenerator {
 
     @Override
@@ -25,6 +28,8 @@ public class PicoDataDumpGenerator extends AbstractDataDumpGenerator {
         objects[index++] = sampleData.getBspStorageLocation();
         objects[index++] = sampleData.containerName();
         objects[index++] = sampleData.getCollaboratorParticipantId();
+        // to avoid a warning for the ++ on the index not being used.  I like to keep it there in case more columns
+        // are added so we don't forget to put the ++ back.
         //noinspection UnusedAssignment
         objects[index++] = sampleData.getCollaboratorsSampleName();
 

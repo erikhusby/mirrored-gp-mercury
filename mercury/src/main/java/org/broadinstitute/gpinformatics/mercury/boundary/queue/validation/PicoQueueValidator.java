@@ -17,10 +17,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Used for validating enqueue / dequeue for pico
+ */
 @Stateful
 @RequestScoped
 public class PicoQueueValidator implements AbstractQueueValidator {
 
+    /**
+     * Verify is DNA
+     */
     @Override
     public Map<Long, ValidationResult> validatePreEnqueue(Collection<LabVessel> labVessels, MessageCollection messageCollection) {
         Map<Long, String> bspSampleIdsByVesselId = new HashMap<>();
@@ -31,6 +37,7 @@ public class PicoQueueValidator implements AbstractQueueValidator {
             // Default to pass, change to fail or unknown if needed.
             validationResultsById.put(labVessel.getLabVesselId(), ValidationResult.PASS);
 
+            // Checks to see if a sample is a BSP sample AND checks to see if mercury knows that it is DNA or not.
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MaterialType materialType = sampleInstanceV2.getMaterialType();
                 if (materialType != null && !materialType.name().toLowerCase().contains("dna")) {
@@ -42,11 +49,13 @@ public class PicoQueueValidator implements AbstractQueueValidator {
                         }
                     }
                 } else {
+                    // Can't determine whether it is DNA or not, therefore set to unknown
                     validationResultsById.put(labVessel.getLabVesselId(), ValidationResult.UNKNOWN);
                 }
             }
         }
 
+        // We determined it there are some BSP Samples, therefore we can use BSP to verify whether it is DNA or not.
         if (!bspSampleIdsByVesselId.isEmpty()) {
             BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
 

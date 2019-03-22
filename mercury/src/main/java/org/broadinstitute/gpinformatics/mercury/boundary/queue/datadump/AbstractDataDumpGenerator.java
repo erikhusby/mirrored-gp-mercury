@@ -16,10 +16,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class is utilized by the GenericQueue subsystem to generate a data dump file based on the abstract methods
+ */
 public abstract class AbstractDataDumpGenerator {
 
+    /**
+     * Takes a SampleData class and generates a data dump from the fields defined by the extending class.
+     *
+     * @param sampleData  Data for a single sample to generate a row for within the spreadsheet
+     * @return Row of Data.
+     */
     protected abstract Object[] extractData(SampleData sampleData);
 
+    /**
+     * Columns to be utilized in generating the spreadsheet.  This is used by the data fetcher to obtain the required information from other systems.
+     *
+     * @return Array of BSP Search columns.
+     */
     protected abstract BSPSampleSearchColumn[] getSearchColumns();
 
     private List<Object[]> generateData(QueueGrouping queueGrouping) {
@@ -37,7 +51,6 @@ public abstract class AbstractDataDumpGenerator {
     }
 
     private List<Object[]> generateData(List<LabVessel> labVessels) {
-
         List<Object[]> rows = new ArrayList<>();
         List<MercurySample> mercurySamples = new ArrayList<>();
         Map<Long, String> labVesselIdToSampleId = new HashMap<>();
@@ -54,6 +67,14 @@ public abstract class AbstractDataDumpGenerator {
         return rows;
     }
 
+    /**
+     * SIDE EFFECTING METHOD. Obtains the mercury samples and fills the maps based on the lab vessels passed in.r
+     *
+     * @param labVessels                    Lab Vessels to generate data for
+     * @param mercurySamples                MercurySamples for the lab vessels
+     * @param labVesselIdToSampleId         Map of LabVessel ID to the associated sample id
+     * @param labVesselIdToMercurySample    Map of the LabVessel ID to the associated MercurySample
+     */
     public static void loadMercurySampleInformation(List<LabVessel> labVessels, List<MercurySample> mercurySamples,
                                                     Map<Long, String> labVesselIdToSampleId,
                                                     Map<Long, MercurySample> labVesselIdToMercurySample) {
@@ -77,6 +98,12 @@ public abstract class AbstractDataDumpGenerator {
         return headers;
     }
 
+    /**
+     * Generates what is effectively a spreadsheet for a single QueueGrouping.
+     *
+     * @param queueGrouping     QueueGrouping to generate spreadsheet for
+     * @return                  Effective spreadsheet contained within a 2D array of objects.
+     */
     public Object[][] generateSpreadsheet(QueueGrouping queueGrouping) {
         List<Object[]> rows = generateData(queueGrouping);
         Object[] headerRow = generateHeaderRow(getSearchColumns());
@@ -90,6 +117,12 @@ public abstract class AbstractDataDumpGenerator {
         return sheet;
     }
 
+    /**
+     * Generates what is effectively a spreadsheet for a List of QueueGrouping.
+     *
+     * @param queueGroupings    QueueGrouping to generate spreadsheet for
+     * @return                  Effective spreadsheet contained within a 2D array of objects.
+     */
     public Object[][] generateSpreadsheet(Collection<QueueGrouping> queueGroupings) {
 
         List<LabVessel> labVessels = new ArrayList<>();

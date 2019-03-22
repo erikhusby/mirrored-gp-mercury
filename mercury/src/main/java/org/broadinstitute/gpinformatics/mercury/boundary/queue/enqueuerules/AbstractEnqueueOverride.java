@@ -19,6 +19,9 @@ import java.util.Set;
  */
 public abstract class AbstractEnqueueOverride {
 
+    /**
+     * We give it the max value so that the when we check the index on it being added to the queue it  will be assigned a proper priority
+     */
     private static final int DEFAULT_PRIORITY_INDEX = Integer.MAX_VALUE;
 
     /**
