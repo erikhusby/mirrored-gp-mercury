@@ -177,7 +177,7 @@ public class QueueActionBean extends CoreActionBean {
     @HandlesEvent("downloadGroupingData")
     public Resolution downloadGroupingData() {
         try {
-            Object[][] rows = queueEjb.generateDataDump(queueType, queueDao.findById(QueueGrouping.class, queueGroupingId));
+            Object[][] rows = queueEjb.generateDataDump(queueDao.findById(QueueGrouping.class, queueGroupingId));
 
             return streamSpreadsheet(rows);
         } catch (Exception e) {
@@ -207,7 +207,7 @@ public class QueueActionBean extends CoreActionBean {
     public Resolution downloadFullQueueData() {
         queue = queueEjb.findQueueByType(queueType);
         try {
-            Object[][] rows = queueEjb.generateDataDump(queueType, queue);
+            Object[][] rows = queueEjb.generateDataDump(queue);
 
             return streamSpreadsheet(rows);
         } catch (Exception e) {

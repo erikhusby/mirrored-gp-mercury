@@ -11,9 +11,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Handles the validation of all the queues.  This is the class which is utilized by the QueueEJB for getting to each
+ * queue's specific enqueue and dequeue validation.
+ */
 public class QueueValidationHandler {
     private static final Log logger = LogFactory.getLog(QueueValidationHandler.class);
 
+    /**
+     * Entry point for validation.  Handles adding warnings  for failed and unknown validation results on enqueue.
+     *
+     * @param labVessels            List of LabVessels to validate
+     * @param queueType             Queue the lab vessels are being validated for.
+     * @param messageCollection     Messages back to the user.
+     */
     public void validate(Collection<LabVessel> labVessels, QueueType queueType, MessageCollection messageCollection) throws Exception {
         AbstractQueueValidator queueValidator = queueType.getValidatorClass().newInstance();
         Map<Long, ValidationResult> validationResultsByVesselId = queueValidator.validatePreEnqueue(labVessels, messageCollection);
@@ -34,6 +45,14 @@ public class QueueValidationHandler {
         }
     }
 
+    /**
+     * Checks the samples to make sure they are properly completed.
+     *
+     * @param labVessel             Lab Vessel to check to see if it is completed.
+     * @param queueType             Type of Queue to check for completion against.
+     * @param messageCollection     Messages back to the user
+     * @return                      True if complete, false otherwise.
+     */
     public boolean isComplete(LabVessel labVessel, QueueType queueType, MessageCollection messageCollection) {
         AbstractQueueValidator queueValidator;
         try {

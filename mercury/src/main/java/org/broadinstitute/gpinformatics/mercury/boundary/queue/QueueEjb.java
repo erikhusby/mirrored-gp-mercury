@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.QueueV
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueContainerRule;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
@@ -36,6 +37,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+/**
+ * EJB for handling any Queue Related items.
+ */
 @Stateful
 @RequestScoped
 public class QueueEjb {
@@ -60,51 +64,50 @@ public class QueueEjb {
      * Adds a list of lab vessel of any type to a queue as a
      * single queue group.  The general intent is for all lab vessels added together to stay together.
      *
-     * @param queueSpecialization
      * @param sampleIds             String containing the sample Ids
      * @param queueType             Type of Queue to add the lab vessels to.
      * @param readableText          Text displayed on the queue row for this item.  If none is there, default text will be
      *                              provided.  Recommended that if a single container is utilized, you use the barcode of
      *                              the container lab vessel.
      * @param messageCollection     Messages back to the user.
-     * @return                      the Database ID of the newly created QueueGrouping.
+     * @param queueSpecialization   What, if any QueueSpecialization is known about these lab vessels for the full list
      */
-    public Long enqueueBySampleIdList(String sampleIds, QueueType queueType, @Nullable String readableText,
+    public void enqueueBySampleIdList(String sampleIds, QueueType queueType, @Nullable String readableText,
                                       @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
         final List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleIds.trim().toUpperCase());
-        return enqueueBySampleIdList(sampleNames, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
+        enqueueBySampleIdList(sampleNames, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
     }
 
     /**
      * Adds a list of lab vessel of any type to a queue as a
      * single queue group.  The general intent is for all lab vessels added together to stay together.
      *
-     * @param queueSpecialization
      * @param sampleIds             List of sample ids to be added to the Queue.
      * @param queueType             Type of Queue to add the lab vessels to.
      * @param readableText          Text displayed on the queue row for this item.  If none is there, default text will be
      *                              provided.  Recommended that if a single container is utilized, you use the barcode of
      *                              the container lab vessel.
      * @param messageCollection     Messages back to the user.
-     * @return                      the Database ID of the newly created QueueGrouping.
+     * @param queueSpecialization   What, if any QueueSpecialization is known about these lab vessels for the full list
      */
-    public Long enqueueBySampleIdList(List<String> sampleIds, QueueType queueType, @Nullable String readableText,
-                                      @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
+    private void enqueueBySampleIdList(List<String> sampleIds, QueueType queueType, @Nullable String readableText,
+                                       @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
         List<LabVessel> labVessels = labVesselDao.findByUnknownBarcodeTypeList(sampleIds);
-        return enqueueLabVessels(labVessels, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
+        enqueueLabVessels(labVessels, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
     }
 
     /**
      * Adds a list of lab vessel of any type to a queue as a
      * single queue group.  The general intent is for all lab vessels added together to stay together.
      *
-     * @param queueSpecialization
      * @param vesselList            List of vessels to queue up as a single group.
      * @param readableText          Text displayed on the queue row for this item.  If none is there, default text will be
      *                              provided.  Recommended that if a single container is utilized, you use the barcode of
      *                              the container lab vessel.
      * @param queueType             Type of Queue to add the lab vessels to.
      * @param messageCollection     Messages back to the user.
+     * @param queueOrigin           What subsystem of the application did the enqueue originate from?
+     * @param queueSpecialization   What, if any QueueSpecialization is known about these lab vessels for the full list
      * @return                      the Database ID of the newly created QueueGrouping.
      */
     public Long enqueueLabVessels(@Nonnull Collection<LabVessel> vesselList,
@@ -116,7 +119,7 @@ public class QueueEjb {
         if (genericQueue.getQueueGroupings() == null) {
             genericQueue.setQueueGroupings(new TreeSet<>(QueueGrouping.BY_SORT_ORDER));
         }
-        List<Long> vesselIds = getApplicableLabVesselIds(vesselList);
+        List<Long> vesselIds = getApplicableLabVesselIds(queueType, vesselList);
 
         boolean isUniqueSetOfActiveVessels = true;
 
@@ -143,6 +146,9 @@ public class QueueEjb {
             }
         }
 
+        // Verify that multiple people haven't submitted EXACTLY duplicate queue groupings.  If 2 people put SM-1234 in
+        // queue groupings that don't otherwise match it is fine and SM-1234 will be in the queue 2x.  This is handled,
+        // but if 2 people submit SM-1234 & SM-3456  as a group  only one will get in.
         if (isUniqueSetOfActiveVessels) {
             QueueGrouping queueGrouping = createGroupingAndSetInitialOrder(readableText, genericQueue, vesselList, queueSpecialization);
             queueGrouping.setQueueOrigin(queueOrigin);
@@ -160,11 +166,11 @@ public class QueueEjb {
     }
 
     @NotNull
-    private List<Long> getApplicableLabVesselIds(@Nonnull Collection<LabVessel> vesselList) {
+    private List<Long> getApplicableLabVesselIds(@Nonnull QueueType queueType, @Nonnull Collection<LabVessel> vesselList) {
         List<Long> vesselIds = new ArrayList<>();
         for (LabVessel labVessel : vesselList) {
 
-            if (labVessel.getContainerRole() != null) {
+            if (labVessel.getContainerRole() != null && queueType.getQueueContainerRule() == QueueContainerRule.TUBES_ONLY) {
                 for (LabVessel vessel : labVessel.getContainerRole().getMapPositionToVessel().values()) {
                     vesselIds.add(vessel.getLabVesselId());
                 }
@@ -182,13 +188,13 @@ public class QueueEjb {
      * @param labVessels            Vessels to Dequeue.
      * @param queueType             Queue Type to remove from.
      * @param messageCollection     Messages back to the user.
-     * @param dequeueingOptions     Dequeueing Options
+     * @param dequeueingOptions     Whether you want to follow the default rules, or update the status regardless.
      */
     @SuppressWarnings("WeakerAccess")
     public void dequeueLabVessels(Collection<LabVessel> labVessels, QueueType queueType,
                                   MessageCollection messageCollection, DequeueingOptions dequeueingOptions) {
 
-        List<Long> labVesselIds = getApplicableLabVesselIds(labVessels);
+        List<Long> labVesselIds = getApplicableLabVesselIds(queueType, labVessels);
 
         // Finds all the Active entities by the vessel Ids
         List<QueueEntity> entitiesByVesselIds = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
@@ -240,11 +246,11 @@ public class QueueEjb {
         }
 
         dequeueLabVessels(completed, queueType, messageCollection, DequeueingOptions.OVERRIDE);
-        updateLabVesselsToRepeat(repeats, queueType, messageCollection);
+        updateLabVesselsToRepeat(repeats, queueType);
     }
 
-    private void updateLabVesselsToRepeat(List<LabVessel> repeats, QueueType queueType, MessageCollection messageCollection) {
-        List<Long> labVesselIds = getApplicableLabVesselIds(repeats);
+    private void updateLabVesselsToRepeat(List<LabVessel> repeats, QueueType queueType) {
+        List<Long> labVesselIds = getApplicableLabVesselIds(queueType, repeats);
 
         // Finds all the Active entities by the vessel Ids
         List<QueueEntity> queueEntities = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
@@ -459,7 +465,7 @@ public class QueueEjb {
      * @param queueType             Queue To exclude them from.
      * @param messageCollection     Messages back to the user.
      */
-    public void excludeItemsById(List<String> excludeVessels, QueueType queueType, MessageCollection messageCollection) {
+    private void excludeItemsById(List<String> excludeVessels, QueueType queueType, MessageCollection messageCollection) {
         List<LabVessel> vessels = labVesselDao.findByUnknownBarcodeTypeList(excludeVessels);
 
         vessels.addAll(labVesselDao.findByBarcodes(excludeVessels).values());
@@ -468,6 +474,15 @@ public class QueueEjb {
         excludeItems(vessels, queueType, messageCollection);
     }
 
+    /**
+     * Excludes Lab vessels by a list of some sort of barcode.  We utilize other methods for figuring out what lab
+     * vessels and by what type of barcode.
+     *
+     * @param excludeVessels        Lab vessels seperated in whichever manner SearchActionBean.cleanInputStringForSamples
+     *                              uses.
+     * @param queueType             Queue the vessels are being excluded from.
+     * @param messageCollection     Messages back to the user.
+     */
     public void excludeItemsById(String excludeVessels, QueueType queueType, MessageCollection messageCollection) {
         List<String> barcodes = SearchActionBean.cleanInputStringForSamples(excludeVessels.trim().toUpperCase());
         excludeItemsById(barcodes, queueType, messageCollection);
@@ -481,22 +496,42 @@ public class QueueEjb {
         genericQueueDao.persist(queueGrouping);
     }
 
+    /**
+     * Loads the requested queue by its queue type
+     * @param queueType     The Type of the queue you wish to load
+     * @return              The Loaded Queue which will include all QueueGroupings which have ACTIVE QueueEntities.
+     */
     public GenericQueue findQueueByType(QueueType queueType) {
         return genericQueueDao.findQueueByType(queueType);
     }
 
-    public Object[][] generateDataDump(QueueType queueType, QueueGrouping queueGrouping) throws Exception {
+    /**
+     * Used to generate a 2D array which can be turned into an Excel file.  This is meant to generate a data dump for a
+     * single Queue Grouping
+     *
+     * @param queueGrouping     QueueGrouping to generate a Data Dump for.
+     * @return                  Object array containing data meant for an excel file data dump.
+     */
+    public Object[][] generateDataDump(QueueGrouping queueGrouping) throws Exception {
         try {
-            AbstractDataDumpGenerator dataDumpGenerator = queueType.getDataDumpGenerator().newInstance();
+            AbstractDataDumpGenerator dataDumpGenerator = queueGrouping.getAssociatedQueue().getQueueType()
+                    .getDataDumpGenerator().newInstance();
             return dataDumpGenerator.generateSpreadsheet(queueGrouping);
         } catch (InstantiationException | IllegalAccessException e) {
             throw new Exception(e);
         }
     }
 
-    public Object[][] generateDataDump(QueueType queueType, GenericQueue genericQueue) throws Exception {
+    /**
+     * Used to generate a 2D array which can be turned into an excel file.  This is meant to generate a data dump for an
+     * entire queue.
+     *
+     * @param genericQueue      Queue to generate a Data Dump for.
+     * @return                  Object array containing data meant for an excel file data dump.
+     */
+    public Object[][] generateDataDump(GenericQueue genericQueue) throws Exception {
         try {
-            AbstractDataDumpGenerator dataDumpGenerator = queueType.getDataDumpGenerator().newInstance();
+            AbstractDataDumpGenerator dataDumpGenerator = genericQueue.getQueueType().getDataDumpGenerator().newInstance();
             return dataDumpGenerator.generateSpreadsheet(genericQueue.getQueueGroupings());
         } catch (InstantiationException | IllegalAccessException e) {
             throw new Exception(e);
