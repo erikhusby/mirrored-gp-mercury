@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
@@ -40,13 +41,14 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.mockito.Mockito;
@@ -77,6 +79,9 @@ import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingCreditDbFreeTest {
+
+    private SapIntegrationClientImpl mockSapClient;
+
     public BillingCreditDbFreeTest() {
     }
 
@@ -84,12 +89,12 @@ public class BillingCreditDbFreeTest {
     private QuotePriceItem quotePriceItem;
     private BillingAdaptor billingAdaptor;
     private ProductOrder pdo;
-    private SapIntegrationService sapService = new SapIntegrationServiceStub();
 
     private EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
     private BillingSessionDao billingSessionDao = Mockito.mock(BillingSessionDao.class);
     private PriceListCache priceListCache = Mockito.mock(PriceListCache.class);
     private QuoteService quoteService = Mockito.mock(QuoteService.class);
+    private SapIntegrationServiceImpl sapService;
     private BillingSessionAccessEjb billingSessionAccessEjb = Mockito.mock(BillingSessionAccessEjb.class);
     private ProductOrderEjb productOrderEjb = Mockito.mock(ProductOrderEjb.class);
     private SAPProductPriceCache productPriceCache = Mockito.mock(SAPProductPriceCache.class);
@@ -101,17 +106,28 @@ public class BillingCreditDbFreeTest {
 
     @BeforeMethod
     public void setUp()
+
         throws QuoteNotFoundException, QuoteServerException, InvalidProductException, SAPInterfaceException,
         SAPIntegrationException {
         resetMocks();
+
+        final BSPUserList bspUserList = Mockito.mock(BSPUserList.class);
+        final SAPProductPriceCache mockProductPriceCache = Mockito.mock(SAPProductPriceCache.class);
+
         pdo = ProductOrderTestFactory.createDummyProductOrder(2, "PDO-1234");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         pdo.setProductOrderAddOns(Collections.emptyList());
+
         String quoteId = pdo.getQuoteId();
         String sapOrderNumber = "sap1234";
 
         SapOrderDetail sapOrderDetail = new SapOrderDetail(sapOrderNumber, 1, quoteId,
-            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
+            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+        sapService =
+                new SapIntegrationServiceImpl(SapConfig.produce(Deployment.DEV), quoteService, bspUserList,
+                        priceListCache, productPriceCache,accessControlEjb);
+        mockSapClient = Mockito.mock(SapIntegrationClientImpl.class);
+        sapService.setWrappedClient(mockSapClient);
         pdo.setSapReferenceOrders(Collections.singletonList(sapOrderDetail));
 
         priceItem = pdo.getProduct().getPrimaryPriceItem();
@@ -155,8 +171,8 @@ public class BillingCreditDbFreeTest {
         templateEngine.postConstruct();
         billingEjb =
             new BillingEjb(priceListCache, billingSessionDao, null, null, null, AppConfig.produce(Deployment.DEV),
-                SapConfig.produce(Deployment.DEV), mockEmailSender, templateEngine, Mockito.mock(BSPUserList.class),
-                    Mockito.mock(SAPProductPriceCache.class));
+                SapConfig.produce(Deployment.DEV), mockEmailSender, templateEngine, bspUserList,
+                    mockProductPriceCache);
         billingAdaptor = new BillingAdaptor(billingEjb, priceListCache, quoteService, billingSessionAccessEjb,
             sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
@@ -171,9 +187,16 @@ public class BillingCreditDbFreeTest {
     }
 
     @Test(dataProvider = "sapOrQuoteProvider")
-    public void testCreateBillingCreditRequest(ProductOrder.QuoteSourceType quoteSourceType) {
+    public void testCreateBillingCreditRequest(ProductOrder.QuoteSourceType quoteSourceType)
+            throws SAPIntegrationException {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         pdo.setQuoteSource(quoteSourceType);
+
+        SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
+                pdo);
+
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+        Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
@@ -194,9 +217,15 @@ public class BillingCreditDbFreeTest {
 
     @Test(dataProvider = "sapOrQuoteProvider")
     public void testCreateBillingCreditRequestNoFunding(ProductOrder.QuoteSourceType quoteSourceType)
-            throws QuoteNotFoundException, QuoteServerException {
+            throws QuoteNotFoundException, QuoteServerException, SAPIntegrationException {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         pdo.setQuoteSource(quoteSourceType);
+
+        SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
+                pdo);
+
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+        Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
@@ -225,9 +254,14 @@ public class BillingCreditDbFreeTest {
     }
 
     @Test(dataProvider = "sapOrQuoteProvider")
-    public void testNegativeBilling(ProductOrder.QuoteSourceType quoteSourceType) {
+    public void testNegativeBilling(ProductOrder.QuoteSourceType quoteSourceType) throws SAPIntegrationException {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         pdo.setQuoteSource(quoteSourceType);
+
+        SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
+                pdo);
+
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyNegativeTwo));
@@ -245,9 +279,15 @@ public class BillingCreditDbFreeTest {
     }
 
     @Test(dataProvider = "sapOrQuoteProvider")
-    public void testPositiveBilling(ProductOrder.QuoteSourceType quoteSourceType) {
+    public void testPositiveBilling(ProductOrder.QuoteSourceType quoteSourceType) throws SAPIntegrationException {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         pdo.setQuoteSource(quoteSourceType);
+
+        SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
+                pdo);
+
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+        Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
 
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, qtyPositiveTwo));
@@ -264,9 +304,17 @@ public class BillingCreditDbFreeTest {
     }
 
     @Test(dataProvider = "sapOrQuoteProvider")
-    public void testMoreNegativeThanPositiveBillingPositiveFirst(ProductOrder.QuoteSourceType quoteSourceType) {
+    public void testMoreNegativeThanPositiveBillingPositiveFirst(ProductOrder.QuoteSourceType quoteSourceType)
+            throws SAPIntegrationException {
         ProductOrderSample pdoSample = pdo.getSamples().iterator().next();
         pdo.setQuoteSource(quoteSourceType);
+
+        SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
+                pdo);
+
+        Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
+        Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
+
         HashMap<ProductOrderSample, Pair<PriceItem, Double>> billingMap = new HashMap<>();
         billingMap.put(pdoSample, Pair.of(priceItem, 1d));
 

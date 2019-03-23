@@ -439,8 +439,7 @@ public class ProductOrderEjb {
         }
         orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,0,
                 orderToPublish.getQuoteId(),
-                SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode(),
-                MercuryStringUtils.makeDigest(allProductsOrdered),""));
+                SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode()));
 
         if(quoteIdChange ) {
             String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+

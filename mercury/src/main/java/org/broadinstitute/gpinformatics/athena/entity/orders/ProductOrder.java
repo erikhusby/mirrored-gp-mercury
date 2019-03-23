@@ -94,6 +94,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @SuppressWarnings("UnusedDeclaration")
@@ -362,9 +363,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if (shareSapOrder & toClone.isSavedInSAP()) {
             cloned.addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
                     toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
-                    toClone.latestSapOrderDetail().getCompanyCode(),
-                    toClone.latestSapOrderDetail().getOrderProductsHash(),
-                    toClone.latestSapOrderDetail().getOrderPricesHash()));
+                    toClone.latestSapOrderDetail().getCompanyCode()));
         }
 
         toClone.addChildOrder(cloned);
@@ -374,9 +373,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public static List<Product> getAllProductsOrdered(ProductOrder order) {
         List<Product> orderedListOfProducts = new ArrayList<>();
-        orderedListOfProducts.add(order.getProduct());
+        final Optional<Product> optionalProduct = Optional.ofNullable(order.getProduct());
+        optionalProduct.ifPresent(orderedListOfProducts::add);
         for (ProductOrderAddOn addOn : order.getAddOns()) {
-            orderedListOfProducts.add(addOn.getAddOn());
+            final Optional<Product> optionalAddOn = Optional.ofNullable(addOn.getAddOn());
+            optionalAddOn.ifPresent(orderedListOfProducts::add);
         }
         Collections.sort(orderedListOfProducts);
         return orderedListOfProducts;
@@ -2496,8 +2497,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public void updateSapDetails(int sampleCount, String productListHash, String pricesForProducts) {
         final SapOrderDetail sapOrderDetail = latestSapOrderDetail();
         sapOrderDetail.setPrimaryQuantity(sampleCount);
-        sapOrderDetail.setOrderProductsHash(productListHash);
-        sapOrderDetail.setOrderPricesHash(pricesForProducts);
     }
 
     public boolean isResearchOrder () {

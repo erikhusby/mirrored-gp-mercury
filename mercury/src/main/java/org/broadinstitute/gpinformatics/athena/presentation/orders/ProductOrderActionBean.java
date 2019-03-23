@@ -128,6 +128,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchAction
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
+import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -163,8 +164,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
@@ -949,6 +952,24 @@ public class ProductOrderActionBean extends CoreActionBean {
                 quote.getQuoteHeader().getQuoteNumber()+" -- " + quote.getQuoteHeader().getProjectName() +
                 " to place a new Product order";
             addGlobalValidationError(insufficientFundsMessage);
+        }
+
+        // Validate Products are on the QUote
+        final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(editOrder);
+        // Filter out all products which are not explicitly referenced as a line item on the quote
+        final Set<Product> productsWithoutQuoteMatches = allProductsOrdered.stream()
+                .filter(testProduct -> !quote.getQuoteItemMap().keySet().contains(testProduct.getPartNumber())).collect(
+                        Collectors.toSet());
+        // Now check if there are any products that do not match the quote.
+        final Set<String> dollarLimitMaterials = quote.getQuoteItemByDescriptionMap().keySet().stream()
+                .filter(Objects::nonNull)
+                .filter(materialDescription -> materialDescription.contains(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR)).collect(
+                        Collectors.toSet());
+        // If at least one of the Products on the order does not match the quote line items, see if there is a
+        // dollar limited product on the quote.  If not, set a validation error letting the user that the products
+        // and the quotes must be inline
+        if(CollectionUtils.isNotEmpty(productsWithoutQuoteMatches) && CollectionUtils.isEmpty(dollarLimitMaterials)) {
+            addGlobalValidationError("The products on your order (including add ons) do not seem to be represented on your quote.  Please revisit either your quote or your order selections");
         }
     }
 

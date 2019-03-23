@@ -24,9 +24,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.sap.entity.DeliveryCondition;
-import org.broadinstitute.sap.entity.material.SAPMaterial;
-import org.broadinstitute.sap.entity.quote.FundingStatus;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -172,20 +169,45 @@ public class BillingAdaptor implements Serializable {
                 String workId = null;
                 boolean isQuoteFunded = false;
                 try {
+                    QuotePriceItem priceItemBeingBilled = null;
+                    QuotePriceItem primaryPriceItemIfReplacement = null;
 
                     if(item.isSapOrder()) {
                         item.setSapQuote(item.getProductOrder().getSapQuote(sapService));
                         //TODO replace the line below with a helper method on SAP Quote to determine if it is funded.
-                        isQuoteFunded = item.getSapQuote().getQuoteHeader().getQuoteStatus() == FundingStatus.APPROVED;
+                        isQuoteFunded = item.getSapQuote().isQuoteAvailableForBilling();
+                        //Replace with the New price list call for effective date
                     } else {
                         priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
                         item.setPriceOnWorkDate(priceItemsForDate);
                         item.setQuote(item.getProductOrder().getQuote(quoteService));
                         isQuoteFunded = item.getQuote().isFunded(item.getWorkCompleteDate());// && quote.isFunded(item.getWorkCompleteDate());
+
+                        // The price item that we are billing.
+                        // need to set the price on the Price Item before this step
+                        priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
+
+                        // Get the quote PriceItem that this is replacing, if it is a replacement.
+                        // need to set the price on the Price Item before this step
+                        primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate);
+
+                        // Get the quote items on the quote, adding to the quote item cache, if not there.
+                        Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
+
+                        //Using the first item in the set of work items because, even though it's a set all ledger items
+                        // in this quote item should have the same work item
+                        // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,
+                        // set the primary to null so it will be billed as if it is a primary.
+                        if (primaryPriceItemIfReplacement != null) {
+                            if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
+                                quoteItemNames.contains(priceItemBeingBilled.getName())) {
+                                primaryPriceItemIfReplacement = null;
+                            }
+                        }
                     }
 
                     // TODO SGM -- Need an isfunded for SAP /\
-                    if(!item.isBillingCredit()) {
+                    if (!item.isBillingCredit()) {
                         if (item.getProductOrder().hasSapQuote()) {
                             ProductOrder.checkSapQuoteValidity(item.getSapQuote(), DateUtils.truncate(item.getWorkCompleteDate(),
                                     Calendar.DATE));
@@ -199,66 +221,7 @@ public class BillingAdaptor implements Serializable {
                     workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
                     sapBillingId = item.getProductOrder().hasSapQuote()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
 
-                    // The price item that we are billing.
-                    // need to set the price on the Price Item before this step
-                    QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
-
-                    //Replace with the New price list call for effective date
-                    String price = item.getEffectivePrice();
-
-                    // Get the quote PriceItem that this is replacing, if it is a replacement.
-                    // need to set the price on the Price Item before this step
-                    QuotePriceItem primaryPriceItemIfReplacement = null;
-                        primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate);
-                    // need to set the price on the Price Item before this step
-                    QuotePriceItem primaryPriceItemIfReplacementForSAP =
-                            item.getPrimaryForReplacement(priceItemsForDate);
-
-                    // Get the quote items on the quote, adding to the quote item cache, if not there.
-                    Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
-
-                    //Using the first item in the set of work items because, even though it's a set all ledger items
-                    // in this quote item should have the same work item
-                    // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,
-                    // set the primary to null so it will be billed as if it is a primary.
-                    if (primaryPriceItemIfReplacement != null) {
-                        if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
-                            quoteItemNames.contains(priceItemBeingBilled.getName()))
-                        {
-                            primaryPriceItemIfReplacement = null;
-                        }
-                    }
-
                     double quantityForSAP = item.getQuantityForSAP();
-
-                    if(item.getProductOrder().hasSapQuote()
-                       && !item.getProductOrder().getOrderStatus().canPlace()
-                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                       && StringUtils.isBlank(item.getSapItems())) {
-
-                        final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
-                                item.getProductOrder().getSapCompanyConfigurationForProductOrder());
-
-                        BigDecimal replacementPrice = new BigDecimal(price);
-
-                        BigDecimal sapPrimaryPrice = new BigDecimal(material.getBasePrice());
-
-                        if (StringUtils.equals(item.getQuotePriceType(),
-                                LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
-                            if (!material.getPossibleDeliveryConditions()
-                                    .containsKey(DeliveryCondition.LATE_DELIVERY_DISCOUNT)) {
-                                throw new InvalidProductException(
-                                        "Pricing in SAP has not been set up correctly: Late Delivery charge is not set for "
-                                        + item.getProduct().getPartNumber());
-                            }
-                            if (replacementPrice.compareTo(sapPrimaryPrice.add(material.getPossibleDeliveryConditions()
-                                    .get(DeliveryCondition.LATE_DELIVERY_DISCOUNT))) != 0) {
-                                throw new InvalidProductException(
-                                        "Pricing in SAP has not been set up correctly: Late Delivery charge in SAP differs from Quotes for "
-                                        + item.getProduct().getPartNumber());
-                            }
-                        }
-                    }
 
                     if (item.getProductOrder().getQuoteSource() != null) {
                         if(StringUtils.isBlank(workId)) {
@@ -296,9 +259,9 @@ public class BillingAdaptor implements Serializable {
                                     //todo, validate if the quantity override parameter is still necessary
                                     sapBillingId = sapService.billOrder(item, null, new Date());
                                     result.setSAPBillingId(sapBillingId);
-                                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId,
-                                            sapBillingId,
-                                            BillingSession.BILLED_FOR_SAP + " " + BillingSession.BILLED_FOR_QUOTES);
+                                    billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
+                                            BillingSession.BILLED_FOR_SAP + " "
+                                            + BillingSession.BILLED_FOR_QUOTES);
                                 } else {
                                     Set<LedgerEntry> priorSapBillings = new HashSet<>();
                                     item.getBillingCredits().stream()
@@ -325,9 +288,8 @@ public class BillingAdaptor implements Serializable {
                                         item.setBillingMessages(BillingSession.BILLING_CREDIT);
                                         sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
                                         result.setSAPBillingId(sapBillingId);
-                                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId,
-                                                        sapBillingId,
-                                                        BillingSession.BILLING_CREDIT);
+                                        billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
+                                                BillingSession.BILLING_CREDIT);
                                     }
                                 }
                                 item.getProductOrder().latestSapOrderDetail().addLedgerEntries(item.getLedgerItems());
@@ -411,6 +373,10 @@ public class BillingAdaptor implements Serializable {
 
     void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem,
                     Set<String> billedPdoKeys, Object sapDocumentID) {
+        String priceItemName = "";
+        if(quotePriceItem != null) {
+            priceItemName = quoteImportItem.getProduct().getProductName();
+        }
         String billingLogText = String.format(
                 "Work item '%s' and SAP Document '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'",
                 workId,
@@ -418,7 +384,7 @@ public class BillingAdaptor implements Serializable {
                 BILLING_DATE_FORMAT.format(quoteImportItem.getWorkCompleteDate()),
                 BILLING_DATE_FORMAT.format(new Date()),
                 quoteImportItem.getQuantity(),
-                quotePriceItem.getName(),
+                priceItemName,
                 quoteImportItem.getNumSamples(),
                 billedPdoKeys);
         log.info(billingLogText);

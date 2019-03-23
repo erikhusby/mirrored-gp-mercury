@@ -1,8 +1,27 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import functions.rfc.sap.document.sap_com.ZESDFUNDINGDET;
+import functions.rfc.sap.document.sap_com.ZESDQUOTEHEADER;
+import functions.rfc.sap.document.sap_com.ZESDQUOTEITEM;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.sap.entity.quote.FundingDetail;
+import org.broadinstitute.sap.entity.quote.FundingStatus;
+import org.broadinstitute.sap.entity.quote.QuoteHeader;
+import org.broadinstitute.sap.entity.quote.QuoteItem;
+import org.broadinstitute.sap.entity.quote.SapQuote;
+import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.jetbrains.annotations.NotNull;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Methods useful when testing.
@@ -37,4 +56,64 @@ public class TestUtils {
         }
         return null;
     }
+
+    @NotNull
+    public static SapQuote buildTestSapQuote(String testQuoteIdentifier, BigDecimal totalOpenOrderValue,
+                                             BigDecimal quoteTotal, ProductOrder billingOrder)
+            throws SAPIntegrationException {
+
+        ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
+        sapQHeader.setPROJECTNAME("TestProject");
+        sapQHeader.setQUOTENAME(testQuoteIdentifier);
+        sapQHeader.setQUOTESTATUS(FundingStatus.APPROVED.name());
+        sapQHeader.setSALESORG("GP01");
+        sapQHeader.setFUNDHEADERSTATUS(FundingStatus.APPROVED.name());
+        sapQHeader.setCUSTOMER("");
+        sapQHeader.setDISTCHANNEL("GE");
+        sapQHeader.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
+        sapQHeader.setQUOTESTATUSTXT("");
+        sapQHeader.setQUOTETOTAL(quoteTotal);
+        sapQHeader.setQUOTEOPENVAL(totalOpenOrderValue);
+
+        QuoteHeader header = new QuoteHeader(sapQHeader);
+
+        final Set<QuoteItem> quoteItems = new HashSet<>();
+
+        if (billingOrder != null) {
+            final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(billingOrder);
+
+            allProductsOrdered.forEach(product -> {
+                ZESDQUOTEITEM sapItem = ZESDQUOTEITEM.Factory.newInstance();
+                sapItem.setMAKTX(product.getProductName());
+                sapItem.setMATNR(product.getPartNumber());
+                sapItem.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+                sapItem.setQUOTATION(testQuoteIdentifier);
+
+                quoteItems.add(new QuoteItem(sapItem));
+            });
+        } else {
+            ZESDQUOTEITEM sapItem = ZESDQUOTEITEM.Factory.newInstance();
+            sapItem.setMAKTX(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR);
+            sapItem.setMATNR("GP-001");
+            sapItem.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+            sapItem.setQUOTATION(testQuoteIdentifier);
+
+            quoteItems.add(new QuoteItem(sapItem));
+        }
+
+        final Set<FundingDetail> fundingDetailsCollection = new HashSet<>();
+
+        ZESDFUNDINGDET sapFundDetail = ZESDFUNDINGDET.Factory.newInstance();
+        sapFundDetail.setFUNDTYPE(SapIntegrationClientImpl.FundingType.PURCHASE_ORDER.name());
+        sapFundDetail.setSPLITPER(BigDecimal.valueOf(100));
+        sapFundDetail.setAPPSTATUS(FundingStatus.APPROVED.name());
+        sapFundDetail.setAUTHAMOUNT(BigDecimal.valueOf(100));
+        sapFundDetail.setPONUMBER("1234");
+        sapFundDetail.setITEMNO("1234");
+
+        fundingDetailsCollection.add(new FundingDetail(sapFundDetail));
+
+        return new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), quoteItems);
+    }
+
 }
