@@ -193,7 +193,7 @@ public class BillingCreditDbFreeTest {
         pdo.setQuoteSource(quoteSourceType);
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
-                pdo);
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
 
         Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
         Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
@@ -222,7 +222,7 @@ public class BillingCreditDbFreeTest {
         pdo.setQuoteSource(quoteSourceType);
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
-                pdo);
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
 
         Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
         Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
@@ -259,7 +259,7 @@ public class BillingCreditDbFreeTest {
         pdo.setQuoteSource(quoteSourceType);
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
-                pdo);
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
 
         Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
 
@@ -284,7 +284,7 @@ public class BillingCreditDbFreeTest {
         pdo.setQuoteSource(quoteSourceType);
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
-                pdo);
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
 
         Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
         Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");
@@ -310,7 +310,7 @@ public class BillingCreditDbFreeTest {
         pdo.setQuoteSource(quoteSourceType);
 
         SapQuote sapQuote = TestUtils.buildTestSapQuote(pdo.getQuoteId(), BigDecimal.valueOf(10000),BigDecimal.valueOf(100000),
-                pdo);
+                pdo, TestUtils.SapQuoteTestScenario.DOLLAR_LIMITED);
 
         Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString())).thenReturn(sapQuote);
         Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn("0211403");

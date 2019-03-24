@@ -59,7 +59,8 @@ public class TestUtils {
 
     @NotNull
     public static SapQuote buildTestSapQuote(String testQuoteIdentifier, BigDecimal totalOpenOrderValue,
-                                             BigDecimal quoteTotal, ProductOrder billingOrder)
+                                             BigDecimal quoteTotal, ProductOrder billingOrder,
+                                             SapQuoteTestScenario quoteTestScenario)
             throws SAPIntegrationException {
 
         ZESDQUOTEHEADER sapQHeader = ZESDQUOTEHEADER.Factory.newInstance();
@@ -79,8 +80,9 @@ public class TestUtils {
 
         final Set<QuoteItem> quoteItems = new HashSet<>();
 
-        if (billingOrder != null) {
-            final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(billingOrder);
+        final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(billingOrder);
+        switch(quoteTestScenario) {
+        case PRODUCTS_MATCH_QUOTE_ITEMS:
 
             allProductsOrdered.forEach(product -> {
                 ZESDQUOTEITEM sapItem = ZESDQUOTEITEM.Factory.newInstance();
@@ -91,7 +93,8 @@ public class TestUtils {
 
                 quoteItems.add(new QuoteItem(sapItem));
             });
-        } else {
+            break;
+        case DOLLAR_LIMITED:
             ZESDQUOTEITEM sapItem = ZESDQUOTEITEM.Factory.newInstance();
             sapItem.setMAKTX(QuoteItem.DOLLAR_LIMIT_MATERIAL_DESCRIPTOR);
             sapItem.setMATNR("GP-001");
@@ -99,6 +102,19 @@ public class TestUtils {
             sapItem.setQUOTATION(testQuoteIdentifier);
 
             quoteItems.add(new QuoteItem(sapItem));
+            break;
+        case PRODUCTS_DIFFER:
+            allProductsOrdered.forEach(product -> {
+                ZESDQUOTEITEM sapItemDiffering = ZESDQUOTEITEM.Factory.newInstance();
+                sapItemDiffering.setMAKTX(product.getProductName());
+                sapItemDiffering.setMATNR(product.getPartNumber()+"mismatch");
+                sapItemDiffering.setQUOTEITEM(String.valueOf((quoteItems.size() + 1) * 10));
+                sapItemDiffering.setQUOTATION(testQuoteIdentifier);
+
+                quoteItems.add(new QuoteItem(sapItemDiffering));
+            });
+
+            break;
         }
 
         final Set<FundingDetail> fundingDetailsCollection = new HashSet<>();
@@ -116,4 +132,7 @@ public class TestUtils {
         return new SapQuote(header, fundingDetailsCollection, Collections.emptySet(), quoteItems);
     }
 
+    public enum SapQuoteTestScenario {
+       PRODUCTS_MATCH_QUOTE_ITEMS, DOLLAR_LIMITED, PRODUCTS_DIFFER;
+    }
 }
