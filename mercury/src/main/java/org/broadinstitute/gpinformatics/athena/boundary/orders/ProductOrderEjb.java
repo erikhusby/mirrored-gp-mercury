@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
@@ -66,9 +65,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -500,39 +497,59 @@ public class ProductOrderEjb {
         return allItemsValid;
     }
 
+    /**
+     * Validates that the prices between the quote server and SAP are in synch.  If they are, it returns the current
+     * effective price of the product for the given date.  if they are not, it will throw an exception stopping progress
+     * until they are in synch.
+     * @param orderQuote    The quote server Quote against which the product order is to be placed
+     * @param product       The Product for which the price will be validated
+     * @param productOrder  The Product Order on which the product whos price is to be validated can be found
+     * @return
+     * @throws InvalidProductException
+     */
+    //TODO Consider renaning this method of Steve agrees to drop validating prices between SAP and Quote Server
     public String validateSAPAndQuoteServerPrices(Quote orderQuote, Product product,
                                                   ProductOrder productOrder)
             throws InvalidProductException {
-        SAPMaterial sapMaterial = null;
-        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = null;
 
-        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
 
-        try {
-            companyCode = SapIntegrationServiceImpl.determineCompanyCode(productOrder);
-        } catch (SAPIntegrationException e) {
-            throw new InvalidProductException(e);
-        }
+//        SAPMaterial sapMaterial = null;
+//        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = null;
+//
+//        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
+//
+//        try {
+//            companyCode = SapIntegrationServiceImpl.determineCompanyCode(productOrder);
+//        } catch (SAPIntegrationException e) {
+//            throw new InvalidProductException(e);
+//        }
 
         // todo sgm check quote and throw exception if it is null
-
-        if(accessControl.isEnabled() &&
-           !CollectionUtils.containsAny(accessControl.getDisabledItems(),
-                   Collections.singleton(new AccessItem(product.getPrimaryPriceItem().getName())))) {
-            sapMaterial = productPriceCache.findByProduct(product, companyCode);
+        if(orderQuote == null) {
+            throw new InvalidProductException("Unable to continue since the quote against which the prices are "
+                                              + "being validated is not set");
         }
+        if(productOrder == null) {
+            throw new InvalidProductException("Unable to continue since the Product Order for which the prices are being validated is not set");
+        }
+
+//        if(accessControl.isEnabled() &&
+//           !CollectionUtils.containsAny(accessControl.getDisabledItems(),
+//                   Collections.singleton(new AccessItem(product.getPrimaryPriceItem().getName())))) {
+//            sapMaterial = productPriceCache.findByProduct(product, companyCode);
+//        }
 
         PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
         if (priceListItem != null) {
-            final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
-            if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {
-                final BigDecimal basePrice = new BigDecimal(sapMaterial.getBasePrice());
-                if (basePrice.compareTo(effectivePrice) != 0) {
-                    throw new InvalidProductException("Unable to continue since the price for the product " +
-                                                      product.getDisplayName() + " has not been properly set up in SAP");
-                }
-            }
+//            final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
+//            if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {
+//                final BigDecimal basePrice = new BigDecimal(sapMaterial.getBasePrice());
+//                if (basePrice.compareTo(effectivePrice) != 0) {
+//                    throw new InvalidProductException("Unable to continue since the price for the product " +
+//                                                      product.getDisplayName() + " has not been properly set up in SAP");
+//                }
+//            }
         } else {
             throw new InvalidProductException("Unable to continue since the price list item " +
                                               priceItem.getDisplayName() + " for " + product.getDisplayName() +
