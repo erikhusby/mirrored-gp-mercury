@@ -74,6 +74,7 @@
             font-size: 12px;
             font-style: oblique;
         }
+
         .ui-progressbar { height:15px}
         #sampleData_info {font-weight: bold}
     </style>
@@ -333,6 +334,7 @@ $j(document).ready(function () {
                 }
                 loadBspData(settings);
                 initColumnVisibility(settings);
+
 
 //                postLoadSampleInfo();
                 // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
@@ -1696,6 +1698,13 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         </div>
     </div>
 </c:if>
+<div class="view-control-group control-group">
+    <label title="Applies to all samples in this order except for cases where samples were indivdually set."
+           class="control-label label-form">Custom Aggregation Particle</label>
+    <div class="controls">
+        <div class="form-value">${actionBean.editOrder.aggregationParticleDisplayName}</div>
+    </div>
+</div>
 <div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
