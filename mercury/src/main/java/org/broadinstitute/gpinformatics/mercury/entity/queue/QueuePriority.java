@@ -25,6 +25,14 @@ public enum QueuePriority {
         return displayName;
     }
 
+    /**
+     * This defines what priorities should be skipped in the priority checks.  Should define here why each is in place.
+     *
+     * ALTERED:  This should be skipped for every process.  The altered priority is set when someone changes the
+     *           placement of a QueueGrouping within the queue via the UI.
+     *
+     * @return  true if the priority check should be skipped.   false if the priority check should be done.
+     */
     public boolean shouldSkipPriorityCheck() {
         return this == ALTERED;
     }

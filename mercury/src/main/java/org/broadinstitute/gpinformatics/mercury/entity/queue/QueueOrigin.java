@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
+/**
+ * Defines the origin of wh
+ */
 public enum QueueOrigin {
     EXTRACTION("Extraction"),
     RECEIVING("Receiving"),

@@ -22,6 +22,9 @@ import javax.ws.rs.core.Response;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * Web service utilized for automatically queueing items into a mercury queue.
+ */
 @Stateful
 @RequestScoped
 @Path("/queue")
@@ -33,6 +36,12 @@ public class QueueResource {
     @Inject
     private LabVesselDao labVesselDao;
 
+    /**
+     * Adds items to the specified queue.
+     *
+     * @param enqueueContents   Contains the information necessary to enqueue lab vessels
+     * @return                  Response back to the calling application
+     */
     @POST
     @Path("/enqueue")
     @Produces(MediaType.APPLICATION_XML)
@@ -56,6 +65,12 @@ public class QueueResource {
         return Response.status(Response.Status.OK).entity(enqueueResponse).type(MediaType.APPLICATION_XML).build();
     }
 
+    /**
+     * Removes lab vessels from a queue.
+     *
+     * @param dequeueContents   Contains the information necessary to dequeue lab vessels
+     * @return                  Response back to the calling application
+     */
     @POST
     @Path("/dequeue")
     @Produces(MediaType.APPLICATION_XML)

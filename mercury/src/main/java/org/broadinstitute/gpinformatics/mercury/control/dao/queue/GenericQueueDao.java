@@ -22,15 +22,31 @@ import javax.persistence.criteria.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DAO for Generic Queues
+ */
 @Stateful
 @TransactionAttribute( TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class GenericQueueDao extends GenericDao {
 
+    /**
+     * Finds and loads the Queue by its type.
+     *
+     * @param queueType     Type of Queue to load.
+     * @return              The loaded Queue.
+     */
     public GenericQueue findQueueByType(QueueType queueType) {
         return findSingle(GenericQueue.class, GenericQueue_.queueType, queueType);
     }
 
+    /**
+     * Finds all the active entities by the Vessel Ids passed in.
+     *
+     * @param queueType     Queue to search for Active Queue Entities within.
+     * @param vesselIds     List of Vessel IDs to search for.
+     * @return              The active entities within the requested Queue.
+     */
     public List<QueueEntity> findActiveEntitiesByVesselIds(QueueType queueType, List<Long> vesselIds) {
         if (CollectionUtils.isEmpty(vesselIds)) {
             return new ArrayList<>();
@@ -43,20 +59,6 @@ public class GenericQueueDao extends GenericDao {
             criteriaQuery.where(labVesselPath.get(LabVessel_.labVesselId).in(vesselIds),
                     criteriaBuilder.equal(genericQueuePath.get(GenericQueue_.queueType), queueType),
                     criteriaBuilder.equal(root.get(QueueEntity_.queueStatus), QueueStatus.Active));
-        });
-    }
-
-    public List<QueueEntity> findEntitiesByVesselIds(QueueType queueType, List<Long> vesselIds) {
-        if (CollectionUtils.isEmpty(vesselIds)) {
-            return new ArrayList<>();
-        }
-        return findAll(QueueEntity.class, (criteriaQuery, root) -> {
-            CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
-            Path<LabVessel> labVesselPath = root.get(QueueEntity_.labVessel);
-            Path<QueueGrouping> queueGroupingPath = root.get(QueueEntity_.queueGrouping);
-            Path<GenericQueue> genericQueuePath = queueGroupingPath.get(QueueGrouping_.associatedQueue);
-            criteriaQuery.where(labVesselPath.get(LabVessel_.labVesselId).in(vesselIds),
-                    criteriaBuilder.equal(genericQueuePath.get(GenericQueue_.queueType), queueType));
         });
     }
 }

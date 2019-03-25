@@ -1,10 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -24,6 +21,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Used to group together Queue Entities.  It is expected that, for whatever reason, the samples within a grouping are
+ * meant to stay together.  It may be that they are all in the same container to start, or that they are meant to end
+ * up in the same container at the end.  Each queue should define this rule on its own.
+ */
 @Entity
 @Audited
 @Table(schema = "mercury", name = "queue_grouping")
@@ -45,10 +47,19 @@ public class QueueGrouping {
     @BatchSize(size = 100)
     private List<QueueEntity> queuedEntities;
 
+    /**
+     * Defines what the origin is for this grouping entering the queue.  The call of the enqueue method
+     * should be where this is defined, so no factory is necessary.  This is mostly for being able to see what happened
+     * should support be needed in the future.
+     */
     @Column(name = "queue_origin")
     @Enumerated(EnumType.STRING)
     private QueueOrigin queueOrigin;
 
+    /**
+     * Defines the "current" sort order for within the queue.  This will both change over time, and there may be
+     * duplicates in the DB as items leave.  Only has meaning if there are any active entities.
+     */
     @Column(name = "sort_order")
     private Long sortOrder;
 
@@ -56,10 +67,18 @@ public class QueueGrouping {
     @Column(name = "version")
     private long version;
 
+    /**
+     * Priority of this groupin within the queue.  This should be filled in via the Extension of the
+     * AbstractQueueOverride class defined for this queue.
+     */
     @Column(name = "queue_priority_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private QueuePriority queuePriority;
 
+    /**
+     * Defines any specialization for what process should be used on this queue grouping.
+     * This is defined where you call enqueue.
+     */
     @Column(name = "queue_specialization")
     @Enumerated(EnumType.STRING)
     private QueueSpecialization queueSpecialization;
@@ -126,6 +145,13 @@ public class QueueGrouping {
 
     public static final BySortOrder BY_SORT_ORDER = new BySortOrder();
 
+    /**
+     * Whether or not this queue grouping should skip the priority check. There are two possible reason as to why it
+     * should be skipped.  If the status is Repeat, and if the particular priority is defined as one that should be
+     * skipped.
+     *
+     * @return  True if the priority check should be skiped.  false otherwise
+     */
     public boolean shouldSkipPriorityCheck() {
         boolean isRepeat = false;
         for (QueueEntity queueEntity : getQueuedEntities()) {
@@ -138,6 +164,9 @@ public class QueueGrouping {
         return getQueuePriority().shouldSkipPriorityCheck() || isRepeat;
     }
 
+    /**
+     * Comparator which sorts by the sort order.
+     */
     public static class BySortOrder implements Comparator<QueueGrouping> {
         @Override
         public int compare(QueueGrouping o1, QueueGrouping o2) {

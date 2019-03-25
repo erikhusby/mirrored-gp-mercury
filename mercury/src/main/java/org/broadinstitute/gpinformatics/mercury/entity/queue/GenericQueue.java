@@ -24,6 +24,10 @@ import javax.persistence.Table;
 import java.util.List;
 import java.util.SortedSet;
 
+/**
+ * Base class for a Generic Queue.  Could have been an enum, but prefer as a database entity which allows for easier
+ * database related searches.
+ */
 @Entity
 @Audited
 @Table(schema = "mercury", name = "queue")
@@ -103,6 +107,11 @@ public class GenericQueue {
         this.associatedProducts = associatedProducts;
     }
 
+    /**
+     * Searches through the queue to determine if there are any active entities within.
+     *
+     * @return    False if there are any active entities, true otherwise.
+     */
     public boolean isQueueEmpty() {
         if (getQueueGroupings() != null) {
             for (QueueGrouping queueGrouping : getQueueGroupings()) {

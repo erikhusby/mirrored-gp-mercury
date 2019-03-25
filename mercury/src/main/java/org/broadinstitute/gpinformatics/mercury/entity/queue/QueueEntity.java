@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
-import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -17,6 +16,9 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.Date;
 
+/**
+ * Connects a Queue Grouping to a LabVessel.  Used to track status and who completed and when.
+ */
 @Entity
 @Audited
 @Table(schema = "mercury", name = "queue_entity")

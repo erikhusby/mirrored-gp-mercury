@@ -29,27 +29,4 @@ public class GenericQueueDaoTest {
             Assert.assertNotNull(queue);
         }
     }
-
-    // TODO:  After first refresh that has production pico queue data, put DB ID into variable and enable this test.
-    @Test(groups = TestGroups.STANDARD, enabled = false)
-    public void findEntitiesByVesselIdsTest() {
-        List<QueueEntity> queueEntities =
-                genericQueueDao.findEntitiesByVesselIds(QueueType.PICO, Collections.singletonList(LAB_VESSEL_ID_IN_QUEUE_IN_PAST));
-
-        Assert.assertFalse(queueEntities.isEmpty());
-    }
-
-    @Test(groups = TestGroups.STANDARD)
-    public void findEntitiesByVesselIdsTestNoneFoundTest() {
-
-        // Verify that we don't get an NPE on either a blank list or a null variable.
-        List<QueueEntity> queueEntities = genericQueueDao.findEntitiesByVesselIds(QueueType.PICO,null);
-        Assert.assertTrue(queueEntities.isEmpty());
-        queueEntities = genericQueueDao.findEntitiesByVesselIds(QueueType.PICO, new ArrayList<>());
-        Assert.assertTrue(queueEntities.isEmpty());
-
-        // Pass in a vessel id which has never been in and will never be in the pico queue.
-        queueEntities = genericQueueDao.findEntitiesByVesselIds(QueueType.PICO, Collections.singletonList(RNA_LAB_VESSEL_ID));
-        Assert.assertTrue(queueEntities.isEmpty());
-    }
 }

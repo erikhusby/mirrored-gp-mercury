@@ -319,7 +319,7 @@ public class QueueEjb {
             labVesselIds.add(labVessel.getLabVesselId());
         }
 
-        List<QueueEntity> queueEntities = genericQueueDao.findEntitiesByVesselIds(queueType, labVesselIds);
+        List<QueueEntity> queueEntities = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
 
         for (QueueEntity queueEntity : queueEntities) {
             updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Excluded);
@@ -394,7 +394,7 @@ public class QueueEjb {
             }
 
             // Find the existing entities
-            List<QueueEntity> entitiesByVesselIds = genericQueueDao.findEntitiesByVesselIds(queueGrouping.getAssociatedQueue().getQueueType(), vesselIds);
+            List<QueueEntity> entitiesByVesselIds = genericQueueDao.findActiveEntitiesByVesselIds(queueGrouping.getAssociatedQueue().getQueueType(), vesselIds);
 
             Set<Long> uniqueVesselIdsAlreadyInQueue = new HashSet<>();
             for (QueueEntity entity : entitiesByVesselIds) {

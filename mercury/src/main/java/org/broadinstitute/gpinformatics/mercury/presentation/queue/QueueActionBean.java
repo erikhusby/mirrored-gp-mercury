@@ -47,6 +47,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * ActionBean for interacting with Queues.
+ */
 @UrlBinding("/queue/Queue.action")
 public class QueueActionBean extends CoreActionBean {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
@@ -78,13 +81,14 @@ public class QueueActionBean extends CoreActionBean {
     private Map<Long, String> labVesselIdToSampleId;
     private Map<Long, MercurySample> labVesselIdToMercurySample;
     private QueueSpecialization queueSpecialization;
-    private int totalNeedPico;
-    private int totalExomeExpress;
-    private int totalClinical;
+    private int totalInQueue;
     private int totalNeedRework;
     private Map<Long, Long> remainingEntities = new HashMap<>();
+    private Map<QueuePriority, Long> entitiesInQueueByPriority = new HashMap<>();
 
-
+    /**
+     * Shows the main Queue page.
+     */
     @DefaultHandler
     @HandlesEvent("showQueuePage")
     // Suppressing this as it considers the two for loops over the queued entities to be duplicates, and the variables
@@ -100,32 +104,27 @@ public class QueueActionBean extends CoreActionBean {
         queue = queueEjb.findQueueByType(queueType);
         for (QueueGrouping grouping : queue.getQueueGroupings()) {
 
-            if (grouping.getQueuePriority() == QueuePriority.EXOME_EXPRESS) {
-                for (QueueEntity queueEntity : grouping.getQueuedEntities()) {
-                    if (queueEntity.getQueueStatus() == QueueStatus.Active) {
-                        totalExomeExpress++;
-                        totalNeedPico++;
-                    } else if (queueEntity.getQueueStatus() == QueueStatus.Repeat) {
-                        totalNeedRework++;
-                        totalNeedPico++;
-                    }
-                }
+            QueuePriority queuePriority = grouping.getQueuePriority();
+
+            // Fill in the initial value for both remaining entities within this grouping, and for the entities by
+            // priority (if it is a new priority).
+            remainingEntities.put(grouping.getQueueGroupingId(), 0L);
+            if (!entitiesInQueueByPriority.containsKey(queuePriority)) {
+                entitiesInQueueByPriority.put(queuePriority, 0L);
             }
-            if (grouping.getQueuePriority() == QueuePriority.CLIA) {
-                for (QueueEntity queueEntity : grouping.getQueuedEntities()) {
-                    if (queueEntity.getQueueStatus() == QueueStatus.Active) {
-                        totalClinical++;
-                        totalNeedPico++;
-                    } else if (queueEntity.getQueueStatus() == QueueStatus.Repeat) {
-                        totalNeedRework++;
-                        totalNeedPico++;
-                    }
-                }
-            }
+            // Fill in the proper numbers.
             for (QueueEntity queueEntity : grouping.getQueuedEntities()) {
-                if (queueEntity.getQueueStatus() == QueueStatus.Active) {
-                    long currentCount = remainingEntities.get(queueGrouping.getQueueGroupingId()) == null ? 0 : remainingEntities.get(queueGrouping.getQueueGroupingId());
-                    remainingEntities.put(queueGrouping.getQueueGroupingId(), currentCount + 1);
+                switch (queueEntity.getQueueStatus()) {
+                    case Repeat:
+                        totalNeedRework++;
+                    case Active:
+
+                        totalInQueue++;
+                        entitiesInQueueByPriority.put(queuePriority, entitiesInQueueByPriority.get(queuePriority) + 1);
+                        remainingEntities.put(queueGrouping.getQueueGroupingId(),
+                                remainingEntities.get(queueGrouping.getQueueGroupingId()) + 1);
+                        break;
+                    default:
                 }
             }
         }
@@ -133,6 +132,9 @@ public class QueueActionBean extends CoreActionBean {
         return new ForwardResolution("/queue/show_queue.jsp");
     }
 
+    /**
+     * View the details of a particular QueueGrouping.
+     */
     @HandlesEvent("viewGrouping")
     public Resolution viewGrouping() {
 
@@ -368,16 +370,8 @@ public class QueueActionBean extends CoreActionBean {
         return QueueSpecialization.getQueueSpecializationsByQueueType(queueType);
     }
 
-    public int getTotalNeedPico() {
-        return totalNeedPico;
-    }
-
-    public int getTotalExomeExpress() {
-        return totalExomeExpress;
-    }
-
-    public int getTotalClinical() {
-        return totalClinical;
+    public int getTotalInQueue() {
+        return totalInQueue;
     }
 
     public int getTotalNeedRework() {
@@ -386,5 +380,13 @@ public class QueueActionBean extends CoreActionBean {
 
     public Map<Long, Long> getRemainingEntities() {
         return remainingEntities;
+    }
+
+    public QueuePriority[] getQueuePriorities() {
+        return QueuePriority.values();
+    }
+
+    public Map<QueuePriority, Long> getEntitiesInQueueByPriority() {
+        return entitiesInQueueByPriority;
     }
 }

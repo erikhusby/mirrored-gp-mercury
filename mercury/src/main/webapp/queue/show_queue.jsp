@@ -11,11 +11,11 @@
 
             .barFull { height: 15px; width:80px; }
 
-            .barNotNeedingPico { height: 15px; float:left; background-color: #dd2222; }
-            .barNeedingPico { height: 15px; float:left; background-color: #22bb22; }
+            .barRemovedFromQueue { height: 15px; float:left; background-color: #dd2222; }
+            .barStillInQueue { height: 15px; float:left; background-color: #22bb22; }
 
-            .numberNeedingPico { float: left; margin-top: -16px; font-weight: bold; margin-left: 3px; color: white; }
-            .numberNotNeedingPico { float: right; margin-top: -16px; font-weight: bold; margin-right: 3px; color: white; }
+            .numberInQueue { float: left; margin-top: -16px; font-weight: bold; margin-left: 3px; color: white; }
+            .numberRemovedFromQueue { float: right; margin-top: -16px; font-weight: bold; margin-right: 3px; color: white; }
 
             .positioning-input {
                 width: 40px;
@@ -68,16 +68,16 @@
                             <td>${queueGrouping.queuePriority.displayName}</td>
                             <td>${queueGrouping.queueOrigin.displayName} <c:if test="${not empty queueGrouping.queueSpecialization}">(${queueGrouping.queueSpecialization.displayName})</c:if> </td>
 
-                            <c:set var="doNotNeedPico" value="${fn:length(queueGrouping.queuedEntities) - queueGrouping.remainingEntities}" />
-                            <c:set var="needPico" value="${actionBean.remainingEntities[queueGrouping.queueGroupingId]}" />
-                            <c:set var="percentNotNeedingPico" value="${doNotNeedPico * 100 / (doNotNeedPico + needPico)}" />
-                            <c:set var="percentNeedingPico" value="${needPico * 100 / (doNotNeedPico + needPico)}" />
+                            <c:set var="removedFromQueue" value="${fn:length(queueGrouping.queuedEntities) - queueGrouping.remainingEntities}" />
+                            <c:set var="stillInQueue" value="${actionBean.remainingEntities[queueGrouping.queueGroupingId]}" />
+                            <c:set var="percentRemovedFromQueue" value="${removedFromQueue * 100 / (removedFromQueue + stillInQueue)}" />
+                            <c:set var="percentStillInQueue" value="${stillInQueue * 100 / (removedFromQueue + stillInQueue)}" />
 
-                            <td title="${needPico} need Pico, ${doNotNeedPico} do not need Pico" class="barFull">
-                                <span class="barNeedingPico" style="width:${percentNeedingPico}%"></span>
-                                <span class="barNotNeedingPico" style="width:${percentNotNeedingPico}%"></span>
-                                <span class="numberNeedingPico">${needPico}</span>
-                                <span class="numberNotNeedingPico">${doNotNeedPico}</span>
+                            <td title="${stillInQueue} need ${actionBean.queueType.textName}, ${removedFromQueue} do not need ${actionBean.queueType.textName}" class="barFull">
+                                <span class="barStillInQueue" style="width:${percentStillInQueue}%"></span>
+                                <span class="barRemovedFromQueue" style="width:${percentRemovedFromQueue}%"></span>
+                                <span class="numberInQueue">${stillInQueue}</span>
+                                <span class="numberRemovedFromQueue">${removedFromQueue}</span>
                             </td>
                             <td>
                                 <span class="position">
@@ -99,9 +99,12 @@
                 </tbody>
                 <tfoot>
                 <tr><td colspan="5">
-                        Total Vessels Needing Pico: ${actionBean.totalNeedPico}<br />
-                        Exome Express Vessels: ${actionBean.totalExomeExpress}<br />
-                        Clinical Vessels: ${actionBean.totalClinical}<br />
+                        Total Vessels In Queue: ${actionBean.totalInQueue}<br />
+                        <c:forEach items="${actionBean.queuePriorities}" var="priority">
+                            <c:if test="${actionBean.entitiesInQueueByPriority[priority] > 0}">
+                                ${priority.displayName} Vessels: ${actionBean.entitiesInQueueByPriority[priority]}<br />
+                            </c:if>
+                        </c:forEach>
                         Total Vessels in Rework: ${actionBean.totalNeedRework}
                     </td>
                 </tr>
