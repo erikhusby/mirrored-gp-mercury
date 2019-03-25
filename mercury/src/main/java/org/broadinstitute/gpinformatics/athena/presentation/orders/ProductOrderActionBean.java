@@ -659,6 +659,25 @@ public class ProductOrderActionBean extends CoreActionBean {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
         }
 
+        Optional<String> skipRegulatoryReason = Optional.ofNullable(editOrder.getSkipRegulatoryReason());
+
+        if (editOrder.getProduct() != null && editOrder.getProduct().isClinicalProduct()) {
+            if(CollectionUtils.isNotEmpty(editOrder.getRegulatoryInfos()) ||
+               (skipRegulatoryReason.isPresent() && !ResearchProject.FROM_CLINICAL_CELL_LINE
+                       .equals(skipRegulatoryReason.get()))) {
+                addGlobalValidationError("For clinical orders, the only valid Regulatory Information selection is '"
+                                         + ResearchProject.FROM_CLINICAL_CELL_LINE + "'.");
+            }
+        } else {
+            skipRegulatoryReason.ifPresent(skipReason -> {
+                if(ResearchProject.FROM_CLINICAL_CELL_LINE
+                        .equals(skipReason)) {
+                    addGlobalValidationError("The regulatory selection '"
+                                             + ResearchProject.FROM_CLINICAL_CELL_LINE + "' is only valid for Clinical Orders");
+                }
+            });
+        }
+
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
 
@@ -758,9 +777,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if(action.equals(PLACE_ORDER_ACTION) && editOrder.getProduct().isClinicalProduct()) {
-            requireField(editOrder.isClinicalAttestationConfirmed().booleanValue(),
-                    "the checkbox that confirms you have completed requirements to place a clinical order",
-                    action);
+                requireField(editOrder.isClinicalAttestationConfirmed().booleanValue(),
+                        "the checkbox that confirms you have completed requirements to place a clinical order",
+                        action);
+
         }
 
         Quote quote = validateQuote(editOrder);
