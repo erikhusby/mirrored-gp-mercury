@@ -65,6 +65,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -73,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -669,6 +671,7 @@ public class LimsQueryResource {
                      Response.Status.INTERNAL_SERVER_ERROR);
         }
         String PDOChipType = chipType.getChipName();
+        List<String> PDOChipTypeList = parseChipName(PDOChipType);
 
         String dataPathStr = infiniumStarterConfig.getDecodeDataPath();
         File dataPath = new File(dataPathStr);
@@ -711,9 +714,14 @@ public class LimsQueryResource {
 
             fileChipType = fileOutput.get(4);
 
-            if (PDOChipType.startsWith(fileChipType)) {
-                return true;
+            for (String PDOKeyword:PDOChipTypeList){
+                if (PDOKeyword.length() > 3){
+                    if (fileChipType.contains(PDOKeyword)){
+                        return true;
+                    }
+                }
             }
+
         }
         return false;
     }
@@ -746,6 +754,17 @@ public class LimsQueryResource {
         return null;
     }
 
+    private List<String> parseChipName(String name){
+
+        List<String> phrases = new ArrayList<>();
+        if (name.contains("-")|name.contains("_")){
+            phrases = Arrays.asList(name.split("\\s*_\\s*|\\s*-\\s*"));
+        }
+        else {
+            phrases = Collections.singletonList(name);
+        }
+        return phrases;
+    }
     public void setInfiniumStarterConfig(InfiniumStarterConfig infiniumStarterConfig) {
         this.infiniumStarterConfig = infiniumStarterConfig;
     }

@@ -675,18 +675,39 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @Test
     public void testVerifyChipTypes() throws IOException {
         /*
-         Chip Type GSAMD-24v1-0
-         */
-        //String ampPlate = "000017259109";
-        String chipBarcode = "203293610273";
+        Chip Type Infinium-MethylationEPIC
+        */
+        String ampPlateInf = "000017236009";
+        String chipBarcodeInf = "203027390034";
         /*
-
         Chip Type Multi-EthnicGlobal
-         */
-        String ampPlate = "000016899009";
-        //String chipBarcode = "200803750060";
+        */
+        String ampPlateME = "000016899009";
+        String chipBarcodeME = "200803750060";
 
-        boolean result = limsQueryResource.verifyChipTypes(ampPlate, Collections.singletonList(chipBarcode));
-        Assert.assertEquals(result, true);
+        boolean resultPos = limsQueryResource.verifyChipTypes(ampPlateME, Collections.singletonList(chipBarcodeME));
+        Assert.assertEquals(resultPos, true);
+
+        boolean resultNeg = limsQueryResource.verifyChipTypes(ampPlateInf, Collections.singletonList(chipBarcodeME));
+        Assert.assertEquals(resultNeg, false);
+
+    }
+
+    @Test
+    public void testVerifyChipTypesFail() throws IOException {
+        /*
+        Chip Type Infinium-MethylationEPIC
+        */
+        String ampPlateInf = "000017236009";
+        String chipBarcodeInf = "203027390034";
+        /*
+        Chip Type Multi-EthnicGlobal
+        */
+        String ampPlateME = "000016899009";
+        String chipBarcodeME = "200803750060";
+
+        boolean resultNeg = limsQueryResource.verifyChipTypes(ampPlateInf, Collections.singletonList(chipBarcodeME));
+        Assert.assertEquals(resultNeg, true);
+
     }
 }
