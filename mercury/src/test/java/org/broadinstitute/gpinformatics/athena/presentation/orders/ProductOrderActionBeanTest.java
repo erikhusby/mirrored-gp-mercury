@@ -11,6 +11,7 @@ import net.sourceforge.stripes.mock.MockHttpServletResponse;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -123,6 +124,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
@@ -371,7 +373,6 @@ public class ProductOrderActionBeanTest {
         testCases.add(new Object[]{"SM-HBYE9\nSM-I2QU9\nSM-I43WJ\nSM-HJILE \nSM-GM6ND", false});
         testCases.add(new Object[]{"SM-HOW1Z\nSM-HGTBZ\nSM-HPNGW\nSM-HK6O2\nSM-HJQFA\nSM-HG3GT", true});
 
-
         return testCases.iterator();
     }
 
@@ -388,8 +389,9 @@ public class ProductOrderActionBeanTest {
         actionBean.setProduct("test product");
 
         // Show that the input is not ascii printable. Mimics what is called in the ProductOrderSample constructor.
-        Arrays.asList(sampleId.split("\\s"))
-            .forEach(s -> assertThat(StringUtils.isAsciiPrintable(s), is(inputIsAsciiPrintable)));
+        final List<String> collect = Arrays.asList(sampleId.split("\\s"))
+                .stream().filter(s -> !StringUtils.isAsciiPrintable(s)).collect(Collectors.toList());
+        assertThat(CollectionUtils.isEmpty(collect),equalTo(inputIsAsciiPrintable));
 
         actionBean.setSampleList(sampleId);
         try {
