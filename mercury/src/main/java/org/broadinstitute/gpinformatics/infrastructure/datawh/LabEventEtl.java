@@ -468,9 +468,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             vessels.add(entity.getInPlaceLabVessel());
         }
 
-        // If the event has a single computed LCSET, use it for all positions/samples
-        Set<LabBatch> eventLcsets = entity.getComputedLcSets();
-
         // If a synthetic event exists, record it, otherwise, skip it
         if (vessels.isEmpty()) {
             // Record ActivityBegin/End events (synthetic events)
@@ -525,14 +522,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 dtos.addAll(eventVesselDtos);
             }
             Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
-        }
-
-        if( eventLcsets.size() == 1 ) {
-            // Replace all sample LCSETs if the event has a single computed one
-            LabBatch singleLcset = eventLcsets.iterator().next();
-            for( EventFactDto dto : dtos ) {
-                dto.batchName = singleLcset.getBatchName();
-            }
         }
 
         postEtlLogging();
