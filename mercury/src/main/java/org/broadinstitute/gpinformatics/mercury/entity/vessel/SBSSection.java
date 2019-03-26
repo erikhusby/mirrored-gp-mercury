@@ -536,6 +536,10 @@ public enum SBSSection {
             VesselPosition.TUBE7,
             VesselPosition.TUBE8
     )),
+    STRIP_TUBE2("STRIP_TUBE2", Arrays.asList(
+            VesselPosition.TUBE1,
+            VesselPosition.TUBE2
+    )),
     FLOWCELL8("FLOWCELL8", Arrays.asList(
             VesselPosition.LANE1,
             VesselPosition.LANE2,

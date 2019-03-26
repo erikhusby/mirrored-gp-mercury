@@ -161,6 +161,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
@@ -250,7 +251,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProductOrderListEntryDao orderListEntryDao;
 
-    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -283,7 +283,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private BSPConfig bspConfig;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
     private JiraService jiraService;
 
     @Inject
@@ -756,34 +755,35 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(editOrder.getLaneCount() > 0, "a specified number of lanes", action);
         }
 
-        if(action.equals(PLACE_ORDER_ACTION) && editOrder.getProduct().isClinicalProduct()) {
+        if(action.equals(PLACE_ORDER_ACTION) && editOrder.getProduct() != null && editOrder.getProduct().isClinicalProduct()) {
             requireField(editOrder.isClinicalAttestationConfirmed().booleanValue(),
                     "the checkbox that confirms you have completed requirements to place a clinical order",
                     action);
         }
 
-        Quote quote = validateQuote(editOrder);
+        Optional<Quote> quote = Optional.ofNullable(validateQuote(editOrder));
 
         try {
-            if (quote != null) {
-                ProductOrder.checkQuoteValidity(quote);
+            if (quote.isPresent()) {
+                ProductOrder.checkQuoteValidity(quote.get());
                 final String[] error = new String[1];
-                quote.getFunding().stream()
+                quote.get().getFunding().stream()
                     .filter(Funding::isFundsReservation)
                     .forEach(funding -> {
-                        int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                        long numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
                         if (numDaysBetween > 0 && numDaysBetween < 45) {
                             addMessage(
                                 String.format("The Funding Source %s on %s  Quote expires in %d days. If it is likely "
                                               + "this work will not be completed by then, please work on updating the "
                                               + "Funding Source so Billing Errors can be avoided.",
-                                    funding.getDisplayName(), quote.getAlphanumericId(), numDaysBetween)
+                                    funding.getDisplayName(), quote.get().getAlphanumericId(), numDaysBetween)
                             );
                         }
                     });
             }
+            validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
+                                                                                  editOrder.getQuoteId())), 0);
 
-            validateQuoteDetails(quote, 0);
 
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
@@ -1956,8 +1956,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                     priceTitle = "clinicalPrice";
                 }
 
-                BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
-                item.put(priceTitle , NumberFormat.getCurrencyInstance().format(priceForFormat));
+                QuotePriceItem quoteForAddon = priceListCache.findByKeyFields(addOn.getPrimaryPriceItem());
+                if (quoteForAddon != null) {
+                    BigDecimal priceForFormat = new BigDecimal(quoteForAddon.getPrice());
+                    item.put(priceTitle , NumberFormat.getCurrencyInstance().format(priceForFormat));
+                    itemList.put(item);
+                }
 
 //                String externalPrice = null;
 //                if (addOn.getExternalPriceItem() != null) {
@@ -1969,7 +1973,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 //
 //                item.put("externalListPrice", (externalPrice != null) ?externalPrice:"");
 
-                itemList.put(item);
             }
         }
         return itemList;
@@ -2397,7 +2400,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if(productEntity.isClinicalProduct()) {
                 priceTitle = "clinicalPrice";
             }
-
+            productInfo.put("productAgp", productEntity.getDefaultAggregationParticle());
             BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
             productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
 //            String externalPrice = null;
@@ -3349,10 +3352,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                                 StringUtils.join(missingRegulatoryRequirements, ", "),
                                 editOrder.getResearchProject().getName());
                     }
-
                 }
             }
-
         }
     }
 
@@ -3787,5 +3788,15 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public Collection<DisplayableItem> getReagentDesigns() {
         return makeDisplayableItemCollection(reagentDesignDao.findAll());
+    }
+
+    @Inject
+    public void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
+    }
+
+    @Inject
+    public void setJiraService(JiraService jiraService) {
+        this.jiraService = jiraService;
     }
 }

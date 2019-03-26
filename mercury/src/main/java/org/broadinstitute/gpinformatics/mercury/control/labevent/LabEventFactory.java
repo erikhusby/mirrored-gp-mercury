@@ -1356,12 +1356,6 @@ public class LabEventFactory implements Serializable {
     // todo jmt make this database free?
     private void addReagents(LabEvent labEvent, List<ReagentType> reagentTypes) {
         LabEventType.ManualTransferDetails manualTransferDetails = labEvent.getLabEventType().getManualTransferDetails();
-        HashSet<String> reagentNameSet = null;
-
-        if (manualTransferDetails != null) {
-            // Populate hashset of reagent names that we need to verify expiration date.
-            reagentNameSet = new HashSet<>(Arrays.asList(manualTransferDetails.getReagentFieldExpirationRequired()));
-        }
 
         for (ReagentType reagentType : reagentTypes) {
             GenericReagent genericReagent = null;
@@ -1384,17 +1378,16 @@ public class LabEventFactory implements Serializable {
                     throw new RuntimeException("Failed to find metadata " + metadataType.getName());
                 }
             }
-            // If the lab event type has a requirement for valid expiration date.
-            if ((manualTransferDetails != null && manualTransferDetails.getReagentFieldExpirationRequired() != null)) {
-                // check to see if the genericReagent name is in the reagentFieldExpirationRequired array. if yes, then ensure expiration date is valid.
-                if (reagentNameSet.contains(genericReagent.getName())) {
+            if (manualTransferDetails != null) {
+                LabEventType.ReagentRequirements reagentRequirements =
+                        manualTransferDetails.getMapReagentNameToRequirements().get(reagentType.getKitType());
+                // Check to see if the lab event type has a requirement for valid expiration date of this reagent type.
+                if (reagentRequirements != null && reagentRequirements.isExpirationDateIncluded()) {
+                    // Check to see if there is an expiration date provided at all. (validated within jsp page).
                     if (reagentType.getExpiration() == null) {
                         throw new RuntimeException("No expiration date provided for reagent " + genericReagent.getName());
-                    } else if (reagentType.getExpiration().before(DateUtils.getStartOfDay(new Date()))) {
-                        throw new RuntimeException("Reagent " + genericReagent.getName() + " expired as of " + reagentType.getExpiration().toString());
                     }
                 }
-
             }
             labEvent.addReagentMetadata(genericReagent, metadataSet);
         }
@@ -1446,11 +1439,13 @@ public class LabEventFactory implements Serializable {
         }
 
         SBSSection targetSection;
+        SBSSection sourceSection = SBSSection.STRIP_TUBE8;
         switch (flowcellType.getVesselGeometry()) {
         case FLOWCELL1x1:
             targetSection = SBSSection.LANE1;
             break;
         case FLOWCELL1x2:
+            sourceSection = SBSSection.STRIP_TUBE2;
             targetSection = SBSSection.ALL2;
             break;
         case FLOWCELL1x8:
@@ -1459,7 +1454,7 @@ public class LabEventFactory implements Serializable {
         }
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourceStripTube.getContainerRole(), SBSSection.STRIP_TUBE8, null,
+                sourceStripTube.getContainerRole(), sourceSection, null,
                 targetFlowcell.getContainerRole(), targetSection, null, labEvent));
         return labEvent;
     }
