@@ -219,7 +219,7 @@ public class ReworkEjb {
             if (productOrderSampleCanEnterBucket(sample)) {
                 String sampleKey = sample.getName();
                 String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
-                if (StringUtils.isNotBlank(tubeBarcode)) {
+                if (StringUtils.isNotBlank(tubeBarcode)) { // todo jmt
                     bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sampleKey,
                             tubeBarcode, ProductFamily.ProductFamilyInfo.EXOME, null, ""));
                 }

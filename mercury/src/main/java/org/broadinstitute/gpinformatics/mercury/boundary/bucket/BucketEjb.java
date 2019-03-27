@@ -500,6 +500,7 @@ public class BucketEjb {
      */
     public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username) {
         Map<String, BspSampleData> bspSampleDataMap = bspSampleDataFetcher.fetchSampleData(samplesWithoutVessel);
+        // todo jmt why not fetch manufacturer barcode?
         Collection<LabVessel> vessels = new ArrayList<>();
         List<String> cannotAddToBucket = new ArrayList<>();
         List<String> missingSampleData = new ArrayList<>();

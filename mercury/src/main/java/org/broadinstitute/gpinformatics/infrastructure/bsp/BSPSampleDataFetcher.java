@@ -183,8 +183,10 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
 
         String urlString = getUrl(WS_DETAILS);
         String queryString = makeQueryString("sample_lsid", lsidToSampleDataMap.keySet());
+        final int SAMPLE_BARCODE = 0;
         final int LSID = 1;
         final int PLASTIC_BARCODE = 16;
+        final int RECEPTACLE_TYPE = 17;
         post(urlString, queryString, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
             @Override
             public void callback(String[] bspOutput) {
@@ -192,7 +194,14 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
                 if (bspSampleData == null) {
                     throw new RuntimeException("Unrecognized return lsid: " + bspOutput[LSID]);
                 }
-                bspSampleData.addPlastic(bspOutput[PLASTIC_BARCODE]);
+                String barcode = bspOutput[PLASTIC_BARCODE];
+                if (StringUtils.isEmpty(barcode)) {
+                    // Matrix tubes require a 2D barcode, but for cryovials etc. the "barcode" is the SM-ID
+                    if (!StringUtils.containsIgnoreCase(bspOutput[RECEPTACLE_TYPE], "matrix")) {
+                        barcode = bspOutput[SAMPLE_BARCODE];
+                    }
+                }
+                bspSampleData.addPlastic(barcode);
             }
         });
 
