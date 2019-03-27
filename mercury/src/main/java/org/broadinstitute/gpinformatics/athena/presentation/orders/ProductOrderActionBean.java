@@ -661,14 +661,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         Optional<String> skipRegulatoryReason = Optional.ofNullable(editOrder.getSkipRegulatoryReason());
 
-        if (editOrder.getProduct() != null && editOrder.getProduct().isClinicalProduct()) {
-            if(CollectionUtils.isNotEmpty(editOrder.getRegulatoryInfos()) ||
-               (skipRegulatoryReason.isPresent() && !ResearchProject.FROM_CLINICAL_CELL_LINE
-                       .equals(skipRegulatoryReason.get()))) {
-                addGlobalValidationError("For clinical orders, the only valid Regulatory Information selection is '"
-                                         + ResearchProject.FROM_CLINICAL_CELL_LINE + "'.");
-            }
-        } else {
+        if (editOrder.getProduct() != null && !editOrder.getProduct().isClinicalProduct()) {
             skipRegulatoryReason.ifPresent(skipReason -> {
                 if(ResearchProject.FROM_CLINICAL_CELL_LINE
                         .equals(skipReason)) {
