@@ -240,7 +240,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
-    @Inject
     private ResearchProjectDao researchProjectDao;
 
     @Inject
@@ -262,22 +261,17 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private ProductOrderEjb productOrderEjb;
 
-    @Inject
     private ProductTokenInput productTokenInput;
 
-    @Inject
     private ProjectTokenInput projectTokenInput;
 
-    @Inject
     private BspShippingLocationTokenInput bspShippingLocationTokenInput;
 
-    @Inject
     private BspGroupCollectionTokenInput bspGroupCollectionTokenInput;
 
     @Inject
     private BSPManagerFactory bspManagerFactory;
 
-    @Inject
     private UserTokenInput notificationListTokenInput;
 
     @Inject
@@ -1553,7 +1547,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * For the pre-populate to work on opening create and edit page, we need to take values from the editOrder. After,
      * the pages have the values passed in.
      */
-    private void populateTokenListsFromObjectData() {
+    protected void populateTokenListsFromObjectData() {
         String[] productKey = (editOrder.getProduct() == null) ? new String[0] :
                 new String[]{editOrder.getProduct().getBusinessKey()};
         productTokenInput.setup(productKey);
@@ -3276,6 +3270,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return notificationListTokenInput;
     }
 
+    @Inject
     public void setNotificationListTokenInput(UserTokenInput notificationListTokenInput) {
         this.notificationListTokenInput = notificationListTokenInput;
     }
@@ -3784,5 +3779,34 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     public void setJiraService(JiraService jiraService) {
         this.jiraService = jiraService;
+    }
+
+    @Inject
+    public void setProductTokenInput(ProductTokenInput productTokenInput) {
+        this.productTokenInput = productTokenInput;
+    }
+
+    @Inject
+    public void setProjectTokenInput(ProjectTokenInput projectTokenInput) {
+        this.projectTokenInput = projectTokenInput;
+    }
+
+    @Inject
+    public void setBspGroupCollectionTokenInput(BspGroupCollectionTokenInput bspGroupCollectionTokenInput) {
+        this.bspGroupCollectionTokenInput = bspGroupCollectionTokenInput;
+    }
+
+    @Inject
+    public void setBspShippingLocationTokenInput(BspShippingLocationTokenInput bspShippingLocationTokenInput) {
+        this.bspShippingLocationTokenInput = bspShippingLocationTokenInput;
+    }
+
+    @Inject
+    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
+        this.researchProjectDao = researchProjectDao;
+    }
+
+    public void setOwner(UserTokenInput owner) {
+        this.owner = owner;
     }
 }
