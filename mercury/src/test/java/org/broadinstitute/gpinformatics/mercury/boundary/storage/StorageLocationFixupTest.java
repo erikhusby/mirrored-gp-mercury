@@ -129,7 +129,7 @@ public class StorageLocationFixupTest extends Arquillian {
                        + "   AND tf.lab_vessel_id = rot.lab_vessel\n"
                        + "   AND r.lab_vessel_id = rot.racks_of_tubes\n"
                        + "   --AND e.in_place_lab_vessel = 5057569\n"   /* *** TESTING *** */
-                       //+ "   AND e.event_date < TO_DATE( '12/20/2018', 'mm/dd/yyyy')\n" /* *** TODO: Exclude BSP migrations - REMOVE *** */
+                       //+ "   AND e.event_date < TO_DATE( '03/15/2019', 'mm/dd/yyyy')\n" /* *** TODO: Exclude BSP migrations - REMOVE *** */
                        + "   AND e.ancillary_in_place_vessel = a.lab_vessel_id(+)\n" /* Outer join */
                        + "GROUP BY e.in_place_lab_vessel, tf.label, e.lab_event_id, e.lab_event_type, e.event_date, a.label\n"
                        + "ORDER BY e.in_place_lab_vessel, e.lab_event_id";
@@ -224,6 +224,18 @@ public class StorageLocationFixupTest extends Arquillian {
         assignRackToEvent(2924300L, "CO-26863282");
         assignRackToEvent(2925482L, "CO-26863282");
         assignRackToEvent(2925485L, "CO-26863282");
+
+        // 0df14981e80d4f94fbae3f030b12cab1 None in storage any longer, use rack created ascending
+        assignRackToEvent(3244376L, "CO-27643389");
+        assignRackToEvent(3244702L, "CO-27734889");
+
+        // 2b1c8bbb5a76771ba1fabc21fb09d536 None in storage any longer, use random of 2 racks
+        assignRackToEvent(3312371L, "CO-24743873");
+        assignRackToEvent(3312674L, "CO-27503541");
+
+        // d6d21d6f020f42c56a3611b7451215b1 None in storage any longer, use the only rack (empty) in storage
+        assignRackToEvent(3312372L, "CO-26596279");
+        assignRackToEvent(3312673L, "CO-26596279");
 
         storageLocationDao.persist(new FixupCommentary("GPLIM-6012 org.broadinstitute.gpinformatics.mercury.boundary.storage.StorageLocationFixupTest.fixupGplim6012BackfillInPlaceRacks()"));
         logWriter.println("***** Flushing persistence context *****" );
