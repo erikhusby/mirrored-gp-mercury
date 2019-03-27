@@ -421,6 +421,76 @@
               name="Hourly Charge - Project Management" platform="Biological Samples" price="96.0" priceItemId="5880"
               quantity="53.5" quantityComplete="53.5" quoteId="1905" total="5136.0" unit="Hour"/>
     </Quote>
+    <Quote alphanumericId="GAN1GX2" approvalStatus="Funded" expirationDate="06/21/2010" financeContactFirstName="Tracey"
+           financeContactLastName="Honan" financeContactUserName="honan@broadinstitute.org" id="1905"
+           investigatorFirstName="Matthew" investigatorLastName="Meyerson"
+           investigatorUserName="matthew_meyerson@dfci.harvard.edu" isExpired="true" isExpiringSoon="false" markup=""
+           name="TCGA_BSPsampleprocessing" projectManagerFirstName="Robert" projectManagerLastName="Onofrio"
+           projectManagerUserName="onofrio@broadinstitute.org" quoteType="Open-Ended">
+        <AssociatedPeople/>
+        <Investigators>
+            <Investigator firstName="Matthew" lastName="Meyerson" userName="matthew_meyerson@dfci.harvard.edu"/>
+        </Investigators>
+        <FinanceUsers>
+            <FinanceUser firstName="Tracey" lastName="Honan" userName="honan@broadinstitute.org"/>
+        </FinanceUsers>
+        <ProjectManagers>
+            <ProjectManager firstName="Tracey" lastName="Honan" userName="honan@broadinstitute.org"/>
+        </ProjectManagers>
+        <QuoteFunding fundsRemaining="16050.4">
+            <FundingLevel percent="0">
+                <Funding awardAdministrator="Ms. Marian A Orfeo" broadName="" commonName="" costObject="5420140"
+                         costObjectStatus="CLSD" endDate="03/24/2011" fundingType="Funds Reservation"
+                         fundsReservationNumber="439" grantDescription="GCC-U24_NIH_MEYERSON" grantEndDate="07/31/2011"
+                         grantNumber="128" grantStartDate="09/29/2009" grantStatus="Active"
+                         sponsorName="GCC-U24_NIH_Meyerson" startDate=""/>
+            </FundingLevel>
+            <FundingLevel percent="100">
+                <Funding awardAdministrator="Ms. Marian A Orfeo" broadName="" commonName="" costObject="5420143"
+                         costObjectStatus="ACTV" endDate="" fundingType="Funds Reservation"
+                         fundsReservationNumber="2045" grantDescription="GCC-U24_NIH_MEYERSON" grantEndDate="07/31/2012"
+                         grantNumber="128" grantStartDate="08/01/2011" grantStatus="Active"
+                         sponsorName="GCC-U24_NIH_Meyerson" startDate=""/>
+            </FundingLevel>
+        </QuoteFunding>
+        <Item calculation="" categoryName="Sample Kit" isExpired="true" isExpiringSoon="true"
+              name="DNA/RNA Matrix Sample Kit Partial Plate (1 - 48 Samples)" platform="Biological Samples" price="5.0"
+              priceItemId="5836" quantity="2340.0" quantityComplete="2679.0" quoteId="1905" total="11700.0"
+              unit="Sample"/>
+        <Item calculation="" categoryName="Sample Processing" isExpired="true" isExpiringSoon="true"
+              name="Bioanalyzer (12 Samples)" platform="Biological Samples" price="186.0" priceItemId="5408"
+              quantity="21.0" quantityComplete="34.0" quoteId="1905" total="3906.0" unit="Chip"/>
+        <Item calculation="" categoryName="Sample Processing" isExpired="true" isExpiringSoon="true"
+              name="Bioanalyzer (12 Samples)" platform="Biological Samples" price="199.0" priceItemId="6961"
+              quantity="29.0" quantityComplete="0.0" quoteId="1905" total="5771.0" unit="Chip"/>
+        <Item calculation="" categoryName="Whole Genome Amplification" isExpired="true" isExpiringSoon="true"
+              name="Whole Genome Amplification Cleanup" platform="Biological Samples" price="5.0" priceItemId="6995"
+              quantity="250.0" quantityComplete="0.0" quoteId="1905" total="1250.0" unit="Sample"/>
+        <Item calculation="" categoryName="" isExpired="true" isExpiringSoon="true"
+              name="Hourly Charge - Project Management" platform="Biological Samples" price="99.0" priceItemId="7002"
+              quantity="20.5" quantityComplete="0.0" quoteId="1905" total="2029.5" unit="Hour"/>
+        <Item calculation="" categoryName="Sample Kit" isExpired="true" isExpiringSoon="true"
+              name="DNA/RNA Matrix Sample Kit Full Plate (49 - 96 Samples)" platform="Biological Samples" price="384.0"
+              priceItemId="5835" quantity="100.0" quantityComplete="109.0" quoteId="1905" total="38400.0" unit="Plate"/>
+        <Item calculation="" categoryName="Sample Processing" isExpired="true" isExpiringSoon="true"
+              name="DNA Quantification - Picogreen" platform="Biological Samples" price="2.5" priceItemId="5865"
+              quantity="9227.0" quantityComplete="10207.0" quoteId="1905" total="23067.5" unit="Sample"/>
+        <Item calculation="" categoryName="" isExpired="true" isExpiringSoon="true" name="Hourly Charge - Laboratory"
+              platform="Biological Samples" price="43.0" priceItemId="7001" quantity="15.0" quantityComplete="5.0"
+              quoteId="1905" total="645.0" unit="Hour"/>
+        <Item calculation="" categoryName="" isExpired="true" isExpiringSoon="true" name="Hourly Charge - Laboratory"
+              platform="Biological Samples" price="48.0" priceItemId="5879" quantity="12.0" quantityComplete="10.0"
+              quoteId="1905" total="576.0" unit="Hour"/>
+        <Item calculation="" categoryName="Sample Kit" isExpired="true" isExpiringSoon="true"
+              name="DNA/RNA Matrix Sample Kit Partial Plate (1 - 48 Samples)" platform="Biological Samples" price="5.5"
+              priceItemId="6964" quantity="248.0" quantityComplete="-34.0" quoteId="1905" total="1364.0" unit="Sample"/>
+        <Item calculation="" categoryName="Sample Plating" isExpired="true" isExpiringSoon="true"
+              name="Sample Plating (96 Well Plate)" platform="Biological Samples" price="192.0" priceItemId="7171"
+              quantity="10.0" quantityComplete="0.0" quoteId="1905" total="1920.0" unit="Plate"/>
+        <Item calculation="" categoryName="" isExpired="true" isExpiringSoon="true"
+              name="Hourly Charge - Project Management" platform="Biological Samples" price="96.0" priceItemId="5880"
+              quantity="53.5" quantityComplete="53.5" quoteId="1905" total="5136.0" unit="Hour"/>
+    </Quote>
     <Quote alphanumericId="BSP20P" approvalStatus="Funded" expirationDate="12/08/2010" financeContactFirstName="Tracey"
            financeContactLastName="Honan" financeContactUserName="honan@broadinstitute.org" id="2617"
            investigatorFirstName="Roger" investigatorLastName="Wiegand"
@@ -22349,6 +22419,46 @@
         </QuoteFunding>
         <Item calculation="" categoryName="Genome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="PCR+ Human WGS (Standard Coverage)" platform="Genomics Platform" price="1790.0" priceItemId="26665" quantity="16.0" quantityComplete="15.0" quoteId="24085" total="28640.0" unit="sample"/>
         <Item calculation="" categoryName="Extraction and Sample Handling" isExpired="true" isExpiringSoon="true" name="Sample Initiation" platform="Genomics Platform" price="11.0" priceItemId="24721" quantity="16.0" quantityComplete="4.0" quoteId="24085" total="176.0" unit="sample"/>
+    </Quote>
+    <Quote alphanumericId="GPLBK" approvalStatus="Funded" billed="4925888" completed="12081873" expirationDate="02/15/2018" financeContactFirstName="Daniel" financeContactLastName="Warrington" financeContactUserName="dwarring@broadinstitute.org" id="27632" investigatorFirstName="Stacey" investigatorLastName="Gabriel" investigatorUserName="stacey@broadinstitute.org" isExpired="true" isExpiringSoon="false" markup="" name="NCI/Leidos Contract - 2017-18" projectManagerFirstName="Kristin" projectManagerLastName="Anderka" projectManagerUserName="kanderka" projectName="NCI/Leidos Contract - 2017-18" quoteType="Dollar Limited" total="19778357.5">
+    <AssociatedPeople/>
+    <Investigators>
+    <Investigator firstName="Stacey" lastName="Gabriel" userName="stacey@broadinstitute.org"/>
+    </Investigators>
+    <FinanceUsers>
+    <FinanceUser firstName="Daniel" lastName="Warrington" userName="dwarring@broadinstitute.org"/>
+    </FinanceUsers>
+    <ProjectManagers>
+    <ProjectManager firstName="Kristina" lastName="Tracy" userName="ktracy"/>
+    <ProjectManager firstName="Kristin" lastName="Anderka" userName="kanderka"/>
+    </ProjectManagers>
+    <QuoteFunding fundsRemaining="4469386">
+    <FundingLevel percent="100">
+    <Funding awardAdministrator="David Hoffmann" broadName="" commonName="" costObject="5417161" costObjectStatus="ACTV" endDate="" fundingType="Funds Reservation" fundsReservationNumber="14408" grantDescription="BROADCGCC_NCI_GABRIE" grantEndDate="06/25/2019" grantNumber="442" grantStartDate="06/24/2015" grantStatus="Active" platform="BTL" sponsorName="BroadCGCC_NCI_Gabriel" startDate=""/>
+    <Funding awardAdministrator="David Hoffmann" broadName="" commonName="" costObject="5417161" costObjectStatus="ACTV" endDate="" fundingType="Funds Reservation" fundsReservationNumber="12164" grantDescription="BROADCGCC_NCI_GABRIE" grantEndDate="06/25/2019" grantNumber="442" grantStartDate="06/24/2015" grantStatus="Active" platform="BTL" sponsorName="BroadCGCC_NCI_Gabriel" startDate=""/>
+    <Funding awardAdministrator="David Hoffmann" broadName="" commonName="" costObject="5417161" costObjectStatus="ACTV" endDate="" fundingType="Funds Reservation" fundsReservationNumber="12164" grantDescription="BROADCGCC_NCI_GABRIE" grantEndDate="06/25/2019" grantNumber="442" grantStartDate="06/24/2015" grantStatus="Active" platform="GP" sponsorName="BroadCGCC_NCI_Gabriel" startDate=""/>
+    </FundingLevel>
+    </QuoteFunding>
+    <Item calculation="" categoryName="Materials" isExpired="true" isExpiringSoon="true" name="Custom Lab Work" platform="Genomics Platform" price="1.0" priceItemId="43373" quantity="107958.0" quantityComplete="107958.0" quoteId="27632" total="107958.0" unit="Each"/>
+    <Item calculation="" categoryName="Exome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="Human WES - Tumor (150xMTC)" platform="Genomics Platform" price="765.0" priceItemId="52903" quantity="81.0" quantityComplete="81.0" quoteId="27632" total="61965.0" unit="sample"/>
+    <Item calculation="" categoryName="Materials" isExpired="true" isExpiringSoon="true" name="Materials" platform="Broad Technology Lab" price="1.6" priceItemId="49085" quantity="21875.0" quantityComplete="21875.0" quoteId="27632" total="35000.0" unit="Each"/>
+    <Item calculation="" categoryName="RNA Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="Transcriptome Capture" platform="Genomics Platform" price="1100.0" priceItemId="43313" quantity="10.0" quantityComplete="0.0" quoteId="27632" total="11000.0" unit="sample"/>
+    <Item calculation="" categoryName="Genome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="PCR-Free Human WGS - 80x" platform="Genomics Platform" price="2900.0" priceItemId="43309" quantity="407.0" quantityComplete="407.0" quoteId="27632" total="1180300.0" unit="sample"/>
+    <Item calculation="" categoryName="Genome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="PCR-Free Human WGS - 80x (High Volume, &gt;10,000 samples)" platform="Genomics Platform" price="2005.0" priceItemId="44162" quantity="2027.0" quantityComplete="2027.0" quoteId="27632" total="4064135.0" unit="sample"/>
+    <Item calculation="" categoryName="Special Projects - Hourly Charge" isExpired="true" isExpiringSoon="true" name="Senior Technical Advice or Development" platform="Genomics Platform" price="340.0" priceItemId="43382" quantity="26.0" quantityComplete="0.0" quoteId="27632" total="8840.0" unit="Hour"/>
+    <Item calculation="" categoryName="Illumina Sequencing Only" isExpired="true" isExpiringSoon="true" name="HiSeq X up to 300 cycles" platform="Genomics Platform" price="1750.0" priceItemId="51918" quantity="1.0019999742507935" quantityComplete="1.0" quoteId="27632" total="1753.5" unit="lane"/>
+    <Item calculation="" categoryName="Exome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="Somatic Human WES (Standard Coverage)" platform="Genomics Platform" price="550.0" priceItemId="43294" quantity="2058.0" quantityComplete="2058.0" quoteId="27632" total="1131900.0" unit="sample"/>
+    <Item calculation="" categoryName="Genome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="PCR-Free Human WGS - 30x (High Volume, &gt;10,000 samples)" platform="Genomics Platform" price="895.0" priceItemId="44158" quantity="2023.0" quantityComplete="2023.0" quoteId="27632" total="1810585.0" unit="sample"/>
+    <Item calculation="" categoryName="Genome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="PCR+ Human WGS - 15x" platform="Genomics Platform" price="880.0" priceItemId="52690" quantity="57.0" quantityComplete="57.0" quoteId="27632" total="50160.0" unit="sample"/>
+    <Item calculation="" categoryName="Genome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="PCR-Free Human WGS - 60x" platform="Genomics Platform" price="2550.0" priceItemId="43307" quantity="572.0" quantityComplete="36.0" quoteId="27632" total="1458600.0" unit="sample"/>
+    <Item calculation="" categoryName="Whole Genome Arrays" isExpired="true" isExpiringSoon="true" name="EPIC Methylation Array" platform="Genomics Platform" price="650.0" priceItemId="43312" quantity="8099.0" quantityComplete="815.0" quoteId="27632" total="5264350.0" unit="sample"/>
+    <Item calculation="" categoryName="Genome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="PCR-Free Human WGS - 15x" platform="Genomics Platform" price="850.0" priceItemId="43302" quantity="1499.0" quantityComplete="1499.0" quoteId="27632" total="1274150.0" unit="sample"/>
+    <Item calculation="" categoryName="Extraction and Sample Handling" isExpired="true" isExpiringSoon="true" name="NCI: Sample Initiation and Data Delivery" platform="Genomics Platform" price="125.0" priceItemId="43361" quantity="638.0" quantityComplete="638.0" quoteId="27632" total="79750.0" unit="sample"/>
+    <Item calculation="" categoryName="Genome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="PCR-Free Human WGS - 30x" platform="Genomics Platform" price="1350.0" priceItemId="43305" quantity="1500.0" quantityComplete="357.0" quoteId="27632" total="2025000.0" unit="sample"/>
+    <Item calculation="" categoryName="Exome Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="Somatic Human WES (Deep Coverage)" platform="Genomics Platform" price="765.0" priceItemId="43293" quantity="1512.0" quantityComplete="1512.0" quoteId="27632" total="1156680.0" unit="sample"/>
+    <Item calculation="" categoryName="Whole Genome Arrays (Processing only)" isExpired="true" isExpiringSoon="true" name="8-Sample Methylation Array Processing" platform="Genomics Platform" price="73.0" priceItemId="43388" quantity="47.0" quantityComplete="0.0" quoteId="27632" total="3431.0" unit="sample"/>
+    <Item calculation="" categoryName="Exome Sequencing Analysis" isExpired="false" isExpiringSoon="false" name="Human WES - Normal (150xMTC)" platform="Genomics Platform" price="450.0" priceItemId="53854" quantity="104.0" quantityComplete="104.0" quoteId="27632" total="46800.0" unit="sample"/>
+    <Item calculation="" categoryName="RNA Sequencing Analysis" isExpired="true" isExpiringSoon="true" name="Tru-Seq Strand Specific Large Insert RNA Sequencing - High Coverage (50M pairs)" platform="Genomics Platform" price="600.0" priceItemId="43316" quantity="10.0" quantityComplete="0.0" quoteId="27632" total="6000.0" unit="sample"/>
     </Quote>
 </Quotes>
 

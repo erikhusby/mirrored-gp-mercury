@@ -166,8 +166,7 @@ public class Quote {
      *
      */
     public boolean isEligibleForSAP() {
-        Collection<Funding> allFundingSources = new HashSet<>();
-
+        List<Funding> allFundingSources = new ArrayList<>();
         Optional.ofNullable(getFirstRelevantFundingLevel())
             .ifPresent(singleLevel -> {
                 Optional.ofNullable(singleLevel.getFunding())

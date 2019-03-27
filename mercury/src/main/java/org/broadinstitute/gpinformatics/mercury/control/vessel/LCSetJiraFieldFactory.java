@@ -58,7 +58,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      */
     public LCSetJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao,
             WorkflowConfig workflowConfig) {
-        super(batch, CreateFields.ProjectType.LCSET_PROJECT, productOrderDao, workflowConfig);
+        super(batch, CreateFields.ProjectType.LCSET_PROJECT, null, productOrderDao, workflowConfig);
         String bucketName = null;
 
         if (!batch.getBucketEntries().isEmpty()) {
