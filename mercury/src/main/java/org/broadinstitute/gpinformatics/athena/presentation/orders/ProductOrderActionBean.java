@@ -1130,7 +1130,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         double productValue = 0d;
         String foundPrice;
         try {
-            foundPrice = productOrderEjb.validateSAPAndQuoteServerPrices(quote, product, productOrder);
+            foundPrice = productOrderEjb.validateQuoteAndGetPrice(quote, product, productOrder);
         } catch (InvalidProductException e) {
             throw new InvalidProductException("For '" + product.getDisplayName() + "' " + e.getMessage(), e);
         }

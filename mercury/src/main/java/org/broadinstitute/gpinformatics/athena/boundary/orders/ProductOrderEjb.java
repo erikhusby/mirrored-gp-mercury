@@ -490,7 +490,7 @@ public class ProductOrderEjb {
                     break;
                 }
 
-                validateSAPAndQuoteServerPrices(orderQuote, product, productOrder);
+                validateQuoteAndGetPrice(orderQuote, product, productOrder);
             }
 
         }
@@ -507,24 +507,9 @@ public class ProductOrderEjb {
      * @return
      * @throws InvalidProductException
      */
-    //TODO Consider renaning this method of Steve agrees to drop validating prices between SAP and Quote Server
-    public String validateSAPAndQuoteServerPrices(Quote orderQuote, Product product,
-                                                  ProductOrder productOrder)
+    public String validateQuoteAndGetPrice(Quote orderQuote, Product product, ProductOrder productOrder)
             throws InvalidProductException {
 
-
-//        SAPMaterial sapMaterial = null;
-//        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = null;
-//
-//        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
-//
-//        try {
-//            companyCode = SapIntegrationServiceImpl.determineCompanyCode(productOrder);
-//        } catch (SAPIntegrationException e) {
-//            throw new InvalidProductException(e);
-//        }
-
-        // todo sgm check quote and throw exception if it is null
         if(orderQuote == null) {
             throw new InvalidProductException("Unable to continue since the quote against which the prices are "
                                               + "being validated is not set");
@@ -533,27 +518,11 @@ public class ProductOrderEjb {
             throw new InvalidProductException("Unable to continue since the Product Order for which the prices are being validated is not set");
         }
 
-//        if(accessControl.isEnabled() &&
-//           !CollectionUtils.containsAny(accessControl.getDisabledItems(),
-//                   Collections.singleton(new AccessItem(product.getPrimaryPriceItem().getName())))) {
-//            sapMaterial = productPriceCache.findByProduct(product, companyCode);
-//        }
-
         PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
-        if (priceListItem != null) {
-//            final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
-//            if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {
-//                final BigDecimal basePrice = new BigDecimal(sapMaterial.getBasePrice());
-//                if (basePrice.compareTo(effectivePrice) != 0) {
-//                    throw new InvalidProductException("Unable to continue since the price for the product " +
-//                                                      product.getDisplayName() + " has not been properly set up in SAP");
-//                }
-//            }
-        } else {
-            throw new InvalidProductException("Unable to continue since the price list item " +
-                                              priceItem.getDisplayName() + " for " + product.getDisplayName() +
-                                              " is invalid.");
+        if (priceListItem == null) {
+            throw new InvalidProductException("Unable to continue since the price list of " +
+                                              priceItem.getDisplayName() + ".");
         }
         return priceListCache.getEffectivePrice(priceItem, orderQuote);
     }
