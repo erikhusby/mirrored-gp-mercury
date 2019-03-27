@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.reagent;
 
 import clover.org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.DesignedReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
@@ -17,6 +18,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,10 +56,11 @@ public class ReagentDesignImportFactory {
             List<String> tubeBarcodes = processor.getTubeBarcodes();
             for (LabVessel labVessel: labVesselDao.findByListIdentifiers(tubeBarcodes)) {
                 messageCollection.addError(String.format(
-                        "Barcode \"%s\" is already exists.", labVessel.getLabel()));
+                        "Barcode \"%s\" already exists.", labVessel.getLabel()));
             }
 
             Map<String, ReagentDesign> mapNameToReagentDesign = new HashMap<>();
+            Map<Triple<ReagentDesign, String, Date>, DesignedReagent> mapDtoToDesign = new HashMap<>();
             List<BarcodedTube> barcodedTubeList = new ArrayList<>();
             for (ReagentDesignImportProcessor.ReagentImportDto dto: dtos) {
                 if (!mapNameToReagentDesign.containsKey(dto.getDesignName())) {
@@ -73,19 +76,33 @@ public class ReagentDesignImportFactory {
 
                 String tubeBarcode = StringUtils.leftPad(dto.getTubeBarcode(), 10, '0');
 
-                DesignedReagent reagent = designedReagentDao
-                        .findByReagentLotDesignAndExpiration(reagentDesign, dto.getLotNumber(),
-                                dto.getExpirationDate());
-                if (reagent == null) {
-                    reagent = new DesignedReagent(reagentDesign);
-                    reagent.setExpiration(dto.getExpirationDate());
-                    reagent.setLot(dto.getLotNumber());
-                    Metadata synthesisDate = new Metadata(Metadata.Key.SYNTHESIS_DATE, dto.getSynthesisDate());
-                    Metadata manufacturingDate = new Metadata(Metadata.Key.MANUFACTURING_DATE, dto.getManufacturingDate());
-                    Metadata storageConditions = new Metadata(Metadata.Key.STORAGE_CONDITIONS, dto.getStorageConditions());
+                DesignedReagent reagent = null;
+                Triple<ReagentDesign, String, Date> uniqueReagentTriple =
+                        Triple.of(reagentDesign, dto.getLotNumber(), dto.getExpirationDate());
+                if (mapDtoToDesign.containsKey(uniqueReagentTriple)) {
+                    reagent = mapDtoToDesign.get(uniqueReagentTriple);
+                } else {
+                    reagent = designedReagentDao.findByReagentLotDesignAndExpiration(reagentDesign, dto.getLotNumber(),
+                                    dto.getExpirationDate());
 
-                    Set<Metadata> metadata = new HashSet<>(Arrays.asList(synthesisDate, manufacturingDate, storageConditions));
-                    reagent.addMetadata(metadata);
+                    if (reagent == null) {
+                        reagent = new DesignedReagent(reagentDesign);
+                        reagent.setExpiration(dto.getExpirationDate());
+                        reagent.setLot(dto.getLotNumber());
+                        reagent.setName(dto.getDesignName());
+                        Metadata synthesisDate = new Metadata(Metadata.Key.SYNTHESIS_DATE, dto.getSynthesisDate());
+                        Metadata manufacturingDate =
+                                new Metadata(Metadata.Key.MANUFACTURING_DATE, dto.getManufacturingDate());
+                        Metadata storageConditions =
+                                new Metadata(Metadata.Key.STORAGE_CONDITIONS, dto.getStorageConditions());
+                        Metadata manufacturerDesignId =
+                                new Metadata(Metadata.Key.MANUFACTURER_DESIGN_ID, dto.getDesignId());
+
+                        Set<Metadata> metadata = new HashSet<>(Arrays.asList(synthesisDate, manufacturingDate,
+                                storageConditions, manufacturerDesignId));
+                        reagent.addMetadata(metadata);
+                        mapDtoToDesign.put(uniqueReagentTriple, reagent);
+                    }
                 }
 
 

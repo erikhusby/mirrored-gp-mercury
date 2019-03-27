@@ -6,6 +6,7 @@ import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -21,6 +22,7 @@ import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -39,6 +41,9 @@ public class ReagentDesignImportFactoryTest extends Arquillian {
     @Inject
     private ReagentDesignImportFactory reagentDesignImportFactory;
 
+    @Inject
+    private BarcodedTubeDao barcodedTubeDao;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
@@ -48,7 +53,7 @@ public class ReagentDesignImportFactoryTest extends Arquillian {
     public void testBasic() throws Exception {
         int numTubes = 8;
         MessageCollection messageCollection = new MessageCollection();
-        List<BarcodedTube> barcodedTubeList = testReagentDesign(REAGENT_DESIGN, numTubes, messageCollection);
+        List<BarcodedTube> barcodedTubeList = testReagentDesign(REAGENT_DESIGN, numTubes, messageCollection, true);
         Assert.assertEquals(barcodedTubeList.size(), numTubes);
         Assert.assertEquals(messageCollection.getErrors().size(), 0);
     }
@@ -57,15 +62,25 @@ public class ReagentDesignImportFactoryTest extends Arquillian {
     public void testUnknownReagentDesign() throws Exception {
         int numTubes = 1;
         MessageCollection messageCollection = new MessageCollection();
-        List<BarcodedTube> barcodedTubeList = testReagentDesign("IamUnknownBaitProbe", numTubes, messageCollection);
+        List<BarcodedTube> barcodedTubeList = testReagentDesign("IamUnknownBaitProbe", numTubes, messageCollection, false);
         Assert.assertEquals(barcodedTubeList.size(), 0);
         Assert.assertEquals(messageCollection.getErrors().size(), 1);
     }
 
-    private List<BarcodedTube> testReagentDesign(String reagentDesign, int numTubes,
-                                                 MessageCollection messageCollection) throws Exception {
+    @Test
+    public void testDuplicateBarcodeInMercury() throws Exception {
+        MessageCollection messageCollection = new MessageCollection();
         String timestamp = simpleDateFormat.format(new Date());
-        String prefix = "Probe" + timestamp;
+        String prefix = "ProbeFail" + timestamp;
+        ReagentDesignImportProcessor.ReagentImportDto dto = createDto("0330395066", "Pancan_396_NO_INTRONS",
+                prefix, 0);
+        testReagentDesign(Collections.singletonList(dto), messageCollection, false);
+        Assert.assertEquals(messageCollection.getErrors().size(), 1);
+        Assert.assertEquals(messageCollection.getErrors().get(0), "Barcode \"0330395066\" already exists.");
+    }
+
+    private List<BarcodedTube> testReagentDesign(List<ReagentDesignImportProcessor.ReagentImportDto> dtos,
+                                                 MessageCollection messageCollection, boolean persist) throws Exception {
         File tempFile = File.createTempFile("Probe Upload Test", ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
             StatefulBeanToCsv<ReagentDesignImportProcessor.ReagentImportDto> beanToCsv =
@@ -73,28 +88,42 @@ public class ReagentDesignImportFactoryTest extends Arquillian {
                             .withSeparator(',')
                             .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
                             .build();
-            List<ReagentDesignImportProcessor.ReagentImportDto> dtos = new ArrayList<>();
-            for (int i = 0; i < numTubes; i++) {
-                String tubeBarcode = "probe" + timestamp + "tubeBarcode_" + i;
-                dtos.add(createDto(tubeBarcode, reagentDesign, prefix, i));
-            }
             beanToCsv.write(dtos);
         }
-
         try (FileInputStream fis = new FileInputStream(tempFile)) {
-            return reagentDesignImportFactory.buildTubesFromSpreadsheet(fis, messageCollection);
+            List<BarcodedTube> barcodedTubes =
+                    reagentDesignImportFactory.buildTubesFromSpreadsheet(fis, messageCollection);
+            if (persist && !messageCollection.hasErrors()) {
+                barcodedTubeDao.persistAll(barcodedTubes);
+            }
+            return barcodedTubes;
         }
+    }
+
+    private List<BarcodedTube> testReagentDesign(String reagentDesign, int numTubes,  MessageCollection messageCollection,
+                                                 boolean persist) throws Exception {
+        String timestamp = simpleDateFormat.format(new Date());
+        String prefix = "Probe" + timestamp;
+        List<ReagentDesignImportProcessor.ReagentImportDto> dtos = new ArrayList<>();
+        for (int i = 0; i < numTubes; i++) {
+            String tubeBarcode = "probe" + timestamp + "tubeBarcode_" + i;
+            dtos.add(createDto(tubeBarcode, reagentDesign, prefix, i));
+        }
+        return testReagentDesign(dtos, messageCollection, persist);
     }
 
     private ReagentDesignImportProcessor.ReagentImportDto createDto(String tubeBarcode, String reagentDesign,
                                                                     String prefix, int index) {
+        SimpleDateFormat sdf = new SimpleDateFormat(
+                ReagentDesignImportProcessor.ReagentImportDto.DATE_FORMAT);
+        String date = sdf.format(Date.from(Instant.now().plusSeconds(86400)));
         ReagentDesignImportProcessor.ReagentImportDto dto = new ReagentDesignImportProcessor.ReagentImportDto();
         dto.setTubeBarcode(tubeBarcode);
         dto.setDesignId(reagentDesign + "_ID");
         dto.setDesignName(reagentDesign);
-        dto.setExpirationDate(Date.from(Instant.now().plusSeconds(86400)));
-        dto.setManufacturingDate(Date.from(Instant.now().minusSeconds(86400)));
-        dto.setSynthesisDate(Date.from(Instant.now().minusSeconds(86400 * 2)));
+        dto.setExpirationDateString(date);
+        dto.setManufacturingDate(date);
+        dto.setSynthesisDateString(date);
         dto.setLotNumber(prefix + "_" + index);
         dto.setVolume(20);
         dto.setMass(40);

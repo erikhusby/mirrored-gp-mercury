@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
@@ -215,6 +216,13 @@ public enum DisplayExpression {
                 results.add(reagentDesign.getName() + "(" + reagentDesign.getReagentType().toString() + ")");
             }
             return results;
+        }
+    }),
+    BAIT_REAGENTS(SampleInstanceV2.class, new SearchTerm.Evaluator<Set<DesignedReagent>>() {
+        @Override
+        public Set<DesignedReagent> evaluate(Object entity, SearchContext context) {
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            return sampleInstanceV2.getDesignReagents();
         }
     }),
     METADATA(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {

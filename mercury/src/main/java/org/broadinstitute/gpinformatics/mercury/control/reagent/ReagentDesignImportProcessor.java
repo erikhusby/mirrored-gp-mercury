@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.reagent;
 
 import com.opencsv.bean.CsvBindByName;
-import com.opencsv.bean.CsvDate;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.apache.commons.logging.Log;
@@ -11,6 +10,8 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -61,8 +62,25 @@ public class ReagentDesignImportProcessor {
                         messageCollection.addError("Mass can't be less than or equal to 0 for " + dto.getTubeBarcode());
                     }
 
-                    if (dto.getExpirationDate().before(c.getTime())) {
-                        messageCollection.addError(dto.getTubeBarcode() + " is expired.");
+                    // Libraries version of date format is lenient, so check after DTO to see if date format is garbage
+                    try {
+                        if (dto.getExpirationDate().before(c.getTime())) {
+                            messageCollection.addError(dto.getTubeBarcode() + " is expired.");
+                        }
+                    } catch (ParseException ex) {
+                        messageCollection.addError(ex.getMessage());
+                    }
+
+                    try {
+                        dto.getSynthesisDate();
+                    } catch (ParseException ex) {
+                        messageCollection.addError(ex.getMessage());
+                    }
+
+                    try {
+                        dto.getManufacturingDate();
+                    } catch (ParseException ex) {
+                        messageCollection.addError(ex.getMessage());
                     }
                 }
 
@@ -82,7 +100,7 @@ public class ReagentDesignImportProcessor {
     public static class ReagentImportDto {
         public static final String DATE_FORMAT = "MM/dd/yy";
 
-        @CsvBindByName(column = "Design ID")
+        @CsvBindByName(column = "Manufacturer Design ID", required = true)
         private String designId;
 
         @CsvBindByName(column = "Design Name", required = true)
@@ -98,12 +116,10 @@ public class ReagentDesignImportProcessor {
         private double mass;
 
         @CsvBindByName(column = "Synthesis Date", required = true)
-        @CsvDate(DATE_FORMAT)
-        private Date synthesisDate;
+        private String synthesisDateString;
 
         @CsvBindByName(column = "Manufacturing Date", required = true)
-        @CsvDate(DATE_FORMAT)
-        private Date manufacturingDate;
+        private String manufacturingDateString;
 
         @CsvBindByName(column = "Storage Conditions (C)", required = true)
         private String storageConditions;
@@ -112,8 +128,7 @@ public class ReagentDesignImportProcessor {
         private String lotNumber;
 
         @CsvBindByName(column = "Expiration Date", required = true)
-        @CsvDate(DATE_FORMAT)
-        private Date expirationDate;
+        private String expirationDateString;
 
         public ReagentImportDto() {
         }
@@ -158,20 +173,28 @@ public class ReagentDesignImportProcessor {
             this.mass = mass;
         }
 
-        public Date getSynthesisDate() {
-            return synthesisDate;
+        public Date getSynthesisDate() throws ParseException {
+            return parseAsDate(synthesisDateString);
         }
 
-        public void setSynthesisDate(Date synthesisDate) {
-            this.synthesisDate = synthesisDate;
+        public String getSynthesisDateString() {
+            return synthesisDateString;
         }
 
-        public Date getManufacturingDate() {
-            return manufacturingDate;
+        public void setSynthesisDateString(String synthesisDateString) {
+            this.synthesisDateString = synthesisDateString;
         }
 
-        public void setManufacturingDate(Date manufacturingDate) {
-            this.manufacturingDate = manufacturingDate;
+        public Date getManufacturingDate() throws ParseException {
+            return parseAsDate(manufacturingDateString);
+        }
+
+        public String getManufacturingDateString() {
+            return manufacturingDateString;
+        }
+
+        public void setManufacturingDate(String manufacturingDateString) {
+            this.manufacturingDateString = manufacturingDateString;
         }
 
         public String getStorageConditions() {
@@ -190,12 +213,22 @@ public class ReagentDesignImportProcessor {
             this.lotNumber = lotNumber;
         }
 
-        public Date getExpirationDate() {
-            return expirationDate;
+        public Date getExpirationDate() throws ParseException {
+            return parseAsDate(this.expirationDateString);
         }
 
-        public void setExpirationDate(Date expirationDate) {
-            this.expirationDate = expirationDate;
+        public String getExpirationDateString() {
+            return expirationDateString;
+        }
+
+        public void setExpirationDateString(String expirationDate) {
+            this.expirationDateString = expirationDate;
+        }
+
+        private Date parseAsDate(String str) throws ParseException {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
+            simpleDateFormat.setLenient(false);
+            return simpleDateFormat.parse(str);
         }
     }
 }

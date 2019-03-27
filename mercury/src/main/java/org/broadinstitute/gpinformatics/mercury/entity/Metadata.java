@@ -305,7 +305,8 @@ public class Metadata {
         NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER),
         SYNTHESIS_DATE(Category.REAGENT, DataType.DATE, "Synthesis Date", Visibility.USER),
         MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
-        STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER);
+        STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
+        MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;
