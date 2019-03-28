@@ -265,7 +265,7 @@ public class BillingAdaptor implements Serializable {
                                 } else {
                                     Set<LedgerEntry> priorSapBillings = new HashSet<>();
                                     item.getBillingCredits().stream()
-                                            .filter(ledgerEntry -> ledgerEntry.getPriceItem().equals(item.getPriceItem()))
+                                            .filter(ledgerEntry -> ledgerEntry.getProductOrderSample().getProductOrder().getProduct().equals(item.getProduct()))
                                             .forEach(ledgerEntry -> {
                                                 ledgerEntry.getPreviouslyBilled().stream()
                                                         .filter(previousBilled -> previousBilled.getSapDeliveryDocumentId()
