@@ -516,7 +516,6 @@
                     initializeQuoteOptions();
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
-                    // $j("#skipRegulatoryInfoCheckbox").on("change", toggleSkipRegulatory);
                     $j("#notFromHumansCheckbox").on("change", toggleSkipRegulatoryReason);
                     $j("#clinicalLineCheckbox").on("change", toggleSkipRegulatoryReason);
                     $j("#regulatorySelect").change(function () {

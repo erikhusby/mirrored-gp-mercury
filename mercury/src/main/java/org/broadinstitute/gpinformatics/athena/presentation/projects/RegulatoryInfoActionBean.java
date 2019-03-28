@@ -94,7 +94,7 @@ public class RegulatoryInfoActionBean extends CoreActionBean {
         } else {
             final List<String> regulatoryInfoIdentifiers =
                     searchResults.stream().map(RegulatoryInfo::getIdentifier).collect(Collectors.toList());
-            final List<OrspProject> orspResults = orspProjectDao.findListByList(regulatoryInfoIdentifiers);
+            final List<OrspProject> orspResults = orspProjectDao.findOrspProjectListByIdList(regulatoryInfoIdentifiers);
             final Optional<Set<String>> orspResultNames = Optional.ofNullable(orspResults.stream().map(OrspProject::getName).collect(Collectors.toSet()));
 
             if(orspResultNames.isPresent() && !orspResultNames.get().isEmpty()) {

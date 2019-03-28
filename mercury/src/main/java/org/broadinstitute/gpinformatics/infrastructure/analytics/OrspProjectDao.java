@@ -82,7 +82,7 @@ public class OrspProjectDao {
         return project;
     }
 
-    public List<OrspProject> findListByList(List<String> ids) {
+    public List<OrspProject> findOrspProjectListByIdList(List<String> ids) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<OrspProject> criteria = cb.createQuery(OrspProject.class);
         Root<OrspProject> orspProjectRoot = criteria.from(OrspProject.class);
