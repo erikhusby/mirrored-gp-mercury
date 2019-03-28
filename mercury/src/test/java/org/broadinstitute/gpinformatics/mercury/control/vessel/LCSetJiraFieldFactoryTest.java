@@ -157,7 +157,7 @@ public class LCSetJiraFieldFactoryTest {
         int numSamples = testBatch.getStartingBatchLabVessels().size();
 
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
-                CreateFields.ProjectType.LCSET_PROJECT, testBatch, productOrderDao, workflowConfig);
+                CreateFields.ProjectType.LCSET_PROJECT, testBatch, null, productOrderDao, workflowConfig);
 
         Assert.assertEquals(testBuilder.generateDescription(),
                 "1 sample with material types [] from MyResearchProject PDO-7\n5 samples with material types [] from MyResearchProject PDO-999\n");

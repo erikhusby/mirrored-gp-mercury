@@ -41,6 +41,16 @@ public class QuoteTest {
 
     }
 
+    public void testQuoteFundingDifferingOnlyByFundsReservationNumber() throws Exception {
+        // Tests a case where a quote was mistakenly being identified as being eligible for SAP when it was not. The
+        // cause turned out to be the equals method not taking fundsReservationNumber into account
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        final String quoteId = "GPLBK";
+        Quote testQuote = stubbedQuoteService.getQuoteByAlphaId(quoteId);
+        assertThat(testQuote.isEligibleForSAP(), is(false));
+    }
+
     public void testQuoteValuesFundsReservation() throws Exception {
 
         QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
@@ -127,7 +137,7 @@ public class QuoteTest {
             quoteEligibility = splitCostObjectQuote.isFunded();
             Assert.assertFalse(quoteEligibility);
             quoteEligibility = splitCostObjectQuote.isEligibleForSAP();
-            Assert.assertTrue(quoteEligibility);
+            Assert.assertFalse(quoteEligibility);
         } catch (Exception shouldNotHappen) {
             Assert.fail(shouldNotHappen.toString());
         }
