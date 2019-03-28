@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-
 public enum BSPSampleSearchColumn {
     SAMPLE_ID("Sample ID"),
     SAMPLE_KIT("Sample Kit"),
@@ -100,8 +99,8 @@ public enum BSPSampleSearchColumn {
 
     public static final BSPSampleSearchColumn[] PICO_QUEUE_DATA_DUMP = {
             SAMPLE_ID, SAMPLE_STATUS, ROOT_SAMPLE, SAMPLE_KIT, PARTICIPANT_ID, COLLECTION, ORIGINAL_MATERIAL_TYPE,
-            MATERIAL_TYPE, VOLUME, CONCENTRATION, /* Manufacturer Barcode */ CONTAINER_ID, /* POSITION */
-            /* Location */ CONTAINER_NAME, COLLABORATOR_PARTICIPANT_ID, COLLABORATOR_SAMPLE_ID
+            MATERIAL_TYPE, VOLUME, CONCENTRATION, MANUFACTURER_BARCODE, CONTAINER_ID, POSITION,
+            LOCATION, CONTAINER_NAME, COLLABORATOR_PARTICIPANT_ID, COLLABORATOR_SAMPLE_ID
     };
 
     public static boolean isQuantColumn(BSPSampleSearchColumn bspSampleSearchColumn) {

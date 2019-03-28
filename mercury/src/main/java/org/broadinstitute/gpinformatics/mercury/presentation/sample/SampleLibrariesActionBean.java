@@ -89,7 +89,7 @@ public class SampleLibrariesActionBean extends CoreActionBean {
         eventTypes.add(LabEventType.DENATURE_TRANSFER);
         eventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
 
-        List<LabVessel> vessels = labVesselDao.findByUnknownBarcodeTypeList(selectedSamples);
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyOrLabVesselLabel(selectedSamples);
         for (LabVessel startingVessel : vessels) {
             Collection<String> vesselSampleNames = startingVessel.getSampleNames();
             sampleNames.addAll(vesselSampleNames);

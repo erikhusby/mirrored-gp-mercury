@@ -161,7 +161,7 @@ public class ReceiveSamplesEjb {
      */
     private void addToPicoQueueIfNecessary(List<String> sampleIds, MessageCollection messageCollection) {
         List<LabVessel> vesselsForPico = new ArrayList<>();
-        List<LabVessel> labVessels = labVesselDao.findByUnknownBarcodeTypeList(sampleIds);
+        List<LabVessel> labVessels = labVesselDao.findBySampleKeyOrLabVesselLabel(sampleIds);
         labVessels.addAll(labVesselDao.findByBarcodes(sampleIds).values());
 
         for (LabVessel labVessel : labVessels) {

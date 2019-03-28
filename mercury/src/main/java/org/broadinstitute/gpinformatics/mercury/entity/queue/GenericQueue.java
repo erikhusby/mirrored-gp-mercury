@@ -117,7 +117,7 @@ public class GenericQueue {
             for (QueueGrouping queueGrouping : getQueueGroupings()) {
                 if (queueGrouping.getQueuedEntities() != null) {
                     for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
-                        if (queueEntity.getQueueStatus() == QueueStatus.Active) {
+                        if (queueEntity.getQueueStatus().isStillInQueue()) {
                             return false;
                         }
                     }

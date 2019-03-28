@@ -1,13 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 
+import org.apache.commons.lang3.tuple.Triple;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 @Entity
 @Audited
@@ -196,5 +203,46 @@ public class BarcodedTube extends LabVessel {
 
     public void setTubeType(BarcodedTubeType type) {
         tubeType = type;
+    }
+
+    @Override
+    public Triple<RackOfTubes, VesselPosition, String> findStorageContainer() {
+
+        if (getStorageLocation() != null) {
+            // If Barcoded Tube, attempt to find its container by grabbing most recent Storage Check-in event.
+            SortedMap<Date, TubeFormation> sortedMap = new TreeMap<>();
+            for (LabVessel container : getContainers()) {
+                if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
+                    TubeFormation tubeFormation = OrmUtil.proxySafeCast(
+                            container, TubeFormation.class);
+                    for (LabEvent labEvent : tubeFormation.getInPlaceLabEvents()) {
+                        if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN) {
+                            sortedMap.put(labEvent.getEventDate(), tubeFormation);
+                        }
+                    }
+                }
+            }
+            if (!sortedMap.isEmpty()) {
+                TubeFormation tubeFormation = sortedMap.get(sortedMap.lastKey());
+                for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
+                    if (rackOfTubes.getStorageLocation() != null) {
+                        if (rackOfTubes.getStorageLocation().equals(getStorageLocation())) {
+                            VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
+                            for (Map.Entry<VesselPosition, BarcodedTube> entry:
+                                    containerRole.getMapPositionToVessel().entrySet()) {
+                                LabVessel value = entry.getValue();
+                                if (value != null && value.getLabel().equals(getLabel())) {
+                                    String locationTrail = rackOfTubes.getStorageLocation().buildLocationTrail() + "["
+                                            + rackOfTubes.getLabel() + "]";
+                                    return Triple.of(rackOfTubes, entry.getKey(), locationTrail);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 }

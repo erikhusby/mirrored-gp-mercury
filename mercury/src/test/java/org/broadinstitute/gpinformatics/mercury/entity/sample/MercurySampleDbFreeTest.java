@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.mockito.Mockito;
@@ -16,7 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-import static org.testng.Assert.*;
 
 @Test(singleThreaded = true, groups = DATABASE_FREE)
 public class MercurySampleDbFreeTest {

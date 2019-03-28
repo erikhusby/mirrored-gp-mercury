@@ -37,12 +37,14 @@ public class PicoQueueValidator implements AbstractQueueValidator {
             // Default to pass, change to fail or unknown if needed.
             validationResultsById.put(labVessel.getLabVesselId(), ValidationResult.PASS);
 
-            // Checks to see if a sample is a BSP sample AND checks to see if mercury knows that it is DNA or not.
-            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                MaterialType materialType = sampleInstanceV2.getMaterialType();
-                if (materialType != null && !materialType.name().toLowerCase().contains("dna")) {
+            MaterialType latestMaterialType = labVessel.getLatestMaterialType();
+            if (latestMaterialType != null) {
+                if (latestMaterialType.name().toLowerCase().contains("dna")) {
                     validationResultsById.put(labVessel.getLabVesselId(), ValidationResult.FAIL);
-                } else if (labVessel.getMercurySamples() != null) {
+                }
+            } else {
+                // Checks to see if a sample is a BSP sample AND checks to see if mercury knows that it is DNA or not.
+                if (labVessel.getMercurySamples() != null) {
                     for (MercurySample mercurySample : labVessel.getMercurySamples()) {
                         if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
                             bspSampleIdsByVesselId.put(labVessel.getLabVesselId(), mercurySample.getSampleKey());

@@ -812,42 +812,6 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Triple<RackOfTubes, VesselPosition, String> findStorageContainer() {
-        if (getStorageLocation() != null) {
-            // If Barcoded Tube, attempt to find its container by grabbing most recent Storage Check-in event.
-            if (OrmUtil.proxySafeIsInstance(this, BarcodedTube.class)) {
-                SortedMap<Date, TubeFormation> sortedMap = new TreeMap<>();
-                for (LabVessel container : getContainers()) {
-                    if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
-                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(
-                                container, TubeFormation.class);
-                        for (LabEvent labEvent : tubeFormation.getInPlaceLabEvents()) {
-                            if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN) {
-                                sortedMap.put(labEvent.getEventDate(), tubeFormation);
-                            }
-                        }
-                    }
-                }
-                if (!sortedMap.isEmpty()) {
-                    TubeFormation tubeFormation = sortedMap.get(sortedMap.lastKey());
-                    for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
-                        if (rackOfTubes.getStorageLocation() != null) {
-                            if (rackOfTubes.getStorageLocation().equals(getStorageLocation())) {
-                                VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
-                                for (Map.Entry<VesselPosition, BarcodedTube> entry:
-                                        containerRole.getMapPositionToVessel().entrySet()) {
-                                    LabVessel value = entry.getValue();
-                                    if (value != null && value.getLabel().equals(getLabel())) {
-                                        String locationTrail = rackOfTubes.getStorageLocation().buildLocationTrail() + "["
-                                                               + rackOfTubes.getLabel() + "]";
-                                        return Triple.of(rackOfTubes, entry.getKey(), locationTrail);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
         return null;
     }
 

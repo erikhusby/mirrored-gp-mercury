@@ -88,10 +88,10 @@ public abstract class AbstractDataDumpGenerator {
         }
     }
 
-    private String[] generateHeaderRow(BSPSampleSearchColumn[] picoQueueDataDump) {
+    private String[] generateHeaderRow(BSPSampleSearchColumn[] dataDumpHeaderColumns) {
         String[] headers = new String[getSearchColumns().length];
         int index = 0;
-        for (BSPSampleSearchColumn bspSampleSearchColumn : picoQueueDataDump) {
+        for (BSPSampleSearchColumn bspSampleSearchColumn : dataDumpHeaderColumns) {
             headers[index] = bspSampleSearchColumn.columnName();
         }
 

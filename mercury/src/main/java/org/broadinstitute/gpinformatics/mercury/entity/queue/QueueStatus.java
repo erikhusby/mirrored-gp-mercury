@@ -16,4 +16,8 @@ public enum QueueStatus {
     public String getName() {
         return name();
     }
+
+    public boolean isStillInQueue() {
+        return this == Active || this == Repeat;
+    }
 }

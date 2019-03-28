@@ -44,7 +44,7 @@ public abstract class AbstractEnqueueOverride {
      * @param uniqueVesselIdsAlreadyInQueue     Set of VesselIds which have been in the Queue in the past.
      * @return                                  Algorithmically determined Queue Priority
      */
-    protected final QueuePriority determineQueuePriority(QueueGrouping queueGrouping, Set<Long> uniqueVesselIdsAlreadyInQueue) {
+    final QueuePriority determineQueuePriority(QueueGrouping queueGrouping, Set<Long> uniqueVesselIdsAlreadyInQueue) {
         // Check to see if ALL of the items in the grouping have been through pico before.  If so, give it default
         // otherwise utilize the queue specific logic for determining the priority.
         if (checkForPreExistingEntries(queueGrouping, uniqueVesselIdsAlreadyInQueue)) {
@@ -56,8 +56,8 @@ public abstract class AbstractEnqueueOverride {
 
     private boolean checkForPreExistingEntries(QueueGrouping queueGrouping, Set<Long> uniqueVesselIdsAlreadyInQueue) {
         int countFound = 0;
-        for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
 
+        for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
             if (uniqueVesselIdsAlreadyInQueue.contains(queueEntity.getLabVessel().getLabVesselId())) {
                 countFound++;
             }
@@ -65,10 +65,7 @@ public abstract class AbstractEnqueueOverride {
 
         // If ALL samples have been in the queue in the past, it will stay default regardless of what would have
         // happened the first time it was put into the queue.
-        if (countFound == queueGrouping.getQueuedEntities().size()) {
-            return true;
-        }
-        return false;
+        return countFound == queueGrouping.getQueuedEntities().size();
     }
 
     /**
@@ -77,7 +74,7 @@ public abstract class AbstractEnqueueOverride {
      * @param queueGrouping     QueueGrouping to determine the Queue Priority type for.
      * @return                  QueuePriorityType for the QueueGrouping passed in.
      */
-    protected final QueuePriority determineQueuePriority(QueueGrouping queueGrouping) {
+    final QueuePriority determineQueuePriority(QueueGrouping queueGrouping) {
         QueuePriority finalPriorityType = getDefaultPriority();
         for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
             QueuePriority priorityType = checkForSpecialPriorityType(queueEntity.getLabVessel().getMercurySamples());
@@ -135,7 +132,7 @@ public abstract class AbstractEnqueueOverride {
      * @param newGrouping     QueueGrouping being enqueued.
      */
     @SuppressWarnings("Duplicates")
-    private final void insertQueueGroupingIntoQueue(QueueGrouping newGrouping) {
+    private void insertQueueGroupingIntoQueue(QueueGrouping newGrouping) {
         long currentSortOrder = 1;
 
         QueuePriority[] queuePriorityOrder = getQueuePriorityOrder();

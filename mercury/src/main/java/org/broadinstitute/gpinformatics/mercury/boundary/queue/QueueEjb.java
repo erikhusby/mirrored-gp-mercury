@@ -16,8 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.QueuePriority;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -32,6 +30,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -74,7 +73,7 @@ public class QueueEjb {
      */
     public void enqueueBySampleIdList(String sampleIds, QueueType queueType, @Nullable String readableText,
                                       @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
-        final List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleIds.trim().toUpperCase());
+        List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleIds.trim().toUpperCase());
         enqueueBySampleIdList(sampleNames, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
     }
 
@@ -90,9 +89,9 @@ public class QueueEjb {
      * @param messageCollection     Messages back to the user.
      * @param queueSpecialization   What, if any QueueSpecialization is known about these lab vessels for the full list
      */
-    private void enqueueBySampleIdList(List<String> sampleIds, QueueType queueType, @Nullable String readableText,
+    public void enqueueBySampleIdList(List<String> sampleIds, QueueType queueType, @Nullable String readableText,
                                        @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
-        List<LabVessel> labVessels = labVesselDao.findByUnknownBarcodeTypeList(sampleIds);
+        List<LabVessel> labVessels = labVesselDao.findBySampleKeyOrLabVesselLabel(sampleIds);
         enqueueLabVessels(labVessels, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
     }
 
@@ -165,6 +164,13 @@ public class QueueEjb {
         return null;
     }
 
+    /**
+     * Utilizes the QueueType's value for the QueueContainerRule and finds the proper LabVesselIds to be added to the queue.
+     *
+     * @param queueType     Queue the Vessels are being added to
+     * @param vesselList    List of vessels attempting to add
+     * @return              List of VesselIds to add to the queue
+     */
     @NotNull
     private List<Long> getApplicableLabVesselIds(@Nonnull QueueType queueType, @Nonnull Collection<LabVessel> vesselList) {
         List<Long> vesselIds = new ArrayList<>();
@@ -182,8 +188,8 @@ public class QueueEjb {
     }
 
     /**
-     * Removes Lab Vessels from a queue.  It is expected only to utilize tubes and not full containers in the dequeue
-     * process.
+     * Removes Lab Vessels from a queue.  Uses the same getApplicableLabVesselIds as the enqueue class to make sure
+     * we're trying to dequeue the proper lab vessels.
      *
      * @param labVessels            Vessels to Dequeue.
      * @param queueType             Queue Type to remove from.
@@ -324,15 +330,18 @@ public class QueueEjb {
         for (QueueEntity queueEntity : queueEntities) {
             updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Excluded);
         }
-
     }
 
     private void updateQueueEntityStatus(MessageCollection messageCollection, QueueEntity queueEntity, QueueStatus queueStatus) {
 
         switch (queueStatus) {
             case Completed:
+                if (queueEntity.getQueueStatus().isStillInQueue()) {
+                    queueEntity.setCompletedOn(new Date());
+                }
+                //  Purposefully not breaking here as the remaining code is the same for both completed and excluded.
             case Excluded:
-                if (queueEntity.getQueueStatus() == QueueStatus.Active) {
+                if (queueEntity.getQueueStatus().isStillInQueue()) {
                     queueEntity.setQueueStatus(queueStatus);
                 } else {
                     messageCollection.addInfo(queueEntity.getLabVessel().getLabel() + " was attempted to be "
@@ -364,7 +373,6 @@ public class QueueEjb {
         genericQueueDao.flush();
 
         for (LabVessel labVessel : vesselList) {
-
             QueueEntity queueEntity = new QueueEntity(queueGrouping, labVessel);
             queueGrouping.getQueuedEntities().add(queueEntity);
             persist(queueEntity);
@@ -382,15 +390,6 @@ public class QueueEjb {
             // Grab the vessel is from the queue entity
             for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
                 vesselIds.add(queueEntity.getLabVessel().getLabVesselId());
-
-                // grab the vessel id from the root mercury samples
-                for (SampleInstanceV2 sampleInstanceV2 : queueEntity.getLabVessel().getSampleInstancesV2()) {
-                    for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
-                        for (LabVessel labVessel : mercurySample.getLabVessel()) {
-                            vesselIds.add(labVessel.getLabVesselId());
-                        }
-                    }
-                }
             }
 
             // Find the existing entities
@@ -465,8 +464,8 @@ public class QueueEjb {
      * @param queueType             Queue To exclude them from.
      * @param messageCollection     Messages back to the user.
      */
-    private void excludeItemsById(List<String> excludeVessels, QueueType queueType, MessageCollection messageCollection) {
-        List<LabVessel> vessels = labVesselDao.findByUnknownBarcodeTypeList(excludeVessels);
+    public void excludeItemsById(List<String> excludeVessels, QueueType queueType, MessageCollection messageCollection) {
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyOrLabVesselLabel(excludeVessels);
 
         vessels.addAll(labVesselDao.findByBarcodes(excludeVessels).values());
         vessels.removeAll(Collections.singletonList(null));

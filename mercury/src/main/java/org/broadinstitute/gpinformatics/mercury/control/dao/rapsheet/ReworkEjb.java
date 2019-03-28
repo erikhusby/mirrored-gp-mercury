@@ -145,7 +145,7 @@ public class ReworkEjb {
 
         Set<LabVessel> labVessels = new HashSet<>();
         labVessels.addAll(labVesselDao.findByListIdentifiers(query));
-        labVessels.addAll(labVesselDao.findByUnknownBarcodeTypeList(query));
+        labVessels.addAll(labVesselDao.findBySampleKeyOrLabVesselLabel(query));
 
         for (LabVessel vessel : labVessels) {
             List<ProductOrderSample> productOrderSamples = new ArrayList<>();
