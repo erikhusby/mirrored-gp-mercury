@@ -343,25 +343,35 @@ sap:
 
 MayoManifestGoogleStorage:
     DEV:
-        credentialFile: /Users/epolk/GoogleCloudStorage/mercurymayoreader.json
+        credentialFile: serviceAccountKeys/mercurymayoreader.json
+        writerCredentialFile: serviceAccountKeys/mercurymayowriter.json
         project: ancient-snow-228719
         bucketName: ep-test-spreadsheets-2019
     TEST:
-        credentialFile: /Users/epolk/GoogleCloudStorage/mercurymayoreader.json
+        credentialFile: serviceAccountKeys/mercurymayoreader.json
+        writerCredentialFile: serviceAccountKeys/mercurymayowriter.json
         project: ancient-snow-228719
         bucketName: ep-test-spreadsheets-2019
     QA:
-        credentialFile: /Users/epolk/GoogleCloudStorage/mercurymayoreader.json
+        credentialFile: serviceAccountKeys/mercurymayoreader.json
+        writerCredentialFile: DISABLED
         project: ancient-snow-228719
         bucketName: ep-test-spreadsheets-2019
     RC:
-        credentialFile: /Users/epolk/GoogleCloudStorage/mercurymayoreader.json
+        credentialFile: serviceAccountKeys/mercurymayoreader.json
+        writerCredentialFile: DISABLED
         project: ancient-snow-228719
         bucketName: ep-test-spreadsheets-2019
     PROD:
-        credentialFile: /Users/epolk/GoogleCloudStorage/mercurymayoreader.json
-        project: ancient-snow-228719
-        bucketName: ep-test-spreadsheets-2019
+        # Do not use production Google storage config values when doing a data fixup involving
+        # ManifestSessions or Mayo accessioning. Production storage uses IP whitelisting which
+        # cannot be configured here. Attempting access when not running from production Mercury
+        # server will likely throw exceptions that can roll back hibernate commits.
+        #
+        credentialFile: 
+        writerCredentialFile: DISABLED
+        project: 
+        bucketName: 
 
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
