@@ -3764,11 +3764,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.customizationJsonString = customizationJsonString;
     }
 
-    @Inject
-    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
-        this.researchProjectDao = researchProjectDao;
-    }
-
     public String getClinicalAttestationMessage() {
         return "I acknowledge that I have been properly trained in the handling of clinical projects, samples, and "
                + "data per Broad Genomics requirements, including HIPAA and data security policies, in order to order "
