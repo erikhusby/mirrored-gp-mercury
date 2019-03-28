@@ -6,6 +6,7 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.storage;
  */
 public interface GoogleStorageConfig {
     public String getCredentialFile();
+    public String getWriterCredentialFile();
     public String getProject();
     public String getBucketName();
 }

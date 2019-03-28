@@ -239,6 +239,9 @@
                         <li><stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean"
                                 event="list">Manage Genotyping Chip Types</stripes:link></li>
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoReceivingActionBean"
+                                event="storageUtilities">Mayo Storage Utilities</stripes:link></li>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.BillingSessionAccessActionBean"

@@ -28,7 +28,7 @@ public class ManifestFile {
     private Long manifestFileId;
 
     /** The filename with the appropriate namespace, directory, bucket name, etc. */
-    @Column(name = "qualified_filename")
+    @Column(name = "qualified_filename", unique = true)
     private String qualifiedFilename;
 
     protected ManifestFile() {

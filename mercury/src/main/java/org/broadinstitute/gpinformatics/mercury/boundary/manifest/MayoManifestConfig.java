@@ -18,6 +18,7 @@ import java.io.Serializable;
 @ApplicationScoped
 public class MayoManifestConfig extends AbstractConfig implements Serializable, GoogleStorageConfig {
     private String credentialFile;
+    private String writerCredentialFile;
     private String project;
     private String bucketName;
 
@@ -35,6 +36,11 @@ public class MayoManifestConfig extends AbstractConfig implements Serializable, 
     }
 
     @Override
+    public String getWriterCredentialFile() {
+        return writerCredentialFile;
+    }
+
+    @Override
     public String getProject() {
         return project;
     }
@@ -46,6 +52,10 @@ public class MayoManifestConfig extends AbstractConfig implements Serializable, 
 
     public void setCredentialFile(String credentialFile) {
         this.credentialFile = credentialFile;
+    }
+
+    public void setWriterCredentialFile(String writerCredentialFile) {
+        this.writerCredentialFile = writerCredentialFile;
     }
 
     public void setProject(String project) {

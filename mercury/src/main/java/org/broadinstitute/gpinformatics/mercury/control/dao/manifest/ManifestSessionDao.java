@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestFile;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestFile_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession_;
+import org.hibernate.criterion.MatchMode;
+import org.hibernate.criterion.Restrictions;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -89,21 +91,23 @@ public class ManifestSessionDao extends GenericDao {
     }
 
     /**
-     * Returns the manifests that contain the given package id, sorted by modified date, most recent first.
+     * Returns the manifests sorted by modified date, most recent first.
      */
-    public List<ManifestSession> getSessionsForPackage(String packageId) {
-        return findList(ManifestSession.class, ManifestSession_.sessionPrefix, packageId).stream().
+    public List<ManifestSession> getSessionsByPrefix(String prefix) {
+        return findList(ManifestSession.class, ManifestSession_.sessionPrefix, prefix).stream().
                 sorted((o1, o2) ->
                         o2.getUpdateData().getModifiedDate().compareTo(o1.getUpdateData().getModifiedDate())).
                 collect(Collectors.toList());
     }
 
-    /** Returns all of the manifest filenames that have been read, without making entities. */
-    public List<String> getQualifiedFilenames() {
-        CriteriaBuilder builder = getCriteriaBuilder();
-        CriteriaQuery<String> query = builder.createQuery(String.class);
+    /**
+     * Returns all of the qualifiedFilename that end with the suffix, without making entities.
+     */
+    public List<String> getQualifiedFilenames(String suffix) {
+        CriteriaQuery<String> query = getCriteriaBuilder().createQuery(String.class);
         Root<ManifestFile> root = query.from(ManifestFile.class);
         query.select(root.get(ManifestFile_.qualifiedFilename));
+        query.where(getCriteriaBuilder().like(root.get(ManifestFile_.qualifiedFilename), "%" + suffix));
         return getEntityManager().createQuery(query).getResultList();
     }
 }

@@ -120,6 +120,9 @@ public class ManifestSession implements Updatable {
     @JoinColumn(name = "MANIFEST_FILE")
     private ManifestFile manifestFile;
 
+    @Column(name = "MANIFEST_FILE_MD5")
+    private String manifestFileMd5;
+
     /**
      * For JPA.
      */
@@ -706,5 +709,13 @@ public class ManifestSession implements Updatable {
 
     public void setManifestFile(ManifestFile manifestFile) {
         this.manifestFile = manifestFile;
+    }
+
+    public String getManifestFileMd5() {
+        return manifestFileMd5;
+    }
+
+    public void setManifestFileMd5(String manifestFileMd5) {
+        this.manifestFileMd5 = manifestFileMd5;
     }
 }

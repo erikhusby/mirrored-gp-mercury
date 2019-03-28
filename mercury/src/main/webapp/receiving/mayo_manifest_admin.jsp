@@ -1,0 +1,79 @@
+<%@ include file="/resources/layout/taglibs.jsp" %>
+<%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
+<stripes:useActionBean var="actionBean"
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoReceivingActionBean"/>
+<stripes:layout-render name="/layout.jsp" pageTitle="Mayo Manifest Admin" sectionTitle="Mayo Manifest Admin">
+    <stripes:layout-component name="content">
+        <stripes:form beanclass="${actionBean.class.name}" id="manifestAdminForm" class="form-horizontal">
+            <!-- Tests access to manifest file storage. -->
+            <div style="padding-top: 20px;">
+                <stripes:submit id="testAccessBtn" name="testAccessBtn" value="Test Bucket Access"
+                                class="btn btn-primary"
+                                title="Click to read bucket storage and report status."/>
+            </div>
+
+            <!-- Loads all new manifest files. -->
+            <div style="padding-top: 20px;">
+                <stripes:submit id="pullAllFilesBtn" name="pullAllFilesBtn" value="Pull All New Manifest Files"
+                                class="btn btn-primary"
+                                title="Click to find new manifest files and save them in Mercury."/>
+            </div>
+
+            <!-- Re-accessions a rack. -->
+            <div style="padding-top: 20px;">
+                <span>
+                    <stripes:submit id="reaccessionBtn" name="reaccessionBtn" value="Re-accession the Rack"
+                                    class="btn btn-primary"
+                                    title="Click to redo the accession using the most recent manifest file."/>
+                    <span style="margin-left: 20px;">
+                        Rack barcode:
+                        <stripes:text id="rackBarcode" name="rackBarcode"/>
+                    </span>
+                </span>
+            </div>
+
+            <!-- Loads a new version of the given manifest file. -->
+            <div style="padding-top: 20px;">
+                <stripes:submit id="pullFileBtn" name="pullFileBtn" value="Re-Pull A Manifest File"
+                                class="btn btn-primary"
+                                title="Click to re-read the given manifest file and save it in Mercury."/>
+                <span style="margin-left: 20px;">
+                    Filename:
+                    <stripes:text id="filename" name="filename"/>
+                </span>
+            </div>
+
+            <!-- Displays the contents of a manifest file using the filename. -->
+            <div style="padding-top: 20px;">
+                <span>
+                    <stripes:submit id="viewFileBtn" name="viewFileBtn" value="View A Manifest File"
+                                    class="btn btn-primary"
+                                    title="Click to display contents of a manifest file."/>
+                    <span style="margin-left: 20px;">
+                        Filename:
+                        <stripes:text id="filename" name="filename"/>
+                    </span>
+                </span>
+            </div>
+
+            <!-- Manifest file contents. -->
+            <c:if test="${!actionBean.getManifestCellGrid().isEmpty()}">
+                <div style="padding-top: 20px;">
+                    <p>Filename: ${actionBean.filename}</p>
+                    <table id=manifestContent" border="2">
+                        <tbody>
+                        <c:forEach items="${actionBean.getManifestCellGrid()}" var="manifestRow">
+                            <tr>
+                                <c:forEach items="${manifestRow}" var="manifestColumn">
+                                    <td align="center">${manifestColumn}</td>
+                                </c:forEach>
+                            </tr>
+                        </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+            </c:if>
+
+        </stripes:form>
+    </stripes:layout-component>
+</stripes:layout-render>

@@ -8,46 +8,50 @@
         <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
 
         <stripes:form beanclass="${actionBean.class.name}" id="rackScanForm" class="form-horizontal">
-
             <!-- The hidden variables to pass back to the action bean. -->
             <c:if test="${actionBean.vesselGeometry != null}">
                 <stripes:hidden name="vesselGeometry" value="${actionBean.vesselGeometry}"/>
             </c:if>
 
-            <!-- Input for package barcode, and next to it a button to show the manifest for that package. -->
+            <!-- Captures the rack barcode. -->
             <div class="control-group">
-                <stripes:label for="packageBarcode" name="Package Barcode" class="control-label"/>
-                <div class="controls">
-                    <span style="width: 25%; border-right-width: 100px;">
-                        <input type="text" id="packageBarcode" name="packageBarcode" value="${actionBean.packageBarcode}"
-                               autocomplete="off" class="clearable barcode unique">
-                    </span>
-                    <span>
-                        <stripes:submit value="Show The Manifest" id="showManifestBtn" name="showManifestBtn"
-                                        class="btn btn-primary"
-                                        title="Displays the manifest document corresponding to the package barcode."/>
-                    </span>
-                </div>
-            </div>
-            <!-- Input for rack/box barcode. -->
-            <div class="control-group">
-                <stripes:label for="rackBarcode" name="Tube Rack or Box Barcode" class="control-label"/>
-                <div class="controls">
-                    <span>
-                        <input type="text" id="rackBarcode" name="rackBarcode" value="${actionBean.rackBarcode}"
-                               autocomplete="off" class="clearable barcode unique">
-                    </span>
-                    <span>
-                        <stripes:submit value="Receive Rack" id="saveBtn" name="saveBtn"
-                                        class="btn btn-primary"
-                                        title="Generates an RCT ticket for the rack, without tubes or samples."/>
-                    </span>
-                </div>
+                Rack Barcode:
+                <span style="padding-left: 10px;">
+                    <input type="text" id="rackBarcode" name="rackBarcode" value="${actionBean.rackBarcode}"/>
+                </span>
             </div>
 
+            <!-- Button to lookup the manifest file for the rack and display contents. -->
+            <c:if test="${actionBean.getManifestCellGrid().isEmpty()}">
+                <div style="padding-left: 8em;">
+                    <stripes:submit id="viewManifestBtn" name="viewManifestBtn" value="View The Manifest File"
+                                    class="btn btn-primary"
+                                    title="Click for a display of the manifest file that will be used for the rack."/>
+                </div>
+            </c:if>
+
+            <!-- Manifest file contents. -->
+            <c:if test="${!actionBean.getManifestCellGrid().isEmpty()}">
+                Filename: ${actionBean.filename}
+                <div style="padding-top: 10px;">
+                    <table id=manifestContent" border="2">
+                        <tbody>
+                        <c:forEach items="${actionBean.getManifestCellGrid()}" var="manifestRow">
+                            <tr>
+                                <c:forEach items="${manifestRow}" var="manifestColumn">
+                                    <td align="center">${manifestColumn}</td>
+                                </c:forEach>
+                            </tr>
+                        </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+            </c:if>
+
             <!-- Selectors for the rack scan lab & scanner, and the Scan button. -->
-            <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
-            <div class="control-group">
+            <div style="padding-top: 20px;">
+                <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
+
                 <div class="controls">
                     <stripes:submit value="Rack Scan" id="scanBtn" name="scanBtn" class="btn btn-primary"/>
                 </div>

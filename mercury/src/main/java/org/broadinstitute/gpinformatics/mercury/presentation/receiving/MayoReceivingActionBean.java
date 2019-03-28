@@ -7,8 +7,6 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
@@ -25,116 +23,164 @@ import java.util.List;
 
 /**
  * Handles receipt of Mayo samples. There are two receivables from Mayo - a manifest file that describes the
- * samples, and a rack or box of tubes. Mayo puts the manifest file in a Google storage bucket where it can be
- * read by Mercury. At a different time the rack of tubes arrives and a lab tech scans its barcodes in using
- * the Mercury UI.
+ * samples, and a rack or box of tubes. An external party puts the manifest file in shared file storage where
+ * it can be read by Mercury. At a different time the rack of tubes arrives and a lab tech scans its barcodes
+ * in using the Mercury UI.
  *
- * This class queries the lab tech for the package barcode and rack barcode, takes a rack scan of tube barcodes,
- * then looks up the manifest file using the package barcode. Mercury makes vessels, samples, a manifest session,
- * and an RCT jira ticket. If there is no manifest found the vessels and RCT ticket are still made, but not the
- * samples since they require data from the manifest. The lab tech can redo the rack scan after the manifest is
- * present in Google bucket, and this class will then create samples and manifest session and update the tubes.
- *
- * For user friendly do-overs, a rack can be rescanned provided the Overwrite checkbox is selected, and this
- * will update the existing rack to match the new scan. When this is done the manifest is re-read from Google
- * storage, and if found to have different sample metadata content, a new manifest session is created, and the
- * old sample metadata is replaced with the new. The existing RCT ticket gets updated too.
+ * This class queries the lab tech for various info at the time of rack receipt. Mercury attempts to find the
+ * matching manifest file. Regardless of the manifest file, a receipt is always done, which consists of vessels
+ * in Mercury and an RCT jira ticket with the appropriate status. If the manifest is found and it agrees with
+ * the vessels received, then accessioning occurs and the samples are made and linked with the tubes.
+ * If no manifest is found or it mismatches the vessels, the RCT ticket indicates "receipt" only, and the rack
+ * is quarantined to await further lab user involvement.
  */
 @UrlBinding(MayoReceivingActionBean.ACTION_BEAN_URL)
 public class MayoReceivingActionBean extends RackScanActionBean {
-    private static final Log logger = LogFactory.getLog(MayoReceivingActionBean.class);
     public static final String ACTION_BEAN_URL = "/receiving/mayo_receiving.action";
-    public static final String PAGE1 = "mayo_sample_receipt1.jsp";
-    public static final String PAGE2 = "mayo_sample_receipt2.jsp";
-    public static final String PAGE3 = "mayo_manifest_display.jsp";
-    public static final String SHOW_MANIFEST_EVENT = "showManifestBtn";
-    public static final String SCAN_EVENT = "scanBtn";
-    public static final String SAVE_EVENT = "saveBtn";
+    private static final String PAGE1 = "mayo_sample_receipt1.jsp";
+    private static final String PAGE2 = "mayo_sample_receipt2.jsp";
+    private static final String MANIFEST_ADMIN_PAGE = "mayo_manifest_admin.jsp";
+    private static final String STORAGE_UTILITIES = "storageUtilities";
+    private static final String TEST_ACCESS_BTN = "testAccessBtn";
+    private static final String PULL_ALL_BTN = "pullAllFilesBtn";
+    private static final String PULL_ONE_BTN = "pullFileBtn";
+    private static final String REACCESSION_BTN = "reaccessionBtn";
+    private static final String VIEW_FILE_BTN = "viewFileBtn";
+    private static final String SCAN_BTN = "scanBtn";
+    private static final String SAVE_BTN = "saveBtn";
+    private static final String VIEW_MANIFEST_BTN = "viewManifestBtn";
 
     private MessageCollection messageCollection = new MessageCollection();
-    private boolean previousMayoRack;
-    private boolean overwriteFlag;
-    private String filename;
     private VesselGeometry vesselGeometry = null;
     private List<String> rackScanEntries = new ArrayList<>();
     private List<String> rackScanBarcodes = new ArrayList<>();
-    private String[][] manifestArray;
+    private List<List<String>> manifestCellGrid = new ArrayList<>();
 
     @Inject
     private MayoManifestEjb mayoManifestEjb;
 
-    @Validate(required = true, on = {SCAN_EVENT, SHOW_MANIFEST_EVENT, SAVE_EVENT})
-    private String packageBarcode;
-
-    @Validate(required = true, on = {SCAN_EVENT, SAVE_EVENT})
+    @Validate(required = true, on = {SCAN_BTN, VIEW_MANIFEST_BTN, SAVE_BTN})
     private String rackBarcode;
+
+    @Validate(required = true, on = {VIEW_FILE_BTN, PULL_ONE_BTN})
+    private String filename;
+
+    @Validate(required = true, on = {SAVE_BTN})
+    private String shipmentCondition;
+
+    @Validate(required = true, on = {SAVE_BTN})
+    private String shippingAcknowledgement;
+
+    @Validate(required = true, on = {SAVE_BTN})
+    private String deliveryMethod;
+
+    @Validate(required = true, on = {SAVE_BTN})
+    private String receiptType;
 
     @DefaultHandler
     public Resolution page1() {
         return new ForwardResolution(PAGE1);
     }
 
-    @HandlesEvent(SCAN_EVENT)
+    @HandlesEvent(STORAGE_UTILITIES)
+    public Resolution storageUtilities() {
+        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
+    }
+
+    @HandlesEvent(SCAN_BTN)
     public Resolution scanEvent() throws ScannerException {
         // Performs the rack scan.
         runRackScan(false);
         if (rackScan == null || rackScan.isEmpty()) {
             messageCollection.addError("The rack scan is empty.");
+            addMessages(messageCollection);
+            return new ForwardResolution(PAGE1);
         } else {
             // Parses the rack scan into tubes and positions. Looks up the manifest file.
             mayoManifestEjb.processScan(this);
+            addMessages(messageCollection);
+            return new ForwardResolution(PAGE2);
         }
-        addMessages(messageCollection);
-        return new ForwardResolution(messageCollection.hasErrors() ? PAGE1 : PAGE2);
     }
 
     /**
-     * Retrieves and displays the manifest cell data from Google Storage file.
+     * Makes receipt artifacts for the rack and tubes and accessions
+     * samples if a ManifestSession is found and the data matches up.
      */
-    @HandlesEvent(SHOW_MANIFEST_EVENT)
-    public Resolution showManifest() {
-        // Finds the manifest filename but looking up the manifest session from info in the UI.
-        // Puts the file content into a cell grid.
-        List<List<String>> manifestCellGrid = mayoManifestEjb.readManifestAsCellGrid(this);
-        if (!manifestCellGrid.isEmpty() && !hasErrors()) {
-            int maxColumnCount = manifestCellGrid.stream().mapToInt(List::size).max().orElse(0);
-            manifestArray = new String[manifestCellGrid.size()][maxColumnCount];
-            MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
-            processor.initHeaders(manifestCellGrid.get(0), filename, null);
-            processor.fixupDates(manifestCellGrid.subList(1, manifestCellGrid.size()), filename);
-            for (int rowIdx = 0; rowIdx < manifestCellGrid.size(); ++rowIdx) {
-                List<String> columns = manifestCellGrid.get(rowIdx);
-                for (int columnIdx = 0; columnIdx < columns.size(); ++columnIdx) {
-                    manifestArray[rowIdx][columnIdx] = columns.get(columnIdx);
-                }
-            }
-        } else {
-            messageCollection.addError("Cannot find %s in Google Storage.", filename);
-        }
-        addMessages(messageCollection);
-        return new ForwardResolution(hasErrors() ? PAGE1 : PAGE3);
-    }
-
-    /**
-     * Makes samples and tubes for the rack whose barcode has been scanned. If there is also a
-     * ManifestSession for the scanned package barcode, finds the correct ManifestRecords for this
-     * rack and links Metadata to the samples and tubes.
-     */
-    @HandlesEvent(SAVE_EVENT)
+    @HandlesEvent(SAVE_BTN)
     public Resolution saveEvent() {
-        // Reconstructs the rackScan from the jsp's mapEntries.
-        rackScan = new LinkedHashMap<>();
-        for (String rackScanEntry : rackScanEntries) {
-            String[] tokens = rackScanEntry.split(" ");
-            String value = (tokens.length > 1) ? tokens[1] : "";
-            rackScan.put(tokens[0], value);
-            if (StringUtils.isNotBlank(value)) {
-                rackScanBarcodes.add(value);
-            }
-        }
+        reconstructScan();
         mayoManifestEjb.saveScan(this);
         addMessages(messageCollection);
         return new ForwardResolution(PAGE1);
+    }
+
+    /**
+     * Generates a cell grid for the contents of the manifest file.
+     */
+    @HandlesEvent(VIEW_MANIFEST_BTN)
+    public Resolution showManifest() {
+        reconstructScan();
+        manifestCellGrid = mayoManifestEjb.readManifestAsCellGrid(this);
+        addMessages(messageCollection);
+        // If a rack scan was done, use it and go to page2.
+        return new ForwardResolution((rackScan == null || rackScan.isEmpty()) ? PAGE1 : PAGE2);
+    }
+
+    /**
+     * Displays connection and storage bucket access status in the process of
+     * listing the storage bucket and reading a bucket file chosen at random.
+     */
+    @HandlesEvent(TEST_ACCESS_BTN)
+    public Resolution testAccess() {
+        mayoManifestEjb.testAccess(this);
+        addMessages(messageCollection);
+        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
+    }
+
+    /**
+     * Processes all new files found in the storage bucket.
+     */
+    @HandlesEvent(PULL_ALL_BTN)
+    public Resolution pullAll() {
+        mayoManifestEjb.pullAll(this);
+        addMessages(messageCollection);
+        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
+    }
+
+    /**
+     * Re-reads and re-processes one file, for the purpose of updating
+     * (i.e. creating a new) manifest session for the file.
+     */
+    @HandlesEvent(PULL_ONE_BTN)
+    public Resolution pullOne() {
+        mayoManifestEjb.pullOne(this);
+        addMessages(messageCollection);
+        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
+    }
+
+    /**
+     * Re-accessions the rack and its tubes using the most recent manifest.
+     * Any tube or position changes must be fixed up before running this.
+     */
+    @HandlesEvent(REACCESSION_BTN)
+    public Resolution reaccession() {
+        mayoManifestEjb.reaccession(this);
+        addMessages(messageCollection);
+        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
+    }
+
+    /**
+     * Generates a cell grid for the contents of the specified manifest file.
+     */
+    @HandlesEvent(VIEW_FILE_BTN)
+    public Resolution viewFile() {
+        manifestCellGrid = mayoManifestEjb.readManifestAsCellGrid(this);
+        if (manifestCellGrid.isEmpty()) {
+            messageCollection.addError("Cannot find %s in manifest file storage.", filename);
+        }
+        addMessages(messageCollection);
+        return new ForwardResolution(MANIFEST_ADMIN_PAGE);
     }
 
     @Override
@@ -182,28 +228,12 @@ public class MayoReceivingActionBean extends RackScanActionBean {
         this.messageCollection = messageCollection;
     }
 
-    public boolean isOverwriteFlag() {
-        return overwriteFlag;
-    }
-
-    public void setOverwriteFlag(boolean overwriteFlag) {
-        this.overwriteFlag = overwriteFlag;
-    }
-
     public void setVesselGeometry(VesselGeometry vesselGeometry) {
         this.vesselGeometry = vesselGeometry;
     }
 
-    public String[][] getManifestArray() {
-        return manifestArray;
-    }
-
-    public String getPackageBarcode() {
-        return packageBarcode;
-    }
-
-    public void setPackageBarcode(String packageBarcode) {
-        this.packageBarcode = packageBarcode;
+    public List<List<String>> getManifestCellGrid() {
+        return manifestCellGrid;
     }
 
     public String getRackBarcode() {
@@ -218,14 +248,6 @@ public class MayoReceivingActionBean extends RackScanActionBean {
         return filename;
     }
 
-    public boolean isPreviousMayoRack() {
-        return previousMayoRack;
-    }
-
-    public void setPreviousMayoRack(boolean previousMayoRack) {
-        this.previousMayoRack = previousMayoRack;
-    }
-
     public void setFilename(String filename) {
         this.filename = filename;
     }
@@ -236,5 +258,73 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     public void setMayoManifestEjb(MayoManifestEjb mayoManifestEjb) {
         this.mayoManifestEjb = mayoManifestEjb;
+    }
+
+    public String getShipmentCondition() {
+        return shipmentCondition;
+    }
+
+    public void setShipmentCondition(String shipmentCondition) {
+        this.shipmentCondition = shipmentCondition;
+    }
+
+    public String getDeliveryMethod() {
+        return deliveryMethod;
+    }
+
+    public void setDeliveryMethod(String deliveryMethod) {
+        this.deliveryMethod = deliveryMethod;
+    }
+
+    public String getReceiptType() {
+        return receiptType;
+    }
+
+    public void setReceiptType(String receiptType) {
+        this.receiptType = receiptType;
+    }
+
+    public String getShippingAcknowledgement() {
+        return shippingAcknowledgement;
+    }
+
+    public void setShippingAcknowledgement(String shippingAcknowledgement) {
+        this.shippingAcknowledgement = shippingAcknowledgement;
+    }
+
+    /** Lookup key for ManifestSession. */
+    public String getManifestKey() {
+        return rackBarcode;
+    }
+
+    /** Lookup key for ManifestSession. */
+    public static String getManifestKey(String rackBarcode) {
+        return rackBarcode;
+    }
+
+    /**
+     * Returns a manifest session key from a row of spreadsheet values, possibly blank.
+     * @param headers the spreadsheet headers that correspond with the values.
+     */
+    public static String makeManifestKey(List<MayoManifestImportProcessor.Header> headers, List<String> values) {
+        for (int i = 0; i < headers.size(); ++i) {
+            if (headers.get(i) == MayoManifestImportProcessor.Header.BOX_ID) {
+                return values.get(i);
+            }
+        }
+        return "";
+    }
+
+    /** Reconstructs the rackScan from the jsp's hidden variables. */
+    private void reconstructScan() {
+        rackScan = new LinkedHashMap<>();
+        for (String rackScanEntry : rackScanEntries) {
+            String[] tokens = rackScanEntry.split(" ");
+            String value = (tokens.length > 1) ? tokens[1] : "";
+            rackScan.put(tokens[0], value);
+            if (StringUtils.isNotBlank(value)) {
+                rackScanBarcodes.add(value);
+            }
+        }
     }
 }
