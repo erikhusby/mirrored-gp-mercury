@@ -686,28 +686,10 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         String chipBarcodeME = "200803750060";
 
         boolean resultPos = limsQueryResource.verifyChipTypes(ampPlateME, Collections.singletonList(chipBarcodeME));
-        Assert.assertEquals(resultPos, true);
+        Assert.assertTrue(resultPos);
 
         boolean resultNeg = limsQueryResource.verifyChipTypes(ampPlateInf, Collections.singletonList(chipBarcodeME));
-        Assert.assertEquals(resultNeg, false);
-
-    }
-
-    @Test
-    public void testVerifyChipTypesFail() throws IOException {
-        /*
-        Chip Type Infinium-MethylationEPIC
-        */
-        String ampPlateInf = "000017236009";
-        String chipBarcodeInf = "203027390034";
-        /*
-        Chip Type Multi-EthnicGlobal
-        */
-        String ampPlateME = "000016899009";
-        String chipBarcodeME = "200803750060";
-
-        boolean resultNeg = limsQueryResource.verifyChipTypes(ampPlateInf, Collections.singletonList(chipBarcodeME));
-        Assert.assertEquals(resultNeg, true);
+        Assert.assertFalse(resultNeg);
 
     }
 }
