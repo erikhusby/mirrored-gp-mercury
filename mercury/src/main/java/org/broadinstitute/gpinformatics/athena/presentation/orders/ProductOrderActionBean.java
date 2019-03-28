@@ -240,7 +240,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
-    @Inject
     private ResearchProjectDao researchProjectDao;
 
     @Inject
@@ -252,7 +251,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProductOrderListEntryDao orderListEntryDao;
 
-    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -285,7 +283,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private BSPConfig bspConfig;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
     private JiraService jiraService;
 
     @Inject
@@ -769,35 +766,35 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(editOrder.getLaneCount() > 0, "a specified number of lanes", action);
         }
 
-        if(action.equals(PLACE_ORDER_ACTION) && editOrder.getProduct().isClinicalProduct()) {
-                requireField(editOrder.isClinicalAttestationConfirmed().booleanValue(),
-                        "the checkbox that confirms you have completed requirements to place a clinical order",
-                        action);
-
+        if(action.equals(PLACE_ORDER_ACTION) && editOrder.getProduct() != null && editOrder.getProduct().isClinicalProduct()) {
+            requireField(editOrder.isClinicalAttestationConfirmed().booleanValue(),
+                    "the checkbox that confirms you have completed requirements to place a clinical order",
+                    action);
         }
 
-        Quote quote = validateQuote(editOrder);
+        Optional<Quote> quote = Optional.ofNullable(validateQuote(editOrder));
 
         try {
-            if (quote != null) {
-                ProductOrder.checkQuoteValidity(quote);
+            if (quote.isPresent()) {
+                ProductOrder.checkQuoteValidity(quote.get());
                 final String[] error = new String[1];
-                quote.getFunding().stream()
+                quote.get().getFunding().stream()
                     .filter(Funding::isFundsReservation)
                     .forEach(funding -> {
-                        int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                        long numDaysBetween = DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
                         if (numDaysBetween > 0 && numDaysBetween < 45) {
                             addMessage(
                                 String.format("The Funding Source %s on %s  Quote expires in %d days. If it is likely "
                                               + "this work will not be completed by then, please work on updating the "
                                               + "Funding Source so Billing Errors can be avoided.",
-                                    funding.getDisplayName(), quote.getAlphanumericId(), numDaysBetween)
+                                    funding.getDisplayName(), quote.get().getAlphanumericId(), numDaysBetween)
                             );
                         }
                     });
             }
+            validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
+                                                                                  editOrder.getQuoteId())), 0);
 
-            validateQuoteDetails(quote, 0);
 
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
@@ -1979,8 +1976,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                     priceTitle = "clinicalPrice";
                 }
 
-                BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
-                item.put(priceTitle , NumberFormat.getCurrencyInstance().format(priceForFormat));
+                QuotePriceItem quoteForAddon = priceListCache.findByKeyFields(addOn.getPrimaryPriceItem());
+                if (quoteForAddon != null) {
+                    BigDecimal priceForFormat = new BigDecimal(quoteForAddon.getPrice());
+                    item.put(priceTitle , NumberFormat.getCurrencyInstance().format(priceForFormat));
+                    itemList.put(item);
+                }
 
 //                String externalPrice = null;
 //                if (addOn.getExternalPriceItem() != null) {
@@ -1992,7 +1993,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 //
 //                item.put("externalListPrice", (externalPrice != null) ?externalPrice:"");
 
-                itemList.put(item);
             }
         }
         return itemList;
@@ -2050,36 +2050,48 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution suggestRegulatoryInfo() throws Exception {
         JSONObject results = new JSONObject();
         JSONArray jsonResults = new JSONArray();
+        JSONArray jsonErrors = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
+        List<ProductOrderSample> productOrderSamples=new ArrayList<>();
         if (!getSampleList().isEmpty()) {
-            List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
-            // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
-            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
+            try {
+                productOrderSamples = stringToSampleListExisting(getSampleList());
+
+                // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
+                ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
                     BSPSampleSearchColumn.COLLECTION);
 
-            Multimap<String, ProductOrderSample> samplesByCollection = HashMultimap.create();
-            for (ProductOrderSample productOrderSample : productOrderSamples) {
-                String collectionId = productOrderSample.getSampleData().getCollectionId();
-                if (!collectionId.isEmpty()) {
-                    samplesByCollection.put(collectionId, productOrderSample);
-                }
-            }
-
-            List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
-            for (OrspProject orspProject : orspProjects) {
-                for (OrspProjectConsent consent : orspProject.getConsents()) {
-                    Collection<ProductOrderSample> samples =
-                            samplesByCollection.get(consent.getKey().getSampleCollection());
-                    for (ProductOrderSample sample : samples) {
-                        sample.addOrspProject(orspProject);
+                Multimap<String, ProductOrderSample> samplesByCollection = HashMultimap.create();
+                for (ProductOrderSample productOrderSample : productOrderSamples) {
+                    String collectionId = productOrderSample.getSampleData().getCollectionId();
+                    if (!collectionId.isEmpty()) {
+                        samplesByCollection.put(collectionId, productOrderSample);
                     }
                 }
+
+                List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
+                for (OrspProject orspProject : orspProjects) {
+                    for (OrspProjectConsent consent : orspProject.getConsents()) {
+                        Collection<ProductOrderSample> samples =
+                            samplesByCollection.get(consent.getKey().getSampleCollection());
+                        for (ProductOrderSample sample : samples) {
+                            sample.addOrspProject(orspProject);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                jsonErrors.put(e.getMessage());
             }
             // Fetching RP here instead of a @Before method to avoid the fetch when it won't be used.
             ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
             Map<String, RegulatoryInfo> regulatoryInfoByIdentifier = researchProject.getRegulatoryByIdentifier();
             jsonResults = orspProjectToJson(productOrderSamples, regulatoryInfoByIdentifier);
+        }
+        if (jsonErrors.length() > 0) {
+            jsonResults.put(new HashMap<String, JSONArray>() {{
+                put("errors", jsonErrors);
+            }});
         }
         results.put("data", jsonResults);
         results.put("draw", 1);
@@ -2410,7 +2422,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if(productEntity.isClinicalProduct()) {
                 priceTitle = "clinicalPrice";
             }
-
+            productInfo.put("productAgp", productEntity.getDefaultAggregationParticle());
             BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
             productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
 //            String externalPrice = null;
@@ -3362,10 +3374,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                                 StringUtils.join(missingRegulatoryRequirements, ", "),
                                 editOrder.getResearchProject().getName());
                     }
-
                 }
             }
-
         }
     }
 
@@ -3795,6 +3805,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.customizationJsonString = customizationJsonString;
     }
 
+    @Inject
+    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
+        this.researchProjectDao = researchProjectDao;
+    }
+
     public String getClinicalAttestationMessage() {
         return "I acknowledge that I have been properly trained in the handling of clinical projects, samples, and "
                + "data per Broad Genomics requirements, including HIPAA and data security policies, in order to order "
@@ -3812,5 +3827,15 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public Collection<DisplayableItem> getReagentDesigns() {
         return makeDisplayableItemCollection(reagentDesignDao.findAll());
+    }
+
+    @Inject
+    public void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
+    }
+
+    @Inject
+    public void setJiraService(JiraService jiraService) {
+        this.jiraService = jiraService;
     }
 }

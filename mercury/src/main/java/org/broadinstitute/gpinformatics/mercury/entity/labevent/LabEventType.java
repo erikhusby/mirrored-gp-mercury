@@ -15,7 +15,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -2697,16 +2696,15 @@ public enum LabEventType {
     // Holds details regarding each reagent possibly used.
     public static class ReagentRequirements {
 
-        String reagentName;
+        private String reagentName;
 
-        @XmlTransient
-        Pattern barcodePattern;
+        // todo jmt this should be a String, so it can be set from XML
+        // XmlAccessType.FIELD and @XmlTransient doesn't work here, still get "does not have a no-arg default constructor"
+        private Pattern barcodePattern;
 
-        @XmlTransient
-        int fieldCount;
+        private int fieldCount = 1;
 
-        @XmlTransient
-        boolean expirationDateIncluded;
+        private boolean expirationDateIncluded;
 
         // This constructor is required for xml loading.
         public ReagentRequirements(String reagentName) {
@@ -2740,6 +2738,10 @@ public enum LabEventType {
             return reagentName;
         }
 
+        public void setReagentName(String reagentName) {
+            this.reagentName = reagentName;
+        }
+
         public Pattern getBarcodePattern() {
             return barcodePattern;
         }
@@ -2748,8 +2750,16 @@ public enum LabEventType {
             return fieldCount;
         }
 
+        public void setFieldCount(int fieldCount) {
+            this.fieldCount = fieldCount;
+        }
+
         public boolean isExpirationDateIncluded() {
             return expirationDateIncluded;
+        }
+
+        public void setExpirationDateIncluded(boolean expirationDateIncluded) {
+            this.expirationDateIncluded = expirationDateIncluded;
         }
 
         /**

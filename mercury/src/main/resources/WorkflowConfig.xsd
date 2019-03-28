@@ -17,6 +17,7 @@
     <xs:complexType name="reagentRequirementsType">
         <xs:sequence>
             <xs:element type="xs:string" name="reagentName"/>
+            <xs:element type="xs:boolean" name="expirationDateIncluded"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="manualTransferDetailsType">

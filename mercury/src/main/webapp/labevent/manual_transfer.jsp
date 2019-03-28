@@ -211,7 +211,11 @@
                             $j("#camera_overlay").append(video);
                             var canvas = $j('<canvas id="canvas" width="' + camWidth + '" height="' + camHeight + '"></canvas>').hide();
                             $j("#camera_overlay").append(canvas);
-                            video[0].src = window.URL.createObjectURL(stream);
+                            try { // Handle deprecation on new version of Chrome better
+                                video[0].srcObject = stream;
+                            } catch (e) {
+                                video[0].src = window.URL.createObjectURL(stream);
+                            }
                             video[0].play();
                             camInitialized = true;
                             return true;
@@ -275,13 +279,14 @@
                 return true;
             }
 
+            /* Date passed in is expected to be in the format of mm-dd-yyyy or mm/dd/yyyy. */
             function isDatePast(dateText) {
-                var inputDate = dateText.split("/");
-                if (inputDate.length < 3) {
-                    inputDate = dateText.split("-");
-                }
                 var today = new Date();
-                inputDate = new Date(inputDate[2], inputDate[1] - 1, inputDate[0], 0, 0, 0, 0);
+                // If a slash is found, use that as delimiter otherwise use a dash.
+                var delimUsed = dateText.indexOf("/") > 0 ? "/" : "-";
+                var inputDate = dateText.split(delimUsed);
+                // Note that we subtract one from month because of weird date indexing by Date() class.
+                inputDate = new Date(inputDate[2], (inputDate[0] - 1), inputDate[1], 0, 0, 0, 0);
                 today = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
                 return inputDate < today;
             }
