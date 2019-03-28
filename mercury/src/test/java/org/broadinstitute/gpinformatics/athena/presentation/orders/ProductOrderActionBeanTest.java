@@ -12,9 +12,9 @@ import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
@@ -136,6 +136,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
@@ -369,6 +370,49 @@ public class ProductOrderActionBeanTest {
     public void testCanEmptyRinScoreBeUsedForOnRiskCalculation() {
         SampleData emptyRinScoreSample = getSampleDTOWithEmptyRinScore();
         Assert.assertTrue(emptyRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
+    }
+
+    @DataProvider(name = "regulatorySuggestionSampleInputs")
+    public Iterator<Object[]> regulatorySuggestionSampleInputs() {
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{"SM-1234", true});
+        testCases.add(new Object[]{"SM-HJILE ", false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u00a0","x", "\u00a0"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u1680","x", "\u1680"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u180e","x", "\u180e"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u2000","x", "\u2000"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u202f","x", "\u202f"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u205f","x", "\u205f"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u3000","x", "\u3000"), false});
+        testCases.add(new Object[]{"SM-HBYE9\nSM-I2QU9\nSM-I43WJ\nSM-HJILE \nSM-GM6ND", false});
+        testCases.add(new Object[]{"SM-HOW1Z\nSM-HGTBZ\nSM-HPNGW\nSM-HK6O2\nSM-HJQFA\nSM-HG3GT", true});
+
+        return testCases.iterator();
+    }
+
+
+    @Test(dataProvider = "regulatorySuggestionSampleInputs")
+    public void testRegulatorySuggestionInput(String sampleId, boolean inputIsAsciiPrintable) throws Exception {
+        Product product = new Product();
+        pdo.setProduct(product);
+        ResearchProjectDao mockResearchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        Mockito.when(mockResearchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(new ResearchProject());
+        actionBean.setResearchProjectDao(mockResearchProjectDao);
+        actionBean.setResearchProjectKey("somekey");
+        actionBean.setEditOrder(pdo);
+        actionBean.setProduct("test product");
+
+        // Show that the input is not ascii printable. Mimics what is called in the ProductOrderSample constructor.
+        final List<String> collect = Arrays.asList(sampleId.split("\\s"))
+                .stream().filter(s -> !StringUtils.isAsciiPrintable(s)).collect(Collectors.toList());
+        assertThat(CollectionUtils.isEmpty(collect),equalTo(inputIsAsciiPrintable));
+
+        actionBean.setSampleList(sampleId);
+        try {
+            actionBean.suggestRegulatoryInfo();
+        } catch (Exception e) {
+            Assert.fail("Calling suggestRegulatoryInfo() should not have resulted in an exception being thrown", e);
+        }
     }
 
     /**

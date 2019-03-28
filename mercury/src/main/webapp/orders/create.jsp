@@ -216,6 +216,10 @@
                 return $j("<div></div>", {"class": "noOrsp", "text": "No ORSP Projects found."})[0].outerHTML
             }
 
+            // prevent datatables javascript error from appearing.
+            $j.fn.dataTable.ext.errMode = function (settings, helpPage, message) {
+                console.log(message);
+            };
             regulatorySuggestionDT = $j("#regulatoryInfoSuggestions").DataTable({
                 dom: 't',
                 stateSave: false,
@@ -240,32 +244,38 @@
                 columns: [{
                     data: "samples", title: "Sample IDs", 'class': "sample", render: {
                         display: function (samples, type, row, meta) {
-                            var linkId = 'orsp' + meta.row + meta.col;
-                            var sampleString = samples.join(", ");
-                            var sampleLength = samples.length;
-                            var linkSelector = '#' + linkId;
-                            var $href = $j("<a></a>", {
-                                'href': 'javascript:;',
-                                'id': linkId,
-                                'text': 'Click to copy',
-                                'data-placement': 'right',
-                                'data-delay': 2000,
-                                'data-toggle': "tooltip",
-                                'data-original-title': sampleLength + ' sample names copied to clipboard.',
-                                'data-clipboard-target': linkSelector,
-                                'data-clipboard-text': sampleString
-                            });
-                            var clipboard = new Clipboard("a" + linkSelector);
-                            var api = $j.fn.dataTable.Api(meta.settings);
-                            api.cell().on('click.dt', function(event) {
-                                $j(event.target).tooltip("show");
-                                setTimeout(function () {
-                                    $j(event.target).tooltip('hide');
-                                }, 2000);
-                            });
+                            if (row.errors!==undefined) {
+                                modalMessages("error").add(row.errors, "addSamples");
+                            }
 
-                            return sampleString.trunc(90) + "<br/>" + '<div>' + $href[0].outerHTML+'</div>';
+                            if (samples!==undefined) {
+                                var linkId = 'orsp' + meta.row + meta.col;
+                                var sampleString = samples.join(", ");
+                                var sampleLength = samples.length;
+                                var linkSelector = '#' + linkId;
+                                var $href = $j("<a></a>", {
+                                    'href': 'javascript:;',
+                                    'id': linkId,
+                                    'text': 'Click to copy',
+                                    'data-placement': 'right',
+                                    'data-delay': 2000,
+                                    'data-toggle': "tooltip",
+                                    'data-original-title': sampleLength + ' sample names copied to clipboard.',
+                                    'data-clipboard-target': linkSelector,
+                                    'data-clipboard-text': sampleString
+                                });
+                                var clipboard = new Clipboard("a" + linkSelector);
+                                var api = $j.fn.dataTable.Api(meta.settings);
+                                api.cell().on('click.dt', function (event) {
+                                    $j(event.target).tooltip("show");
+                                    setTimeout(function () {
+                                        $j(event.target).tooltip('hide');
+                                    }, 2000);
 
+                                });
+
+                                return sampleString.trunc(90) + "<br/>" + '<div>' + $href[0].outerHTML + '</div>';
+                            }
                         }
                     }
                 }, {
