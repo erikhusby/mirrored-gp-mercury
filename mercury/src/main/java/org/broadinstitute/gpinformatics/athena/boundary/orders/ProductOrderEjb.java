@@ -347,15 +347,13 @@ public class ProductOrderEjb {
         List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(editedProductOrder);
         try {
             productPriceCache.determineIfProductsExist(allProductsOrdered, editedProductOrder.getSapCompanyConfigurationForProductOrder());
-//            Quote quote = editedProductOrder.hasSapQuote()?editedProductOrder.getSapQuote(sapService):editedProductOrder.getQuote(quoteService);
-            
+
             final boolean quoteIdChange = editedProductOrder.isSavedInSAP() &&
                                           !editedProductOrder.getQuoteId()
                                                   .equals(editedProductOrder.latestSapOrderDetail().getQuoteId());
 
             if ((!editedProductOrder.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
-                final String newSapOrderNumber = createOrderInSAP(editedProductOrder, quoteIdChange,
-                        allProductsOrdered, messageCollection, true);
+                createOrderInSAP(editedProductOrder, quoteIdChange, allProductsOrdered, messageCollection, true);
 
 
             } else if (editedProductOrder.isSavedInSAP()) {
@@ -1664,8 +1662,6 @@ public class ProductOrderEjb {
             SAPIntegrationException {
         List<String> errorMessages = new ArrayList<>();
 
-//        Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
-//        Map<String, SapQuote> usedSAPQuotesMiniCache = new HashMap<>();
 
         Map<String, Boolean> updatedOrderMap = new HashMap<>();
 
@@ -1675,18 +1671,6 @@ public class ProductOrderEjb {
 
             if(!updatedOrderMap.containsKey(productOrderSample.getProductOrder().getBusinessKey()) ||
                !updatedOrderMap.get(productOrderSample.getProductOrder().getBusinessKey())) {
-
-//                Quote orderQuote = usedQuotesMiniCache.get(productOrderSample.getProductOrder().getQuoteId());
-
-//                if(orderQuote == null) {
-//                    if(productOrderSample.getProductOrder().hasSapQuote()) {
-//                        orderQuote = sapService.findSapQuote(productOrderSample.getProductOrder().getQuoteId());
-//                        usedSAPQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
-//                    } else {
-//                        orderQuote = quoteService.getQuoteByAlphaId(productOrderSample.getProductOrder().getQuoteId());
-//                        usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
-//                    }
-//                }
 
                 updatedOrderMap.put(productOrderSample.getProductOrder().getBusinessKey(), Boolean.TRUE);
             }

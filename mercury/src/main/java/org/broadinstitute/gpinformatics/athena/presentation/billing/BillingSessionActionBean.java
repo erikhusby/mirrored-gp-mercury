@@ -213,7 +213,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
                     String link = "<a href=\"" + workUrl + "\" target=\"QUOTE\">click here</a>";
                     final StringBuilder results = new StringBuilder("Sent to quote server");
-                    if(StringUtils.isNotBlank(billingResult.getSAPBillingId())) {
+                    if(StringUtils.isNotBlank(billingResult.getSapBillingId())) {
                         results.append(" and SAP");
                     }
                     results.append(": ").append(link) .append(" to see the quotes server value");

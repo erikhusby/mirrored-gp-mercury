@@ -400,7 +400,7 @@ public class BillingCreditDbFreeTest {
         billingResults.forEach(
             billingResult -> {
                 assertThat(billingResult.getErrorMessage(), blankOrNullString());
-                assertThat(billingResult.getSAPBillingId(), pdo.hasSapQuote()?not(blankOrNullString()):is(blankOrNullString()));
+                assertThat(billingResult.getSapBillingId(), pdo.hasSapQuote()?not(blankOrNullString()):is(blankOrNullString()));
             });
 
         Mockito.verify(mockEmailSender, Mockito.never())
@@ -471,7 +471,7 @@ public class BillingCreditDbFreeTest {
         results.stream().filter(result -> !result.isError())
             .forEach(billingResult -> {
                 assertThat(billingResult.isError(), is(false));
-                assertThat(billingResult.getSAPBillingId(),
+                assertThat(billingResult.getSapBillingId(),
                         sample.getProductOrder().hasSapQuote()?notNullValue():nullValue());
             });
         Double totalBilled =

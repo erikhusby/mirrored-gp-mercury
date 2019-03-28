@@ -69,7 +69,7 @@ public class BillingEjb {
         private String workId;
 
         private String errorMessage;
-        private String SAPBillingId;
+        private String sapBillingId;
 
         public BillingResult(@Nonnull QuoteImportItem quoteImportItem) {
             this.quoteImportItem = quoteImportItem;
@@ -99,12 +99,20 @@ public class BillingEjb {
             return errorMessage != null;
         }
 
-        public void setSAPBillingId(String SAPBillingId) {
-            this.SAPBillingId = SAPBillingId;
+        public void setSapBillingId(String sapBillingId) {
+            this.sapBillingId = sapBillingId;
         }
 
-        public String getSAPBillingId() {
-            return SAPBillingId;
+        public String getSapBillingId() {
+            return sapBillingId;
+        }
+
+        public boolean isBilledInSap() {
+            return StringUtils.isNotBlank(sapBillingId);
+        }
+
+        public boolean isBilledInQuoteServer() {
+            return StringUtils.isNotBlank(workId);
         }
     }
 

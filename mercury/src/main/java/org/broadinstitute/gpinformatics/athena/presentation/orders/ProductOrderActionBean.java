@@ -830,7 +830,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void validateGrantEndDate(Date grantEndDate, String grantDisplayName, String quoteIdentifier) {
-        int numDaysBetween = DateUtils.getNumDaysBetween(new Date(), grantEndDate);
+        long numDaysBetween = DateUtils.getNumDaysBetween(new Date(), grantEndDate);
         if (numDaysBetween > 0 && numDaysBetween < 45) {
             addMessage(
                     String.format(

@@ -57,6 +57,7 @@ public class BillingAdaptor implements Serializable {
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
     public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
     public static final String BILLING_CREDIT_REQUESTED_INDICATOR = "Credit Requested";
+    public static final String NOT_ELLIGIBLE_FOR_QUOTE_SERVER_INDICATOR = "Not Elligible for Quote Server.";
 
     private BillingEjb billingEjb;
 
@@ -218,8 +219,13 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
-                    sapBillingId = item.getProductOrder().hasSapQuote()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
+                    if (item.isSapOrder()) {
+                        workId = NOT_ELLIGIBLE_FOR_QUOTE_SERVER_INDICATOR;
+                        sapBillingId = item.getSapItems();
+                    } else {
+                        workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
+                        sapBillingId = NOT_ELIGIBLE_FOR_SAP_INDICATOR;
+                    }
 
                     double quantityForSAP = item.getQuantityForSAP();
 
@@ -258,7 +264,7 @@ public class BillingAdaptor implements Serializable {
                                 if (quantityForSAP > 0) {
                                     //todo, validate if the quantity override parameter is still necessary
                                     sapBillingId = sapService.billOrder(item, null, new Date());
-                                    result.setSAPBillingId(sapBillingId);
+                                    result.setSapBillingId(sapBillingId);
                                     billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
                                             BillingSession.BILLED_FOR_SAP + " "
                                             + BillingSession.BILLED_FOR_QUOTES);
@@ -287,7 +293,7 @@ public class BillingAdaptor implements Serializable {
                                                 billingSession.getCreatedBy());
                                         item.setBillingMessages(BillingSession.BILLING_CREDIT);
                                         sapBillingId = BILLING_CREDIT_REQUESTED_INDICATOR;
-                                        result.setSAPBillingId(sapBillingId);
+                                        result.setSapBillingId(sapBillingId);
                                         billingEjb.updateSapLedgerEntries(item, workId, sapBillingId,
                                                 BillingSession.BILLING_CREDIT);
                                     }
@@ -309,13 +315,13 @@ public class BillingAdaptor implements Serializable {
                 } catch (Exception ex) {
 
                     StringBuilder errorMessage = new StringBuilder();
-                    if (StringUtils.isBlank(result.getWorkId()) && StringUtils.isBlank(workId)) {
+                    if (!result.isBilledInQuoteServer() && StringUtils.isBlank(workId)) {
 
 
                         errorMessage.append("A problem occurred attempting to post to the quote server for ")
                                 .append(billingSession.getBusinessKey()).append(".");
 
-                    } else if (StringUtils.isBlank(result.getSAPBillingId()) && item.getSapQuote() != null
+                    } else if (!result.isBilledInSap() && item.getSapQuote() != null
                                && isQuoteFunded && item.isSapOrder()) {
 
                         errorMessage.append("A problem occured attempting to post to SAP for ")
@@ -325,8 +331,8 @@ public class BillingAdaptor implements Serializable {
                     else {
                         errorMessage.append("A problem occurred saving the ledger entries for ")
                                 .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
-                                .append(StringUtils.isNotBlank(result.getSAPBillingId())?result.getSAPBillingId():sapBillingId).append(",")
-                                .append(" with work id of ").append(StringUtils.isNotBlank(result.getWorkId())?result.getWorkId():workId)
+                                .append(result.isBilledInSap()?result.getSapBillingId():sapBillingId).append(",")
+                                .append(" with work id of ").append(result.isBilledInQuoteServer()?result.getWorkId():workId)
                                 .append(".  ")
                                 .append("The quote for this item may have been successfully sent to the quote server");
                     }
