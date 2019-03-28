@@ -210,7 +210,11 @@
                             $j("#camera_overlay").append(video);
                             var canvas = $j('<canvas id="canvas" width="' + camWidth + '" height="' + camHeight + '"></canvas>').hide();
                             $j("#camera_overlay").append(canvas);
-                            video[0].src = window.URL.createObjectURL(stream);
+                            try { // Handle deprecation on new version of Chrome better
+                                video[0].srcObject = stream;
+                            } catch (e) {
+                                video[0].src = window.URL.createObjectURL(stream);
+                            }
                             video[0].play();
                             camInitialized = true;
                             return true;

@@ -232,13 +232,15 @@ public class Funding implements Displayable {
 
         Funding castOther = (Funding) other;
         return new EqualsBuilder().append(costObject, castOther.getCostObject())
-                                  .append(purchaseOrderNumber, castOther.getPurchaseOrderNumber())
-                                  .append(fundingType, castOther.getFundingType()).isEquals();
+            .append(purchaseOrderNumber, castOther.getPurchaseOrderNumber())
+            .append(fundingType, castOther.getFundingType())
+            .append(fundsReservationNumber, castOther.getFundsReservationNumber()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(costObject).append(purchaseOrderNumber).append(fundingType).toHashCode();
+        return new HashCodeBuilder().append(costObject).append(purchaseOrderNumber).append(fundingType)
+            .append(fundsReservationNumber).toHashCode();
     }
 
     public static Set<Funding> getFundingSet(Document response) {
