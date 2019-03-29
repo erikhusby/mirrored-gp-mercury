@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.hibernate.annotations.BatchSize;
@@ -146,6 +145,7 @@ public class BucketEntry {
     public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
                        @Nonnull BucketEntryType entryType, int productOrderRanking) {
         this.labVessel = vessel;
+        vessel.addBucketEntry(this); // todo jmt
         this.bucket = bucket;
         this.entryType = entryType;
         this.productOrderRanking = productOrderRanking;

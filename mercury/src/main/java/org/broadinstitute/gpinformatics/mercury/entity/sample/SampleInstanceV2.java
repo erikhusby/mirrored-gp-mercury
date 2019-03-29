@@ -43,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
@@ -635,18 +636,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         // Multiple workflow batches need help.
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
         else if (singleWorkflowBatch == null) {
-            /* todo jmt if event matches any workflows unambiguously */
-            WorkflowConfig workflowConfig = new WorkflowLoader().load();
-            for (LabBatch labBatch : getAllWorkflowBatches()) {
-                ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflowByName(
-                        labBatch.getWorkflowName()).getEffectiveVersion(labEvent.getEventDate());
-                ProductWorkflowDefVersion.LabEventNode labEventNode = workflowDefVersion.findStepByEventType(labEventType.getName());
-                if (labEventNode != null) {
-                    labEventNode.getPredecessorTransfers();
-                    labEvent.getAncestorEvents();
-                }
-            }
-
             Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
             if (computedLcsets.size() != 1) {
