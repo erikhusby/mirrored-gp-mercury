@@ -348,9 +348,7 @@ public class ProductOrderEjb {
         try {
             productPriceCache.determineIfProductsExist(allProductsOrdered, editedProductOrder.getSapCompanyConfigurationForProductOrder());
 
-            final boolean quoteIdChange = editedProductOrder.isSavedInSAP() &&
-                                          !editedProductOrder.getQuoteId()
-                                                  .equals(editedProductOrder.latestSapOrderDetail().getQuoteId());
+            final boolean quoteIdChange = editedProductOrder.isSavedInSAP() && !editedProductOrder.isLatestSapQuote();
 
             if ((!editedProductOrder.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
                 createOrderInSAP(editedProductOrder, quoteIdChange, allProductsOrdered, messageCollection, true);
@@ -496,9 +494,8 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Validates that the prices between the quote server and SAP are in synch.  If they are, it returns the current
-     * effective price of the product for the given date.  if they are not, it will throw an exception stopping progress
-     * until they are in synch.
+     * Returns the current effective price of the product for the given date.
+     *
      * @param orderQuote    The quote server Quote against which the product order is to be placed
      * @param product       The Product for which the price will be validated
      * @param productOrder  The Product Order on which the product whos price is to be validated can be found

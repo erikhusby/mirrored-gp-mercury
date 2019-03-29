@@ -321,8 +321,7 @@ public class BillingAdaptor implements Serializable {
                         errorMessage.append("A problem occurred attempting to post to the quote server for ")
                                 .append(billingSession.getBusinessKey()).append(".");
 
-                    } else if (!result.isBilledInSap() && item.getSapQuote() != null
-                               && isQuoteFunded && item.isSapOrder()) {
+                    } else if (!result.isBilledInSap() && isQuoteFunded && item.isSapOrder()) {
 
                         errorMessage.append("A problem occured attempting to post to SAP for ")
                                 .append(billingSession.getBusinessKey()).append(".");
