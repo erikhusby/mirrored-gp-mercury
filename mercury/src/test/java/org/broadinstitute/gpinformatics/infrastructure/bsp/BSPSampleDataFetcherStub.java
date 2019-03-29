@@ -60,13 +60,6 @@ public class BSPSampleDataFetcherStub extends BSPSampleDataFetcher {
     }
 
     @Override
-    public void fetchSamplePlastic(@Nonnull Collection<BspSampleData> bspSampleDatas) {
-        for (BspSampleData bspSampleData : bspSampleDatas) {
-            bspSampleData.addPlastic(samplePlasticBySampleId.get(bspSampleData.getSampleId()));
-        }
-    }
-
-    @Override
     public String getStockIdForAliquotId(@Nonnull String aliquotId) {
         return super.getStockIdForAliquotId(aliquotId);
     }

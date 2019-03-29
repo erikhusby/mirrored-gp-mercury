@@ -34,7 +34,6 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
     BSPSampleSearchService service;
 
     static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
-    static final String WS_DETAILS = "sample/getdetails";
     // Used for mapping Matrix barcodes to Sample short barcodes, forces xml output format.
     static final String WS_SAMPLE_DETAILS = "sample/getsampledetails?format=xml";
 
@@ -169,42 +168,6 @@ public abstract class BSPSampleDataFetcher extends BSPJerseyClient implements Se
                 }
             });
         }
-    }
-
-    public void fetchSamplePlastic(@Nonnull Collection<BspSampleData> bspSampleDatas) {
-        if (bspSampleDatas.isEmpty()) {
-            return;
-        }
-
-        final Map<String, BspSampleData> lsidToSampleDataMap = new HashMap<>();
-        for (BspSampleData bspSampleData : bspSampleDatas) {
-            lsidToSampleDataMap.put(bspSampleData.getSampleLsid(), bspSampleData);
-        }
-
-        String urlString = getUrl(WS_DETAILS);
-        String queryString = makeQueryString("sample_lsid", lsidToSampleDataMap.keySet());
-        final int SAMPLE_BARCODE = 0;
-        final int LSID = 1;
-        final int PLASTIC_BARCODE = 16;
-        final int RECEPTACLE_TYPE = 17;
-        post(urlString, queryString, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
-            @Override
-            public void callback(String[] bspOutput) {
-                BspSampleData bspSampleData = lsidToSampleDataMap.get(bspOutput[LSID]);
-                if (bspSampleData == null) {
-                    throw new RuntimeException("Unrecognized return lsid: " + bspOutput[LSID]);
-                }
-                String barcode = bspOutput[PLASTIC_BARCODE];
-                if (StringUtils.isEmpty(barcode)) {
-                    // Matrix tubes require a 2D barcode, but for cryovials etc. the "barcode" is the SM-ID
-                    if (!StringUtils.containsIgnoreCase(bspOutput[RECEPTACLE_TYPE], "matrix")) {
-                        barcode = bspOutput[SAMPLE_BARCODE];
-                    }
-                }
-                bspSampleData.addPlastic(barcode);
-            }
-        });
-
     }
 
     /**

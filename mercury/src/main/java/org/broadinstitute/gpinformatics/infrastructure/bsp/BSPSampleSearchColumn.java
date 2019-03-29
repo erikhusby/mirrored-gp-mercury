@@ -38,7 +38,8 @@ public enum BSPSampleSearchColumn {
     RECEIPT_DATE("Receipt Date"),
     ORIGINAL_MATERIAL_TYPE("Original Material Type"),
     DV200("DV200"),
-    RECEPTACLE_TYPE("Receptacle Type");
+    RECEPTACLE_TYPE("Receptacle Type"),
+    MANUFACTURER_BARCODE("Manufacturer Tube Barcode");
 
     private final String columnName;
     public String columnName() { return columnName; }

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.rapsheet;
 
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -37,6 +38,9 @@ public class ReworkEjbNonStubbyTest extends Arquillian {
     private ResearchProjectDao researchProjectDao;
 
     @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
     private ReworkEjb reworkEjb;
 
     @Inject
@@ -50,22 +54,6 @@ public class ReworkEjbNonStubbyTest extends Arquillian {
 
     @Test
     public void testCryovialNotKnownToMercury() throws InvalidProductException {
-        String cryovialSmId = "SM-IHW5S";
-
-        Product exExProduct = productDao.findByPartNumber("P-ESH-0058");
-        ResearchProject researchProject = researchProjectDao.findByBusinessKey("RP-19");
-
-        Date currDate = new Date();
-        exExProductOrder1 = new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
-                "Rework Integration TestOrder 1" + currDate.getTime(),
-                Collections.singletonList(new ProductOrderSample(cryovialSmId)), "GSP-123", exExProduct,
-                researchProject);
-        exExProductOrder1.setProduct(exExProduct);
-        exExProductOrder1.prepareToSave(bspUserList.getByUsername("scottmat"));
-        String pdo1JiraKey = "PDO-SGM-RWINT_tst" + currDate.getTime() + 1;
-        exExProductOrder1.setJiraTicketKey(pdo1JiraKey);
-        exExProductOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        productDao.persist(exExProductOrder1);
         /*
         SELECT
             *
@@ -79,7 +67,25 @@ public class ReworkEjbNonStubbyTest extends Arquillian {
             bb.process_type = 'STOOL_DISSECTION'
             AND bb.created_on between SYSDATE - 60 and SYSDATE - 30;
          */
+        String cryovialSmId = "SM-IHW5S";
         Assert.assertNull(labVesselDao.findByIdentifier(cryovialSmId), "Tube should not be in Mercury");
+
+        if (productOrderSampleDao.findBySamples(Collections.singletonList(cryovialSmId)).isEmpty()) {
+            Product exExProduct = productDao.findByPartNumber("P-ESH-0058");
+            ResearchProject researchProject = researchProjectDao.findByBusinessKey("RP-19");
+
+            Date currDate = new Date();
+            exExProductOrder1 = new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
+                    "Rework Integration TestOrder 1" + currDate.getTime(),
+                    Collections.singletonList(new ProductOrderSample(cryovialSmId)), "GSP-123", exExProduct,
+                    researchProject);
+            exExProductOrder1.setProduct(exExProduct);
+            exExProductOrder1.prepareToSave(bspUserList.getByUsername("scottmat"));
+            String pdo1JiraKey = "PDO-SGM-RWINT_tst" + currDate.getTime() + 1;
+            exExProductOrder1.setJiraTicketKey(pdo1JiraKey);
+            exExProductOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            productDao.persist(exExProductOrder1);
+        }
         Collection<ReworkEjb.BucketCandidate> bucketCandidates = reworkEjb.findBucketCandidates(
                 Collections.singletonList(cryovialSmId));
         Assert.assertEquals(bucketCandidates.size(), 1);
@@ -91,8 +97,10 @@ public class ReworkEjbNonStubbyTest extends Arquillian {
         if (reworkEjb == null) {
             return;
         }
-        exExProductOrder1.setOrderStatus(ProductOrder.OrderStatus.Completed);
-        productDao.flush();
+        if (exExProductOrder1 != null) {
+            exExProductOrder1.setOrderStatus(ProductOrder.OrderStatus.Completed);
+            productDao.flush();
+        }
     }
 
 }

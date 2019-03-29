@@ -18,10 +18,10 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -213,15 +213,14 @@ public class ReworkEjb {
         for (ProductOrderSample sample : samplesById) {
             sampleIDs.add(sample.getName());
         }
-        Map<String, BspSampleData> bspResult = bspSampleDataFetcher.fetchSampleData(sampleIDs);
-        bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
+        Map<String, BspSampleData> bspResult = bspSampleDataFetcher.fetchSampleData(sampleIDs,
+                BSPSampleSearchColumn.MANUFACTURER_BARCODE, BSPSampleSearchColumn.RECEPTACLE_TYPE);
         for (ProductOrderSample sample : samplesById) {
             if (productOrderSampleCanEnterBucket(sample)) {
                 String sampleKey = sample.getName();
                 String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
-                if (StringUtils.isNotBlank(tubeBarcode)) { // todo jmt
-                    bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sampleKey,
-                            tubeBarcode, ProductFamily.ProductFamilyInfo.EXOME, null, ""));
+                if (StringUtils.isNotBlank(tubeBarcode)) {
+                    bucketCandidates.add(buildBucketCandidate(sample, sampleKey, tubeBarcode, null, ""));
                 }
             }
         }
@@ -256,39 +255,29 @@ public class ReworkEjb {
         for (ProductOrderSample sample : productOrderSamples) {
             if (productOrderSampleCanEnterBucket(sample)) {
                 String eventName = vessel.getLastEventName();
-                bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sample.getName(),
-                        vessel.getLabel(),
-                        ProductFamily.ProductFamilyInfo.EXOME, vessel, eventName));
+                bucketCandidates.add(buildBucketCandidate(sample, sample.getName(), vessel.getLabel(), vessel,
+                        eventName));
             }
         }
         return bucketCandidates;
     }
 
     /**
-     * getBucketCandidateConsideringProductFamily will construct a bucket candidate based on given key information
+     * buildBucketCandidate will construct a bucket candidate based on given key information
      * and add a validation message if the candidate does not match the desired product family
      *
      * @param sample        ProductOrderSample that is associated with the desired bucket candidate
      * @param sampleKey     name of the sample to which the BucketCandidate will be associated
      * @param tubeBarcode   2d Manufacturers Barcode of the labvessel to which this candidate is to be associated
-     * @param productFamily Product family for which this bucket Candidate is valid
      * @param labVessel     Entity representation of the Lab Vessle to which this candidate is to be associated
      * @param lastEventStep step in the workflow for which the vessel for this candidate originated.  Typically
      *                      used for Reworks.
      *
      * @return A new instance of a Bucket Candidate
      */
-    public BucketCandidate getBucketCandidateConsideringProductFamily(@Nonnull ProductOrderSample sample,
-            @Nonnull String sampleKey, @Nonnull String tubeBarcode,
-            @Nonnull ProductFamily.ProductFamilyInfo productFamily, LabVessel labVessel, String lastEventStep) {
-        BucketCandidate candidate = new BucketCandidate(sampleKey, tubeBarcode,
-                sample.getProductOrder(), labVessel, lastEventStep);
-        if (!sample.getProductOrder().getProduct().isSameProductFamily(productFamily)) {
-            candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
-                                           " for Sample " + sampleKey +
-                                           " is not part of the Exome family");
-        }
-        return candidate;
+    public BucketCandidate buildBucketCandidate(@Nonnull ProductOrderSample sample,
+            @Nonnull String sampleKey, @Nonnull String tubeBarcode, LabVessel labVessel, String lastEventStep) {
+        return new BucketCandidate(sampleKey, tubeBarcode, sample.getProductOrder(), labVessel, lastEventStep);
     }
 
     /**

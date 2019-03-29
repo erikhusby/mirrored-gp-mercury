@@ -192,8 +192,8 @@ public class BucketEjbDbFreeTest {
                 expectedSamples.add(pdoSample);
                 break;
             }
+            bspData.put(BSPSampleSearchColumn.MANUFACTURER_BARCODE, makeTubeBarcode(rackPosition));
             BspSampleData bspSampleData = new BspSampleData(bspData);
-            bspSampleData.addPlastic(makeTubeBarcode(rackPosition));
             bspSampleDataMap.put(pdoSample.getName(), bspSampleData);
 
             LabVessel labVessel = new BarcodedTube(makeTubeBarcode(rackPosition));
@@ -243,10 +243,11 @@ public class BucketEjbDbFreeTest {
         for (String workflow : (new String[]{AGILENT_EXOME_EXPRESS, ICE})) {
             setupCoreMocks(workflow, false);
 
-            for (BspSampleData sampleDTO : bspSampleDataMap.values()) {
-                sampleDTO.getPlasticBarcodes().clear();
-                sampleDTO.addPlastic(badLabelResult);
-            }
+            // todo jmt
+//            for (BspSampleData sampleDTO : bspSampleDataMap.values()) {
+//                sampleDTO.getPlasticBarcodes().clear();
+//                sampleDTO.addPlastic(badLabelResult);
+//            }
 
             expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<List<String>>anyObject())).andReturn( bspSampleDataMap);
 

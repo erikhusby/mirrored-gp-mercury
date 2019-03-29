@@ -290,9 +290,9 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     @Test
     public void testValidBucketEntry() {
 
-        ReworkEjb.BucketCandidate validCandidate = reworkEjb.getBucketCandidateConsideringProductFamily(
+        ReworkEjb.BucketCandidate validCandidate = reworkEjb.buildBucketCandidate(
                 sampleList1.get(0), sampleList1.get(0).getSampleKey(), labVessel.getLabel(),
-                ProductFamily.ProductFamilyInfo.EXOME, labVessel, ""
+                labVessel, ""
         );
 
         Assert.assertTrue(validCandidate.isValid());
