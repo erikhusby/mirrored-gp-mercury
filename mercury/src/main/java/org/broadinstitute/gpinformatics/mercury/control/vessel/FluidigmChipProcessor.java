@@ -244,6 +244,7 @@ public class FluidigmChipProcessor {
         }
         fluidigmRun.setRunDateFromString(columns[7]);
         fluidigmRun.setInstrumentName(columns[9]);
+        fluidigmRun.setReagentPlateName(columns[12]. split(":")[1].trim());
         //read version line
         line = reader.readLine();
         fluidigmRun.setApplicationVersion(line.split(",")[1]);
@@ -320,6 +321,7 @@ public class FluidigmChipProcessor {
         private Map<String, DescriptiveStatistics> mapSampleToRawStatistics;
         private Map<String, DescriptiveStatistics> mapAssayToBackgroundStatistics;
         private Map<String, DescriptiveStatistics> mapSampleToBackgroundStatistics;
+        private String reagentPlateName;
 
         public FluidigmRun() {
             assayNamesByAssayKey = new HashMap<>(96);
@@ -595,6 +597,14 @@ public class FluidigmChipProcessor {
 
         public Map<String, DescriptiveStatistics> getMapSampleToBackgroundStatistics() {
             return mapSampleToBackgroundStatistics;
+        }
+
+        public String getReagentPlateName() {
+            return reagentPlateName;
+        }
+
+        public void setReagentPlateName(String reagentPlateName) {
+            this.reagentPlateName = reagentPlateName;
         }
     }
 

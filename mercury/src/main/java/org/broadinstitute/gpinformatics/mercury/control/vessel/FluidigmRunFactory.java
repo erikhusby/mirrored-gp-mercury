@@ -7,10 +7,14 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SnpList;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
@@ -46,6 +50,9 @@ public class FluidigmRunFactory {
     @Inject
     private SnpDao snpDao;
 
+    @Inject
+    private SnpListDao snpListDao;
+
     public Pair<StaticPlate, LabMetricRun> createFluidigmChipRun(InputStream inputStream, Long decidingUser, MessageCollection messageCollection) {
         FluidigmChipProcessor fluidigmChipProcessor = new FluidigmChipProcessor();
         FluidigmChipProcessor.FluidigmRun fluidigmRun = fluidigmChipProcessor.parse(inputStream);
@@ -57,6 +64,12 @@ public class FluidigmRunFactory {
         StaticPlate staticPlate = staticPlateDao.findByBarcode(formattedBarcode);
         if (staticPlate == null) {
             messageCollection.addError("Failed to find chip " + formattedBarcode);
+            return null;
+        }
+
+        SnpList snpList = snpListDao.findByName(fluidigmRun.getReagentPlateName());
+        if (snpList == null) {
+            messageCollection.addError("Failed to find Snp List with name " + fluidigmRun.getReagentPlateName());
             return null;
         }
 
@@ -91,7 +104,7 @@ public class FluidigmRunFactory {
         }
 
         LabMetricRun run = createFluidigmRunDaoFree(fluidigmRun, staticPlate, decidingUser,
-                traverserResult, mapAssayToSnp, messageCollection);
+                traverserResult, mapAssayToSnp, snpList);
 
         if (!messageCollection.hasErrors()) {
             labMetricRunDao.persist(run);
@@ -104,7 +117,7 @@ public class FluidigmRunFactory {
                                                  StaticPlate ifcChip, Long decidingUser,
                                                  StaticPlate.TubeFormationByWellCriteria.Result traverserResult,
                                                  Map<String, Snp> mapAssayToSnp,
-                                                 MessageCollection messageCollection) {
+                                                 SnpList snpList) {
         LabMetricRun labMetricRun = new LabMetricRun(fluidigmRun.buildRunName(), fluidigmRun.getRunDate(),
                 LabMetric.MetricType.FLUIDIGM_FINGERPRINTING);
         labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
@@ -143,8 +156,9 @@ public class FluidigmRunFactory {
         double q20Threshold = 99.0;
         generateCallRateLabMetrics(labMetricRun, LabMetric.MetricType.CALL_RATE_Q17, decidingUser, mapAssayToSnp,
                 mapLabVesselToRecords, q17Threshold);
-        generateCallRateLabMetrics(labMetricRun, LabMetric.MetricType.CALL_RATE_Q20, decidingUser, mapAssayToSnp,
-                mapLabVesselToRecords, q20Threshold);
+
+        Map<PlateWell, LabMetricDecision> mapPlateWellToDecision = generateCallRateLabMetrics(
+                labMetricRun, LabMetric.MetricType.CALL_RATE_Q20, decidingUser, mapAssayToSnp, mapLabVesselToRecords, q20Threshold);
 
         // ROX Data
         for (Map.Entry<String, DescriptiveStatistics>  entry: fluidigmRun.getMapSampleToRawStatistics().entrySet()) {
@@ -209,19 +223,45 @@ public class FluidigmRunFactory {
             }
         }
 
-        generateGenderAndConfidenceMetric(labMetricRun, mapAssayToSnp, mapLabVesselToRecords, messageCollection);
+        Map<PlateWell, Gender> mapPlateWellToGender =
+                generateGenderAndConfidenceMetric(labMetricRun, mapAssayToSnp, mapLabVesselToRecords);
+
+        for (Map.Entry<PlateWell, Gender> entry: mapPlateWellToGender.entrySet()) {
+            PlateWell plateWell = entry.getKey();
+            MercurySample mercurySample =
+                    plateWell.getSampleInstancesV2().iterator().next().getNearestMercurySample();
+            LabMetricDecision.Decision decision = mapPlateWellToDecision.get(plateWell).getDecision();
+
+            Fingerprint.Disposition disposition =
+                    (decision == LabMetricDecision.Decision.PASS) ? Fingerprint.Disposition.PASS : Fingerprint.Disposition.FAIL;
+
+            Fingerprint.Platform platform = Fingerprint.Platform.FLUIDIGM;
+            Fingerprint.GenomeBuild genomeBuild = Fingerprint.GenomeBuild.HG19;
+            Fingerprint.Gender gender = Fingerprint.Gender.byAbbreviation(entry.getValue().getSymbol());
+            Fingerprint fingerprint = new Fingerprint(mercurySample, disposition, platform, genomeBuild,
+                    fluidigmRun.getRunDate(), snpList, gender, null);
+        }
+
+        //TODO
+        calculateHapMapConcordance(labMetricRun, mapAssayToSnp, mapLabVesselToRecords);
 
         return labMetricRun;
+    }
+
+    private void calculateHapMapConcordance(LabMetricRun labMetricRun, Map<String, Snp> mapAssayToSnp,
+                                            Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords) {
+        
     }
 
     /**
      * Creates a Call Rate Metric of type Q17 or Q20 depending on their thresholds. Stores the num passing calls
      * and total calls based on this threshold as metadata so ratio can be shown in UDS.
      */
-    private void generateCallRateLabMetrics(LabMetricRun run, LabMetric.MetricType metricType, long decidingUser,
-                                            Map<String, Snp> mapAssayToSnp,
-                                            Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords,
-                                            double threshold) {
+    private Map<PlateWell, LabMetricDecision> generateCallRateLabMetrics(LabMetricRun run, LabMetric.MetricType metricType, long decidingUser,
+                                                                         Map<String, Snp> mapAssayToSnp,
+                                                                         Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords,
+                                                                         double threshold) {
+        Map<PlateWell, LabMetricDecision> mapPlateWellToDecision = new HashMap<>();
         for (Map.Entry<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> entry: mapLabVesselToRecords.entrySet()) {
             PlateWell plateWell = entry.getKey();
             double calls = 0.0;
@@ -255,40 +295,42 @@ public class FluidigmRunFactory {
             Metadata callsMetadata = new Metadata(Metadata.Key.CALLS, new BigDecimal(calls));
             labMetric.getMetadataSet().add(totalCallsMetadata);
             labMetric.getMetadataSet().add(callsMetadata);
+            mapPlateWellToDecision.put(plateWell, decision);
         }
+
+        return mapPlateWellToDecision;
     }
 
-    private void generateGenderAndConfidenceMetric(LabMetricRun run, Map<String, Snp> mapAssayToSnp,
-                                                   Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords,
-                                                   MessageCollection messageCollection) {
+    private Map<PlateWell, Gender> generateGenderAndConfidenceMetric(LabMetricRun run, Map<String, Snp> mapAssayToSnp,
+                                                                     Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords) {
+        Map<PlateWell, Gender> mapPlateWellToGender = new HashMap<>();
         for (Map.Entry<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> entry: mapLabVesselToRecords.entrySet()) {
             PlateWell plateWell = entry.getKey();
             for (FluidigmChipProcessor.FluidigmDataRow row : entry.getValue()) {
                 Snp polyAssay = mapAssayToSnp.get(row.getAssayName());
                 if(polyAssay.isGender()) {
-                    String genderCall = null;
+                    Gender gender = null;
                     Genotype genotype = parseGenotype(row);
                     if (polyAssay.getRsId().contains("AMG_3b")) {
                         if (genotype.isCall()) {
-                            genderCall = genotype.isHet() ? Gender.MALE.getSymbol() : Gender.FEMALE.getSymbol();
+                            gender = genotype.isHet() ? Gender.MALE : Gender.FEMALE;
                         } else {
-                            genderCall = Genotype.NO_CALL_ALLELE_CHAR;       // No call symbol...
+                            gender = Gender.UNKNOWN;       // No call symbol...
                         }
                     } else {
                         // TODO JW handle chromosome? See FingerprintManager.getFluidigmGenotypeGenderCall
                     }
-                    if (genderCall != null) {
-                        // TODO How to store gender?
-                        LabMetric labMetric = new LabMetric(BigDecimal.ZERO, LabMetric.MetricType.FLUIDIGM_GENDER, LabMetric.LabUnit.GENDER,
+                    if (gender != null) {
+                        LabMetric labMetric = new LabMetric(new BigDecimal(gender.getNumXChromosomes()), LabMetric.MetricType.FLUIDIGM_GENDER, LabMetric.LabUnit.GENDER,
                                 plateWell.getVesselPosition().name(), new Date());
                         plateWell.addMetric(labMetric);
-                        Metadata metadata = new Metadata(Metadata.Key.FLUIDIGM_GENDER, genderCall);
-                        labMetric.getMetadataSet().add(metadata);
                         run.getLabMetrics().add(labMetric);
+                        mapPlateWellToGender.put(plateWell, gender);
                     }
                 }
             }
         }
+        return mapPlateWellToGender;
     }
 
     private Genotype parseGenotype(FluidigmChipProcessor.FluidigmDataRow record) {
@@ -393,17 +435,28 @@ public class FluidigmRunFactory {
     }
 
     public enum Gender {
-        MALE("M", "Male"),
-        FEMALE("F", "Female"),
-        UNKNOWN("U", "Unknown"),
-        UNRECOGNIZED("?", "Unrecognized");
+        MALE("M", "Male", 1),
+        FEMALE("F", "Female", 2),
+        UNKNOWN("U", "Unknown", 0),
+        UNRECOGNIZED("?", "Unrecognized", -1);
 
         private final String symbol;
         private final String name;
+        private final int numXChromosomes;
 
-        Gender(String symbol, String name) {
+        private static final Map<Integer, Gender> MAP_X_CHROMOSOMES_TO_GENDER =
+                new HashMap<>(Gender.values().length);
+
+        static {
+            for (Gender gender : Gender.values()) {
+                MAP_X_CHROMOSOMES_TO_GENDER.put(gender.getNumXChromosomes(), gender);
+            }
+        }
+
+        Gender(String symbol, String name, int numXChromosomes) {
             this.symbol = symbol;
             this.name = name;
+            this.numXChromosomes = numXChromosomes;
         }
 
         public String getSymbol() {
@@ -413,5 +466,14 @@ public class FluidigmRunFactory {
         public String getName() {
             return name;
         }
+
+        public int getNumXChromosomes() {
+            return numXChromosomes;
+        }
+
+        public static Gender getByNumberOfXChromosomes(int numXChromosomes) {
+            return MAP_X_CHROMOSOMES_TO_GENDER.get(numXChromosomes);
+        }
+
     }
 }

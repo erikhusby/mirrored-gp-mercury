@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.FluidigmRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -229,10 +230,10 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                             stdDevVal, stdDevVal));
                     break;
                 case FLUIDIGM_GENDER:
-                    String gender = ColumnValueType.GENDER.format(
-                            labMetric.getMetadataSet().iterator().next().getValue(), "");
+                    FluidigmRunFactory.Gender gender =
+                            FluidigmRunFactory.Gender.getByNumberOfXChromosomes(labMetric.getValue().intValue());
                     row.addCell(new ConfigurableList.Cell(
-                            VALUE_COLUMN_TYPE.GENDER.getResultHeader(), gender, gender));
+                            VALUE_COLUMN_TYPE.GENDER.getResultHeader(), gender.getSymbol(), gender.getSymbol()));
                 default:
                 }
             }

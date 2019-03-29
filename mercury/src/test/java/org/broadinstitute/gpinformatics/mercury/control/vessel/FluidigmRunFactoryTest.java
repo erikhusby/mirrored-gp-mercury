@@ -48,6 +48,8 @@ public class FluidigmRunFactoryTest extends BaseEventTest {
         FluidigmChipProcessor fluidigmChipProcessor = new FluidigmChipProcessor();
         FluidigmChipProcessor.FluidigmRun run  = fluidigmChipProcessor.parse(testSpreadSheet);
 
+        Assert.assertEquals(run.getReagentPlateName(), "FluidigmFPv5");
+
         StaticPlate ifcChip = buildTubesAndTransfers(CHIP_BARCODE);
         StaticPlate.TubeFormationByWellCriteria.Result result =
                 ifcChip.nearestFormationAndTubePositionByWell();
@@ -70,7 +72,7 @@ public class FluidigmRunFactoryTest extends BaseEventTest {
 
         MessageCollection messageCollection = new MessageCollection();
         LabMetricRun labMetricRun = fluidigmRunFactory.createFluidigmRunDaoFree(run, ifcChip, 1L,
-                result, mapAssayToSnp,messageCollection);
+                result, mapAssayToSnp, null);
 
         Assert.assertEquals(messageCollection.hasErrors(), false);
 
