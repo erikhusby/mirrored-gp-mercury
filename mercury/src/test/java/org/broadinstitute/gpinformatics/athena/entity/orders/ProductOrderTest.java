@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -20,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFa
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
@@ -33,11 +35,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -140,6 +144,7 @@ public class ProductOrderTest {
                 .ignoreProperty("clinicalAttestationConfirmed")
                 .ignoreProperty("analyzeUmiOverride")
                 .ignoreProperty("reagentDesignKey")
+                .ignoreProperty("defaultAggregationParticle")
                 .ignoreProperty("quoteSource")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
@@ -616,6 +621,27 @@ public class ProductOrderTest {
 
         }
 
+    }
+
+    @DataProvider(name = "aggregationParticles")
+    public Iterator<Object[]> aggregationParticles() {
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{null, Product.AggregationParticle.DEFAULT_LABEL});
+        testCases.add(new Object[]{Product.AggregationParticle.PDO, Product.AggregationParticle.PDO.getDisplayName()});
+        testCases.add(new Object[]{Product.AggregationParticle.PDO_ALIQUOT,
+            Product.AggregationParticle.PDO_ALIQUOT.getDisplayName()});
+
+        return testCases.iterator();
+    }
+
+
+    @Test(dataProvider = "aggregationParticles")
+    public void testDefaultAggregationParticleDefaultValueNeverNull(Product.AggregationParticle aggregationParticle, String displayValue) {
+        ProductOrder productOrder = new ProductOrder();
+        productOrder.setDefaultAggregationParticle(aggregationParticle);
+
+        assertThat(StringUtils.isNotBlank(displayValue), CoreMatchers.is(true));
+        assertThat(productOrder.getAggregationParticleDisplayName(), equalTo(displayValue));
     }
 
     public void testSapOrderStatus() throws Exception {

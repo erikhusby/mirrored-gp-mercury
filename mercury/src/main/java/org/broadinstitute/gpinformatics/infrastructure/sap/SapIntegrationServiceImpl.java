@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
-import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl.SSF_PRICE_LIST_NAME;
@@ -53,22 +54,16 @@ import static org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService
 @Default
 public class SapIntegrationServiceImpl implements SapIntegrationService {
 
-    @Inject
     private SapConfig sapConfig;
 
-    @Inject
     private QuoteService quoteService;
 
-    @Inject
     private BSPUserList bspUserList;
 
-    @Inject
     private PriceListCache priceListCache;
 
-    @Inject
     private SAPProductPriceCache productPriceCache;
 
-    @Inject
     private SAPAccessControlEjb accessControlEjb;
 
     private SapIntegrationClientImpl wrappedClient;
@@ -78,10 +73,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public SapIntegrationServiceImpl() {
     }
 
-    public SapIntegrationServiceImpl(SapConfig sapConfigIn) {
+    @Inject
+    public SapIntegrationServiceImpl(SapConfig sapConfigIn, QuoteService quoteService, BSPUserList bspUserList,
+                                     PriceListCache priceListCache, SAPProductPriceCache productPriceCache,
+                                     SAPAccessControlEjb accessControlEjb) {
         if(sapConfig == null) {
             this.sapConfig = sapConfigIn;
         }
+        this.quoteService = quoteService;
+        this.bspUserList = bspUserList;
+        this.priceListCache = priceListCache;
+        this.productPriceCache = productPriceCache;
+        this.accessControlEjb = accessControlEjb;
     }
 
     /**
@@ -473,15 +476,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         OrderCalculatedValues orderCalculatedValues = null;
         if (accessControlEjb.getCurrentControlDefinitions().isEnabled()) {
             OrderCriteria potentialOrderCriteria = null;
-            if (productOrder != null && productOrder.getProduct() != null) {
+            if (productOrder != null && productOrder.getProduct() != null && productsFoundInSap(productOrder)) {
                 potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
             }
 
-            if (potentialOrderCriteria != null && StringUtils.isNotBlank(potentialOrderCriteria.getCustomerNumber())) {
-                orderCalculatedValues =
+            orderCalculatedValues =
                     getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
-                        potentialOrderCriteria);
-            }
+                            potentialOrderCriteria);
         }
         return orderCalculatedValues;
     }
@@ -491,13 +492,28 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         throw new SAPIntegrationException("SAP Quotes are not available at this time");
     }
 
+    private boolean productsFoundInSap(ProductOrder productOrder) {
+        boolean result = true;
+
+        if(!productPriceCache.productExists(productOrder.getProduct().getPartNumber())) {
+            result = false;
+        } else {
+            for (ProductOrderAddOn addOn : productOrder.getAddOns()) {
+                if(!productPriceCache.productExists(addOn.getAddOn().getPartNumber())) {
+                    result = false;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
         return generateOrderCriteria(productOrder, 0, false);
     }
 
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder, int addedSampleCount,
                                                   boolean forOrderValueQuery) throws SAPIntegrationException {
-
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();
@@ -512,19 +528,21 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             sapOrderItems.add(orderSubItem);
         }
 
-        String customerNumber = "";
-        if (!forOrderValueQuery) {
-            Quote foundQuote = null;
-            try {
-                if (productOrder.getQuoteSource() == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
-                    foundQuote = productOrder.getQuote(quoteService);
-                }
-            } catch (QuoteNotFoundException | QuoteServerException e) {
+        String customerNumber = null;
+        Optional <Quote> foundQuote = null;
+        OrderCriteria orderCriteria = null;
+
+        try {
+            foundQuote = Optional.ofNullable(productOrder.getQuote(quoteService));
+        } catch (QuoteServerException | QuoteNotFoundException e) {
+            if(!forOrderValueQuery) {
                 throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
             }
-            FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
+        }
+        if(foundQuote.isPresent()) {
+            Optional<FundingLevel> fundingLevel = Optional.ofNullable(foundQuote.get().getFirstRelevantFundingLevel());
 
-            if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
+            if (fundingLevel.isPresent() && CollectionUtils.isEmpty(fundingLevel.get().getFunding())) {
                 // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
                 // of funding
                 if (!forOrderValueQuery) {
@@ -533,24 +551,30 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 }
             }
 
-            customerNumber = null;
-            if (fundingLevel.getFunding().size() > 1 && !forOrderValueQuery) {
-                throw new SAPIntegrationException("This order is ineligible to save to SAP since there are multiple "
-                                                  + "funding sources associated with the given quote " +
-                                                  productOrder.getQuoteId());
-            }
-            for (Funding funding : fundingLevel.getFunding()) {
-                if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                    customerNumber =
-                            findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(), fundingLevel);
-                } else {
-                    customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+            if (fundingLevel.isPresent()) {
+                if (!forOrderValueQuery && fundingLevel.get().getFunding().size() > 1) {
+                    throw new SAPIntegrationException(
+                            "This order is ineligible to save to SAP since there are multiple "
+                            + "funding sources associated with the given quote " +
+                            productOrder.getQuoteId());
+                }
+                for (Funding funding : fundingLevel.get().getFunding()) {
+                    if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
+                        customerNumber =
+                                findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(),
+                                        fundingLevel.get());
+                    } else {
+                        customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+                    }
                 }
             }
         }
 
-        return new OrderCriteria(customerNumber, productOrder.getSapCompanyConfigurationForProductOrder(),
-            sapOrderItems);
+        if(customerNumber != null) {
+            orderCriteria = new OrderCriteria(customerNumber, productOrder.getSapCompanyConfigurationForProductOrder(),
+                    sapOrderItems);
+        }
+        return orderCriteria;
     }
 
     /**

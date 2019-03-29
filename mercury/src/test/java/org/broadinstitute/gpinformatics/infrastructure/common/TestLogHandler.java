@@ -28,7 +28,16 @@ import java.util.logging.LogRecord;
  */
 public class TestLogHandler extends Handler {
     private List<LogRecord> logs = new ArrayList<>();
+    private static TestLogHandler instance;
+    public static TestLogHandler newInstance() {
+        if (instance == null) {
+            instance = new TestLogHandler();
+        }
+        return instance;
+    }
 
+    protected TestLogHandler() {
+    }
 
     /**
      * Scan collected logs for message with matching regex pattern.

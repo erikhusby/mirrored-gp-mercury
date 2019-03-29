@@ -71,7 +71,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      */
     public ExtractionJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao,
             WorkflowConfig workflowConfig) {
-        super(batch, CreateFields.ProjectType.EXTRACTION_PROJECT, productOrderDao, workflowConfig);
+        super(batch, CreateFields.ProjectType.EXTRACTION_PROJECT, null, productOrderDao, workflowConfig);
 
         if (!batch.getBucketEntries().isEmpty()) {
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
