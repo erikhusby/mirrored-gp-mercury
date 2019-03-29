@@ -54,6 +54,7 @@ public class ReagentDesignImportProcessorTest {
         messageCollection = new MessageCollection();
     }
 
+    @Test
     public void testBasic() {
         InputStream testSpreadSheet = VarioskanParserTest.getSpreadsheet(IMPORT_CSV);
         try {
@@ -69,6 +70,17 @@ public class ReagentDesignImportProcessorTest {
             } catch (IOException ignored) {
             }
         }
+    }
+
+    @Test
+    public void testDesignIdLinkedToTwoDesignNamesFails() {
+        String rowA = createRow(DESIGN_ID, DESIGN_NAME, TUBE_BARCODE, VOL,
+                MASS, SYNTHESIS_DATE, MANUFACTURING_DATE, STORAGE, LOT,
+                EXP_DATE);
+        String rowB = createRow(DESIGN_ID, "DNAME2", "TubeBarcode2", VOL,
+                MASS, SYNTHESIS_DATE, MANUFACTURING_DATE, STORAGE, LOT,
+                EXP_DATE);
+        runParseTest(HEADER + rowA + rowB, "Can't link Design ID DNAME2 it's already linked to dName in upload");
     }
 
     @Test

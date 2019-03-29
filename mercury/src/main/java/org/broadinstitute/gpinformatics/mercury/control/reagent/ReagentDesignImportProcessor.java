@@ -14,8 +14,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,8 @@ public class ReagentDesignImportProcessor {
                 c.set(Calendar.SECOND, 0);
                 c.set(Calendar.MILLISECOND, 0);
 
+                Map<String, String> mapDesignIdToName = new HashMap<>();
+
                 // Validate other fields
                 for (ReagentImportDto dto: dtos) {
                     if (dto.getVolume() <= 0) {
@@ -81,6 +85,14 @@ public class ReagentDesignImportProcessor {
                         dto.getManufacturingDate();
                     } catch (ParseException ex) {
                         messageCollection.addError(ex.getMessage());
+                    }
+
+                    if (!mapDesignIdToName.containsKey(dto.getDesignId())) {
+                        mapDesignIdToName.put(dto.getDesignId(), dto.getDesignName());
+                    } else if (!mapDesignIdToName.get(dto.getDesignId()).equals(dto.getDesignName())) {
+                        String err = String.format("Can't link Design ID %s it's already linked to %s in upload",
+                                dto.getDesignName(), mapDesignIdToName.get(dto.getDesignId()));
+                        messageCollection.addError(err);
                     }
                 }
 

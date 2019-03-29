@@ -59,6 +59,17 @@ public class ReagentDesignImportFactory {
                         "Barcode \"%s\" already exists.", labVessel.getLabel()));
             }
 
+            Map<String, ReagentDesign> mapDesignIdToReagent = new HashMap<>();
+            List<DesignedReagent> oldDesignedReagent = designedReagentDao.findAllWithLots();
+            for (DesignedReagent designedReagent: oldDesignedReagent) {
+                for (Metadata metadata: designedReagent.getMetadata()) {
+                    if (metadata.getKey() == Metadata.Key.MANUFACTURER_DESIGN_ID) {
+                        mapDesignIdToReagent.put(metadata.getValue(), designedReagent.getReagentDesign());
+                        break;
+                    }
+                }
+            }
+
             Map<String, ReagentDesign> mapNameToReagentDesign = new HashMap<>();
             Map<Triple<ReagentDesign, String, Date>, DesignedReagent> mapDtoToDesign = new HashMap<>();
             List<BarcodedTube> barcodedTubeList = new ArrayList<>();
@@ -73,6 +84,17 @@ public class ReagentDesignImportFactory {
                 }
 
                 ReagentDesign reagentDesign = mapNameToReagentDesign.get(dto.getDesignName());
+
+                // Multiple design name > Single Design ID Causes an error
+                if (mapDesignIdToReagent.containsKey(dto.getDesignId()) &&
+                    !mapDesignIdToReagent.get(dto.getDesignId()).equals(reagentDesign)) {
+                    String err = String.format("Can't link Design ID %s to %s it's already linked to %s.",
+                            dto.getDesignId(), dto.getDesignName(), mapDesignIdToReagent.get(dto.getDesignId()).getDesignName());
+                    messageCollection.addError(err);
+                    continue;
+                } else {
+                    mapDesignIdToReagent.put(dto.getDesignId(), reagentDesign);
+                }
 
                 String tubeBarcode = StringUtils.leftPad(dto.getTubeBarcode(), 10, '0');
 

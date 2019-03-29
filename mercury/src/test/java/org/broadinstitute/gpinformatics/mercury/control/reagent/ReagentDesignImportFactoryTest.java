@@ -22,6 +22,7 @@ import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -65,6 +66,30 @@ public class ReagentDesignImportFactoryTest extends Arquillian {
         List<BarcodedTube> barcodedTubeList = testReagentDesign("IamUnknownBaitProbe", numTubes, messageCollection, false);
         Assert.assertEquals(barcodedTubeList.size(), 0);
         Assert.assertEquals(messageCollection.getErrors().size(), 1);
+    }
+
+    @Test
+    public void testMultipleDesignsToSingleID() throws Exception {
+        MessageCollection messageCollection = new MessageCollection();
+        String timestamp = simpleDateFormat.format(new Date());
+        String prefix = "ProbeFail" + timestamp;
+
+        String tubeA = "TubeATest" + prefix;
+        String tubeB = "TubeBFails" + prefix;
+
+        // Upload Once to get data, then attempt with another design name to this id to see if it fails correctly
+        ReagentDesignImportProcessor.ReagentImportDto dto = createDto(tubeA, "Pancan_396_NO_INTRONS",
+                prefix, 0);
+        testReagentDesign(Collections.singletonList(dto), messageCollection, false);
+        Assert.assertEquals(messageCollection.getErrors().size(), 0);
+
+        ReagentDesignImportProcessor.ReagentImportDto dto2 = createDto(tubeB, "broad_custom_exome_v1",
+                prefix, 1);
+        dto2.setDesignId(dto.getDesignId());
+        testReagentDesign(Collections.singletonList(dto2), messageCollection, false);
+        Assert.assertEquals(messageCollection.getErrors().size(), 1);
+        Assert.assertEquals(messageCollection.getErrors().get(0),
+                "Can't link Design ID Pancan_396_NO_INTRONS_ID to broad_custom_exome_v1 it's already linked to Pancan_396_NO_INTRONS.");
     }
 
     @Test

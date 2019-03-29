@@ -25,6 +25,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
 import java.util.Date;
+import java.util.List;
 
 @Stateful
 @RequestScoped
@@ -47,6 +48,19 @@ public class DesignedReagentDao extends GenericDao {
                         criteriaBuilder.equal(root.get(DesignedReagent_.expiration), expiration)));
         try {
             return getEntityManager().createQuery(criteriaQuery).getSingleResult();
+        } catch (NoResultException ignored) {
+            return null;
+        }
+    }
+
+    public List<DesignedReagent> findAllWithLots() {
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<DesignedReagent> criteriaQuery = criteriaBuilder.createQuery(DesignedReagent.class);
+
+        Root<DesignedReagent> root = criteriaQuery.from(DesignedReagent.class);
+        criteriaQuery.where(criteriaBuilder.isNotNull(root.get(DesignedReagent_.lot)));
+        try {
+            return getEntityManager().createQuery(criteriaQuery).getResultList();
         } catch (NoResultException ignored) {
             return null;
         }
