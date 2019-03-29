@@ -757,7 +757,7 @@ public class LimsQueryResource {
     private List<String> parseChipName(String name){
 
         List<String> phrases = new ArrayList<>();
-        if (name.contains("-")|name.contains("_")){
+        if (name.contains("-")||name.contains("_")){
             phrases = Arrays.asList(name.split("\\s*_\\s*|\\s*-\\s*"));
         }
         else {
