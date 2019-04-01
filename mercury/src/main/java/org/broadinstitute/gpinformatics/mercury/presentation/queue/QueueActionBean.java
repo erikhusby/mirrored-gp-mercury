@@ -137,6 +137,9 @@ public class QueueActionBean extends CoreActionBean {
      */
     @HandlesEvent("viewGrouping")
     public Resolution viewGrouping() {
+        if (queueGroupingId == null) {
+            return getSourcePageResolution();
+        }
 
         queueGrouping = queueDao.findById(QueueGrouping.class, queueGroupingId);
 
@@ -176,9 +179,16 @@ public class QueueActionBean extends CoreActionBean {
         };
     }
 
+    /**
+     * Download for just the Grouping data for a particular grouping.
+     */
     @HandlesEvent("downloadGroupingData")
     public Resolution downloadGroupingData() {
         try {
+            if (queueGroupingId == null) {
+                return getSourcePageResolution();
+            }
+
             Object[][] rows = queueEjb.generateDataDump(queueDao.findById(QueueGrouping.class, queueGroupingId));
 
             return streamSpreadsheet(rows);
@@ -205,6 +215,9 @@ public class QueueActionBean extends CoreActionBean {
         return stream;
     }
 
+    /**
+     * Download for just the Grouping data for a full queue.
+     */
     @HandlesEvent("downloadFullQueueData")
     public Resolution downloadFullQueueData() {
         queue = queueEjb.findQueueByType(queueType);
