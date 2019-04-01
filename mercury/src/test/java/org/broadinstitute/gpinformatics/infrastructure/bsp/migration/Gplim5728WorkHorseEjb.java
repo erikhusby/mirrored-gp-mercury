@@ -673,6 +673,7 @@ public class Gplim5728WorkHorseEjb {
                                      + "     , r.external_id \n"
                                      + "     , CASE rt.container WHEN 1 THEN CAST( NULL AS VARCHAR2(12) ) \n"
                                      + "       ELSE ( SELECT 'SM-' || s.sample_id from bsp_sample s where s.receptacle_id = r.receptacle_id ) END as sample_id \n"
+                                     + "     , r.receptacle_name \n"
                                      + "  from bsp_receptacle r \n"
                                      + "     , bsp_receptacle_type rt \n"
                                      + "     , bsp_location l \n"
@@ -682,7 +683,7 @@ public class Gplim5728WorkHorseEjb {
                                      + "   and r.location_id NOT IN ( 334, 4992 ) "); // Exclude anything stored in RTS1 and RTS2 (matrix tubes)
 
             Long bspReceptacleId, bspContainerId;
-            String bspReceptacleType, bspLabel, bspSampleId;
+            String bspReceptacleType, bspLabel, bspSampleId, bspReceptacleName;
             while ( true ) {
                 // BSP data fields
                 if( !rs.next() ) {
@@ -707,6 +708,11 @@ public class Gplim5728WorkHorseEjb {
                 // If no sample id, prepend CO- to bspReceptacleId for label
                 if( rs.wasNull() ) {
                     bspSampleId = null;
+                }
+
+                bspReceptacleName = rs.getString(6);
+                if( rs.wasNull() ) {
+                    bspReceptacleName = null;
                 }
 
                 // Mercury lab vessel type
@@ -755,6 +761,7 @@ public class Gplim5728WorkHorseEjb {
                     processPhaseOneLog.write("  -->   (bspReceptacleId: " + bspReceptacleId + ")\n" );
                     continue;
                 }
+                storageVessel.setName(bspReceptacleName);
 
                 if ( storageVessel == null ) {
                     processPhaseOneLog.write("Can't determine which type of mercury lab vessel corresponds to " + bspReceptacleType  );
