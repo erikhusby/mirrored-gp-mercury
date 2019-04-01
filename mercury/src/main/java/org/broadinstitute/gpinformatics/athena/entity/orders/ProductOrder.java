@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
@@ -93,6 +94,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @SuppressWarnings("UnusedDeclaration")
@@ -114,17 +116,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
 
     public Quote getQuote(QuoteService quoteService) throws QuoteNotFoundException, QuoteServerException {
-        if (cachedQuote == null) {
+        if (cachedQuote == null ||
+            !StringUtils.equals(quoteId,cachedQuote.getAlphanumericId())) {
             cachedQuote = quoteService.getQuoteByAlphaId(quoteId);
         }
         return cachedQuote;
     }
 
-    public Quote getSapQuote(SapIntegrationService sapService) throws SAPIntegrationException {
-        if (cachedQuote == null) {
-            cachedQuote = sapService.findSapQuote(quoteId);
+    public SapQuote getSapQuote(SapIntegrationService sapService) throws SAPIntegrationException {
+        if (cachedSapQuote == null ||
+            !StringUtils.equals(cachedSapQuote.getQuoteHeader().getQuoteNumber(), quoteId)) {
+            cachedSapQuote = sapService.findSapQuote(quoteId);
         }
-        return cachedQuote;
+        return cachedSapQuote;
     }
 
     public enum SaveType {CREATING, UPDATING}
@@ -307,6 +311,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Transient
     private Quote cachedQuote;
+    @Transient
+    private SapQuote cachedSapQuote;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -357,9 +363,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if (shareSapOrder & toClone.isSavedInSAP()) {
             cloned.addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
                     toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
-                    toClone.latestSapOrderDetail().getCompanyCode(),
-                    toClone.latestSapOrderDetail().getOrderProductsHash(),
-                    toClone.latestSapOrderDetail().getOrderPricesHash()));
+                    toClone.latestSapOrderDetail().getCompanyCode()));
         }
 
         toClone.addChildOrder(cloned);
@@ -369,9 +373,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public static List<Product> getAllProductsOrdered(ProductOrder order) {
         List<Product> orderedListOfProducts = new ArrayList<>();
-        orderedListOfProducts.add(order.getProduct());
+        final Optional<Product> optionalProduct = Optional.ofNullable(order.getProduct());
+        optionalProduct.ifPresent(orderedListOfProducts::add);
         for (ProductOrderAddOn addOn : order.getAddOns()) {
-            orderedListOfProducts.add(addOn.getAddOn());
+            final Optional<Product> optionalAddOn = Optional.ofNullable(addOn.getAddOn());
+            optionalAddOn.ifPresent(orderedListOfProducts::add);
         }
         Collections.sort(orderedListOfProducts);
         return orderedListOfProducts;
@@ -2360,7 +2366,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if (Objects.nonNull(quote)) {
             quote.getFunding().stream()
                 .filter(Funding::isFundsReservation)
-                .filter(funding -> !FundingLevel.isGrantActiveForDate(todayTruncated, funding))
+                .filter(funding -> !FundingLevel.isGrantActiveForDate(todayTruncated, funding.getGrantEndDate()))
                 .forEach(funding -> {
                     errors.add(String.format("The funding source %s has expired making this quote currently unfunded.",
                         funding.getGrantNumber()));
@@ -2372,14 +2378,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
-    public static void checkSapQuoteValidity(Quote quote) throws QuoteServerException {
-        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
-
-        checkSapQuoteValidity(quote, todayTruncated);
+    public static void checkSapQuoteValidity(SapQuote quote) throws QuoteServerException {
+        checkSapQuoteValidity(quote, new Date());
     }
 
-    public static void checkSapQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
+    public static void checkSapQuoteValidity(SapQuote quote, Date todayTruncated) throws QuoteServerException {
+        final Date truncatedDate = DateUtils.truncate(new Date(), Calendar.DATE);
+        final Set<String> errors = new HashSet<>();
 
+        if(Objects.nonNull(quote)) {
+            quote.getFundingDetails().stream()
+                    .filter(fundingDetail -> fundingDetail.getFundingType() == SapIntegrationClientImpl.FundingType.FUNDS_RESERVATION)
+                    .filter(fundingDetail -> !FundingLevel.isGrantActiveForDate(todayTruncated, fundingDetail.getFundingHeaderChangeDate()))
+                    .forEach(fundingDetail -> errors.add(String.format("The funding source %s has expired making this quote currently unfunded", fundingDetail.getItemNumber())));
+        }
+
+        if (CollectionUtils.isNotEmpty(errors)) {
+            throw new QuoteServerException(errors.toString());
+        }
     }
 
     /**
@@ -2490,8 +2506,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public void updateSapDetails(int sampleCount, String productListHash, String pricesForProducts) {
         final SapOrderDetail sapOrderDetail = latestSapOrderDetail();
         sapOrderDetail.setPrimaryQuantity(sampleCount);
-        sapOrderDetail.setOrderProductsHash(productListHash);
-        sapOrderDetail.setOrderPricesHash(pricesForProducts);
     }
 
     public boolean isResearchOrder () {
@@ -2669,4 +2683,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return isQuoteIdSet() && QuoteSourceType.QUOTE_SERVER == getQuoteSource();
     }
 
+    public boolean isLatestSapQuote() {
+        return latestSapOrderDetail() != null &&
+               StringUtils.equals(latestSapOrderDetail().getQuoteId(), quoteId);
+    }
 }

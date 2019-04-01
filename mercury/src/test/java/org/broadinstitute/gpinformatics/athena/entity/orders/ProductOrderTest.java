@@ -382,7 +382,7 @@ public class ProductOrderTest {
                 sixMercurySamplesNoDupes, QUOTE, null, null);
         testParentOrder.setQuoteSource(ProductOrder.QuoteSourceType.SAP_SOURCE);
         testParentOrder.addSapOrderDetail(new SapOrderDetail("testParentNumber", testParentOrder.getNonAbandonedCount(),
-                testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
+                testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
 
         Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),6);
         Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),6);
@@ -493,10 +493,10 @@ public class ProductOrderTest {
 
         final String sapOrderNumber = "SAP_001";
         final SapOrderDetail orderDetail1 = new SapOrderDetail(sapOrderNumber, 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
         orderDetail1.getUpdateData().setCreatedDate(new Date());
         final SapOrderDetail orderDetail2 = new SapOrderDetail(sapOrderNumber + "2", 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
         orderDetail2.getUpdateData().setCreatedDate(new Date());
         testProductOrder.addSapOrderDetail(orderDetail1);
 
@@ -594,8 +594,7 @@ public class ProductOrderTest {
 
         testProductOrder.addSapOrderDetail(new SapOrderDetail("test number",
                 testProductOrder.getSampleCount(), testProductOrder.getQuoteId(),
-                testProductOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "",
-                ""));
+                testProductOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode()));
 
         assertThat(testProductOrder.getSapCompanyConfigurationForProductOrder(), is(equalTo(
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD)));

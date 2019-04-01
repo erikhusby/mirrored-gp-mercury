@@ -26,6 +26,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -90,26 +91,22 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "sapReferenceOrders")
     private Set<ProductOrder> referenceProductOrder = new HashSet<>();
 
-    private String orderProductsHash;
-
-    private String orderPricesHash;
-
     @OneToMany(mappedBy = "sapOrderDetail", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
     private Set<LedgerEntry> ledgerEntries = new HashSet<>();
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name="sap_order_detail")
+    private Set<SapQuoteItemReference> quoteReferences = new HashSet<>();
+
     public SapOrderDetail() {
     }
 
-    public SapOrderDetail(String sapOrderNumber, int primaryQuantity, String quoteId, String companyCode,
-                          String productsHash, String quantitiesHash) {
+    public SapOrderDetail(String sapOrderNumber, int primaryQuantity, String quoteId, String companyCode) {
         this.sapOrderNumber = sapOrderNumber;
         this.primaryQuantity = primaryQuantity;
         this.quoteId = quoteId;
         this.companyCode = companyCode;
-        this.orderProductsHash = productsHash;
-        this.orderPricesHash = quantitiesHash;
-
     }
 
     public String getSapOrderNumber() {
@@ -145,22 +142,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         this.companyCode = companyCode;
     }
 
-    public String getOrderProductsHash() {
-        return orderProductsHash;
-    }
-
-    public void setOrderProductsHash(String orderProductHash) {
-        this.orderProductsHash = orderProductHash;
-    }
-
-    public String getOrderPricesHash() {
-        return orderPricesHash;
-    }
-
-    public void setOrderPricesHash(String orderQuantitiesHash) {
-        this.orderPricesHash = orderQuantitiesHash;
-    }
-
     public Set<LedgerEntry> getLedgerEntries() {
         return ledgerEntries;
     }
@@ -174,6 +155,22 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     public void addLedgerEntry(LedgerEntry ledgerEntry) {
         ledgerEntry.setSapOrderDetail(this);
         this.ledgerEntries.add(ledgerEntry);
+    }
+
+    public Set<SapQuoteItemReference> getQuoteReferences() {
+        return quoteReferences;
+    }
+
+    public void addQuoteReference(SapQuoteItemReference quoteItemReference) {
+        this.quoteReferences.add(quoteItemReference);
+    }
+
+    public void addQuoteReferences(Collection<SapQuoteItemReference> references) {
+        if(CollectionUtils.isNotEmpty(references)) {
+            this.quoteReferences.addAll(references);
+        } else {
+            this.quoteReferences.clear();
+        }
     }
 
     public Map<Product, Integer> getNumberOfBilledEntriesByProduct() {
@@ -257,8 +254,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         return new EqualsBuilder()
                 .append(sapOrderNumber, that.sapOrderNumber)
                 .append(referenceProductOrder, that.referenceProductOrder)
-                .append(orderProductsHash, that.orderProductsHash)
-                .append(orderPricesHash, that.orderPricesHash)
                 .isEquals();
     }
 
@@ -267,8 +262,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         return new HashCodeBuilder(17, 37)
                 .append(sapOrderNumber)
                 .append(referenceProductOrder)
-                .append(orderProductsHash)
-                .append(orderPricesHash)
                 .toHashCode();
     }
 }

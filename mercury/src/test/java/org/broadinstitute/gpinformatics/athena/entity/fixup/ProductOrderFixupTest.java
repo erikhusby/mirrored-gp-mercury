@@ -1093,8 +1093,7 @@ public class ProductOrderFixupTest extends Arquillian {
                 }
                 SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
                         sampleCount.intValue(),
-                        orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode(),
-                        "", "");
+                        orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode());
                 orderWithSap.addSapOrderDetail(newDetail);
             } else {
                 SapOrderDetail latestDetail = orderWithSap.latestSapOrderDetail();
