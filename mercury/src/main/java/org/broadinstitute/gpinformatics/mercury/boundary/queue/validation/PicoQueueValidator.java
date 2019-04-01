@@ -39,7 +39,7 @@ public class PicoQueueValidator implements AbstractQueueValidator {
 
             MaterialType latestMaterialType = labVessel.getLatestMaterialType();
             if (latestMaterialType != null) {
-                if (latestMaterialType.name().toLowerCase().contains("dna")) {
+                if (!latestMaterialType.name().toLowerCase().contains("dna")) {
                     validationResultsById.put(labVessel.getLabVesselId(), ValidationResult.FAIL);
                 }
             } else {
@@ -57,7 +57,7 @@ public class PicoQueueValidator implements AbstractQueueValidator {
             }
         }
 
-        // We determined it there are some BSP Samples, therefore we can use BSP to verify whether it is DNA or not.
+        // We determined that there are some BSP Samples, therefore we can use BSP to verify whether it is DNA or not.
         if (!bspSampleIdsByVesselId.isEmpty()) {
             BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
 

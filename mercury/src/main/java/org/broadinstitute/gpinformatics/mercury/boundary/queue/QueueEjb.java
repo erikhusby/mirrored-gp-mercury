@@ -154,7 +154,7 @@ public class QueueEjb {
 
             genericQueue.getQueueGroupings().add(queueGrouping);
             try {
-                queueValidationHandler.validate(vesselList, queueType, messageCollection);
+                queueValidationHandler.enqueueValidation(vesselList, queueType, messageCollection);
             } catch (Exception e) {
                 messageCollection.addWarning("Internal error trying to validate: " + e.getMessage());
             }

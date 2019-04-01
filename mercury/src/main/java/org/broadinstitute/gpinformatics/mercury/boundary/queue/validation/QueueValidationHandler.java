@@ -25,7 +25,7 @@ public class QueueValidationHandler {
      * @param queueType             Queue the lab vessels are being validated for.
      * @param messageCollection     Messages back to the user.
      */
-    public void validate(Collection<LabVessel> labVessels, QueueType queueType, MessageCollection messageCollection) throws Exception {
+    public void enqueueValidation(Collection<LabVessel> labVessels, QueueType queueType, MessageCollection messageCollection) throws Exception {
         AbstractQueueValidator queueValidator = queueType.getValidatorClass().newInstance();
         Map<Long, ValidationResult> validationResultsByVesselId = queueValidator.validatePreEnqueue(labVessels, messageCollection);
 

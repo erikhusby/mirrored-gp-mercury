@@ -68,7 +68,7 @@ public abstract class AbstractDataDumpGenerator {
     }
 
     /**
-     * SIDE EFFECTING METHOD. Obtains the mercury samples and fills the maps based on the lab vessels passed in.r
+     * SIDE EFFECTING METHOD. Obtains the mercury samples and fills the maps based on the lab vessels passed in.
      *
      * @param labVessels                    Lab Vessels to generate data for
      * @param mercurySamples                MercurySamples for the lab vessels
