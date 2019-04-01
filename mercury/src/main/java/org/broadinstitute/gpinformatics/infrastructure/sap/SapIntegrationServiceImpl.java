@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
@@ -30,6 +31,7 @@ import org.broadinstitute.sap.entity.SAPOrder;
 import org.broadinstitute.sap.entity.SAPOrderItem;
 import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
@@ -408,14 +410,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = product.isExternalProduct() ?
             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        String productHeirarchy = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization();
+
+        if (product.isExternalOnlyProduct() || product.isClinicalProduct()) {
+            productHeirarchy = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization();
+        }
         BigDecimal minimumOrderQuantity =
             product.getMinimumOrderSize() != null ? new BigDecimal(product.getMinimumOrderSize()) : BigDecimal.ONE;
 
-        SAPMaterial newMaterial = new SAPMaterial(product.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+        return new SAPMaterial(product.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
             product.getProductName(), null, SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, minimumOrderQuantity,
             product.getDescription(), product.getDeliverables(), product.getInputRequirements(),new Date(), new Date(),
-            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
-        return newMaterial;
+            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, productHeirarchy);
     }
 
     @Override
