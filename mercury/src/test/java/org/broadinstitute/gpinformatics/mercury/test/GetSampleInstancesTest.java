@@ -285,7 +285,8 @@ public class GetSampleInstancesTest {
 
         LabBatch lcsetBatch = new LabBatch("LCSET-" + lcsetNum, extractedVessels, LabBatch.LabBatchType.WORKFLOW);
         lcsetBatch.setCreatedOn(new Date(now++));
-        lcsetBatch.setWorkflowName("Exome Express");
+        String workflowName = "ICE Exome Express";
+        lcsetBatch.setWorkflowName(workflowName);
 
         Bucket lcsetBucket = new Bucket("Shearing" + lcsetNum);
         BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder, lcsetBucket,
@@ -394,7 +395,7 @@ public class GetSampleInstancesTest {
         Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), "EX-1");
         Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), LCSET_1);
         Assert.assertEquals(allBatchVessels.get(index).getLabBatch().getBatchName(), SAMPLE_KIT_1);
-        Assert.assertEquals(sampleInstance.getWorkflowName(), "Exome Express");
+        Assert.assertEquals(sampleInstance.getWorkflowName(), workflowName);
 
         Assert.assertEquals(sampleInstance.getAllBucketEntries().size(), lcsetNum);
         final int sampleIndex = lcsetNum - 1;

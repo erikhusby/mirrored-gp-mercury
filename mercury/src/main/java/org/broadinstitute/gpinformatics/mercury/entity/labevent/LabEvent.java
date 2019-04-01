@@ -4,7 +4,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -55,7 +54,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * A lab event is an informatics model of some of the types of operations that occur in the lab.
@@ -584,7 +582,7 @@ todo jmt adder methods
                 // First attempt to find the LCSET that all single-sample vessels have in common
                 for (SectionTransfer sectionTransfer : sectionTransfers) {
                     Set<LabBatch> sectionLcsets = sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
-                            sectionTransfer.getSourceSection());
+                            sectionTransfer.getSourceSection(), this);
                     if( !sectionLcsets.isEmpty() ) {
                         computedLcSets.addAll(sectionLcsets);
                     } else {
@@ -615,30 +613,6 @@ todo jmt adder methods
                 }
                 computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
                 computedLcSets.addAll(computeLcSetsForVesselToSectionTransfers());
-
-                // check whether event matches any workflows unambiguously
-                WorkflowConfig workflowConfig = new WorkflowLoader().load();
-                for (LabBatch labBatch : computedLcSets) {
-                    ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflowByName(
-                            labBatch.getWorkflowName()).getEffectiveVersion(getEventDate());
-                    ProductWorkflowDefVersion.LabEventNode labEventNode = workflowDefVersion.findStepByEventType(labEventType.getName());
-                    if (labEventNode != null) {
-                        if (!labEventNode.getPredecessorTransfers().isEmpty() && !getAncestorEvents().isEmpty()) {
-                            Set<LabEventType> workflowTypes = labEventNode.getPredecessorTransfers().stream().
-                                    map(ProductWorkflowDefVersion.LabEventNode::getLabEventType).collect(Collectors.toSet());
-                            Set<LabEventType> ancestorTypes = getAncestorEvents().stream().
-                                    map(LabEvent::getLabEventType).collect(Collectors.toSet());
-                            Set<LabEventType> intersection = workflowTypes.stream()
-                                    .filter(ancestorTypes::contains)
-                                    .collect(Collectors.toSet());
-                            if (!intersection.isEmpty()) {
-                                computedLcSets.clear();
-                                computedLcSets.add(labBatch);
-                                break;
-                            }
-                        }
-                    }
-                }
 
     /*
                 todo jmt revisit after we remove inference of LCSETs for controls.  The performance penalty is too high now.
@@ -699,7 +673,7 @@ todo jmt adder methods
                         mapPositionToLcSets.put(targetPosition, labBatches);
                     }
                     Set<LabBatch> localComputedLcSets = VesselContainer.computeLcSets(mapLabBatchToCount,
-                            numVesselsWithBucketEntries);
+                            numVesselsWithBucketEntries, this);
                     labBatches.addAll(localComputedLcSets);
                     totalLabBatches.addAll(localComputedLcSets);
                     mapLabBatchToCount.clear();
@@ -714,7 +688,7 @@ todo jmt adder methods
                 numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
                         sampleInstancesAtPositionV2);
             }
-            return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries);
+            return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries, this);
         }
     }
 
@@ -727,7 +701,7 @@ todo jmt adder methods
             numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
                     sampleInstancesAtPositionV2);
         }
-        return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries);
+        return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries, this);
     }
 
     /**

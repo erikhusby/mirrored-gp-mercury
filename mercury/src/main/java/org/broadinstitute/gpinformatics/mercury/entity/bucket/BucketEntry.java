@@ -145,7 +145,6 @@ public class BucketEntry {
     public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
                        @Nonnull BucketEntryType entryType, int productOrderRanking) {
         this.labVessel = vessel;
-        vessel.addBucketEntry(this); // todo jmt
         this.bucket = bucket;
         this.entryType = entryType;
         this.productOrderRanking = productOrderRanking;
