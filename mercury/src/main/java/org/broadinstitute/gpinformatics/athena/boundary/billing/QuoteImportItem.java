@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
@@ -41,6 +42,7 @@ public class QuoteImportItem {
 
     private PriceList priceOnWorkDate;
     private Quote quote;
+    private SapQuote sapQuote;
 
     public QuoteImportItem(
             String quoteId, PriceItem priceItem, String quotePriceType, List<LedgerEntry> ledgerItems, Date billToDate,
@@ -205,6 +207,27 @@ public class QuoteImportItem {
     }
 
     /**
+     * This method should be invoked upon successful billing to update ledger entries with the quote to which they were
+     * billed and the work item.
+     *
+     * @param billingMessage            The message to be assigned to all entries.
+     * @param quoteServerWorkItem       the id of the transaction in the quote server
+     * @param sapDeliveryId
+     */
+    public void updateSapLedgerEntries(String billingMessage, String quoteServerWorkItem, String sapDeliveryId) {
+
+        for (LedgerEntry ledgerEntry : ledgerItems) {
+            ledgerEntry.setQuoteId(quoteId);
+            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            ledgerEntry.setBillingMessage(billingMessage);
+            ledgerEntry.setWorkItem(quoteServerWorkItem);
+            if (StringUtils.isNotBlank(sapDeliveryId)) {
+                ledgerEntry.setSapDeliveryDocumentId(sapDeliveryId);
+            }
+        }
+    }
+
+    /**
      * @return There should always be ledger entries and if not, it will throw an exception, which should be OK. This
      * just returns the first items sample because all items are grouped at a fine level by price item which means the
      * same product because price items are product based.
@@ -350,4 +373,14 @@ public class QuoteImportItem {
     public boolean isBillingCredit() {
         return getQuantity() < 0;
     }
+
+    public SapQuote getSapQuote() {
+        return sapQuote;
+    }
+
+    public void setSapQuote(SapQuote sapQuote) {
+        this.sapQuote = sapQuote;
+    }
+
+    public boolean isSapOrder() { return productOrder.hasSapQuote();}
 }

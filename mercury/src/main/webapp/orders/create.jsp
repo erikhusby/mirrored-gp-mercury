@@ -1,8 +1,10 @@
+<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.QuoteSourceType.*" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="static org.broadinstitute.sap.services.SapIntegrationClientImpl.FundingType.*" %>
 
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -1105,36 +1107,54 @@
 
             if (data.fundsRemaining && !data.error) {
                 var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                        ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
+                    ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
                 var fundingDetails = data.fundingDetails;
 
-                if(data.status != "Funded" ||
-                        Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
+                if((data.status !== (data.quoteType==="Quote Server Quote")?"Funded":"Approved" )  ||
+                    Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
                     quoteWarning = true;
+                }
+                if(fundingDetails) {
+                    fundsRemainingNotification += '<br><B>Funding Information</b>';
                 }
 
                 for(var detailIndex in fundingDetails) {
-                    fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
-                    if(fundingDetails[detailIndex].activeGrant) {
-                        fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
-                        if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
-                                ' days. If it is likely this work will not be completed by then, please work on updating the ' +
-                                'Funding Source so Billing Errors can be avoided.';
+                    fundsRemainingNotification += '<br>' + (detailIndex+1) +") " +fundingDetails[detailIndex].fundingType
+                        + ": " + fundingDetails[detailIndex].fundingStatus;
+
+                    if(fundingDetails[detailIndex].fundingStatus !== "Active") {
+                        quoteWarning = true;
+                    }
+
+                    if(fundingDetails[detailIndex].fundingType === "FUNDS_RESERVATION") {
+                        fundsRemainingNotification += '<br>'+fundingDetails[detailIndex].fundsReservationNumber;
+
+                        if (fundingDetails[detailIndex].activeGrant) {
+                            fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].fundsReservationEndDate;
+                            if (fundingDetails[detailIndex].daysTillExpire < 45) {
+                                fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
+                                    ' days. If it is likely this work will not be completed by then, please work on updating the ' +
+                                    'Funding Source so Billing Errors can be avoided.';
+                                quoteWarning = true;
+                            }
+                        } else {
+                            fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].fundsReservationEndDate;
                             quoteWarning = true;
                         }
                     } else {
-                        fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
-                        quoteWarning = true;
+                        if(fundingDetails[detailIndex].purchaseOrderNumber) {
+                            fundsRemainingNotification += '<BR>' + fundingDetails[detailIndex].purchaseOrderNumber;
+                        }
                     }
-                    if(fundingDetails[detailIndex].grantStatus != "Active") {
-                        quoteWarning = true;
+                    if(data.quoteType==="SAP Quote") {
+                        fundsRemainingNotification += '<br>funding split percentage=' + fundingDetails[detailIndex].fundingSplit + ' ';
                     }
-                    fundsRemainingNotification += '\n';
+
+                    fundsRemainingNotification += '<br>';
                 }
-                $j("#fundsRemaining").text(fundsRemainingNotification);
+                $j("#fundsRemaining").html(fundsRemainingNotification);
             } else {
-                $j("#fundsRemaining").text('Error: ' + data.error);
+                $j("#fundsRemaining").html('Error: ' + data.error);
                 quoteWarning = true;
             }
 
