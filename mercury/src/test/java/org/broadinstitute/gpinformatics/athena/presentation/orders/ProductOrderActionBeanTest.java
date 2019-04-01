@@ -12,9 +12,9 @@ import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
@@ -2379,7 +2379,15 @@ public class ProductOrderActionBeanTest {
          assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
      }
 
+    /**
+     *
+     * Tests the validation methods executed when a Product Order is saved
+     * @throws Exception
+     */
     public void testSaveValidations() throws Exception {
+
+        // Initialize the Order to be tested
+
         pdo = ProductOrderTestFactory.createDummyProductOrder();
         pdo.setQuoteId("BSP252");
         pdo.addRegulatoryInfo(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
@@ -2388,12 +2396,16 @@ public class ProductOrderActionBeanTest {
         pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
         pdo.setCreatedBy(1L);
 
+        // Initialize the Action Bean to be in such a state that we can mimic calls from the web
         HttpServletRequest request = new MockHttpServletRequest("foo","bar");
         actionBean.setContext(new CoreActionBeanContext());
+
 
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> returnMaterials = new HashSet<>();
+
+        //setup the mock quote server to return a fully defined quote found in our quoteTestData.xml file
         Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString()))
                 .then(new Answer<Quote>() {
                     @Override
@@ -2402,7 +2414,9 @@ public class ProductOrderActionBeanTest {
                     }
                 });
 
-
+        //Now setup the pricing for the products.  The aim is to have the price set so that the value of the order
+        // (without customizations) will be more than the quote.  Later on, we will set the customizations up to have
+        // a custom price to make the value of the order will be less than the quote.
         final BigDecimal quoteFundsRemaining = new BigDecimal(mockQuoteService.getQuoteByAlphaId(pdo.getQuoteId())
                         .getQuoteFunding().getFundsRemaining());
         BigDecimal pricedMoreThanQuote =
@@ -2423,6 +2437,7 @@ public class ProductOrderActionBeanTest {
             returnMaterials.add(addonMaterial);
         }
 
+        //Set up the rest of the Mocks with values that will refelct the conditions needed
         Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
         stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
@@ -2507,7 +2522,11 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockBspUserList.find(Mockito.anyString()))
                 .thenReturn(Collections.singletonList(new BspUser(1L, "", "squidUser@broadinstitute.org", "Squid", "User", Collections.<String>emptyList(),1L, "squiduser" )));
 
+        // Ensure that there were no Customizations previously set on the Product Order
         Assert.assertTrue(CollectionUtils.isEmpty(pdo.getCustomPriceAdjustments()));
+
+        // The create page will set values with Token input.  Initialize this token input to set values such as the
+        //
         ProductTokenInput productTokenInput = new ProductTokenInput();
         productTokenInput.setProductDao(mockProductDao);
         ProjectTokenInput projectTokenInput = new ProjectTokenInput();
@@ -2532,13 +2551,19 @@ public class ProductOrderActionBeanTest {
 
         actionBean.populateTokenListsFromObjectData();
         userTokenInput.setup("1");
+        // end of definitions for token input
+
+        // call validation methods called during save
         actionBean.saveValidations();
         actionBean.doValidation(actionBean.SAVE_ACTION);
-        //Errors should be 2 concerned with owner is not set and one saying that the quote will be over drawn
+
+        //Errors should be just related to quote does not have enough value
         Assert.assertFalse(actionBean.getValidationErrors().isEmpty(),
                 "validation Errors should not be empty at this stage");
         actionBean.clearValidationErrors();
 
+        // Begin to mimic creating pricing customizations from the user.  Divide the price in half to ensure that the
+        // order value is lower than the quote
         JSONObject customizationJson = new JSONObject();
         CustomizationValues customPricePrimary = new CustomizationValues(pdo.getProduct().getPartNumber(),
                 String.valueOf(pdo.getSamples().size()),
@@ -2551,13 +2576,18 @@ public class ProductOrderActionBeanTest {
                     pricedMoreThanQuote.divide(BigDecimal.valueOf(3)).toString(), "");
             customizationJson.put(productOrderAddOn.getAddOn().getPartNumber(), customPriceAddon.toJson());
         }
+
+        //Set the customizations on the action bean
         actionBean.setCustomizationJsonString(customizationJson.toString());
 
         actionBean.populateTokenListsFromObjectData();
         userTokenInput.setup("1");
+
+        // re-call the save validations
         actionBean.saveValidations();
         actionBean.doValidation(actionBean.SAVE_ACTION);
-        //Errors with owner not set still come, but errors concerning quote being over are not validated anymore
+
+        // Now there are no errors, Quote value compared to Order value is sufficient
         Assert.assertTrue(actionBean.getValidationErrors().isEmpty(),
                 "Validation errors should be empty.");
         Assert.assertTrue(CollectionUtils.isNotEmpty(pdo.getCustomPriceAdjustments()));
