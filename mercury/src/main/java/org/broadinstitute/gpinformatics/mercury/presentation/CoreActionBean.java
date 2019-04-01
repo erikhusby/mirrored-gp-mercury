@@ -48,6 +48,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.owasp.encoder.Encode;
 
@@ -130,8 +131,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     protected QuoteService quoteService;
-    @Inject
-    private SapIntegrationService sapService;
+    protected SapIntegrationService sapService;
 
     public enum ErrorLevel {
         WARNING,
@@ -652,8 +652,8 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
         return quoteDetails;
     }
 
-    protected Quote validateSapQuote(ProductOrder productOrder) {
-        Quote quoteDetails = null;
+    protected SapQuote validateSapQuote(ProductOrder productOrder) {
+        SapQuote quoteDetails = null;
         try {
             quoteDetails = productOrder.getSapQuote(sapService);
         } catch (SAPIntegrationException e) {
@@ -721,5 +721,10 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     @Inject
     public void setQuoteService(QuoteService quoteService) {
         this.quoteService = quoteService;
+    }
+
+    @Inject
+    public void setSapService(SapIntegrationService sapService) {
+        this.sapService = sapService;
     }
 }

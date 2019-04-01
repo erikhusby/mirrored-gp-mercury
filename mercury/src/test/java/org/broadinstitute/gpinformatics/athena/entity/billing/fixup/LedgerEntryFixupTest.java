@@ -30,7 +30,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -404,27 +403,32 @@ public class LedgerEntryFixupTest extends Arquillian {
         try {
             final List<QuoteImportItem> quoteImportItems = collectedEntriesByQuoteId.getQuoteImportItems(priceListCache);
             for (QuoteImportItem item : quoteImportItems) {
-                Quote quote = item.getProductOrder().hasSapQuote()?item.getProductOrder().getSapQuote(sapService):item.getProductOrder().getQuote(quoteService);
+                if(item.isSapOrder()) {
+                    Quote quote = item.getProductOrder().getQuote(quoteService);
 
-                System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
-                                   + item.getLedgerItems().size() + " ledger entries: "
-                                   + StringUtils.join(entriesByWorkItem.get(item.getSingleWorkItem()), ","));
-                final PriceList priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
-                String newWorkId = quoteService.registerNewWork(quote,
-                        QuotePriceItem.convertMercuryPriceItem(item.getPriceItem()),
-                        item.getPrimaryForReplacement(priceItemsForDate),
-                        item.getWorkCompleteDate(),
-                        item.getQuantity(),
-                        "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4208",
-                        "SupportTicket","SUPPORT-4208",null);
+                    System.out.println("SUPPORT-4208 For work item " + item.getSingleWorkItem() + " updating "
+                                       + item.getLedgerItems().size() + " ledger entries: "
+                                       + StringUtils.join(entriesByWorkItem.get(item.getSingleWorkItem()), ","));
+                    final PriceList priceItemsForDate =
+                            quoteService.getPriceItemsForDate(Collections.singletonList(item));
+                    String newWorkId = quoteService.registerNewWork(quote,
+                            QuotePriceItem.convertMercuryPriceItem(item.getPriceItem()),
+                            item.getPrimaryForReplacement(priceItemsForDate),
+                            item.getWorkCompleteDate(),
+                            item.getQuantity(),
+                            "https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-4208",
+                            "SupportTicket", "SUPPORT-4208", null);
 
-                newWorkItems.add(newWorkId);
+                    newWorkItems.add(newWorkId);
 
-                item.updateLedgerEntries(null, BillingSession.SUCCESS, newWorkId, Collections.emptyList(),
-                        item.getSapItems());
+                    item.updateLedgerEntries(null, BillingSession.SUCCESS, newWorkId, Collections.emptyList(),
+                            item.getSapItems());
+                }else {
+                    Assert.fail();
+                }
             }
 
-        } catch (QuoteNotFoundException | QuoteServerException | SAPIntegrationException e) {
+        } catch (QuoteNotFoundException | QuoteServerException e) {
             Assert.fail();
         }
         ledgerEntryFixupDao.persist(new FixupCommentary("SUPPORT-4208 Replaced work item references " +

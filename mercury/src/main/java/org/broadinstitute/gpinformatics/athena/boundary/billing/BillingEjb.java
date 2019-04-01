@@ -69,7 +69,7 @@ public class BillingEjb {
         private String workId;
 
         private String errorMessage;
-        private String SAPBillingId;
+        private String sapBillingId;
 
         public BillingResult(@Nonnull QuoteImportItem quoteImportItem) {
             this.quoteImportItem = quoteImportItem;
@@ -99,12 +99,20 @@ public class BillingEjb {
             return errorMessage != null;
         }
 
-        public void setSAPBillingId(String SAPBillingId) {
-            this.SAPBillingId = SAPBillingId;
+        public void setSapBillingId(String sapBillingId) {
+            this.sapBillingId = sapBillingId;
         }
 
-        public String getSAPBillingId() {
-            return SAPBillingId;
+        public String getSapBillingId() {
+            return sapBillingId;
+        }
+
+        public boolean isBilledInSap() {
+            return StringUtils.isNotBlank(sapBillingId);
+        }
+
+        public boolean isBilledInQuoteServer() {
+            return StringUtils.isNotBlank(workId);
         }
     }
 
@@ -209,6 +217,23 @@ public class BillingEjb {
         }
         item.updateLedgerEntries(quoteIsReplacing, billingMessage, quoteServerWorkItem,
                 replacementPriceItemNames, sapDeliveryId);
+        billingSessionDao.flush();
+    }
+
+    /**
+     * Separation of the action of calling the quote server and updating the associated ledger entries.  This is to
+     * separate the steps of billing a session into smaller finite transactions so we can record more to the database
+     * sooner
+     *
+     * @param item                Representation of the quote and its ledger entries that are to be billed
+     * @param quoteServerWorkItem the pointer back to the quote server transaction
+     * @param sapDeliveryId
+     * @param billingMessage
+     */
+    public void updateSapLedgerEntries(QuoteImportItem item, String quoteServerWorkItem,
+                                    String sapDeliveryId, String billingMessage) {
+
+        item.updateSapLedgerEntries(billingMessage, quoteServerWorkItem,sapDeliveryId);
         billingSessionDao.flush();
     }
 

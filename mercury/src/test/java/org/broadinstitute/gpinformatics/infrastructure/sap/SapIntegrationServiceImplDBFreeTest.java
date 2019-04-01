@@ -149,7 +149,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId());
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         conversionPdo.addSapOrderDetail(new SapOrderDetail("testSAPOrder", 10, testSingleSourceQuote.getAlphanumericId(),
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
 
         final Product primaryProduct = conversionPdo.getProduct();
         addTestProductMaterialPrice(primaryMaterialBasePrice, priceList, materials, primaryProduct,
@@ -239,7 +239,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         conversionPdo.addSapOrderDetail(new SapOrderDetail("testsap001", conversionPdo.getTotalNonAbandonedCount(
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                conversionPdo.getQuoteId(), conversionPdo.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
+                conversionPdo.getQuoteId(), conversionPdo.getSapCompanyConfigurationForProductOrder().getCompanyCode()));
 
         SAPOrder convertedOrder2 = integrationService.initializeSAPOrder(conversionPdo, true, false);
         for(SAPOrderItem item:convertedOrder2.getOrderItems()) {
@@ -398,7 +398,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         countTestPDO.setQuoteId(testSingleSourceQuote.getAlphanumericId());
         countTestPDO.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         countTestPDO.addSapOrderDetail(new SapOrderDetail("testSAPOrder", 10, testSingleSourceQuote.getAlphanumericId(),
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
 
         final Product primaryProduct = countTestPDO.getProduct();
         addTestProductMaterialPrice("50.00", priceList, materials, primaryProduct,
