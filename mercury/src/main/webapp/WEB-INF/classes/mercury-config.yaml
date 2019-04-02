@@ -129,11 +129,6 @@ portal:
 
 quote:
 
-    DEV:
-      login:    mercuryquote
-      password: ml1m5qu0t3
-      url:      http://quotedev:8080
-
     QA:
       login:    mercuryquote
       password: ml1m5qu0t3
@@ -142,7 +137,7 @@ quote:
     TEST:
       login:    mercuryquote
       password: ml1m5qu0t3
-      url:      http://quotetest:8080
+      url:      https://quotes-test.broadinstitute.org
 
     PROD:
       login:    mercuryquote
