@@ -39,7 +39,7 @@ public class ExternalDataCacheControlIntegrationTest extends Arquillian {
     public void setUpTestLogger() {
         cacheControlLogger = Logger.getLogger(ExternalDataCacheControl.class.getName());
         cacheControlLogger.setLevel(Level.ALL);
-        testLogHandler = new TestLogHandler();
+        testLogHandler = TestLogHandler.newInstance();
         cacheControlLogger.addHandler(testLogHandler);
         testLogHandler.setLevel(Level.ALL);
     }

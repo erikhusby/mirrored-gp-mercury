@@ -155,9 +155,9 @@ public class MetricsViewActionBeanTest {
         for (MetricsViewActionBean.PlateMapMetrics plateMapMetrics: MetricsViewActionBean.PlateMapMetrics.values()) {
             boolean foundMetric = false;
             for (MetricsViewActionBean.WellDataset wellDataset: plateMap.getDatasets()) {
-                if (wellDataset.getPlateMapMetrics() == plateMapMetrics) {
+                if (wellDataset.getDisplayMetrics() == plateMapMetrics) {
                     foundMetric = true;
-                    if (wellDataset.getPlateMapMetrics() == MetricsViewActionBean.PlateMapMetrics.CALL_RATE) {
+                    if (wellDataset.getDisplayMetrics() == MetricsViewActionBean.PlateMapMetrics.CALL_RATE) {
                         callRateDataset = wellDataset;
                     }
                     break;
