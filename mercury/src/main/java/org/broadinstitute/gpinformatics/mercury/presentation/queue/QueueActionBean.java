@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityActionBean;
 import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
@@ -98,7 +99,7 @@ public class QueueActionBean extends CoreActionBean {
 
         if (queueType == null) {
             flashMessage(new SimpleMessage("You attempted to load the Queue page without specifying a queue."));
-            return new RedirectResolution(ProductOrderActionBean.class).addParameter("list", "");
+            return new RedirectResolution(SecurityActionBean.HOME_PAGE);
         }
 
         queue = queueEjb.findQueueByType(queueType);

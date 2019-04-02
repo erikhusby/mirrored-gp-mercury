@@ -58,10 +58,11 @@ public class QueueResource {
         if (enqueueContents.getReadableName().startsWith("Ext")) {
             queueOrigin = QueueOrigin.EXTRACTION;
         }
-        Long queueGroupingId = queueEjb.enqueueLabVessels(labVessels, queueType, enqueueContents.getReadableName(),
+        queueEjb.enqueueLabVessels(labVessels, queueType, enqueueContents.getReadableName(),
                 messageCollection, queueOrigin, QueueSpecialization.valueOf(enqueueContents.getQueueSpecialization()));
 
-        EnqueueResponse enqueueResponse = new EnqueueResponse(queueGroupingId, messageCollection);
+        // Decided not to pass back the QueueGroupingId to BSP. So passing null instead.
+        EnqueueResponse enqueueResponse = new EnqueueResponse(null, messageCollection);
         return Response.status(Response.Status.OK).entity(enqueueResponse).type(MediaType.APPLICATION_XML).build();
     }
 

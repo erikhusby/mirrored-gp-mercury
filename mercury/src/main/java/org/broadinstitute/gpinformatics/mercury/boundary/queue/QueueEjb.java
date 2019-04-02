@@ -107,9 +107,8 @@ public class QueueEjb {
      * @param messageCollection     Messages back to the user.
      * @param queueOrigin           What subsystem of the application did the enqueue originate from?
      * @param queueSpecialization   What, if any QueueSpecialization is known about these lab vessels for the full list
-     * @return                      the Database ID of the newly created QueueGrouping.
      */
-    public Long enqueueLabVessels(@Nonnull Collection<LabVessel> vesselList,
+    public void enqueueLabVessels(@Nonnull Collection<LabVessel> vesselList,
                                   @Nonnull QueueType queueType, @Nullable String readableText,
                                   @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
 
@@ -158,10 +157,7 @@ public class QueueEjb {
             } catch (Exception e) {
                 messageCollection.addWarning("Internal error trying to validate: " + e.getMessage());
             }
-            return queueGrouping.getQueueGroupingId();
         }
-
-        return null;
     }
 
     /**
@@ -205,7 +201,7 @@ public class QueueEjb {
         // Finds all the Active entities by the vessel Ids
         List<QueueEntity> entitiesByVesselIds = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
 
-        // Check for completeness, then if somplete update status.
+        // Check for completeness, then if complete update status.
         for (QueueEntity queueEntity : entitiesByVesselIds) {
             if (!queueValidationHandler.isComplete(queueEntity.getLabVessel(), queueType, messageCollection)
                             && dequeueingOptions == DequeueingOptions.DEFAULT_DEQUEUE_RULES) {
