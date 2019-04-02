@@ -9,6 +9,8 @@ import htsjdk.samtools.util.SequenceUtil;
 import htsjdk.variant.variantcontext.VariantContext;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.jetbrains.annotations.NotNull;
 import picard.fingerprint.FingerprintChecker;
 import picard.fingerprint.HaplotypeMap;
@@ -23,25 +25,37 @@ import java.util.Map;
 import java.util.SortedSet;
 
 public class ConcordanceCalculator {
+    // todo jmt OS-specific configuration, or require mount on Windows / MacOs?
     private HaplotypeMap haplotypes = new HaplotypeMap(new File(
             "\\\\iodine\\seq_references\\Homo_sapiens_assembly19\\v1\\Homo_sapiens_assembly19.haplotype_database.txt"));
     private File reference = new File(
             "\\\\iodine\\seq_references\\Homo_sapiens_assembly19\\v1\\Homo_sapiens_assembly19.fasta");
     private ReferenceSequenceFile ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference);
 
-    public double calculateLodScore(Fingerprint fingerprint1, String sampleKey1, Fingerprint fingerprint2, String sampleKey2) {
-        picard.fingerprint.Fingerprint observedFp = getFingerprint(fingerprint1, sampleKey1);
-        picard.fingerprint.Fingerprint expectedFp = getFingerprint(fingerprint2, sampleKey2);
+    public double calculateLodScore(Fingerprint observerdFingerprint, String observedSampleId,
+                Fingerprint expectedFingerprint, String expectedSampleId) {
+        picard.fingerprint.Fingerprint observedFp = getFingerprint(observerdFingerprint, observedSampleId);
+        picard.fingerprint.Fingerprint expectedFp = getFingerprint(expectedFingerprint, expectedSampleId);
         FingerprintChecker fingerprintChecker = new FingerprintChecker(haplotypes);
-        Map<String, picard.fingerprint.Fingerprint> mapSampleToObservedFp = fingerprintChecker.loadFingerprints(observedFp.getSource(), observedFp.getSample());
-        Map<String, picard.fingerprint.Fingerprint> mapSampleToExpectedFp = fingerprintChecker.loadFingerprints(expectedFp.getSource(), expectedFp.getSample());
-        MatchResults matchResults = FingerprintChecker.calculateMatchResults(mapSampleToObservedFp.get(observedFp.getSample()),
+        Map<String, picard.fingerprint.Fingerprint> mapSampleToObservedFp =
+                fingerprintChecker.loadFingerprints(observedFp.getSource(), observedFp.getSample());
+        Map<String, picard.fingerprint.Fingerprint> mapSampleToExpectedFp =
+                fingerprintChecker.loadFingerprints(expectedFp.getSource(), expectedFp.getSample());
+        MatchResults matchResults = FingerprintChecker.calculateMatchResults(
+                mapSampleToObservedFp.get(observedFp.getSample()),
                 mapSampleToExpectedFp.get(expectedFp.getSample()));
         return matchResults.getLOD();
     }
 
+    public double calculateHapMapConcordance(Fingerprint fingerprint, String sampleId, Control control) {
+        // todo jmt most recent passed
+        MercurySample concordanceMercurySample = control.getConcordanceMercurySample();
+        Fingerprint controlFp = concordanceMercurySample.getFingerprints().iterator().next();
+        return calculateLodScore(fingerprint, sampleId, controlFp, concordanceMercurySample.getSampleKey());
+    }
+
     @NotNull
-    private picard.fingerprint.Fingerprint getFingerprint(Fingerprint fingerprint, String sampleKey1) {
+    private picard.fingerprint.Fingerprint getFingerprint(Fingerprint fingerprint, String sampleKey) {
         List<Fingerprints.Fingerprint> fingerprints = new ArrayList<>();
         List<Fingerprints.Call> calls = new ArrayList<>();
         fingerprints.add(new Fingerprints.Fingerprint(fingerprint.getMercurySample().getSampleKey(),
@@ -62,7 +76,7 @@ public class ConcordanceCalculator {
             DownloadGenotypes downloadGenotypes = new DownloadGenotypes();
             File fpFile = File.createTempFile("Fingerprint", ".vcf");
             downloadGenotypes.OUTPUT = fpFile;
-            downloadGenotypes.SAMPLE_ALIAS = sampleKey1;
+            downloadGenotypes.SAMPLE_ALIAS = sampleKey;
 
             List<DownloadGenotypes.SnpGenotype> snpGenotypes = DownloadGenotypes.mercuryResultsToGenotypes(
                     fingerprints, haplotypes, 0.0);
@@ -74,7 +88,7 @@ public class ConcordanceCalculator {
                     haplotypes, ref);
             downloadGenotypes.writeVcf(variantContexts, Gender.valueOf(fingerprint.getGender().name()),
                     reference, ref.getSequenceDictionary());
-            return new picard.fingerprint.Fingerprint(sampleKey1, fpFile.toPath(), "");
+            return new picard.fingerprint.Fingerprint(sampleKey, fpFile.toPath(), "");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

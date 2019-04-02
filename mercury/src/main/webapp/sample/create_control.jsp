@@ -74,6 +74,15 @@
                     </c:otherwise>
                 </c:choose>
 
+                <div class="control-group">
+                    <stripes:label for="concordanceSmId" class="control-label">
+                        Aliquot SM-ID for concordance
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:checkbox name="concordanceSmId" id="concordanceSmId"
+                                          value="${actionBean.concordanceSmId}"/>
+                    </div>
+                </div>
 
                 <c:if test="${not actionBean.creating}">
                     <div class="control-group">

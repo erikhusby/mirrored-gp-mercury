@@ -12,7 +12,9 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ControlEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -33,6 +35,9 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     @Inject
     private ControlEjb controlEjb;
 
+    @Inject
+    private MercurySampleDao mercurySampleDao;
+
     private static final String VIEW_PAGE = "/sample/view_control.jsp";
     private static final String CREATE_PAGE = "/sample/create_control.jsp";
     private static final String CONTROL_LIST_PAGE = "/sample/list_controls.jsp";
@@ -46,9 +51,11 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     private boolean editControlInactiveState;
 
     private Control workingControl;
-    List<Control> positiveControls;
-    List<Control> negativeControls;
+    private List<Control> positiveControls;
+    private List<Control> negativeControls;
     private String controlReference;
+    private String concordanceSmId;
+    private MercurySample mercurySample;
 
     /**
      * Called before the execution of all Control related actions (except for the list page), this method
@@ -147,6 +154,14 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
                                               "already an inactive control that matches this.");
         }
 
+        mercurySample = mercurySampleDao.findBySampleKey(concordanceSmId);
+        if (mercurySample == null) {
+            addValidationError("concordanceSmId", "Sample not found.");
+        } else {
+            if (mercurySample.getFingerprints().isEmpty()) {
+                addValidationError("concordanceSmId", "Sample has no fingerprints.");
+            }
+        }
     }
 
     /**
@@ -176,7 +191,8 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
                     : Control.ControlState.ACTIVE;
         }
 
-//        controlDao.persist(workingControl);
+        workingControl.setConcordanceMercurySample(mercurySample);
+
         controlEjb.saveControl(workingControl, state);
 
         StringBuilder confirmMessage = new StringBuilder();
@@ -256,5 +272,13 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
 
     public void setEditControlInactiveState(boolean editControlInactiveState) {
         this.editControlInactiveState = editControlInactiveState;
+    }
+
+    public String getConcordanceSmId() {
+        return concordanceSmId;
+    }
+
+    public void setConcordanceSmId(String concordanceSmId) {
+        this.concordanceSmId = concordanceSmId;
     }
 }
