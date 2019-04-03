@@ -833,6 +833,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.orderStatus = orderStatus;
     }
 
+    @Transient
+    public String getAggregationParticleDisplayName() {
+        String displayValue = Product.AggregationParticle.DEFAULT_LABEL;
+        if (defaultAggregationParticle != null) {
+            displayValue = defaultAggregationParticle.getDisplayName();
+        }
+        return displayValue;
+    }
+
     public Product.AggregationParticle getDefaultAggregationParticle() {
         return defaultAggregationParticle;
     }

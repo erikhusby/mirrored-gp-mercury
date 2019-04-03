@@ -74,9 +74,16 @@
         .divCell.right {
             float: right;
         }
+        .changed {
+            border: #3a87ad 1.5px solid
+        }
+        ul.token-input-list {
+            max-width: 360px;
+        }
     </style>
         <script src="${ctxpath}/resources/scripts/clipboard.min.js" type="text/javascript"></script>
         <script src="${ctxpath}/resources/scripts/bindWithDelay.js" type="text/javascript"></script>
+        <script src="${ctxpath}/resources/scripts/modalMessages.js" type="text/javascript"></script>
         <script type="text/javascript">
 
         var duration = {'duration' : 400};
@@ -212,6 +219,10 @@
                 return $j("<div></div>", {"class": "noOrsp", "text": "No ORSP Projects found."})[0].outerHTML
             }
 
+            // prevent datatables javascript error from appearing.
+            $j.fn.dataTable.ext.errMode = function (settings, helpPage, message) {
+                console.log(message);
+            };
             regulatorySuggestionDT = $j("#regulatoryInfoSuggestions").DataTable({
                 dom: 't',
                 stateSave: false,
@@ -236,32 +247,38 @@
                 columns: [{
                     data: "samples", title: "Sample IDs", 'class': "sample", render: {
                         display: function (samples, type, row, meta) {
-                            var linkId = 'orsp' + meta.row + meta.col;
-                            var sampleString = samples.join(", ");
-                            var sampleLength = samples.length;
-                            var linkSelector = '#' + linkId;
-                            var $href = $j("<a></a>", {
-                                'href': 'javascript:;',
-                                'id': linkId,
-                                'text': 'Click to copy',
-                                'data-placement': 'right',
-                                'data-delay': 2000,
-                                'data-toggle': "tooltip",
-                                'data-original-title': sampleLength + ' sample names copied to clipboard.',
-                                'data-clipboard-target': linkSelector,
-                                'data-clipboard-text': sampleString
-                            });
-                            var clipboard = new Clipboard("a" + linkSelector);
-                            var api = $j.fn.dataTable.Api(meta.settings);
-                            api.cell().on('click.dt', function(event) {
-                                $j(event.target).tooltip("show");
-                                setTimeout(function () {
-                                    $j(event.target).tooltip('hide');
-                                }, 2000);
-                            });
+                            if (row.errors!==undefined) {
+                                modalMessages("error").add(row.errors, "addSamples");
+                            }
 
-                            return sampleString.trunc(90) + "<br/>" + '<div>' + $href[0].outerHTML+'</div>';
+                            if (samples!==undefined) {
+                                var linkId = 'orsp' + meta.row + meta.col;
+                                var sampleString = samples.join(", ");
+                                var sampleLength = samples.length;
+                                var linkSelector = '#' + linkId;
+                                var $href = $j("<a></a>", {
+                                    'href': 'javascript:;',
+                                    'id': linkId,
+                                    'text': 'Click to copy',
+                                    'data-placement': 'right',
+                                    'data-delay': 2000,
+                                    'data-toggle': "tooltip",
+                                    'data-original-title': sampleLength + ' sample names copied to clipboard.',
+                                    'data-clipboard-target': linkSelector,
+                                    'data-clipboard-text': sampleString
+                                });
+                                var clipboard = new Clipboard("a" + linkSelector);
+                                var api = $j.fn.dataTable.Api(meta.settings);
+                                api.cell().on('click.dt', function (event) {
+                                    $j(event.target).tooltip("show");
+                                    setTimeout(function () {
+                                        $j(event.target).tooltip('hide');
+                                    }, 2000);
 
+                                });
+
+                                return sampleString.trunc(90) + "<br/>" + '<div>' + $href[0].outerHTML + '</div>';
+                            }
                         }
                     }
                 }, {
@@ -910,8 +927,25 @@
                 priceListText += "Clinical list price: " + data.clinicalPrice;
             }
 
-            if (data.productAgp !== undefined && $j("#aggregationParticle").val() === "") {
-                $j("#aggregationParticle").val(data.productAgp);
+            var $aggregationParticle = $j("#customAggregationParticle");
+            var agpFieldChanged = data.productAgp !== undefined && $aggregationParticle.val() !== data.productAgp;
+            if (agpFieldChanged && $j("#orderId").length === 0) {
+                if ($aggregationParticle.text() !== data.productAgp) {
+                    var agpModalMessage = modalMessages("info", {
+                        onClose: function(){
+                            $j($aggregationParticle).removeClass("changed")
+                        }
+                    });
+
+                    $aggregationParticle.val(data.productAgp);
+                    $j($aggregationParticle).addClass("changed");
+
+                    agpModalMessage
+                        .add("The selected product defines a default aggregation particle. This order will now aggregate on '"
+                            + $aggregationParticle.find(":selected").text() + "' unless you override this manually.", "AGP_CHANGED");
+                }
+            } else {
+                modalMessages("info","AGP_CHANGED").clear();
             }
 
             $j("#primaryProductListPrice").text(priceListText);
@@ -1426,7 +1460,7 @@
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
-            <div class="form-horizontal span6">
+            <div class="form-horizontal span6" style="min-width: 512px">
                 <stripes:hidden name="productOrder"/>
                 <stripes:hidden name="submitString"/>
                 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
@@ -1449,7 +1483,7 @@
                                     DRAFT
                                 </c:when>
                                 <c:otherwise>
-                                    <a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">
+                                    <a id="orderId" target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">
                                             ${actionBean.editOrder.jiraTicketKey}
                                     </a>
                                 </c:otherwise>
@@ -1610,12 +1644,12 @@
 
             <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
                 <div class="control-group">
-                    <stripes:label for="aggregationParticle" name="aggregationParticle" class="control-label"/>
+                    <stripes:label for="customAggregationParticle" class="control-label"/>
                     <div class="controls">
-                        <stripes:select style="width: auto;" id="aggregationParticle"
+                        <stripes:select style="width: auto;" id="customAggregationParticle"
                                         name="editOrder.defaultAggregationParticle"
-                                        title="Select the aggregation particle to use for pipeline aggregation. By default the pipeline aggregates on the research project.">
-                            <stripes:option value="">RP (eg: RP-1243)</stripes:option>
+                                        title="Select the custom aggregation particle which the pipleine will appended to their default aggregation. By default the pipeline aggregates on the research project.">
+                            <stripes:option value=""><%=Product.AggregationParticle.DEFAULT_LABEL%></stripes:option>
                             <stripes:options-enumeration label="displayName"
                                                          enum="org.broadinstitute.gpinformatics.athena.entity.products.Product.AggregationParticle"/>
                         </stripes:select>
@@ -1773,10 +1807,12 @@
                 <br/>
                 <br/>
                 <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd"
-                                  name="sampleList" rows="15" style="width: 100%;"/>
+                              name="sampleList" rows="15" style="width: 95%;"/>
+
             <table id="regulatoryInfoSuggestions" class="table simple">
                 <caption style="text-align: left;margin-top:1em;"><h3>ORSP(s) associated with samples</h3></caption>
             </table>
+            </div>
             <div id="sampleInitiationKitRequestEdit" class="help-block span4" style="display: none">
             <div class="form-horizontal span5">
                 <fieldset>
@@ -1871,6 +1907,7 @@
                         <div id="kitDefinitions" style="margin-top: 5px;"></div>
                     </div>
                 </fieldset>
+            </div>
             </div>
         </stripes:form>
 

@@ -37,6 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
@@ -139,6 +140,8 @@ public class LabBatchEjb {
     private BSPRestClient bspRestClient;
 
     private BSPExportsService bspExportsService;
+
+    private SequencingTemplateFactory sequencingTemplateFactory;
 
     private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
@@ -406,7 +409,7 @@ public class LabBatchEjb {
             }
 
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                    .getInstance(projectType, newBatch, productOrderDao, workflowConfig);
+                    .getInstance(projectType, newBatch, sequencingTemplateFactory, productOrderDao, workflowConfig);
             if (projectType == null) {
                 projectType = fieldBuilder.getProjectType();
             }
@@ -576,7 +579,7 @@ public class LabBatchEjb {
         }
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(projectType, batch, productOrderDao, workflowConfig);
+                .getInstance(projectType, batch, sequencingTemplateFactory, productOrderDao, workflowConfig);
         if (projectType == null) {
             projectType = fieldBuilder.getProjectType();
         }
@@ -1508,5 +1511,10 @@ public class LabBatchEjb {
     @Inject
     public void setBspExportsService(BSPExportsService bspExportsService) {
         this.bspExportsService = bspExportsService;
+    }
+
+    @Inject
+    public void setSequencingTemplateFactory(SequencingTemplateFactory sequencingTemplateFactory) {
+        this.sequencingTemplateFactory = sequencingTemplateFactory;
     }
 }

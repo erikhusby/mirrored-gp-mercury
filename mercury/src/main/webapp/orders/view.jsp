@@ -1700,9 +1700,9 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 </c:if>
 <div class="view-control-group control-group">
     <label title="Applies to all samples in this order except for cases where samples were indivdually set."
-           class="control-label label-form">Aggregation Particle</label>
+           class="control-label label-form">Custom Aggregation Particle</label>
     <div class="controls">
-        <div class="form-value">${actionBean.editOrder.defaultAggregationParticle.displayName}</div>
+        <div class="form-value">${actionBean.editOrder.aggregationParticleDisplayName}</div>
     </div>
 </div>
 <div class="view-control-group control-group">

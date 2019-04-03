@@ -11,7 +11,8 @@ import net.sourceforge.stripes.mock.MockHttpServletResponse;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
@@ -108,6 +110,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -120,6 +124,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
@@ -351,6 +356,49 @@ public class ProductOrderActionBeanTest {
     public void testCanEmptyRinScoreBeUsedForOnRiskCalculation() {
         SampleData emptyRinScoreSample = getSampleDTOWithEmptyRinScore();
         Assert.assertTrue(emptyRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
+    }
+
+    @DataProvider(name = "regulatorySuggestionSampleInputs")
+    public Iterator<Object[]> regulatorySuggestionSampleInputs() {
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{"SM-1234", true});
+        testCases.add(new Object[]{"SM-HJILE ", false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u00a0","x", "\u00a0"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u1680","x", "\u1680"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u180e","x", "\u180e"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u2000","x", "\u2000"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u202f","x", "\u202f"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u205f","x", "\u205f"), false});
+        testCases.add(new Object[]{String.format("%s%s%s", "\u3000","x", "\u3000"), false});
+        testCases.add(new Object[]{"SM-HBYE9\nSM-I2QU9\nSM-I43WJ\nSM-HJILE \nSM-GM6ND", false});
+        testCases.add(new Object[]{"SM-HOW1Z\nSM-HGTBZ\nSM-HPNGW\nSM-HK6O2\nSM-HJQFA\nSM-HG3GT", true});
+
+        return testCases.iterator();
+    }
+
+
+    @Test(dataProvider = "regulatorySuggestionSampleInputs")
+    public void testRegulatorySuggestionInput(String sampleId, boolean inputIsAsciiPrintable) throws Exception {
+        Product product = new Product();
+        pdo.setProduct(product);
+        ResearchProjectDao mockResearchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        Mockito.when(mockResearchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(new ResearchProject());
+        actionBean.setResearchProjectDao(mockResearchProjectDao);
+        actionBean.setResearchProjectKey("somekey");
+        actionBean.setEditOrder(pdo);
+        actionBean.setProduct("test product");
+
+        // Show that the input is not ascii printable. Mimics what is called in the ProductOrderSample constructor.
+        final List<String> collect = Arrays.asList(sampleId.split("\\s"))
+                .stream().filter(s -> !StringUtils.isAsciiPrintable(s)).collect(Collectors.toList());
+        assertThat(CollectionUtils.isEmpty(collect),equalTo(inputIsAsciiPrintable));
+
+        actionBean.setSampleList(sampleId);
+        try {
+            actionBean.suggestRegulatoryInfo();
+        } catch (Exception e) {
+            Assert.fail("Calling suggestRegulatoryInfo() should not have resulted in an exception being thrown", e);
+        }
     }
 
     /**
@@ -2235,7 +2283,37 @@ public class ProductOrderActionBeanTest {
         assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
         assertThat(fundingDetails.get("grantEndDate"), equalTo(DateUtils.getDate(oneWeek)));
         assertThat(fundingDetails.get("activeGrant"), is(true));
-        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7));
+        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7l));
+    }
+
+    public void testQuoteOptionsFundsReservationExpiresAfterLeapYear() throws Exception {
+        String quoteId = "DNA4JD";
+        testOrder = new ProductOrder();
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
+        funding.setGrantNumber("1234");
+        funding.setGrantStartDate(new Date());
+        Date oneHeckOfALongTime =
+            Date.from(LocalDate.now().plusYears(1000).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+        funding.setGrantEndDate(oneHeckOfALongTime);
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel.setPercent("100");
+
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
+        actionBean.setQuoteIdentifier(quoteId);
+        actionBean.setQuoteService(mockQuoteService);
+
+        JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
+        JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
+
+        assertThat(fundingDetails.get("grantTitle"), equalTo("CO-1234"));
+        assertThat(fundingDetails.get("grantEndDate"), equalTo(DateUtils.getDate(oneHeckOfALongTime)));
+        assertThat(fundingDetails.get("activeGrant"), is(true));
+        assertThat(fundingDetails.get("daysTillExpire"), equalTo(365242L));
     }
 
     public void testQuoteOptionsPurchaseOrder() throws Exception {
