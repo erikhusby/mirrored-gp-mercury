@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.TransferReturn;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -79,7 +80,7 @@ public class BSPRestSender implements Serializable {
     @Inject
     private BSPRestClient bspRestClient;
 
-    public void postToBsp(BettaLIMSMessage message, String bspRestUrl) {
+    public TransferReturn postToBsp(BettaLIMSMessage message, String bspRestUrl) {
 
         String urlString = bspRestClient.getUrl(bspRestUrl);
         WebResource webResource = bspRestClient.getWebResource(urlString);
@@ -91,7 +92,7 @@ public class BSPRestSender implements Serializable {
         if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
             throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
         }
-
+        return response.getEntity(TransferReturn.class);
     }
 
     private PlateCherryPickEvent plateTransferToCherryPick(PlateTransferEventType plateTransferEventType,
@@ -307,7 +308,8 @@ public class BSPRestSender implements Serializable {
 
         for (PlateCherryPickEvent plateCherryPickEvent : message.getPlateCherryPickEvent()) {
             LabEventType labEventType = LabEventType.getByName(plateCherryPickEvent.getEventType());
-            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP) {
+            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP  ||
+                    labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP_APPLY_SM_IDS) {
 
                 addSourceHandlingException(labEventType, plateCherryPickEvent.getSourcePlate(), plateCherryPickEvent.getSourcePositionMap());
                 // todo jmt method to filter out clinical samples
@@ -317,7 +319,8 @@ public class BSPRestSender implements Serializable {
         }
         for (PlateTransferEventType plateTransferEventType : message.getPlateTransferEvent()) {
             LabEventType labEventType = LabEventType.getByName(plateTransferEventType.getEventType());
-            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP) {
+            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP ||
+                    labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP_APPLY_SM_IDS) {
                 // If there is a sourcePositionMap create a list to handle.
                 List<PositionMapType> sourcePositionMapList = plateTransferEventType.getSourcePositionMap() != null ?
                         Collections.singletonList(plateTransferEventType.getSourcePositionMap()) : null;
@@ -360,10 +363,11 @@ public class BSPRestSender implements Serializable {
             }
         }
         for (ReceptacleTransferEventType receptacleTransferEventType : message.getReceptacleTransferEvent()) {
-            if(LabEventType.getByName(receptacleTransferEventType.getEventType()).getForwardMessage() ==
-                    LabEventType.ForwardMessage.BSP) {
+            LabEventType labEventType = LabEventType.getByName(receptacleTransferEventType.getEventType());
+            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP ||
+                    labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP_APPLY_SM_IDS) {
                 // todo jmt method to filter out clinical samples
-                addSourceHandlingException(LabEventType.getByName(receptacleTransferEventType.getEventType()), receptacleTransferEventType.getSourceReceptacle());
+                addSourceHandlingException(labEventType, receptacleTransferEventType.getSourceReceptacle());
                 copy.getReceptacleTransferEvent().add(receptacleTransferEventType);
                 atLeastOneEvent = true;
             }

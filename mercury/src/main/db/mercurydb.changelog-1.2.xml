@@ -1575,7 +1575,7 @@
     <changeSet id="GPLIM-4712-207" author="epolk">
         <addForeignKeyConstraint constraintName="FK_SMPL_INST_ANALYSIS_TYPE"
                                  baseTableSchemaName="mercury" baseTableName="sample_instance_entity" baseColumnNames="analysis_type"
-             
+
                     referencedTableSchemaName="mercury" referencedTableName="analysis_type" referencedColumnNames="analysis_type_id"/>
     </changeSet>
     <changeSet id="GPLIM-4712-210" author="epolk">
@@ -1668,6 +1668,36 @@
             'SM-AM4BT', 'SM-6V6OS', 'SM-6ZIZT', 'SM-73H6O', 'SM-73H6P', 'SM-73H6Q', 'SM-73H6R', 'SM-73H6S',
             'SM-73H6T', 'SM-73H6U', 'SM-73H6V', 'SM-76UCM', 'SM-77IU4' ) );
 
+            commit;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-5839a" author="jsacco">
+        <sql>
+            update lab_vessel set tube_type = 'EppendorfFliptop15_Gates' where label = 'SM-7LG4A';
+
+            -- Audit tables will also cause failures
+            update lab_vessel_aud set tube_type = 'EppendorfFliptop15_Gates' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where  label = 'SM-7LG4A' );
+            commit;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-5839b" author="jsacco">
+        <sql>
+            update lab_vessel set tube_type = 'EppendorfScrewcap20' where label in ( 'SM-AH35W', 'SM-AH35V', 'SM-AH35X' );
+
+            -- Audit tables will also cause failures
+            update lab_vessel_aud set tube_type = 'EppendorfScrewcap20' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where  label in ( 'SM-AH35W', 'SM-AH35V', 'SM-AH35X' ) );
+            commit;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-5839c" author="jsacco">
+        <sql>
+            update lab_vessel set tube_type = 'EppendorfScrewcap20' where label = 'SM-AH35Y';
+
+            -- Audit tables will also cause failures
+            update lab_vessel_aud set tube_type = 'EppendorfScrewcap20' where revtype != 3 and lab_vessel_id in (
+            select lab_vessel_id from lab_vessel where label = 'SM-AH35Y' );
             commit;
         </sql>
     </changeSet>
@@ -1887,5 +1917,27 @@
         <createIndex tableName="FP_GENOTYPE_AUD" indexName="IX_FGA_FP_GENOTYPE_ID">
             <column name="FP_GENOTYPE_ID"/>
         </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-5973-01" author="epolk">
+        <addColumn tableName="sample_instance_entity" schemaName="mercury">
+            <column name="aggregation_data_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5973-02" author="epolk">
+        <addColumn tableName="sample_instance_entity_aud" schemaName="mercury">
+            <column name="aggregation_data_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jsacco" id="GPLIM-5218-1">
+        <addColumn schemaName="mercury" tableName="abandon_vessel">
+            <column name="abandoned_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jsacco" id="GPLIM-5218-2">
+        <addColumn schemaName="mercury" tableName="abandon_vessel_aud">
+            <column name="abandoned_by" type="number(19,0)"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

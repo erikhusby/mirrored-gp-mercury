@@ -126,7 +126,7 @@ public class Fingerprint {
     @JoinColumn(name = "SNP_LIST")
     private SnpList snpList;
 
-    @OneToMany(mappedBy = "fingerprint", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "fingerprint", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private Set<FpGenotype> fpGenotypes = new HashSet<>();
 
     @Enumerated(EnumType.STRING)

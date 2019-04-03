@@ -35,6 +35,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
 @Dependent
 public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
@@ -92,7 +94,7 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, AcceptsAllWorkRegistrationsQuoteServiceStub.class);
     }
 
     /**

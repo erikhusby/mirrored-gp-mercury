@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -30,17 +31,25 @@ public abstract class AbstractBatchJiraFieldFactory {
     protected final CreateFields.ProjectType projectType;
     protected final ProductOrderDao productOrderDao;
     protected final WorkflowConfig workflowConfig;
+    protected final SequencingTemplateFactory sequencingTemplateFactory;
     // Determines whether to use nearest or earliest sample name in the Jira ticket.
     protected boolean jiraSampleFromNearest = true;
 
     public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType) {
-        this(batch, projectType, null, null);
+        this(batch, projectType, null, null, null);
     }
 
     public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType,
-            ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
+                                         @Nonnull SequencingTemplateFactory sequencingTemplateFactory) {
+        this(batch, projectType, sequencingTemplateFactory, null, null);
+    }
+
+    public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType,
+                                         @Nonnull SequencingTemplateFactory sequencingTemplateFactory,
+                                         ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
         this.batch = batch;
         this.projectType = projectType;
+        this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.productOrderDao = productOrderDao;
         this.workflowConfig = workflowConfig;
     }
@@ -129,13 +138,14 @@ public abstract class AbstractBatchJiraFieldFactory {
      *                            which the custom submission fields will be generated
      */
     public static AbstractBatchJiraFieldFactory getInstance(CreateFields.ProjectType projectType,
-            @Nonnull LabBatch batch, ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
+            @Nonnull LabBatch batch, SequencingTemplateFactory sequencingTemplateFactory, ProductOrderDao productOrderDao,
+            WorkflowConfig workflowConfig) {
 
         if (projectType == null || projectType == CreateFields.ProjectType.FCT_PROJECT) {
             switch (batch.getLabBatchType()) {
             case MISEQ:
             case FCT:
-                return new FCTJiraFieldFactory(batch);
+                return new FCTJiraFieldFactory(batch, sequencingTemplateFactory);
             default:
                 throw new IllegalArgumentException(projectType + " ticket type cannot be used with a " +
                         batch.getLabBatchType() + " batch type.");
