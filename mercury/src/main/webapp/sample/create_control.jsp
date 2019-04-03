@@ -79,7 +79,7 @@
                         Aliquot SM-ID for concordance
                     </stripes:label>
                     <div class="controls">
-                        <stripes:checkbox name="concordanceSmId" id="concordanceSmId"
+                        <input type="text" name="concordanceSmId" id="concordanceSmId"
                                           value="${actionBean.concordanceSmId}"/>
                     </div>
                 </div>

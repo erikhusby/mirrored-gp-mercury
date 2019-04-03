@@ -1940,4 +1940,21 @@
             <column name="abandoned_by" type="number(19,0)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-6080-1">
+        <addColumn schemaName="mercury" tableName="mercury_control">
+            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-6080-2">
+        <addColumn schemaName="mercury" tableName="mercury_control_aud">
+            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-6080-3">
+        <addForeignKeyConstraint constraintName="FK_MC_MERCURY_SAMPLE"
+                baseTableSchemaName="mercury" baseTableName="mercury_control" baseColumnNames="CONCORDANCE_SAMPLE_ID"
+                referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+
 </databaseChangeLog>
