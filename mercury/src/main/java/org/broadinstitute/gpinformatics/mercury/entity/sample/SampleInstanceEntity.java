@@ -78,7 +78,7 @@ public class SampleInstanceEntity {
     @JoinColumn(name = "REFERENCE_SEQUENCE")
     private ReferenceSequence referenceSequence;
 
-    private String LibraryName;
+    private String libraryName;
     private String experiment;
     private Integer readLength;
     private Date uploadDate;
@@ -151,7 +151,7 @@ public class SampleInstanceEntity {
     }
 
     public void setLibraryName(String libraryName) {
-        this.LibraryName = libraryName;
+        this.libraryName = libraryName;
     }
 
     public String getExperiment() {
@@ -202,7 +202,7 @@ public class SampleInstanceEntity {
 
     @Nonnull
     public String getLibraryName() {
-        return LibraryName;
+        return libraryName;
     }
 
     public void setUploadDate(Date uploadDate) {
