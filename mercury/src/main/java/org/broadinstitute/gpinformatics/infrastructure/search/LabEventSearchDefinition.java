@@ -565,7 +565,6 @@ public class LabEventSearchDefinition {
                 "LCSET term will only locate events associated with batch or rework batch vessels.<br>"
                 + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
                 + "Note: The LCSET term is exclusive, no other terms can be selected.");
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
