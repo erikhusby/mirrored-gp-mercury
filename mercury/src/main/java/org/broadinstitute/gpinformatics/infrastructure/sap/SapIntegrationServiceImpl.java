@@ -426,20 +426,20 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Override
     public void publishProductInSAP(Product product) throws SAPIntegrationException {
-        SAPChangeMaterial newMaterial = SAPChangeMaterial.fromSAPMaterial(initializeSapMaterialObject(product));
-        if (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) == null) {
-            getClient().createMaterial(newMaterial);
+        SAPChangeMaterial sapMaterial = SAPChangeMaterial.fromSAPMaterial(initializeSapMaterialObject(product));
+        if (isNewMaterial(product)) {
+            getClient().createMaterial(sapMaterial);
         } else {
-            getClient().changeMaterialDetails(newMaterial);
+            getClient().changeMaterialDetails(sapMaterial);
         }
 
         if(product.hasExternalCounterpart() || product.isClinicalProduct() || product.isExternalOnlyProduct()) {
-            newMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
-            newMaterial.setMaterialName(StringUtils.isNotBlank(product.getAlternateExternalName())?product.getAlternateExternalName():product.getName());
+            sapMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
+            sapMaterial.setMaterialName(StringUtils.isNotBlank(product.getAlternateExternalName())?product.getAlternateExternalName():product.getName());
             if (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null) {
-                getClient().createMaterial(newMaterial);
+                getClient().createMaterial(sapMaterial);
             } else {
-                getClient().changeMaterialDetails(newMaterial);
+                getClient().changeMaterialDetails(sapMaterial);
             }
 
         }
