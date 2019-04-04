@@ -58,7 +58,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -74,7 +73,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -634,8 +632,7 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/verifyChipTypes")
-    public boolean verifyChipTypes(@QueryParam("plateBarcode") String plateBarcode, @QueryParam("chip") List<String> chips)
-            throws FileNotFoundException {
+    public boolean verifyChipTypes(@QueryParam("plateBarcode") String plateBarcode, @QueryParam("chip") List<String> chips) {
 
         List<String> fileOutput;
         String fileChipType;
@@ -684,14 +681,14 @@ public class LimsQueryResource {
                 StringBuilder retryFileName = new StringBuilder(fileName).deleteCharAt(fileName.length() - 10);
                 targetFile = new File(targetFolder, retryFileName.toString());
                 if (!targetFile.exists()){
-                    throw new ResourceException("Failed to find target DMAP File" + targetFile,
+                    throw new ResourceException("Failed to find target DMAP File " + targetFile,
                             Response.Status.INTERNAL_SERVER_ERROR);
                 }
             }
 
             GZIPInputStream DMAP = null;
             try {
-                DMAP = LimsQueryResource.createReader(targetFile, "Cp1252");
+                DMAP = createReader(targetFile, "Cp1252");
             }
             catch (IOException e) {
                 log.error("Failed to unzip file", e);
@@ -741,12 +738,13 @@ public class LimsQueryResource {
         return chip;
     }
 
-    public static GZIPInputStream createReader (File f, String encoding) throws IOException {
+    private static GZIPInputStream createReader(File f, String encoding) throws IOException {
 
         try {
             InputStream in = new FileInputStream(f);
-            if (f.getName ().endsWith (".gz"))
+            if (f.getName ().endsWith (".gz")) {
                 return new GZIPInputStream(in, 10240);
+            }
         }
         catch (UnsupportedEncodingException e) {
             throw new RuntimeException("Missing encoding "+encoding, e);
@@ -756,7 +754,7 @@ public class LimsQueryResource {
 
     private List<String> parseChipName(String name){
 
-        List<String> phrases = new ArrayList<>();
+        List<String> phrases;
         if (name.contains("-")||name.contains("_")){
             phrases = Arrays.asList(name.split("\\s*_\\s*|\\s*-\\s*"));
         }
@@ -765,6 +763,7 @@ public class LimsQueryResource {
         }
         return phrases;
     }
+
     public void setInfiniumStarterConfig(InfiniumStarterConfig infiniumStarterConfig) {
         this.infiniumStarterConfig = infiniumStarterConfig;
     }
