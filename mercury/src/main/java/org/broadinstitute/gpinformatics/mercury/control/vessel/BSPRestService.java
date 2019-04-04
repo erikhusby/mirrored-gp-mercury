@@ -3,13 +3,15 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import com.sun.jersey.multipart.FormDataBodyPart;
+import com.sun.jersey.multipart.FormDataMultiPart;
+import com.sun.jersey.multipart.MultiPart;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ExternalSamplesRequest;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.IdNames;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.PlateRegistrationBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RegisterNonBroadTubesBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleKitReceivedBean;
@@ -19,8 +21,9 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,6 +37,7 @@ public class BSPRestService implements Serializable {
     public static final String BSP_GET_LABELS = "receptacle/getLabelFormats";
     public static final String BSP_GET_CHILD_RECEPTACLES = "receptacle/getChildReceptacleTypesForBarcode";
     public static final String BSP_RECEIVE_EXT_TUBES = "sampleKit/receiveExternalTubes";
+    public static final String BSP_RECEIVE_EXT_MATRIX_TUBES = "sampleKit/receiveExternalMatrixTubes";
 
     private static final Log logger = LogFactory.getLog(BSPRestService.class);
 
@@ -156,6 +160,30 @@ public class BSPRestService implements Serializable {
         }
 
         return response.getEntity(SampleKitReceivedBean.class);
+    }
+
+    public SampleKitReceivedBean receiveExternalMatrixTubes(ExternalSamplesRequest sampleContents, InputStream inputStream,
+                                                            String filename) {
+        String urlString = bspRestClient.getUrl(BSP_RECEIVE_EXT_MATRIX_TUBES);
+
+        WebResource webResource = bspRestClient.getWebResource(urlString);
+
+        try (FormDataMultiPart formDataMultiPart = new FormDataMultiPart()) {
+            formDataMultiPart.field("externalSamplesRequest", sampleContents, MediaType.APPLICATION_XML_TYPE);
+            formDataMultiPart.field("spreadsheetFilename", filename);
+            MultiPart multiPart = formDataMultiPart.bodyPart(
+                    new FormDataBodyPart("spreadsheet", inputStream,
+                            MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            ClientResponse response =
+                    webResource.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(ClientResponse.class, multiPart);
+            if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+                throw new RuntimeException(response.getEntity(String.class));
+            }
+
+            return response.getEntity(SampleKitReceivedBean.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void setBspRestClient(BSPRestClient bspRestClient) {

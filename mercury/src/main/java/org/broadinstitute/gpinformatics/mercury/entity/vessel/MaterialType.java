@@ -18,20 +18,22 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public enum MaterialType implements Displayable {
     // These MaterialTypes already exist in the database.
-    CELL_SUSPENSION("Cell Suspension"),
-    FRESH_BLOOD("Fresh Blood"),
-    BUFFY_COAT("Buffy Coat"),
-    DNA("DNA"),
-    RNA("RNA"),
-    FFPE("FFPE"),
-    DNA_GENOMIC("DNA:Genomic"),
-    FRESH_FROZEN_TISSUE("Fresh Frozen Tissue"),
-    FRESH_FROZEN_BLOOD("Fresh Frozen Blood"),
+    CELL_SUSPENSION("Cell Suspension", true),
+    FRESH_BLOOD("Fresh Blood", true),
+    BUFFY_COAT("Buffy Coat", true),
+    DNA("DNA", true),
+    RNA("RNA", true),
+    FFPE("FFPE", true),
+    DNA_GENOMIC("DNA:Genomic", true),
+    FRESH_FROZEN_TISSUE("Fresh Frozen Tissue", true),
+    FRESH_FROZEN_BLOOD("Fresh Frozen Blood", true),
 
     // These materialTypes match those in BSP
     BACTERIAL_CULTURE_GLYCEROL_FROZEN("Bacterial Culture:Glycerol Frozen"),
@@ -139,10 +141,20 @@ public enum MaterialType implements Displayable {
     NONE("");
 
     private final String displayName;
+    private final boolean mercuryMaterial;
 
     MaterialType(String displayName) {
-        this.displayName = displayName;
+        this(displayName, false);
     }
+
+    MaterialType(String displayName, boolean mercuryMaterial) {
+        this.displayName = displayName;
+        this.mercuryMaterial = mercuryMaterial;
+    }
+
+    private static final List<MaterialType> BSP_MATERIAL_TYPES = Arrays.stream(MaterialType.values())
+            .filter(m -> !m.mercuryMaterial)
+            .collect(Collectors.toList());
 
     public static MaterialType fromDisplayName(String displayName) {
         if (StringUtils.isBlank(displayName)) {
@@ -190,5 +202,13 @@ public enum MaterialType implements Displayable {
 
     public boolean containsIgnoringCase(String text) {
         return this.getDisplayName().toUpperCase().contains(text.toUpperCase());
+    }
+
+    public boolean isMercuryMaterial() {
+        return mercuryMaterial;
+    }
+
+    public static List<MaterialType> getBspMaterialTypes() {
+        return BSP_MATERIAL_TYPES;
     }
 }

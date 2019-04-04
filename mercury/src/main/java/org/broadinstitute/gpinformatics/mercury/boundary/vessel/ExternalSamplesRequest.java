@@ -24,6 +24,9 @@ public class ExternalSamplesRequest implements Serializable  {
     private String shippingNotes;
     private String trackingNumber;
     private String conditionShipment;
+    private String materialType;
+    private String originalMaterialType;
+    private String receptacleType;
 
     public ExternalSamplesRequest() {
     }
@@ -121,6 +124,30 @@ public class ExternalSamplesRequest implements Serializable  {
         this.collectionId = collectionId;
     }
 
+    public String getMaterialType() {
+        return materialType;
+    }
+
+    public void setMaterialType(String materialType) {
+        this.materialType = materialType;
+    }
+
+    public String getOriginalMaterialType() {
+        return originalMaterialType;
+    }
+
+    public void setOriginalMaterialType(String originalMaterialType) {
+        this.originalMaterialType = originalMaterialType;
+    }
+
+    public String getReceptacleType() {
+        return receptacleType;
+    }
+
+    public void setReceptacleType(String receptacleType) {
+        this.receptacleType = receptacleType;
+    }
+
     @XmlAccessorType(XmlAccessType.FIELD)
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ExternalSampleContents implements Serializable {
@@ -150,6 +177,8 @@ public class ExternalSamplesRequest implements Serializable  {
         private String formatType;
 
         private String scanType;
+
+        private String barcode;
 
         public ExternalSampleContents() {
         }
@@ -244,6 +273,14 @@ public class ExternalSamplesRequest implements Serializable  {
 
         public String getScanType() {
             return scanType;
+        }
+
+        public String getBarcode() {
+            return barcode;
+        }
+
+        public void setBarcode(String barcode) {
+            this.barcode = barcode;
         }
     }
 }

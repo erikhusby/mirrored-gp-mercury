@@ -9,7 +9,7 @@
     <div class="control-group">
         <stripes:label for="organism" name="Organism" class="control-label"/>
         <div class="controls">
-            <stripes:select name="organismId" id="organism">
+            <stripes:select name="externalSamplesRequest.externalSampleContents[0].organismId" id="organism">
                 <stripes:options-collection collection="${actionBean.organisms}"
                                             label="right" value="left" />
             </stripes:select>

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.receiving;
 
 import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
@@ -8,18 +9,19 @@ import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
+import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSiteList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleInfo;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ExternalSamplesRequest;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.IdNames;
@@ -43,7 +45,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube.BarcodedTubeType.MatrixTube075;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube.BarcodedTubeType.MatrixTubeSC05;
 
 @UrlBinding(ReceiveExternalActionBean.ACTION_BEAN_URL)
 public class ReceiveExternalActionBean extends ReceivingActionBean {
@@ -51,7 +57,9 @@ public class ReceiveExternalActionBean extends ReceivingActionBean {
 
     public static final String ACTION_BEAN_URL = "/receiving/receiveByExternal.action";
     public static final String RECEIEVE_EXT_TUBE = "byReceiveExternalTube";
+    public static final String BY_RECEIVE_EXTERNAL_MATRIX_TUBE = "byReceiveExternalMatrixTube";
     public static final String RECEIVE_BY_EXTERNAL_PAGE = "/receiving/receive_external_tubes.jsp";
+    public static final String RECEIVE_BY_EXTERNAL_MATRIX_PAGE = "/receiving/receive_external_matrix_tubes.jsp";
     public static final String EXTERNAL_TUBES_TABLE = "/receiving/external_tubes_table.jsp";
     public static final String LOAD_COLLECTION_ACTION = "loadCollectionSelect";
     public static final String LOAD_SITE_SELECT_ACTION = "loadSiteSelect";
@@ -60,6 +68,8 @@ public class ReceiveExternalActionBean extends ReceivingActionBean {
     public static final String LOAD_LABELS_ACTION = "loadLabels";
     public static final String UPLOAD_KIT = "uploadKit";
     public static final String ADD_TUBE = "addTube";
+    public static final String RACK_SCAN_EXTERNAL = "rackScanExternal";
+    public static final String SAVE_MATRIX_KIT = "saveMatrixKit";
     private  String tubeData = "{}";
 
     @Inject
@@ -98,10 +108,21 @@ public class ReceiveExternalActionBean extends ReceivingActionBean {
     @Validate(required = true, on = {VALIDATE_PLATE_TUBE_ACTION, LOAD_LABELS_ACTION})
     private String receptacleType;
 
+    @Validate(required = true, on = {SAVE_MATRIX_KIT})
+    private FileBean manifestFile;
+
+    private ExternalSamplesRequest externalSamplesRequest = new ExternalSamplesRequest();
+
     @HandlesEvent(RECEIEVE_EXT_TUBE)
     public Resolution receiveExternalTubes() {
         init();
         return new ForwardResolution(RECEIVE_BY_EXTERNAL_PAGE);
+    }
+
+    @HandlesEvent(BY_RECEIVE_EXTERNAL_MATRIX_TUBE)
+    public Resolution receiveExternalMatrixTube() {
+        init();
+        return new ForwardResolution(RECEIVE_BY_EXTERNAL_MATRIX_PAGE);
     }
 
     @Before(stages = LifecycleStage.BindingAndValidation, on = {LOAD_COLLECTION_ACTION})
@@ -260,6 +281,142 @@ public class ReceiveExternalActionBean extends ReceivingActionBean {
         return new ForwardResolution(EXTERNAL_TUBES_TABLE);
     }
 
+    @HandlesEvent(RACK_SCAN_EXTERNAL)
+    public Resolution fireRackScan() throws ScannerException {
+        scan();
+        positionToBarcode = new HashMap<>();
+        showLayout = true;
+        if(getRackScan() != null) {
+            if (rackScan == null || rackScan.isEmpty()) {
+                messageCollection.addError("No results from rack scan");
+            } else {
+                List<String> barcodes = new ArrayList<>(rackScan.values());
+                Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo =
+                        bspSampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
+                for (Map.Entry<String, String> entry : rackScan.entrySet()) {
+                    if (StringUtils.isNotEmpty(entry.getValue())) {
+                        String position = entry.getKey();
+                        String barcode = entry.getValue();
+                        GetSampleDetails.SampleInfo sampleInfo = mapBarcodeToSampleInfo.get(barcode);
+                        if (sampleInfo != null) {
+                            messageCollection.addError("Matrix tube has already been uploaded: " + barcode);
+                        } else {
+                            VesselPosition vesselPosition = VesselPosition.getByName(position);
+                            if (vesselPosition == null) {
+                                messageCollection.addError("Unrecognized position: " + position);
+                            } else {
+                                positionToBarcode.put(vesselPosition, barcode);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (positionToBarcode.isEmpty()) {
+            messageCollection.addError("No results from rack scan");
+        }
+
+        if (StringUtils.isBlank(externalSamplesRequest.getFormatType())) {
+            messageCollection.addError("Format Type is required.");
+        }
+
+        if (StringUtils.isBlank(externalSamplesRequest.getLabelFormat())) {
+            messageCollection.addError("Label Format is required.");
+        }
+
+        if (StringUtils.isBlank(externalSamplesRequest.getMaterialType())) {
+            messageCollection.addError("Material Type is required.");
+        }
+
+        if (StringUtils.isBlank(externalSamplesRequest.getOriginalMaterialType())) {
+            messageCollection.addError("Original Material Type is required.");
+        }
+
+        if (StringUtils.isBlank(externalSamplesRequest.getOriginalMaterialType())) {
+            messageCollection.addError("Original Material Type is required.");
+        }
+
+        if (externalSamplesRequest.getExternalSampleContents() == null || externalSamplesRequest.getExternalSampleContents().isEmpty()) {
+            messageCollection.addError("Organism is required.");
+        }
+
+        init();
+
+        if (messageCollection.hasErrors()) {
+            showLayout = false;
+            addMessages(messageCollection);
+            return new ForwardResolution(RECEIVE_BY_EXTERNAL_MATRIX_PAGE);
+        }
+
+        Collection<Pair<Long, String>> organisms =
+                bspGroupCollectionList.getById(externalSamplesRequest.getCollectionId()).getOrganisms();
+
+        ExternalSamplesRequest.ExternalSampleContents origContents =
+                externalSamplesRequest.getExternalSampleContents().iterator().next();
+
+        Optional<Pair<Long, String>> organismPair = organisms.stream()
+                .filter(pair -> pair.getKey().equals(origContents.getOrganismId()))
+                .findFirst();
+
+        if (!organismPair.isPresent()) {
+            messageCollection.addError("Failed to find organism with id " + origContents.getOrganismId());
+        }
+
+        String organism = organismPair.get().getRight();
+        Long organismId = organismPair.get().getLeft();
+
+        if (messageCollection.hasErrors()) {
+            showLayout = false;
+            addMessages(messageCollection);
+            return new ForwardResolution(RECEIVE_BY_EXTERNAL_MATRIX_PAGE);
+        }
+
+        List<ExternalSamplesRequest.ExternalSampleContents> contents = new ArrayList<>();
+
+        for (Map.Entry<VesselPosition, String> entry: positionToBarcode.entrySet()) {
+            ExternalSamplesRequest.ExternalSampleContents content = new ExternalSamplesRequest.ExternalSampleContents();
+            content.setFormatType(externalSamplesRequest.getFormatType());
+            content.setLabelFormat(externalSamplesRequest.getLabelFormat());
+            content.setPosition(entry.getKey().name());
+            content.setMaterialType(externalSamplesRequest.getMaterialType());
+            content.setOriginalMaterialType(externalSamplesRequest.getOriginalMaterialType());
+            content.setOrganismId(organismId);
+            content.setOrganism(organism);
+            content.setBarcode(entry.getValue());
+            content.setReceptacleType(externalSamplesRequest.getReceptacleType());
+            contents.add(content);
+        }
+
+        externalSamplesRequest.setExternalSampleContents(contents);
+
+        return new ForwardResolution(RECEIVE_BY_EXTERNAL_MATRIX_PAGE);
+    }
+
+    @HandlesEvent(SAVE_MATRIX_KIT)
+    public Resolution saveMatrixKit() {
+        SampleKitReceivedBean response = null;
+        init();
+        try {
+            externalSamplesRequest.setUsername(getUserBean().getBspUser().getUsername());
+            response = receiveSamplesEjb.receiveExternalMatrixTubes(externalSamplesRequest, manifestFile.getInputStream(),
+                    manifestFile.getFileName(), messageCollection);
+            for (String error : response.getMessages()) {
+                addGlobalValidationError(error);
+            }
+
+            if (response.isSuccess()) {
+                String kitCreated = response.getReceivedSamplesPerKit().iterator().next().getKitId();
+                messageCollection.addInfo("Sucessfully received samples in BSP: " + kitCreated);
+                addMessages(messageCollection);
+            }
+        } catch (Exception e) {
+            log.error("Failed to upload matrix kit", e);
+            addGlobalValidationError(e.getMessage());
+        }
+        return new ForwardResolution(RECEIVE_BY_EXTERNAL_MATRIX_PAGE);
+    }
+
     @Override
     public String getRackScanPageUrl() {
         return null;
@@ -346,6 +503,27 @@ public class ReceiveExternalActionBean extends ReceivingActionBean {
 
     public void setTubeData(String tubeData) {
         this.tubeData = tubeData;
+    }
+
+    public FileBean getManifestFile() {
+        return manifestFile;
+    }
+
+    public void setManifestFile(FileBean manifestFile) {
+        this.manifestFile = manifestFile;
+    }
+
+    public ExternalSamplesRequest getExternalSamplesRequest() {
+        return externalSamplesRequest;
+    }
+
+    public void setExternalSamplesRequest(
+            ExternalSamplesRequest externalSamplesRequest) {
+        this.externalSamplesRequest = externalSamplesRequest;
+    }
+
+    public List<BarcodedTube.BarcodedTubeType> getMatrixTubeTypes() {
+        return Arrays.asList(MatrixTube075, MatrixTubeSC05);
     }
 
     public static class ContainerWellInfo {

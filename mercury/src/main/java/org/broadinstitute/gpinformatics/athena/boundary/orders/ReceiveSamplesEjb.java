@@ -28,6 +28,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.xml.bind.JAXBException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -188,6 +189,41 @@ public class ReceiveSamplesEjb {
         if (!messageCollection.hasErrors()) {
 
             sampleKitReceivedBean = bspRestService.receiveExternalTubes(externalRequest);
+
+            if (sampleKitReceivedBean.isSuccess()) {
+
+                for (SampleKitReceivedBean.KitInfo kit: sampleKitReceivedBean.getReceivedSamplesPerKit()) {
+
+                    Map<String, String> sampleToType = sampleKitReceivedBean.getTubeTypePerSample()
+                            .stream().collect(Collectors.toMap(SampleKitReceivedBean.TubeTypePerSample::getSampleId,
+                                    SampleKitReceivedBean.TubeTypePerSample::getTubeType));
+                    List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+                    for (String barcode : kit.getSamples()) {
+                        String tubeType = sampleToType.get(barcode);
+                        parentVesselBeans.add(new ParentVesselBean(null, barcode, tubeType,null));
+                    }
+                    SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
+                            parentVesselBeans, externalRequest.getUsername());
+                    sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
+                }
+            }
+        }
+
+        return sampleKitReceivedBean;
+    }
+
+    /**
+     * For samples that arrive in external tubes, e.g. Blood Spot Cards without SM-IDs but have a Collaborator
+     * Sample ID. Technician will link these Collaborator Sample IDs to newly created SM-IDs.
+     * @return SampleKitReceivedBean received from BSP.
+     */
+    public SampleKitReceivedBean receiveExternalMatrixTubes(ExternalSamplesRequest externalRequest, InputStream file,
+                                                      String filename, MessageCollection messageCollection) {
+        SampleKitReceivedBean sampleKitReceivedBean = null;
+
+        if (!messageCollection.hasErrors()) {
+
+            sampleKitReceivedBean = bspRestService.receiveExternalMatrixTubes(externalRequest, file, filename);
 
             if (sampleKitReceivedBean.isSuccess()) {
 

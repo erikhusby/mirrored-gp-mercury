@@ -342,6 +342,11 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceiveExternalActionBean"
                                       event="byReceiveExternalTube">Receive External Tubes</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="receiveExternalMatrixTubes"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ReceiveExternalActionBean"
+                                      event="byReceiveExternalMatrixTube">Receive External Matrix Tubes</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>
