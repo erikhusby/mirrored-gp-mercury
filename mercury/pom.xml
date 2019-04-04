@@ -2010,9 +2010,9 @@ nodePrinter.print(webapp)
                 </plugin>
 
                 <plugin>
-                    <groupId>external.atlassian.jgitflow</groupId>
-                    <artifactId>jgitflow-maven-plugin</artifactId>
-                    <version>1.0-m5.1</version>
+                    <groupId>com.amashchenko.maven.plugin</groupId>
+                    <artifactId>gitflow-maven-plugin</artifactId>
+                    <version>1.11.0</version>
                 </plugin>
 
             </plugins>
@@ -2394,33 +2394,33 @@ nodePrinter.print(webapp)
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
-                <groupId>external.atlassian.jgitflow</groupId>
-                <artifactId>jgitflow-maven-plugin</artifactId>
+                <groupId>com.amashchenko.maven.plugin</groupId>
+                <artifactId>gitflow-maven-plugin</artifactId>
+                <version>1.11.0</version>
                 <configuration>
-                    <!-- Allow untracked files during the release process -->
-                    <allowUntracked>true</allowUntracked>
-                    <!-- Allow snapshots when we start the release because the limsThrift version will be fixed during the release process -->
+                    <verbose>true</verbose>
+                    <!-- Do not run the unit tests during the finish goals -->
+                    <skipTestProject>true</skipTestProject>
+                    <!-- When starting the release, update the development version at the start -->
+                    <commitDevelopmentVersionAtStart>true</commitDevelopmentVersionAtStart>
+                    <!-- The names of the branches being used -->
+                    <gitFlowConfig>
+                        <productionBranch>master</productionBranch>
+                        <developmentBranch>develop</developmentBranch>
+                    </gitFlowConfig>
+                    <!-- Allow snapshots at the start of the release -->
                     <allowSnapshots>true</allowSnapshots>
-                    <pushFeatures>true</pushFeatures>
-                    <noFeatureBuild>true</noFeatureBuild>
-                    <enableFeatureVersions>true</enableFeatureVersions>
-                    <releaseBranchVersionSuffix>RC</releaseBranchVersionSuffix>
-                    <!--Do NOT do a build during the release-finish process -->
-                    <noReleaseBuild>true</noReleaseBuild>
-                    <!-- Do NOT use the Maven default release profile during the release process -->
-                    <useReleaseProfile>false</useReleaseProfile>
-                    <!-- Do NOT use the Maven deploy goal during the release process. -->
-                    <noDeploy>true</noDeploy>
-                    <!-- Do push the release branches to the remote upstream -->
-                    <pushReleases>true</pushReleases>
-                    <!-- Do push the hotfix branches to the remote upstream -->
-                    <pushHotfixes>true</pushHotfixes>
-                    <noHotfixBuild>true</noHotfixBuild>
+                    <!-- Keep the SNAPSHOT prefix in the version until the release is finished -->
+                    <useSnapshotInRelease>true</useSnapshotInRelease>
+                    <!-- Keep the SNAPSHOT prefix in the version until the hot fix is finished -->
+                    <useSnapshotInHotfix>true</useSnapshotInHotfix>
+                    <!-- Push the new created branches to the remote upon start of the release and
+                     the modified development and production branches at the end of the release. -->
+                    <pushRemote>true</pushRemote>
                 </configuration>
             </plugin>
-
+            
         </plugins>
 
         <extensions>
