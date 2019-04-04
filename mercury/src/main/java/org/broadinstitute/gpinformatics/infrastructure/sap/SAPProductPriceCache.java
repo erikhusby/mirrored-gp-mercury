@@ -121,14 +121,10 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     }
 
 
+    @Deprecated
     public static PriceItem determinePriceItemByCompanyCode(Product product,
                                                             SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
-        PriceItem priceItem = product.getPrimaryPriceItem();
-        if(companyCode == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
-                product.getExternalPriceItem() != null) {
-            priceItem = product.getExternalPriceItem();
-        }
-        return priceItem;
+        return product.getPrimaryPriceItem();
     }
 
     public String getEffectivePrice(Product product, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode,

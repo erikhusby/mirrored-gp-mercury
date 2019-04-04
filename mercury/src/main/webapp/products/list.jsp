@@ -121,9 +121,9 @@
                     <td>${product.productName}</td>
                 <td>${product.productFamily.name}</td>
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, FinanceViewer)%>">
-                    <td>${product.primaryPriceItem.units}</td>
-                    <td>${product.primaryPriceItem.displayName}</td>
-                    <td>${product.primaryPriceItem.platform}</td>
+                    <td>${product.unitsDisplay}</td>
+                    <td>${product.priceItemDisplayName}</td>
+                    <td>${product.platformDisplay}</td>
                     <td>${product.quoteServerPrice}</td>
                     <td>
                         <c:if test="${inSAP}">

@@ -703,6 +703,8 @@
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
+            var quote = $j("#quote").val();
+            var quoteSource = $j("#quoteSource").val();
             if ((productKey === null) || (productKey === "")) {
                 $j("#customizationJsonString").val("");
                 customizationValues = {};
@@ -726,7 +728,8 @@
                     $j("#sampleInitiationKitRequestEdit").hide();
                 }
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey +
+                    "&quoteIdentifier=" + quote + "&quoteSource="+quoteSource,
                     dataType: 'json',
                     success: selectedProductFollowup,
                     complete: detectNumberOfLanesVisibility
@@ -1249,7 +1252,9 @@
             $j.ajax({
                 url: "${ctxpath}/orders/order.action?openCustomView=",
                 data: {
-                    'customizationJsonString': JSON.stringify(customizationValues)
+                    'customizationJsonString': JSON.stringify(customizationValues),
+                    'quoteSource':$j("#quoteSource"),
+                    'quoteIdentifier':$j("#quote")
                 },
                 datatype: 'html',
                 success: function (html) {

@@ -2289,6 +2289,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public OrderAccessType getOrderType() {
+        OrderAccessType orderType = null;
+        if(hasSapQuote()) {
+            orderType = this.orderType;
+        }
         return orderType;
     }
 
@@ -2296,6 +2300,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             this.orderType = orderType;
     }
 
+    //todo This doesn't appear to be used, so we should get rid of it
+    @Deprecated
     public boolean isCommercial() {
         return orderType == OrderAccessType.COMMERCIAL;
     }
@@ -2508,6 +2514,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         sapOrderDetail.setPrimaryQuantity(sampleCount);
     }
 
+    @Deprecated
     public boolean isResearchOrder () {
         boolean result = true;
         if(getOrderType() != null) {
@@ -2517,18 +2524,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public enum OrderAccessType implements StatusType {
-        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)"),
-        COMMERCIAL("Commercial (2000)");
+        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)", "GP01"),
+        COMMERCIAL("Commercial (2000)", "GP02");
 
         private String displayName;
+        private String salesOrg;
 
-        OrderAccessType(String displayName) {
+        OrderAccessType(String displayName, String salesOrg) {
             this.displayName = displayName;
+            this.salesOrg = salesOrg;
         }
 
         @Override
         public String getDisplayName() {
             return displayName;
+        }
+
+        public String getSalesOrg() {
+            return salesOrg;
         }
 
         public static List<String> displayNames() {
@@ -2548,6 +2561,18 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             for (OrderAccessType orderAccessType : values()) {
                 if(orderAccessType.getDisplayName().equals(displayName)) {
                     foundType = orderAccessType;
+                    break;
+                }
+            }
+            return foundType;
+        }
+
+        public static OrderAccessType fromSalesOrg(String salesOrg) {
+            OrderAccessType foundType = null;
+
+            for (OrderAccessType value : values()) {
+                if(value.getSalesOrg().equals(salesOrg)) {
+                    foundType = value;
                     break;
                 }
             }
@@ -2655,15 +2680,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return foundAdjustment;
     }
 
+    // todo remove this code since it seems no longer valid
+    @Deprecated
     public PriceItem determinePriceItemByCompanyCode(Product product) {
-        PriceItem priceItem = product.getPrimaryPriceItem();
-        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = this.getSapCompanyConfigurationForProductOrder(
-        );
-        if(companyCode == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
-           product.getExternalPriceItem() != null) {
-            priceItem = product.getExternalPriceItem();
-        }
-        return priceItem;
+        return product.getPrimaryPriceItem();
     }
 
     @NotNull

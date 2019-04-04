@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -226,7 +227,8 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
 
                     @Override
                     public boolean apply(@Nullable LedgerEntry ledgerEntry) {
-                        return ledgerEntry.getPriceItem().equals(targetProduct.getPrimaryPriceItem()) &&
+                        return (ledgerEntry.getPriceItem() == null ||
+                                Objects.equals(ledgerEntry.getPriceItem(),targetProduct.getPrimaryPriceItem())) &&
                                StringUtils.equals(ledgerEntry.getBillingMessage(),BillingSession.SUCCESS);
                     }
                 });

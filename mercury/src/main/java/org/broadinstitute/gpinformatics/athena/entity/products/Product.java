@@ -1037,6 +1037,35 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return fee;
     }
 
+    public String getUnitsDisplay()  {
+        String display = "";
+        if(getPrimaryPriceItem() != null) {
+            display = getPrimaryPriceItem().getUnits();
+        }
+
+        return display;
+    }
+
+    public String getPriceItemDisplayName() {
+        String display = "";
+
+        if(getPrimaryPriceItem() != null) {
+            display = getPrimaryPriceItem().getDisplayName();
+        }
+
+        return display;
+    }
+
+    public String getPlatformDisplay() {
+        String display = "";
+
+        if(getPrimaryPriceItem() != null) {
+            display = getPrimaryPriceItem().getPlatform();
+        }
+
+        return display;
+    }
+
     public enum AggregationParticle implements Displayable {
         PDO("PDO (eg: PDO-1243)"),
         PDO_ALIQUOT("PDO, Aliquot (eg: PDO-12.SM-34)");

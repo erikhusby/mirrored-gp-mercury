@@ -39,6 +39,7 @@ import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -547,6 +548,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         return companyCode;
+    }
+
+    public static SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(SapQuote quote) {
+        SapIntegrationClientImpl.SAPCompanyConfiguration sapCompanyConfiguration =
+                SapIntegrationClientImpl.SAPCompanyConfiguration
+                        .fromSalesOrgForMaterial(quote.getQuoteHeader().getSalesOrganization());
+
+        if(!Arrays.asList(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD).contains(sapCompanyConfiguration)) {
+            sapCompanyConfiguration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        }
+        return sapCompanyConfiguration;
     }
 
     protected void setQuoteService(QuoteService quoteService) {
