@@ -33,12 +33,13 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Parses cell data from Mayo manifest files into sample metadata.
@@ -56,7 +57,6 @@ public class MayoManifestImportProcessor {
     public static final String UNKNOWN_UNITS = "Manifest file %s has header %s that has unknown units \"%s\".";
     public static final String UNKNOWN_HEADER = "Manifest file %s has unknown header \"%s\" which will be ignored.";
 
-    private Map<String, Header> nameToHeader = new HashMap<>();
     private List<Header> sheetHeaders = new ArrayList<>();
 
     private enum Attribute {REQUIRED, HAS_UNITS, IS_DATE}
@@ -67,15 +67,18 @@ public class MayoManifestImportProcessor {
         BOX_ID("box label", Metadata.Key.BOX_ID, Attribute.REQUIRED),
         MATRIX_ID("matrix id", Metadata.Key.BROAD_2D_BARCODE, Attribute.REQUIRED),
         WELL_LOCATION("well position", Metadata.Key.WELL, Attribute.REQUIRED),
-        SAMPLE_ID("sample id", Metadata.Key.BROAD_SAMPLE_ID, Attribute.REQUIRED),
+        BROAD_SAMPLE_ID("sample id", Metadata.Key.BROAD_SAMPLE_ID, Attribute.REQUIRED),
 
-        PARENT_SAMPLE_ID("parent sample id", Metadata.Key.PARENT_SAMPLE_ID),
         COLLECTION_DATE("collection date", Metadata.Key.COLLECTION_DATE, Attribute.IS_DATE),
         VOLUME("quantity", Metadata.Key.QUANTITY, Attribute.HAS_UNITS),
         CONCENTRATION("total concentration", Metadata.Key.CONCENTRATION, Attribute.HAS_UNITS),
         MASS("total dna", Metadata.Key.MASS, Attribute.HAS_UNITS),
-
         BIOBANK_ID("biobank id", Metadata.Key.PATIENT_ID),
+
+        // The parent relationship is in sample metadata only, not in chain-of-custody.
+        PARENT_SAMPLE_ID("parent sample id", Metadata.Key.PARENT_SAMPLE_ID),
+        // This naming scheme looks redundant since the sample id part will be unique in Mercury.
+        // I suppose it's used to make the patient-sample hierarchy explicit in Mercury.
         COLLABORATOR_SAMPLE_ID("biobank id sample id", Metadata.Key.SAMPLE_ID),
         SEX("sex at birth", Metadata.Key.GENDER),
         SAMPLE_TYPE("sample type", Metadata.Key.MATERIAL_TYPE),
@@ -180,12 +183,6 @@ public class MayoManifestImportProcessor {
         }
     }
 
-    public MayoManifestImportProcessor() {
-        for (Header header : Header.values()) {
-            nameToHeader.put(header.getText(), header);
-        }
-    }
-
     /**
      * Returns spreadsheet cell contents as strings. Blank lines are removed.
      */
@@ -196,7 +193,7 @@ public class MayoManifestImportProcessor {
             if (isExcel(filename)) {
                 // Parses file as an Excel spreadsheet. Uses the "Details" sheet if it exists.
                 if (PoiSpreadsheetParser.getWorksheetNames(new ByteArrayInputStream(content)).stream().
-                        filter(sheetname -> DETAILS_SHEETNAME.equals(sheetname)).
+                        filter(DETAILS_SHEETNAME::equals).
                         findFirst().isPresent()) {
                     // Makes a cell grid without expecting a specific sheet layout or headers.
                     GenericTableProcessor processor = new GenericTableProcessor();
@@ -320,10 +317,21 @@ public class MayoManifestImportProcessor {
         return manifestKeys;
     }
 
+    private void initHeaders(List<String> headerRow, @Nullable String filename, @Nullable MessageCollection messages) {
+        sheetHeaders.clear();
+        sheetHeaders.addAll(MayoManifestImportProcessor.extractHeaders(headerRow, filename, messages));
+    }
+
     /**
      * Parses the header text, extracts the units if any, and sets the header's conversion factor.
      */
-    private void initHeaders(List<String> headerRow, @Nullable String filename, @Nullable MessageCollection messages) {
+    static List<Header> extractHeaders(List<String> headerRow, @Nullable String filename,
+            @Nullable MessageCollection messages) {
+
+        Map<String, Header> nameToHeader = Stream.of(Header.values()).
+                collect(Collectors.toMap(Header::getText, Function.identity()));
+
+        List<Header> headers = new ArrayList<>();
         for (String column : headerRow) {
             // Until the actual stable spreadsheet headers are known, does a forgiving header lookup by
             // ignoring case, allowing underscores instead of spaces, "somethingid" instead of "something id",
@@ -332,15 +340,18 @@ public class MayoManifestImportProcessor {
             String header = headerParts[0].toLowerCase().replaceAll("_", " ").
                     replaceAll("id$", " id").replaceAll("id ", " id ").replaceAll("  ", " ").trim();
             Header match = nameToHeader.get(header);
-            if (match == null && messages != null && filename != null) {
-                messages.addInfo(UNKNOWN_HEADER, filename, column);
-            } else if (match.hasUnits() && messages != null && filename != null && headerParts.length > 1) {
-                match.setFactor(StringUtils.remove(headerParts[1].toLowerCase().replaceAll("\\)", ""), " "),
-                        filename, messages);
+            if (filename != null && messages != null) {
+                if (match == null) {
+                    messages.addInfo(UNKNOWN_HEADER, filename, column);
+                } else if (match.hasUnits() && headerParts.length > 1) {
+                    match.setFactor(StringUtils.remove(headerParts[1].toLowerCase().replaceAll("\\)", ""), " "),
+                            filename, messages);
+                }
             }
-            // Notice that an unknown header goes in as a null, to maintain a corresponding index with data rows.
-            sheetHeaders.add(match);
+            // An unknown header is added as a null, to maintain a corresponding index with data rows.
+            headers.add(match);
         }
+        return headers;
     }
 
     /**

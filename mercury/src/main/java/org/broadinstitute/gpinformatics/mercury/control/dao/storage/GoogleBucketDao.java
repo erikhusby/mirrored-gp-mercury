@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -80,8 +81,11 @@ public class GoogleBucketDao {
         if (writerCredentials != null) {
             Storage storage = StorageOptions.newBuilder().setCredentials(writerCredentials)
                     .setProjectId(googleStorageConfig.getProject()).build().getService();
-            storage.create(BlobInfo.newBuilder(googleStorageConfig.getBucketName(), filename).
-                    setContentType("text/plain").build(), content);
+            BlobInfo blobInfo = BlobInfo.newBuilder(googleStorageConfig.getBucketName(), filename).
+                    setContentType("text/plain").build();
+            Blob blob = storage.get(blobInfo.getBlobId());
+            // This will create a new file or overwrite an existing one.
+            storage.create(blobInfo, content);
         }
     }
 

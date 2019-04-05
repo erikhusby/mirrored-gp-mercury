@@ -53,7 +53,6 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     private MessageCollection messageCollection = new MessageCollection();
     private VesselGeometry vesselGeometry = null;
     private List<String> rackScanEntries = new ArrayList<>();
-    private List<String> rackScanBarcodes = new ArrayList<>();
     private List<List<String>> manifestCellGrid = new ArrayList<>();
 
     @Inject
@@ -89,15 +88,14 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     @HandlesEvent(SCAN_BTN)
     public Resolution scanEvent() throws ScannerException {
-        // Performs the rack scan.
+        // Performs the rack scan and validates it.
         runRackScan(false);
         if (rackScan == null || rackScan.isEmpty()) {
             messageCollection.addError("The rack scan is empty.");
             addMessages(messageCollection);
             return new ForwardResolution(PAGE1);
         } else {
-            // Parses the rack scan into tubes and positions. Looks up the manifest file.
-            mayoManifestEjb.processScan(this);
+            mayoManifestEjb.validateAndScan(this);
             addMessages(messageCollection);
             return new ForwardResolution(PAGE2);
         }
@@ -110,7 +108,7 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     @HandlesEvent(SAVE_BTN)
     public Resolution saveEvent() {
         reconstructScan();
-        mayoManifestEjb.saveScan(this);
+        mayoManifestEjb.receiveAndAccession(this);
         addMessages(messageCollection);
         return new ForwardResolution(PAGE1);
     }
@@ -252,10 +250,6 @@ public class MayoReceivingActionBean extends RackScanActionBean {
         this.filename = filename;
     }
 
-    public List<String> getRackScanBarcodes() {
-        return rackScanBarcodes;
-    }
-
     public void setMayoManifestEjb(MayoManifestEjb mayoManifestEjb) {
         this.mayoManifestEjb = mayoManifestEjb;
     }
@@ -322,9 +316,6 @@ public class MayoReceivingActionBean extends RackScanActionBean {
             String[] tokens = rackScanEntry.split(" ");
             String value = (tokens.length > 1) ? tokens[1] : "";
             rackScan.put(tokens[0], value);
-            if (StringUtils.isNotBlank(value)) {
-                rackScanBarcodes.add(value);
-            }
         }
     }
 }

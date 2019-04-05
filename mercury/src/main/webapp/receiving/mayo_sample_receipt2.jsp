@@ -74,17 +74,19 @@
             <div style="margin-left: 20px;">
                 Delivery Method: &nbsp;
                 <stripes:select id="deliveryMethod" class="multiEditSelect" name="">
-                    <stripes:option value="Fedex" label="Fedex"/>
-                    <stripes:option value="Local Courier" label="Local Courier"/>
                     <stripes:option value="None" label="None"/>
+                    <stripes:option value="FedEx" label="FedEx"/>
+                    <stripes:option value="Local Courier" label="Local Courier"/>
                 </stripes:select>
             </div>
             <div style="margin-left: 20px;">
                 Receipt Type: &nbsp;
                 <stripes:select id="receiptType" class="multiEditSelect" name="">
+                    <stripes:option value="None" label="None"/>
                     <stripes:option value="Clinical Genomes" label="Clinical Genomes"/>
                     <stripes:option value="Clinical Exomes" label="Clinical Exomes"/>
-                    <stripes:option value="None" label="None"/>
+                    <!-- Multiple values must be comma-space separated. -->
+                    <stripes:option value="Clinical Exomes, Clinical Genomes" label="Clinical Exomes, Clinical Genomes"/>
                 </stripes:select>
             </div>
 
