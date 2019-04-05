@@ -358,7 +358,7 @@ public class ProductEjb {
             try {
                 publishProductToSAP(productToPublish);
             } catch (SAPIntegrationException e) {
-                errorMessages.add(e.getMessage());
+                errorMessages.add(productToPublish.getPartNumber() + ": " + e.getMessage());
                 log.error(e.getMessage());
             }
         }
