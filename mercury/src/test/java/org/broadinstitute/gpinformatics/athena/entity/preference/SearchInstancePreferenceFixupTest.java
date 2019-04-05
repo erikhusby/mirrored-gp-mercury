@@ -53,7 +53,7 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void modifyResultColumnNamesGPLIM6178() {
         int replaceCount = 0;
         try {
