@@ -26,8 +26,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -132,8 +130,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.IntStream;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
@@ -2824,6 +2822,7 @@ public class ProductOrderActionBeanTest {
     public void testQuoteOptionsFundsReservationExpiresAfterLeapYear() throws Exception {
         String quoteId = "DNA4JD";
         testOrder = new ProductOrder();
+        testOrder.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
         funding.setGrantNumber("1234");
@@ -2842,6 +2841,7 @@ public class ProductOrderActionBeanTest {
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteService(mockQuoteService);
 
+        actionBean.setQuoteSource(testOrder.getQuoteSource().getDisplayName());
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
 
@@ -2904,7 +2904,7 @@ public class ProductOrderActionBeanTest {
 //        assertThat(fundingDetails.get("fundsReservationNumber"), equalTo("CO-1234"));
         assertThat(fundingDetails.get("fundsReservationEndDate"), equalTo(DateUtils.getDate(oneWeek)));
         assertThat(fundingDetails.get("activeGrant"), is(true));
-        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7));
+        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7L));
 
         assertThat(quoteFundingJson.getString("status"), equalTo(FundingStatus.SUBMITTED.getStatusText()));
         assertThat(quoteFundingJson.getString("quoteType"), equalTo(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName()));
