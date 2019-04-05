@@ -71,7 +71,7 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
             replaceCount += renameSavedResultColumn("LCSET", "Lab Batch", preferenceTypes);
 
             preferenceDao.persist(new FixupCommentary("GPLIM-6178 Rename " + replaceCount
-                    + " Event and Metric Saved Search Column/Term 'LCSET' to 'Batch Name'"));
+                    + " Event and Metric Saved Search Column/Term 'LCSET' to 'Lab Batch'"));
 
             preferenceDao.flush();
 
