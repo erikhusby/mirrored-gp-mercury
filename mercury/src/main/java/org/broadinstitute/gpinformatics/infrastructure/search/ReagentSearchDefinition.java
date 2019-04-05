@@ -126,7 +126,7 @@ public class ReagentSearchDefinition {
 
         // This is an exclusive search term using programmatic logic to populate the entity list
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
+        searchTerm.setName("Lab Batch");
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setAlternateSearchDefinition(buildLcsetAlternateSearchDef());
         searchTerm.setHelpText( "Reagents are collected and consolidated from all descendant events in the LCSET."
@@ -157,7 +157,7 @@ public class ReagentSearchDefinition {
                 "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
 
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
+        searchTerm.setName("Lab Batch");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */

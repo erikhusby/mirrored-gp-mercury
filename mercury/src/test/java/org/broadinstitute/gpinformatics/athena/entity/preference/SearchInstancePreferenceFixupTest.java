@@ -53,6 +53,33 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
+    @Test(enabled = true)
+    public void modifyResultColumnNamesGPLIM6178() {
+        int replaceCount = 0;
+        try {
+            userBean.loginOSUser();
+
+            PreferenceType[] preferenceTypes = {
+                    PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES,
+                    PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES,
+                    PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES,
+                    PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES,
+                    PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES,
+                    PreferenceType.USER_REAGENT_SEARCH_INSTANCES
+            };
+
+            replaceCount += renameSavedResultColumn("LCSET", "Lab Batch", preferenceTypes);
+
+            preferenceDao.persist(new FixupCommentary("GPLIM-6178 Rename " + replaceCount
+                    + " Event and Metric Saved Search Column/Term 'LCSET' to 'Batch Name'"));
+
+            preferenceDao.flush();
+
+        } catch ( Exception e ) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Test(enabled = false)
     public void modifyResultColumnNamesGPLIM3955() {
         int replaceCount = 0;
