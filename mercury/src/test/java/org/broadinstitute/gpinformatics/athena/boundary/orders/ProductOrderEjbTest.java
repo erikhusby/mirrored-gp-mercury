@@ -115,7 +115,7 @@ public class ProductOrderEjbTest {
         mockSapService = Mockito.mock(SapIntegrationService.class);
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
         mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenThrow(new RuntimeException());
 
         productPriceCache = new SAPProductPriceCache(mockSapService);
         productPriceCache.setAccessControlEjb(mockAccessController);
@@ -710,7 +710,6 @@ public class ProductOrderEjbTest {
         final SAPAccessControl control = new SAPAccessControl();
         AccessItem orderAccessItem = new AccessItem(conversionPdo.getProduct().getPrimaryPriceItem().getName());
         control.setDisabledItems(Collections.singleton(orderAccessItem));
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(control);
 
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
@@ -944,7 +943,6 @@ public class ProductOrderEjbTest {
         final SAPAccessControl control = new SAPAccessControl();
         AccessItem orderAccessItem = new AccessItem(conversionPdo.getProduct().getPrimaryPriceItem().getName());
         control.setDisabledItems(Collections.singleton(orderAccessItem));
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(control);
 
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);

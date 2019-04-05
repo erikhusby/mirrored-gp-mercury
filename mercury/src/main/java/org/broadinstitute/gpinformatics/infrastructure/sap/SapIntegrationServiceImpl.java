@@ -462,16 +462,14 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId,
                                                           ProductOrder productOrder) throws SAPIntegrationException {
         OrderCalculatedValues orderCalculatedValues = null;
-        if (accessControlEjb.getCurrentControlDefinitions().isEnabled()) {
-            OrderCriteria potentialOrderCriteria = null;
-            if (productOrder != null && productOrder.getProduct() != null && productsFoundInSap(productOrder)) {
-                potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
-            }
-
-            orderCalculatedValues =
-                    getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
-                            potentialOrderCriteria);
+        OrderCriteria potentialOrderCriteria = null;
+        if (productOrder != null && productOrder.getProduct() != null && productsFoundInSap(productOrder)) {
+            potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
         }
+
+        orderCalculatedValues =
+                getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
+                        potentialOrderCriteria);
         return orderCalculatedValues;
     }
 
