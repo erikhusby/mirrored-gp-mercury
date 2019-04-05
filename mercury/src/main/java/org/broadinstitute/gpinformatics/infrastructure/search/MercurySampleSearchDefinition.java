@@ -85,8 +85,7 @@ public class MercurySampleSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
+        searchTerm.setName("Lab Batch");
         criteriaPaths = new ArrayList<>();
 
         // Mercury only cares about workflow batches

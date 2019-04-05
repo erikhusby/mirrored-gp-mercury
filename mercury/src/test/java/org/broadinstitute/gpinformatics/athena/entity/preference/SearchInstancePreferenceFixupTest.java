@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.preference;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -63,9 +64,13 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                     PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES,
                     PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES,
                     PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES,
+                    PreferenceType.GLOBAL_PRODUCT_ORDER_SEARCH_INSTANCES,
+                    PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES,
                     PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES,
                     PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES,
-                    PreferenceType.USER_REAGENT_SEARCH_INSTANCES
+                    PreferenceType.USER_REAGENT_SEARCH_INSTANCES,
+                    PreferenceType.USER_PRODUCT_ORDER_SEARCH_INSTANCES,
+                    PreferenceType.USER_MERCURY_SAMPLE_SEARCH_INSTANCES
             };
 
             replaceCount += renameSavedResultColumn("LCSET", "Lab Batch", preferenceTypes);
@@ -119,23 +124,29 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
             for( Preference preference : preferences ) {
 
                 if (preference.getData() == null || preference.getData().isEmpty()) {
-                    return 0;
+                    continue;
                 }
 
                 SearchInstanceList searchInstanceList =
                         (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
 
                 if (searchInstanceList == null || searchInstanceList.getSearchInstances().isEmpty()) {
-                    return 0;
+                    continue;
                 }
 
                 for (SearchInstance searchInstance : searchInstanceList.getSearchInstances()) {
                     List<String> names = searchInstance.getPredefinedViewColumns();
                     for (int j = 0; j < names.size(); j++) {
                         if (names.get(j).equals(oldName)) {
-                            System.out.println(names.get(j));
+                            System.out.println("Renaming column " + names.get(j));
                             names.set(j, newName);
                             replaceCount++;
+                        }
+                    }
+                    for(SearchInstance.SearchValue termVal : searchInstance.getSearchValues() ) {
+                        if( oldName.equals( termVal.getTermName() ) ) {
+                            System.out.println("Renaming term " + termVal.getTermName() );
+                            termVal.setTermName(newName);
                         }
                     }
                 }
