@@ -274,6 +274,8 @@ public class ProductOrderSearchDefinition {
             public Object evaluate(Object entity, SearchContext context) {
                 ProductOrder orderData = (ProductOrder) entity;
 
+                context.setQuoteSourceType(orderData.getQuoteSource());
+
                 return Encode.forHtml(orderData.getQuoteId());
             }
         });
@@ -288,7 +290,11 @@ public class ProductOrderSearchDefinition {
                 if(StringUtils.isNotBlank(quoteId)) {
                     quoteLink .append("<a class=\"external\" target=\"QUOTE\" href=\"");
                     //todo this needs to be sap quote link when it is an SAP Order.  HOw do we get that context in here.
-                    quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
+                    if (context.getQuoteSourceType() == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
+                        quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
+                    } else {
+                        quoteLink.append(context.getSapQuoteLink().sapUrl(quoteId));
+                    }
                     quoteLink.append("\">").append(Encode.forHtml(quoteId)).append("</a>");
                 }
                 return quoteLink.toString();

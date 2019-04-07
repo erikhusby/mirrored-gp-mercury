@@ -164,17 +164,15 @@ public class ProductOrderBillingPlugin implements ListPlugin  {
                         businessKey = billingKey.get().getBusinessKey();
                     }
 
-                    final List<String> cellList = new ArrayList(Arrays.asList(
-                            getBillingSessionLink(businessKey, singleWorkItem.isPresent()?singleWorkItem.get():"",
-                                    context),
-                            billedDate.isPresent()?dateFormatter.format(billedDate.get()):"",
+                    final List<String> cellList = new ArrayList<String>(Arrays.asList(
+                            getBillingSessionLink(businessKey, singleWorkItem.orElse(""), context),
+                            billedDate.map(dateFormatter::format).orElse(""),
                             getQuoteLink(quoteImportItem, context),
-                            getWorkItemLink(singleWorkItem.isPresent()?singleWorkItem.get():"",
-                                    quoteImportItem.getQuoteId(), context),
-                            sapItems.isPresent()?sapItems.get():"",
+                            getWorkItemLink(singleWorkItem.orElse(""), quoteImportItem.getQuoteId(), context),
+                            sapItems.orElse(""),
                             quoteImportItem.getProduct().getDisplayName(),
                             quoteImportItem.getRoundedQuantity(), quoteImportItem.getNumSamples(),
-                            workCompleteDate.isPresent()?dateFormatter.format(workCompleteDate.get()):"",
+                            workCompleteDate.map(dateFormatter::format).orElse(""),
                             quoteImportItem.getBillingMessage()));
                     ConfigurableList.ResultRow row =
                             new ConfigurableList.ResultRow(null, cellList, String.valueOf(count));
