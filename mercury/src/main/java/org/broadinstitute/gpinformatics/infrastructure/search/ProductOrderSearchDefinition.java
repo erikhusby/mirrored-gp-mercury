@@ -287,6 +287,7 @@ public class ProductOrderSearchDefinition {
                 StringBuffer quoteLink = new StringBuffer();
                 if(StringUtils.isNotBlank(quoteId)) {
                     quoteLink .append("<a class=\"external\" target=\"QUOTE\" href=\"");
+                    //todo this needs to be sap quote link when it is an SAP Order.  HOw do we get that context in here.
                     quoteLink.append(context.getQuoteLink().quoteUrl(quoteId));
                     quoteLink.append("\">").append(Encode.forHtml(quoteId)).append("</a>");
                 }

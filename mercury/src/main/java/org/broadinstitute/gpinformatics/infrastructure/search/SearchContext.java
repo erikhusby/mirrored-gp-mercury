@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -46,6 +47,7 @@ public class SearchContext {
     private JiraConfig jiraConfig;
     private PriceListCache priceListCache;
     private QuoteLink quoteLink;
+    private SapQuoteLink sapQuoteLink;
     private UserBean userBean;
 
     private ResultParamValues rowTraverserParams;
@@ -279,6 +281,14 @@ public class SearchContext {
 
     public ResultParamValues getRowTraverserParams() {
         return rowTraverserParams;
+    }
+
+    public void setSapQuoteLink(SapQuoteLink sapQuoteLink) {
+        this.sapQuoteLink = sapQuoteLink;
+    }
+
+    public SapQuoteLink getSapQuoteLink() {
+        return sapQuoteLink;
     }
 
     /**
