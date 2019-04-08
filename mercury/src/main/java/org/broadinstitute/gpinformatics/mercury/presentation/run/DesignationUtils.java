@@ -147,7 +147,7 @@ public class DesignationUtils {
                                                              MessageCollection messageCollection) {
         List<LcsetAssignmentDto> lcsetAssignmentDtos = new ArrayList<>();
         for (FlowcellDesignation designation : flowcellDesignations) {
-            Set<SampleInstanceV2> sampleInstances = designation.getLoadingTube().getSampleInstancesV2();
+            Set<SampleInstanceV2> sampleInstances = designation.getStartingTube().getSampleInstancesV2();
             Set<LabBatch> lcsets = sampleInstances.stream().
                     flatMap(sampleInstance -> sampleInstance.getAllWorkflowBatches().stream()).
                     collect(Collectors.toSet());
