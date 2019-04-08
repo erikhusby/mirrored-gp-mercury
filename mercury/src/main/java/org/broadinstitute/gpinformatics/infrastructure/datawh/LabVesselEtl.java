@@ -55,12 +55,14 @@ public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
 
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, LabVessel entity) {
+
         return genericRecord(etlDateStr, isDelete,
                 entity.getLabVesselId(),
                 format(entity.getLabel()),
                 format(entity.getType().getName()),
                 format(entity.getName()),
-                format(entity.getCreatedOn())
+                format(entity.getCreatedOn()),
+                format(entity.getVolume())
         );
     }
 

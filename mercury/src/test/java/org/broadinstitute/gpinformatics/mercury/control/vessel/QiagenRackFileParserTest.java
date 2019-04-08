@@ -55,6 +55,7 @@ public class QiagenRackFileParserTest {
             assertNotNull(plateTransferEventType);
             assertEquals(messageCollection.hasErrors(), false);
             assertEquals(plateTransferEventType.getPlate().getBarcode(), "1013740015402336601842");
+            assertEquals(plateTransferEventType.getStation(), "Beethoven");
         } catch (JAXBException e) {
             e.printStackTrace();
         } finally {

@@ -109,6 +109,7 @@ public class SampleInstanceEntity {
     private String aggregationParticle;
     private String insertSize;
     private Boolean umisPresent;
+    private String aggregationDataType;
     private String baitName;
 
     @Enumerated(EnumType.STRING)
@@ -317,6 +318,14 @@ public class SampleInstanceEntity {
 
     public void setUmisPresent(Boolean umisPresent) {
         this.umisPresent = umisPresent;
+    }
+
+    public String getAggregationDataType() {
+        return aggregationDataType;
+    }
+
+    public void setAggregationDataType(String aggregationDataType) {
+        this.aggregationDataType = aggregationDataType;
     }
 
     public FlowcellDesignation.IndexType getIndexType() {

@@ -58,6 +58,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     private Map<String, ReferenceSequence> referenceSequenceMap = new HashMap<>();
     private Map<String, IlluminaFlowcell.FlowcellType> sequencerModelMap = new HashMap<>();
     private Set<Object> entitiesToUpdate = new HashSet<>();
+    private List<String> validAggregationDataTypes = new ArrayList();
 
     // Maps adjusted header name to actual header name.
     protected Map<String, String> adjustedNames = new HashMap<>();
@@ -272,8 +273,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             dto.setCollaboratorSampleId(get(getCollaboratorSampleIds(), index));
             dto.setConcentration(asNonNegativeBigDecimal(get(getConcentrations(), index),
                     ExternalLibraryProcessorNewTech.Headers.CONCENTRATION.getText(), dto.getRowNumber(), messages));
-            dto.setConditions(get(getConditions(), index));
-            dto.setExperiment(get(getExperiments(), index));
             dto.setInsertSize(asIntegerRange(get(getInsertSizes(), index),
                     ExternalLibraryProcessorNewTech.Headers.INSERT_SIZE_RANGE.getText(), dto.getRowNumber(), messages));
             dto.setIrbNumber(get(getIrbNumbers(), index));
@@ -300,6 +299,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             dto.setSex(get(getSexes(), index));
             dto.setVolume(asNonNegativeBigDecimal(get(getVolumes(), index),
                     VesselPooledTubesProcessor.Headers.VOLUME.getText(), dto.getRowNumber(), messages));
+            dto.setAggregationDataType(get(getAggregationDataTypes(), index));
         }
         return dtos;
     }
@@ -427,6 +427,11 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             }
         }
     }
+
+    /**
+     * Does character set validation checks on the data.
+     */
+    abstract public void validateCharacterSet(List<SampleInstanceEjb.RowDto> dtos, MessageCollection messages);
 
     /**
      * Does self-consistency and other validation checks on the data.
@@ -572,13 +577,13 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
             sampleInstanceEntity.setSampleLibraryName(dto.getLibraryName());
         }
         // An existing Sample Instance Entity gets rewritten.
+        sampleInstanceEntity.setAggregationDataType(dto.getAggregationDataType());
         sampleInstanceEntity.setAggregationParticle(dto.getAggregationParticle());
         sampleInstanceEntity.setAnalysisType(getAnalysisTypeMap().get(dto.getAnalysisTypeName()));
         sampleInstanceEntity.setComments(dto.getAdditionalSampleInformation() +
                 ((StringUtils.isNotBlank(dto.getAdditionalSampleInformation()) &&
                         StringUtils.isNotBlank(dto.getAdditionalAssemblyInformation())) ? "; " : "") +
                 dto.getAdditionalAssemblyInformation());
-        sampleInstanceEntity.setExperiment(dto.getExperiment());
         sampleInstanceEntity.setInsertSize(dto.getInsertSize());
         sampleInstanceEntity.setLabVessel(labVessel);
         sampleInstanceEntity.setLibraryType(dto.getLibraryType());
@@ -848,6 +853,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return Collections.emptyList();
     }
 
+    public List<String> getAggregationDataTypes() {
+        return Collections.emptyList();
+    }
+
     public List<String> getReferenceSequences() {
         return Collections.emptyList();
     }
@@ -888,14 +897,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return Collections.emptyList();
     }
 
-    public List<String> getExperiments() {
-        return Collections.emptyList();
-    }
-
-    public List<List<String>> getConditions() {
-        return Collections.emptyList();
-    }
-
     public List<String> getCollaboratorParticipantIds() {
         return Collections.emptyList();
     }
@@ -933,6 +934,14 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     public Map<String, AnalysisType> getAnalysisTypeMap() {
         return analysisTypeMap;
+    }
+
+    public List<String> getValidAggregationDataTypes() {
+        return validAggregationDataTypes;
+    }
+
+    public void setValidAggregationDataTypes(List<String> validAggregationDataTypes) {
+        this.validAggregationDataTypes = validAggregationDataTypes;
     }
 
     public Map<String, MolecularIndexingScheme> getMolecularIndexingSchemeMap() {

@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -41,9 +44,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -560,6 +560,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
             ledgerQuantities = productOrderSample.getLedgerQuantities();
 
+            for(Map.Entry<PriceItem, ProductOrderSample.LedgerQuantities> quantityEntry: ledgerQuantities.entrySet()) {
+                if(quantityEntry.getValue().getTotal()>0) {
+                    anyQuantitySet = true;
+                }
+            }
+
             boolean primaryBilled = false;
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
                 PriceItem priceItem = ledgerEntry.getPriceItem();
@@ -568,9 +574,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 if (priceItemType == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM
                     || priceItemType == LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM) {
                     primaryBilled = true;
-                }
-                if(ledgerEntry.getQuantity()>0) {
-                    anyQuantitySet = true;
                 }
             }
 
@@ -649,6 +652,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public void setQuantities(Map<Long, ProductOrderSampleQuantities> quantities) {
             this.quantities = quantities;
         }
+
     }
 
     /**

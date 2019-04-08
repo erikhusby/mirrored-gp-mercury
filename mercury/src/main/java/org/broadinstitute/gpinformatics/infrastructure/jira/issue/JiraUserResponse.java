@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import java.io.Serializable;

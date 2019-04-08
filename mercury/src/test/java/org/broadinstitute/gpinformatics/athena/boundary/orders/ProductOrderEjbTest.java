@@ -1215,6 +1215,7 @@ public class ProductOrderEjbTest {
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         try {
             productOrderEjb.isOrderEligibleForSAP(conversionPdo);
+            productOrderEjb.isOrderFunded(productOrder);
             Assert.fail("Differences in prices should have thrown an error");
         } catch (QuoteServerException | QuoteNotFoundException e) {
             Assert.fail("Differences in prices should have thrown an InvalidProductException");
