@@ -734,6 +734,16 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return reagentDesigns;
     }
 
+    public Set<DesignedReagent> getDesignReagents() {
+        Set<DesignedReagent> designReagents = new HashSet<>();
+        for( Reagent reagent : getReagents() ) {
+            if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                designReagents.add( OrmUtil.proxySafeCast(reagent, DesignedReagent.class) );
+            }
+        }
+        return designReagents;
+    }
+
     private void mergePooledTubeDevConditions(String experimentName, List<String> subTasks)
     {
         // tzDevExperimentData must also be null to prevent resurrecting the experiment in DevExperimentDataBean.

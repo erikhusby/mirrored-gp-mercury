@@ -1954,4 +1954,55 @@
             <column name="LAB_VESSEL"/>
         </createIndex>
     </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6009-1">
+        <createTable tableName="reagent_metadata" schemaName="mercury">
+            <column name="reagent" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="metadata" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="reagent_metadata" columnNames="reagent, metadata"
+                       constraintName="PK_REAGENT_TO_METADATA_JOIN"/>
+        <addForeignKeyConstraint constraintName="FK_REAGENT_METADATA_META"
+                                 baseTableSchemaName="mercury" baseTableName="reagent_metadata" baseColumnNames="metadata"
+                                 referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+        <addForeignKeyConstraint constraintName="FK_REAGENT_METADATA_REAG"
+                                 baseTableSchemaName="mercury" baseTableName="reagent_metadata" baseColumnNames="reagent"
+                                 referencedTableSchemaName="mercury" referencedTableName="reagent" referencedColumnNames="reagent_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6009-2">
+        <createTable tableName="reagent_metadata_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="reagent" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="reagent_metadata_aud"
+                       columnNames="rev, reagent, metadata" constraintName="PK_REAG_TO_META_JOIN_AUD"/>
+        <addForeignKeyConstraint baseTableName="reagent_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_reagent_metadata_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6009-3" author="jowalsh">
+        <addColumn schemaName="mercury" tableName="LAB_VESSEL">
+            <column name="mass" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6009-4" author="jowalsh">
+        <addColumn schemaName="mercury" tableName="LAB_VESSEL_AUD">
+            <column name="mass" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

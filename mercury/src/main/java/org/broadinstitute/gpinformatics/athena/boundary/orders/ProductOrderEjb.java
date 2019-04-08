@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProduct
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
-import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
@@ -227,21 +226,18 @@ public class ProductOrderEjb {
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
             throws IOException, QuoteNotFoundException, SAPInterfaceException {
 
-        persistProductOrder(saveType, editedProductOrder, deletedIds, kitDetailCollection, Collections.<CustomizationValues>emptyList(), new MessageCollection());
+        persistProductOrder(saveType, editedProductOrder, deletedIds, kitDetailCollection, new MessageCollection());
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
                                     @Nonnull Collection<String> deletedIds,
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection,
-                                    List<CustomizationValues> customizationValues,
                                     MessageCollection messageCollection)
             throws IOException, QuoteNotFoundException, SAPInterfaceException {
 
         kitDetailCollection.removeAll(Collections.singleton(null));
         deletedIds.removeAll(Collections.singleton(null));
-
-        editedProductOrder.updateCustomSettings(customizationValues);
 
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 
