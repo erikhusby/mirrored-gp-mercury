@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
-import com.sun.jersey.api.client.UniformInterfaceException;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.FileBean;
@@ -31,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -267,7 +267,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
                         .addParameter("receiptDescription", receiptInfo.getDescription())
                         .addParameter("receiptKey", receiptKey);
             }
-        } catch (UniformInterfaceException e) {
+        } catch (WebApplicationException e) {
             scanErrors = String.format("Unable to access the specified record of receipt: %s", receiptKey);
         } catch (RuntimeException e) {
             scanErrors = e.getMessage();

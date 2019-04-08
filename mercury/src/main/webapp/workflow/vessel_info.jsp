@@ -57,8 +57,8 @@
         <c:when test="${actionBean.bucketCandidates.isEmpty()}">
             <div class="control-group">
                 <div class="controls">
-                    <div id="error" class="text-error">Mercury does not recognize tube barcode or sample
-                        ID: ${actionBean.vesselLabel}.
+                    <div id="error" class="text-error">Mercury either does not recognize tube barcode or sample
+                        ID: ${actionBean.vesselLabel} or the sample is not eligible for any of the product's buckets.
                     </div>
                 </div>
             </div>

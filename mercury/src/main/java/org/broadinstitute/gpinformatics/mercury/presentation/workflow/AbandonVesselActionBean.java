@@ -1,27 +1,25 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.ObjectReader;
-import org.codehaus.jackson.map.ObjectWriter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -255,11 +253,13 @@ public class AbandonVesselActionBean extends CoreActionBean {
                     abandonVessel.setReason(abandonActionReason);
                     abandonVessel.setAbandonedOn(abandonedOn);
                     abandonVessel.setVesselPosition(position);
+                    abandonVessel.setAbandonedBy(getUserBean().getBspUser().getUserId());
                     vesselToAbandon.addAbandonedVessel(abandonVessel);
                     if( well != null ) {
                         AbandonVessel wellAbandonVessel = new AbandonVessel();
                         wellAbandonVessel.setReason(abandonActionReason);
                         wellAbandonVessel.setAbandonedOn(abandonedOn);
+                        abandonVessel.setAbandonedBy(getUserBean().getBspUser().getUserId());
                         well.addAbandonedVessel(wellAbandonVessel);
                     }
                 }
@@ -291,6 +291,7 @@ public class AbandonVesselActionBean extends CoreActionBean {
                     AbandonVessel abandonVessel = new AbandonVessel();
                     abandonVessel.setReason(abandonActionReason);
                     abandonVessel.setAbandonedOn(abandonedOn);
+                    abandonVessel.setAbandonedBy(getUserBean().getBspUser().getUserId());
                     vesselToAbandon.addAbandonedVessel(abandonVessel);
                     if( abandonPositionToOverwrite == null ) {
                         addMessage( "Abandoned " + vesselToAbandon.getLabel() );
@@ -445,12 +446,22 @@ public class AbandonVesselActionBean extends CoreActionBean {
                 abandonCell = new AbandonCell( labVessel.getLabel(), vesselPosition, rowAndColumn.getLeft(), rowAndColumn.getRight() );
                 if( !labVessel.getAbandonVessels().isEmpty() ) {
                     if( labVessel.getContainerRole() == null ) {
-                        abandonCell.setAbandonReason( labVessel.getAbandonVessels().iterator().next().getReason());
+                        AbandonVessel abandonVessel = labVessel.getAbandonVessels().iterator().next();
+                        abandonCell.setAbandonReason( abandonVessel.getReason());
+                        abandonCell.setAbandonDateDisplay( AbandonCell.DATE_FORMAT.format( abandonVessel.getAbandonedOn() ) );
+                        if( abandonVessel.getAbandonedBy() != null ) {
+                            abandonCell.setAbandonUser(getUserFullNameOrBlank(abandonVessel.getAbandonedBy()));
+                        }
                     } else {
                         // Parse for position
                         for( AbandonVessel abandonVessel : labVessel.getAbandonVessels() ) {
                             if( vesselPosition == abandonVessel.getVesselPosition() ) {
                                 abandonCell.setAbandonReason( abandonVessel.getReason());
+                                abandonCell.setAbandonDateDisplay( AbandonCell.DATE_FORMAT.format( abandonVessel.getAbandonedOn() ) );
+                                // NPE if old entries don't have users associated (07/03/2018)
+                                if( abandonVessel.getAbandonedBy() != null ) {
+                                    abandonCell.setAbandonUser(getUserFullNameOrBlank(abandonVessel.getAbandonedBy()));
+                                }
                                 break;
                             }
                         }
@@ -504,6 +515,9 @@ public class AbandonVesselActionBean extends CoreActionBean {
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class AbandonCell {
+
+        private static final FastDateFormat DATE_FORMAT = FastDateFormat.getDateInstance(FastDateFormat.SHORT);
+
         // Only used if no mapPositionToVessel entries (e.g. StaticPlate)
         private String barcode;
         private boolean isEmpty;
@@ -511,6 +525,8 @@ public class AbandonVesselActionBean extends CoreActionBean {
         private int row;
         private int column;
         private AbandonVessel.Reason abandonReason;
+        private String abandonUser;
+        private String abandonDateDisplay;
 
         public AbandonCell(){}
 
@@ -577,6 +593,22 @@ public class AbandonVesselActionBean extends CoreActionBean {
 
         public void setAbandonReason(AbandonVessel.Reason abandonReason) {
             this.abandonReason = abandonReason;
+        }
+
+        public String getAbandonUser() {
+            return abandonUser;
+        }
+
+        public void setAbandonUser(String abandonUser) {
+            this.abandonUser = abandonUser;
+        }
+
+        public String getAbandonDateDisplay() {
+            return abandonDateDisplay;
+        }
+
+        public void setAbandonDateDisplay(String abandonDateDisplay) {
+            this.abandonDateDisplay = abandonDateDisplay;
         }
 
         public String getAbandonReasonDisplay() {

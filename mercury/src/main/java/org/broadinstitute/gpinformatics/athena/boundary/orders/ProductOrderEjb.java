@@ -4,8 +4,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimaps;
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
@@ -35,6 +33,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.orders.Customization
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -63,7 +62,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -95,7 +93,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
@@ -339,27 +336,9 @@ public class ProductOrderEjb {
      *
      * @throws SAPInterfaceException
      */
-    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
-                                         boolean allowCreateOrder) throws SAPInterfaceException {
-         publishProductOrderToSAP(editedProductOrder, messageCollection, allowCreateOrder, new Date());
-    }
-
-    /**
-     * Takes care of the logic to publish the Product Order to SAP for the purposes of either creating or updating
-     * an SAP order.  This must be done in order to directly bill to SAP from mercury
-     *
-     * @param editedProductOrder Product order entity which intends to be reflected in SAP
-     * @param messageCollection  Storage for error/success messages that happens during the publishing process
-     * @param allowCreateOrder   Helper flag to know indicate if the scenario by which the method is called intends to
-     *                           allow a new order to be replaced (e.g. an order previously was associated with an SAP
-     *                           order but needs a new one)
-     * @param effectiveDate
-     *
-     * @throws SAPInterfaceException
-     */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
-                                         boolean allowCreateOrder, Date effectiveDate) throws SAPInterfaceException {
+                                         boolean allowCreateOrder) throws SAPInterfaceException {
         ProductOrder orderToPublish = editedProductOrder;
 
         final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
@@ -368,59 +347,55 @@ public class ProductOrderEjb {
         }
         if (!areProductsOnOrderBlocked(orderToPublish)) {
             try {
-                if (isOrderEligibleForSAP(orderToPublish, effectiveDate)
+                if (isOrderEligibleForSAP(orderToPublish)
                     && !orderToPublish.getOrderStatus().canPlace()) {
                     Quote quote = orderToPublish.getQuote(quoteService);
                     final List<String> effectivePricesForProducts = productPriceCache
-                            .getEffectivePricesForProducts(allProductsOrdered,editedProductOrder, quote);
+                        .getEffectivePricesForProducts(allProductsOrdered, editedProductOrder, quote);
 
                     final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
                                                   !orderToPublish.getQuoteId()
-                                                          .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
+                                                      .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
 
                     boolean priceChangeForNewOrder = false;
-                    if(orderToPublish.isSavedInSAP() && orderToPublish.isPriorToSAP1_5()) {
-                        priceChangeForNewOrder = !StringUtils.equals(orderToPublish.latestSapOrderDetail().getOrderPricesHash(),
-                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
-                                                 && orderToPublish.hasAtLeastOneBilledLedgerEntry();
+                    if (orderToPublish.isSavedInSAP() && orderToPublish.isPriorToSAP1_5()) {
+                        priceChangeForNewOrder =
+                            !StringUtils.equals(orderToPublish.latestSapOrderDetail().getOrderPricesHash(),
+                                MercuryStringUtils.makeDigest(effectivePricesForProducts))
+                            && orderToPublish.hasAtLeastOneBilledLedgerEntry();
                     }
 
-                    if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange || priceChangeForNewOrder) {
-                        final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange,allProductsOrdered,
+                    if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange
+                        || priceChangeForNewOrder) {
+                        createOrderInSAP(orderToPublish, quoteIdChange, allProductsOrdered,
                                 effectivePricesForProducts, messageCollection, priceChangeForNewOrder, true);
+                    } else if (orderToPublish.isSavedInSAP()) {
 
-
-                } else if(orderToPublish.isSavedInSAP()){
-
-                        updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection,
-                            CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),
-                                    Collections.singleton(orderToPublish.getOrderStatus()))
-                            && !orderToPublish.isPriorToSAP1_5());
+                        updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts,
+                            messageCollection, orderToPublish.getOrderStatus().canClose()
+                                               && !orderToPublish.isPriorToSAP1_5());
 
                         for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
 
                             if (childProductOrder.isSubmitted() &&
                                 !StringUtils.equals(childProductOrder.getSapOrderNumber(),
-                                        orderToPublish.getSapOrderNumber())) {
+                                    orderToPublish.getSapOrderNumber())) {
 
                                 updateOrderInSap(childProductOrder, allProductsOrdered, effectivePricesForProducts,
-                                        messageCollection,
-                            CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned,
-                                            OrderStatus.Completed),
-                                            Collections.singleton(orderToPublish.getOrderStatus()))
-                                    && !orderToPublish.isPriorToSAP1_5());
+                                    messageCollection, orderToPublish.getOrderStatus().canClose()
+                                                       && !orderToPublish.isPriorToSAP1_5());
+                            }
                         }
                     }
-                }
-                productOrderDao.persist(orderToPublish);
-            } else {
-                final String inelligiblOrderError = "This order is ineligible to post to SAP: ";
-                if(orderToPublish.isSavedInSAP()) {
-                    throw new SAPInterfaceException(inelligiblOrderError);
+                    productOrderDao.persist(orderToPublish);
                 } else {
-                    messageCollection.addInfo(inelligiblOrderError);
+                    final String inelligiblOrderError = "This order is ineligible to post to SAP: ";
+                    if (orderToPublish.isSavedInSAP()) {
+                        throw new SAPInterfaceException(inelligiblOrderError);
+                    } else {
+                        messageCollection.addInfo(inelligiblOrderError);
+                    }
                 }
-            }
         } catch (SAPIntegrationException | QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
             StringBuilder errorMessage = new StringBuilder();
                 errorMessage.append("Unable to ");
@@ -458,8 +433,8 @@ public class ProductOrderEjb {
                     orderToUpdate.getProduct(), 0, false, closingOrder);
         }
         orderToUpdate.updateSapDetails(sampleCount.intValue(),
-                TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),
-                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")));
+            MercuryStringUtils.makeDigest(allProductsOrdered),
+            MercuryStringUtils.makeDigest(effectivePricesForProducts));
         messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
                                   " has been successfully updated in SAP");
 
@@ -495,8 +470,8 @@ public class ProductOrderEjb {
         orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,0,
                 orderToPublish.getQuoteId(),
                 SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode(),
-                TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),
-                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ","))));
+                MercuryStringUtils.makeDigest(allProductsOrdered),
+                MercuryStringUtils.makeDigest(effectivePricesForProducts)));
 
         if(quoteIdChange || priceChangeForNewOrder) {
             String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
@@ -514,50 +489,46 @@ public class ProductOrderEjb {
     /**
      * Helper method to determine if, based on certain criteria, the order is allowed to be pushed to SAP at the time
      * that the method is called.
+     * Criteria determining eligibility are:
+     * <ul>
+     *     <li> Has Quote </li>
+     *     <li> Has Primary Price Item </li>
+     *     <li> Access is enabled for price items </li>
+     * </ul>
      *
-     * @param editedProductOrder The order to be tested for SAP eligibility
+     * @param productOrder The order to be tested for SAP eligibility
      * @return Boolean indicator identifying SAP eligibility
-     * @throws QuoteServerException
-     * @throws QuoteNotFoundException
      */
-    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
-            throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
-        return isOrderEligibleForSAP(editedProductOrder, new Date());
-    }
-    /**
-     * Helper method to determine if, based on certain criteria, the order is allowed to be pushed to SAP at the time
-     * that the method is called.
-     *
-     * @param editedProductOrder The order to be tested for SAP eligibility
-     * @param effectiveDate
-     * @return Boolean indicator identifying SAP eligibility
-     * @throws QuoteServerException
-     * @throws QuoteNotFoundException
-     */
-    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
-            throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
-        Quote orderQuote = editedProductOrder.getQuote(quoteService);
+    public boolean isOrderEligibleForSAP(ProductOrder productOrder)
+        throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
+        Quote orderQuote = productOrder.getQuote(quoteService);
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
-        boolean eligibilityResult = false;
-
         Set<AccessItem> priceItemNameList = new HashSet<>();
+        boolean priceItemsValid = areProductPricesValid(productOrder, priceItemNameList, orderQuote);
 
-        final boolean priceItemsValid = areProductPricesValid(editedProductOrder, priceItemNameList, orderQuote);
-
-        if(orderQuote != null && accessControl.isEnabled()) {
-
-            eligibilityResult = editedProductOrder.getProduct()!=null &&
-                                editedProductOrder.getProduct().getPrimaryPriceItem() != null &&
-                                orderQuote != null && orderQuote.isEligibleForSAP(effectiveDate) &&
-                                !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
+        boolean eligibilityResult = false;
+        if (accessControl.isEnabled()) {
+            eligibilityResult =
+                productOrder.getProduct() != null && productOrder.getProduct().getPrimaryPriceItem() != null
+                && orderQuote != null && orderQuote.isEligibleForSAP()
+                && !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList);
         }
 
         if(eligibilityResult && !priceItemsValid) {
             throw new InvalidProductException("One of the Price items associated with " +
-                                              editedProductOrder.getBusinessKey() + ": " +
-                                              editedProductOrder.getName() + " is invalid");
+                                              productOrder.getBusinessKey() + ": " +
+                                              productOrder.getName() + " is invalid");
         }
         return eligibilityResult;
+    }
+
+    public boolean isOrderFunded(ProductOrder productOrder) throws QuoteNotFoundException, QuoteServerException {
+        return isOrderFunded(productOrder, new Date());
+    }
+
+    public boolean isOrderFunded(ProductOrder productOrder, Date effectiveDate) throws QuoteNotFoundException, QuoteServerException {
+        Quote orderQuote = productOrder.getQuote(quoteService);
+        return orderQuote.isFunded(effectiveDate);
     }
 
     private boolean areProductsOnOrderBlocked(ProductOrder targetOrder) {
@@ -572,6 +543,10 @@ public class ProductOrderEjb {
 
         return areProductsBlocked(priceItemNameList);
 
+    }
+
+    public boolean areProductsBlocked(String priceItemName) {
+        return areProductsBlocked(Collections.singleton(new AccessItem(priceItemName)));
     }
 
     public boolean areProductsBlocked(Set<AccessItem> priceItemNameList) {
@@ -1723,56 +1698,6 @@ public class ProductOrderEjb {
         String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
         order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
         messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-    }
-
-    /**
-     * This method will post the basic squid work request details entered by a user to create a project and work
-     * request within squid for the product order represented in the input.
-     *
-     * @param productOrderKey Unique Jira key representing the product order for the resultant work request
-     * @param squidInput      Basic information needed for squid to automatically create a work request for the
-     *                        material information represented by the samples in the referenced product order
-     *
-     * @return work request output
-     */
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public AutoWorkRequestOutput createSquidWorkRequest(@Nonnull String productOrderKey,
-                                                        @Nonnull AutoWorkRequestInput squidInput) {
-
-        ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-
-        if (order == null) {
-            throw new RuntimeException("Unable to find a product order with a key of " + productOrderKey);
-        }
-
-        AutoWorkRequestOutput workRequestOutput = squidConnector.createSquidWorkRequest(squidInput);
-
-        order.setSquidWorkRequest(workRequestOutput.getWorkRequestId());
-
-        try {
-            addWorkRequestNotification(order, workRequestOutput, squidInput);
-        } catch (IOException e) {
-            log.info("Unable to post work request creation of " + workRequestOutput.getWorkRequestId() + " to Jira for "
-                     + productOrderKey);
-        }
-        return workRequestOutput;
-    }
-
-    private void addWorkRequestNotification(@Nonnull ProductOrder pdo,
-                                            @Nonnull AutoWorkRequestOutput createdWorkRequestResults,
-                                            AutoWorkRequestInput squidInput)
-            throws IOException {
-
-        JiraIssue pdoIssue = jiraService.getIssue(pdo.getBusinessKey());
-
-        pdoIssue.addComment(String.format("Created new Squid project %s for new Squid work request %s",
-                createdWorkRequestResults.getProjectId(), createdWorkRequestResults.getWorkRequestId()));
-
-        if (StringUtils.isNotBlank(squidInput.getLcsetId())) {
-            pdoIssue.addLink(squidInput.getLcsetId());
-//            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
-//                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
-        }
     }
 
     /**

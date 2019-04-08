@@ -1575,7 +1575,7 @@
     <changeSet id="GPLIM-4712-207" author="epolk">
         <addForeignKeyConstraint constraintName="FK_SMPL_INST_ANALYSIS_TYPE"
                                  baseTableSchemaName="mercury" baseTableName="sample_instance_entity" baseColumnNames="analysis_type"
-             
+
                     referencedTableSchemaName="mercury" referencedTableName="analysis_type" referencedColumnNames="analysis_type_id"/>
     </changeSet>
     <changeSet id="GPLIM-4712-210" author="epolk">
@@ -1916,6 +1916,42 @@
         </createIndex>
         <createIndex tableName="FP_GENOTYPE_AUD" indexName="IX_FGA_FP_GENOTYPE_ID">
             <column name="FP_GENOTYPE_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-5973-01" author="epolk">
+        <addColumn tableName="sample_instance_entity" schemaName="mercury">
+            <column name="aggregation_data_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5973-02" author="epolk">
+        <addColumn tableName="sample_instance_entity_aud" schemaName="mercury">
+            <column name="aggregation_data_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jsacco" id="GPLIM-5218-1">
+        <addColumn schemaName="mercury" tableName="abandon_vessel">
+            <column name="abandoned_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jsacco" id="GPLIM-5218-2">
+        <addColumn schemaName="mercury" tableName="abandon_vessel_aud">
+            <column name="abandoned_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6078" author="jsacco">
+        <createIndex tableName="BUCKET_ENTRY" indexName="IX_BUCKET_BATCH_FK">
+            <column name="LAB_BATCH"/>
+        </createIndex>
+        <createIndex tableName="LAB_METRIC" indexName="IX_METRIC_RUN_FK">
+            <column name="LAB_METRIC_RUN"/>
+        </createIndex>
+        <createIndex tableName="LAB_VESSEL_RACKS_OF_TUBES" indexName="IX_VESSEL_RACKS_FK">
+            <column name="RACKS_OF_TUBES"/>
+        </createIndex>
+        <createIndex tableName="SAMPLE_INSTANCE_ENTITY" indexName="IX_SAMPLE_ENTITY_VESSEL_FK">
+            <column name="LAB_VESSEL"/>
         </createIndex>
     </changeSet>
 </databaseChangeLog>

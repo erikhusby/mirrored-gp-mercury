@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -12,6 +11,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 
@@ -31,10 +31,10 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
     @RunAsClient
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     public void testBasics(@ArquillianResource URL baseUrl) throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "query");
+        WebTarget resource = makeWebResource(baseUrl, "query");
 
         InfiniumRunBean response1 = resource.queryParam("chipWellBarcode", "3999582166_R01C01").
-                type(MediaType.APPLICATION_JSON_TYPE).
+                request(MediaType.APPLICATION_JSON_TYPE).
                 accept(MediaType.APPLICATION_JSON_TYPE).
                 get(InfiniumRunBean.class);
         Assert.assertEquals(response1.getSampleId(), "SM-ATJSM");
@@ -47,7 +47,7 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
 
         // Test a control
         InfiniumRunBean response2 = resource.queryParam("chipWellBarcode", "3999582166_R05C01").
-                type(MediaType.APPLICATION_JSON_TYPE).
+                request(MediaType.APPLICATION_JSON_TYPE).
                 accept(MediaType.APPLICATION_JSON_TYPE).
                 get(InfiniumRunBean.class);
         Assert.assertEquals(response2.getCollaboratorSampleId(), "NA12878");

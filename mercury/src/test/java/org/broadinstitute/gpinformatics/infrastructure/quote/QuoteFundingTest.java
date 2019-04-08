@@ -16,6 +16,6 @@ public class QuoteFundingTest {
         Quote quoteForTesting = service.getQuoteByAlphaId("GP87U");
         Assert.assertEquals(quoteForTesting.getQuoteFunding().getFundingLevel().size(), 3);
         Assert.assertEquals("The filtered number of funding sources for GP87U should now be 1",
-                quoteForTesting.getQuoteFunding().getFundingLevel(true).size(), 1);
+                quoteForTesting.getQuoteFunding().getActiveFundingLevel().size(), 1);
     }
 }
