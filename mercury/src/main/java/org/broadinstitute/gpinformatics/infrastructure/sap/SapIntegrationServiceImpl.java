@@ -457,13 +457,15 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException {
         Set<SAPMaterial> materials = new HashSet<>();
-        materials.addAll(findMaterials(SAPCompanyConfiguration.BROAD.getSalesOrganization()));
-        materials.addAll(findMaterials(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()));
+        materials.addAll(findMaterials(SAPCompanyConfiguration.BROAD));
+        materials.addAll(findMaterials(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
         return materials;
     }
 
-    private Set<SAPMaterial> findMaterials(String salesOrg) throws SAPIntegrationException {
-        return getClient().findMaterials(SAPCompanyConfiguration.BROAD.getPlant(), salesOrg);
+    private Set<SAPMaterial> findMaterials(SAPCompanyConfiguration sapCompanyConfiguration)
+        throws SAPIntegrationException {
+        return getClient()
+            .findMaterials(sapCompanyConfiguration.getPlant(), sapCompanyConfiguration.getSalesOrganization());
     }
 
     @Override
