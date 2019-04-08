@@ -1,25 +1,25 @@
 package org.broadinstitute.gpinformatics.mercury;
 
-import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
 
 /**
  * This contains common code used by all clients of BSP web services.
  */
-public abstract class BSPJerseyClient extends AbstractJerseyClientService {
+public abstract class BSPJaxRsClient extends AbstractJaxRsClientService {
 
     private static final long serialVersionUID = 5472586820069306030L;
 
     @Inject
     private BSPConfig bspConfig;
 
-    public BSPJerseyClient() {
+    public BSPJaxRsClient() {
     }
 
-    public BSPJerseyClient(BSPConfig bspConfig) {
+    public BSPJaxRsClient(BSPConfig bspConfig) {
         this.bspConfig = bspConfig;
     }
 

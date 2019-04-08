@@ -1,20 +1,20 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
+import org.broadinstitute.gpinformatics.mercury.BSPJaxRsClient;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -27,7 +27,7 @@ import java.util.List;
  */
 @Dependent
 @Default
-public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BSPSetVolumeConcentration {
+public class BSPSetVolumeConcentrationImpl extends BSPJaxRsClient implements BSPSetVolumeConcentration {
 
     private static final long serialVersionUID = -2649024856161379565L;
 
@@ -105,21 +105,22 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
             String queryString = getQueryString(barcode, volume, concentration, receptacleWeight, terminateAction.getTerminateDepleted());
             String urlString = getUrl(queryString);
 
-            WebResource webResource = getJerseyClient().resource(urlString);
-            ClientResponse clientResponse =
-                    webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, urlString);
+            WebTarget webTarget = getJaxRsClient().target(urlString);
+            Response clientResponse =
+                    webTarget.request(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(null);
 
-            InputStream is = clientResponse.getEntityInputStream();
+            InputStream is = clientResponse.readEntity(InputStream.class);
             rdr = new BufferedReader(new InputStreamReader(is));
 
             // Check for OK status.
             String firstLine = rdr.readLine();
-            if (clientResponse.getStatus() == ClientResponse.Status.OK.getStatusCode() &&
-                firstLine.startsWith(VALID_COMMUNICATION_PREFIX)) {
+            if (clientResponse.getStatus() == Response.Status.OK.getStatusCode() &&
+                    firstLine.startsWith(VALID_COMMUNICATION_PREFIX)) {
                 result = RESULT_OK;
             } else {
                 result = "Cannot set volume and concentration: " + firstLine + "(" + clientResponse.getStatus() + ")";
             }
+            clientResponse.close();
         } catch (Exception exp) {
             result = "Cannot set volume and concentration: " + exp.getMessage();
         } finally {

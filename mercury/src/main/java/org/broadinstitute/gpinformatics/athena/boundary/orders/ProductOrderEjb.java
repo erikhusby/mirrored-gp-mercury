@@ -4,8 +4,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimaps;
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
@@ -95,7 +93,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
@@ -1701,56 +1698,6 @@ public class ProductOrderEjb {
         String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
         order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
         messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-    }
-
-    /**
-     * This method will post the basic squid work request details entered by a user to create a project and work
-     * request within squid for the product order represented in the input.
-     *
-     * @param productOrderKey Unique Jira key representing the product order for the resultant work request
-     * @param squidInput      Basic information needed for squid to automatically create a work request for the
-     *                        material information represented by the samples in the referenced product order
-     *
-     * @return work request output
-     */
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public AutoWorkRequestOutput createSquidWorkRequest(@Nonnull String productOrderKey,
-                                                        @Nonnull AutoWorkRequestInput squidInput) {
-
-        ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-
-        if (order == null) {
-            throw new RuntimeException("Unable to find a product order with a key of " + productOrderKey);
-        }
-
-        AutoWorkRequestOutput workRequestOutput = squidConnector.createSquidWorkRequest(squidInput);
-
-        order.setSquidWorkRequest(workRequestOutput.getWorkRequestId());
-
-        try {
-            addWorkRequestNotification(order, workRequestOutput, squidInput);
-        } catch (IOException e) {
-            log.info("Unable to post work request creation of " + workRequestOutput.getWorkRequestId() + " to Jira for "
-                     + productOrderKey);
-        }
-        return workRequestOutput;
-    }
-
-    private void addWorkRequestNotification(@Nonnull ProductOrder pdo,
-                                            @Nonnull AutoWorkRequestOutput createdWorkRequestResults,
-                                            AutoWorkRequestInput squidInput)
-            throws IOException {
-
-        JiraIssue pdoIssue = jiraService.getIssue(pdo.getBusinessKey());
-
-        pdoIssue.addComment(String.format("Created new Squid project %s for new Squid work request %s",
-                createdWorkRequestResults.getProjectId(), createdWorkRequestResults.getWorkRequestId()));
-
-        if (StringUtils.isNotBlank(squidInput.getLcsetId())) {
-            pdoIssue.addLink(squidInput.getLcsetId());
-//            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
-//                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
-        }
     }
 
     /**

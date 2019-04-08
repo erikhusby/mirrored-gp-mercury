@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.spreadsheet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.BuiltinFormats;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -10,7 +11,6 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -113,7 +113,7 @@ public class SpreadsheetCreator {
             CellStyle style = wb.createCellStyle();
             style.setFont(font);
             style.setDataFormat(dataFormat.getFormat(name));
-            style.setBorderBottom(CellStyle.BORDER_MEDIUM);
+            style.setBorderBottom(BorderStyle.MEDIUM);
             return style;
         }
     }
@@ -149,7 +149,7 @@ public class SpreadsheetCreator {
         headerFont.setFontHeightInPoints((short) 10);
         // make it black and bold
         headerFont.setColor(Font.COLOR_NORMAL);
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        headerFont.setBold(true);
 
         // Create cell styles.
         Map<POIBuiltinFormats, CellStyle> styleMap =

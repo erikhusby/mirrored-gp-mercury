@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.io.Serializable;
 
