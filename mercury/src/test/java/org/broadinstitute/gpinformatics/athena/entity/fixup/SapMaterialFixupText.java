@@ -72,7 +72,7 @@ public class SapMaterialFixupText extends Arquillian {
         userBean.loginOSUser();
         utx.begin();
 
-        Map<Boolean, List<Product>> productsByValidPartNumber =
+        Map<Boolean, List<Product>> partNumbersByPartNumberValidity =
             productDao.findProducts(ProductDao.Availability.CURRENT_OR_FUTURE, ProductDao.TopLevelOnly.NO,
                 ProductDao.IncludePDMOnly.NO).stream().collect(Collectors.partitioningBy(validPartNumber()));
 
@@ -84,13 +84,13 @@ public class SapMaterialFixupText extends Arquillian {
         productDao.persist(control);
 
         // publish products. will create or update them in SAP
-        productEjb.publishProductsToSAP(productsByValidPartNumber.get(true));
+        productEjb.publishProductsToSAP(partNumbersByPartNumberValidity.get(true));
 
         // restore blacklist;
         control.setDisabledItems(disabledItems);
         control.setAccessStatus(AccessStatus.DISABLED);
 
-        System.out.println("excludedPartNumbers = " + productsByValidPartNumber.get(false).stream()
+        System.out.println("excludedPartNumbers = " + partNumbersByPartNumberValidity.get(false).stream()
             .map(Product::getPartNumber).collect(Collectors.toList()));
 
         productDao.persist(new FixupCommentary("GPLIM-6183 Syncing products witn SAP"));
