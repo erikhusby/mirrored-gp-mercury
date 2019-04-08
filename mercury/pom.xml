@@ -1669,7 +1669,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
-            <version>3.4</version>
+            <version>4.4</version>
         </dependency>
 
         <!-- exists only to be included in ShrinkWrap deployments. would be better to include explicitly in DeploymentBuilder -->
