@@ -263,6 +263,22 @@ public enum DisplayExpression {
             return null;
         }
     }),
+    METADATA_SOURCE(SampleInstanceV2.class, new SearchTerm.Evaluator<Set<String>>() {
+        @Override
+        public Set<String> evaluate(Object entity, SearchContext context) {
+            LabVessel labVessel = (LabVessel) entity;
+            Set<String> sources = new HashSet<>();
+            if (labVessel != null) {
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    if (!sampleInstanceV2.isReagentOnly()) {
+                        sources.add(sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource().getDisplayName());
+                    }
+                }
+
+            }
+            return sources;
+        }
+    }),
 
     // SampleData
     STOCK_SAMPLE(SampleData.class, new SearchTerm.Evaluator<String>() {
@@ -315,6 +331,13 @@ public enum DisplayExpression {
         public String evaluate(Object entity, SearchContext context) {
             SampleData sampleData = (SampleData) entity;
             return sampleData.getOriginalMaterialType();
+        }
+    }),
+    SPECIES(SampleData.class, new SearchTerm.Evaluator<String>() {
+        @Override
+        public String evaluate(Object entity, SearchContext context) {
+            SampleData sampleData = (SampleData) entity;
+            return sampleData.getOrganism();
         }
     });
 
