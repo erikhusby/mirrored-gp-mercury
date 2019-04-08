@@ -240,7 +240,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
-    @Inject
     private ResearchProjectDao researchProjectDao;
 
     @Inject
@@ -2029,36 +2028,48 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution suggestRegulatoryInfo() throws Exception {
         JSONObject results = new JSONObject();
         JSONArray jsonResults = new JSONArray();
+        JSONArray jsonErrors = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
+        List<ProductOrderSample> productOrderSamples=new ArrayList<>();
         if (!getSampleList().isEmpty()) {
-            List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
-            // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
-            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
+            try {
+                productOrderSamples = stringToSampleListExisting(getSampleList());
+
+                // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
+                ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
                     BSPSampleSearchColumn.COLLECTION);
 
-            Multimap<String, ProductOrderSample> samplesByCollection = HashMultimap.create();
-            for (ProductOrderSample productOrderSample : productOrderSamples) {
-                String collectionId = productOrderSample.getSampleData().getCollectionId();
-                if (!collectionId.isEmpty()) {
-                    samplesByCollection.put(collectionId, productOrderSample);
-                }
-            }
-
-            List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
-            for (OrspProject orspProject : orspProjects) {
-                for (OrspProjectConsent consent : orspProject.getConsents()) {
-                    Collection<ProductOrderSample> samples =
-                            samplesByCollection.get(consent.getKey().getSampleCollection());
-                    for (ProductOrderSample sample : samples) {
-                        sample.addOrspProject(orspProject);
+                Multimap<String, ProductOrderSample> samplesByCollection = HashMultimap.create();
+                for (ProductOrderSample productOrderSample : productOrderSamples) {
+                    String collectionId = productOrderSample.getSampleData().getCollectionId();
+                    if (!collectionId.isEmpty()) {
+                        samplesByCollection.put(collectionId, productOrderSample);
                     }
                 }
+
+                List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
+                for (OrspProject orspProject : orspProjects) {
+                    for (OrspProjectConsent consent : orspProject.getConsents()) {
+                        Collection<ProductOrderSample> samples =
+                            samplesByCollection.get(consent.getKey().getSampleCollection());
+                        for (ProductOrderSample sample : samples) {
+                            sample.addOrspProject(orspProject);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                jsonErrors.put(e.getMessage());
             }
             // Fetching RP here instead of a @Before method to avoid the fetch when it won't be used.
             ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
             Map<String, RegulatoryInfo> regulatoryInfoByIdentifier = researchProject.getRegulatoryByIdentifier();
             jsonResults = orspProjectToJson(productOrderSamples, regulatoryInfoByIdentifier);
+        }
+        if (jsonErrors.length() > 0) {
+            jsonResults.put(new HashMap<String, JSONArray>() {{
+                put("errors", jsonErrors);
+            }});
         }
         results.put("data", jsonResults);
         results.put("draw", 1);
@@ -3753,6 +3764,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setCustomizationJsonString(String customizationJsonString) {
         this.customizationJsonString = customizationJsonString;
+    }
+
+    @Inject
+    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
+        this.researchProjectDao = researchProjectDao;
     }
 
     public String getClinicalAttestationMessage() {
