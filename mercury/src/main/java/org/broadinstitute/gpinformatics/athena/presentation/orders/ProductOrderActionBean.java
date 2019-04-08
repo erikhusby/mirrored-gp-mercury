@@ -780,10 +780,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                             );
                         }
                     });
-            }
-            validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
-                                                                                  editOrder.getQuoteId())), 0);
+                validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
+                                                                                      editOrder.getQuoteId())), 0);
 
+            }
 
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
@@ -2401,8 +2401,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 priceTitle = "clinicalPrice";
             }
             productInfo.put("productAgp", productEntity.getDefaultAggregationParticle());
-            BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
-            productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
+            Optional<QuotePriceItem> quotePriceItem = Optional.ofNullable(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()));
+
+            if(quotePriceItem.isPresent()) {
+                BigDecimal priceForFormat = new BigDecimal(quotePriceItem.get().getPrice());
+                productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
+            }
 //            String externalPrice = null;
 //            if (productEntity.getExternalPriceItem() != null) {
 //                final QuotePriceItem externalPriceItem = priceListCache.findByKeyFields(productEntity.getExternalPriceItem());
