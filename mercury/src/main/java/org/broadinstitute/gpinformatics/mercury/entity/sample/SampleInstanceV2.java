@@ -744,18 +744,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     }
 
     /**
-<<<<<<< HEAD
-     * Merges DesignedReagent into Reagents
-     */
-    private void mergeReagents(ReagentDesign reagentDesign) {
-        if (reagentDesign != null) {
-            this.reagents.addAll(reagentDesign.getDesignedReagents());
-        }
-    }
-
-    /**
-=======
->>>>>>> develop
      * Gets any ReagentDesign entities out of any DesignedReagent subclasses of Reagent on demand
      * to avoid the overhead of digesting Reagent into separate variables at SampleInstanceV2 creation
      * just to support a few use-cases
