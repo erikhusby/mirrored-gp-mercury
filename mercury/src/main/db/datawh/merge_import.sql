@@ -577,6 +577,7 @@ AS
               lab_vessel_type = new.lab_vessel_type,
               name = new.name,
               created_on = new.created_on,
+              volume = new.volume,
               etl_date = new.etl_date
             WHERE lab_vessel_id = new.lab_vessel_id;
 
@@ -589,6 +590,7 @@ AS
               lab_vessel_type,
               name,
               created_on,
+              volume,
               etl_date
             ) VALUES (
               new.lab_vessel_id,
@@ -596,6 +598,7 @@ AS
               new.lab_vessel_type,
               new.name,
               new.created_on,
+              new.volume,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;

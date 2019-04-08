@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -50,7 +50,7 @@ var modalMessages = function (level = "info", options={}) {
         }
 
         // merge passed in options with defaults.
-        options = Object.assign({}, options, defaults);
+        Object.assign({}, defaults, options);
         this.className = 'alert-' + level;
         this.messageBlock = document.querySelector("div.message-block");
         if (this.messageBlock == undefined) {
@@ -73,6 +73,7 @@ var modalMessages = function (level = "info", options={}) {
         if (isFunction(options.onClose)) {
             closeButton.addEventListener("click", function () {
                 options.onClose(this.parentNode);
+                defaults.onClose(this.parentNode);
             }, false);
         }
     }());

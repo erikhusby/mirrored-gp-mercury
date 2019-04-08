@@ -80,8 +80,11 @@ import java.util.TreeSet;
 @SuppressWarnings("ReuseOfLocalVariable")
 public class LabVesselSearchDefinition {
 
-    private static final List<LabEventType> POND_LAB_EVENT_TYPES = Arrays.asList(LabEventType.POND_REGISTRATION,
-            LabEventType.PCR_FREE_POND_REGISTRATION, LabEventType.PCR_PLUS_POND_REGISTRATION);
+    private static final List<LabEventType> POND_LAB_EVENT_TYPES =
+            LabEventType.getLabEventsWithLibraryEtlDisplayName("Pond");
+
+    private static final List<LabEventType> CATCH_LAB_EVENT_TYPES =
+            LabEventType.getLabEventsWithLibraryEtlDisplayName("Catch");
 
     public static final List<LabEventType> CHIP_EVENT_TYPES = Collections.singletonList(
             LabEventType.INFINIUM_HYBRIDIZATION);
@@ -1132,13 +1135,7 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> positions = null;
 
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                // ICE
-                labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
-                // Agilent
-                labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
-
-                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(labEventTypes );
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(CATCH_LAB_EVENT_TYPES);
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
@@ -1162,14 +1159,8 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> barcodes = null;
 
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                // ICE
-                labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
-                // Agilent
-                labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
-
                 VesselsForEventTraverserCriteria eval
-                        = new VesselsForEventTraverserCriteria(labEventTypes );
+                        = new VesselsForEventTraverserCriteria(CATCH_LAB_EVENT_TYPES);
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions

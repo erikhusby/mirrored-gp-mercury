@@ -47,7 +47,10 @@
                 cell.attr('class', plugin.unabandonedClass);
             } else {
                 cell.attr('class', plugin.abandonedClass);
-                cell.html(cell.html() + '<br/>' + abandonCell.abandonReasonDisplay);
+                cell.html(cell.html() + '<br/>' + abandonCell.abandonReasonDisplay
+                    + ( abandonCell.abandonUser != null ? '<br/>' + abandonCell.abandonUser : '' )
+                    + " - " + abandonCell.abandonDateDisplay
+                );
             }
         });
 

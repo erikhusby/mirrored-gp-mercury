@@ -11,19 +11,19 @@
 
 package org.broadinstitute.gpinformatics.mercury;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
 
 /**
  * This contains common code used by all clients of BSP rest, ie: non-broadcore) services.
  */
 @Dependent
-public class BSPRestClient extends AbstractJerseyClientService {
+public class BSPRestClient extends AbstractJaxRsClientService {
 
     private static final long serialVersionUID = 5472586820069306030L;
 
@@ -50,7 +50,7 @@ public class BSPRestClient extends AbstractJerseyClientService {
         specifyHttpAuthCredentials(client, bspConfig);
     }
 
-    public WebResource getWebResource(String urlString) {
-        return getJerseyClient().resource(urlString);
+    public WebTarget getWebResource(String urlString) {
+        return getJaxRsClient().target(urlString);
     }
 }

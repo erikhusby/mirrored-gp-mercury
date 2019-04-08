@@ -13,7 +13,7 @@ public class TransitionFields {
     private FieldSchema schema;
     private String name;
     private List<String> operations;
-    private List<String> allowedValues;
+    private List<AllowedValues> allowedValues;
     private String autoCompleteUrl;
 
     public TransitionFields() {
@@ -51,11 +51,11 @@ public class TransitionFields {
         this.operations = operations;
     }
 
-    public List<String> getAllowedValues() {
+    public List<AllowedValues> getAllowedValues() {
         return allowedValues;
     }
 
-    public void setAllowedValues(List<String> allowedValues) {
+    public void setAllowedValues(List<AllowedValues> allowedValues) {
         this.allowedValues = allowedValues;
     }
 
