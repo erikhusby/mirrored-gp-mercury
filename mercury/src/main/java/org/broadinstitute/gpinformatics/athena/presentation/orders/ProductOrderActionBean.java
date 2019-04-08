@@ -798,16 +798,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                 if (quote.isPresent()) {
                     ProductOrder.checkQuoteValidity(quote.get());
                     quote.get().getFunding().stream()
-                            .filter(Funding::isFundsReservation)
-                            .forEach(funding -> {
-                                validateGrantEndDate(funding.getGrantEndDate(), funding.getDisplayName(),
-                                        quote.get().getAlphanumericId());
-                            });
+                        .filter(Funding::isFundsReservation)
+                        .forEach(funding -> {
+                            validateGrantEndDate(funding.getGrantEndDate(),
+                                        funding.getDisplayName(), quote.get().getAlphanumericId());
+                        });
                 }
-                validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
-                                                                                      editOrder.getQuoteId())), 0);
-            }
 
+            validateQuoteDetails(quote.orElseThrow(() -> new QuoteServerException("A quote was not found for " +
+                                                                                  editOrder.getQuoteId())), 0);}
 
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
