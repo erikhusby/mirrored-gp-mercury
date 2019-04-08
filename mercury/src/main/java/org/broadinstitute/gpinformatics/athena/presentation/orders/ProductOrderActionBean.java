@@ -261,22 +261,17 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private ProductOrderEjb productOrderEjb;
 
-    @Inject
     private ProductTokenInput productTokenInput;
 
-    @Inject
     private ProjectTokenInput projectTokenInput;
 
-    @Inject
     private BspShippingLocationTokenInput bspShippingLocationTokenInput;
 
-    @Inject
     private BspGroupCollectionTokenInput bspGroupCollectionTokenInput;
 
     @Inject
     private BSPManagerFactory bspManagerFactory;
 
-    @Inject
     private UserTokenInput notificationListTokenInput;
 
     @Inject
@@ -602,6 +597,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
+
+        // adding customizations in order to allow it to be validated against the quote.
+        if (StringUtils.isNotBlank(customizationJsonString)) {
+            buildJsonObjectFromEditOrderProductCustomizations();
+            editOrder.updateCustomSettings(productCustomizations);
+        }
 
         if(editOrder.getProduct() != null) {
             if(ProductOrder.OrderAccessType.COMMERCIAL.getDisplayName().equals(orderType) &&
@@ -1546,7 +1547,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * For the pre-populate to work on opening create and edit page, we need to take values from the editOrder. After,
      * the pages have the values passed in.
      */
-    private void populateTokenListsFromObjectData() {
+    protected void populateTokenListsFromObjectData() {
         String[] productKey = (editOrder.getProduct() == null) ? new String[0] :
                 new String[]{editOrder.getProduct().getBusinessKey()};
         productTokenInput.setup(productKey);
@@ -1712,9 +1713,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                         editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
 //                }
             }
-            if (StringUtils.isNotBlank(customizationJsonString)) {
-                buildJsonObjectFromEditOrderProductCustomizations();
-            }
         }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
@@ -1723,8 +1721,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         try {
-            productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
-                    productCustomizations, saveOrderMessageCollection);
+            productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails, saveOrderMessageCollection);
             originalBusinessKey = null;
 
 
@@ -3280,6 +3277,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return notificationListTokenInput;
     }
 
+    @Inject
     public void setNotificationListTokenInput(UserTokenInput notificationListTokenInput) {
         this.notificationListTokenInput = notificationListTokenInput;
     }
@@ -3761,11 +3759,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.customizationJsonString = customizationJsonString;
     }
 
-    @Inject
-    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
-        this.researchProjectDao = researchProjectDao;
-    }
-
     public String getClinicalAttestationMessage() {
         return "I acknowledge that I have been properly trained in the handling of clinical projects, samples, and "
                + "data per Broad Genomics requirements, including HIPAA and data security policies, in order to order "
@@ -3793,5 +3786,34 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     public void setJiraService(JiraService jiraService) {
         this.jiraService = jiraService;
+    }
+
+    @Inject
+    public void setProductTokenInput(ProductTokenInput productTokenInput) {
+        this.productTokenInput = productTokenInput;
+    }
+
+    @Inject
+    public void setProjectTokenInput(ProjectTokenInput projectTokenInput) {
+        this.projectTokenInput = projectTokenInput;
+    }
+
+    @Inject
+    public void setBspGroupCollectionTokenInput(BspGroupCollectionTokenInput bspGroupCollectionTokenInput) {
+        this.bspGroupCollectionTokenInput = bspGroupCollectionTokenInput;
+    }
+
+    @Inject
+    public void setBspShippingLocationTokenInput(BspShippingLocationTokenInput bspShippingLocationTokenInput) {
+        this.bspShippingLocationTokenInput = bspShippingLocationTokenInput;
+    }
+
+    @Inject
+    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
+        this.researchProjectDao = researchProjectDao;
+    }
+
+    public void setOwner(UserTokenInput owner) {
+        this.owner = owner;
     }
 }
