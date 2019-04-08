@@ -79,6 +79,9 @@
         .changed {
             border: #3a87ad 1.5px solid
         }
+        ul.token-input-list {
+            max-width: 360px;
+        }
     </style>
         <script src="${ctxpath}/resources/scripts/clipboard.min.js" type="text/javascript"></script>
         <script src="${ctxpath}/resources/scripts/bindWithDelay.js" type="text/javascript"></script>
@@ -1480,7 +1483,7 @@
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
-            <div class="form-horizontal span6">
+            <div class="form-horizontal span6" style="min-width: 512px">
                 <stripes:hidden name="productOrder"/>
                 <stripes:hidden name="submitString"/>
                 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
@@ -1839,10 +1842,12 @@
                 <br/>
                 <br/>
                 <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd"
-                                  name="sampleList" rows="15" style="width: 100%;"/>
+                              name="sampleList" rows="15" style="width: 95%;"/>
+
             <table id="regulatoryInfoSuggestions" class="table simple">
                 <caption style="text-align: left;margin-top:1em;"><h3>ORSP(s) associated with samples</h3></caption>
             </table>
+            </div>
             <div id="sampleInitiationKitRequestEdit" class="help-block span4" style="display: none">
             <div class="form-horizontal span5">
                 <fieldset>
@@ -1937,6 +1942,7 @@
                         <div id="kitDefinitions" style="margin-top: 5px;"></div>
                     </div>
                 </fieldset>
+            </div>
             </div>
         </stripes:form>
 
