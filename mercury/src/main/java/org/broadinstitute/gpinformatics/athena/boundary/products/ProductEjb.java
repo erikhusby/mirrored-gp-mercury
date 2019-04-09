@@ -9,8 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -33,16 +31,13 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -323,14 +318,6 @@ public class ProductEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
-        SAPAccessControl control = accessController.getCurrentControlDefinitions();
-        List<AccessItem> accessItemList = new ArrayList<>();
-        accessItemList.add(new AccessItem(productToPublish.getPrimaryPriceItem().getName()));
-        if(productToPublish.getExternalPriceItem() != null) {
-            accessItemList.add(new AccessItem(productToPublish.getExternalPriceItem().getName()));
-        }
-        if (!CollectionUtils.containsAll(control.getDisabledItems(), accessItemList)
-            && control.isEnabled()) {
             try {
                 sapService.publishProductInSAP(productToPublish);
                 productToPublish.setSavedInSAP(true);
@@ -338,11 +325,6 @@ public class ProductEjb {
             } catch (SAPIntegrationException e) {
                 throw new SAPIntegrationException(e.getMessage());
             }
-        } else {
-            throw new SAPIntegrationException(productToPublish.getName() +
-                              " has a price item that makes it ineligible to be reflected in SAP.");
-        }
-
     }
 
     /**

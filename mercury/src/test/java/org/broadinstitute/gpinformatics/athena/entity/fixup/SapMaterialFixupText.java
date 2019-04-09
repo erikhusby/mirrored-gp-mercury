@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -64,17 +65,22 @@ public class SapMaterialFixupText extends Arquillian {
     }
 
     private static Predicate<Product> validPartNumber() {
-        return p -> p.getPartNumber().length() <= 18;
+        return p -> p.getPartNumber().length() <= 18 ||
+                    !p.getPartNumber().trim().equals(p.getPartNumber());
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void testUpdateActiveProductsInSap() throws Exception {
         userBean.loginOSUser();
         utx.begin();
 
         Map<Boolean, List<Product>> partNumbersByPartNumberValidity =
             productDao.findProducts(ProductDao.Availability.CURRENT_OR_FUTURE, ProductDao.TopLevelOnly.NO,
-                ProductDao.IncludePDMOnly.NO).stream().collect(Collectors.partitioningBy(validPartNumber()));
+                ProductDao.IncludePDMOnly.YES).stream().collect(Collectors.partitioningBy(validPartNumber()));
+
+        final List<String> partNumbersToUpdate =
+                partNumbersByPartNumberValidity.get(Boolean.TRUE).stream().map(Product::getPartNumber)
+                        .collect(Collectors.toList());
 
         // Enable access for all products in Mercury, but keep track of the blacklisted ones
         SAPAccessControl control = accessController.getCurrentControlDefinitions();
@@ -89,6 +95,9 @@ public class SapMaterialFixupText extends Arquillian {
         // restore blacklist;
         control.setDisabledItems(disabledItems);
         control.setAccessStatus(AccessStatus.DISABLED);
+
+        System.out.println("The part numbers attempted to Update. " + partNumbersToUpdate.size() + " -- \n" +
+                           StringUtils.join(partNumbersToUpdate, "\n"));
 
         System.out.println("excludedPartNumbers = " + partNumbersByPartNumberValidity.get(false).stream()
             .map(Product::getPartNumber).collect(Collectors.toList()));
