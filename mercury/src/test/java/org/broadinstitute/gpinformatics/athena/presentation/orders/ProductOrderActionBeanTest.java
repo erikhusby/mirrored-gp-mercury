@@ -2880,7 +2880,7 @@ public class ProductOrderActionBeanTest {
         actionBean.doValidation(actionBean.SAVE_ACTION);
 
         // Now there are no errors, Quote value compared to Order value is sufficient
-        Assert.assertFalse(actionBean.getValidationErrors().isEmpty(),
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty(),
                 "Validation errors should not be empty.");
         Assert.assertTrue(CollectionUtils.isNotEmpty(pdo.getCustomPriceAdjustments()));
         actionBean.clearValidationErrors();
