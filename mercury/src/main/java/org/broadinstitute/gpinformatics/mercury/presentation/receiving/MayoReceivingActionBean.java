@@ -15,11 +15,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Handles receipt of Mayo samples. There are two receivables from Mayo - a manifest file that describes the
@@ -42,6 +44,7 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     private static final String MANIFEST_ADMIN_PAGE = "mayo_manifest_admin.jsp";
     private static final String STORAGE_UTILITIES = "storageUtilities";
     private static final String TEST_ACCESS_BTN = "testAccessBtn";
+    private static final String SHOW_BUCKETLIST_BTN = "showBucketListBtn";
     private static final String PULL_ALL_BTN = "pullAllFilesBtn";
     private static final String PULL_ONE_BTN = "pullFileBtn";
     private static final String REACCESSION_BTN = "reaccessionBtn";
@@ -54,6 +57,7 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     private VesselGeometry vesselGeometry = null;
     private List<String> rackScanEntries = new ArrayList<>();
     private List<List<String>> manifestCellGrid = new ArrayList<>();
+    private List<String> bucketList = new ArrayList<>();
 
     @Inject
     private MayoManifestEjb mayoManifestEjb;
@@ -119,9 +123,9 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     @HandlesEvent(VIEW_MANIFEST_BTN)
     public Resolution showManifest() {
         reconstructScan();
-        manifestCellGrid = mayoManifestEjb.readManifestAsCellGrid(this);
+        mayoManifestEjb.readManifestFileCellGrid(this);
         addMessages(messageCollection);
-        // If a rack scan was done, use it and go to page2.
+        // If a rack scan was already done, use it and go to page2.
         return new ForwardResolution((rackScan == null || rackScan.isEmpty()) ? PAGE1 : PAGE2);
     }
 
@@ -134,6 +138,21 @@ public class MayoReceivingActionBean extends RackScanActionBean {
         mayoManifestEjb.testAccess(this);
         addMessages(messageCollection);
         return new ForwardResolution(MANIFEST_ADMIN_PAGE);
+    }
+
+    @HandlesEvent(SHOW_BUCKETLIST_BTN)
+    public Resolution showBucketList() {
+        final byte[] bytes = bucketList.stream().sorted().collect(Collectors.joining("\n")).getBytes();
+        Resolution resolution = (request, response) -> {
+            response.setContentType("application/text");
+            response.setContentLength(bytes.length);
+            response.setHeader("Expires:", "0"); // eliminates browser caching
+            response.setHeader("Content-Disposition", "attachment; filename=bucketList.txt");
+            OutputStream outStream = response.getOutputStream();
+            outStream.write(bytes);
+            outStream.flush();
+        };
+        return resolution;
     }
 
     /**
@@ -173,7 +192,7 @@ public class MayoReceivingActionBean extends RackScanActionBean {
      */
     @HandlesEvent(VIEW_FILE_BTN)
     public Resolution viewFile() {
-        manifestCellGrid = mayoManifestEjb.readManifestAsCellGrid(this);
+        mayoManifestEjb.readManifestFileCellGrid(this);
         if (manifestCellGrid.isEmpty()) {
             messageCollection.addError("Cannot find %s in manifest file storage.", filename);
         }
@@ -232,6 +251,10 @@ public class MayoReceivingActionBean extends RackScanActionBean {
 
     public List<List<String>> getManifestCellGrid() {
         return manifestCellGrid;
+    }
+
+    public void setManifestCellGrid(List<List<String>> manifestCellGrid) {
+        this.manifestCellGrid = manifestCellGrid;
     }
 
     public String getRackBarcode() {
@@ -294,6 +317,14 @@ public class MayoReceivingActionBean extends RackScanActionBean {
     /** Lookup key for ManifestSession. */
     public static String getManifestKey(String rackBarcode) {
         return rackBarcode;
+    }
+
+    public List<String> getBucketList() {
+        return bucketList;
+    }
+
+    public void setBucketList(List<String> bucketList) {
+        this.bucketList = bucketList;
     }
 
     /**

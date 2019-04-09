@@ -49,7 +49,7 @@
             <c:if test="${!actionBean.getManifestCellGrid().isEmpty()}">
                 <p>Filename: ${actionBean.filename}</p>
                 <div style="padding-top: 10px;">
-                    <table id=manifestContent" border="2">
+                    <table id="manifestCellGrid" border="2">
                         <tbody>
                         <c:forEach items="${actionBean.getManifestCellGrid()}" var="manifestRow">
                             <tr>
@@ -63,25 +63,25 @@
                 </div>
             </c:if>
             <!-- User entered values that go into the RCT ticket. -->
-            <div style="margin-left: 20px;">
-                <textarea style="width: 50%" rows=2 id="shipmentCondition" name="shipmentCondition"
-                          placeholder='[Enter shipment condition]'></textarea>
+            <div style="padding-top: 20px;">
+                Shipment Condition: &nbsp;
+                <stripes:textarea style="width: 50%" rows="2" id="shipmentCondition" name="shipmentCondition"/>
             </div>
-            <div style="margin-left: 20px;">
+            <div style="padding-top: 10px;">
                 Shipping Acknowledgement: &nbsp;
                 <stripes:text style="width: 50%" id="shippingAcknowledgement" name="shippingAcknowledgement"/>
             </div>
-            <div style="margin-left: 20px;">
+            <div style="padding-top: 10px;">
                 Delivery Method: &nbsp;
-                <stripes:select id="deliveryMethod" class="multiEditSelect" name="">
+                <stripes:select id="deliveryMethod" class="multiEditSelect" name="deliveryMethod">
                     <stripes:option value="None" label="None"/>
                     <stripes:option value="FedEx" label="FedEx"/>
                     <stripes:option value="Local Courier" label="Local Courier"/>
                 </stripes:select>
             </div>
-            <div style="margin-left: 20px;">
+            <div style="padding-top: 10px;">
                 Receipt Type: &nbsp;
-                <stripes:select id="receiptType" class="multiEditSelect" name="">
+                <stripes:select id="receiptType" class="multiEditSelect" name="receiptType">
                     <stripes:option value="None" label="None"/>
                     <stripes:option value="Clinical Genomes" label="Clinical Genomes"/>
                     <stripes:option value="Clinical Exomes" label="Clinical Exomes"/>
@@ -90,7 +90,7 @@
                 </stripes:select>
             </div>
 
-            <div style="margin-top: 10px; margin-left: 20px;">
+            <div style="padding-top: 10px; margin-left: 20px;">
                 <span>
                 <stripes:submit id="saveBtn" name="saveBtn" value="Receive and Accession" class="btn btn-primary"
                                 title="Receives the rack and tubes, and attempts to accession the samples."/>

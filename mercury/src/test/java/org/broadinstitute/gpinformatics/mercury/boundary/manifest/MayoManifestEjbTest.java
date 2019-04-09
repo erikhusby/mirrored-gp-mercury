@@ -485,6 +485,42 @@ public class MayoManifestEjbTest extends Arquillian {
         validateEntities(cellGrid, rackBarcode, false);
     }
 
+    @Test
+    public void testBucketAccessAndViewFileByFilename() {
+        String testDigits = String.format("%09d", random.nextInt(10000000));
+        mayoManifestEjb.getUserBean().loginTestUser();
+        MessageCollection messageCollection = new MessageCollection();
+        MayoReceivingActionBean bean = new MayoReceivingActionBean();
+        bean.setMessageCollection(messageCollection);
+
+        // Make sure bucket has at least one manifest file to display.
+        List<List<String>> cellGrid = makeCellGrid(testDigits, ImmutableMap.of("Bx-" + testDigits, 1));
+        List<Header> headers = MayoManifestImportProcessor.extractHeaders(cellGrid.get(0), null, null);
+        int boxIndex = headers.indexOf(Header.BOX_ID);
+        int tubeIndex = headers.indexOf(Header.MATRIX_ID);
+        String filename = String.format("test_%s_1.csv", testDigits);
+        googleBucketDao.upload(filename, makeContent(cellGrid), messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        messageCollection.clearAll();
+
+        // Tests access and obtains filelist. The list should include the file that was just written.
+        mayoManifestEjb.testAccess(bean);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertTrue(messageCollection.hasInfos());
+        Assert.assertTrue(bean.getBucketList().contains(filename));
+
+        // Reads the file by its filename.
+        messageCollection.clearAll();
+        bean.setFilename(filename);
+        bean.getManifestCellGrid().clear();
+        mayoManifestEjb.readManifestFileCellGrid(bean);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getWarnings(), "; "));
+        List<List<String>> displayCellGrid = bean.getManifestCellGrid();
+        Assert.assertEquals(displayCellGrid.stream().flatMap(list -> list.stream()).collect(Collectors.joining(" ")),
+                cellGrid.stream().flatMap(list -> list.stream()).collect(Collectors.joining(" ")));
+    }
+
     private void validateManifest(ManifestSession manifestSession, List<List<String>> cellGrid) {
         manifestSession.getRecords().forEach(manifestRecord -> {
             String tubeBarcode = manifestRecord.getMetadataByKey(Metadata.Key.BROAD_2D_BARCODE).getValue();

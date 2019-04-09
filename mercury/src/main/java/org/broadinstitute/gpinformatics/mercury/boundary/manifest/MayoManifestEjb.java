@@ -152,6 +152,7 @@ public class MayoManifestEjb {
         List<String> tubeBarcodes = bean.getRackScan().values().stream().
                 filter(StringUtils::isNotBlank).collect(Collectors.toList());
         assert(!tubeBarcodes.isEmpty());
+
         // Verifies that if barcodes match an existing vessel, it must be a tube.
         List<LabVessel> tubes = labVesselDao.findByListIdentifiers(tubeBarcodes);
         String notTubes = tubes.stream().
@@ -170,29 +171,30 @@ public class MayoManifestEjb {
         }
 
         // Verifies that the rack barcode is for a rack.
-        LabVessel rackVessel = labVesselDao.findByIdentifier(bean.getRackBarcode());
-        if (rackVessel != null) {
-            if (OrmUtil.proxySafeIsInstance(rackVessel, RackOfTubes.class)) {
-                RackOfTubes rack = OrmUtil.proxySafeCast(rackVessel, RackOfTubes.class);
-                // Disallows a re-upload of a rack if its tubes were successful accessioned.
-                if (rack != null) {
-                    String racksAccessionedTubes = rack.getTubeFormations().stream().
-                            flatMap(tubeFormation -> tubeFormation.getVesselContainers().stream()).
-                            flatMap(vesselContainer -> vesselContainer.getContainedVessels().stream()).
-                            filter(labVessel -> CollectionUtils.isNotEmpty(labVessel.getMercurySamples())).
-                            map(LabVessel::getLabel).
-                            collect(Collectors.joining(" "));
-                    if (!racksAccessionedTubes.isEmpty()) {
-                        bean.getMessageCollection().addError(ALREADY_ACCESSIONED_RACK, racksAccessionedTubes);
-                    } else {
-                        bean.getMessageCollection().addInfo(OVERWRITING, rackVessel.getLabel());
+        if (!bean.getMessageCollection().hasErrors()) {
+            LabVessel rackVessel = labVesselDao.findByIdentifier(bean.getRackBarcode());
+            if (rackVessel != null) {
+                if (OrmUtil.proxySafeIsInstance(rackVessel, RackOfTubes.class)) {
+                    RackOfTubes rack = OrmUtil.proxySafeCast(rackVessel, RackOfTubes.class);
+                    // Disallows a re-upload of a rack if its tubes were successful accessioned.
+                    if (rack != null) {
+                        String racksAccessionedTubes = rack.getTubeFormations().stream().
+                                flatMap(tubeFormation -> tubeFormation.getVesselContainers().stream()).
+                                flatMap(vesselContainer -> vesselContainer.getContainedVessels().stream()).
+                                filter(labVessel -> CollectionUtils.isNotEmpty(labVessel.getMercurySamples())).
+                                map(LabVessel::getLabel).
+                                collect(Collectors.joining(" "));
+                        if (!racksAccessionedTubes.isEmpty()) {
+                            bean.getMessageCollection().addError(ALREADY_ACCESSIONED_RACK, racksAccessionedTubes);
+                        } else {
+                            bean.getMessageCollection().addInfo(OVERWRITING, rackVessel.getLabel());
+                        }
                     }
+                } else {
+                    bean.getMessageCollection().addError(NOT_A_RACK, bean.getRackBarcode());
                 }
-            } else {
-                bean.getMessageCollection().addError(NOT_A_RACK, bean.getRackBarcode());
             }
         }
-
         // Checks that the rack scan positions are valid.
         String invalidPositions = bean.getRackScan().keySet().stream().
                 filter(position -> VesselPosition.getByName(position) == null).
@@ -370,12 +372,19 @@ public class MayoManifestEjb {
                 }
             }
         }
+
+        // Jira limit is 255.
+        String physicians = requestingPhysician.stream().sorted().distinct().collect(Collectors.joining(","));
+        if (physicians.length() > 254) {
+            physicians = physicians.substring(0, 251) + "...";
+        }
+
         JiraTicket jiraTicket = makeOrUpdateRct(bean, rack,
                 tubeToPosition.keySet().stream().sorted().collect(Collectors.toList()),
                 sampleMap.keySet().stream().sorted().collect(Collectors.toList()),
                 materialTypes,
                 packageId.stream().sorted().collect(Collectors.joining(", ")),
-                requestingPhysician.stream().sorted().collect(Collectors.joining(", ")),
+                physicians,
                 trackingNumber.stream().sorted().collect(Collectors.joining(", "))
         );
         if (jiraTicket != null) {
@@ -420,30 +429,36 @@ public class MayoManifestEjb {
     }
 
     /**
-     * Returns the manifest file in a cell grid for the UI to display.
+     * Obtains the manifest file in a cell grid for either the filename or the filename associated with the rack.
      */
-    public @NotNull List<List<String>> readManifestAsCellGrid(MayoReceivingActionBean bean) {
+    public void readManifestFileCellGrid(MayoReceivingActionBean bean) {
+        // If no filename was given, looks up a filename via the manifest session for the rack barcode.
         if (StringUtils.isBlank(bean.getFilename())) {
-            // Looks up a filename via the manifest session for the rack barcode.
-            ManifestSession manifestSession = lookupManifestSession(bean.getManifestKey(),
-                    bean.getMessageCollection(), true);
-            if (manifestSession == null || manifestSession.getManifestFile() == null) {
-                bean.getMessageCollection().addInfo(INVALID, "manifest", bean.getManifestKey());
+            if (StringUtils.isBlank(bean.getManifestKey())) {
+                bean.getMessageCollection().addError("Need a filename or a rack barcode.");
             } else {
-                String[] fileBucket = manifestSession.getManifestFile().getQualifiedFilename().split(FILE_DELIMITER);
-                String bucketName = mayoManifestConfig.getBucketName();
-                if (fileBucket.length == 0 || !bucketName.equals(fileBucket[1])) {
-                    bean.getMessageCollection().addError(WRONG_BUCKET, fileBucket[0], bucketName);
+                ManifestSession manifestSession = lookupManifestSession(bean.getManifestKey(),
+                        bean.getMessageCollection(), true);
+                if (manifestSession == null || manifestSession.getManifestFile() == null) {
+                    bean.getMessageCollection().addInfo(INVALID, "manifest", bean.getManifestKey());
                 } else {
-                    bean.setFilename(fileBucket[0]);
+                    String[] fileBucket = manifestSession.getManifestFile().getQualifiedFilename().
+                            split(FILE_DELIMITER);
+                    String bucketName = mayoManifestConfig.getBucketName();
+                    if (fileBucket.length == 0 || !bucketName.equals(fileBucket[1])) {
+                        bean.getMessageCollection().addError(WRONG_BUCKET, fileBucket[0], bucketName);
+                    } else {
+                        bean.setFilename(fileBucket[0]);
+                    }
                 }
             }
         }
-        return readFileAsCellGrid(bean.getFilename(), bean.getMessageCollection());
+        bean.setManifestCellGrid(readManifestFileCellGrid(bean.getFilename(), bean.getMessageCollection()));
     }
 
     public void testAccess(MayoReceivingActionBean bean) {
-        googleBucketDao.test(bean.getMessageCollection());
+        // Generates info messages and obtains a list of filenames in the bucket.
+        bean.setBucketList(googleBucketDao.test(bean.getMessageCollection()));
     }
 
     public void pullAll(MayoReceivingActionBean bean) {
@@ -458,9 +473,9 @@ public class MayoManifestEjb {
     /**
      * Looks for the file in Google Storage using filename and returns the cell data for each sheet.
      * Returns null if the manifest file doesn't exist or could not be read. This is not an error.
-     * Errors are put in the MessageCollection.
+     * True errors are put in the MessageCollection.
      */
-    private @NotNull List<List<String>> readFileAsCellGrid(@Nullable String filename, MessageCollection messages) {
+    private @NotNull List<List<String>> readManifestFileCellGrid(String filename, MessageCollection messages) {
         if (StringUtils.isNotBlank(filename)) {
             byte[] spreadsheet = googleBucketDao.download(filename, messages);
             if (spreadsheet != null && spreadsheet.length > 0) {
@@ -501,7 +516,7 @@ public class MayoManifestEjb {
         if (StringUtils.isNotBlank(filename)) {
             // When a filename is present the file is assumed to be an update of an earlier upload
             // having the same filename. The file is made into a new manifest session.
-            List<List<String>> cellGrid = readFileAsCellGrid(filename, messages);
+            List<List<String>> cellGrid = readManifestFileCellGrid(filename, messages);
             String cellGridMd5 = manifestHash(cellGrid);
             Set<String> manifestsAffected = new HashSet<>();
             MayoManifestImportProcessor processor = new MayoManifestImportProcessor();
@@ -554,7 +569,7 @@ public class MayoManifestEjb {
     private Collection<ManifestSession> makeManifestSessions(String filename, String bucketName,
             MessageCollection messageCollection, Set<Object> newEntities) {
 
-        List<List<String>> cellGrid = readFileAsCellGrid(filename, messageCollection);
+        List<List<String>> cellGrid = readManifestFileCellGrid(filename, messageCollection);
         String qualifiedFilename = filename + FILE_DELIMITER + bucketName;
         ManifestFile manifestFile = findManifestFile(qualifiedFilename);
         if (manifestFile == null) {

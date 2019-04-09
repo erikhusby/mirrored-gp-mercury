@@ -56,6 +56,7 @@ public class MayoManifestImportProcessor {
     public static final String NOT_NUMBER = "Manifest file %s has a %s value \"%s\" that is not a number.";
     public static final String UNKNOWN_UNITS = "Manifest file %s has header %s that has unknown units \"%s\".";
     public static final String UNKNOWN_HEADER = "Manifest file %s has unknown header \"%s\" which will be ignored.";
+    public static final String NO_VALUE_PRESENT = "[blank]";
 
     private List<Header> sheetHeaders = new ArrayList<>();
 
@@ -155,28 +156,32 @@ public class MayoManifestImportProcessor {
          * Calculates a numeric conversion factor to represent concentration in ng/ul, and quantity in ul.
          */
         private void setFactor(String headerSuffix, String filename, MessageCollection messages) {
-            // Splits the header suffix into numerator and denominator, or just numerator.
-            String[] parts = headerSuffix.split("/", 2);
-            // The only ratio should be concentration.
-            if (getMetadataKey() == Metadata.Key.CONCENTRATION ^ parts.length != 1) {
-                messages.addError(UNKNOWN_UNITS, filename, getText(), headerSuffix);
-            } else {
-                BigDecimal number = null;
-                for (int idx = 0; idx < parts.length; ++idx) {
-                    for (Pair<String, String> pair : conversionFactors) {
-                        if (parts[idx].startsWith(pair.getLeft())) {
-                            number = new BigDecimal(pair.getRight());
-                            break;
+            if (StringUtils.isBlank(headerSuffix)) {
+                messages.addError(UNKNOWN_UNITS, filename, getText(), NO_VALUE_PRESENT);
+            } else{
+                // Splits the header suffix into numerator and denominator, or just numerator.
+                String[] parts = headerSuffix.split("/", 2);
+                // The only ratio should be concentration.
+                if (getMetadataKey() == Metadata.Key.CONCENTRATION ^ parts.length != 1) {
+                    messages.addError(UNKNOWN_UNITS, filename, getText(), headerSuffix);
+                } else {
+                    BigDecimal number = null;
+                    for (int idx = 0; idx < parts.length; ++idx) {
+                        for (Pair<String, String> pair : conversionFactors) {
+                            if (parts[idx].startsWith(pair.getLeft())) {
+                                number = new BigDecimal(pair.getRight());
+                                break;
+                            }
                         }
-                    }
-                    if (number == null) {
-                        messages.addError(UNKNOWN_UNITS, filename, getText(), headerSuffix);
-                        factor = BigDecimal.ZERO;
-                        break;
-                    } else if (idx == 0) {
-                        factor = number;
-                    } else {
-                        factor = factor.divide(number, BigDecimal.ROUND_UNNECESSARY);
+                        if (number == null) {
+                            messages.addError(UNKNOWN_UNITS, filename, getText(), headerSuffix);
+                            factor = BigDecimal.ZERO;
+                            break;
+                        } else if (idx == 0) {
+                            factor = number;
+                        } else {
+                            factor = factor.divide(number, BigDecimal.ROUND_UNNECESSARY);
+                        }
                     }
                 }
             }
@@ -213,9 +218,18 @@ public class MayoManifestImportProcessor {
                         filter(line -> line != null && !StringUtils.isAllBlank(line)).
                         map(Arrays::asList).
                         forEach(cellGrid::add);
+                // Decides it's not spreadsheet (to avoid a ream of misleading error output) if
+                // there's only 1 row (i.e. no data row) or if rows have different number of columns.
+                if (cellGrid.size() < 2 || cellGrid.subList(1, cellGrid.size()).stream().
+                        mapToInt(row -> row.size()).
+                        filter(size -> size != cellGrid.get(0).size()).
+                        findFirst().isPresent()) {
+                    messages.addWarning(CANNOT_PARSE, filename, "invalid .csv spreadsheet");
+                    cellGrid.clear();
+                }
             }
         } catch(Exception e) {
-            messages.addError(CANNOT_PARSE, filename, e.toString());
+            messages.addWarning(CANNOT_PARSE, filename, e.toString());
         }
         return cellGrid;
     }
@@ -333,19 +347,23 @@ public class MayoManifestImportProcessor {
 
         List<Header> headers = new ArrayList<>();
         for (String column : headerRow) {
-            // Until the actual stable spreadsheet headers are known, does a forgiving header lookup by
-            // ignoring case, allowing underscores instead of spaces, "somethingid" instead of "something id",
-            // and units in parentheses.
-            String[] headerParts = column.split("\\(", 2);
-            String header = headerParts[0].toLowerCase().replaceAll("_", " ").
-                    replaceAll("id$", " id").replaceAll("id ", " id ").replaceAll("  ", " ").trim();
+            String header = column.toLowerCase().replaceAll("_", " ").replace('(', ' ').replace(')', ' ').
+                    // Space between name and id, e.g. sampleId -> sample id
+                    replaceAll("id$", " id").replaceAll("id ", " id ").
+                    // Removes spaces around '/' so that if units are present they are always the last single token.
+                    replace(" /", "/").replace("/ ", "/").replaceAll("[ ]+", " ").trim();
+            // Looks for the header name. If no match, try without the last token in case it's the units.
             Header match = nameToHeader.get(header);
+            String units = "";
+            if (match == null && header.contains(" ")) {
+                match = nameToHeader.get(StringUtils.substringBeforeLast(header, " "));
+                units = StringUtils.substringAfterLast(header, " ");
+            }
             if (filename != null && messages != null) {
                 if (match == null) {
-                    messages.addInfo(UNKNOWN_HEADER, filename, column);
-                } else if (match.hasUnits() && headerParts.length > 1) {
-                    match.setFactor(StringUtils.remove(headerParts[1].toLowerCase().replaceAll("\\)", ""), " "),
-                            filename, messages);
+                    messages.addWarning(UNKNOWN_HEADER, filename, column);
+                } else if (match.hasUnits()) {
+                    match.setFactor(units, filename, messages);
                 }
             }
             // An unknown header is added as a null, to maintain a corresponding index with data rows.

@@ -34,7 +34,7 @@
             <c:if test="${!actionBean.getManifestCellGrid().isEmpty()}">
                 Filename: ${actionBean.filename}
                 <div style="padding-top: 10px;">
-                    <table id=manifestContent" border="2">
+                    <table id="manifestCellGrid" border="2">
                         <tbody>
                         <c:forEach items="${actionBean.getManifestCellGrid()}" var="manifestRow">
                             <tr>
