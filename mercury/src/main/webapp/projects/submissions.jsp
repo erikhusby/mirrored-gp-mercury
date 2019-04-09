@@ -369,8 +369,13 @@
                 $j("#filtering").accordion({
                       "collapsible": true, "heightStyle": "content", 'active': false
                     });
+                var additionalOptionMap = {
+                    value: "sample",
+                    text: "Sample List",
+                    searchIndex: 1
+                };
 
-                includeAdvancedFilter(oTable, "#submissionSamples");
+                includeAdvancedFilter(oTable, "#submissionSamples", additionalOptionMap);
                 $j('#submissionSamples').one('init', function (event, oSettings, aaData) {
                     <enhance:out escapeXml="false">
                     $j('#submissionSamples').filterColumn("Current Status", ${actionBean.submissionStatusesJson}, {
