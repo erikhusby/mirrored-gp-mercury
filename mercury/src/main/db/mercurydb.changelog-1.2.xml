@@ -1947,8 +1947,9 @@
         <createIndex tableName="LAB_METRIC" indexName="IX_METRIC_RUN_FK">
             <column name="LAB_METRIC_RUN"/>
         </createIndex>
-        <createIndex tableName="LAB_VESSEL_RACKS_OF_TUBES" indexName="IX_VESSEL_RACKS_FK">
+        <createIndex tableName="LAB_VESSEL_RACKS_OF_TUBES" indexName="IX_VESSEL_RACKS_FK" unique="true">
             <column name="RACKS_OF_TUBES"/>
+            <column name="LAB_VESSEL"/>
         </createIndex>
         <createIndex tableName="SAMPLE_INSTANCE_ENTITY" indexName="IX_SAMPLE_ENTITY_VESSEL_FK">
             <column name="LAB_VESSEL"/>
