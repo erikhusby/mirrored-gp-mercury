@@ -1193,7 +1193,8 @@ public class ProductOrderActionBeanTest {
         final Product primaryOrderProduct = testOrder.getProduct();
         returnMaterials.add(new SAPMaterial(primaryOrderProduct.getPartNumber(), broad, broad.getDefaultWbs(),
             "test description", "2000", SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", null,
-            null, null, null, Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, ""));
+            null, null, null, Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+            broad.getSalesOrganization()));
 
         final String priceItemPrice = "2000";
         final String quoteItemQuantity = "2000";
@@ -1209,7 +1210,8 @@ public class ProductOrderActionBeanTest {
 
         returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(), broad, broad.getDefaultWbs(), "test description", "1573",
                     SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(), new Date(),
-                    Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, ""));
+                    Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                    broad.getSalesOrganization()));
 
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, addonNonSeqProduct, "1573", "2000", "573"
         );
@@ -2608,7 +2610,8 @@ public class ProductOrderActionBeanTest {
                         basePrice,SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE,"Test Description",
                         "", "",
                         new Date(), new Date(),Collections.<Condition, BigDecimal>emptyMap(),
-                        Collections.<DeliveryCondition, BigDecimal>emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "GP01");
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                        broad.getSalesOrganization());
         returnMaterials.add(material);
     }
 
