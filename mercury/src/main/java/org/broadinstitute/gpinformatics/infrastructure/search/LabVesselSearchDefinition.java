@@ -1757,8 +1757,9 @@ public class LabVesselSearchDefinition {
         // ******** Allow individual selectable result columns for each sample metadata value *******
         for (Metadata.Key meta : Metadata.Key.values()) {
             if (meta.getCategory() == Metadata.Category.SAMPLE &&
-                BSPSampleSearchColumn.getByName(meta.getDisplayName()) == null)
-            {
+                    // Need "Sample ID" for eMERGE web service
+                    (meta == Metadata.Key.SAMPLE_ID ||
+                            BSPSampleSearchColumn.getByName(meta.getDisplayName()) == null)) {
                 searchTerm = new SearchTerm();
                 searchTerm.setName(meta.getDisplayName());
                 searchTerm.setDisplayExpression(DisplayExpression.METADATA);

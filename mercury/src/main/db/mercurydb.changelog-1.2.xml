@@ -2068,4 +2068,9 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-6009-5" author="thompson">
+        <createIndex schemaName="mercury" tableName="REAGENT_METADATA_AUD" indexName="IX_RMA_REAGENT">
+            <column name="REAGENT"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
