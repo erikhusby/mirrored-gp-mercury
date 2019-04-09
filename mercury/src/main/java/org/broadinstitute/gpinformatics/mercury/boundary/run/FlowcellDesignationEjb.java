@@ -26,8 +26,10 @@ import javax.persistence.TemporalType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Data Access Object for designation tubes.
@@ -118,10 +120,10 @@ public class FlowcellDesignationEjb {
         for (DesignationDto dto : dtos) {
             if (dto.isSelected() && targetableStatuses.contains(dto.getStatus())) {
                 if (dto.getDesignationId() == null) {
-                    LabVessel loadingTube = barcodedTubeDao.findByBarcode(dto.getBarcode());
+                    LabVessel startingTube = barcodedTubeDao.findByBarcode(dto.getBarcode());
                     LabBatch chosenLcset = StringUtils.isBlank(dto.getChosenLcset()) ?
                             null : labBatchDao.findByName(dto.getChosenLcset());
-                    FlowcellDesignation designation = new FlowcellDesignation(loadingTube, chosenLcset,
+                    FlowcellDesignation designation = new FlowcellDesignation(startingTube, chosenLcset,
                             dto.getIndexType(), dto.getPoolTest(), dto.getSequencerModel(),
                             dto.getNumberLanes(), dto.getReadLength(), dto.getLoadingConc(), dto.getPairedEndRead(),
                             dto.getStatus(), dto.getPriority());
@@ -163,23 +165,18 @@ public class FlowcellDesignationEjb {
         return labBatchDao.findListByList(FlowcellDesignation.class, FlowcellDesignation_.status, statuses);
     }
 
-    /** Returns the flowcell designations used in the FCT or MISEQ batch sorted by descending create date. */
+    /** Returns the flowcell designations used in the FCT or MISEQ batch ordered most recent last. */
     public List<FlowcellDesignation> getFlowcellDesignations(LabBatch fct) {
-        List<LabVessel> loadingTubes = new ArrayList<>();
+        List<LabVessel> startingTubes = new ArrayList<>();
         if (fct != null && CollectionUtils.isNotEmpty(fct.getLabBatchStartingVessels())) {
             for (LabBatchStartingVessel labBatchStartingVessel : fct.getLabBatchStartingVessels()) {
-                loadingTubes.add(labBatchStartingVessel.getLabVessel());
+                startingTubes.add(labBatchStartingVessel.getLabVessel());
             }
         }
-        return getFlowcellDesignations(loadingTubes);
-    }
-
-    /** Returns the flowcell designations for loading tubes sorted by descending create date. */
-    public List<FlowcellDesignation> getFlowcellDesignations(Collection<LabVessel> loadingTubes) {
-        List<FlowcellDesignation> list = labBatchDao.findListByList(FlowcellDesignation.class,
-                FlowcellDesignation_.loadingTube, loadingTubes);
-        Collections.sort(list, FlowcellDesignation.BY_DATE_DESC);
-        return list;
+        return labBatchDao.findListByList(FlowcellDesignation.class, FlowcellDesignation_.startingTube, startingTubes).
+                stream().
+                sorted(Comparator.comparing(FlowcellDesignation::getCreatedOn)).
+                collect(Collectors.toList());
     }
 
 }
