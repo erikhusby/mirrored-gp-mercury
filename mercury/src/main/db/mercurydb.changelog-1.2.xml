@@ -2073,19 +2073,21 @@
             <column name="REAGENT"/>
         </createIndex>
     </changeSet>
-    <changeSet id="GPLIM-6078-fix-one" author="jsacco">
-        <sql  endDelimiter="/">
-            DECLARE
-                V_COUNT NUMBER(1);
-            BEGIN
-                SELECT COUNT(*) INTO V_COUNT FROM USER_INDEXES WHERE INDEX_NAME = 'IX_VESSEL_RACKS_FK';
-                IF V_COUNT > 0 THEN
-                    EXECUTE IMMEDIATE 'DROP INDEX IX_VESSEL_RACKS_FK';
-                END IF;
-            EXECUTE IMMEDIATE
-                'CREATE UNIQUE INDEX IX_VESSEL_RACKS_FK ON LAB_VESSEL_RACKS_OF_TUBES(RACKS_OF_TUBES,LAB_VESSEL)';
-            END;
-/
+
+    <changeSet id="GPLIM-6078-undo-one-index" author="jsacco">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM USER_INDEXES WHERE INDEX_NAME = 'IX_VESSEL_RACKS_FK'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            DROP INDEX IX_VESSEL_RACKS_FK
         </sql>
+    </changeSet>
+    <changeSet id="GPLIM-6078-better-index" author="jsacco">
+        <createIndex tableName="LAB_VESSEL_RACKS_OF_TUBES" indexName="IX_VESSEL_RACKS_FK" unique="true">
+            <column name="RACKS_OF_TUBES"/>
+            <column name="LAB_VESSEL"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>
