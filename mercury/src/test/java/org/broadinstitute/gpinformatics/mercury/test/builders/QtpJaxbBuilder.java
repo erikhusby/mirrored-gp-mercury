@@ -30,7 +30,6 @@ public class QtpJaxbBuilder {
     private String denatureRackBarcode;
     private PlateCherryPickEvent denatureJaxb;
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
-    private String denatureTubeBarcode;
     private String ecoPlateBarcode;
     private PlateTransferEventType ecoTransferDuplicateA3Jaxb;
     private String viia7PlateBarcode;
@@ -116,7 +115,7 @@ public class QtpJaxbBuilder {
     }
 
     public String getDenatureTubeBarcode() {
-        return denatureTubeBarcode;
+        return denatureTubeBarcodes.get(0);
     }
 
     public List<String> getNormalizationTubeBarcodes() {
