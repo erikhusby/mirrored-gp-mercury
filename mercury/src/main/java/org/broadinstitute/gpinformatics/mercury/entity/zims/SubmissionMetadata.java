@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SubmissionMetadata {
     @JsonProperty("key")

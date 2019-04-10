@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.105-SNAPSHOT</version>
+    <version>1.109-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -176,7 +176,6 @@
         <site.path>/prodinfo/releng/m2-projects</site.path>
 
         <seam.version>3.1.0.Final</seam.version>
-        <jersey.version>1.11</jersey.version>
 
         <oracle.version>12.1.0.2</oracle.version>
 
@@ -1276,17 +1275,6 @@ nodePrinter.print(webapp)
 
         <dependencies>
             <dependency>
-                <groupId>com.sun.jersey</groupId>
-                <artifactId>jersey-bundle</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.sun.jersey.contribs</groupId>
-                <artifactId>jersey-multipart</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.jboss.arquillian</groupId>
                 <artifactId>arquillian-bom</artifactId>
                 <version>1.4.0.Final</version>
@@ -1534,7 +1522,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
-            <version>1.2.2</version>
+            <version>1.3.3</version>
         </dependency>
 
         <dependency>
@@ -1645,20 +1633,22 @@ nodePrinter.print(webapp)
         </dependency>
 
         <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>${jersey.version}</version>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>3.0.19.Final</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.sun.jersey.contribs</groupId>
-            <artifactId>jersey-multipart</artifactId>
-            <version>${jersey.version}</version>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-multipart-provider</artifactId>
+            <version>3.0.19.Final</version>
+            <scope>provided</scope>
         </dependency>
-
         <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-json</artifactId>
-            <version>${jersey.version}</version>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jackson2-provider</artifactId>
+            <version>3.0.19.Final</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -1669,17 +1659,17 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>3.9</version>
+            <version>3.17</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>3.9</version>
+            <version>3.17</version>
         </dependency>
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
-            <version>3.4</version>
+            <version>4.4</version>
         </dependency>
 
         <!-- exists only to be included in ShrinkWrap deployments. would be better to include explicitly in DeploymentBuilder -->
@@ -1913,6 +1903,7 @@ nodePrinter.print(webapp)
             <artifactId>csrfguard</artifactId>
             <version>3.1.0</version>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -2074,38 +2065,6 @@ nodePrinter.print(webapp)
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>SolexaRunSynopsis</id>
-                        <goals>
-                            <goal>xjc</goal>
-                        </goals>
-                        <configuration>
-                            <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>SolexaRun.xsd</schemaFiles>
-                            <schemaDirectory>${project.basedir}/target/xsd-includes/XSD</schemaDirectory>
-                            <packageName>org.broadinstitute.gpinformatics.mercury.squid.generated</packageName>
-                            <!-- each execution must have a unique staleFile -->
-                            <staleFile>${project.build.directory}/jaxb2/.SolexaRunSynopsisXjcStaleFlag</staleFile>
-                            <!-- all executions, except the first, need clearOutputDir set to false -->
-                            <clearOutputDir>false</clearOutputDir>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>ProjectResourceBeans</id>
-                        <goals>
-                            <goal>xjc</goal>
-                        </goals>
-                        <configuration>
-                            <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>WorkRequest.xsd</schemaFiles>
-                            <schemaDirectory>${project.basedir}/target/xsd-includes/XSD</schemaDirectory>
-                            <packageName>edu.mit.broad.prodinfo.bean.generated</packageName>
-                            <!-- each execution must have a unique staleFile -->
-                            <staleFile>${project.build.directory}/jaxb2/.ProjectResourceXjcStaleFlag</staleFile>
-                            <!-- all executions, except the first, need clearOutputDir set to false -->
-                            <clearOutputDir>false</clearOutputDir>
-                        </configuration>
-                    </execution>
 
                     <execution>
                         <id>ClinicalResourceTypes</id>
@@ -2253,25 +2212,6 @@ nodePrinter.print(webapp)
                                     <artifactId>jaxws-api</artifactId>
                                     <version>2.2.8</version>
                                     <type>jar</type>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>SquidWS</groupId>
-                                    <artifactId>squidWS</artifactId>
-                                    <version>1.0-SNAPSHOT</version>
-                                    <classifier>XSD</classifier>
-                                    <type>tar</type>
-                                    <outputDirectory>${project.basedir}/target/xsd-includes</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

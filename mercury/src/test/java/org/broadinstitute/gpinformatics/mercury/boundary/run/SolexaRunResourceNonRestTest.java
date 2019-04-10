@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -129,9 +128,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @Inject
     private SystemRouter router;
-
-    @Inject
-    private HipChatMessageSender messageSender;
 
     @Inject
     private VesselTransferEjb vesselTransferEjb;
@@ -317,7 +313,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                                      SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao);
 
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
@@ -357,7 +353,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public void testGetReadStructureByName() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                                      SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao);
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
                                   reagentKitBarcode);
@@ -385,7 +381,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public void testLaneReadStructure() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                                      SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao);
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
                                   reagentKitBarcode);
@@ -424,7 +420,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                                      SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), squidConfig, reagentKitDao);
 
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcellBarcode, runBarcode, runDate, machineName, runFileDirectory,
@@ -492,7 +488,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                                      SquidConnectorProducer.failureStubInstance(), messageSender, squidConfig,
+                                      SquidConnectorProducer.failureStubInstance(), squidConfig,
                                       reagentKitDao);
 
         Response readStructureStoreResponse = runResource.storeRunReadStructure(readStructure);

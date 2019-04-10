@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.UpdateJiraIssueUpdateSerializer;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.util.Collection;
 import java.util.Collections;
