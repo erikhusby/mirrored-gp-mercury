@@ -1786,7 +1786,8 @@ public class ProductOrderFixupTest extends Arquillian {
             return null;
         });
         if (messages.size() == 1 && messages.get(0).equals("{0} samples have been added to the {1}.")) {
-            productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
+            // No FixupCommentary, because it creates huge ETL activity, and this isn't altering anything in the
+            // database, just re-triggering a normal process.
             System.out.println("Added samples to bucket for " + pdo.getBusinessKey());
             commitTransaction();
         } else {
