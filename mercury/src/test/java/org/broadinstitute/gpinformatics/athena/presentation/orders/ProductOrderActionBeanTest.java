@@ -955,7 +955,7 @@ public class ProductOrderActionBeanTest {
 
 
         // Now test test validation using passed-in parameters.
-        actionBean.setSkipRegulatoryInfo(skipRegulatory);
+        actionBean.setNotFromHumans(skipRegulatory);
         actionBean.getEditOrder().setSkipRegulatoryReason(skipRegulatoryReason);
         actionBean.getEditOrder().setAttestationConfirmed(attestationChecked);
         actionBean.getEditOrder().setPlacedDate(placedDate);
