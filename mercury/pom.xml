@@ -2010,6 +2010,12 @@ nodePrinter.print(webapp)
                 </plugin>
 
                 <plugin>
+                    <groupId>external.atlassian.jgitflow</groupId>
+                    <artifactId>jgitflow-maven-plugin</artifactId>
+                    <version>1.0-m5.1</version>
+                </plugin>
+		
+                <plugin>
                     <groupId>com.amashchenko.maven.plugin</groupId>
                     <artifactId>gitflow-maven-plugin</artifactId>
                     <version>1.11.0</version>
@@ -2394,6 +2400,33 @@ nodePrinter.print(webapp)
                     </execution>
                 </executions>
             </plugin>
+	    
+            <plugin>
+                <groupId>external.atlassian.jgitflow</groupId>
+                <artifactId>jgitflow-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Allow untracked files during the release process -->
+                    <allowUntracked>true</allowUntracked>
+                    <!-- Allow snapshots when we start the release because the limsThrift version will be fixed during the release process -->
+                    <allowSnapshots>true</allowSnapshots>
+                    <pushFeatures>true</pushFeatures>
+                    <noFeatureBuild>true</noFeatureBuild>
+                    <enableFeatureVersions>true</enableFeatureVersions>
+                    <releaseBranchVersionSuffix>RC</releaseBranchVersionSuffix>
+                    <!--Do NOT do a build during the release-finish process -->
+                    <noReleaseBuild>true</noReleaseBuild>
+                    <!-- Do NOT use the Maven default release profile during the release process -->
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <!-- Do NOT use the Maven deploy goal during the release process. -->
+                    <noDeploy>true</noDeploy>
+                    <!-- Do push the release branches to the remote upstream -->
+                    <pushReleases>true</pushReleases>
+                    <!-- Do push the hotfix branches to the remote upstream -->
+                    <pushHotfixes>true</pushHotfixes>
+                    <noHotfixBuild>true</noHotfixBuild>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
                 <artifactId>gitflow-maven-plugin</artifactId>
