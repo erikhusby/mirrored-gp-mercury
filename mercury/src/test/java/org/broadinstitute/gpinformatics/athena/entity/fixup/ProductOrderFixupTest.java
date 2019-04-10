@@ -8,11 +8,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -43,13 +41,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -125,9 +120,6 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Inject
-    BucketEjb bucketEjb;
-
-    @Inject
     private ProductOrderDao productOrderDao;
 
     @Inject
@@ -161,18 +153,6 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private UserTransaction utx;
-
-    @Inject
-    private SapIntegrationService sapIntegrationService;
-
-    @Inject
-    private BillingSessionDao billingSessionDao;
-
-    @Inject
-    private BillingEjb billingEjb;
-
-    @Inject
-    private LabBatchDao labBatchDao;
 
     @Inject
     private BucketEntryDao bucketEntryDao;
@@ -1783,5 +1763,37 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
+    }
+
+    /**
+     * When a PDO is submitted, if auto-bucketing exceeds the transaction timeout and fails, this test can be used to
+     * add the PDO samples to the bucket.
+     * It reads its parameters from a file, mercury/src/test/resources/testdata/AddPdosSamplesToBucket.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-5265
+     * PDO-17968
+     */
+    @Test(enabled = false)
+    public void fixupSupport5265() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddPdosSamplesToBucket.txt"));
+        ProductOrder pdo = productOrderDao.findByBusinessKey(fixupLines.get(1));
+        pdo.loadSampleData();
+        List<String> messages = new ArrayList<>();
+        productOrderEjb.handleSamplesAdded(pdo.getBusinessKey(), pdo.getSamples(), (message, arguments) -> {
+            messages.add(message);
+            return null;
+        });
+        if (messages.size() == 1 && messages.get(0).equals("{0} samples have been added to the {1}.")) {
+            productOrderDao.persist(new FixupCommentary(fixupLines.get(0)));
+            System.out.println("Added samples to bucket for " + pdo.getBusinessKey());
+            commitTransaction();
+        } else {
+            for (String message : messages) {
+                System.out.println(message);
+            }
+            utx.rollback();
+        }
     }
 }
