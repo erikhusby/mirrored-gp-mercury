@@ -1954,4 +1954,19 @@
             <column name="LAB_VESSEL"/>
         </createIndex>
     </changeSet>
+    <changeSet id="GPLIM-6078-fix-one" author="jsacco">
+        <sql  endDelimiter="/">
+            DECLARE
+                V_COUNT NUMBER(1);
+            BEGIN
+                SELECT COUNT(*) INTO V_COUNT FROM USER_INDEXES WHERE INDEX_NAME = 'IX_VESSEL_RACKS_FK';
+                IF V_COUNT > 0 THEN
+                    EXECUTE IMMEDIATE 'DROP INDEX IX_VESSEL_RACKS_FK';
+                END IF;
+            EXECUTE IMMEDIATE
+                'CREATE UNIQUE INDEX IX_VESSEL_RACKS_FK ON LAB_VESSEL_RACKS_OF_TUBES(RACKS_OF_TUBES,LAB_VESSEL)';
+            END;
+/
+        </sql>
+    </changeSet>
 </databaseChangeLog>
