@@ -321,6 +321,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private boolean skipRegulatoryInfo;
 
+    private boolean notFromHumans;
+    private boolean fromClinicalLine;
+
     private GenotypingChip genotypingChip;
 
     private GenotypingProductOrderMapping genotypingProductOrderMapping;
@@ -462,10 +465,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                + "regulatory requirements and/or falsification of information may lead to quarantining of data. "
                + "If you have any questions regarding the federal regulations associated with your project, "
                + "please contact orsp@broadinstitute.org.";
-    }
-
-    public String getComplianceStatement() {
-        return String.format(ResearchProject.REGULATORY_COMPLIANCE_STATEMENT, "this order involves");
     }
 
     /**
@@ -656,6 +655,18 @@ public class ProductOrderActionBean extends CoreActionBean {
             StringUtils.isNotBlank(editOrder.getProductOrderKit().getComments()) &&
             editOrder.getProductOrderKit().getComments().length() > 255) {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
+        }
+
+        Optional<String> skipRegulatoryReason = Optional.ofNullable(editOrder.getSkipRegulatoryReason());
+
+        if (editOrder.getProduct() != null && !editOrder.getProduct().isClinicalProduct()) {
+            skipRegulatoryReason.ifPresent(skipReason -> {
+                if(ResearchProject.FROM_CLINICAL_CELL_LINE
+                        .equals(skipReason)) {
+                    addGlobalValidationError("The regulatory selection '"
+                                             + ResearchProject.FROM_CLINICAL_CELL_LINE + "' is only valid for Clinical Orders");
+                }
+            });
         }
 
         // If this is not a draft, some fields are required.
@@ -1299,6 +1310,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
 
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
+
+            Optional<String> skipRegulatoryReason = Optional.ofNullable(editOrder.getSkipRegulatoryReason());
+            skipRegulatoryReason.ifPresent(reason -> {
+                if(reason.equals(ResearchProject.FROM_CLINICAL_CELL_LINE)) {
+                    fromClinicalLine = true;
+                } else {
+                    notFromHumans = true;
+                }
+            });
 
             sampleDataSourceResolver.populateSampleDataSources(editOrder);
 
@@ -1993,6 +2013,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                         if (editOrder != null && editOrder.getRegulatoryInfos().contains(regulatoryInfo)) {
                             regulatoryInfoJson.put("selected", true);
                         }
+                        final OrspProject orspRegInfo = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
+                        regulatoryInfoJson.put("userEdit", orspRegInfo == null);
                         values.put(regulatoryInfoJson);
                     }
                     item.put("value", values);
@@ -3322,7 +3344,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (action.equals(SAVE_ACTION)) {
-            if (skipRegulatoryInfo) {
+            if (isNotFromHumans() || isFromClinicalLine()) {
                 requireField(editOrder.canSkipRegulatoryRequirements(),
                         "a reason for bypassing the regulatory requirements", action);
             }
@@ -3420,6 +3442,23 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSkipRegulatoryInfo(boolean skipRegulatoryInfo) {
         this.skipRegulatoryInfo = skipRegulatoryInfo;
+    }
+
+
+    public boolean isNotFromHumans() {
+        return notFromHumans;
+    }
+
+    public void setNotFromHumans(boolean notFromHumans) {
+        this.notFromHumans = notFromHumans;
+    }
+
+    public boolean isFromClinicalLine() {
+        return fromClinicalLine;
+    }
+
+    public void setFromClinicalLine(boolean fromClinicalLine) {
+        this.fromClinicalLine = fromClinicalLine;
     }
 
     @Inject
