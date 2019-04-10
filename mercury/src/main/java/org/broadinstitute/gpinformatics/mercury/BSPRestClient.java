@@ -16,6 +16,7 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.queue.CompletedSamples;
 import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
@@ -35,6 +36,8 @@ import java.util.List;
 public class BSPRestClient extends AbstractJerseyClientService {
 
     private static final String EXOMEEXPRESS_CHECK_IS_EXEX = "exomeexpress/check_is_exex_with_wrapper";
+
+    private static final String SEND_PICO_MESSAGE = "afterPico/notifyOfCompletedPico";
 
     private static final long serialVersionUID = 5472586820069306030L;
 
@@ -71,6 +74,11 @@ public class BSPRestClient extends AbstractJerseyClientService {
         WebResource webResource = getWebResource(getUrl(EXOMEEXPRESS_CHECK_IS_EXEX));
         webResource.addFilter(new LoggingFilter(System.out));
         return webResource.type(MediaType.APPLICATION_JSON).post(ExomeExpressCheckResponse.class, new ListWrapper(barcodes));
+    }
+
+    public void informUsersOfPicoCompletion(List<String> sampleIds) {
+        WebResource webResource = getWebResource(getUrl(SEND_PICO_MESSAGE));
+        webResource.type(MediaType.APPLICATION_JSON_TYPE).post(String.class, new CompletedSamples(sampleIds));
     }
 
     @XmlRootElement

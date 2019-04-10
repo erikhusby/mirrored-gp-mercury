@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.AbstractDataDumpGenerator;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.PicoDataDumpGenerator;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.AbstractPostDequeueHandler;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.PicoPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.PicoEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.AbstractQueueValidator;
@@ -11,8 +13,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.PicoQu
  * Enum which defines a queue and its implementation.
  */
 public enum QueueType {
-    PICO("Pico", PicoQueueValidator.class, PicoEnqueueOverride.class, PicoDataDumpGenerator.class,
-            QueueContainerRule.TUBES_ONLY);
+    PICO("Pico", PicoQueueValidator.class, PicoEnqueueOverride.class, PicoPostDequeueHandler.class,
+            PicoDataDumpGenerator.class, QueueContainerRule.TUBES_ONLY);
 
     // Name displayed in the queue page
     private final String textName;
@@ -20,6 +22,8 @@ public enum QueueType {
     private final Class<? extends AbstractQueueValidator> validatorClass;
     // Used to define an override during the Enqueue process utilizing the QueueGrouping.Priority value
     private final Class<? extends AbstractEnqueueOverride> enqueueOverrideClass;
+    // Used to define an override during the Dequeue process.
+    private final Class<? extends AbstractPostDequeueHandler> postDequeueHandlerClass;
     // Used by the queue pages to generate a datadump.
     private final Class<? extends AbstractDataDumpGenerator> dataDumpGenerator;
     // Used throughout to do some verification based upon whether we want to allow only tubes or any vessel.
@@ -27,10 +31,12 @@ public enum QueueType {
 
     QueueType(String textName, Class<? extends AbstractQueueValidator> validatorClass,
               Class<? extends AbstractEnqueueOverride> enqueueOverrideClass,
+              Class<? extends AbstractPostDequeueHandler> postDequeueHandlerClass,
               Class<? extends AbstractDataDumpGenerator> dataDumpGenerator, QueueContainerRule queueContainerRule) {
         this.textName = textName;
         this.validatorClass = validatorClass;
         this.enqueueOverrideClass = enqueueOverrideClass;
+        this.postDequeueHandlerClass = postDequeueHandlerClass;
         this.dataDumpGenerator = dataDumpGenerator;
         this.queueContainerRule = queueContainerRule;
     }
@@ -45,6 +51,10 @@ public enum QueueType {
 
     public Class<? extends AbstractEnqueueOverride> getEnqueueOverrideClass() {
         return enqueueOverrideClass;
+    }
+
+    public Class<? extends AbstractPostDequeueHandler> getPostDequeueHandlerClass() {
+        return postDequeueHandlerClass;
     }
 
     public Class<? extends AbstractDataDumpGenerator> getDataDumpGenerator() {

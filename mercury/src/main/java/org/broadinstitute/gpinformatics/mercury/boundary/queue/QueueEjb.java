@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.queue;
 import org.broadinstitute.bsp.client.queue.DequeueingOptions;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.AbstractDataDumpGenerator;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.dequeueRules.AbstractPostDequeueHandler;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.AbstractEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.validation.QueueValidationHandler;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
@@ -199,10 +200,10 @@ public class QueueEjb {
         List<Long> labVesselIds = getApplicableLabVesselIds(queueType, labVessels);
 
         // Finds all the Active entities by the vessel Ids
-        List<QueueEntity> entitiesByVesselIds = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
+        List<QueueEntity> completedQueueEntities = genericQueueDao.findActiveEntitiesByVesselIds(queueType, labVesselIds);
 
         // Check for completeness, then if complete update status.
-        for (QueueEntity queueEntity : entitiesByVesselIds) {
+        for (QueueEntity queueEntity : completedQueueEntities) {
             if (!queueValidationHandler.isComplete(queueEntity.getLabVessel(), queueType, messageCollection)
                             && dequeueingOptions == DequeueingOptions.DEFAULT_DEQUEUE_RULES) {
                 messageCollection.addWarning(queueEntity.getLabVessel().getLabel()
@@ -211,6 +212,14 @@ public class QueueEjb {
             } else {
                 updateQueueEntityStatus(messageCollection, queueEntity, QueueStatus.Completed);
             }
+        }
+
+        AbstractPostDequeueHandler abstractPostDequeueHandler = null;
+        try {
+            abstractPostDequeueHandler = queueType.getPostDequeueHandlerClass().newInstance();
+            abstractPostDequeueHandler.process(completedQueueEntities);
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
     }
 
