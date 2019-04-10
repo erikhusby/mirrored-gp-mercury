@@ -3,13 +3,13 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -126,6 +126,9 @@ public class LabEventSearchDefinition {
 
         searchTerms = buildEventSampleOptions( sourceLayoutTerm, destinationLayoutTerm );
         mapGroupSearchTerms.put("Sample Metadata", searchTerms);
+
+        searchTerms = buildEventMetadata();
+        mapGroupSearchTerms.put("Event Metadata", searchTerms);
 
         searchTerms = buildLabEventNestedTables();
         searchTerms.add(sourceLayoutTerm);
@@ -312,26 +315,6 @@ public class LabEventSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Simulation Mode");
-        searchTerm.setValueType(ColumnValueType.BOOLEAN);
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public String evaluate(Object entity, SearchContext context) {
-                LabEvent labEvent = (LabEvent) entity;
-                Boolean result = Boolean.FALSE;
-                for(LabEventMetadata meta : labEvent.getLabEventMetadatas() ) {
-                    if( meta.getLabEventMetadataType() == LabEventMetadata.LabEventMetadataType.SimulationMode ) {
-                        result = Boolean.valueOf(meta.getValue());
-                        break;
-                    }
-                }
-                return result?"Yes":"No";
-
-            }
-        });
-        searchTerms.add(searchTerm);
-
         return searchTerms;
     }
 
@@ -506,6 +489,43 @@ public class LabEventSearchDefinition {
                 searchTerm.setDisplayExpression(DisplayExpression.METADATA);
                 searchTerms.add(searchTerm);
             }
+        }
+
+        return searchTerms;
+    }
+
+    /**
+     * Event metadata values.
+     *
+     * @return List of search terms/column definitions for lab event metadata
+     */
+    private List<SearchTerm> buildEventMetadata() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        for (LabEventMetadata.LabEventMetadataType labEventMetadataType : LabEventMetadata.LabEventMetadataType.values()) {
+            SearchTerm searchTerm = new SearchTerm();
+            searchTerm.setName(labEventMetadataType.getDisplayName());
+            searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+                @Override
+                public Set<String> evaluate(Object entity, SearchContext context) {
+                    LabEvent labEvent = (LabEvent) entity;
+                    Set<String> results = new HashSet<>();
+                    for (LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
+                        if (labEventMetadata.getLabEventMetadataType().getDisplayName().equals(searchTerm.getName())) {
+                            if (labEventMetadata.getLabEventMetadataType() ==
+                                    LabEventMetadata.LabEventMetadataType.SimulationMode) {
+                                results.add(Boolean.valueOf(labEventMetadata.getValue()) ? "Yes" : "No");
+                            } else {
+                                results.add(labEventMetadata.getValue());
+                            }
+                            break;
+                        }
+                    }
+
+                    return results;
+                }
+            });
+            searchTerms.add(searchTerm);
         }
 
         return searchTerms;

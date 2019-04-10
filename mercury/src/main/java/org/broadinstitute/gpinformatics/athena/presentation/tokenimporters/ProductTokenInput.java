@@ -20,7 +20,6 @@ import java.util.List;
 @Dependent
 public class ProductTokenInput extends TokenInput<Product> {
 
-    @Inject
     private ProductDao productDao;
 
     public ProductTokenInput() {
@@ -68,5 +67,10 @@ public class ProductTokenInput extends TokenInput<Product> {
         }
 
         return businessKeyList;
+    }
+
+    @Inject
+    public void setProductDao(ProductDao productDao) {
+        this.productDao = productDao;
     }
 }

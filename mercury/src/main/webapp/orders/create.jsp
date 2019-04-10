@@ -1,6 +1,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 
@@ -76,6 +76,9 @@
         }
         .changed {
             border: #3a87ad 1.5px solid
+        }
+        ul.token-input-list {
+            max-width: 360px;
         }
     </style>
         <script src="${ctxpath}/resources/scripts/clipboard.min.js" type="text/javascript"></script>
@@ -216,6 +219,10 @@
                 return $j("<div></div>", {"class": "noOrsp", "text": "No ORSP Projects found."})[0].outerHTML
             }
 
+            // prevent datatables javascript error from appearing.
+            $j.fn.dataTable.ext.errMode = function (settings, helpPage, message) {
+                console.log(message);
+            };
             regulatorySuggestionDT = $j("#regulatoryInfoSuggestions").DataTable({
                 dom: 't',
                 stateSave: false,
@@ -240,32 +247,38 @@
                 columns: [{
                     data: "samples", title: "Sample IDs", 'class': "sample", render: {
                         display: function (samples, type, row, meta) {
-                            var linkId = 'orsp' + meta.row + meta.col;
-                            var sampleString = samples.join(", ");
-                            var sampleLength = samples.length;
-                            var linkSelector = '#' + linkId;
-                            var $href = $j("<a></a>", {
-                                'href': 'javascript:;',
-                                'id': linkId,
-                                'text': 'Click to copy',
-                                'data-placement': 'right',
-                                'data-delay': 2000,
-                                'data-toggle': "tooltip",
-                                'data-original-title': sampleLength + ' sample names copied to clipboard.',
-                                'data-clipboard-target': linkSelector,
-                                'data-clipboard-text': sampleString
-                            });
-                            var clipboard = new Clipboard("a" + linkSelector);
-                            var api = $j.fn.dataTable.Api(meta.settings);
-                            api.cell().on('click.dt', function(event) {
-                                $j(event.target).tooltip("show");
-                                setTimeout(function () {
-                                    $j(event.target).tooltip('hide');
-                                }, 2000);
-                            });
+                            if (row.errors!==undefined) {
+                                modalMessages("error").add(row.errors, "addSamples");
+                            }
 
-                            return sampleString.trunc(90) + "<br/>" + '<div>' + $href[0].outerHTML+'</div>';
+                            if (samples!==undefined) {
+                                var linkId = 'orsp' + meta.row + meta.col;
+                                var sampleString = samples.join(", ");
+                                var sampleLength = samples.length;
+                                var linkSelector = '#' + linkId;
+                                var $href = $j("<a></a>", {
+                                    'href': 'javascript:;',
+                                    'id': linkId,
+                                    'text': 'Click to copy',
+                                    'data-placement': 'right',
+                                    'data-delay': 2000,
+                                    'data-toggle': "tooltip",
+                                    'data-original-title': sampleLength + ' sample names copied to clipboard.',
+                                    'data-clipboard-target': linkSelector,
+                                    'data-clipboard-text': sampleString
+                                });
+                                var clipboard = new Clipboard("a" + linkSelector);
+                                var api = $j.fn.dataTable.Api(meta.settings);
+                                api.cell().on('click.dt', function (event) {
+                                    $j(event.target).tooltip("show");
+                                    setTimeout(function () {
+                                        $j(event.target).tooltip('hide');
+                                    }, 2000);
 
+                                });
+
+                                return sampleString.trunc(90) + "<br/>" + '<div>' + $href[0].outerHTML + '</div>';
+                            }
                         }
                     }
                 }, {
@@ -506,7 +519,8 @@
                     initializeQuoteOptions();
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
-                    $j("#skipRegulatoryInfoCheckbox").on("change", toggleSkipRegulatory);
+                    $j("#notFromHumansCheckbox").on("change", toggleSkipRegulatoryReason);
+                    $j("#clinicalLineCheckbox").on("change", toggleSkipRegulatoryReason);
                     $j("#regulatorySelect").change(function () {
                         $j("#attestationConfirmed").attr("checked", false)
                     });
@@ -551,20 +565,33 @@
         </c:forEach>
 
         var quoteBeforeSkipping;
-        function toggleSkipRegulatory() {
-            var skipRegulatoryChecked = $j("#skipRegulatoryInfoCheckbox").prop("checked");
-            $j("#attestationConfirmed").attr("checked", false);
-            handleUpdateRegulatory(skipRegulatoryChecked);
-        }
 
+        function toggleSkipRegulatoryReason() {
+            var checked = $(this).prop("checked");
+            var notFromHumansElement = $j("#notFromHumansCheckbox");
+            var clinicalLineElement = $j("#clinicalLineCheckbox");
+            handleUpdateRegulatory(checked);
+            if (checked) {
+                $j("#attestationConfirmed").attr("checked", false);
+                if($(this).is(notFromHumansElement)) {
+                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}");
+                    $j("#clinicalLineCheckbox").attr("checked", false);
+                } else {
+                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.FROM_CLINICAL_CELL_LINE}");
+                    $j("#notFromHumansCheckbox").attr("checked", false);
+                }
+            }
+
+        }
         function handleUpdateRegulatory(skipRegulatoryChecked){
             if (skipRegulatoryChecked) {
-                $j("#regulatorySelect :selected").prop("selected", false)
+                $j("#regulatorySelect :selected").prop("selected", false);
                 $j("#regulatorySelect").hide();
                 $j("#skipRegulatoryDiv").show();
             } else {
                 $j("#skipRegulatoryInfoReason").val("");
-                $j("#skipRegulatoryDiv").hide();
+                $j("#notFromHumansCheckbox").attr("checked", false);
+                $j("#clinicalLineCheckbox").attr("checked", false);
                 $j("#regulatorySelect").show();
                 populateRegulatorySelect();
             }
@@ -622,11 +649,9 @@
             var projectKey = $j("#researchProject").val();
             var skipRegulatory = false;
             skipRegulatory = ${actionBean.editOrder.canSkipRegulatoryRequirements()};
-            $j("#skipRegulatoryInfoCheckbox").prop('checked', skipRegulatory);
 
             if (projectKey == null || projectKey == "") {
                 $j("#regulatorySelect").text('When you select a project, its regulatory options will show up here');
-                $j("#regulatoryActive").hide();
                 $j("#attestationDiv").hide();
                 $j("#skipRegulatoryDiv").hide();
                 $j("#regulatoryInfo").hide();
@@ -639,7 +664,7 @@
                     populateRegulatorySelect();
                  }
                 $j("#regulatoryInfo").show();
-                $j("#regulatoryActive").show();
+                $j("#skipRegulatoryDiv").show();
                 $j("#attestationDiv").show();
 
             }
@@ -862,8 +887,10 @@
                         var input = $j('<input type = "checkbox" name="selectedRegulatoryIds" />');
                         if (regulatoryList[index].selected) {
                             $j(input).attr("checked", "");
+                        } else if (regulatoryList[index].userEdit) {
+                            $j(input).attr("disabled", "");
+                            $j(input).attr("title", "This is invalid as it is not found in the ORSP Database")
                         }
-
                         $j(input).attr('value', regulatoryList[index].key);
                         $j(row).append(input);
                         $j(row).append(regulatoryList[index].value);
@@ -1447,7 +1474,7 @@
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
-            <div class="form-horizontal span6">
+            <div class="form-horizontal span6" style="min-width: 512px">
                 <stripes:hidden name="productOrder"/>
                 <stripes:hidden name="submitString"/>
                 <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
@@ -1537,17 +1564,14 @@
                                     Regulatory Information
                                 </stripes:label>
 
-
-                                <div id="regulatoryActive" class="controls">
-                                    <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
-                                                      title="Click if no IRB/ORSP review is required."/>No IRB/ORSP
-                                    Review Required
-                                </div>
                                 <div id="skipRegulatoryDiv" class="controls controls-text">
-                                        ${actionBean.complianceStatement}<br/>
-                                    <stripes:text id="skipRegulatoryInfoReason"
-                                                  name="editOrder.skipRegulatoryReason"
-                                                  maxlength="255"/>
+
+                                    <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
+                                    ${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}<br/>
+                                    <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
+                                    ${ResearchProject.FROM_CLINICAL_CELL_LINE}<br/>
+                                    <stripes:hidden id="skipRegulatoryInfoReason"
+                                                    name="editOrder.skipRegulatoryReason"/>
                                 </div>
                                 <div id="regulatorySelect" class="controls controls-text"></div>
                                 <div id="attestationDiv" class="controls controls-text">
@@ -1794,10 +1818,12 @@
                 <br/>
                 <br/>
                 <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd"
-                                  name="sampleList" rows="15" style="width: 100%;"/>
+                              name="sampleList" rows="15" style="width: 95%;"/>
+
             <table id="regulatoryInfoSuggestions" class="table simple">
                 <caption style="text-align: left;margin-top:1em;"><h3>ORSP(s) associated with samples</h3></caption>
             </table>
+            </div>
             <div id="sampleInitiationKitRequestEdit" class="help-block span4" style="display: none">
             <div class="form-horizontal span5">
                 <fieldset>
@@ -1892,6 +1918,7 @@
                         <div id="kitDefinitions" style="margin-top: 5px;"></div>
                     </div>
                 </fieldset>
+            </div>
             </div>
         </stripes:form>
 

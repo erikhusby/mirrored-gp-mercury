@@ -11,29 +11,19 @@
 
 package org.broadinstitute.gpinformatics.mercury;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.filter.LoggingFilter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.queue.CompletedSamples;
-import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
-import javax.xml.bind.annotation.XmlRootElement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
 
 /**
  * This contains common code used by all clients of BSP rest, ie: non-broadcore) services.
  */
 @Dependent
-public class BSPRestClient extends AbstractJerseyClientService {
+public class BSPRestClient extends AbstractJaxRsClientService {
 
     private static final String EXOMEEXPRESS_CHECK_IS_EXEX = "exomeexpress/check_is_exex_with_wrapper";
 
@@ -66,8 +56,8 @@ public class BSPRestClient extends AbstractJerseyClientService {
         specifyHttpAuthCredentials(client, bspConfig);
     }
 
-    public WebResource getWebResource(String urlString) {
-        return getJerseyClient().resource(urlString);
+    public WebTarget getWebResource(String urlString) {
+        return getJaxRsClient().target(urlString);
     }
 
     public ExomeExpressCheckResponse callExomeExpressCheck(List<String> barcodes) {

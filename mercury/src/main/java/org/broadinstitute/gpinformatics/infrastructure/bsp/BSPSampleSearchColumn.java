@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum BSPSampleSearchColumn {
     SAMPLE_ID("Sample ID"),
     SAMPLE_KIT("Sample Kit"),
@@ -42,6 +45,8 @@ public enum BSPSampleSearchColumn {
     POSITION("Position"),
     LOCATION("Location");
 
+    private static final Map<String, BSPSampleSearchColumn> MAP_NAME_TO_COLUMN =
+            new HashMap<>(BSPSampleSearchColumn.values().length);
     private final String columnName;
     public String columnName() { return columnName; }
 
@@ -110,5 +115,15 @@ public enum BSPSampleSearchColumn {
             }
         }
         return false;
+    }
+
+    static {
+        for (BSPSampleSearchColumn column : BSPSampleSearchColumn.values()) {
+            MAP_NAME_TO_COLUMN.put(column.columnName(), column);
+        }
+    }
+
+    public static BSPSampleSearchColumn getByName(String displayName) {
+        return MAP_NAME_TO_COLUMN.get(displayName);
     }
 }

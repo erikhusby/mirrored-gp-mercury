@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
-import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;

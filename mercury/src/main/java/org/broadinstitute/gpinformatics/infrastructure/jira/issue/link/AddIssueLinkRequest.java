@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue.link;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraLinkTypeSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.GetCommentsResponse;
-import org.codehaus.jackson.annotate.JsonPropertyOrder;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 /**
  * @author Scott Matthews

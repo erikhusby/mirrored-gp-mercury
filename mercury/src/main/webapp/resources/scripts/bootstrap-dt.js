@@ -109,19 +109,24 @@ function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
  *
  * @param oTable
  * @param tableID
+ * @param additionalOptionMap map of new option to create:
+ *      var additionalOptionMap = {
+            value: "theValue",
+            text: "Something to select",
+            searchIndex: 1
+        }
  */
-function includeAdvancedFilter(oTable, tableID) {
+function includeAdvancedFilter(oTable, tableID, additionalOptionMap) {
     $j(tableID + "_filter").append(filterDropdownHtml);
+    if (additionalOptionMap != undefined) {
+        $j(tableID + "_filter").find(".filterDropdown").append("<option value='" + additionalOptionMap.value + "'>" + additionalOptionMap.text + "</option>");
+    }
     $j(tableID + "_filter").find(".filterDropdown").change(function() {
-        chooseFilterForData(oTable);
+        chooseFilterForData(oTable, additionalOptionMap);
     });
     findFilterTextInput(oTable).focusout(function () {
-        var filterTextInput = oTable.fnSettings().oPreviousSearch;
-        if (isBlank(filterTextInput.sSearch)) {
-            oTable.fnFilterClear();
-        }
+        findFilterTextInput(oTable).trigger('keyup');
     });
-
 
     $j(".dataTables_filter").find("input[type='text'],input[type='search']").keyup();
 }
@@ -139,33 +144,43 @@ function findFilterTextInput(oTable) {
  *
  * @param oTable
  */
-function chooseFilterForData(oTable) {
+function chooseFilterForData(oTable, additionalOptionMap) {
     var filterWrapperSelector = findDataTableWrapper(oTable);
     var filterTextInput = findFilterTextInput(oTable);
     filterTextInput.unbind('keyup');
+    var hasAdditionalOption = additionalOptionMap != undefined
+        && additionalOptionMap.value != undefined
+        && additionalOptionMap.searchIndex != undefined;
+
     filterTextInput.keyup(function () {
         var tab = RegExp("\\t", "g");
         var useOr = false;
-        if ($j(filterWrapperSelector).find(".filterDropdown").val() == "any") {
+        var useAdditionalOption=false;
+        var searchIndex = null;
+        var useGrep = false;
+        var selectedOption = $j(filterWrapperSelector).find(".filterDropdown").val();
+        if (selectedOption === "any") {
             useOr = true;
+            useGrep = true;
+        } else if (hasAdditionalOption && selectedOption === additionalOptionMap.value) {
+            searchIndex = additionalOptionMap.searchIndex;
+            useAdditionalOption = true;
+            useGrep = true;
         }
         var filterInput = filterTextInput.val().replace(tab, " ");
-        var searchRegex = ".";
-        if (useOr) {
-            // OR
-            if (!isBlank(filterInput)) {
-                searchRegex = "(" + filterInput.trim().split(" ").join("+|") + "+)";
+        oTable.fnFilterClear(oTable.oSettings);
+        if (!isBlank(filterInput)) {
+            var searchText = filterInput;
+            if (useOr) {
+                searchText = "(" + filterInput.trim().split(/\s+/).join(".*|") + ".*)";
+            } else if (useAdditionalOption) {
+                searchText = "(^" + filterInput.trim().split(/\s+/).join("$|^") + "$)";
             }
-            oTable.fnFilter( searchRegex, null, true, false );
-        }else {
-            // AND
-            if (!isBlank(filterInput)) {
-                oTable.fnFilter(filterInput, null, false, true);
-            }
+
+            // the last column here is 'smart search' which is normally false when regexp is used.
+            oTable.fnFilter(searchText, searchIndex, useGrep, !useGrep);
         }
-        if (useOr||matchNone) {
-            oTable.fnFilter( searchRegex, null, true, false );
-        }
+
         filterTextInput.val(filterInput);
     });
 
