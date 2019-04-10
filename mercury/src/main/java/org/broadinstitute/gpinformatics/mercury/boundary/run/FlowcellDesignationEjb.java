@@ -69,7 +69,7 @@ public class FlowcellDesignationEjb {
                 "  and normEvent.event_date >= :startDate " +
                 "  and normEvent.event_date <= :endDate " +
                 "and not exists (select 1 from flowcell_designation dsg " +
-                "  where dsg.loading_tube = normTube.lab_vessel_id and pool_test = 0) " +
+                "  where dsg.starting_tube = normTube.lab_vessel_id and pool_test = 0) " +
                 "and not exists (select 1 from batch_starting_vessels normFctTubes " +
                 "  join lab_batch normFct on normFctTubes.lab_batch = normFct.lab_batch_id " +
                 "  where normFctTubes.lab_vessel = normTube.lab_vessel_id " +
