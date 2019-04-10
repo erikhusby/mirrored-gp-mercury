@@ -7,15 +7,20 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -33,8 +38,8 @@ import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
@@ -55,7 +60,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
-@Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+@Test(groups = TestGroups.ALTERNATIVES)
 @Dependent
 public class BillingEjbJiraDownTest extends Arquillian {
 
@@ -76,7 +81,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
     @Inject
     private BillingSessionAccessEjb billingSessionAccessEjb;
 
-    private SapIntegrationService sapService = Mockito.mock(SapIntegrationService.class);
+    private SapIntegrationServiceImpl sapService;
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -93,15 +98,15 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryDeployment() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class,
+            AlwaysThrowsRuntimeExceptionsJiraStub.class);
     }
 
     private String writeFixtureData() throws SAPIntegrationException {
 
         final String SM_A = "SM-" + (new Date()).getTime();
         final String SM_B = "SM-" + ((new Date()).getTime() + 1);
-        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, ProductOrder.QuoteSourceType.SAP_SOURCE, SM_A, SM_B);
-        productOrder = Mockito.spy(productOrder);
+        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, SM_A, SM_B);
 
         Multimap<String, ProductOrderSample> samplesByName = ProductOrderTestFactory.groupBySampleId(productOrder);
 
@@ -124,22 +129,20 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
 
-        productPriceCache = Mockito.mock(SAPProductPriceCache.class);
-        SapQuote fakeQuote = fakeQuote(productOrder.getQuoteId());
-        Mockito.when(productOrder.getSapQuote(sapService)).thenReturn(fakeQuote);
+        QuoteService mockQuoteService = Mockito.mock(QuoteService.class);
+        SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
+        sapService = new SapIntegrationServiceImpl(
+            SapConfig.produce(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV),
+            mockQuoteService, Mockito.mock(BSPUserList.class), Mockito.mock(PriceListCache.class),
+            productPriceCache, mockAccessController);
+        productPriceCache = new SAPProductPriceCache(sapService);
+        sapService.setProductPriceCache(productPriceCache);
+        SapIntegrationClientImpl sapIntegrationClient = Mockito.mock(SapIntegrationClientImpl.class);
+        sapService.setWrappedClient(sapIntegrationClient);
 
         billingAdaptor = new BillingAdaptor(billingEjb, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
-        SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
 
-        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-            SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
-            .thenReturn(new SAPMaterial("test", broad, broad.getDefaultWbs(), "test description", "50",
-                SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", null, null, null, null,
-                Collections.emptyMap(),
-                Collections.singletonMap(DeliveryCondition.LATE_DELIVERY_DISCOUNT, new BigDecimal("200.00")),
-                SAPMaterial.MaterialStatus.ENABLED, broad.getSalesOrganization()));
-        Mockito.when(productPriceCache.productExists(Mockito.anyString())).thenReturn(true);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
 
         BillingSession
@@ -151,20 +154,6 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
         return billingSession.getBusinessKey();
     }
-
-    private static SapQuote fakeQuote(String quoteId) {
-        QuoteHeader header=Mockito.mock(QuoteHeader.class);
-        Mockito.when(header.getQuoteNumber()).thenReturn(quoteId);
-        FundingDetail fundingDetail = Mockito.mock(FundingDetail.class);
-        Mockito.when(fundingDetail.getFundingStatus()).thenReturn(FundingStatus.APPROVED);
-        FundingPartner fundingPartner = Mockito.mock(FundingPartner.class);
-        QuoteItem quoteItem = Mockito.mock(QuoteItem.class);
-        SapQuote sapQuote =
-            new SapQuote(header, Collections.singleton(fundingDetail), Collections.singleton(fundingPartner),
-                Collections.singleton(quoteItem));
-        return sapQuote;
-    }
-
 
     public void test() throws SAPIntegrationException {
 
