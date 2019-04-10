@@ -80,8 +80,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         super();
         Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
         billingAdaptorLogger.setLevel(Level.ALL);
-        Arrays.stream(billingAdaptorLogger.getHandlers())
-            .filter(handler -> !(handler instanceof TestLogHandler)).forEach(billingAdaptorLogger::removeHandler);
+        Arrays.stream(billingAdaptorLogger.getHandlers()).forEach(billingAdaptorLogger::removeHandler);
         testLogHandler = TestLogHandler.newInstance();
         billingAdaptorLogger.addHandler(testLogHandler);
         testLogHandler.setLevel(Level.ALL);

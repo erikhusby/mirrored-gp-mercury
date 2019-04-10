@@ -165,7 +165,8 @@ public class BillingCreditDbFreeTest {
             SapIntegrationClientImpl.SAPCompanyConfiguration.class)))
             .thenReturn(new SAPMaterial("test", broad, broad.getDefaultWbs(), "test description", "100",
                 SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "", "", new Date(),
-                new Date(), Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, ""));
+                new Date(), Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                broad.getSalesOrganization()));
         TemplateEngine templateEngine = new TemplateEngine();
 
         templateEngine.postConstruct();
