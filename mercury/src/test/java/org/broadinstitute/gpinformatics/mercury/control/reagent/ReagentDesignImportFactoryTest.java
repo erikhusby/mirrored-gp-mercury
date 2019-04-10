@@ -77,19 +77,25 @@ public class ReagentDesignImportFactoryTest extends Arquillian {
         String tubeA = "TubeATest" + prefix;
         String tubeB = "TubeBFails" + prefix;
 
+        String uniqueDesignId = "NoChanceLabUsesThisId" + timestamp;
+
         // Upload Once to get data, then attempt with another design name to this id to see if it fails correctly
         ReagentDesignImportProcessor.ReagentImportDto dto = createDto(tubeA, "Pancan_396_NO_INTRONS",
                 prefix, 0);
-        testReagentDesign(Collections.singletonList(dto), messageCollection, false);
+        dto.setDesignId(uniqueDesignId);
+        testReagentDesign(Collections.singletonList(dto), messageCollection, true);
         Assert.assertEquals(messageCollection.getErrors().size(), 0);
 
         ReagentDesignImportProcessor.ReagentImportDto dto2 = createDto(tubeB, "broad_custom_exome_v1",
                 prefix, 1);
-        dto2.setDesignId(dto.getDesignId());
+        dto2.setDesignId(uniqueDesignId);
         testReagentDesign(Collections.singletonList(dto2), messageCollection, false);
         Assert.assertEquals(messageCollection.getErrors().size(), 1);
+        String expErr = String.format(
+                "Can't link Design ID %s to broad_custom_exome_v1 it's already linked to Pancan_396_NO_INTRONS.",
+                uniqueDesignId);
         Assert.assertEquals(messageCollection.getErrors().get(0),
-                "Can't link Design ID Pancan_396_NO_INTRONS_ID to broad_custom_exome_v1 it's already linked to Pancan_396_NO_INTRONS.");
+                expErr);
     }
 
     @Test
