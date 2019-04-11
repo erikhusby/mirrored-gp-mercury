@@ -1990,10 +1990,6 @@
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="reagent_metadata_aud"
                        columnNames="rev, reagent, metadata" constraintName="PK_REAG_TO_META_JOIN_AUD"/>
-        <addForeignKeyConstraint baseTableName="reagent_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
-                                 constraintName="fk_reagent_metadata_ref_info"
-                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
-                                 referencedColumnNames="rev_info_id"/>
     </changeSet>
 
     <changeSet id="GPLIM-6009-3" author="jowalsh">
