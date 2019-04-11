@@ -952,7 +952,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError(unFundedMessage);
         }
 
-        BigDecimal fundsRemaining = quote.getQuoteHeader().getQuoteTotal().subtract(quote.getQuoteHeader().getQuoteOpenValue());
+        BigDecimal fundsRemaining = quote.getQuoteHeader().getQuoteOpenValue();
         double outstandingEstimate = estimateSapOutstandingOrders(quote, additionalSampleCount, editOrder);
         double valueOfCurrentOrder = 0;
 
@@ -1018,9 +1018,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         double value = 0d;
 
         if(productOrder == null) {
-            final Optional<BigDecimal> quoteOpenValue = Optional.ofNullable(foundQuote.getQuoteHeader().getQuoteOpenValue());
-            if(quoteOpenValue.isPresent()) {
-                value = quoteOpenValue.get().doubleValue();
+            final Optional<BigDecimal> openSalesValue = Optional.ofNullable(foundQuote.getQuoteHeader().getSalesOrderTotal());
+            if(openSalesValue.isPresent()) {
+                value = openSalesValue.get().doubleValue();
             }
         } else {
             OrderCalculatedValues calculatedValues = null;
@@ -1600,7 +1600,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     if(quoteTotal.isPresent() && quoteOpenValue.isPresent()) {
                         item.put("fundsRemaining",
                                 NumberFormat.getCurrencyInstance()
-                                        .format(quoteTotal.get().subtract(quoteOpenValue.get())));
+                                        .format(quoteTotal.orElse(BigDecimal.ZERO)));
                     }
                     final Optional<FundingStatus> fundingHeaderStatus = Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
                     if(fundingHeaderStatus.isPresent()) {
