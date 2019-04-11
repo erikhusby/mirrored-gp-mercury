@@ -372,7 +372,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         if(forOrderValueQuery) {
-            previousBilledCount = (int) ProductOrder.getBilledSampleCount(placedOrder, product);
+            previousBilledCount = (int) ProductOrder.getUnbilledNonSampleCount(placedOrder, product, sampleCount);
         }
         return BigDecimal.valueOf(sampleCount-previousBilledCount);
     }
