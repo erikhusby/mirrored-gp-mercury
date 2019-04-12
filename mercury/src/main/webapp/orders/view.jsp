@@ -910,7 +910,7 @@ function updateFunds(data) {
             fundsRemainingNotification += '<br>' + (detailIndex+1) +") " +fundingDetails[detailIndex].fundingType
                 + ": " + fundingDetails[detailIndex].fundingStatus;
 
-            if(fundingDetails[detailIndex].fundingStatus !== (data.quoteType == "Quote Server Quote")?"Active":"Approved") {
+            if(fundingDetails[detailIndex].fundingStatus !== ((data.quoteType == "Quote Server Quote")?"Active":"Approved")) {
                 quoteWarning = true;
             }
 
