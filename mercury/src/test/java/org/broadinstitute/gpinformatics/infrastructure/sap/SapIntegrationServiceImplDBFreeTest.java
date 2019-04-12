@@ -507,6 +507,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         Set<SAPMaterial> materials = new HashSet<>();
 
         ProductOrder countTestPDO = ProductOrderTestFactory.createDummyProductOrder(10, "PDO-smpcnt");
+        countTestPDO.setPriorToSAP1_5(false);
         countTestPDO.setQuoteId(testSingleSourceQuote.getAlphanumericId());
         countTestPDO.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         countTestPDO.addSapOrderDetail(new SapOrderDetail("testSAPOrder", 10, testSingleSourceQuote.getAlphanumericId(),
@@ -533,7 +534,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                     SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, true,
                             false).doubleValue();
             double primaryOrderValueQueryCount =
-                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, true,
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, false,
                             true).doubleValue();
             assertThat(primarySampleCount, is(equalTo((double) countTestPDO.getSamples().size())));
             assertThat(primaryClosingCount, is(equalTo(closingCount)));
@@ -548,7 +549,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                         SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, true,
                                 false).doubleValue();
                 final double addOnOrderValueQueryCount =
-                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, true,
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, false,
                                 true).doubleValue();
                 assertThat(addonSampleCount, is(equalTo((double) countTestPDO.getSamples().size())));
                 assertThat(addonClosingCount, is(equalTo(closingCount)));
