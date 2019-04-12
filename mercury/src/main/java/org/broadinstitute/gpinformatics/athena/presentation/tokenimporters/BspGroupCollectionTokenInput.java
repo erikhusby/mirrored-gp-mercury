@@ -16,7 +16,6 @@ import java.text.MessageFormat;
 @Dependent
 public class BspGroupCollectionTokenInput extends TokenInput<SampleCollection> {
 
-    @Inject
     private BSPGroupCollectionList bspCollectionList;
 
     public BspGroupCollectionTokenInput() {
@@ -46,5 +45,10 @@ public class BspGroupCollectionTokenInput extends TokenInput<SampleCollection> {
     @Override
     protected SampleCollection getById(String key) {
         return StringUtils.isNumeric(key) ? bspCollectionList.getById(Long.valueOf(key)) : null;
+    }
+
+    @Inject
+    public void setBspCollectionList(BSPGroupCollectionList bspCollectionList) {
+        this.bspCollectionList = bspCollectionList;
     }
 }

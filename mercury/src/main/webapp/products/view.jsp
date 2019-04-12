@@ -141,6 +141,13 @@
                 </div>
             </div>
 
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Product WBS</label>
+                <div class="controls">
+                    <div class="form-value">${actionBean.editProduct.determineCompanyConfiguration().defaultWbs}</div>
+                </div>
+            </div>
+
                 <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
             <%--<c:if test="${actionBean.editProduct.externalPriceItem != null}">--%>
                 <%--<div class="view-control-group control-group">--%>

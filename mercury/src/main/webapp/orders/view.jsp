@@ -878,7 +878,10 @@ function renderPico(data, type, row, meta) {
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
     var productOrderKey = $j("input[name='productOrder']").val();
+    var quoteSource = "${actionBean.editOrder.quoteSource}";
+
     if ($j.trim(quoteIdentifier)) {
+        debugger;
         $j.ajax({
             url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey + "&quoteSource=${actionBean.editOrder.quoteSource.displayName}",
             dataType: 'json',
@@ -1857,14 +1860,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                     <stripes:button name="setRisk" value="Set Risk" class="btn"
                                     style="margin-left:5px;" onclick="showRiskDialog()"/>
 
-                </security:authorizeBlock>
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
-                        <stripes:link beanclass="${actionBean.class.name}" event="<%= ProductOrderActionBean.SQUID_COMPONENTS_ACTION %>">
-                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                            Build Squid Components
-                        </stripes:link>
-                    </c:if>
                 </security:authorizeBlock>
             </span>
 

@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
@@ -46,6 +47,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.*;
 
 @Dependent
 @Default
@@ -89,24 +92,24 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      */
     private void initializeClient() {
 
-        SapIntegrationClientImpl.SAPEnvironment environment;
+        SAPEnvironment environment;
 
         switch (sapConfig.getExternalDeployment()) {
         case PROD:
-            environment = SapIntegrationClientImpl.SAPEnvironment.PRODUCTION;
+            environment = SAPEnvironment.PRODUCTION;
             break;
             case DEV:
-                environment = SapIntegrationClientImpl.SAPEnvironment.DEV;
+                environment = SAPEnvironment.DEV;
                 break;
             case TEST:
-                environment = SapIntegrationClientImpl.SAPEnvironment.DEV_400;
+                environment = SAPEnvironment.DEV_400;
                 break;
             case RC:
-                environment = SapIntegrationClientImpl.SAPEnvironment.QA_400;
+                environment = SAPEnvironment.QA_400;
                 break;
             case QA:
             default:
-                environment = SapIntegrationClientImpl.SAPEnvironment.QA;
+                environment = SAPEnvironment.QA;
                 break;
         }
 
@@ -174,7 +177,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         ProductOrder orderToUpdate = placedOrder;
 
         SAPOrder newOrder =
-                new SAPOrder(SapIntegrationClientImpl.SystemIdentifier.MERCURY, orderToUpdate.getSapCompanyConfigurationForProductOrder(),
+                new SAPOrder(SystemIdentifier.MERCURY, orderToUpdate.getSapCompanyConfigurationForProductOrder(),
                         orderToUpdate.getQuoteId(), bspUserList.getUserFullName(orderToUpdate.getCreatedBy()),
                         placedOrder.isPriorToSAP1_5());
 
@@ -331,7 +334,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public String findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException {
+    public String findCustomer(SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException {
 
         String customerNumber = null;
         if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
@@ -347,7 +350,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         customerNumber =
                                 getClient().findCustomerNumber(funding.getPurchaseOrderContact(), companyCode);
                     } catch (SAPIntegrationException e) {
-                        if (e.getMessage().equals(SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT)) {
+                        if (e.getMessage().equals(MISSING_CUSTOMER_RESULT)) {
                             throw new SAPIntegrationException(
                                     "Your order cannot be placed in SAP because the email address "
                                     + "specified on the Quote is not attached to any SAP Customer account.\n"
@@ -357,7 +360,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                                     + "to resubmit this order to ensure that your work is "
                                     + "properly processed.\n"
                                     + "For further questions please contact Mercury support");
-                        } else if (e.getMessage().equals(SapIntegrationClientImpl.TOO_MANY_ACCOUNTS_RESULT)) {
+                        } else if (e.getMessage().equals(TOO_MANY_ACCOUNTS_RESULT)) {
                             throw new SAPIntegrationException(
                                     "Your order cannot be placed because the email address specified "
                                     + "on the Quote is associated with more than 1 SAP Customer account.\n"
@@ -407,55 +410,63 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @NotNull
     protected SAPMaterial initializeSapMaterialObject(Product product) throws SAPIntegrationException {
-        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = product.isExternalProduct() ?
-            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
-            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        SAPCompanyConfiguration companyCode = product.isExternalProduct() ?
+            SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
+            SAPCompanyConfiguration.BROAD;
+        String productHeirarchy = SAPCompanyConfiguration.BROAD.getSalesOrganization();
+
+        if (product.isExternalOnlyProduct() || product.isClinicalProduct()) {
+            productHeirarchy = SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization();
+        }
         BigDecimal minimumOrderQuantity =
             product.getMinimumOrderSize() != null ? new BigDecimal(product.getMinimumOrderSize()) : BigDecimal.ONE;
 
-        SAPMaterial newMaterial = new SAPMaterial(product.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
+        return new SAPMaterial(product.getPartNumber(), companyCode, companyCode.getDefaultWbs(),
             product.getProductName(), null, SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, minimumOrderQuantity,
             product.getDescription(), product.getDeliverables(), product.getInputRequirements(),new Date(), new Date(),
-            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
-        return newMaterial;
+            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, productHeirarchy);
     }
 
     @Override
     public void publishProductInSAP(Product product) throws SAPIntegrationException {
-        SAPChangeMaterial newMaterial = SAPChangeMaterial.fromSAPMaterial(initializeSapMaterialObject(product));
-        if (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) == null) {
-            getClient().createMaterial(newMaterial);
+        SAPChangeMaterial sapMaterial = SAPChangeMaterial.fromSAPMaterial(initializeSapMaterialObject(product));
+        if (isNewMaterial(product)) {
+            getClient().createMaterial(sapMaterial);
         } else {
-            getClient().changeMaterialDetails(newMaterial);
+            getClient().changeMaterialDetails(sapMaterial);
         }
+        if(sapMaterial.getCompanyCode() == SAPCompanyConfiguration.BROAD) {
+            sapMaterial.setCompanyCode(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
 
-        if(product.hasExternalCounterpart() || product.isClinicalProduct() || product.isExternalOnlyProduct()) {
-            newMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
-            newMaterial.setMaterialName(StringUtils.isNotBlank(product.getAlternateExternalName())?product.getAlternateExternalName():product.getName());
-            if (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null) {
-                getClient().createMaterial(newMaterial);
+            String materialName = StringUtils.defaultString(product.getAlternateExternalName(), product.getName());
+            sapMaterial.setMaterialName(materialName);
+            if (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null) {
+                getClient().createMaterial(sapMaterial);
             } else {
-                getClient().changeMaterialDetails(newMaterial);
+                getClient().changeMaterialDetails(sapMaterial);
             }
 
         }
 
     }
 
+    private boolean isNewMaterial(Product product) {
+        return (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD) == null)
+            && (productPriceCache.findByProduct(product, SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null);
+    }
+
     @Override
     public Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException {
-
         Set<SAPMaterial> materials = new HashSet<>();
-        Set<SAPMaterial> researchMaterials =
-                getClient().findMaterials(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getPlant(),
-                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
-        Set<SAPMaterial> externalMaterials =
-                getClient().findMaterials(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getPlant(),
-                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES
-                                .getSalesOrganization());
-        materials.addAll(researchMaterials);
-        materials.addAll(externalMaterials);
+        materials.addAll(findMaterials(SAPCompanyConfiguration.BROAD));
+        materials.addAll(findMaterials(SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
         return materials;
+    }
+
+    private Set<SAPMaterial> findMaterials(SAPCompanyConfiguration sapCompanyConfiguration)
+        throws SAPIntegrationException {
+        return getClient()
+            .findMaterials(sapCompanyConfiguration.getPlant(), sapCompanyConfiguration.getSalesOrganization());
     }
 
     @Override
@@ -467,9 +478,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
         }
 
-        orderCalculatedValues =
-                getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
-                        potentialOrderCriteria);
+            orderCalculatedValues =
+                    getClient().calculateOrderValues(quoteId, SystemIdentifier.MERCURY, potentialOrderCriteria);
+        }
         return orderCalculatedValues;
     }
 
@@ -532,11 +543,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param companyProductOrder Product Order from which the company code is to be determined
      * @return an indicator that represents one of the configured companies within SAP
      */
-    public static SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
+    public static SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
             throws SAPIntegrationException
     {
-        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
-                companyProductOrder.getSapCompanyConfigurationForProductOrder();
+        SAPCompanyConfiguration companyCode = companyProductOrder.getSapCompanyConfigurationForProductOrder();
 
         final SapOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
         if(latestSapOrderDetail != null && latestSapOrderDetail.getCompanyCode()!= null

@@ -1378,17 +1378,7 @@ public class LabEventFactory implements Serializable {
                     throw new RuntimeException("Failed to find metadata " + metadataType.getName());
                 }
             }
-            if (manualTransferDetails != null) {
-                LabEventType.ReagentRequirements reagentRequirements =
-                        manualTransferDetails.getMapReagentNameToRequirements().get(reagentType.getKitType());
-                // Check to see if the lab event type has a requirement for valid expiration date of this reagent type.
-                if (reagentRequirements != null && reagentRequirements.isExpirationDateIncluded()) {
-                    // Check to see if there is an expiration date provided at all. (validated within jsp page).
-                    if (reagentType.getExpiration() == null) {
-                        throw new RuntimeException("No expiration date provided for reagent " + genericReagent.getName());
-                    }
-                }
-            }
+
             labEvent.addReagentMetadata(genericReagent, metadataSet);
         }
     }

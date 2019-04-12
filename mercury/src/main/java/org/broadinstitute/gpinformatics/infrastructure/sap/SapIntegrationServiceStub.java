@@ -296,7 +296,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
                 new SAPMaterial(dividedProductInfo[0], companyCode, companyCode.getDefaultWbs(), dividedProductInfo[1],
                     String.valueOf(testPrice), SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA,
                     BigDecimal.ZERO, dividedProductInfo[1], null, null, new Date(), new Date(), null, null,
-                    SAPMaterial.MaterialStatus.ENABLED, null);
+                    SAPMaterial.MaterialStatus.ENABLED, companyCode.getSalesOrganization());
             testPrice += 10;
             sapMaterials.add(initialMaterial);
         }

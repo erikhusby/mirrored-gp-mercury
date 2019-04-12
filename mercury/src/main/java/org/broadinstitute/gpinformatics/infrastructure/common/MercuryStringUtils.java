@@ -11,10 +11,10 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,7 +38,7 @@ public class MercuryStringUtils {
 
     public static <T> String serializeJsonBean(T beanClass) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(SerializationConfig.Feature.WRITE_DATES_AS_TIMESTAMPS, false);
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(beanClass);
     }
 

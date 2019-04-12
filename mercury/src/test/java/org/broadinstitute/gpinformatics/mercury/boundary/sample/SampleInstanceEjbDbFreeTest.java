@@ -109,17 +109,24 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     public void testWalkupSequencing() throws Exception {
         SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.WALKUP);
         MessageCollection messages = new MessageCollection();
-        sampleInstanceEjb.verifyAndPersistSubmission(new WalkUpSequencing() {{
+        SampleInstanceEntity entity = sampleInstanceEjb.verifyAndPersistSubmission(new WalkUpSequencing() {{
             setLibraryName("TEST_LIBRARY");
             setTubeBarcode("TEST_BARCODE");
-            setReadType("TEST_READ_TYPE");
-            setAnalysisType("TEST");
-            setLabName("TEST lab");
-            setBaitSetName("TEST_BAIT");
+            setAnalysisType("No_Analysis");
             setReadType("Paried End");
+            setBaitSetName("TEST bait");
         }}, messages);
+        // dbFree must explicitly do what Hibernate entity mapping would normally do.
+        entity.getLabVessel().getSampleInstanceEntities().add(entity);
 
         Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entity.getLabVessel().getSampleInstancesV2()));
+        for (SampleInstanceV2 sampleInstance : entity.getLabVessel().getSampleInstancesV2()) {
+            Assert.assertEquals(sampleInstance.getBaitName(), "TEST bait");
+            Assert.assertEquals(sampleInstance.getAnalysisType().getName(), "No_Analysis");
+            Assert.assertEquals(sampleInstance.getSampleLibraryName(), "TEST_LIBRARY");
+            Assert.assertTrue(sampleInstance.getPairedEndRead());
+        }
     }
 
     @Test
@@ -253,7 +260,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getConcentration(), new BigDecimal(select(i, "67.00", "68.00", "69.00")));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), 76);
+            Assert.assertEquals(entity.getReadLength1().intValue(), 76);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
             Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
@@ -319,7 +326,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("100.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), 151);
+            Assert.assertEquals(entity.getReadLength1().intValue(), 151);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
             Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
@@ -386,7 +393,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getConcentration(), new BigDecimal("4444.00"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), 151);
+            Assert.assertEquals(entity.getReadLength1().intValue(), 151);
             Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
             Assert.assertEquals(entity.getAggregationParticle(), "Microsporidia_RNASeq_Sanscrainte");
             Assert.assertEquals(entity.getAnalysisType().getBusinessKey(), "WholeGenomeShotgun.Resequencing");
@@ -461,7 +468,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(tube.getVolume(), new BigDecimal("0.60"));
             Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-            Assert.assertEquals(entity.getReadLength().intValue(), new int[]{4, 2}[i]);
+            Assert.assertEquals(entity.getReadLength1().intValue(), new int[]{4, 2}[i]);
             Assert.assertNull(entity.getLibraryType());
             Assert.assertEquals(entity.getAggregationParticle(), select(i, "1", ""));
             Assert.assertEquals(entity.getUmisPresent(), new Boolean[]{null, Boolean.TRUE}[i]);
@@ -672,7 +679,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         Assert.assertTrue(warnings.contains("Row #2 Unknown header(s) \"Insert Size Range\"."));
         Assert.assertTrue(warnings.contains(String.format(SampleInstanceEjb.DUPLICATE_S_M, 6,
                 "SM-748OO", "Illumina_P5-Nijow_P7-Waren")));
-        Assert.assertEquals(warnings.size(), 2, "Found unexpected warnings: " + StringUtils.join(warnings, "; "));
+        Assert.assertTrue(warnings.get(2).startsWith("Row #7 value for Read Length is not consistent with row #6"));
+        Assert.assertEquals(warnings.size(), 3, "Found unexpected warnings: " + StringUtils.join(warnings, "; "));
     }
 
     @Test
@@ -926,7 +934,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             public ReagentDesign answer(InvocationOnMock invocation) throws Throwable {
                 String name = (String)invocation.getArguments()[0];
                 ReagentDesign reagentDesign = null;
-                if (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown")) {
+                if (StringUtils.isBlank(name) || name.equalsIgnoreCase("unknown") || name.startsWith("TEST ")) {
                     return null;
                 }
                 reagentDesign = new ReagentDesign();

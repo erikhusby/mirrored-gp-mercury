@@ -20,7 +20,6 @@ import java.util.Collections;
 @Dependent
 public class ProjectTokenInput extends TokenInput<ResearchProject> {
 
-    @Inject
     private ResearchProjectDao researchProjectDao;
 
     public ProjectTokenInput() {
@@ -72,5 +71,11 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     @Override
     protected String formatMessage(String messageString, ResearchProject project) {
         return MessageFormat.format(messageString, project.getBusinessKey(), project.getTitle());
+    }
+
+    @Inject
+    public void setResearchProjectDao(
+            ResearchProjectDao researchProjectDao) {
+        this.researchProjectDao = researchProjectDao;
     }
 }

@@ -1,6 +1,7 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
+<%@ page import="org.broadinstitute.sap.services.SapIntegrationClientImpl" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -60,6 +61,18 @@
             var criteriaCount = 0;
             var genotypingChipCount = 0;
 
+            function loadDefaultWbs() {
+                var wbs = "";
+                var tokenInput = $j("#primaryPriceItem").tokenInput("get");
+                if (tokenInput.length > 0) {
+                    wbs = "<%= SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs() %>";
+                    if ($j("#clinicalProduct, #externalOrderOnly").is(":checked")) {
+                        wbs = "<%= SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getDefaultWbs() %>";
+                    }
+                }
+                $j("#defaultWbs").text(wbs);
+            }
+
             $j(document).ready(
                 function () {
                     $j("#primaryPriceItem").tokenInput(
@@ -72,7 +85,9 @@
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.priceItemTokenInput.separator}",
                             preventDuplicates: true,
-                            autoSelectFirstResult: true
+                            autoSelectFirstResult: true,
+                            onAdd: loadDefaultWbs,
+                            onDelete: loadDefaultWbs
                         }
                     );
 
@@ -153,6 +168,11 @@
                         $j("#reagentDesignKey").prop('disabled', false);
                         return true;
                     });
+
+                    $j(function () {
+                        loadDefaultWbs();
+                    });
+                    $j("#clinicalProduct, #externalOrderOnly").on("click", loadDefaultWbs);
                 }
             );
 
@@ -578,6 +598,13 @@
                     <div class="controls">
                         <stripes:text id="primaryPriceItem" name="priceItemTokenInput.listOfKeys"
                             class="defaultText" title="Type to search for matching price items"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="defaultWbs" class="control-label">Product WBS</label>
+                    <div class="controls">
+                        <div id="defaultWbs" class="form-value" style="margin-top: 10px;"></div>
                     </div>
                 </div>
 
