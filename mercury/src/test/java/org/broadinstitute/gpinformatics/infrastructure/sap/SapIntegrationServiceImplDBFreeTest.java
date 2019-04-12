@@ -501,7 +501,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
     }
 
-    public void testTetSampleCountFreshOrderNoOverrides() throws Exception {
+    public void testGetSampleCountFreshOrderNoOverrides() throws Exception {
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> materials = new HashSet<>();
