@@ -26,7 +26,7 @@ import static org.testng.Assert.*;
 public class ReagentDesignImportProcessorTest {
 
     private static String IMPORT_CSV = "Probe Tube CSV.csv";
-    private static String HEADER = "Manufacturer Design ID,Design Name,2-D Barcode,Volume in Tube (uL),Probe Mass (ng),Synthesis Date,Manufacturing Date,Storage Conditions (C),Lot Number,Expiration Date\n";
+    private static String HEADER = "Manufacturer Design ID,Design Name,2-D Barcode,Volume in Tube (uL),Probe Mass (ng),Synthesis Date,Manufacturing Date,Storage Conditions,Lot Number,Expiration Date\n";
 
     private static final String DESIGN_ID = "Did";
     private static final String DESIGN_NAME = "dName";
