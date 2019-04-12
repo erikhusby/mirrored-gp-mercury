@@ -36,7 +36,7 @@ public class ArraysQc {
     private Character fpGender;
     private Character reportedGender;
     // See GPLIM-4863, this column needs 3 states so needs to be replaced with business logic until analytics changes
-    private boolean genderConcordancePf;
+    private Boolean genderConcordancePf;
     private BigDecimal hetPct;
     private BigDecimal hetHomvarRatio;
     private String clusterFileName;
@@ -149,6 +149,11 @@ public class ArraysQc {
      * Display logic for potential states  See GPLIM-4863, GPLIM-6134
      */
     public String getGenderConcordancePf() {
+        // The existing 0.2% nulls in this column would be reported as N/A
+        if( genderConcordancePf == null ) {
+            return "N/A";
+        }
+
         // Low hanging fruit:  If analytics says it passes, it passes
         // Correlates to GPLIM-6134 including 2 matches with an unreported are a Pass
         if( genderConcordancePf ) {

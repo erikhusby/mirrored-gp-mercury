@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jboss-deployment-structure>
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.3">
     <deployment>
         <exclude-subsystems>
             <subsystem name="jsf" />
         </exclude-subsystems>
+        <exclusions>
+            <module name="org.jboss.resteasy.resteasy-jackson-provider"/>
+        </exclusions>
         <dependencies>
-            <module name="org.broadinstitute.configuration" />
+            <module name="org.broadinstitute.configuration"/>
             <module name="javax.ws.rs.api"/>
+            <module name="org.jboss.resteasy.resteasy-jackson2-provider"/>
             <module name="org.dom4j"/>
         </dependencies>
     </deployment>

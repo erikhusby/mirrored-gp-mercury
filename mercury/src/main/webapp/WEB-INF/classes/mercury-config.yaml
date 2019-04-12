@@ -129,20 +129,10 @@ portal:
 
 quote:
 
-    DEV:
-      login:    mercuryquote
-      password: ml1m5qu0t3
-      url:      http://quotedev:8080
-
-    QA:
-      login:    mercuryquote
-      password: ml1m5qu0t3
-      url:      http://quoteqa:8080
-
     TEST:
       login:    mercuryquote
       password: ml1m5qu0t3
-      url:      http://quotetest:8080
+      url:      https://quotes-test.broadinstitute.org
 
     PROD:
       login:    mercuryquote
@@ -404,7 +394,7 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    TEST
       tableau:  PROD
       thrift:   TEST

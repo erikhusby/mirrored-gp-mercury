@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
@@ -21,7 +22,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
-import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.text.Format;
 import java.util.Arrays;

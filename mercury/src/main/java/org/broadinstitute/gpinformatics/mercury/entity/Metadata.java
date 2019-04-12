@@ -241,7 +241,7 @@ public class Metadata {
         ORIGINAL_MATERIAL_TYPE(Category.SAMPLE, DataType.STRING, "Original Material Type", Visibility.USER),
 
         /**
-         * A unique ID for the patient. Should not contain PHI.
+         * A unique ID for the patient. Collaborator Patient Id for Biobank samples. Should not contain PHI.
          */
         PATIENT_ID(Category.SAMPLE, DataType.STRING, "Patient ID", Visibility.USER),
 
@@ -303,6 +303,11 @@ public class Metadata {
         CELLS_PER_WELL(Category.SAMPLE, DataType.NUMBER, "Cells Per Well", Visibility.USER),
         POSITIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Positive Control", Visibility.USER),
         NEGATIVE_CONTROL(Category.SAMPLE, DataType.STRING, "Negative Control", Visibility.USER),
+        SYNTHESIS_DATE(Category.REAGENT, DataType.DATE, "Synthesis Date", Visibility.USER),
+        MANUFACTURING_DATE(Category.REAGENT, DataType.DATE, "Manufacturing Date", Visibility.USER),
+        STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
+        MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
+
         PACKAGE_ID(Category.SAMPLE, DataType.STRING, "Package ID", Visibility.USER),
         BOX_ID(Category.SAMPLE, DataType.STRING, "Box ID", Visibility.USER),
         WELL(Category.SAMPLE, DataType.STRING, "Well Location", Visibility.USER),
@@ -310,7 +315,6 @@ public class Metadata {
         VISIT_DESCRIPTION(Category.SAMPLE, DataType.STRING, "Visit Description", Visibility.USER),
         QUANTITY(Category.SAMPLE, DataType.STRING, "Quantity", Visibility.USER),
         CONCENTRATION(Category.SAMPLE, DataType.STRING, "Concentration", Visibility.USER),
-        MASS(Category.SAMPLE, DataType.STRING, "Mass", Visibility.USER),
         TREATMENTS(Category.SAMPLE, DataType.STRING, "Treatments", Visibility.USER),
         STUDY(Category.SAMPLE, DataType.STRING, "Study", Visibility.USER),
         REQUESTING_PHYSICIAN(Category.SAMPLE, DataType.STRING, "Requesting Physician", Visibility.USER),

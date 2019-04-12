@@ -1901,6 +1901,7 @@
             <column name="MERCURY_SAMPLE"/>
         </createIndex>
     </changeSet>
+
     <changeSet id="GPLIM-5122-16" author="thompson">
         <createIndex tableName="SNP_AUD" indexName="IX_SA_SNP_ID">
             <column name="SNP_ID"/>
@@ -1939,6 +1940,156 @@
         <addColumn schemaName="mercury" tableName="abandon_vessel_aud">
             <column name="abandoned_by" type="number(19,0)"/>
         </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-6078" author="jsacco">
+        <createIndex tableName="BUCKET_ENTRY" indexName="IX_BUCKET_BATCH_FK">
+            <column name="LAB_BATCH"/>
+        </createIndex>
+        <createIndex tableName="LAB_METRIC" indexName="IX_METRIC_RUN_FK">
+            <column name="LAB_METRIC_RUN"/>
+        </createIndex>
+        <createIndex tableName="LAB_VESSEL_RACKS_OF_TUBES" indexName="IX_VESSEL_RACKS_FK">
+            <column name="RACKS_OF_TUBES"/>
+        </createIndex>
+        <createIndex tableName="SAMPLE_INSTANCE_ENTITY" indexName="IX_SAMPLE_ENTITY_VESSEL_FK">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6009-1">
+        <createTable tableName="reagent_metadata" schemaName="mercury">
+            <column name="reagent" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="metadata" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="reagent_metadata" columnNames="reagent, metadata"
+                       constraintName="PK_REAGENT_TO_METADATA_JOIN"/>
+        <addForeignKeyConstraint constraintName="FK_REAGENT_METADATA_META"
+                                 baseTableSchemaName="mercury" baseTableName="reagent_metadata" baseColumnNames="metadata"
+                                 referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+        <addForeignKeyConstraint constraintName="FK_REAGENT_METADATA_REAG"
+                                 baseTableSchemaName="mercury" baseTableName="reagent_metadata" baseColumnNames="reagent"
+                                 referencedTableSchemaName="mercury" referencedTableName="reagent" referencedColumnNames="reagent_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-6009-2">
+        <createTable tableName="reagent_metadata_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="reagent" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="reagent_metadata_aud"
+                       columnNames="rev, reagent, metadata" constraintName="PK_REAG_TO_META_JOIN_AUD"/>
+        <addForeignKeyConstraint baseTableName="reagent_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_reagent_metadata_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6009-3" author="jowalsh">
+        <addColumn schemaName="mercury" tableName="LAB_VESSEL">
+            <column name="mass" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6009-4" author="jowalsh">
+        <addColumn schemaName="mercury" tableName="LAB_VESSEL_AUD">
+            <column name="mass" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4711-200" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="index_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4711-201" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="index_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4711-202" author="epolk">
+        <sql>
+	  UPDATE SAMPLE_INSTANCE_ENTITY SET INDEX_TYPE = 'NONE' WHERE INDEX_TYPE IS NULL;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-4711-203" author="epolk">
+        <sql>
+	  UPDATE SAMPLE_INSTANCE_ENTITY_AUD SET INDEX_TYPE = 'NONE' WHERE INDEX_TYPE IS NULL AND REVTYPE IN (0,1);
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-4711-204" author="epolk">
+      <renameColumn schemaName="mercury" tableName="sample_instance_entity"
+		    newColumnName="read_length1" oldColumnName="read_length"/>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="read_length2" type="number(19,0)"/>
+            <column name="index_length1" type="number(19,0)"/>
+            <column name="index_length2" type="number(19,0)"/>
+	</addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4711-205" author="epolk">
+      <renameColumn schemaName="mercury" tableName="sample_instance_entity_aud"
+		    newColumnName="read_length1" oldColumnName="read_length"/>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="read_length2" type="number(19,0)"/>
+            <column name="index_length1" type="number(19,0)"/>
+            <column name="index_length2" type="number(19,0)"/>
+	</addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4711-206" author="epolk">
+      <addDefaultValue schemaName="mercury" tableName="sample_instance_entity"
+		       columnName="index_type" defaultValue="NONE"/>
+    </changeSet>
+    <changeSet id="GPLIM-4711-207" author="epolk">
+      <renameColumn schemaName="mercury" tableName="flowcell_designation"
+		    newColumnName="starting_tube" oldColumnName="loading_tube"/>
+    </changeSet>
+    <changeSet id="GPLIM-4711-208" author="epolk">
+      <renameColumn schemaName="mercury" tableName="flowcell_designation_aud"
+		    newColumnName="starting_tube" oldColumnName="loading_tube"/>
+    </changeSet>
+    <changeSet id="GPLIM-4711-209" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="bait_name" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4711-210" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="bait_name" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-6009-5" author="thompson">
+        <createIndex schemaName="mercury" tableName="REAGENT_METADATA_AUD" indexName="IX_RMA_REAGENT">
+            <column name="REAGENT"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-6078-undo-one-index" author="jsacco">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM USER_INDEXES WHERE INDEX_NAME = 'IX_VESSEL_RACKS_FK'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            DROP INDEX IX_VESSEL_RACKS_FK
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-6078-better-index" author="jsacco">
+        <createIndex tableName="LAB_VESSEL_RACKS_OF_TUBES" indexName="IX_VESSEL_RACKS_FK" unique="true">
+            <column name="RACKS_OF_TUBES"/>
+            <column name="LAB_VESSEL"/>
+        </createIndex>
     </changeSet>
 
     <changeSet id="GPLIM-6005-001" author="epolk">
