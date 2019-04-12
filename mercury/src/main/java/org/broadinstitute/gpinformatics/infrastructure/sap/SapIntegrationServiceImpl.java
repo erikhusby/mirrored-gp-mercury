@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
@@ -29,6 +28,7 @@ import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPDeliveryItem;
 import org.broadinstitute.sap.entity.SAPOrder;
 import org.broadinstitute.sap.entity.SAPOrderItem;
+import org.broadinstitute.sap.entity.SAPReturnOrder;
 import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.quote.SapQuote;
@@ -47,7 +47,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.broadinstitute.sap.services.SapIntegrationClientImpl.*;
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT;
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPCompanyConfiguration;
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPEnvironment;
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SystemIdentifier;
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.TOO_MANY_ACCOUNTS_RESULT;
 
 @Dependent
 @Default
@@ -490,6 +494,15 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         return getClient().findQuoteDetails(sapQuoteId);
 
+    }
+
+    @Override
+    public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
+            throws SAPIntegrationException {
+
+        SAPOrderItem returnLine = new SAPOrderItem(quoteItemForBilling.getProduct().getPartNumber(), BigDecimal.valueOf(quoteItemForBilling.getQuantity()));
+        SAPReturnOrder returnOrder = new SAPReturnOrder(deliveryDocumentId, Collections.singleton(returnLine));
+        return getClient().createReturnOrder(returnOrder);
     }
 
     private boolean productsFoundInSap(ProductOrder productOrder) {

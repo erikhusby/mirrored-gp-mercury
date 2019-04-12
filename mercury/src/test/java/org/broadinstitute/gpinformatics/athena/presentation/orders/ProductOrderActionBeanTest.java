@@ -30,8 +30,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -144,8 +142,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.IntStream;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
@@ -3127,8 +3125,14 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct("BSP252", priceList, quoteItems, pdo.getProduct(),
                 pricedMoreThanQuote.toString(), "20", pricedMoreThanQuote.toString());
         final SAPMaterial productMaterial =
-                new SAPMaterial(pdo.getProduct().getPartNumber(), pricedMoreThanQuote.toString(),
-                        Collections.emptyMap(), Collections.emptyMap());
+                new SAPMaterial(pdo.getProduct().getPartNumber(),
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
+                        pdo.getProduct().getName(),pricedMoreThanQuote.toString(),"EA",
+                        BigDecimal.ONE, pdo.getProduct().getDescription(),"", "",
+                        new Date(),new Date(), Collections.emptyMap(), Collections.emptyMap(),
+                        SAPMaterial.MaterialStatus.ENABLED,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(productMaterial);
 
@@ -3140,8 +3144,13 @@ public class ProductOrderActionBeanTest {
                     pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString());
             final SAPMaterial addonMaterial =
                     new SAPMaterial(addOn.getAddOn().getPartNumber(),
-                            pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),
-                            Collections.emptyMap(), Collections.emptyMap());
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
+                            pdo.getProduct().getName(), pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),
+                            "EA", BigDecimal.ONE,pdo.getProduct().getDescription(),"",
+                            "",new Date(),new Date(), Collections.emptyMap(), Collections.emptyMap(),
+                            SAPMaterial.MaterialStatus.ENABLED,
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
             addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
             returnMaterials.add(addonMaterial);
         }
@@ -3403,8 +3412,14 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct(quoteId, priceList, quoteItems, pdo.getProduct(), pricePerSample.toString(),
                 "20", pricePerSample.toString());
         final SAPMaterial productMaterial =
-                new SAPMaterial(pdo.getProduct().getPartNumber(), pricePerSample.toString(),
-                        Collections.emptyMap(), Collections.emptyMap());
+                new SAPMaterial(pdo.getProduct().getPartNumber(),
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
+                        pdo.getProduct().getName(),pricePerSample.toString(),"EA",
+                        BigDecimal.ONE,pdo.getProduct().getDescription(),"", "", new Date(),
+                        new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(productMaterial);
 
@@ -3414,8 +3429,13 @@ public class ProductOrderActionBeanTest {
                     pricePerSample.toString());
             final SAPMaterial addonMaterial =
                     new SAPMaterial(addOn.getAddOn().getPartNumber(),
-                            pricePerSample.toString(), Collections.emptyMap(), Collections.emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
+                            pdo.getProduct().getName(),
+                            pricePerSample.toString(), "EA", BigDecimal.ONE,
+                            pdo.getProduct().getDescription(),"", "",new Date(),
+                            new Date(),Collections.emptyMap(), Collections.emptyMap(),
+                            SAPMaterial.MaterialStatus.ENABLED, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
             returnMaterials.add(addonMaterial);
         }
 
