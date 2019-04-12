@@ -14,9 +14,10 @@ import org.apache.poi.hssf.usermodel.HSSFPalette;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.util.IOUtils;
@@ -282,7 +283,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 // All the data in the header is currently ignored.
                 HSSFCellStyle style = workbook.createCellStyle();
                 style.setFillForegroundColor(colorMap.get(ExternalLibraryProcessor.DataPresence.IGNORED));
-                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+                style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                 cell.setCellStyle(style);
             }
             sheet1.createRow(rowIndex++).createCell(0).setCellValue(""); //a blank row
@@ -304,13 +305,13 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
                 Pair.of(ExternalLibraryProcessor.DataPresence.IGNORED, " Ignored "))) {
 
             HSSFCellStyle style = workbook.createCellStyle();
-            style.setBorderTop(colorRowIdx == 1 ? CellStyle.BORDER_THIN : CellStyle.BORDER_NONE);
-            style.setBorderTop(CellStyle.BORDER_NONE);
-            style.setBorderLeft(CellStyle.BORDER_THIN);
-            style.setBorderRight(CellStyle.BORDER_THIN);
-            style.setBorderBottom(CellStyle.BORDER_NONE);
+            style.setBorderTop(colorRowIdx == 1 ? BorderStyle.THIN : BorderStyle.NONE);
+            style.setBorderTop(BorderStyle.NONE);
+            style.setBorderLeft(BorderStyle.THIN);
+            style.setBorderRight(BorderStyle.THIN);
+            style.setBorderBottom(BorderStyle.NONE);
             if (pair.getLeft() != null) {
-                style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+                style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                 style.setFillForegroundColor(colorMap.get(pair.getLeft()));
             }
             Row row = sheet1.getRow(colorRowIdx++);
@@ -319,8 +320,8 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
             cell.setCellStyle(style);
         }
         // Puts a border on the top and bottom color cells.
-        sheet1.getRow(1).getCell(colorColumnIdx).getCellStyle().setBorderTop(CellStyle.BORDER_THIN);
-        sheet1.getRow(colorRowIdx - 1).getCell(colorColumnIdx).getCellStyle().setBorderBottom(CellStyle.BORDER_THIN);
+        sheet1.getRow(1).getCell(colorColumnIdx).getCellStyle().setBorderTop(BorderStyle.THIN);
+        sheet1.getRow(colorRowIdx - 1).getCell(colorColumnIdx).getCellStyle().setBorderBottom(BorderStyle.THIN);
 
         // A blank row.
         sheet1.createRow(rowIndex++).createCell(0).setCellValue("");
@@ -330,7 +331,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         for (ExternalLibraryProcessor.DataPresence dataPresence : ExternalLibraryProcessor.DataPresence.values()) {
             HSSFCellStyle style = workbook.createCellStyle();
             style.setFillForegroundColor(colorMap.get(dataPresence));
-            style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             headerStyles.put(dataPresence, style);
         }
 

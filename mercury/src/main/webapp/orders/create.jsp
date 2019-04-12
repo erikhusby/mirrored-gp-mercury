@@ -1,5 +1,7 @@
 <%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.QuoteSourceType.*" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
@@ -521,7 +523,8 @@
                     initializeQuoteOptions();
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
-                    $j("#skipRegulatoryInfoCheckbox").on("change", toggleSkipRegulatory);
+                    $j("#notFromHumansCheckbox").on("change", toggleSkipRegulatoryReason);
+                    $j("#clinicalLineCheckbox").on("change", toggleSkipRegulatoryReason);
                     $j("#regulatorySelect").change(function () {
                         $j("#attestationConfirmed").attr("checked", false)
                     });
@@ -566,20 +569,33 @@
         </c:forEach>
 
         var quoteBeforeSkipping;
-        function toggleSkipRegulatory() {
-            var skipRegulatoryChecked = $j("#skipRegulatoryInfoCheckbox").prop("checked");
-            $j("#attestationConfirmed").attr("checked", false);
-            handleUpdateRegulatory(skipRegulatoryChecked);
-        }
 
+        function toggleSkipRegulatoryReason() {
+            var checked = $(this).prop("checked");
+            var notFromHumansElement = $j("#notFromHumansCheckbox");
+            var clinicalLineElement = $j("#clinicalLineCheckbox");
+            handleUpdateRegulatory(checked);
+            if (checked) {
+                $j("#attestationConfirmed").attr("checked", false);
+                if($(this).is(notFromHumansElement)) {
+                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}");
+                    $j("#clinicalLineCheckbox").attr("checked", false);
+                } else {
+                    $j("#skipRegulatoryInfoReason").val("${ResearchProject.FROM_CLINICAL_CELL_LINE}");
+                    $j("#notFromHumansCheckbox").attr("checked", false);
+                }
+            }
+
+        }
         function handleUpdateRegulatory(skipRegulatoryChecked){
             if (skipRegulatoryChecked) {
-                $j("#regulatorySelect :selected").prop("selected", false)
+                $j("#regulatorySelect :selected").prop("selected", false);
                 $j("#regulatorySelect").hide();
                 $j("#skipRegulatoryDiv").show();
             } else {
                 $j("#skipRegulatoryInfoReason").val("");
-                $j("#skipRegulatoryDiv").hide();
+                $j("#notFromHumansCheckbox").attr("checked", false);
+                $j("#clinicalLineCheckbox").attr("checked", false);
                 $j("#regulatorySelect").show();
                 populateRegulatorySelect();
             }
@@ -637,11 +653,9 @@
             var projectKey = $j("#researchProject").val();
             var skipRegulatory = false;
             skipRegulatory = ${actionBean.editOrder.canSkipRegulatoryRequirements()};
-            $j("#skipRegulatoryInfoCheckbox").prop('checked', skipRegulatory);
 
             if (projectKey == null || projectKey == "") {
                 $j("#regulatorySelect").text('When you select a project, its regulatory options will show up here');
-                $j("#regulatoryActive").hide();
                 $j("#attestationDiv").hide();
                 $j("#skipRegulatoryDiv").hide();
                 $j("#regulatoryInfo").hide();
@@ -654,7 +668,7 @@
                     populateRegulatorySelect();
                  }
                 $j("#regulatoryInfo").show();
-                $j("#regulatoryActive").show();
+                $j("#skipRegulatoryDiv").show();
                 $j("#attestationDiv").show();
 
             }
@@ -878,8 +892,10 @@
                         var input = $j('<input type = "checkbox" name="selectedRegulatoryIds" />');
                         if (regulatoryList[index].selected) {
                             $j(input).attr("checked", "");
+                        } else if (regulatoryList[index].userEdit) {
+                            $j(input).attr("disabled", "");
+                            $j(input).attr("title", "This is invalid as it is not found in the ORSP Database")
                         }
-
                         $j(input).attr('value', regulatoryList[index].key);
                         $j(row).append(input);
                         $j(row).append(regulatoryList[index].value);
@@ -1573,17 +1589,14 @@
                                     Regulatory Information
                                 </stripes:label>
 
-
-                                <div id="regulatoryActive" class="controls">
-                                    <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
-                                                      title="Click if no IRB/ORSP review is required."/>No IRB/ORSP
-                                    Review Required
-                                </div>
                                 <div id="skipRegulatoryDiv" class="controls controls-text">
-                                        ${actionBean.complianceStatement}<br/>
-                                    <stripes:text id="skipRegulatoryInfoReason"
-                                                  name="editOrder.skipRegulatoryReason"
-                                                  maxlength="255"/>
+
+                                    <stripes:checkbox name="notFromHumans" id="notFromHumansCheckbox" title="Click if the sample does not involve samples from Humans"/>
+                                    ${ResearchProject.NOT_FROM_HUMANS_REASON_FILL}<br/>
+                                    <stripes:checkbox name="fromClinicalLine" id="clinicalLineCheckbox" title="Click if the sample comes from a Clinical cell line"/>
+                                    ${ResearchProject.FROM_CLINICAL_CELL_LINE}<br/>
+                                    <stripes:hidden id="skipRegulatoryInfoReason"
+                                                    name="editOrder.skipRegulatoryReason"/>
                                 </div>
                                 <div id="regulatorySelect" class="controls controls-text"></div>
                                 <div id="attestationDiv" class="controls controls-text">

@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import functions.rfc.sap.document.sap_com.ZESDFUNDINGDET;
@@ -15,6 +17,8 @@ import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.collection.Group;
+import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
@@ -29,6 +33,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
+import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
@@ -45,10 +50,18 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSiteList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -99,8 +112,6 @@ import org.broadinstitute.sap.entity.quote.QuoteHeader;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -131,6 +142,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
@@ -174,6 +186,7 @@ public class ProductOrderActionBeanTest {
     private JiraService mockJiraService;
     private SapIntegrationClientImpl mockSapClient;
     private SAPAccessControlEjb mockAccessController;
+    private ProductDao mockProductDao;
 
 
     @BeforeMethod
@@ -201,11 +214,12 @@ public class ProductOrderActionBeanTest {
         mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
         mockBspUserList = Mockito.mock(BSPUserList.class);
         mockJiraService = Mockito.mock(JiraService.class);
-        productOrderEjb = new ProductOrderEjb(mockProductOrderDao, Mockito.mock(ProductDao.class),
-                mockQuoteService, mockJiraService,Mockito.mock(UserBean.class),
-                mockBspUserList,Mockito.mock(BucketEjb.class),Mockito.mock(SquidConnector.class),
-                Mockito.mock(MercurySampleDao.class),Mockito.mock(ProductOrderJiraUtil.class), mockSAPService,priceListCache,
-                stubProductPriceCache);
+        mockProductDao = Mockito.mock(ProductDao.class);
+        productOrderEjb = new ProductOrderEjb(mockProductOrderDao, mockProductDao,
+                mockQuoteService, mockJiraService, Mockito.mock(UserBean.class),
+                mockBspUserList, Mockito.mock(BucketEjb.class), Mockito.mock(SquidConnector.class),
+                Mockito.mock(MercurySampleDao.class), Mockito.mock(ProductOrderJiraUtil.class),
+                mockSAPService, priceListCache, stubProductPriceCache);
 
         productOrderEjb.setAccessController(mockAccessController);
 
@@ -624,7 +638,7 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(returnedKitIndex, testKitQueryIndex,
                 "The kit index passed in should match the kit index returned");
 
-        Iterator<JsonNode> resultIterator = jsonNode.get("dataList").getElements();
+        Iterator<JsonNode> resultIterator = jsonNode.get("dataList").elements();
         String nodeKey = "key";
         String nodeChecked = "checked";
 
@@ -1053,7 +1067,7 @@ public class ProductOrderActionBeanTest {
 
 
         // Now test test validation using passed-in parameters.
-        actionBean.setSkipRegulatoryInfo(skipRegulatory);
+        actionBean.setNotFromHumans(skipRegulatory);
         actionBean.getEditOrder().setSkipRegulatoryReason(skipRegulatoryReason);
         actionBean.getEditOrder().setAttestationConfirmed(attestationChecked);
         actionBean.getEditOrder().setPlacedDate(placedDate);
@@ -3062,4 +3076,563 @@ public class ProductOrderActionBeanTest {
         assertThat(quoteFundingJson.getString("key"), equalTo(quoteId));
      }
 
+    /**
+     *
+     * Tests the validation methods executed when a Product Order is saved
+     * @throws Exception
+     */
+    public void testSaveValidationsQuoteTooSmall() throws Exception {
+
+        // Initialize the Order to be tested
+
+        pdo = ProductOrderTestFactory.createDummyProductOrder();
+        pdo.setQuoteId("BSP252");
+        pdo.addRegulatoryInfo(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
+        pdo.setAttestationConfirmed(true);
+        pdo.setJiraTicketKey("");
+        pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        pdo.setCreatedBy(1L);
+
+        // Initialize the Action Bean to be in such a state that we can mimic calls from the web
+        HttpServletRequest request = new MockHttpServletRequest("foo","bar");
+        actionBean.setContext(new CoreActionBeanContext());
+
+
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> returnMaterials = new HashSet<>();
+
+        //setup the mock quote server to return a fully defined quote found in our quoteTestData.xml file
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString()))
+                .then(new Answer<Quote>() {
+                    @Override
+                    public Quote answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        return stubQuoteService.getQuoteByAlphaId(pdo.getQuoteId());
+                    }
+                });
+
+        //Now setup the pricing for the products.  The aim is to have the price set so that the value of the order
+        // (without customizations) will be more than the quote.  Later on, we will set the customizations up to have
+        // a custom price to make the value of the order will be less than the quote.
+        final BigDecimal quoteFundsRemaining = new BigDecimal(mockQuoteService.getQuoteByAlphaId(pdo.getQuoteId())
+                        .getQuoteFunding().getFundsRemaining());
+        BigDecimal pricedMoreThanQuote =
+                quoteFundsRemaining.divide((BigDecimal.valueOf(pdo.getSamples().size()).multiply(
+                        BigDecimal.valueOf(pdo.getAddOns().size() + 1))).divide(BigDecimal.valueOf(4), 2, RoundingMode.CEILING),RoundingMode.FLOOR);
+
+        final List<String> addOnKeys = pdo.getAddOns().stream().map(productOrderAddOn -> {
+            return productOrderAddOn.getAddOn().getPartNumber();
+        }).collect(Collectors.toList());
+
+        addPriceItemForProduct("BSP252", priceList, quoteItems, pdo.getProduct(),
+                pricedMoreThanQuote.toString(), "20", pricedMoreThanQuote.toString());
+        final SAPMaterial productMaterial =
+                new SAPMaterial(pdo.getProduct().getPartNumber(), pricedMoreThanQuote.toString(),
+                        Collections.emptyMap(), Collections.emptyMap());
+        productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(productMaterial);
+
+        for (ProductOrderAddOn addOn : pdo.getAddOns()) {
+            addPriceItemForProduct("BSP252", priceList, quoteItems,
+                    addOn.getAddOn(),
+                    pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),
+                    "20",
+                    pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString());
+            final SAPMaterial addonMaterial =
+                    new SAPMaterial(addOn.getAddOn().getPartNumber(),
+                            pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),
+                            Collections.emptyMap(), Collections.emptyMap());
+            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            returnMaterials.add(addonMaterial);
+        }
+
+        //Set up the rest of the Mocks with values that will refelct the conditions needed
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
+        stubProductPriceCache.refreshCache();
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn((Collections.singletonList(pdo)));
+        Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenAnswer(new Answer<OrderCalculatedValues>() {
+                    @Override
+                    public OrderCalculatedValues answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+
+                        BigDecimal potentialOrderValue = BigDecimal.ZERO;
+                        potentialOrderValue = incrementOrderValue(potentialOrderValue, priceList, pdo, pdo.getProduct());
+
+                        for (ProductOrderAddOn addOn : pdo.getAddOns()) {
+                            potentialOrderValue = incrementOrderValue(potentialOrderValue, priceList, pdo, addOn.getAddOn());
+                        }
+
+                        return new OrderCalculatedValues(potentialOrderValue, Collections.emptySet());
+                    }
+                });
+
+        actionBean.setEditOrder(pdo);
+        actionBean.setQuoteService(mockQuoteService);
+
+        Mockito.when(mockBspUserList.getById(Mockito.any(Long.class)))
+                .thenReturn(new BspUser(1L, "", "squidUser@broadinstitute.org", "Squid", "User", Collections.<String>emptyList(),1L, "squiduser" ));
+        Mockito.when(mockJiraService.isValidUser(Mockito.anyString())).thenReturn(true);
+
+        Mockito.when(mockProductDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Product>() {
+            @Override
+            public Product answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return pdo.getProduct();
+            }
+        });
+        Mockito.when(mockProductDao.findByPartNumber(Mockito.anyString())).thenAnswer(new Answer<Product>() {
+            @Override
+            public Product answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return pdo.getProduct();
+            }
+        });
+        ResearchProjectDao mockResearchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        Mockito.when(mockResearchProjectDao.findByBusinessKey(Mockito.anyString()))
+                .thenAnswer(new Answer<ResearchProject>() {
+                    @Override
+                    public ResearchProject answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        return pdo.getResearchProject();
+                    }
+                });
+        BSPGroupCollectionList mockGroupCollectionList = Mockito.mock(BSPGroupCollectionList.class);
+        Mockito.when(mockGroupCollectionList.find(Mockito.anyString()))
+                .thenAnswer(new Answer<List<SampleCollection>>() {
+                    @Override
+                    public List<SampleCollection> answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        final Group group = new Group();
+                        final SampleCollection sampleCollection =
+                                new SampleCollection(1l, "TestName", group,
+                                        "testCategory", "Nothing much", true,
+                                        Collections.emptyList());
+                        return Collections.singletonList(sampleCollection);
+                    }
+                });
+        Mockito.when(mockGroupCollectionList.getById(Mockito.anyLong()))
+                .thenAnswer(new Answer<SampleCollection>() {
+                    @Override
+                    public SampleCollection answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        final Group group = new Group();
+                        final SampleCollection sampleCollection =
+                                new SampleCollection(1l, "TestName", group,
+                                "testCategory", "Nothing much", true,
+                                Collections.emptyList());
+                        return sampleCollection;
+                    }
+                });
+
+        UserTokenInput userTokenInput = new UserTokenInput(mockBspUserList);
+
+        Mockito.when(mockBspUserList.getById(Mockito.any(Long.class)))
+                .thenReturn(new BspUser(1L, "", "squidUser@broadinstitute.org", "Squid", "User", Collections.<String>emptyList(),1L, "squiduser" ));
+        Mockito.when(mockBspUserList.find(Mockito.anyString()))
+                .thenReturn(Collections.singletonList(new BspUser(1L, "", "squidUser@broadinstitute.org", "Squid", "User", Collections.<String>emptyList(),1L, "squiduser" )));
+
+        // Ensure that there were no Customizations previously set on the Product Order
+        Assert.assertTrue(CollectionUtils.isEmpty(pdo.getCustomPriceAdjustments()));
+
+        // The create page will set values with Token input.  Initialize this token input to set values such as the
+        //
+        ProductTokenInput productTokenInput = new ProductTokenInput();
+        productTokenInput.setProductDao(mockProductDao);
+        ProjectTokenInput projectTokenInput = new ProjectTokenInput();
+        projectTokenInput.setResearchProjectDao(mockResearchProjectDao);
+        BspGroupCollectionTokenInput bspGroupCollectionTokenInput = new BspGroupCollectionTokenInput();
+        bspGroupCollectionTokenInput.setBspCollectionList(mockGroupCollectionList);
+        BspShippingLocationTokenInput locationTokenInput = new BspShippingLocationTokenInput();
+
+        BSPManagerFactory managerFactory = Mockito.mock(BSPManagerFactory.class);
+        BSPSiteList siteList = Mockito.mock(BSPSiteList.class);
+
+        locationTokenInput.setBspManagerFactory(managerFactory);
+        locationTokenInput.setBspSiteList(siteList);
+        actionBean.setProductTokenInput(productTokenInput);
+        actionBean.setProjectTokenInput(projectTokenInput);
+        actionBean.setBspGroupCollectionTokenInput(bspGroupCollectionTokenInput);
+        actionBean.setBspShippingLocationTokenInput(locationTokenInput);
+        actionBean.setNotificationListTokenInput(userTokenInput);
+        actionBean.setResearchProjectDao(mockResearchProjectDao);
+        actionBean.setProductDao(mockProductDao);
+        actionBean.setOwner(userTokenInput);
+
+        actionBean.setAddOnKeys(addOnKeys);
+
+        actionBean.populateTokenListsFromObjectData();
+        userTokenInput.setup("1");
+        // end of definitions for token input
+
+        // call validation methods called during save
+        actionBean.saveValidations();
+        actionBean.doValidation(actionBean.SAVE_ACTION);
+
+        //Errors should be just related to quote does not have enough value
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty(),
+                "validation Errors should not be empty at this stage");
+        actionBean.clearValidationErrors();
+
+
+
+        // Begin to mimic creating pricing customizations from the user.  Subtract $1 from price so that the value of
+        // the order is still over the quoted value
+        JSONObject customizationJson = new JSONObject();
+        CustomizationValues customPricePrimary = new CustomizationValues(pdo.getProduct().getPartNumber(),
+                String.valueOf(pdo.getSamples().size()),
+                pricedMoreThanQuote.subtract(BigDecimal.valueOf(1)).toString(), "");
+        customizationJson.put(pdo.getProduct().getPartNumber(), customPricePrimary.toJson());
+        for (ProductOrderAddOn productOrderAddOn : pdo.getAddOns()) {
+
+            CustomizationValues customPriceAddon = new CustomizationValues(productOrderAddOn.getAddOn().getPartNumber(),
+                    String.valueOf(pdo.getSamples().size()),
+                    pricedMoreThanQuote.divide(BigDecimal.valueOf(3)).toString(), "");
+            customizationJson.put(productOrderAddOn.getAddOn().getPartNumber(), customPriceAddon.toJson());
+        }
+
+        //Set the customizations on the action bean
+        actionBean.setCustomizationJsonString(customizationJson.toString());
+        actionBean.setAddOnKeys(addOnKeys);
+
+        actionBean.populateTokenListsFromObjectData();
+        userTokenInput.setup("1");
+
+        // re-call the save validations
+        actionBean.saveValidations();
+        actionBean.doValidation(actionBean.SAVE_ACTION);
+
+        // Now there are no errors, Quote value compared to Order value is sufficient
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty(),
+                "Validation errors should not be empty.");
+        Assert.assertTrue(CollectionUtils.isNotEmpty(pdo.getCustomPriceAdjustments()));
+        actionBean.clearValidationErrors();
+
+
+
+
+//////////////////////////############################################/////////////////////////////
+        // Begin to mimic creating pricing customizations from the user.  Divide the price by 3 to ensure that the
+        customizationJson = new JSONObject();
+        // order value is lower than the quote
+        customPricePrimary = new CustomizationValues(pdo.getProduct().getPartNumber(),
+                String.valueOf(pdo.getSamples().size()),
+                pricedMoreThanQuote.divide(BigDecimal.valueOf(3), 2, RoundingMode.FLOOR).toString(), "");
+        customizationJson.put(pdo.getProduct().getPartNumber(), customPricePrimary.toJson());
+        for (ProductOrderAddOn productOrderAddOn : pdo.getAddOns()) {
+
+            CustomizationValues customPriceAddon = new CustomizationValues(productOrderAddOn.getAddOn().getPartNumber(),
+                    String.valueOf(pdo.getSamples().size()),
+                    pricedMoreThanQuote.divide(BigDecimal.valueOf(3)).toString(), "");
+            customizationJson.put(productOrderAddOn.getAddOn().getPartNumber(), customPriceAddon.toJson());
+        }
+
+        //Set the customizations on the action bean
+        actionBean.setCustomizationJsonString(customizationJson.toString());
+        actionBean.setAddOnKeys(addOnKeys);
+
+        actionBean.populateTokenListsFromObjectData();
+        userTokenInput.setup("1");
+
+        // re-call the save validations
+        actionBean.saveValidations();
+        actionBean.doValidation(actionBean.SAVE_ACTION);
+
+        // Now there are no errors, Quote value compared to Order value is sufficient
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty(),
+                "Validation errors should be empty.");
+        Assert.assertTrue(CollectionUtils.isNotEmpty(pdo.getCustomPriceAdjustments()));
+    }
+
+    /**
+     *
+     * Tests the validation methods executed when a Product Order is saved
+     * @throws Exception
+     */
+    public void testSaveValidationsQuoteHasEnoughFunding() throws Exception {
+
+        // Initialize the Order to be tested
+
+        pdo = ProductOrderTestFactory.createDummyProductOrder();
+        final String quoteId = "BSP252";
+        pdo.setQuoteId(quoteId);
+        pdo.addRegulatoryInfo(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
+        pdo.setAttestationConfirmed(true);
+        pdo.setJiraTicketKey("");
+        pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        pdo.setCreatedBy(1L);
+
+        // Initialize the Action Bean to be in such a state that we can mimic calls from the web
+        HttpServletRequest request = new MockHttpServletRequest("foo","bar");
+        actionBean.setContext(new CoreActionBeanContext());
+
+
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> returnMaterials = new HashSet<>();
+
+        //setup the mock quote server to return a fully defined quote found in our quoteTestData.xml file
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString()))
+                .then(new Answer<Quote>() {
+                    @Override
+                    public Quote answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        return stubQuoteService.getQuoteByAlphaId(pdo.getQuoteId());
+                    }
+                });
+
+        // Now setup the pricing for the products.  The aim is to have the price set so that the value of the order
+        // (without customizations) will be just enough for the quote.  Later on, we will set the customizations up to
+        // have a custom price to make the value of the order first greater than the quote, then it will be less than
+        // the quote.
+        final BigDecimal quoteFundsRemaining = new BigDecimal(mockQuoteService.getQuoteByAlphaId(pdo.getQuoteId())
+                .getQuoteFunding().getFundsRemaining());
+        final BigDecimal sampleSize = BigDecimal.valueOf(pdo.getSamples().size());
+        final BigDecimal productSize = BigDecimal.valueOf(pdo.getAddOns().size() + 1);
+        final List<String> addOnKeys = pdo.getAddOns().stream().map(productOrderAddOn -> {
+            return productOrderAddOn.getAddOn().getPartNumber();
+        }).collect(Collectors.toList());
+        BigDecimal pricePerSample =
+                quoteFundsRemaining.divide(
+                        (sampleSize.multiply(productSize))
+                                .multiply(BigDecimal.valueOf(4)),
+                        2, RoundingMode.FLOOR);
+
+        System.out.println("Quote funding is " + quoteFundsRemaining.toString() +". Price per sample is " +
+                           pricePerSample.toString() + ". sample Size is " + pdo.getSamples().size() +
+                           ". number of addons is " + pdo.getAddOns().size());
+
+        addPriceItemForProduct(quoteId, priceList, quoteItems, pdo.getProduct(), pricePerSample.toString(),
+                "20", pricePerSample.toString());
+        final SAPMaterial productMaterial =
+                new SAPMaterial(pdo.getProduct().getPartNumber(), pricePerSample.toString(),
+                        Collections.emptyMap(), Collections.emptyMap());
+        productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(productMaterial);
+
+        for (ProductOrderAddOn addOn : pdo.getAddOns()) {
+            addPriceItemForProduct(quoteId, priceList, quoteItems, addOn.getAddOn(),
+                    pricePerSample.toString(), "20",
+                    pricePerSample.toString());
+            final SAPMaterial addonMaterial =
+                    new SAPMaterial(addOn.getAddOn().getPartNumber(),
+                            pricePerSample.toString(), Collections.emptyMap(), Collections.emptyMap());
+            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            returnMaterials.add(addonMaterial);
+        }
+
+        //Set up the rest of the Mocks with values that will refelct the conditions needed
+        Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
+        stubProductPriceCache.refreshCache();
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn((Collections.singletonList(pdo)));
+        Mockito.when(mockSapClient.findCustomerNumber(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn("TestNumber");
+        Mockito.when(mockSapClient.calculateOrderValues(Mockito.anyString(), Mockito.any(
+                SapIntegrationClientImpl.SystemIdentifier.class), Mockito.any(OrderCriteria.class)))
+                .thenAnswer(new Answer<OrderCalculatedValues>() {
+                    @Override
+                    public OrderCalculatedValues answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        BigDecimal potentialOrderValue = BigDecimal.ZERO;
+                        potentialOrderValue = incrementOrderValue(potentialOrderValue, priceList, pdo, pdo.getProduct());
+                        for (ProductOrderAddOn addOn : pdo.getAddOns()) {
+                            potentialOrderValue = incrementOrderValue(potentialOrderValue, priceList, pdo, addOn.getAddOn());
+                        }
+                        return new OrderCalculatedValues(potentialOrderValue, Collections.emptySet());
+                    }
+                });
+
+        actionBean.setEditOrder(pdo);
+        actionBean.setQuoteService(mockQuoteService);
+
+        Mockito.when(mockBspUserList.getById(Mockito.any(Long.class)))
+                .thenReturn(new BspUser(1L, "", "squidUser@broadinstitute.org",
+                        "Squid", "User", Collections.<String>emptyList(),1L,
+                        "squiduser" ));
+        Mockito.when(mockJiraService.isValidUser(Mockito.anyString())).thenReturn(true);
+
+        Mockito.when(mockProductDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Product>() {
+            @Override
+            public Product answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return pdo.getProduct();
+            }
+        });
+        Mockito.when(mockProductDao.findByPartNumber(Mockito.anyString())).thenAnswer(new Answer<Product>() {
+            @Override
+            public Product answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return pdo.getProduct();
+            }
+        });
+        ResearchProjectDao mockResearchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        Mockito.when(mockResearchProjectDao.findByBusinessKey(Mockito.anyString()))
+                .thenAnswer(new Answer<ResearchProject>() {
+                    @Override
+                    public ResearchProject answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        return pdo.getResearchProject();
+                    }
+                });
+        BSPGroupCollectionList mockGroupCollectionList = Mockito.mock(BSPGroupCollectionList.class);
+        Mockito.when(mockGroupCollectionList.find(Mockito.anyString()))
+                .thenAnswer(new Answer<List<SampleCollection>>() {
+                    @Override
+                    public List<SampleCollection> answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        final Group group = new Group();
+                        final SampleCollection sampleCollection =
+                                new SampleCollection(1l, "TestName", group,
+                                        "testCategory", "Nothing much", true,
+                                        Collections.emptyList());
+                        return Collections.singletonList(sampleCollection);
+                    }
+                });
+        Mockito.when(mockGroupCollectionList.getById(Mockito.anyLong()))
+                .thenAnswer(new Answer<SampleCollection>() {
+                    @Override
+                    public SampleCollection answer(InvocationOnMock invocationOnMock) throws Throwable {
+                        final Group group = new Group();
+                        final SampleCollection sampleCollection =
+                                new SampleCollection(1l, "TestName", group,
+                                        "testCategory", "Nothing much", true,
+                                        Collections.emptyList());
+                        return sampleCollection;
+                    }
+                });
+
+        UserTokenInput userTokenInput = new UserTokenInput(mockBspUserList);
+
+        Mockito.when(mockBspUserList.getById(Mockito.any(Long.class)))
+                .thenReturn(new BspUser(1L, "", "squidUser@broadinstitute.org",
+                        "Squid", "User", Collections.<String>emptyList(),1L,
+                        "squiduser" ));
+        Mockito.when(mockBspUserList.find(Mockito.anyString()))
+                .thenReturn(Collections.singletonList(new BspUser(1L, "",
+                        "squidUser@broadinstitute.org", "Squid", "User",
+                        Collections.<String>emptyList(),1L, "squiduser" )));
+
+        // Ensure that there were no Customizations previously set on the Product Order
+        Assert.assertTrue(CollectionUtils.isEmpty(pdo.getCustomPriceAdjustments()));
+
+        // The create page will set values with Token input.  Initialize this token input to set values such as the
+        //
+        ProductTokenInput productTokenInput = new ProductTokenInput();
+        productTokenInput.setProductDao(mockProductDao);
+        ProjectTokenInput projectTokenInput = new ProjectTokenInput();
+        projectTokenInput.setResearchProjectDao(mockResearchProjectDao);
+        BspGroupCollectionTokenInput bspGroupCollectionTokenInput = new BspGroupCollectionTokenInput();
+        bspGroupCollectionTokenInput.setBspCollectionList(mockGroupCollectionList);
+        BspShippingLocationTokenInput locationTokenInput = new BspShippingLocationTokenInput();
+
+        BSPManagerFactory managerFactory = Mockito.mock(BSPManagerFactory.class);
+        BSPSiteList siteList = Mockito.mock(BSPSiteList.class);
+
+        locationTokenInput.setBspManagerFactory(managerFactory);
+        locationTokenInput.setBspSiteList(siteList);
+        actionBean.setProductTokenInput(productTokenInput);
+        actionBean.setProjectTokenInput(projectTokenInput);
+        actionBean.setBspGroupCollectionTokenInput(bspGroupCollectionTokenInput);
+        actionBean.setBspShippingLocationTokenInput(locationTokenInput);
+        actionBean.setNotificationListTokenInput(userTokenInput);
+        actionBean.setResearchProjectDao(mockResearchProjectDao);
+        actionBean.setProductDao(mockProductDao);
+        actionBean.setOwner(userTokenInput);
+
+        actionBean.setAddOnKeys(addOnKeys);
+        actionBean.populateTokenListsFromObjectData();
+        userTokenInput.setup("1");
+        // end of definitions for token input
+
+        // call validation methods called during save
+        actionBean.saveValidations();
+        actionBean.doValidation(actionBean.SAVE_ACTION);
+
+        //Errors should be just related to quote does not have enough value
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty(),
+                "validation Errors should be empty at this stage");
+        actionBean.clearValidationErrors();
+
+
+
+        // Begin to mimic creating pricing customizations from the user.  Subtract $1 from price so that the value of
+        // the order is still over the quoted value
+        JSONObject customizationJson = new JSONObject();
+        CustomizationValues customPricePrimary = new CustomizationValues(pdo.getProduct().getPartNumber(),
+                String.valueOf(pdo.getSamples().size()),
+                pricePerSample.multiply(BigDecimal.valueOf(4)).toString(), "");
+        customizationJson.put(pdo.getProduct().getPartNumber(), customPricePrimary.toJson());
+        for (ProductOrderAddOn productOrderAddOn : pdo.getAddOns()) {
+
+            CustomizationValues customPriceAddon = new CustomizationValues(productOrderAddOn.getAddOn().getPartNumber(),
+                    String.valueOf(pdo.getSamples().size()),
+                    pricePerSample.multiply(BigDecimal.valueOf(4.5)).toString(), "");
+            customizationJson.put(productOrderAddOn.getAddOn().getPartNumber(), customPriceAddon.toJson());
+        }
+
+        //Set the customizations on the action bean
+        actionBean.setAddOnKeys(addOnKeys);
+        actionBean.setCustomizationJsonString(customizationJson.toString());
+
+        actionBean.populateTokenListsFromObjectData();
+        userTokenInput.setup("1");
+
+
+        // re-call the save validations
+        actionBean.saveValidations();
+        actionBean.doValidation(actionBean.SAVE_ACTION);
+
+        // Now there are no errors, Quote value compared to Order value is sufficient
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty(),
+                "Validation errors should not be empty.");
+        Assert.assertTrue(CollectionUtils.isNotEmpty(pdo.getCustomPriceAdjustments()));
+        actionBean.clearValidationErrors();
+
+
+
+
+//////////////////////////############################################/////////////////////////////
+        // Begin to mimic creating pricing customizations from the user.  Divide the price by 3 to ensure that the
+        customizationJson = new JSONObject();
+        // order value is lower than the quote
+        customPricePrimary = new CustomizationValues(pdo.getProduct().getPartNumber(),
+                String.valueOf(pdo.getSamples().size()),
+                pricePerSample.divide(BigDecimal.valueOf(3), 2, RoundingMode.FLOOR).toString(), "");
+        customizationJson.put(pdo.getProduct().getPartNumber(), customPricePrimary.toJson());
+        for (ProductOrderAddOn productOrderAddOn : pdo.getAddOns()) {
+
+            CustomizationValues customPriceAddon = new CustomizationValues(productOrderAddOn.getAddOn().getPartNumber(),
+                    String.valueOf(pdo.getSamples().size()),
+                    pricePerSample.divide(BigDecimal.valueOf(3), 2, RoundingMode.FLOOR).toString(), "");
+            customizationJson.put(productOrderAddOn.getAddOn().getPartNumber(), customPriceAddon.toJson());
+        }
+
+        //Set the customizations on the action bean
+        actionBean.setAddOnKeys(addOnKeys);
+        actionBean.setCustomizationJsonString(customizationJson.toString());
+
+        actionBean.populateTokenListsFromObjectData();
+
+        userTokenInput.setup("1");
+
+        // re-call the save validations
+        actionBean.saveValidations();
+        actionBean.doValidation(actionBean.SAVE_ACTION);
+
+        // Now there are no errors, Quote value compared to Order value is sufficient
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty(),
+                "Validation errors should be empty.");
+        Assert.assertTrue(CollectionUtils.isNotEmpty(pdo.getCustomPriceAdjustments()));
+    }
+
+    public static BigDecimal incrementOrderValue(BigDecimal potentialOrderValue, PriceList priceList,
+                                                 ProductOrder pdo, Product product) {
+        BigDecimal primaryMultiplier =
+                new BigDecimal(priceList.findByKeyFields(product.getPrimaryPriceItem()).getPrice());
+        Optional<PriceAdjustment> primaryPriceAdjustment = Optional.ofNullable(pdo.getAdjustmentForProduct(
+                product));
+        if (primaryPriceAdjustment.isPresent()){
+            if(primaryPriceAdjustment.get().getAdjustmentValue() != null) {
+                primaryMultiplier = primaryPriceAdjustment.get().getAdjustmentValue();
+            }
+        }
+        System.out.println("Price multiplier for " + product.getPartNumber() + " is " +
+                           primaryMultiplier.toString());
+        potentialOrderValue = potentialOrderValue.add(BigDecimal.valueOf(pdo.getSamples().size()).multiply(primaryMultiplier));
+        return potentialOrderValue;
+    }
 }

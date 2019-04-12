@@ -1,13 +1,13 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonPropertyOrder;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.io.Serializable;
 import java.util.List;

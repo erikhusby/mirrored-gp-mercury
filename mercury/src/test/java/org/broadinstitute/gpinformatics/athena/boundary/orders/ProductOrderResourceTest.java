@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
@@ -15,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -23,6 +21,10 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URL;
@@ -37,9 +39,6 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.core.Is.is;
 
 @Test(groups = TestGroups.STANDARD)
 public class ProductOrderResourceTest extends RestServiceContainerTest {
@@ -83,10 +82,10 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
         data.setSamples(sampleIds);
 
-        WebResource resource = makeWebResource(baseUrl, "create");
+        WebTarget resource = makeWebResource(baseUrl, "create");
 
-        ProductOrderData productOrderData = resource.entity(data).post(new GenericType<ProductOrderData>() {
-        });
+        ProductOrderData productOrderData = JaxRsUtils.postAndCheck(resource.request(), Entity.xml(data),
+                new GenericType<ProductOrderData>() {});
         Assert.assertEquals(productOrderData.getStatus(), ProductOrder.OrderStatus.Pending.name());
     }
 
@@ -104,13 +103,14 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
         data.setSamples(sampleIds);
 
-        WebResource resource = makeWebResource(baseUrl, "create");
+        WebTarget resource = makeWebResource(baseUrl, "create");
 
         try {
-            resource.post(data);
+            resource.request().post(Entity.xml(data), ProductOrderData.class);
             Assert.fail();
-        } catch (UniformInterfaceException e) {
-            assertThat(e.getResponse().getStatus(), is(equalTo(Response.Status.UNAUTHORIZED.getStatusCode())));
+        } catch (WebApplicationException e) {
+            Assert.assertEquals(e.getResponse().getStatusInfo().getStatusCode(),
+                    Response.Status.UNAUTHORIZED.getStatusCode());
         }
     }
 
@@ -138,8 +138,9 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     }
 
     private ProductOrderData sendCreateWithKitRequest(URL baseUrl, String username) throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
-        return resource.entity(createTestProductOrderData(username)).post(new GenericType<ProductOrderData>() { });
+        WebTarget resource = makeWebResource(baseUrl, "createWithKitRequest");
+        return JaxRsUtils.postAndCheck(resource.request(), Entity.xml(createTestProductOrderData(username)),
+                new GenericType<ProductOrderData>() {});
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -159,13 +160,13 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(projectManagers.size(), 2);
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = WebApplicationException.class)
     @RunAsClient
     public void testCreateProductOrderWithKitNoUser(@ArquillianResource URL baseUrl) throws Exception {
         sendCreateWithKitRequest(baseUrl, null);
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = WebApplicationException.class)
     @RunAsClient
     public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) throws Exception {
         sendCreateWithKitRequest(baseUrl, "invalid user name");
@@ -177,10 +178,9 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         PDOSamples pdoSamples = getAtRiskSamples();
 
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
-                .type(MediaType.APPLICATION_JSON)
+                .request(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .entity(pdoSamples)
-                .post(PDOSamples.class);
+                .post(Entity.json(pdoSamples), PDOSamples.class);
 
         Assert.assertEquals(pdoSamples.getPdoSamples().size(), returnedPdoSamples.getPdoSamples().size());
         Assert.assertEquals(returnedPdoSamples.getErrors().size(), pdoSamples.getAtRiskPdoSamples().size());
@@ -214,10 +214,9 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     public void testFetchAtRiskPDOSamplesNoneAtRisk(@ArquillianResource URL baseUrl) throws Exception {
         PDOSamples pdoSamples = getNonRiskPDOSamples();
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
-                .type(MediaType.APPLICATION_JSON)
+                .request(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .entity(pdoSamples)
-                .post(PDOSamples.class);
+                .post(Entity.json(pdoSamples), PDOSamples.class);
 
         Assert.assertTrue(returnedPdoSamples.getAtRiskPdoSamples().isEmpty());
         Assert.assertTrue(returnedPdoSamples.getErrors().isEmpty());
@@ -228,7 +227,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     public void testFindByIds(@ArquillianResource URL baseUrl)
             throws Exception {
         ProductOrders orders = makeWebResource(baseUrl, "pdo/" + VALID_PDO_ID)
-                .accept(MediaType.APPLICATION_XML)
+                .request(MediaType.APPLICATION_XML)
                 .get(ProductOrders.class);
         // The web API returns the PDO ID for both the "id" and "productOrderKey" results.
         Assert.assertEquals(orders.getOrders().get(0).getId(), VALID_PDO_ID);
@@ -244,7 +243,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
             put("PDO-8350", "Multi-EthnicGlobal-8_A1");
         }};
         ProductOrders orders = makeWebResource(baseUrl, "pdo/" + StringUtils.join(map.keySet(), ","))
-                .accept(MediaType.APPLICATION_XML)
+                .request(MediaType.APPLICATION_XML)
                 .get(ProductOrders.class);
         Assert.assertEquals(orders.getOrders().size(), map.size());
         for (ProductOrderData order : orders.getOrders()) {

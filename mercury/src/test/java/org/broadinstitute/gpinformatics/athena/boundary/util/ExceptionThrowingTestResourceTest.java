@@ -11,8 +11,6 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.util;
 
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -23,6 +21,8 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -62,10 +62,10 @@ public class ExceptionThrowingTestResourceTest extends RestServiceContainerTest 
 
     private void testResultForStatus(URL baseUrl, Response.Status status) throws MalformedURLException {
         String statusCode = String.valueOf(status.getStatusCode());
-        WebResource resource = makeWebResource(baseUrl, "throwsResourceException")
+        WebTarget resource = makeWebResource(baseUrl, "throwsResourceException")
                 .queryParam(ExceptionThrowingTestResource.RESPONSE_STATUS, statusCode);
 
-        UniformInterfaceException result = getWithError(resource);
+        WebApplicationException result = getWithError(resource);
 
         // These responses return jsp pages (defined in web.xml) so ignore them as the response will not be a simple
         // error string.
@@ -73,7 +73,7 @@ public class ExceptionThrowingTestResourceTest extends RestServiceContainerTest 
             String content = getResponseContent(result);
             assertThat(content, equalTo("Oopsie, I threw a ResourceException"));
         }
-        assertThat(result.getResponse().getClientResponseStatus().getStatusCode(), equalTo(status.getStatusCode()));
+        assertThat(result.getResponse().getStatusInfo().getStatusCode(), equalTo(status.getStatusCode()));
     }
 
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -94,24 +94,24 @@ public class ExceptionThrowingTestResourceTest extends RestServiceContainerTest 
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testThrowsEJBException(@ArquillianResource URL baseUrl) throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "throwsEJBException");
-        UniformInterfaceException result = getWithError(resource);
+        WebTarget resource = makeWebResource(baseUrl, "throwsEJBException");
+        WebApplicationException result = getWithError(resource);
         String content = getResponseContent(result);
 
-        assertThat(result.getResponse().getClientResponseStatus().getStatusCode(),
+        assertThat(result.getResponse().getStatusInfo().getStatusCode(),
                 equalTo(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
     }
 
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testThrowsInformaticsServiceException(@ArquillianResource URL baseUrl) throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "throwsInformaticsServiceException");
-        UniformInterfaceException result = getWithError(resource);
+        WebTarget resource = makeWebResource(baseUrl, "throwsInformaticsServiceException");
+        WebApplicationException result = getWithError(resource);
         String content = getResponseContent(result);
 
         assertThat(content, equalTo("Oopsie, I threw an InformaticsServiceException"));
 
-        assertThat(result.getResponse().getClientResponseStatus().getStatusCode(),
+        assertThat(result.getResponse().getStatusInfo().getStatusCode(),
                 equalTo(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 
     }
