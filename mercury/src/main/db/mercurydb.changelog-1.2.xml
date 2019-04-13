@@ -2176,7 +2176,6 @@
             <column name="REV"/>
         </createIndex>
     </changeSet>
-
     <changeSet id="GPLIM-5849-8" author="thompson">
         <addForeignKeyConstraint constraintName="FK_LECL_LAB_BATCH"
                                  baseTableName="le_computed_lcsets" baseColumnNames="COMPUTED_LCSETS" baseTableSchemaName="MERCURY"
@@ -2205,23 +2204,9 @@
                                  baseTableName="POSITION_LAB_BATCHES_AUD" baseColumnNames="REV" baseTableSchemaName="MERCURY"
                                  referencedTableName="REV_INFO" referencedColumnNames="REV_INFO_ID" referencedTableSchemaName="MERCURY"/>
     </changeSet>
-
-    <changeSet id="GPLIM-5849-9" author="thompson">
-        <sql>delete from lab_batch_reworks where lab_batch = 56127 and reworks = 882095</sql>
-        <addPrimaryKey tableName="LAB_BATCH_REWORKS" columnNames="LAB_BATCH, REWORKS" constraintName="PK_LAB_BATCH_REWORKS"/>
-        <createIndex tableName="SAMPLE_INSTANCE_ENTITY" indexName="IX_SIE_LAB_VESSEL">
-            <column name="LAB_VESSEL"/>
-        </createIndex>
-    </changeSet>
-
     <changeSet id="GPLIM-5849-10" author="thompson">
         <createIndex tableName="LAB_BATCH_REWORKS" indexName="IX_LBR_REWORKS">
             <column name="REWORKS"/>
-        </createIndex>
-    </changeSet>
-    <changeSet id="GPLIM-5849-11" author="thompson">
-        <createIndex tableName="BUCKET_ENTRY" indexName="IX_BE_LAB_BATCH">
-            <column name="LAB_BATCH"/>
         </createIndex>
     </changeSet>
     <changeSet id="GPLIM-5849-12" author="thompson">
