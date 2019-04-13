@@ -12,8 +12,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import com.google.common.collect.ImmutableMap;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
@@ -35,6 +33,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URL;
@@ -73,12 +73,12 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, true, 0);
 
-        WebResource resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
-        ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE)
-                .accept(MediaType.APPLICATION_JSON_TYPE).entity(clinicalResourceBean)
-                .post(ClientResponse.class);
+        WebTarget resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
+        Response response = resource.request(MediaType.APPLICATION_JSON_TYPE)
+                .accept(MediaType.APPLICATION_JSON_TYPE)
+                .post(Entity.json(clinicalResourceBean));
         assertThat(response.getStatus(), is(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-        String errorMessage = response.getEntity(String.class);
+        String errorMessage = response.readEntity(String.class);
         assertThat(errorMessage, is(ClinicalResource.EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED));
     }
 

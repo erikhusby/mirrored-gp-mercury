@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.lang3.StringUtils;
@@ -13,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -339,10 +339,9 @@ public class LibraryBean {
         if (metadataSource != null) {
             this.metadataSource = metadataSource;
         }
+        dataType = aggregationDataType;
 
-        if (productOrder == null) {
-            dataType = aggregationDataType;
-        } else {
+        if (productOrder != null) {
             this.regulatoryDesignation = productOrder.getRegulatoryDesignationCodeForPipeline();
             productOrderKey = productOrder.getBusinessKey();
             productOrderTitle = productOrder.getTitle();
@@ -354,7 +353,9 @@ public class LibraryBean {
 
             Product product = productOrder.getProduct();
             if (product != null) {
-                this.dataType = productOrder.getProduct().getAggregationDataType();
+                if (dataType == null) {
+                    dataType = productOrder.getProduct().getAggregationDataType();
+                }
                 this.product = product.getProductName();
                 ProductFamily family = product.getProductFamily();
                 if (family != null) {

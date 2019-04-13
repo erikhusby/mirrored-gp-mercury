@@ -2,7 +2,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.RegulatoryInfoActionBean" %>
 
 <stripes:layout-definition>
-
     <script type="text/javascript">
         $j(document).ready(function() {
             $j('#addRegulatoryInfoDialog').dialog({
@@ -15,11 +14,15 @@
             $j('#regulatoryInfoSearchForm').submit(searchRegulatoryInfo);
         });
 
-        function resetRegulatoryInfoDialog() {
+        function resetRegulatoryInfoDialog(errorMessage) {
+            $j('#regInfoErrors').html('');
             $j('#regulatoryInfoQuery').val('');
             $j('#addRegulatoryInfoDialogSheet2').html('');
             $j('#regInfoErrors').html('');
             $j('#addRegulatoryInfoDialogSheet1').show();
+            if(errorMessage) {
+                $j('#regInfoErrors').html(errorMessage);
+            }
         }
 
         var regulatory_info_dialog = {};
@@ -45,34 +48,6 @@
             regInfoDialogDiv.dialog({title: 'Add Regulatory Information for ' + rpLabel}).dialog("open");
         }
 
-        /**
-         * Open a dialog box for editing the title of a regulatory information record.
-         *
-         * @param regulatoryInfoId  primary key of the regulatory information to edit
-         * @param rpLabel           label to display in the title bar of the dialog box
-         * @param callback          function to call after successful edit
-         */
-        function openRegulatoryInfoEditDialog(regulatoryInfoId, rpLabel, callback) {
-            regulatory_info_dialog.successCallback = callback;
-            $j('#addRegulatoryInfoDialogSheet2').html('');
-            $j('#regInfoErrors').html('');
-            $j('#addRegulatoryInfoDialogSheet1').hide();
-            var regInfoDialogDiv = $j('#addRegulatoryInfoDialog');
-            regInfoDialogDiv.dialog({title: 'Edit Regulatory Information for ' + rpLabel}).dialog("open");
-
-            $j.ajax({
-                url: '${ctxpath}/projects/regulatoryInfo.action',
-                data: {
-                    '<%= RegulatoryInfoActionBean.VIEW_REGULATORY_INFO_ACTION %>': '',
-                    regulatoryInfoId: regulatoryInfoId
-                },
-                dataType: 'html',
-                success: function(html) {
-                    $j('#addRegulatoryInfoDialogSheet2').html(html);
-                }
-            });
-        }
-
         function closeRegulatoryInfoDialog() {
             $j('#addRegulatoryInfoDialog').dialog("close");
         }
@@ -81,6 +56,7 @@
             if (event) {
                 event.preventDefault();
             }
+            $j('#regInfoErrors').html('');
             $j.ajax({
                 url: '${ctxpath}/projects/regulatoryInfo.action',
                 data: {
@@ -107,11 +83,11 @@
             $j('#regInfoErrors').html('<p>' + status + ': ' + error + '</p>' + $alert.html());
         }
     </script>
-
     <div id="addRegulatoryInfoDialog" title="Add Regulatory Information" class="form-horizontal">
 
         <div id="addRegulatoryInfoDialogSheet1">
-            <p>Enter the ORSP Determination number to see if the regulatory information is already known to Mercury.</p>
+            <%--<div id="statusMessage" class="alert alert-block" style="font-weight: bold"></div>--%>
+            <p>Enter the Broad ORSP number Determination number to see if the regulatory information is already known to Mercury.</p>
             <stripes:form id="regulatoryInfoSearchForm" beanclass="<%=RegulatoryInfoActionBean.class.getName()%>">
                 <stripes:hidden name="researchProjectKey"/>
                 <div class="control-group">
@@ -126,5 +102,4 @@
 
         <div id="addRegulatoryInfoDialogSheet2"></div>
         <div id="regInfoErrors" style="color: red; font-weight: bold;"></div>
-    </div>
-</stripes:layout-definition>
+    </div></stripes:layout-definition>

@@ -20,7 +20,9 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Parser for tube barcode/ well pairs to output vessel barcode from Qiagen Rack File output
@@ -51,6 +53,13 @@ public class QiagenRackFileParser {
             messageCollection.addError("Unknown rack type: " + plateTransferEventType.getSourcePlate().getPhysType());
             return;
         }
+
+        String instrument = rack.getModificationRecord().getInstrument().getValue();
+        if (mapSerialNumberToMachineName.containsKey(instrument)) {
+            instrument = mapSerialNumberToMachineName.get(instrument);
+        }
+        plateTransferEventType.setStation(instrument);
+
         //Generate new source plate barcode since Qiasymphony doesn't supply one.
         String platePrefix = "QiagenSampleCarrier24";
         String sdf = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
@@ -110,5 +119,11 @@ public class QiagenRackFileParser {
         JAXBContext jaxbUnmarshaller = JAXBContext.newInstance(Rack.class);
         Unmarshaller unmarshaller = jaxbUnmarshaller.createUnmarshaller();
         return (Rack) unmarshaller.unmarshal(inputStream);
+    }
+
+    static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
+    static {
+        mapSerialNumberToMachineName.put("qssp34733", "Beethoven");
+        mapSerialNumberToMachineName.put("qssp35174", "Air Bud");
     }
 }

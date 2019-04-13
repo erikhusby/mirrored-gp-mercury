@@ -123,6 +123,8 @@ public abstract class LabVessel implements Serializable {
 
     private BigDecimal receptacleWeight;
 
+    private BigDecimal mass;
+
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury", name="LAB_VESSEL_TICKETS_CREATED"
             , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
@@ -943,7 +945,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return A list of ancestor vessel events
      */
-    List<VesselEvent> getAncestors() {
+    public List<VesselEvent> getAncestors() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             VesselEvent vesselEvent = new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null, vesselToVesselTransfer.getLabEvent(),
@@ -1016,6 +1018,14 @@ public abstract class LabVessel implements Serializable {
 
     public void setReceptacleWeight(BigDecimal receptacleWeight) {
         this.receptacleWeight = receptacleWeight;
+    }
+
+    public BigDecimal getMass() {
+        return mass;
+    }
+
+    public void setMass(BigDecimal mass) {
+        this.mass = mass;
     }
 
     /**

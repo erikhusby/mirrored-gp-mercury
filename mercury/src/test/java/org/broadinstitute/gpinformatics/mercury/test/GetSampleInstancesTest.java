@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -29,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -68,6 +70,34 @@ public class GetSampleInstancesTest {
         tube.addSample(bspSample);
         return new SampleInstanceV2(tube);
 
+    }
+
+    private SampleInstanceV2 createSampleInstanceForPipelineAPIAggregationParticleTesting(String pdo, String sample,
+                                                                                          String pdoParticleString,
+                                                                                          Product.AggregationParticle aggregationParticle) {
+        SampleInstanceV2 sampleInstanceV2 =
+            createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.BSP, sample);
+
+        LabVessel labVessel = sampleInstanceV2.getInitialLabVessel();
+        MercurySample bspSample = labVessel.getMercurySamples().iterator().next();
+
+        ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(0, pdo);
+        dummyProductOrder.setDefaultAggregationParticle(aggregationParticle);
+
+        if (sample != null) {
+            ProductOrderSample pdoSample = new ProductOrderSample(sample);
+            if (StringUtils.isNotBlank(pdoParticleString)) {
+                pdoSample.setAggregationParticle(pdoParticleString);
+            }
+            bspSample.addProductOrderSample(pdoSample);
+            dummyProductOrder.addSample(pdoSample);
+        }
+
+        BucketEntry bucketEntry = new BucketEntry(labVessel, dummyProductOrder, new Bucket("foo"), BucketEntry.BucketEntryType.PDO_ENTRY);
+        labVessel.addBucketEntry(bucketEntry);
+             bucketEntry.setLabBatch(new LabBatch("batch", Collections.singleton(labVessel), LabBatch.LabBatchType.WORKFLOW));
+
+        return new SampleInstanceV2(labVessel);
     }
 
     /**
@@ -483,6 +513,31 @@ public class GetSampleInstancesTest {
                             MercurySample.GSSR_METADATA_SOURCE);
         Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null, "samples from outer space").getMetadataSourceForPipelineAPI(),
                             MercurySample.OTHER_METADATA_SOURCE);
+    }
+
+    @DataProvider(name = "aggregationParticleProvider")
+    public Iterator<Object[]> aggregationParticleProvider() {
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{Product.AggregationParticle.PDO_ALIQUOT, "PDO-XYZ", "SM-222", null, "PDO-XYZ.SM-222"});
+        testCases.add(new Object[]{Product.AggregationParticle.PDO, "PDO-XYZ", "SM-222",null,  "PDO-XYZ"});
+        testCases.add(new Object[]{null, "PDO-XYZ", "SM-222", null, null});
+        testCases.add(new Object[]{null, null, null, null, null});
+
+        testCases.add(new Object[]{Product.AggregationParticle.PDO_ALIQUOT, "PDO-XYZ", "SM-222", "FOOFOO", "FOOFOO"});
+        testCases.add(new Object[]{Product.AggregationParticle.PDO, "PDO-XYZ", "SM-222","FOOFOO", "FOOFOO"});
+
+        return testCases.iterator();
+    }
+
+    @Test(dataProvider = "aggregationParticleProvider")
+    public void testGetAggregationParticleForPipeline(Product.AggregationParticle aggregationParticle, String pdo,
+                                                      String sampleId, String pdoParticleString, String aggregationParticleString) {
+
+        SampleInstanceV2 sample =
+            createSampleInstanceForPipelineAPIAggregationParticleTesting(pdo, sampleId, pdoParticleString,
+                aggregationParticle);
+
+        Assert.assertEquals(sample.getAggregationParticle(), aggregationParticleString);
     }
 
     @Test

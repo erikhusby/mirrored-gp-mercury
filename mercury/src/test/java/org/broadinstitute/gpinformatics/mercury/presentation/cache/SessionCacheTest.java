@@ -11,12 +11,12 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.cache;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockServletContext;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.codehaus.jackson.type.TypeReference;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;

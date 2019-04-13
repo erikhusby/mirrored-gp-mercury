@@ -2,16 +2,20 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -28,6 +32,9 @@ public class ReagentSearchDefinition {
         searchTerms = buildReagentEventGroup();
         mapGroupSearchTerms.put("Events", searchTerms);
 
+        searchTerms = buildMetadataGroup();
+        mapGroupSearchTerms.put("Metadata", searchTerms);
+
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
 
         criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("ReagentID",
@@ -37,6 +44,20 @@ public class ReagentSearchDefinition {
                 ColumnEntity.REAGENT, criteriaProjections, mapGroupSearchTerms);
 
         return configurableSearchDefinition;
+    }
+
+    private List<SearchTerm> buildMetadataGroup() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+        for (Metadata.Key meta : Metadata.Key.values()) {
+            if (meta.getCategory() == Metadata.Category.REAGENT && meta != Metadata.Key.BAIT_WELL) {
+                SearchTerm searchTerm = new SearchTerm();
+                searchTerm.setName(meta.getDisplayName());
+                searchTerm.setDisplayExpression(DisplayExpression.REAGENT_METADATA);
+                searchTerms.add(searchTerm);
+            }
+        }
+
+        return searchTerms;
     }
 
     private List<SearchTerm> buildReagentGroup() {

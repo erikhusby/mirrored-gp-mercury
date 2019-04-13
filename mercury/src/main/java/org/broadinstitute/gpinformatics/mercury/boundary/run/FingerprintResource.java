@@ -41,11 +41,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static java.util.Comparator.reverseOrder;
 
 /**
  * JAX-RS web service for fingerprints.
@@ -182,8 +185,10 @@ public class FingerprintResource {
                         List<FingerprintCallsBean> calls = new ArrayList<>();
                         if (fingerprint.getDisposition() == Fingerprint.Disposition.PASS) {
                             for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
-                                calls.add(new FingerprintCallsBean(fpGenotype.getSnp().getRsId(), fpGenotype.getGenotype(),
-                                        fpGenotype.getCallConfidence().toString()));
+                                if (fpGenotype != null) {
+                                    calls.add(new FingerprintCallsBean(fpGenotype.getSnp().getRsId(), fpGenotype.getGenotype(),
+                                            fpGenotype.getCallConfidence().toString()));
+                                }
                             }
                         }
 
@@ -213,7 +218,7 @@ public class FingerprintResource {
                         null, null, null, null, Collections.emptyList()));
             }
         }
-        fingerprints.sort((o1, o2) -> o2.getDateGenerated().compareTo(o1.getDateGenerated()));
+        fingerprints.sort(Comparator.comparing(FingerprintBean::getDateGenerated, Comparator.nullsLast(reverseOrder())));
 
         return new FingerprintsBean(fingerprints);
     }
