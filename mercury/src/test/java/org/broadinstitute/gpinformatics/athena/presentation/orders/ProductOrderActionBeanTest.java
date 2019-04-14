@@ -3370,6 +3370,7 @@ public class ProductOrderActionBeanTest {
         pdo.setAttestationConfirmed(true);
         pdo.setJiraTicketKey("");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        pdo.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         pdo.setCreatedBy(1L);
 
         // Initialize the Action Bean to be in such a state that we can mimic calls from the web
