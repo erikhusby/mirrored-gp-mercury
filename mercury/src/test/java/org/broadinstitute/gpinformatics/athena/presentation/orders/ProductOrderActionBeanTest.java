@@ -2919,7 +2919,7 @@ public class ProductOrderActionBeanTest {
 //        assertThat(fundingDetails.get("fundsReservationNumber"), equalTo("CO-1234"));
         assertThat(fundingDetails.get("fundsReservationEndDate"), equalTo(DateUtils.getDate(oneWeek)));
         assertThat(fundingDetails.get("activeGrant"), is(true));
-        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7));
+        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7L));
 
         assertThat(quoteFundingJson.getString("status"), equalTo(FundingStatus.SUBMITTED.getStatusText()));
         assertThat(quoteFundingJson.getString("quoteType"), equalTo(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName()));
