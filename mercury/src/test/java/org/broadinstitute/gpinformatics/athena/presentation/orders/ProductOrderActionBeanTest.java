@@ -2856,6 +2856,7 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteService(mockQuoteService);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
@@ -3090,6 +3091,7 @@ public class ProductOrderActionBeanTest {
         pdo.setJiraTicketKey("");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
         pdo.setCreatedBy(1L);
+        pdo.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
 
         // Initialize the Action Bean to be in such a state that we can mimic calls from the web
         HttpServletRequest request = new MockHttpServletRequest("foo","bar");
