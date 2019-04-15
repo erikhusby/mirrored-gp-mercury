@@ -133,7 +133,7 @@ public class ReagentDesignImportProcessor {
         @CsvBindByName(column = "Manufacturing Date", required = true)
         private String manufacturingDateString;
 
-        @CsvBindByName(column = "Storage Conditions (C)", required = true)
+        @CsvBindByName(column = "Storage Conditions", required = true)
         private String storageConditions;
 
         @CsvBindByName(column = "Lot Number", required = true)

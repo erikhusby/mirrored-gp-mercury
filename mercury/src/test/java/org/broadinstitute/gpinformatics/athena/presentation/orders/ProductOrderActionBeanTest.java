@@ -2856,6 +2856,7 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteService(mockQuoteService);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
         JSONObject fundingDetails = (JSONObject) quoteFundingJson.getJSONArray("fundingDetails").get(0);
@@ -2919,7 +2920,7 @@ public class ProductOrderActionBeanTest {
 //        assertThat(fundingDetails.get("fundsReservationNumber"), equalTo("CO-1234"));
         assertThat(fundingDetails.get("fundsReservationEndDate"), equalTo(DateUtils.getDate(oneWeek)));
         assertThat(fundingDetails.get("activeGrant"), is(true));
-        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7));
+        assertThat(fundingDetails.get("daysTillExpire"), equalTo(7L));
 
         assertThat(quoteFundingJson.getString("status"), equalTo(FundingStatus.SUBMITTED.getStatusText()));
         assertThat(quoteFundingJson.getString("quoteType"), equalTo(ProductOrder.QuoteSourceType.SAP_SOURCE.getDisplayName()));
@@ -3090,6 +3091,7 @@ public class ProductOrderActionBeanTest {
         pdo.setJiraTicketKey("");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
         pdo.setCreatedBy(1L);
+        pdo.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
 
         // Initialize the Action Bean to be in such a state that we can mimic calls from the web
         HttpServletRequest request = new MockHttpServletRequest("foo","bar");
@@ -3128,10 +3130,10 @@ public class ProductOrderActionBeanTest {
                 new SAPMaterial(pdo.getProduct().getPartNumber(),
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
-                        pdo.getProduct().getName(),pricedMoreThanQuote.toString(),"EA",
-                        BigDecimal.ONE, pdo.getProduct().getDescription(),"", "",
-                        new Date(),new Date(), Collections.emptyMap(), Collections.emptyMap(),
-                        SAPMaterial.MaterialStatus.ENABLED,
+                        pdo.getProduct().getName(),pricedMoreThanQuote.toString(),
+                        "EA",BigDecimal.ONE,"", "", "",
+                        new Date(),new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(productMaterial);
@@ -3146,11 +3148,11 @@ public class ProductOrderActionBeanTest {
                     new SAPMaterial(addOn.getAddOn().getPartNumber(),
                             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
                             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
-                            pdo.getProduct().getName(), pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),
-                            "EA", BigDecimal.ONE,pdo.getProduct().getDescription(),"",
-                            "",new Date(),new Date(), Collections.emptyMap(), Collections.emptyMap(),
-                            SAPMaterial.MaterialStatus.ENABLED,
-                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+                            pdo.getProduct().getName(),
+                            pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),"EA",
+                            BigDecimal.ONE,"", "", "",
+                            new Date(), new Date(),
+                            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
             addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
             returnMaterials.add(addonMaterial);
         }
@@ -3368,6 +3370,7 @@ public class ProductOrderActionBeanTest {
         pdo.setAttestationConfirmed(true);
         pdo.setJiraTicketKey("");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        pdo.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         pdo.setCreatedBy(1L);
 
         // Initialize the Action Bean to be in such a state that we can mimic calls from the web
@@ -3416,8 +3419,7 @@ public class ProductOrderActionBeanTest {
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
                         pdo.getProduct().getName(),pricePerSample.toString(),"EA",
-                        BigDecimal.ONE,pdo.getProduct().getDescription(),"", "", new Date(),
-                        new Date(),
+                        BigDecimal.ONE, "", "", "", new Date(), new Date(),
                         Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
@@ -3432,10 +3434,11 @@ public class ProductOrderActionBeanTest {
                             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
                             SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
                             pdo.getProduct().getName(),
-                            pricePerSample.toString(), "EA", BigDecimal.ONE,
-                            pdo.getProduct().getDescription(),"", "",new Date(),
-                            new Date(),Collections.emptyMap(), Collections.emptyMap(),
-                            SAPMaterial.MaterialStatus.ENABLED, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+                            pricePerSample.toString(), "EA",BigDecimal.ONE,
+                            "", "", "",
+                            new Date(),new Date(),Collections.emptyMap(), Collections.emptyMap(),
+                            SAPMaterial.MaterialStatus.ENABLED,
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
             returnMaterials.add(addonMaterial);
         }
 
