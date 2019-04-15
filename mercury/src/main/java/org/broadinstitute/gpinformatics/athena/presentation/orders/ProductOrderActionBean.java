@@ -1426,6 +1426,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
+            productOrderListEntry.setQuoteSourceType(editOrder.getQuoteSource());
 
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
 
