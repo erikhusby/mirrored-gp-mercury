@@ -34,15 +34,19 @@ import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -501,7 +505,8 @@ public class SapIntegrationServiceImplDBFreeTest {
 
     }
 
-    public void testGetSampleCountFreshOrderNoOverrides() throws Exception {
+    @Test(dataProvider = "orderStatusForSampleCount")
+    public void testGetSampleCountFreshOrderNoOverrides(ProductOrder.OrderStatus testOrderStatus) throws Exception {
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> materials = new HashSet<>();
@@ -512,6 +517,8 @@ public class SapIntegrationServiceImplDBFreeTest {
         countTestPDO.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         countTestPDO.addSapOrderDetail(new SapOrderDetail("testSAPOrder", 10, testSingleSourceQuote.getAlphanumericId(),
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
+        System.out.println("The current order status is : " + testOrderStatus.getDisplayName());
+        countTestPDO.setOrderStatus(testOrderStatus);
 
         final Product primaryProduct = countTestPDO.getProduct();
         addTestProductMaterialPrice("50.00", priceList, quoteItems, materials, primaryProduct,
@@ -524,7 +531,6 @@ public class SapIntegrationServiceImplDBFreeTest {
         testSingleSourceQuote.setQuoteItems(quoteItems);
 
         double closingCount = 0d;
-
 
         while (closingCount <= countTestPDO.getSamples().size()) {
             double primarySampleCount =
@@ -559,7 +565,6 @@ public class SapIntegrationServiceImplDBFreeTest {
 
             closingCount++;
         }
-
     }
 
     private void addLedgerItems(ProductOrder order, int ledgerCount) {
@@ -600,5 +605,18 @@ public class SapIntegrationServiceImplDBFreeTest {
                 (new BigDecimal(primaryMaterialBasePrice)).subtract(new BigDecimal(20)).toString(), "test",
                 primaryProduct.getPrimaryPriceItem().getPlatform(),
                 primaryProduct.getPrimaryPriceItem().getCategory()));
+    }
+
+    @DataProvider(name="orderStatusForSampleCount")
+    public Iterator<Object[]> orderStatusForSampleCount() {
+        List<Object[]> testScenarios = new ArrayList<>();
+
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Submitted});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Draft});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Abandoned});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Completed});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Pending});
+
+        return testScenarios.iterator();
     }
 }
