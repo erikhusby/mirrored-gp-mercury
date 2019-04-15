@@ -777,4 +777,40 @@ public class GetSampleInstancesTest {
 
         BaseEventTest.runTransferVisualizer(l1T1);
     }
+
+    /**
+     * Some daughter transfers backfilled from BSP contain daughter and grand daughter transfers in the same cherry
+     * pick.  Test that this does not cause a stack overflow.
+     */
+    public void testGrandDaughter() {
+        BarcodedTube parentTube = new BarcodedTube("P1");
+        String sampleKey = "SM-1";
+        MercurySample mercurySample = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
+        mercurySample.addLabVessel(parentTube);
+
+        HashMap<VesselPosition, BarcodedTube> mapPositionToParentTube = new HashMap<>();
+        mapPositionToParentTube.put(VesselPosition.A01, parentTube);
+        TubeFormation parentTf = new TubeFormation(mapPositionToParentTube, RackOfTubes.RackType.Matrix96);
+
+        HashMap<VesselPosition, BarcodedTube> mapPositionToDaughterTube = new HashMap<>();
+        BarcodedTube daughterTube = new BarcodedTube("D1");
+        mapPositionToDaughterTube.put(VesselPosition.A01, daughterTube);
+        TubeFormation daughterTf = new TubeFormation(mapPositionToDaughterTube, RackOfTubes.RackType.Matrix96);
+
+        HashMap<VesselPosition, BarcodedTube> mapPositionToGrandDaughterTube = new HashMap<>();
+        BarcodedTube grandDaughterTube = new BarcodedTube("GD1");
+        mapPositionToGrandDaughterTube.put(VesselPosition.A01, grandDaughterTube);
+        TubeFormation grandDaughterTf = new TubeFormation(mapPositionToGrandDaughterTube, RackOfTubes.RackType.Matrix96);
+
+        LabEvent grandDaughterEvent = new LabEvent(LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION, new Date(), "BATMAN", 1L, 101L, "Bravo");
+        grandDaughterEvent.getCherryPickTransfers().add(new CherryPickTransfer(parentTf.getContainerRole(), VesselPosition.A01, null,
+                daughterTf.getContainerRole(), VesselPosition.A01, null, grandDaughterEvent));
+        grandDaughterEvent.getCherryPickTransfers().add(new CherryPickTransfer(daughterTf.getContainerRole(), VesselPosition.A01, null,
+                grandDaughterTf.getContainerRole(), VesselPosition.A01, null, grandDaughterEvent));
+
+        Set<SampleInstanceV2> sampleInstances = grandDaughterTube.getSampleInstancesV2();
+        Assert.assertEquals(sampleInstances.size(), 1);
+        Assert.assertEquals(sampleInstances.iterator().next().getRootOrEarliestMercurySampleName(),
+                sampleKey);
+    }
 }

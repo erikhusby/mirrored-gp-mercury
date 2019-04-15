@@ -657,22 +657,24 @@ todo jmt adder methods
     }
 
     private Set<LabBatch> computeLcSetsForCherryPickTransfers() {
-        Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount = new HashMap<>();
-        int numVesselsWithBucketEntries = 0;
-        List<CherryPickTransfer> cherryPickTransferList = new ArrayList<>();
-        cherryPickTransferList.addAll(cherryPickTransfers);
-        Collections.sort(cherryPickTransferList, new Comparator<CherryPickTransfer>() {
-            @Override
-            public int compare(CherryPickTransfer o1, CherryPickTransfer o2) {
-                return o1.getTargetPosition().compareTo(o2.getTargetPosition());
-            }
-        });
         // Determine whether we're pooling multiple sources into the same destination
+        List<CherryPickTransfer> cherryPickTransferList = new ArrayList<>(cherryPickTransfers);
+        cherryPickTransferList.sort(Comparator.comparing(CherryPickTransfer::getTargetPosition));
         boolean poolMode = false;
         if (cherryPickTransferList.size() > 1 && cherryPickTransferList.get(0).getTargetPosition() ==
                 cherryPickTransferList.get(1).getTargetPosition()) {
             poolMode = true;
         }
+
+        // Detect granddaughter transfers
+        Set<String> destContainerBarcodes = new HashSet<>();
+        for (CherryPickTransfer cherryPickTransfer : cherryPickTransferList) {
+            destContainerBarcodes.add(cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel());
+        }
+
+
+        Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount = new HashMap<>();
+        int numVesselsWithBucketEntries = 0;
         if (poolMode) {
             // This handles the case where two LCSETS are reworked in the ICE bucket, and appear in the same
             // IcePoolingTransfer.  There are two LCSETS for the event as a whole, so this doesn't help disambiguate
@@ -680,6 +682,11 @@ todo jmt adder methods
             Set<LabBatch> totalLabBatches = new HashSet<>();
             for (int i = 0; i < cherryPickTransferList.size(); i++) {
                 CherryPickTransfer cherryPickTransfer = cherryPickTransferList.get(i);
+                // Some transfers backfilled from BSP contain daughters and and granddaughters.  Avoid getting sample
+                // instances for granddaughters, because this will cause a stack overflow.
+                if (destContainerBarcodes.contains(cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel())) {
+                    continue;
+                }
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 = cherryPickTransfer.getSourceVesselContainer()
                         .getSampleInstancesAtPositionV2(cherryPickTransfer.getSourcePosition());
                 numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
