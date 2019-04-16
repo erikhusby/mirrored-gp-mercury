@@ -2857,6 +2857,7 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(quoteId)).thenReturn(testQuote);
         actionBean.setQuoteIdentifier(quoteId);
         actionBean.setQuoteService(mockQuoteService);
+        actionBean.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER.getDisplayName());
 
         actionBean.setQuoteSource(testOrder.getQuoteSource().getDisplayName());
         JSONObject quoteFundingJson = actionBean.getQuoteFundingJson();
@@ -3092,6 +3093,7 @@ public class ProductOrderActionBeanTest {
         pdo.setJiraTicketKey("");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
         pdo.setCreatedBy(1L);
+        pdo.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
 
         // Initialize the Action Bean to be in such a state that we can mimic calls from the web
         HttpServletRequest request = new MockHttpServletRequest("foo","bar");
@@ -3127,8 +3129,14 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct("BSP252", priceList, quoteItems, pdo.getProduct(),
                 pricedMoreThanQuote.toString(), "20", pricedMoreThanQuote.toString());
         final SAPMaterial productMaterial =
-                new SAPMaterial(pdo.getProduct().getPartNumber(), pricedMoreThanQuote.toString(),
-                        Collections.emptyMap(), Collections.emptyMap());
+                new SAPMaterial(pdo.getProduct().getPartNumber(),
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
+                        pdo.getProduct().getName(),pricedMoreThanQuote.toString(),
+                        "EA",BigDecimal.ONE,"", "", "",
+                        new Date(),new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(productMaterial);
 
@@ -3140,8 +3148,13 @@ public class ProductOrderActionBeanTest {
                     pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString());
             final SAPMaterial addonMaterial =
                     new SAPMaterial(addOn.getAddOn().getPartNumber(),
-                            pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),
-                            Collections.emptyMap(), Collections.emptyMap());
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
+                            pdo.getProduct().getName(),
+                            pricedMoreThanQuote.multiply(BigDecimal.valueOf(2)).toString(),"EA",
+                            BigDecimal.ONE,"", "", "",
+                            new Date(), new Date(),
+                            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
             addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
             returnMaterials.add(addonMaterial);
         }
@@ -3359,6 +3372,7 @@ public class ProductOrderActionBeanTest {
         pdo.setAttestationConfirmed(true);
         pdo.setJiraTicketKey("");
         pdo.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        pdo.setQuoteSource(ProductOrder.QuoteSourceType.QUOTE_SERVER);
         pdo.setCreatedBy(1L);
 
         // Initialize the Action Bean to be in such a state that we can mimic calls from the web
@@ -3403,8 +3417,13 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct(quoteId, priceList, quoteItems, pdo.getProduct(), pricePerSample.toString(),
                 "20", pricePerSample.toString());
         final SAPMaterial productMaterial =
-                new SAPMaterial(pdo.getProduct().getPartNumber(), pricePerSample.toString(),
-                        Collections.emptyMap(), Collections.emptyMap());
+                new SAPMaterial(pdo.getProduct().getPartNumber(),
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
+                        pdo.getProduct().getName(),pricePerSample.toString(),"EA",
+                        BigDecimal.ONE, "", "", "", new Date(), new Date(),
+                        Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         productMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(productMaterial);
 
@@ -3414,8 +3433,14 @@ public class ProductOrderActionBeanTest {
                     pricePerSample.toString());
             final SAPMaterial addonMaterial =
                     new SAPMaterial(addOn.getAddOn().getPartNumber(),
-                            pricePerSample.toString(), Collections.emptyMap(), Collections.emptyMap());
-            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getDefaultWbs(),
+                            pdo.getProduct().getName(),
+                            pricePerSample.toString(), "EA",BigDecimal.ONE,
+                            "", "", "",
+                            new Date(),new Date(),Collections.emptyMap(), Collections.emptyMap(),
+                            SAPMaterial.MaterialStatus.ENABLED,
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
             returnMaterials.add(addonMaterial);
         }
 
