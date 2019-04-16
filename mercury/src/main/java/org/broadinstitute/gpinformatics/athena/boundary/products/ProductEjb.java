@@ -339,10 +339,13 @@ public class ProductEjb {
                 throw new SAPIntegrationException(e.getMessage());
             }
         } else {
-            throw new SAPIntegrationException(productToPublish.getName() +
-                              " has a price item that makes it ineligible to be reflected in SAP.");
+            throw new SAPIntegrationException(buildIneligibleForSapError(productToPublish.getName()));
         }
 
+    }
+
+    public static String buildIneligibleForSapError(String productName) {
+        return String.format("%s has a price item that makes it ineligible to be reflected in SAP.", productName);
     }
 
     /**
