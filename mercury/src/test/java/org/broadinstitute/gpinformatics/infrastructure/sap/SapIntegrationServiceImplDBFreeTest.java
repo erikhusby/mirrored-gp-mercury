@@ -506,7 +506,7 @@ public class SapIntegrationServiceImplDBFreeTest {
     }
 
     @Test(dataProvider = "orderStatusForSampleCount")
-    public void testGetSampleCountFreshOrderNoOverrides(ProductOrder.OrderStatus testOrderStatus) throws Exception {
+    public void testGetSampleCountFreshOrderNoOverrides(ProductOrder.OrderStatus testOrderStatus, int extraSamples) throws Exception {
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
         Set<SAPMaterial> materials = new HashSet<>();
@@ -534,32 +534,32 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         while (closingCount <= countTestPDO.getSamples().size()) {
             double primarySampleCount =
-                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, false,
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), extraSamples, false, false,
                             false).doubleValue();
             double primaryClosingCount =
-                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, true,
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), extraSamples, false, true,
                             false).doubleValue();
             double primaryOrderValueQueryCount =
-                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, false,
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), extraSamples, false, false,
                             true).doubleValue();
-            assertThat(primarySampleCount, is(equalTo((double) countTestPDO.getSamples().size())));
+            assertThat(primarySampleCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
             assertThat(primaryClosingCount, is(equalTo(closingCount)));
-            assertThat(primaryOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size() - closingCount)));
+            assertThat(primaryOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples - closingCount)));
 
 
             for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
                 final double addonSampleCount =
-                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, false,
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), extraSamples, false, false,
                                 false).doubleValue();
                 final double addonClosingCount =
-                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, true,
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), extraSamples, false, true,
                                 false).doubleValue();
                 final double addOnOrderValueQueryCount =
-                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, false,
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), extraSamples, false, false,
                                 true).doubleValue();
-                assertThat(addonSampleCount, is(equalTo((double) countTestPDO.getSamples().size())));
+                assertThat(addonSampleCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples)));
                 assertThat(addonClosingCount, is(equalTo(closingCount)));
-                assertThat(addOnOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size() - closingCount)));
+                assertThat(addOnOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size()+extraSamples - closingCount)));
             }
             addLedgerItems(countTestPDO, 1);
 
@@ -611,11 +611,16 @@ public class SapIntegrationServiceImplDBFreeTest {
     public Iterator<Object[]> orderStatusForSampleCount() {
         List<Object[]> testScenarios = new ArrayList<>();
 
-        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Submitted});
-        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Draft});
-        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Abandoned});
-        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Completed});
-        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Pending});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Submitted, 2});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Submitted, 0});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Draft, 2});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Draft, 0});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Abandoned, 2});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Abandoned, 0});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Completed, 2});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Completed, 0});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Pending, 2});
+        testScenarios.add(new Object[]{ProductOrder.OrderStatus.Pending, 0});
 
         return testScenarios.iterator();
     }
