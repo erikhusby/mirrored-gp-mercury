@@ -2524,8 +2524,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public enum OrderAccessType implements StatusType {
-        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)", "GP01"),
-        COMMERCIAL("Commercial (2000)", "GP02");
+        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()),
+        COMMERCIAL("Commercial (2000)", SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization());
 
         private String displayName;
         private String salesOrg;
