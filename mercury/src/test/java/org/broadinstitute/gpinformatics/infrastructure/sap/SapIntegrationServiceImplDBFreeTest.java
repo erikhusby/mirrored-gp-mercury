@@ -24,9 +24,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.ConditionValue;
 import org.broadinstitute.sap.entity.SAPMaterial;
@@ -529,20 +527,32 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         while (closingCount <= countTestPDO.getSamples().size()) {
             double primarySampleCount =
-                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, false).doubleValue();
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, false,
+                            false).doubleValue();
             double primaryClosingCount =
-                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, true).doubleValue();
-            assertThat(primarySampleCount, is(equalTo(Double.valueOf(countTestPDO.getSamples().size()))));
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, true,
+                            false).doubleValue();
+            double primaryOrderValueQueryCount =
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, true,
+                            true).doubleValue();
+            assertThat(primarySampleCount, is(equalTo((double) countTestPDO.getSamples().size())));
             assertThat(primaryClosingCount, is(equalTo(closingCount)));
+            assertThat(primaryOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size() - closingCount)));
 
 
             for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
                 final double addonSampleCount =
-                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, false).doubleValue();
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, false,
+                                false).doubleValue();
                 final double addonClosingCount =
-                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, true).doubleValue();
-                assertThat(addonSampleCount, is(equalTo(Double.valueOf(countTestPDO.getSamples().size()))));
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, true,
+                                false).doubleValue();
+                final double addOnOrderValueQueryCount =
+                        SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, true,
+                                true).doubleValue();
+                assertThat(addonSampleCount, is(equalTo((double) countTestPDO.getSamples().size())));
                 assertThat(addonClosingCount, is(equalTo(closingCount)));
+                assertThat(addOnOrderValueQueryCount, is(equalTo((double) countTestPDO.getSamples().size() - closingCount)));
             }
             addLedgerItems(countTestPDO, 1);
 
@@ -551,7 +561,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
     }
 
-    void addLedgerItems(ProductOrder order, int ledgerCount) {
+    private void addLedgerItems(ProductOrder order, int ledgerCount) {
         for (ProductOrderSample productOrderSample : order.getSamples()) {
             if(!productOrderSample.isCompletelyBilled()) {
                 productOrderSample.addLedgerItem(new Date(), order.getProduct().getPrimaryPriceItem(), ledgerCount * 1d);
