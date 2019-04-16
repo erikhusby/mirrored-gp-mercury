@@ -123,8 +123,10 @@ public class ProductOrderListEntry implements Serializable {
         this(null, null, null, 0);
     }
 
-    public static ProductOrderListEntry createDummy() {
-        return new ProductOrderListEntry();
+    public static ProductOrderListEntry createDummy(ProductOrder defaultOrder) {
+        final ProductOrderListEntry productOrderListEntry = new ProductOrderListEntry();
+        productOrderListEntry.setQuoteSourceType(defaultOrder.getQuoteSource());
+        return productOrderListEntry;
     }
 
     /**

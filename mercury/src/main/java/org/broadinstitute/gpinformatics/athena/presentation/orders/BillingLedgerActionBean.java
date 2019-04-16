@@ -312,7 +312,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         ProductOrder.loadSampleData(productOrder.getSamples(), BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS);
 
         // Load billing status information
-        productOrderListEntry = productOrder.isDraft() ? ProductOrderListEntry.createDummy() :
+        productOrderListEntry = productOrder.isDraft() ? ProductOrderListEntry.createDummy(productOrder) :
                 productOrderListEntryDao.findSingle(productOrder.getJiraTicketKey());
 
         // Gather metrics and related information

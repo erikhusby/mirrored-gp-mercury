@@ -1424,9 +1424,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
-            productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
+            productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy(editOrder) :
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
-            productOrderListEntry.setQuoteSourceType(editOrder.getQuoteSource());
 
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
 
