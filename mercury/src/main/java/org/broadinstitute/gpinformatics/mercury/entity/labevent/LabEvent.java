@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
@@ -659,7 +660,12 @@ todo jmt adder methods
     private Set<LabBatch> computeLcSetsForCherryPickTransfers() {
         // Determine whether we're pooling multiple sources into the same destination
         List<CherryPickTransfer> cherryPickTransferList = new ArrayList<>(cherryPickTransfers);
-        cherryPickTransferList.sort(Comparator.comparing(CherryPickTransfer::getTargetPosition));
+        cherryPickTransferList.sort((o1, o2) -> {
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(o1.getTargetVessel().getLabel(), o2.getTargetVessel().getLabel());
+            builder.append(o1.getTargetPosition(), o2.getTargetPosition());
+            return builder.build();
+        });
         boolean poolMode = false;
         if (cherryPickTransferList.size() > 1 && cherryPickTransferList.get(0).getTargetPosition() ==
                 cherryPickTransferList.get(1).getTargetPosition()) {
@@ -671,7 +677,6 @@ todo jmt adder methods
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransferList) {
             destContainerBarcodes.add(cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel());
         }
-
 
         Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount = new HashMap<>();
         int numVesselsWithBucketEntries = 0;
@@ -710,6 +715,11 @@ todo jmt adder methods
             return totalLabBatches;
         } else {
             for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
+                // Some transfers backfilled from BSP contain daughters and and granddaughters.  Avoid getting sample
+                // instances for granddaughters, because this will cause a stack overflow.
+                if (destContainerBarcodes.contains(cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel())) {
+                    continue;
+                }
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 = cherryPickTransfer.getSourceVesselContainer()
                         .getSampleInstancesAtPositionV2(cherryPickTransfer.getSourcePosition());
                 numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
