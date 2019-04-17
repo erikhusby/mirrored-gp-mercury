@@ -323,6 +323,9 @@ public class EventEtlDbFreeTest {
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(pdoSample);
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(sampleInst.getProductOrderSampleForSingleBucket()).andReturn(pdoSample);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo);
+        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
         EasyMock.expect(sampleInst.getMolecularIndexingScheme()).andReturn(indexingScheme).times(2);
         EasyMock.expect(sampleInst.isReagentOnly()).andReturn(false);
         EasyMock.expect(sampleInst.getNearestMercurySampleName()).andReturn(lcsetSampleKey);
@@ -427,6 +430,9 @@ public class EventEtlDbFreeTest {
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(pdoSample);
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(sampleInst.getProductOrderSampleForSingleBucket()).andReturn(pdoSample);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo);
+        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
         EasyMock.expect(sampleInst.getMolecularIndexingScheme()).andReturn(indexingScheme).times(2);
         EasyMock.expect(sampleInst.isReagentOnly()).andReturn(false);
         EasyMock.expect(sampleInst.getNearestMercurySampleName()).andReturn(lcsetSampleKey);
@@ -479,6 +485,9 @@ public class EventEtlDbFreeTest {
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(pdoSample);
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(sampleInst.getProductOrderSampleForSingleBucket()).andReturn(pdoSample);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo);
+        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
         EasyMock.expect(sampleInst.getMolecularIndexingScheme()).andReturn(indexingScheme).times(2);
         EasyMock.expect(sampleInst.isReagentOnly()).andReturn(false);
         EasyMock.expect(sampleInst.getNearestMercurySampleName()).andReturn(lcsetSampleKey);
@@ -536,6 +545,9 @@ public class EventEtlDbFreeTest {
 
         EasyMock.expect(sampleInst.getSingleProductOrderSample()).andReturn(pdoSample);
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(sampleInst.getProductOrderSampleForSingleBucket()).andReturn(pdoSample);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo);
+        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
         EasyMock.expect(sampleInst.getMolecularIndexingScheme()).andReturn(indexingScheme).times(2);
         EasyMock.expect(sampleInst.isReagentOnly()).andReturn(false);
         EasyMock.expect(sampleInst.getNearestMercurySampleName()).andReturn(lcsetSampleKey);
