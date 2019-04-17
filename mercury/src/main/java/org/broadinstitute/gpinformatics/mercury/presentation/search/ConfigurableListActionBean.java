@@ -8,6 +8,7 @@ import net.sourceforge.stripes.validation.SimpleError;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -71,6 +72,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private SapQuoteLink sapQuoteLink;
 
     @Inject
     private ConstrainedValueDao constrainedValueDao;
@@ -153,6 +157,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         evalContext.setJiraConfig(jiraConfig);
         evalContext.setPriceListCache(priceListCache);
         evalContext.setQuoteLink(quoteLink);
+        evalContext.setSapQuoteLink(sapQuoteLink);
         evalContext.setOptionValueDao(constrainedValueDao);
         return evalContext;
     }

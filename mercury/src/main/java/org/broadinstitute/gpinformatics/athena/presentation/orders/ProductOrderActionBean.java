@@ -78,6 +78,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.SquidLink;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
@@ -261,6 +262,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private SapQuoteLink sapQuoteLink;
 
     @Inject
     private SquidLink squidLink;
@@ -1425,7 +1429,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
-            productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
+            productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy(editOrder) :
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
 
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
@@ -2932,6 +2936,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getQuoteUrl() {
         return getQuoteUrl(editOrder.getQuoteId());
+    }
+
+    public String getSapQuoteUrl(String quoteIdentifier) {
+        return sapQuoteLink.sapUrl(quoteIdentifier);
+    }
+
+    public String getSapQuoteUrl() {
+        return sapQuoteLink.sapUrl(editOrder.getQuoteId());
     }
 
     public String getSquidWorkRequestUrl(String workRequestId) {

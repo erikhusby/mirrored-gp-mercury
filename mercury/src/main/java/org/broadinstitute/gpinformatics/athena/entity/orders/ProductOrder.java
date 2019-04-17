@@ -2592,6 +2592,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return foundValue;
 
         }
+        public boolean isSapType() {
+            return this == SAP_SOURCE;
+        }
     }
 
     public QuoteSourceType getQuoteSource() {
