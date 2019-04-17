@@ -623,7 +623,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         }
 
         for (MercurySample mercurySample : labVessel.getMercurySamples()) {
-            allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
+            allProductOrderSamples.addAll(mercurySample.getProductOrderSamples()); // todo jmt needs an order
         }
     }
 
