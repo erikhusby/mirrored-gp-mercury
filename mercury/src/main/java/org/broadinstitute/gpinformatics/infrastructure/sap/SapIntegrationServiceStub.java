@@ -314,4 +314,9 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     public SapQuote findSapQuote(String sapQuoteId) throws SAPIntegrationException {
         return null;
     }
+
+    @Override
+    public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling) {
+        return null;
+    }
 }
