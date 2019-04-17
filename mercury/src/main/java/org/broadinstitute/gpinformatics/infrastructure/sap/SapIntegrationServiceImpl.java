@@ -322,7 +322,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return sapOrderItem;
     }
 
-
+    /**
+     * This appears to currently only be used for a single fixup test
+     * @param placedOrder
+     * @param product
+     * @param closingOrder
+     * @return
+     */
     public static BigDecimal getSampleCount(ProductOrder placedOrder, Product product, boolean closingOrder) {
 
         return getSampleCount(placedOrder, product, 0, false, closingOrder, false);
@@ -366,7 +372,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         if(forOrderValueQuery) {
-            previousBilledCount = (int) ProductOrder.getUnbilledNonSampleCount(placedOrder, product, sampleCount);
+            previousBilledCount = (int) ProductOrder.getBilledSampleCount(placedOrder, product);
         }
         return BigDecimal.valueOf(sampleCount-previousBilledCount);
     }
