@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
@@ -68,6 +69,9 @@ public class ConfigurableListContainerTest extends Arquillian {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private SapQuoteLink sapQuoteLink;
 
     @Inject
     private ConfigurableListFactory configurableListFactory;
@@ -322,6 +326,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         evalContext.setJiraConfig(jiraConfig);
         evalContext.setPriceListCache(priceListCache);
         evalContext.setQuoteLink(quoteLink);
+        evalContext.setSapQuoteLink(sapQuoteLink);
         return evalContext;
     }
 

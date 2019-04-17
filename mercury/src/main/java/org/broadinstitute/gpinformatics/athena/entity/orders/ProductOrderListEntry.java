@@ -64,11 +64,13 @@ public class ProductOrderListEntry implements Serializable {
 
     private long readyForBillingCount;
 
+    private ProductOrder.QuoteSourceType quoteSourceType;
+
     private ProductOrderListEntry(Long orderId, String title, String jiraTicketKey,
                                   ProductOrder.OrderStatus orderStatus, Product product, String researchProjectTitle,
                                   Long ownerId, Date placedDate, Integer laneCount, String quoteId,
                                   Long billingSessionId,
-                                  long constructedCount, ProductOrder.OrderAccessType orderType) {
+                                  long constructedCount, ProductOrder.OrderAccessType orderType, ProductOrder.QuoteSourceType quoteSourceType) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
@@ -86,6 +88,7 @@ public class ProductOrderListEntry implements Serializable {
         // This count is used by the query that needs to populate one of the two other counts.
         this.constructedCount = constructedCount;
         this.orderType = orderType;
+        this.quoteSourceType = quoteSourceType;
     }
 
     /**
@@ -95,11 +98,11 @@ public class ProductOrderListEntry implements Serializable {
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  Product product, String researchProjectTitle, Long ownerId,
-                                 Date placedDate, Integer laneCount, String quoteId, ProductOrder.OrderAccessType orderType) {
+                                 Date placedDate, Integer laneCount, String quoteId, ProductOrder.OrderAccessType orderType, ProductOrder.QuoteSourceType quoteSourceType) {
 
         // No billing session and a the constructed count is set to 0 because it is not used for this constructor.
         this(orderId, title, jiraTicketKey, orderStatus, product, researchProjectTitle, ownerId, placedDate,
-                laneCount, quoteId, null, 0, orderType);
+                laneCount, quoteId, null, 0, orderType, quoteSourceType);
     }
 
 
@@ -113,15 +116,17 @@ public class ProductOrderListEntry implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     public ProductOrderListEntry(Long orderId, String jiraTicketKey, Long billingSessionId, long constructedCount) {
         this(orderId, null, jiraTicketKey, null, null, null, null, null, null, null, billingSessionId,
-                constructedCount, null);
+                constructedCount, null, null);
     }
 
     private ProductOrderListEntry() {
         this(null, null, null, 0);
     }
 
-    public static ProductOrderListEntry createDummy() {
-        return new ProductOrderListEntry();
+    public static ProductOrderListEntry createDummy(ProductOrder defaultOrder) {
+        final ProductOrderListEntry productOrderListEntry = new ProductOrderListEntry();
+        productOrderListEntry.setQuoteSourceType(defaultOrder.getQuoteSource());
+        return productOrderListEntry;
     }
 
     /**
@@ -209,6 +214,15 @@ public class ProductOrderListEntry implements Serializable {
 
     public ProductOrder.OrderAccessType getOrderType() {
         return orderType;
+    }
+
+    public ProductOrder.QuoteSourceType getQuoteSourceType() {
+        return quoteSourceType;
+    }
+
+    public void setQuoteSourceType(
+            ProductOrder.QuoteSourceType quoteSourceType) {
+        this.quoteSourceType = quoteSourceType;
     }
 
     /**
