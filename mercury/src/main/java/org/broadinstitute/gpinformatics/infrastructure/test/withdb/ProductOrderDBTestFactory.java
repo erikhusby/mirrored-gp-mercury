@@ -99,11 +99,16 @@ public class ProductOrderDBTestFactory {
      * Creates a {@link ProductOrder} with the specified sample names and persists everything using the
      * dao parameter.
      */
-    public static ProductOrder createProductOrder(GenericDao dao, String... sampleNames) {
+    public static ProductOrder createProductOrder(GenericDao dao, ProductOrder.QuoteSourceType quoteSource, String... sampleNames) {
         ProductOrder productOrder = ProductOrderTestFactory.createProductOrder(sampleNames);
+        productOrder.setQuoteSource(quoteSource);
         dao.persist(productOrder.getResearchProject());
         dao.persist(productOrder.getProduct());
         dao.persist(productOrder);
         return productOrder;
+    }
+
+    public static ProductOrder createProductOrder(GenericDao dao, String... sampleNames) {
+        return createProductOrder(dao, ProductOrder.QuoteSourceType.QUOTE_SERVER, sampleNames);
     }
 }

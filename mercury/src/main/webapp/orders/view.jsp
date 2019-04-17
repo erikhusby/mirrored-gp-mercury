@@ -1607,12 +1607,15 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <div class="controls">
             <div class="form-value">
                 <c:if test="${actionBean.editOrder.quoteIdSet}">
-                    <c:if test="${ not actionBean.editOrder.hasSapQuote()}">
-                        <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                    </c:if>
-                    <c:if test="${ actionBean.editOrder.hasSapQuote()}">
-                        <b>SAP Quote: </b>
-                    </c:if>
+                    <c:choose>
+                        <c:when test="${actionBean.editOrder.hasSapQuote()}">
+                            <b>SAP Quote: </b>
+                            <a href="${actionBean.sapQuoteUrl}" class="external" target="QUOTE">
+                        </c:when>
+                        <c:otherwise>
+                            <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
+                        </c:otherwise>
+                    </c:choose>
                     ${actionBean.editOrder.quoteId}
                     <c:if test="${ not actionBean.editOrder.hasSapQuote()}">
                         </a>
@@ -1860,14 +1863,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                     <stripes:button name="setRisk" value="Set Risk" class="btn"
                                     style="margin-left:5px;" onclick="showRiskDialog()"/>
 
-                </security:authorizeBlock>
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
-                        <stripes:link beanclass="${actionBean.class.name}" event="<%= ProductOrderActionBean.SQUID_COMPONENTS_ACTION %>">
-                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                            Build Squid Components
-                        </stripes:link>
-                    </c:if>
                 </security:authorizeBlock>
             </span>
 

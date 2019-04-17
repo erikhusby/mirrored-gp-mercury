@@ -477,7 +477,8 @@ public class SapIntegrationServiceImplDBFreeTest {
         SapIntegrationClientImpl.SAPCompanyConfiguration broad = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         SAPMaterial primaryMaterial = new SAPMaterial(primaryProduct.getPartNumber(), broad, broad.getDefaultWbs(), "test description", primaryMaterialBasePrice,
             SAPMaterial.DEFAULT_UNIT_OF_MEASURE_EA, BigDecimal.ONE, "description", "","",new Date(), new Date(),
-            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED, "");
+            Collections.emptyMap(), Collections.emptyMap(), SAPMaterial.MaterialStatus.ENABLED,
+            broad.getSalesOrganization());
         materials.add(primaryMaterial);
         priceList.add(new QuotePriceItem(primaryProduct.getPrimaryPriceItem().getCategory(),
                 primaryProduct.getPrimaryPriceItem().getName(),

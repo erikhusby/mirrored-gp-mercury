@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ListMultimap;
@@ -21,6 +24,7 @@ import net.sourceforge.stripes.exception.SourcePageNotFoundException;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -74,6 +78,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.SquidLink;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
@@ -132,9 +137,6 @@ import org.broadinstitute.sap.entity.quote.QuoteItem;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -197,7 +199,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
     private static final String UNABANDON_SAMPLES_ACTION = "unAbandonSamples";
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
-    public static final String SQUID_COMPONENTS_ACTION = "createSquidComponents";
     private static final String SET_RISK = "setRisk";
     private static final String SET_PROCEED_OOS = "setProceedOos";
     private static final String RECALCULATE_RISK = "recalculateRisk";
@@ -263,26 +264,24 @@ public class ProductOrderActionBean extends CoreActionBean {
     private QuoteLink quoteLink;
 
     @Inject
+    private SapQuoteLink sapQuoteLink;
+
+    @Inject
     private SquidLink squidLink;
 
     private ProductOrderEjb productOrderEjb;
 
-    @Inject
     private ProductTokenInput productTokenInput;
 
-    @Inject
     private ProjectTokenInput projectTokenInput;
 
-    @Inject
     private BspShippingLocationTokenInput bspShippingLocationTokenInput;
 
-    @Inject
     private BspGroupCollectionTokenInput bspGroupCollectionTokenInput;
 
     @Inject
     private BSPManagerFactory bspManagerFactory;
 
-    @Inject
     private UserTokenInput notificationListTokenInput;
 
     @Inject
@@ -329,6 +328,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private CompletionStatusFetcher progressFetcher;
 
     private boolean skipRegulatoryInfo;
+
+    private boolean notFromHumans;
+    private boolean fromClinicalLine;
 
     private GenotypingChip genotypingChip;
 
@@ -471,10 +473,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                + "regulatory requirements and/or falsification of information may lead to quarantining of data. "
                + "If you have any questions regarding the federal regulations associated with your project, "
                + "please contact orsp@broadinstitute.org.";
-    }
-
-    public String getComplianceStatement() {
-        return String.format(ResearchProject.REGULATORY_COMPLIANCE_STATEMENT, "this order involves");
     }
 
     /**
@@ -665,6 +663,18 @@ public class ProductOrderActionBean extends CoreActionBean {
             StringUtils.isNotBlank(editOrder.getProductOrderKit().getComments()) &&
             editOrder.getProductOrderKit().getComments().length() > 255) {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
+        }
+
+        Optional<String> skipRegulatoryReason = Optional.ofNullable(editOrder.getSkipRegulatoryReason());
+
+        if (editOrder.getProduct() != null && !editOrder.getProduct().isClinicalProduct()) {
+            skipRegulatoryReason.ifPresent(skipReason -> {
+                if(ResearchProject.FROM_CLINICAL_CELL_LINE
+                        .equals(skipReason)) {
+                    addGlobalValidationError("The regulatory selection '"
+                                             + ResearchProject.FROM_CLINICAL_CELL_LINE + "' is only valid for Clinical Orders");
+                }
+            });
         }
 
         // If this is not a draft, some fields are required.
@@ -1419,10 +1429,19 @@ public class ProductOrderActionBean extends CoreActionBean {
                     DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
-            productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
+            productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy(editOrder) :
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
 
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
+
+            Optional<String> skipRegulatoryReason = Optional.ofNullable(editOrder.getSkipRegulatoryReason());
+            skipRegulatoryReason.ifPresent(reason -> {
+                if(reason.equals(ResearchProject.FROM_CLINICAL_CELL_LINE)) {
+                    fromClinicalLine = true;
+                } else {
+                    notFromHumans = true;
+                }
+            });
 
             sampleDataSourceResolver.populateSampleDataSources(editOrder);
 
@@ -1763,7 +1782,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * For the pre-populate to work on opening create and edit page, we need to take values from the editOrder. After,
      * the pages have the values passed in.
      */
-    private void populateTokenListsFromObjectData() {
+    protected void populateTokenListsFromObjectData() {
         String[] productKey = (editOrder.getProduct() == null) ? new String[0] :
                 new String[]{editOrder.getProduct().getBusinessKey()};
         productTokenInput.setup(productKey);
@@ -1893,11 +1912,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 businessKey);
     }
 
-    @HandlesEvent(SQUID_COMPONENTS_ACTION)
-    public Resolution createSquidComponents() {
-        return new ForwardResolution(SquidComponentActionBean.class, SquidComponentActionBean.ENTER_COMPONENTS_ACTION);
-    }
-
     @HandlesEvent(VALIDATE_ORDER)
     public Resolution validate() {
         validatePlacedOrder("validate");
@@ -1948,8 +1962,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         try {
-            productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
-                    saveOrderMessageCollection);
+            productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails, saveOrderMessageCollection);
             originalBusinessKey = null;
 
 
@@ -2221,6 +2234,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                         if (editOrder != null && editOrder.getRegulatoryInfos().contains(regulatoryInfo)) {
                             regulatoryInfoJson.put("selected", true);
                         }
+                        final OrspProject orspRegInfo = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
+                        regulatoryInfoJson.put("userEdit", orspRegInfo == null);
                         values.put(regulatoryInfoJson);
                     }
                     item.put("value", values);
@@ -2523,7 +2538,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     logger.error(e);
                 } finally {
                     if (jsonGenerator!=null) {
-                        jsonGenerator.close();
+                        IOUtils.closeQuietly(jsonGenerator);
                     }
                 }
             }
@@ -2921,6 +2936,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getQuoteUrl() {
         return getQuoteUrl(editOrder.getQuoteId());
+    }
+
+    public String getSapQuoteUrl(String quoteIdentifier) {
+        return sapQuoteLink.sapUrl(quoteIdentifier);
+    }
+
+    public String getSapQuoteUrl() {
+        return sapQuoteLink.sapUrl(editOrder.getQuoteId());
     }
 
     public String getSquidWorkRequestUrl(String workRequestId) {
@@ -3505,6 +3528,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return notificationListTokenInput;
     }
 
+    @Inject
     public void setNotificationListTokenInput(UserTokenInput notificationListTokenInput) {
         this.notificationListTokenInput = notificationListTokenInput;
     }
@@ -3554,7 +3578,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (action.equals(SAVE_ACTION)) {
-            if (skipRegulatoryInfo) {
+            if (isNotFromHumans() || isFromClinicalLine()) {
                 requireField(editOrder.canSkipRegulatoryRequirements(),
                         "a reason for bypassing the regulatory requirements", action);
             }
@@ -3652,6 +3676,23 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSkipRegulatoryInfo(boolean skipRegulatoryInfo) {
         this.skipRegulatoryInfo = skipRegulatoryInfo;
+    }
+
+
+    public boolean isNotFromHumans() {
+        return notFromHumans;
+    }
+
+    public void setNotFromHumans(boolean notFromHumans) {
+        this.notFromHumans = notFromHumans;
+    }
+
+    public boolean isFromClinicalLine() {
+        return fromClinicalLine;
+    }
+
+    public void setFromClinicalLine(boolean fromClinicalLine) {
+        this.fromClinicalLine = fromClinicalLine;
     }
 
     @Inject
@@ -3986,11 +4027,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.customizationJsonString = customizationJsonString;
     }
 
-    @Inject
-    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
-        this.researchProjectDao = researchProjectDao;
-    }
-
     public String getClinicalAttestationMessage() {
         return "I acknowledge that I have been properly trained in the handling of clinical projects, samples, and "
                + "data per Broad Genomics requirements, including HIPAA and data security policies, in order to order "
@@ -4018,6 +4054,35 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     public void setJiraService(JiraService jiraService) {
         this.jiraService = jiraService;
+    }
+
+    @Inject
+    public void setProductTokenInput(ProductTokenInput productTokenInput) {
+        this.productTokenInput = productTokenInput;
+    }
+
+    @Inject
+    public void setProjectTokenInput(ProjectTokenInput projectTokenInput) {
+        this.projectTokenInput = projectTokenInput;
+    }
+
+    @Inject
+    public void setBspGroupCollectionTokenInput(BspGroupCollectionTokenInput bspGroupCollectionTokenInput) {
+        this.bspGroupCollectionTokenInput = bspGroupCollectionTokenInput;
+    }
+
+    @Inject
+    public void setBspShippingLocationTokenInput(BspShippingLocationTokenInput bspShippingLocationTokenInput) {
+        this.bspShippingLocationTokenInput = bspShippingLocationTokenInput;
+    }
+
+    @Inject
+    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
+        this.researchProjectDao = researchProjectDao;
+    }
+
+    public void setOwner(UserTokenInput owner) {
+        this.owner = owner;
     }
 
     public List<ProductOrder.QuoteSourceType> getQuoteSources() {

@@ -2,9 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 //import com.jprofiler.api.agent.Controller;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -41,7 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
@@ -90,6 +87,8 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -1128,14 +1127,12 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         if (false) {
             // JAX-RS
-            ClientConfig clientConfig = new DefaultClientConfig();
-            JerseyUtils.acceptAllServerCertificates(clientConfig);
+            ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+            JaxRsUtils.acceptAllServerCertificates(clientBuilder);
 
-            response = Client.create(clientConfig).resource(testMercuryUrl + "/rest/bettalimsmessage")
-                    .type(MediaType.APPLICATION_XML_TYPE)
-                    .accept(MediaType.APPLICATION_XML)
-                    .entity(bettaLIMSMessage)
-                    .post(String.class);
+            response = clientBuilder.build().target(testMercuryUrl + "/rest/bettalimsmessage")
+                    .request(MediaType.APPLICATION_XML_TYPE)
+                    .post(Entity.xml(bettaLIMSMessage), String.class);
         }
 
         if (false) {
@@ -1217,15 +1214,13 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private void sendFile(URL baseUrl, File file) {
         try {
 
-            ClientConfig clientConfig = new DefaultClientConfig();
-            JerseyUtils.acceptAllServerCertificates(clientConfig);
+            ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+            JaxRsUtils.acceptAllServerCertificates(clientBuilder);
 
-            String response = Client.create(clientConfig)
-                    .resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/bettalimsmessage")
-                    .type(MediaType.APPLICATION_XML_TYPE)
-                    .accept(MediaType.APPLICATION_XML)
-                    .entity(file)
-                    .post(String.class);
+            String response = clientBuilder.build()
+                    .target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/bettalimsmessage")
+                    .request(MediaType.APPLICATION_XML_TYPE)
+                    .post(Entity.xml(file), String.class);
             System.out.println(response);
         } catch (Exception e) {
             System.out.println(e.getMessage());

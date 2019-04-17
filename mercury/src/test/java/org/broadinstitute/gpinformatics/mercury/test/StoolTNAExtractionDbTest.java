@@ -1,15 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
-import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.EntityLoggingFilter;
+import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -19,6 +17,9 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -53,10 +54,10 @@ public class StoolTNAExtractionDbTest extends StubbyContainerTest {
         StoolTNAJaxbBuilder stoolTNAJaxbBuilder = new StoolTNAJaxbBuilder(parentVesselBean.getManufacturerBarcode(),
                 childVesselBeans.size(), bettaLimsMessageTestFactory, "StoolXTR" + timestamp).invoke();
 
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        ClientBuilder clientBuilder = JaxRsUtils.getClientBuilderAcceptCertificate();
 
-        Client client = Client.create(clientConfig);
-        client.addFilter(new LoggingFilter(System.out));
+        Client client = clientBuilder.build();
+        client.register(new EntityLoggingFilter());
 
         String batchResponse = createBatch(baseUrl, client, batchId, parentVesselBean);
         Assert.assertEquals(batchResponse, "Batch persisted");
@@ -67,11 +68,10 @@ public class StoolTNAExtractionDbTest extends StubbyContainerTest {
                                            ParentVesselBean parentVesselBean) throws Exception {
         LabBatchBean labBatchBean = new LabBatchBean(batchId, parentVesselBean, "jowalsh");
 
-        String response = client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labbatch")
-                .type(MediaType.APPLICATION_XML_TYPE)
+        String response = client.target(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labbatch")
+                .request(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
-                .entity(labBatchBean)
-                .post(String.class);
+                .post(Entity.xml(labBatchBean), String.class);
         return response;
     }
 }

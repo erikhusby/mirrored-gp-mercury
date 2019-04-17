@@ -11,8 +11,8 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.io.Serializable;
 

@@ -265,6 +265,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
         Multimap<LabVessel, BucketEntry> loadingTubeToBucketEntry = HashMultimap.create();
         Multimap<LabVessel, LabVessel> loadingTubeToControl = HashMultimap.create();
         boolean foundOutOfDateEvents = false;
+        Map<LabVessel, SampleInstanceV2> loadingTubeToSampleInstance = new HashMap<>();
 
         // Iterates on the loading tubes specified by barcode by the user.
         for (LabVessel loadingTube : loadingTubeToLcset.keySet()) {
@@ -289,6 +290,8 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                             loadingTubeToBucketEntry.put(loadingTube, bucketEntry);
                         }
                     }
+
+                    loadingTubeToSampleInstance.put(loadingTube, sampleInstance);
                 }
             }
 
@@ -316,6 +319,13 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                     loadingTubeToLcset.get(loadingTube), loadingTubeToBucketEntry.get(loadingTube),
                     loadingTubeToControl.get(loadingTube), null);
             newDto.setTypeAndDate(loadingTube);
+            // External upload will already have values for some designation parameters.
+            SampleInstanceV2 sampleInstance = loadingTubeToSampleInstance.get(loadingTube);
+            if (sampleInstance != null) {
+                newDto.setReadLength(sampleInstance.getReadLength1());
+                newDto.setPairedEndRead(sampleInstance.getPairedEndRead());
+                newDto.setIndexType(sampleInstance.getIndexType());
+            }
             // Persists the lcset choice made by the user.
             for (DesignationUtils.LcsetAssignmentDto assignmentDto : tubeLcsetAssignments) {
                 if (assignmentDto.getBarcode().equals(loadingTube.getLabel()) &&

@@ -295,13 +295,16 @@ public class ProductActionBean extends CoreActionBean {
         allProducts = productDao.findProducts(availability, TopLevelOnly.NO, IncludePDMOnly.YES);
 
         for (Product product: allProducts) {
-            final QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
-            if (quotePriceItem != null) {
-                product.getPrimaryPriceItem().setPrice(quotePriceItem.getPrice());
-                product.getPrimaryPriceItem().setUnits(quotePriceItem.getUnit());
+            Optional <PriceItem> primaryPriceItem = Optional.ofNullable(product.getPrimaryPriceItem());
+            primaryPriceItem.ifPresent(priceItem -> {
+                final QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(priceItem);
+                if (quotePriceItem != null) {
+                    priceItem.setPrice(quotePriceItem.getPrice());
+                    priceItem.setUnits(quotePriceItem.getUnit());
 
-                product.setSapMaterial(productPriceCache.findByProduct(product, product.determineCompanyConfiguration()));
-            }
+                }
+            });
+            product.setSapMaterial(productPriceCache.findByProduct(product, product.determineCompanyConfiguration()));
         }
     }
 

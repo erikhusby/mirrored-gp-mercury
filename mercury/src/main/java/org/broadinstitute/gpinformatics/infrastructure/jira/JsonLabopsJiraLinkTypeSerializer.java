@@ -1,16 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.map.JsonSerializer;
-import org.codehaus.jackson.map.SerializerProvider;
 
 import java.io.IOException;
 
 
 /**
  * When applied to an {@link Enum} with
- * {@link org.codehaus.jackson.map.annotate.JsonSerialize}, will convert any underscores
+ * {@link JsonSerialize}, will convert any underscores
  * in the {@link Enum} instance name to a blank character during JSON serialization.
  *
  * Also, because labopsjira tickets seem to use a lot of parentheses, we have

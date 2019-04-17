@@ -27,6 +27,9 @@ import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPDeliveryItem;
+import org.broadinstitute.sap.entity.SAPOrder;
+import org.broadinstitute.sap.entity.SAPOrderItem;
+import org.broadinstitute.sap.entity.SAPReturnOrder;
 import org.broadinstitute.sap.entity.material.SAPChangeMaterial;
 import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.entity.order.SAPOrder;
@@ -521,6 +524,15 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         return getClient().findQuoteDetails(sapQuoteId);
 
+    }
+
+    @Override
+    public String creditDelivery(String deliveryDocumentId, QuoteImportItem quoteItemForBilling)
+            throws SAPIntegrationException {
+
+        SAPOrderItem returnLine = new SAPOrderItem(quoteItemForBilling.getProduct().getPartNumber(), BigDecimal.valueOf(quoteItemForBilling.getQuantity()));
+        SAPReturnOrder returnOrder = new SAPReturnOrder(deliveryDocumentId, Collections.singleton(returnLine));
+        return getClient().createReturnOrder(returnOrder);
     }
 
     private boolean productsFoundInSap(ProductOrder productOrder) {

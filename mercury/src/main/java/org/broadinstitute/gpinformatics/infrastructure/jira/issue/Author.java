@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.io.Serializable;
 import java.util.Map;

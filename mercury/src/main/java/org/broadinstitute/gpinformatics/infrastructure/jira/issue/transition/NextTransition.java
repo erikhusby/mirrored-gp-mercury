@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition;
 
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 

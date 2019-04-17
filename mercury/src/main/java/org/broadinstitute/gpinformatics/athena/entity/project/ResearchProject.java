@@ -63,13 +63,23 @@ import java.util.TreeSet;
 public class ResearchProject implements BusinessObject, JiraProject, Comparable<ResearchProject>, Serializable {
 
     public static final String REGULATORY_COMPLIANCE_STATEMENT =
-            "If %s human-derived samples (even if commercially "
-            + "available, or established cell lines), either an IRB approval or a Broad Office of Research Subject "
-            + "Protection (ORSP) determination is required. Contact orsp@broadinstitute.org for more information about "
-            + "obtaining an ORSP determination. Note: Internal technical development/validation projects using a "
-            + "Coriell cell line have already received a blanket determination (ORSP-995).<br/><br/> If your order "
-            + "does not involve human-derived samples, then neither ORSP nor IRB review is required. However your "
-            + "order must identify the specific type of samples involved (e.g mouse cells, artificial DNA).";
+            "If orders created from this Research Project involve human-derived samples (even if commercially "
+            + "available, or established cell lines), a Broad ORSP ID number is required (e.g. ORSP-1212, IRB-1234, "
+            + "NE-1234, NHSR-1234).  Contact orsp@broadinstitute.org for more information about obtaining an ORSP ID "
+            + "number. Note: Internal technical development/validation projects using a Coriell cell line have already "
+            + "received a blanket determination (ORSP-995).";
+
+    public static final String REGULATORY_COMPLIANCE_STATEMENT_2 =
+            "If your order does not involve any material derived from humans "
+            + "(e.g. synthetic DNA, mouse samples), then neither ORSP nor IRB review is required.";
+
+    public static final String NOT_FROM_HUMANS_REASON_FILL =
+            "My project does not involve samples or cell lines that originated from humans.";
+
+    public static final String FROM_CLINICAL_CELL_LINE =
+            "Samples will be processed through a clinical workflow and were received with a signed clinical requisition.";
+
+
 
     public boolean isResearchOnly() {
         return getRegulatoryDesignation() == RegulatoryDesignation.RESEARCH_ONLY;
