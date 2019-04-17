@@ -209,7 +209,6 @@ public class BillingCreditDbFreeTest {
             Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn(
                     firstDeliveryDocument);
             Mockito.when(mockSapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class)))
-//                    .thenReturn("8535957");
             .thenAnswer(new Answer<String>() {
                 @Override
                 public String answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -295,7 +294,6 @@ public class BillingCreditDbFreeTest {
             Mockito.when(mockSapClient.createDeliveryDocument(Mockito.any(SAPDeliveryDocument.class))).thenReturn(
                     firstDeliveryDocumentId);
             Mockito.when(mockSapClient.createReturnOrder(Mockito.any(SAPReturnOrder.class)))
-//                    .thenReturn("8535937");
                     .thenAnswer(new Answer<String>() {
                         @Override
                         public String answer(InvocationOnMock invocationOnMock) throws Throwable {
