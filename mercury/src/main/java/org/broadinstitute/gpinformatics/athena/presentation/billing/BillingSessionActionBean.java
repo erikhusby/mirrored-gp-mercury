@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessio
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -68,6 +69,9 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private SapQuoteLink sapQuoteLink;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -286,6 +290,10 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     public String getQuoteUrl(String quote) {
         return quoteLink.quoteUrl(quote);
+    }
+
+    public String getSapQuoteUrl(String quote) {
+        return sapQuoteLink.sapUrl(quote);
     }
 
     public String getQuoteWorkItemUrl(String quote,String workItem) {

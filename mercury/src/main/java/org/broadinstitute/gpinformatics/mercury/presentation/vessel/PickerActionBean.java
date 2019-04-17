@@ -10,6 +10,7 @@ import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SapQuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
@@ -80,6 +81,8 @@ public class PickerActionBean extends CoreActionBean {
     private PriceListCache priceListCache;
     @Inject
     private QuoteLink quoteLink;
+    @Inject
+    private SapQuoteLink sapQuoteLink;
     @Validate(required = true, on = {SEARCH_ACTION})
     private String barcodes;
 
@@ -171,6 +174,7 @@ public class PickerActionBean extends CoreActionBean {
         searchContext.setJiraConfig(jiraConfig);
         searchContext.setPriceListCache(priceListCache);
         searchContext.setQuoteLink(quoteLink);
+        searchContext.setSapQuoteLink(sapQuoteLink);
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("XL20 Picker");
         searchTerm.setPluginClass(PickerVesselPlugin.class);

@@ -99,8 +99,7 @@ public class ProductOrderListEntry implements Serializable {
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  Product product, String researchProjectTitle, Long ownerId,
-                                 Date placedDate, Integer laneCount, String quoteId,
-                                 ProductOrder.OrderAccessType orderType, ProductOrder.QuoteSourceType quoteSourceType) {
+                                 Date placedDate, Integer laneCount, String quoteId, ProductOrder.OrderAccessType orderType, ProductOrder.QuoteSourceType quoteSourceType) {
 
         // No billing session and a the constructed count is set to 0 because it is not used for this constructor.
         this(orderId, title, jiraTicketKey, orderStatus, product, researchProjectTitle, ownerId, placedDate,
@@ -125,8 +124,10 @@ public class ProductOrderListEntry implements Serializable {
         this(null, null, null, 0);
     }
 
-    public static ProductOrderListEntry createDummy() {
-        return new ProductOrderListEntry();
+    public static ProductOrderListEntry createDummy(ProductOrder defaultOrder) {
+        final ProductOrderListEntry productOrderListEntry = new ProductOrderListEntry();
+        productOrderListEntry.setQuoteSourceType(defaultOrder.getQuoteSource());
+        return productOrderListEntry;
     }
 
     /**
@@ -218,6 +219,11 @@ public class ProductOrderListEntry implements Serializable {
 
     public ProductOrder.QuoteSourceType getQuoteSourceType() {
         return quoteSourceType;
+    }
+
+    public void setQuoteSourceType(
+            ProductOrder.QuoteSourceType quoteSourceType) {
+        this.quoteSourceType = quoteSourceType;
     }
 
     /**

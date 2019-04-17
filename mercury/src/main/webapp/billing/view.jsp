@@ -114,9 +114,20 @@
             <c:forEach items="${actionBean.quoteImportItems}" var="item">
                 <tr id="${item.singleWorkItem}">
                     <td>
-                        <a href="${actionBean.getQuoteUrl(item.quoteId)}" class="external" target="QUOTE">
-                            ${item.quoteId}
-                        </a>
+                        <c:choose>
+                            <c:when test="${item.sapOrder}">
+                                Sap Quote:
+                                <a href="${actionBean.getSapQuoteUrl(item.quoteId)}" class="external" target="QUOTE">
+                                        ${item.quoteId}
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <a href="${actionBean.getQuoteUrl(item.quoteId)}" class="external" target="QUOTE">
+                                        ${item.quoteId}
+                                </a>
+
+                            </c:otherwise>
+                        </c:choose>
                     </td>
                     <td>
                         <c:forEach items="${item.orderKeys}" var="pdoBusinessKey">
