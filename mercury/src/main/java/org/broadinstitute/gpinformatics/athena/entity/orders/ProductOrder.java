@@ -828,11 +828,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setProduct(Product product) throws InvalidProductException {
-        if(isSavedInSAP() &&
-           getSapCompanyConfigurationForProductOrder() != product.determineCompanyConfiguration()) {
-            throw new InvalidProductException("Unable to update the order.  This combination of Product and Order is "
-                                              + "attempting to change the company code to which this order will be associated.");
-        }
+
+        // todo SGM This used to be where it threw an exception if the product it was attempting to set differed
+        // in configuration code from the order.  Need something similar, but not the exact implementation from before
         this.product = product;
     }
 
