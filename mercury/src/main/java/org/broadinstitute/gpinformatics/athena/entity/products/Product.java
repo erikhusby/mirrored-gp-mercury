@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -50,9 +51,11 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -176,7 +179,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
 
     @Transient
-    private SAPMaterial sapMaterial;
+    private Map<String, SAPMaterial> sapMaterials = new HashMap<>();
 
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
@@ -980,57 +983,127 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return configuration;
     }
 
-    public void setSapMaterial(SAPMaterial sapMaterial) {
-        this.sapMaterial = sapMaterial;
+    public void setSapMaterials(Map<String, SAPMaterial> sapMaterials) {
+        this.sapMaterials = sapMaterials;
     }
 
-    public SAPMaterial getSapMaterial() {
-        return sapMaterial;
+    public void addSapMaterial(SAPMaterial material) {
+        this.sapMaterials.put(material.getCompanyCode().getSalesOrganization(), material);
+    }
+
+    public Map<String, SAPMaterial> getSapMaterials() {
+        return sapMaterials;
     }
 
     public String getSapClinicalCharge() {
-        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.CLINICAL_CHARGE):"";
+        String clinicalDisplayCharge = "";
+        if (determineCompanyConfiguration()
+            == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+            clinicalDisplayCharge =  NumberFormat.getCurrencyInstance().format(getFeeByCondition(Condition.CLINICAL_CHARGE));
+        }
+        return clinicalDisplayCharge;
     }
-    
+
     public String getSapCommercialCharge() {
-        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.COMMERCIAL_CHARGE):"";
+
+        String commercialDisplayCharge = "";
+        if (determineCompanyConfiguration()
+            == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+            commercialDisplayCharge =  NumberFormat.getCurrencyInstance().format(getFeeByCondition(Condition.COMMERCIAL_CHARGE));
+        }
+        return commercialDisplayCharge;
     }
 
     public String getSapSSFIntercompanyCharge() {
-        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.INTERCOMPANY_FEE):"";
+        String interCompanyDisplayCharge = "";
+        if (determineCompanyConfiguration()
+                          == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) {
+            interCompanyDisplayCharge =  NumberFormat.getCurrencyInstance().format(getFeeByCondition(Condition.INTERCOMPANY_FEE));
+        }
+        return interCompanyDisplayCharge;
     }
 
-    public String getSapFullPrice() {
-        String price = "";
-        if(this.sapMaterial != null && StringUtils.isNotBlank(this.sapMaterial.getBasePrice())) {
-            final BigDecimal basePrice = new BigDecimal(this.sapMaterial.getBasePrice());
+    public String getSapSSFFullPrice() {
+        final BigDecimal sapFullPrice =
+                getSapFullPrice(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        String format = "";
+        if(sapFullPrice.compareTo(BigDecimal.ZERO) == 1) {
+            format = NumberFormat.getCurrencyInstance().format(sapFullPrice);
+        }
+        return format;
+    }
+
+    public String getSapLLCFullPrice() {
+        BigDecimal sapFullLLCPrice = getRawLLCFullPrice();
+        String format = "";
+        if(sapFullLLCPrice.compareTo(BigDecimal.ZERO) == 1) {
+            format = NumberFormat.getCurrencyInstance().format(sapFullLLCPrice);
+        }
+        return format;
+    }
+
+    private BigDecimal getRawLLCFullPrice() {
+        BigDecimal sapFullLLCPrice = getSapFullPrice(
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization());
+        sapFullLLCPrice = sapFullLLCPrice.add(getFeeByCondition(Condition.COMMERCIAL_CHARGE))
+                .add(getFeeByCondition(Condition.CLINICAL_CHARGE));
+        return sapFullLLCPrice;
+    }
+
+    private BigDecimal getSapFullPrice(String salesOrg) {
+        BigDecimal price = BigDecimal.ZERO;
+        Optional <SAPMaterial> targetMaterial = Optional.ofNullable(this.sapMaterials.get(salesOrg));
+
+        if(targetMaterial.isPresent() && StringUtils.isNotBlank(targetMaterial.get().getBasePrice())) {
+            final BigDecimal basePrice = new BigDecimal(this.sapMaterials.get(salesOrg).getBasePrice());
             if (basePrice.doubleValue() > 0d) {
-                price = NumberFormat.getCurrencyInstance().format(basePrice);
+                price = basePrice;
             }
         }
         return price;
+    }
+
+    public boolean isQuotePriceDifferent() {
+        final boolean differenceResult;
+        if(determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) {
+            differenceResult = getQuoteServerRawPrice().equals(getSapFullPrice(
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization()));
+        } else {
+            differenceResult = getQuoteServerRawPrice().equals(getRawLLCFullPrice());
+        }
+        return differenceResult;
     }
 
     public String getQuoteServerPrice() {
-        String price = "";
+        BigDecimal rawPrice = getQuoteServerRawPrice();
+        return NumberFormat.getCurrencyInstance().format(rawPrice);
+    }
+
+    private BigDecimal getQuoteServerRawPrice() {
+        BigDecimal rawPrice = BigDecimal.ZERO;
+
         if(getPrimaryPriceItem() != null && StringUtils.isNotBlank(getPrimaryPriceItem().getPrice())) {
             final BigDecimal quotePrice = new BigDecimal(getPrimaryPriceItem().getPrice());
             if (quotePrice.doubleValue() > 0d) {
-                price = NumberFormat.getCurrencyInstance().format(quotePrice);
+                rawPrice = quotePrice;
             }
         }
-        return price;
+        return rawPrice;
     }
 
-    private String getFeeByCondition(Condition condition) {
-        String fee = "";
-        if (this.sapMaterial != null) {
-            final Map<Condition, BigDecimal> possibleOrderConditions = this.sapMaterial.getPossibleOrderConditions();
+    private BigDecimal getFeeByCondition(Condition condition) {
+        BigDecimal fee = BigDecimal.ZERO;
+        Optional <SAPMaterial> targetMaterial =
+                Optional.ofNullable(this.sapMaterials.get(SapIntegrationClientImpl.SAPCompanyConfiguration
+                        .BROAD_EXTERNAL_SERVICES.getSalesOrganization()));
+
+        if (targetMaterial.isPresent()) {
+            final Map<Condition, BigDecimal> possibleOrderConditions = targetMaterial.get().getPossibleOrderConditions();
             if(possibleOrderConditions.containsKey(condition)) {
 
                 final BigDecimal bigDecimalCharge = possibleOrderConditions.get(condition);
                 if(bigDecimalCharge != null && bigDecimalCharge.doubleValue() > 0d) {
-                    fee = NumberFormat.getCurrencyInstance().format(bigDecimalCharge);
+                    fee = bigDecimalCharge;
                 }
             }
         }
@@ -1106,4 +1179,18 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             return null;
         }
     }
+
+    public static void setMaterialOnProduct(Product product, SAPProductPriceCache productPriceCache) {
+        final SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
+                product.determineCompanyConfiguration();
+        Optional<SAPMaterial> primaryProduct = Optional.ofNullable(productPriceCache.findByPartNumber(product.getPartNumber(),
+                companyCode));
+        primaryProduct.ifPresent(product::addSapMaterial);
+        if(companyCode == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) {
+            Optional<SAPMaterial> llcVersion = Optional.ofNullable(productPriceCache.findByPartNumber(product.getPartNumber(),
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
+            llcVersion.ifPresent(product::addSapMaterial);
+        }
+    }
+
 }

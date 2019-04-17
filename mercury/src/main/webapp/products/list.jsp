@@ -26,7 +26,8 @@
                         {"bSortable": true, "sType": "title-string"},   // Price item Display Name
                         {"bSortable": true, "sType": "title-string"},   // Price Item Platform
                         {"bSortable": true, "sType": "numeric"},        // Quote Server Price
-                        {"bSortable": true, "sType": "numeric"},        // SAP Price
+                        {"bSortable": true, "sType": "numeric"},        // SAP SSF Price
+                        {"bSortable": true, "sType": "numeric"},        // SAP Clinical/Commercial Price
                         {"bSortable": true, "sType": "numeric"},        // SAP Clinical Charge
                         {"bSortable": true, "sType": "numeric"},        // SAP Commerical Charge
                         {"bSortable": true, "sType": "numeric"},        // SAP SSF Intercompany Charge
@@ -79,7 +80,8 @@
                     <th>Price Item Display Name</th>
                     <th>Price Item Platform</th>
                     <th>Quote Server Price</th>
-                    <th>SAP List Price</th>
+                    <th>SAP SSF List Price</th>
+                    <th>SAP LLC List Price</th>
                     <th>SAP Clinical Charge</th>
                     <th>SAP Commercial Charge</th>
                     <th>SAP SSF intercompany Charge</th>
@@ -95,13 +97,16 @@
                 <c:set var="priceClass" value="" />
                 <c:set var="inSAP" value="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}" />
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, FinanceViewer)%>">
-                    <c:if test="${inSAP && !product.quoteServerPrice.equals(product.sapFullPrice)}">
+                    <c:if test="${inSAP && !product.quotePriceDifferent}">
                         <c:set var="priceClass" value="bad-prices"/>
                     </c:if>
                 </security:authorizeBlock>
                 <tr class="${priceClass}">
                     <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
                         <td>
+                        <span class="bad-price-div">The prices for this product information differ between the quote server and SAP.  Please correct this before any orders can be placed or updated
+                        </span>
+
                             <c:if test="${!inSAP}">
                                 <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}"
                                                   class="shiftCheckbox"/>
@@ -109,9 +114,6 @@
                         </td>
                     </security:authorizeBlock>
                     <td>
-                        <span class="bad-price-div">The prices for this product information differ between the quote server and SAP.  Please correct this before any orders can be placed or updated
-                        </span>
-
                         <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
                             <stripes:param name="product" value="${product.businessKey}"/>
                             ${product.partNumber}
@@ -127,7 +129,13 @@
                     <td>${product.quoteServerPrice}</td>
                     <td>
                         <c:if test="${inSAP}">
-                            ${product.sapFullPrice}
+                            ${product.sapSSFFullPrice}
+                        </c:if>
+                    </td>
+
+                    <td>
+                        <c:if test="${inSAP}">
+                            ${product.sapLLCFullPrice}
                         </c:if>
                     </td>
 

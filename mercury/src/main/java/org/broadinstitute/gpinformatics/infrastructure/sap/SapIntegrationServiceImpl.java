@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
@@ -48,7 +47,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.broadinstitute.sap.services.SapIntegrationClientImpl.*;
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT;
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPCompanyConfiguration;
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SAPEnvironment;
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.SystemIdentifier;
+import static org.broadinstitute.sap.services.SapIntegrationClientImpl.TOO_MANY_ACCOUNTS_RESULT;
 
 @Dependent
 @Default
@@ -478,9 +481,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
         }
 
-            orderCalculatedValues =
-                    getClient().calculateOrderValues(quoteId, SystemIdentifier.MERCURY, potentialOrderCriteria);
-        }
+        orderCalculatedValues =
+                getClient().calculateOrderValues(quoteId, SystemIdentifier.MERCURY, potentialOrderCriteria);
         return orderCalculatedValues;
     }
 

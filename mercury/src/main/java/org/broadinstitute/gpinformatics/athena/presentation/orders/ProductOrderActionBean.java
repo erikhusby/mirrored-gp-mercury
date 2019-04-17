@@ -2085,14 +2085,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
         if(product != null) {
-            product.setSapMaterial(productPriceCache.findByPartNumber(product.getPartNumber(),
-                    product.determineCompanyConfiguration()));
+            Product.setMaterialOnProduct(product, productPriceCache);
         }
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
 
         for (Product addOnProduct : addOnProducts) {
-            addOnProduct.setSapMaterial(productPriceCache.findByPartNumber(addOnProduct.getPartNumber(),
-                    addOnProduct.determineCompanyConfiguration()));
+            Product.setMaterialOnProduct(addOnProduct, productPriceCache);
         }
 
         try {

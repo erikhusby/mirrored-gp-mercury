@@ -793,10 +793,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
                 // For SAP Company code 2000 orders, create a custom price adjustment to lock in the price at the time
                 // of the order
-                if (addOn.getSapMaterial() != null && (addOn.isClinicalProduct() || addOn.isExternalOnlyProduct())) {
+                if (addOn.getSapMaterials() != null && (addOn.isClinicalProduct() || addOn.isExternalOnlyProduct())) {
                     final ProductOrderAddOnPriceAdjustment customPriceAdjustment =
                             new ProductOrderAddOnPriceAdjustment();
-                    customPriceAdjustment.setAdjustmentValue(new BigDecimal(addOn.getSapMaterial().getBasePrice()));
+                    customPriceAdjustment.setAdjustmentValue(new BigDecimal(addOn.getSapMaterials().get(getOrderType().salesOrg).getBasePrice()));
                     pdoAddOn.setCustomPriceAdjustment(customPriceAdjustment);
                 }
             }

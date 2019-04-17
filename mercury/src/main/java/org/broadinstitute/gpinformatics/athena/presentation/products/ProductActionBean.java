@@ -304,7 +304,7 @@ public class ProductActionBean extends CoreActionBean {
 
                 }
             });
-            product.setSapMaterial(productPriceCache.findByProduct(product, product.determineCompanyConfiguration()));
+            Product.setMaterialOnProduct(product, productPriceCache);
         }
     }
 
