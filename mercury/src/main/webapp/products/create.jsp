@@ -470,16 +470,15 @@
                     </div>
                 </div>
 
-                        <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
-                <%--<div class="control-group">--%>
-                    <%--<stripes:label for="alternateExternalName" class="control-label">--%>
-                        <%--Alternate (External) Product Name--%>
-                    <%--</stripes:label>--%>
-                    <%--<div class="controls">--%>
-                        <%--<stripes:text id="alternateExternalName" name="editProduct.alternateExternalName" class="defaultText input-xxlarge"--%>
-                            <%--title="Enter the Commercial/Clinical (External) name of the new product"/>--%>
-                    <%--</div>--%>
-                <%--</div>--%>
+                <div class="control-group">
+                    <stripes:label for="alternateExternalName" class="control-label">
+                        Alternate (External) Product Name
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text id="alternateExternalName" name="editProduct.alternateExternalName" class="defaultText input-xxlarge"
+                            title="Enter the Commercial/Clinical (External) name of the new product"/>
+                    </div>
+                </div>
 
                 <div class="control-group">
                     <stripes:label for="description" class="control-label">
@@ -594,7 +593,7 @@
 
                 <div class="control-group">
                     <stripes:label for="primaryPriceItem" class="control-label">
-                        Primary Price Item *
+                        Primary Price Item
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="primaryPriceItem" name="priceItemTokenInput.listOfKeys"
@@ -609,19 +608,7 @@
                     </div>
                 </div>
 
-                <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
-                    <%--<div class="control-group">--%>
-                        <%--<stripes:label for="externalPriceItem" class="control-label">--%>
-                            <%--Alternate (External) Price Item--%>
-                        <%--</stripes:label>--%>
-                        <%--<div class="controls">--%>
-                            <%--<stripes:text id="externalPriceItem" name="externalPriceItemTokenInput.listOfKeys"--%>
-                                          <%--class="defaultText" title="Type to search for matching price items"/>--%>
-                        <%--</div>--%>
-                    <%--</div>--%>
-
-
-                    <div class="control-group">
+                <div class="control-group">
                     <stripes:label for="addOns" class="control-label">
                         Add-ons
                     </stripes:label>

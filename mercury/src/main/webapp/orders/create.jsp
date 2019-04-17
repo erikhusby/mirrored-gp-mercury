@@ -720,6 +720,8 @@
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
+            var quote = $j("#quote").val();
+            var quoteSource = $j("#quoteSource").val();
             if ((productKey === null) || (productKey === "")) {
                 $j("#customizationJsonString").val("");
                 customizationValues = {};
@@ -743,7 +745,8 @@
                     $j("#sampleInitiationKitRequestEdit").hide();
                 }
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey +
+                    "&quoteIdentifier=" + quote + "&quoteSource="+quoteSource,
                     dataType: 'json',
                     success: selectedProductFollowup,
                     complete: detectNumberOfLanesVisibility
@@ -1129,7 +1132,7 @@
                     ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
                 var fundingDetails = data.fundingDetails;
 
-                if((data.status !== (data.quoteType==="Quote Server Quote")?"Funded":"Approved" )  ||
+                if((data.status !== ((data.quoteType === "Quote Server Quote")?"Funded":"Approved" ))  ||
                     Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
                     quoteWarning = true;
                 }
@@ -1141,7 +1144,7 @@
                     fundsRemainingNotification += '<br>' + (detailIndex+1) +") " +fundingDetails[detailIndex].fundingType
                         + ": " + fundingDetails[detailIndex].fundingStatus;
 
-                    if(fundingDetails[detailIndex].fundingStatus !== "Active") {
+                    if(fundingDetails[detailIndex].fundingStatus !== ((data.quoteType === "Quote Server Quote")?"Active":"Approved")) {
                         quoteWarning = true;
                     }
 
@@ -1268,7 +1271,9 @@
             $j.ajax({
                 url: "${ctxpath}/orders/order.action?openCustomView=",
                 data: {
-                    'customizationJsonString': JSON.stringify(customizationValues)
+                    'customizationJsonString': JSON.stringify(customizationValues),
+                    'quoteSource':$j("#quoteSource"),
+                    'quoteIdentifier':$j("#quote")
                 },
                 datatype: 'html',
                 success: function (html) {

@@ -304,7 +304,7 @@ public class ProductActionBean extends CoreActionBean {
 
                 }
             });
-            product.setSapMaterial(productPriceCache.findByProduct(product, product.determineCompanyConfiguration()));
+            Product.setMaterialOnProduct(product, productPriceCache);
         }
     }
 
@@ -334,18 +334,6 @@ public class ProductActionBean extends CoreActionBean {
             (editProduct.getDiscontinuedDate() != null) &&
             (editProduct.getAvailabilityDate().after(editProduct.getDiscontinuedDate()))) {
             addGlobalValidationError("Availability date must precede discontinued date.");
-        }
-
-        if (priceItemTokenInput.getItem() == null) {
-            addValidationError("token-input-primaryPriceItem", "Primary price item is required");
-        }
-        if (StringUtils.isNotBlank(editProduct.getAlternateExternalName()) && externalPriceItemTokenInput.getItem() == null) {
-            addValidationError("token-input-externalPriceItem",
-                    "If setting an external product name, an external price item is required");
-        }
-        if (externalPriceItemTokenInput.getItem() != null && StringUtils.isBlank(editProduct.getAlternateExternalName())) {
-            addValidationError("token-input-externalPriceItem",
-                    "If setting an external price item, an external product name is required");
         }
 
         checkValidCriteria();
@@ -453,11 +441,6 @@ public class ProductActionBean extends CoreActionBean {
         PriceItem primaryPriceItem = editProduct.getPrimaryPriceItem();
         if (primaryPriceItem != null) {
             priceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(primaryPriceItem)));
-        }
-
-        PriceItem externalPriceItem = editProduct.getExternalPriceItem();
-        if(externalPriceItem != null) {
-            externalPriceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(externalPriceItem)));
         }
     }
 

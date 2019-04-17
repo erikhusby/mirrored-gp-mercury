@@ -318,13 +318,13 @@ public class ProductEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
-            try {
-                sapService.publishProductInSAP(productToPublish);
-                productToPublish.setSavedInSAP(true);
+        try {
+            sapService.publishProductInSAP(productToPublish);
+            productToPublish.setSavedInSAP(true);
 
-            } catch (SAPIntegrationException e) {
-                throw new SAPIntegrationException(e.getMessage());
-            }
+        } catch (SAPIntegrationException e) {
+            throw new SAPIntegrationException(e.getMessage());
+        }
     }
 
     /**

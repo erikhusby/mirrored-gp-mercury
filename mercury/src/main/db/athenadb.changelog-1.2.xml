@@ -1397,4 +1397,8 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-4924-11">
+        <dropNotNullConstraint columnName="PRIMARY_PRICE_ITEM" schemaName="ATHENA" tableName="PRODUCT" />
+    </changeSet>
+
 </databaseChangeLog>

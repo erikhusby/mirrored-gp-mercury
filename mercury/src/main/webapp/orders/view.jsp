@@ -883,7 +883,7 @@ function updateFundsRemaining() {
     if ($j.trim(quoteIdentifier)) {
         debugger;
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey + "&quoteSource=" + quoteSource,
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey + "&quoteSource=${actionBean.editOrder.quoteSource.displayName}",
             dataType: 'json',
             success: updateFunds
         });
@@ -901,7 +901,7 @@ function updateFunds(data) {
             ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
         var fundingDetails = data.fundingDetails;
 
-        if((data.status !== (data.quoteType==="Quote Server Quote")?"Funded":"Approved" )  ||
+        if((data.status != ((data.quoteType == "Quote Server Quote")?"Funded":"Approved" ))  ||
             Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
             quoteWarning = true;
         }
@@ -913,7 +913,7 @@ function updateFunds(data) {
             fundsRemainingNotification += '<br>' + (detailIndex+1) +") " +fundingDetails[detailIndex].fundingType
                 + ": " + fundingDetails[detailIndex].fundingStatus;
 
-            if(fundingDetails[detailIndex].fundingStatus !== "Active") {
+            if(fundingDetails[detailIndex].fundingStatus !== ((data.quoteType == "Quote Server Quote")?"Active":"Approved")) {
                 quoteWarning = true;
             }
 
